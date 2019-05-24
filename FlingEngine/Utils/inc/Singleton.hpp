@@ -5,7 +5,6 @@ class Singleton
 {
 public:
 
-	
 	static T& instance();
 
 	// Have separate virtual init and shutdown functions so that we 

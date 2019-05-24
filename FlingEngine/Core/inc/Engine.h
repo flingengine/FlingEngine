@@ -11,8 +11,7 @@ namespace Fling
 
 	public:
 
-
-		Engine( const int t_width = 800, const int t_height = 600 );
+		Engine();
 
 		~Engine();
 
@@ -24,10 +23,19 @@ namespace Fling
 
 	private:
 
+		/// <summary>
+		/// Start any systems or subsystems that may be needed
+		/// </summary>
 		virtual void Startup();
 
+		/// <summary>
+		/// Inital tick for the engine frame
+		/// </summary>
 		virtual void Tick();
 
+		/// <summary>
+		/// Shutdown all engine systems and do any necessary cleanup
+		/// </summary>
 		virtual void Shutdown();
 
 	};

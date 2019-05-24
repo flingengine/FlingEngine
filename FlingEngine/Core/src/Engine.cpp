@@ -3,7 +3,7 @@
 
 namespace Fling
 {
-	Engine::Engine( const int t_width, const int t_height )
+	Engine::Engine()
 	{
 	}
 
@@ -30,11 +30,12 @@ namespace Fling
 		Logger::instance().Init();
 		Timing::instance().Init();
 		Renderer::instance().Init();
+		Renderer::instance().CreateGameWindow( FLING_DEFAULT_WINDOW_WIDTH, FLING_DEFAULT_WINDOW_HEIGHT );
 	}
 
 	void Engine::Tick()
 	{
-		while( !glfwWindowShouldClose( Renderer::instance().GetCurrentWindow() ) )
+		while( !glfwWindowShouldClose( Renderer::instance().Window() ) )
 		{
 			glfwPollEvents();
 			Timing::instance().Update();

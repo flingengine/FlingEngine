@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <vector>
 #include <unordered_map>
+#include <cstring>
 
 #include "FlingTypes.h" 
 #include "Random.h"
@@ -26,3 +27,6 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+
+#define FLING_DEFAULT_WINDOW_WIDTH		800
+#define FLING_DEFAULT_WINDOW_HEIGHT		600

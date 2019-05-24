@@ -9,7 +9,8 @@
 
 int main( int argc, char* argv[] )
 {
-	Fling::Engine engine( 800, 600 );
+	// #TODO: Make an ini file for the resolution and other settings
+	Fling::Engine engine = {};
 
 	try
 	{
