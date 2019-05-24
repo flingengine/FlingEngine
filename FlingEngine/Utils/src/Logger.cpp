@@ -1,31 +1,22 @@
 #include "pch.h"
 #include "Logger.h"
 
-std::shared_ptr<spdlog::logger> Logger::console = nullptr;
-
-Logger::Logger()
+namespace Fling
 {
-	std::cout << "Create logger!" << std::endl;
-}
+	// Static definitions
+	std::shared_ptr<spdlog::logger> Logger::m_console = nullptr;
 
-Logger::~Logger()
-{
-	std::cout << "Destroy logger!" << std::endl;
-}
+	void Logger::Init()
+	{
+		// Create the SPD log console 
+		m_console = spdlog::stdout_color_mt( "LOG" );
+		spdlog::set_pattern( "[%H:%M:%S] [%^%L%$] [thread %t] %v" );
+		F_LOG_TRACE( "Logger initalized!" );
+	}
 
-void Logger::Init()
-{
-	// Create the SPD log console 
-	console = spdlog::stdout_color_mt( "LOG" );
-	spdlog::set_pattern( "[%H:%M:%S] [%^%L%$] [thread %t] %v" );
-}
+	std::shared_ptr<spdlog::logger> Logger::GetCurrentConsole()
+	{
+		return m_console;
+	}
 
-void Logger::Shutdown()
-{
-
-}
-
-std::shared_ptr<spdlog::logger> Logger::GetCurrentConsole()
-{
-	return console;
-}
+}	// namespace Fling

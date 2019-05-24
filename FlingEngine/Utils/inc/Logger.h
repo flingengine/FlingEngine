@@ -9,31 +9,30 @@
 #include "spdlog/sinks/stdout_sinks.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
-class Logger : public Singleton<Logger>
+namespace Fling
 {
-public:
+	class Logger : public Singleton<Logger>
+	{
+	public:
 
-	Logger();
-	virtual ~Logger();
+		virtual void Init() override;
 
-	virtual void Init() override;
+		/// <summary>
+		/// Gets a reference to the current logging console
+		/// </summary>
+		/// <returns>Shader ptr to the current console</returns>
+		static std::shared_ptr<spdlog::logger> GetCurrentConsole();
 
-	virtual void Shutdown() override;
+	protected:
 
-	/// <summary>
-	/// Gets a reference to the current logging console
-	/// </summary>
-	/// <returns>Shader ptr to the current console</returns>
-	static std::shared_ptr<spdlog::logger> GetCurrentConsole();
+		/** Pointer to the current console that is being used for logging */
+		static std::shared_ptr<spdlog::logger> m_console;
 
-protected:
+	};
 
-	/** Pointer to the current console that is being used for logging */
-	static std::shared_ptr<spdlog::logger> console;
+}	// namespace Fling
 
-};
-
-
+// Debug/release mode defs
 #if defined( DEBUG ) || defined ( _DEBUG ) || defined ( F_ENABLE_LOGGING )
 
 #define  F_LOG_TRACE( ... )    Logger::GetCurrentConsole()->info( __VA_ARGS__ )

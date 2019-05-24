@@ -9,7 +9,7 @@
 
 int main( int argc, char* argv[] )
 {
-	Engine engine( 800, 600 );
+	Fling::Engine engine( 800, 600 );
 
 	try
 	{

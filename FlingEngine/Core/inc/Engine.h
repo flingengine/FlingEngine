@@ -1,29 +1,34 @@
 #pragma once
 
 #include "Logger.h"
+#include "Timing.h"
+#include "Renderer.h"
 
-class FLING_API Engine
+namespace Fling
 {
+	class FLING_API Engine
+	{
 
-public:
+	public:
 
 
-	Engine( const int t_width = 800, const int t_height = 600 );
+		Engine( const int t_width = 800, const int t_height = 600 );
 
-	~Engine();
+		~Engine();
 
-	/// <summary>
-	/// Run the engine
-	/// </summary>
-	/// <returns>Error code or 0 for success</returns>
-	UINT64 Run();
+		/// <summary>
+		/// Run the engine
+		/// </summary>
+		/// <returns>Error code or 0 for success</returns>
+		UINT64 Run();
 
-private:
+	private:
 
-	virtual void Startup();
+		virtual void Startup();
 
-	virtual void Tick();
+		virtual void Tick();
 
-	virtual void Shutdown();
+		virtual void Shutdown();
 
-};
+	};
+}	// namespace Fling

@@ -1,42 +1,54 @@
 #include "pch.h"
 #include "Engine.h"
 
-Engine::Engine( const int t_width, const int t_height )
+namespace Fling
 {
-}
+	Engine::Engine( const int t_width, const int t_height )
+	{
+	}
 
-Engine::~Engine()
-{
+	Engine::~Engine()
+	{
 
-}
+	}
 
-UINT64 Engine::Run()
-{
-	Startup();
+	UINT64 Engine::Run()
+	{
+		Startup();
 
-	Tick();
+		Tick();
 
-	Shutdown();
+		Shutdown();
 
-	return 0;
-}
+		return 0;
+	}
 
-void Engine::Startup()
-{
-	Utils::Random::Init();
+	void Engine::Startup()
+	{
+		Utils::Random::Init();
 
-	Logger::instance().Init();
+		Logger::instance().Init();
+		Timing::instance().Init();
+		Renderer::instance().Init();
+	}
 
-	F_LOG_TRACE( "Lol here I am!" );
-}
+	void Engine::Tick()
+	{
+		while( !glfwWindowShouldClose( Renderer::instance().GetCurrentWindow() ) )
+		{
+			glfwPollEvents();
+			Timing::instance().Update();
 
-void Engine::Tick()
-{
-	// Update systems
-}
+			float deltaTime = Timing::instance().GetDeltaTime();
+			float totalTime = Timing::instance().GetTimef();
+		}
+	}
 
-void Engine::Shutdown()
-{
-	// Cleanup any resources
-	Logger::instance().Shutdown();
+	void Engine::Shutdown()
+	{
+		// Cleanup any resources
+		Logger::instance().Shutdown();
+		Timing::instance().Shutdown();
+		Renderer::instance().Shutdown();
+	}
 }
