@@ -21,12 +21,24 @@ namespace Fling
 	private:
 
 		/// <summary>
+		/// Init the current graphics API
+		/// </summary>
+		void InitGraphics();
+
+		/// <summary>
+		/// Create a vulkan instance
+		/// </summary>
+		void CreateGraphicsInstance();
+
+		/// <summary>
 		/// Init GLFW and create the game window
 		/// </summary>
 		void InitWindow();
 
 		/** The window that the game is being drawn to */
 		GLFWwindow* m_window = nullptr;
+
+		VkInstance m_instance;
 
 	};
 

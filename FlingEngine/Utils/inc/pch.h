@@ -10,6 +10,8 @@
 #include <assert.h>
 #include <functional>
 #include <cstdlib>
+#include <vector>
+#include <unordered_map>
 
 #include "FlingTypes.h" 
 #include "Random.h"
