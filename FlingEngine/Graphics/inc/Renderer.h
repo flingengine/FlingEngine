@@ -12,7 +12,7 @@ namespace Fling
     /// </summary>
     struct QueueFamilyIndices
     {
-        UINT8 GraphicsFamily : 1;
+        UINT32 GraphicsFamily = 0;
 
         /// <summary>
         /// Determines if this 
@@ -81,6 +81,11 @@ namespace Fling
         void PickPhysicalDevice();
 
         /// <summary>
+        /// Create the logical vulkan device
+        /// </summary>
+        void CreateLogicalDevice();
+
+        /// <summary>
         /// Configure graphics API debug callbacks [Vulkan]
         /// </summary>
         void SetupDebugMessesages();
@@ -114,7 +119,13 @@ namespace Fling
         /** Physical device for Vulkan. Destroyed in cleanup. */
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 
-        /** Debug message handler fo Vulkan */
+        /** Logical vulkan device */
+        VkDevice m_Device = VK_NULL_HANDLE;
+
+        /** Handle for the graphics queue */
+        VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
+
+        /** Debug message handler for Vulkan */
         VkDebugUtilsMessengerEXT m_DebugMessenger;
 
         /** Width of the window that GLFW creates */

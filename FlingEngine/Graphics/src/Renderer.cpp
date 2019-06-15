@@ -70,6 +70,7 @@ namespace Fling
 		CreateGraphicsInstance();
 		SetupDebugMessesages();
 		PickPhysicalDevice();
+        CreateLogicalDevice();
 	}
 
 	void Renderer::CreateGraphicsInstance()
@@ -196,6 +197,48 @@ namespace Fling
         }
 	}
 
+    void Renderer::CreateLogicalDevice()
+    {
+        // Queue creation
+        QueueFamilyIndices Indecies = FindQueueFamilies( m_PhysicalDevice );
+
+        VkDeviceQueueCreateInfo QueueCreateInfo = {};
+        QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        QueueCreateInfo.queueFamilyIndex = Indecies.GraphicsFamily;
+        QueueCreateInfo.queueCount = 1;
+
+        float Priority = 1.0f;
+        QueueCreateInfo.pQueuePriorities = &Priority;
+        
+        VkPhysicalDeviceFeatures DevicesFeatures = {};
+
+        // Device creation 
+        VkDeviceCreateInfo CreateInfo = {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        CreateInfo.pQueueCreateInfos = &QueueCreateInfo;
+        CreateInfo.queueCreateInfoCount = 1;
+        CreateInfo.pEnabledFeatures = &DevicesFeatures;
+
+        CreateInfo.enabledExtensionCount = 0;
+
+        if( m_EnableValidationLayers ) 
+        {
+            CreateInfo.enabledLayerCount = static_cast<UINT32>( m_ValidationLayers.size() );
+            CreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
+        }
+        else 
+        {
+            CreateInfo.enabledLayerCount = 0;
+        }
+
+        if( vkCreateDevice( m_PhysicalDevice, &CreateInfo, nullptr, &m_Device ) != VK_SUCCESS ) 
+        {
+            F_LOG_FATAL( "failed to create logical Device!" );
+        }
+
+        vkGetDeviceQueue( m_Device, Indecies.GraphicsFamily, 0, &m_GraphicsQueue );
+    }
+
 	void Renderer::SetupDebugMessesages()
 	{
 		if( !m_EnableValidationLayers ) { return; }
@@ -296,6 +339,7 @@ namespace Fling
 			DestroyDebugUtilsMessengerEXT( m_Instance, m_DebugMessenger, nullptr );
 		}
 
+        vkDestroyDevice( m_Device, nullptr );
 		vkDestroyInstance( m_Instance, nullptr );
 
 		// Cleanup GLFW --------
