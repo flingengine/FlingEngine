@@ -26,7 +26,7 @@ namespace Fling
 	protected:
 
 		/** Pointer to the current console that is being used for logging */
-		static std::shared_ptr<spdlog::logger> m_console;
+		static std::shared_ptr<spdlog::logger> m_Console;
 
 	};
 
@@ -39,10 +39,19 @@ namespace Fling
 #define  F_LOG_WARN( ... )     Logger::GetCurrentConsole()->warn( __VA_ARGS__ )
 #define  F_LOG_ERROR( ... )    Logger::GetCurrentConsole()->error( __VA_ARGS__ )
 
+/** Log a message to the error console AND throw a runtime exception. Only use for fatal asserts!
+    Left in in release builds! */
+#define  F_LOG_FATAL( ... )    Logger::GetCurrentConsole()->error( __VA_ARGS__ ); \
+                               throw std::runtime_error( __VA_ARGS__ )
+
 #else
 
 #define  F_LOG_TRACE( ... ) 
 #define  F_LOG_WARN( ... )  
 #define  F_LOG_ERROR( ... ) 
 
+/** Log a message to the error console AND throw a runtime exception. Only use for fatal asserts!
+    Left in in release builds! */
+#define  F_LOG_FATAL( ... )    Logger::GetCurrentConsole()->error( __VA_ARGS__ ); \
+                               throw std::runtime_error( __VA_ARGS__ )
 #endif

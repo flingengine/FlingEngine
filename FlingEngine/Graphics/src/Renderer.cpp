@@ -8,15 +8,73 @@ namespace Fling
 		InitGraphics();
 	}
 
-	void Renderer::InitGraphics()
+    UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
+    {
+        UINT16 Score = 0;
+
+        VkPhysicalDeviceProperties DeviceProperties;
+        VkPhysicalDeviceFeatures DeviceFeatures;
+        vkGetPhysicalDeviceProperties( t_Device, &DeviceProperties );
+        vkGetPhysicalDeviceFeatures( t_Device, &DeviceFeatures );
+
+        // Necessary application features, if the device doesn't have one then return 0
+        if( !DeviceFeatures.geometryShader )
+        {
+            return 0;
+        }
+
+        // Favor discrete GPU's
+        if( DeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU )
+        {
+            Score += 500;
+        }
+
+        // Favor complete queue sets
+        QueueFamilyIndices QueueFamily = FindQueueFamilies( t_Device );
+        if( QueueFamily.IsComplete() )
+        {
+            Score += 500;
+        }
+
+        return Score;
+    }
+
+    QueueFamilyIndices Renderer::FindQueueFamilies( VkPhysicalDevice const t_Device )
+    {
+        QueueFamilyIndices Indecies = {};
+
+        UINT32 QueueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, nullptr );
+
+        std::vector<VkQueueFamilyProperties> QueueFamilies( QueueFamilyCount );
+        vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, QueueFamilies.data() );
+        // Set the family flags we are interested in
+        for( const VkQueueFamilyProperties& Family : QueueFamilies )
+        {
+            if( Family.queueCount > 0 )
+            {
+                Indecies.GraphicsFamily = Family.queueFlags & VK_QUEUE_GRAPHICS_BIT;
+            }
+
+            if( Indecies.IsComplete() )
+            {
+                break;
+            }
+        }
+
+        return Indecies;
+    }
+
+    void Renderer::InitGraphics()
 	{
 		CreateGraphicsInstance();
 		SetupDebugMessesages();
+		PickPhysicalDevice();
 	}
 
 	void Renderer::CreateGraphicsInstance()
 	{
-		if( m_enableValidationLayers && !CheckValidationLayerSupport() )
+		if( m_EnableValidationLayers && !CheckValidationLayerSupport() )
 		{
 			F_LOG_ERROR( "Validation layers are requested, but not available!" );
 			throw std::runtime_error( "Validation layers are requested, but not available!" );
@@ -40,26 +98,26 @@ namespace Fling
 
 		// Because we are using GLFW as an extension interface for window creation
 		// Vulkan needs to know how many extensions are available
-		auto extensions = GetRequiredExtensions();
+		std::vector<const char*> extensions = GetRequiredExtensions();
 		createInfo.enabledExtensionCount = static_cast<uint32_t>( extensions.size() );
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		// Determine global validation layer count
-		if( m_enableValidationLayers )
+		if( m_EnableValidationLayers )
 		{
-			createInfo.enabledLayerCount = static_cast<UINT32>( m_validationLayers.size() );
-			createInfo.ppEnabledLayerNames = m_validationLayers.data();
+			createInfo.enabledLayerCount = static_cast<UINT32>( m_ValidationLayers.size() );
+			createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 		}
 		else 
 		{
 			createInfo.enabledLayerCount = 0;
+			createInfo.pNext = nullptr;
 		}
 
 		// Create the vulkan instance! Throw exception if it fails
-		if( vkCreateInstance( &createInfo, nullptr, &m_instance ) != VK_SUCCESS )
+		if( vkCreateInstance( &createInfo, nullptr, &m_Instance ) != VK_SUCCESS )
 		{
-			F_LOG_ERROR( "Failed to create the Vulkan instance!" );
-			std::runtime_error( "Failed to create the Vulkan instance!" );
+            F_LOG_FATAL( "Failed to create the Vulkan instance!" );
 		}
 
 		// Find out what extensions are available
@@ -86,7 +144,7 @@ namespace Fling
 		std::vector<VkLayerProperties> availableLayers( layerCount );
 		vkEnumerateInstanceLayerProperties( &layerCount, availableLayers.data() );
 
-		for( const char* layerName : m_validationLayers )
+		for( const char* layerName : m_ValidationLayers )
 		{
 			bool layerFound = false;
 			for( const auto& layerProperties : availableLayers )
@@ -106,9 +164,41 @@ namespace Fling
 		return true;
 	}
 
+	void Renderer::PickPhysicalDevice()
+	{
+        // Enumerate available devices
+		UINT32 DeviceCount = 0;
+		vkEnumeratePhysicalDevices( m_Instance, &DeviceCount, nullptr );
+
+		if( DeviceCount == 0 )
+		{
+            F_LOG_FATAL( "Failed to find GPU's with Vulkan support!" );
+		}
+
+        std::vector<VkPhysicalDevice> Devices( DeviceCount );
+        vkEnumeratePhysicalDevices( m_Instance, &DeviceCount, Devices.data() );
+        
+        // Find the best device for this application
+        UINT16 MaxRating = 0;
+        for( const VkPhysicalDevice& Device : Devices )
+        {
+            UINT16 Rating = GetDeviceRating( Device );
+            if( Rating > 0 && Rating > MaxRating )
+            {
+                MaxRating = Rating;
+                m_PhysicalDevice = Device;
+            }
+        }
+
+        if( m_PhysicalDevice == VK_NULL_HANDLE )
+        {
+            F_LOG_FATAL( "Failed to find a suitable GPU!" );
+        }
+	}
+
 	void Renderer::SetupDebugMessesages()
 	{
-		if( !m_enableValidationLayers ) return;
+		if( !m_EnableValidationLayers ) { return; }
 
 		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -117,12 +207,11 @@ namespace Fling
 		createInfo.pfnUserCallback = DebugCallback;
 		createInfo.pUserData = nullptr; // Optional
 		
-		if( CreateDebugUtilsMessengerEXT( m_instance, &createInfo, nullptr, &m_debugMessenger ) != VK_SUCCESS )
+		if( CreateDebugUtilsMessengerEXT( m_Instance, &createInfo, nullptr, &m_DebugMessenger ) != VK_SUCCESS )
 		{
-			F_LOG_ERROR( "failed to set up debug messenger!" );
-			throw std::runtime_error( "failed to set up debug messenger!" );
+			F_LOG_ERROR( "Failed to set up debug messenger!" );
+			throw std::runtime_error( "Failed to set up debug messenger!" );
 		}
-
 	}
 
 	std::vector<const char*> Renderer::GetRequiredExtensions()
@@ -133,7 +222,7 @@ namespace Fling
 
 		std::vector<const char*> extensions( glfwExtensions, glfwExtensions + glfwExtensionCount );
 
-		if( m_enableValidationLayers ) 
+		if( m_EnableValidationLayers ) 
 		{
 			extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 		}
@@ -168,47 +257,49 @@ namespace Fling
 
 	VkResult Renderer::CreateDebugUtilsMessengerEXT( VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger )
 	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkCreateDebugUtilsMessengerEXT" );
+		PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkCreateDebugUtilsMessengerEXT" );
 		if( func != nullptr ) 
 		{
 			return func( instance, pCreateInfo, pAllocator, pDebugMessenger );
 		}
-		else {
+		else 
+		{
 			return VK_ERROR_EXTENSION_NOT_PRESENT;
 		}
 	}
 
 	void Renderer::DestroyDebugUtilsMessengerEXT( VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator )
 	{
-		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" );
+		PFN_vkDestroyDebugUtilsMessengerEXT func = 
+			(PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" );
 		if( func != nullptr ) 
 		{
-			func( instance, m_debugMessenger, pAllocator );
+			func( instance, m_DebugMessenger, pAllocator );
 		}
 	}
 
 	void Renderer::CreateGameWindow( const int t_width, const int t_height )
 	{
-		m_width = t_width;
-		m_height = m_height;
+		m_Width = t_width;
+		m_Height = m_Height;
 		glfwInit();
 
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-		m_window = glfwCreateWindow( m_width, m_height, "Engine Window", nullptr, nullptr );
+		m_Window = glfwCreateWindow( m_Width, m_Height, "Engine Window", nullptr, nullptr );
 	}
 
 	void Renderer::Shutdown()
 	{
 		// Cleanup vulkan ------
-		if( m_enableValidationLayers ) 
+		if( m_EnableValidationLayers ) 
 		{
-			DestroyDebugUtilsMessengerEXT( m_instance, m_debugMessenger, nullptr );
+			DestroyDebugUtilsMessengerEXT( m_Instance, m_DebugMessenger, nullptr );
 		}
 
-		vkDestroyInstance( m_instance, nullptr );
+		vkDestroyInstance( m_Instance, nullptr );
 
 		// Cleanup GLFW --------
-		glfwDestroyWindow( m_window );
+		glfwDestroyWindow( m_Window );
 		glfwTerminate();
 	}
 

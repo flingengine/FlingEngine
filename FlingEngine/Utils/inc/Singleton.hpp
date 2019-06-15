@@ -26,7 +26,7 @@ T& Singleton<T>::instance()
 	static_assert( std::is_default_constructible<T>::value,
 		"T is required to be default constructible" );
 
-	static T _instance;
+	static T m_Instance;
 
-	return _instance;
+	return m_Instance;
 }
