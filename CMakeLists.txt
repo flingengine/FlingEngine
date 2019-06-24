@@ -4,8 +4,7 @@ set( CMAKE_SUPPRESS_REGENERATION true )
 project ( "FlingEngine" )
 
 # Include external libraries
-#TODO: Repalce this with actually finding vulkan on the current machine
-include_directories( C:/VulkanSDK/1.1.106.0/Include )
+include_directories( $ENV{VULKAN_INCLUDE} )
 include_directories( external/glfw/include )
 include_directories( external/glm )
 include_directories( external/spdlog/include )

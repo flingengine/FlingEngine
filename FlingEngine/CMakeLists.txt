@@ -23,7 +23,7 @@ include_directories(
 ##################### Linking #################
 set( LINK_DIRS
     ../external/glfw/src/$<CONFIG>
-    C:/VulkanSDK/1.1.106.0/Lib
+    $ENV{VULKAN_LIB}
 )
 
 set ( LINK_LIBS
