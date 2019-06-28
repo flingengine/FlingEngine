@@ -110,6 +110,11 @@ namespace Fling
         void CreateSwapChain();
 
         /**
+        * Create the image views from the swap chain so that we can actually render them 
+        */
+        void CreateImageViews();
+
+        /**
         * Check the swap chain support of a given device
         * @param 	The device to check support on
         *
@@ -206,7 +211,7 @@ namespace Fling
 
         VkExtent2D m_SwapChainExtents;
 
-        VkSurfaceFormatKHR m_SwapChainFormat;
+        VkFormat m_SwapChainImageFormat;
 
         /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
         UINT32 m_WindowWidth = 800;
@@ -232,6 +237,9 @@ namespace Fling
 
         /** The images inside of the swap chain */
         std::vector<VkImage> m_SwapChainImages;
+
+        /** Image views from the swap chain */
+        std::vector<VkImageView> m_SwapChainImageViews;
 
     public:
 
