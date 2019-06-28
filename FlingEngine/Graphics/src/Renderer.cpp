@@ -49,17 +49,24 @@ namespace Fling
         std::vector<VkQueueFamilyProperties> QueueFamilies( QueueFamilyCount );
         vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, QueueFamilies.data() );
         // Set the family flags we are interested in
+        int i = 0;
         for( const VkQueueFamilyProperties& Family : QueueFamilies )
         {
-            if( Family.queueCount > 0 )
+            if (Family.queueCount > 0)
             {
-                Indecies.GraphicsFamily = Family.queueFlags & VK_QUEUE_GRAPHICS_BIT;
-            }
+                Indecies.GraphicsFamily = Family.queueFlags & VK_QUEUE_GRAPHICS_BIT ? i : 0;
+                
+                VkBool32 PresentSupport = false;
+                vkGetPhysicalDeviceSurfaceSupportKHR(t_Device, i, m_Surface, &PresentSupport);
 
+                Indecies.PresentFamily = PresentSupport ? i : 0;
+            }
+                    
             if( Indecies.IsComplete() )
             {
                 break;
             }
+            i++;
         }
 
         return Indecies;
@@ -69,6 +76,7 @@ namespace Fling
 	{
 		CreateGraphicsInstance();
 		SetupDebugMessesages();
+        CreateSurface();
 		PickPhysicalDevice();
         CreateLogicalDevice();
 	}
@@ -77,8 +85,7 @@ namespace Fling
 	{
 		if( m_EnableValidationLayers && !CheckValidationLayerSupport() )
 		{
-			F_LOG_ERROR( "Validation layers are requested, but not available!" );
-			throw std::runtime_error( "Validation layers are requested, but not available!" );
+            F_LOG_FATAL( "Validation layers are requested, but not available!" );
 		}
 
 		// Basic app data that we can modify 
@@ -201,22 +208,29 @@ namespace Fling
     {
         // Queue creation
         QueueFamilyIndices Indecies = FindQueueFamilies( m_PhysicalDevice );
+  
+        std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
+        std::set<UINT32> UniqueQueueFamilies = { Indecies.GraphicsFamily, Indecies.PresentFamily };
 
-        VkDeviceQueueCreateInfo QueueCreateInfo = {};
-        QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        QueueCreateInfo.queueFamilyIndex = Indecies.GraphicsFamily;
-        QueueCreateInfo.queueCount = 1;
-
+        // Generate the CreatinInfo for each queue family 
         float Priority = 1.0f;
-        QueueCreateInfo.pQueuePriorities = &Priority;
-        
+        for (const UINT32 fam : UniqueQueueFamilies)
+        {
+            VkDeviceQueueCreateInfo QueueCreateInfo = {};
+            QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            QueueCreateInfo.queueFamilyIndex = fam;
+            QueueCreateInfo.queueCount = 1;
+            QueueCreateInfo.pQueuePriorities = &Priority;
+            QueueCreateInfos.push_back(QueueCreateInfo);
+        }
+
         VkPhysicalDeviceFeatures DevicesFeatures = {};
 
         // Device creation 
         VkDeviceCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        CreateInfo.pQueueCreateInfos = &QueueCreateInfo;
-        CreateInfo.queueCreateInfoCount = 1;
+        CreateInfo.queueCreateInfoCount = static_cast<UINT32>(QueueCreateInfos.size());
+        CreateInfo.pQueueCreateInfos = QueueCreateInfos.data();
         CreateInfo.pEnabledFeatures = &DevicesFeatures;
 
         CreateInfo.enabledExtensionCount = 0;
@@ -237,6 +251,7 @@ namespace Fling
         }
 
         vkGetDeviceQueue( m_Device, Indecies.GraphicsFamily, 0, &m_GraphicsQueue );
+        vkGetDeviceQueue(m_Device, Indecies.PresentFamily, 0, &m_PresentQueue);
     }
 
 	void Renderer::SetupDebugMessesages()
@@ -252,12 +267,19 @@ namespace Fling
 		
 		if( CreateDebugUtilsMessengerEXT( m_Instance, &createInfo, nullptr, &m_DebugMessenger ) != VK_SUCCESS )
 		{
-			F_LOG_ERROR( "Failed to set up debug messenger!" );
-			throw std::runtime_error( "Failed to set up debug messenger!" );
+            F_LOG_FATAL( "Failed to set up debug messenger!" );
 		}
 	}
 
-	std::vector<const char*> Renderer::GetRequiredExtensions()
+    void Renderer::CreateSurface()
+    {
+        if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to created the window surface!");
+        }
+    }
+
+    std::vector<const char*> Renderer::GetRequiredExtensions()
 	{
 		UINT32 glfwExtensionCount = 0;
 		const char** glfwExtensions;
@@ -323,12 +345,12 @@ namespace Fling
 
 	void Renderer::CreateGameWindow( const int t_width, const int t_height )
 	{
-		m_Width = t_width;
-		m_Height = m_Height;
+		m_WindowWidth = t_width;
+		m_WindowHeight = m_WindowHeight;
 		glfwInit();
 
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-		m_Window = glfwCreateWindow( m_Width, m_Height, "Engine Window", nullptr, nullptr );
+		m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, "Engine Window", nullptr, nullptr );
 	}
 
 	void Renderer::Shutdown()
@@ -340,6 +362,7 @@ namespace Fling
 		}
 
         vkDestroyDevice( m_Device, nullptr );
+        vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 		vkDestroyInstance( m_Instance, nullptr );
 
 		// Cleanup GLFW --------

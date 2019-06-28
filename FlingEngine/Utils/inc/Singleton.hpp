@@ -16,6 +16,11 @@ public:
 
 protected:
 
+    /**
+    * Every singleton must have a default constructor so that explicit 
+    * creation and destruction of them is maintained. Use Init and Shutdown to 
+    * handle initializing of singletons. 
+    */
 	explicit Singleton<T>() = default;
 
 };

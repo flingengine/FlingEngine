@@ -13,6 +13,7 @@ namespace Fling
     struct QueueFamilyIndices
     {
         UINT32 GraphicsFamily = 0;
+        UINT32 PresentFamily = 0;
 
         /// <summary>
         /// Determines if this 
@@ -20,7 +21,7 @@ namespace Fling
         /// <returns>True if queue family is complete</returns>
         bool IsComplete() const
         {
-            return GraphicsFamily;
+            return GraphicsFamily && PresentFamily;
         }
     };
 
@@ -48,14 +49,14 @@ namespace Fling
         /// </summary>
         /// <param name="t_Device">Device to consider</param>
         /// <returns>Score on a scale of 0 to 1000</returns>
-        static UINT16 GetDeviceRating( VkPhysicalDevice const t_Device );
+        UINT16 GetDeviceRating( VkPhysicalDevice const t_Device );
 
         /// <summary>
         /// Find what queue families are supported by a given 
         /// </summary>
         /// <param name="t_Device">Device to check</param>
         /// <returns>Queue family flags</returns>
-        static QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
+        QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
 
     private:
 
@@ -90,6 +91,12 @@ namespace Fling
         /// </summary>
         void SetupDebugMessesages();
 
+        /**
+        * Create the surface for Vulkan to use for integration with the window system
+        * this surface can have an effect on the selection of physical device
+        */
+        void CreateSurface();
+
         std::vector<const char*> GetRequiredExtensions();
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -119,19 +126,25 @@ namespace Fling
         /** Physical device for Vulkan. Destroyed in cleanup. */
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 
-        /** Logical vulkan device */
+        /** Logical Vulkan device */
         VkDevice m_Device = VK_NULL_HANDLE;
 
         /** Handle for the graphics queue */
         VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 
-        /** Debug message handler for Vulkan */
-        VkDebugUtilsMessengerEXT m_DebugMessenger;
+        /** Handle to the presentation queue */
+        VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
-        /** Width of the window that GLFW creates */
-        int m_Width = 800;
-        /** Height of the window that GLFW creates */
-        int m_Height = 600;
+        /** Debug message handler for Vulkan */
+        VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+
+        /** Handle to the surface extension used to interact with the windows system */
+        VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
+
+        /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
+        int m_WindowWidth = 800;
+        /** Height of the window that GLFW creates  @see Renderer::CreateGameWindow */
+        int m_WindowHeight = 600;
 
 #ifdef NDEBUG
         const bool m_EnableValidationLayers = false;

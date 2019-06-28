@@ -25,12 +25,12 @@ namespace Fling
 
 	void Engine::Startup()
 	{
-		Utils::Random::Init();
+		Random::Init();
 
 		Logger::instance().Init();
 		Timing::instance().Init();
+        Renderer::instance().CreateGameWindow(FLING_DEFAULT_WINDOW_WIDTH, FLING_DEFAULT_WINDOW_HEIGHT);
 		Renderer::instance().Init();
-		Renderer::instance().CreateGameWindow( FLING_DEFAULT_WINDOW_WIDTH, FLING_DEFAULT_WINDOW_HEIGHT );
 	}
 
 	void Engine::Tick()
