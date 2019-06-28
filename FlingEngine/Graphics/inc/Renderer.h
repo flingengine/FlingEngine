@@ -25,6 +25,13 @@ namespace Fling
         }
     };
 
+    struct SwapChainSupportDetails
+    {
+        VkSurfaceCapabilitiesKHR Capabilities;
+        std::vector<VkSurfaceFormatKHR> Formats;
+        std::vector<VkPresentModeKHR> PresentModes;
+    };
+
     /// <summary>
     /// Core renderer for the application
     /// </summary>
@@ -41,7 +48,7 @@ namespace Fling
         /// </summary>
         /// <param name="t_width">Width of the window</param>
         /// <param name="t_height">Height of the window</param>
-        void CreateGameWindow( const int t_width, const int t_height );
+        void CreateGameWindow( const UINT32 t_width, const UINT32 t_height );
 
         /// <summary>
         /// Get a rating of how good this device is for this application.
@@ -97,7 +104,60 @@ namespace Fling
         */
         void CreateSurface();
 
+        /**
+        * Create the swap chain and select the format, present mode, and extents
+        */
+        void CreateSwapChain();
+
+        /**
+        * Check the swap chain support of a given device
+        * @param 	The device to check support on
+        *
+        * @return   Details of the the swap chain support on this device
+        */
+        SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice t_Device);
+
+        /**
+        * Choose a swap chain format based on the available formats. Prefer to format
+        * that has VK_FORMAT_B8G8R8A8_UNORM and VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, otherwise
+        * get the first available. 
+        * 
+        * @param    Available swap chain formats
+        *
+        * @return   Best swap chain surface formate based on the available ones
+        */
+        VkSurfaceFormatKHR ChooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& t_AvailableFormats);
+
+        /**
+        * Choose a present mode for the swap chain based on the given formats. Prefer VK_PRESENT_MODE_MAILBOX_KHR
+        * If none are available, than return VK_PRESENT_MODE_FIFO_KHR or VK_PRESENT_MODE_IMMEDIATE_KHR based on support
+        * 
+        * @param    Vector of available formats
+        *
+        * @return   Preferred present mode from the available formats   	
+        */
+        VkPresentModeKHR ChooseSwapChainPresentMode(const std::vector< VkPresentModeKHR>& t_AvialableFormats);
+
+        /**
+        * Determine the best match extents based on our window width and height
+        * 
+        * @param 	t_Capabilies    The available capabilities of the swap chain on this device
+        *
+        * @return   Extents with the best matching resolution
+        */
+        VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies);
+
         std::vector<const char*> GetRequiredExtensions();
+
+        /**
+        * Check if the given device supports the extensinos that this application requires
+        * 
+        * @param t_Device       The device to check  		
+        *
+        * @return True if device supports our listed extensions
+        * @see Renderer::m_DeviceExtensions
+        */
+        bool CheckDeviceExtensionSupport(VkPhysicalDevice t_Device);
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,
@@ -141,10 +201,17 @@ namespace Fling
         /** Handle to the surface extension used to interact with the windows system */
         VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 
+        /** The swap chain of this renderer */
+        VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
+
+        VkExtent2D m_SwapChainExtents;
+
+        VkSurfaceFormatKHR m_SwapChainFormat;
+
         /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
-        int m_WindowWidth = 800;
+        UINT32 m_WindowWidth = 800;
         /** Height of the window that GLFW creates  @see Renderer::CreateGameWindow */
-        int m_WindowHeight = 600;
+        UINT32 m_WindowHeight = 600;
 
 #ifdef NDEBUG
         const bool m_EnableValidationLayers = false;
@@ -156,6 +223,15 @@ namespace Fling
         {
             "VK_LAYER_KHRONOS_validation"
         };
+
+        /** Device extension support for the swap chain */
+        const std::vector<const char*> m_DeviceExtensions = 
+        {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+
+        /** The images inside of the swap chain */
+        std::vector<VkImage> m_SwapChainImages;
 
     public:
 

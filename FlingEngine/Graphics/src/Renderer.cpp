@@ -23,6 +23,19 @@ namespace Fling
             return 0;
         }
 
+        // Ensure that this devices supports all necessary extensions
+        if (!CheckDeviceExtensionSupport(t_Device))
+        {
+            return 0;
+        }
+
+        // This device must have swap chain support
+        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(t_Device);
+        if (SwapChainSupport.Formats.empty() || SwapChainSupport.PresentModes.empty())
+        {
+            return 0;
+        }
+
         // Favor discrete GPU's
         if( DeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU )
         {
@@ -79,6 +92,7 @@ namespace Fling
         CreateSurface();
 		PickPhysicalDevice();
         CreateLogicalDevice();
+        CreateSwapChain();
 	}
 
 	void Renderer::CreateGraphicsInstance()
@@ -233,7 +247,9 @@ namespace Fling
         CreateInfo.pQueueCreateInfos = QueueCreateInfos.data();
         CreateInfo.pEnabledFeatures = &DevicesFeatures;
 
-        CreateInfo.enabledExtensionCount = 0;
+        // Set the enabled extenstions
+        CreateInfo.enabledExtensionCount = static_cast<UINT32>(m_DeviceExtensions.size());
+        CreateInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 
         if( m_EnableValidationLayers ) 
         {
@@ -279,6 +295,146 @@ namespace Fling
         }
     }
 
+    void Renderer::CreateSwapChain()
+    {
+        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
+
+        m_SwapChainFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
+        VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
+        m_SwapChainExtents = ChooseSwapExtent(SwapChainSupport.Capabilities);
+
+        // Use one more than the minimum image count so that we don't have to wait for the 
+        // driver to finish some internal things before we start sending another image
+        UINT32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
+
+        // Check that we don't exceed the max image count
+        if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
+        {
+            ImageCount = SwapChainSupport.Capabilities.maxImageCount;
+        }
+
+        VkSwapchainCreateInfoKHR CreateInfo = {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        CreateInfo.surface = m_Surface;
+        CreateInfo.minImageCount = ImageCount;
+        CreateInfo.imageFormat = m_SwapChainFormat.format;
+        CreateInfo.imageColorSpace = m_SwapChainFormat.colorSpace;
+        CreateInfo.imageExtent = m_SwapChainExtents;
+        CreateInfo.imageArrayLayers = 1;
+        CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+        // Specify the handling of multiple queue families
+        QueueFamilyIndices Indices = FindQueueFamilies(m_PhysicalDevice);
+        UINT32 queueFamilyIndices[] = { Indices.GraphicsFamily, Indices.PresentFamily };
+
+        if (Indices.GraphicsFamily != Indices.PresentFamily) 
+        {
+            CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            CreateInfo.queueFamilyIndexCount = 2;
+            CreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        }
+        else 
+        {
+            CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            CreateInfo.queueFamilyIndexCount = 0; // Optional
+            CreateInfo.pQueueFamilyIndices = nullptr; // Optional
+        }
+
+        // Transparency settings of this swap chain
+        CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
+        CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        CreateInfo.presentMode = PresentMode;
+        CreateInfo.clipped = VK_TRUE;
+        CreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+        if (vkCreateSwapchainKHR(m_Device, &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create swap chain!");
+        }
+
+        // Get handles to the swap chain images
+        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &ImageCount, nullptr);
+        m_SwapChainImages.resize(ImageCount);
+        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &ImageCount, m_SwapChainImages.data());
+    }
+
+    SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
+    {
+        SwapChainSupportDetails Details = {};
+
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(t_Device, m_Surface, &Details.Capabilities);
+
+        UINT32 FormatCount = 0;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(t_Device, m_Surface, &FormatCount, nullptr);
+        if (FormatCount != 0)
+        {
+            Details.Formats.resize(FormatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(t_Device, m_Surface, &FormatCount, Details.Formats.data());
+        }
+
+        UINT32 PresentModeCount = 0;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(t_Device, m_Surface, &PresentModeCount, nullptr);
+
+        if (PresentModeCount != 0)
+        {
+            Details.PresentModes.resize(PresentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(t_Device, m_Surface, &PresentModeCount, Details.PresentModes.data());
+        }
+
+        return Details;
+    }
+
+    VkSurfaceFormatKHR Renderer::ChooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& t_AvailableFormats)
+    {
+        for (const VkSurfaceFormatKHR& Format : t_AvailableFormats)
+        {
+            if (Format.format == VK_FORMAT_B8G8R8A8_UNORM && Format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
+                return Format;
+            }
+        }
+
+        return t_AvailableFormats[0];
+    }
+
+    VkPresentModeKHR Renderer::ChooseSwapChainPresentMode(const std::vector<VkPresentModeKHR>& t_AvialableFormats)
+    {
+        VkPresentModeKHR BestMode = VK_PRESENT_MODE_FIFO_KHR;
+
+        for (const VkPresentModeKHR& Mode : t_AvialableFormats)
+        {
+            if (Mode == VK_PRESENT_MODE_MAILBOX_KHR)
+            {
+                return Mode;
+            }
+            else if (Mode == VK_PRESENT_MODE_IMMEDIATE_KHR) 
+            {
+                BestMode = Mode;
+            }
+        }
+
+        return BestMode;
+    }
+
+    VkExtent2D Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies)
+    {
+        if (t_Capabilies.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        {
+            return t_Capabilies.currentExtent;
+        }
+        else 
+        {
+            VkExtent2D actualExtent = { m_WindowWidth, m_WindowHeight };
+
+            actualExtent.width = std::max(t_Capabilies.minImageExtent.width, 
+                std::min(t_Capabilies.maxImageExtent.width, actualExtent.width));
+            actualExtent.height = std::max(t_Capabilies.minImageExtent.height, 
+                std::min(t_Capabilies.maxImageExtent.height, actualExtent.height));
+
+            return actualExtent;
+        }
+    }
+
     std::vector<const char*> Renderer::GetRequiredExtensions()
 	{
 		UINT32 glfwExtensionCount = 0;
@@ -295,7 +451,26 @@ namespace Fling
 		return extensions;
 	}
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(
+    bool Renderer::CheckDeviceExtensionSupport(VkPhysicalDevice t_Device)
+    {
+        UINT32 ExtensionCount = 0;
+
+        // Determine how many extensions are available
+        vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionCount, nullptr);
+        std::vector<VkExtensionProperties> AvailableExtensions(ExtensionCount);
+        vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionCount, AvailableExtensions.data());
+
+        std::set<std::string> RequiredExtensions(m_DeviceExtensions.begin(), m_DeviceExtensions.end());
+
+        for (const VkExtensionProperties& Extension : AvailableExtensions)
+        {
+            RequiredExtensions.erase(Extension.extensionName);
+        }
+
+        return RequiredExtensions.empty();
+    }
+
+    VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity, 
 		VkDebugUtilsMessageTypeFlagsEXT t_messageType, 
 		const VkDebugUtilsMessengerCallbackDataEXT* t_CallbackData, 
@@ -343,7 +518,7 @@ namespace Fling
 		}
 	}
 
-	void Renderer::CreateGameWindow( const int t_width, const int t_height )
+	void Renderer::CreateGameWindow( const UINT32 t_width, const UINT32 t_height )
 	{
 		m_WindowWidth = t_width;
 		m_WindowHeight = m_WindowHeight;
@@ -355,12 +530,13 @@ namespace Fling
 
 	void Renderer::Shutdown()
 	{
-		// Cleanup vulkan ------
+		// Cleanup Vulkan ------
 		if( m_EnableValidationLayers ) 
 		{
 			DestroyDebugUtilsMessengerEXT( m_Instance, m_DebugMessenger, nullptr );
 		}
 
+        vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
         vkDestroyDevice( m_Device, nullptr );
         vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 		vkDestroyInstance( m_Instance, nullptr );
