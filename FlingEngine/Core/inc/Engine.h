@@ -2,6 +2,7 @@
 
 #include "Logger.h"
 #include "Timing.h"
+#include "ResourceManager.h"
 #include "Renderer.h"
 
 namespace Fling
@@ -29,7 +30,7 @@ namespace Fling
 		virtual void Startup();
 
 		/// <summary>
-		/// Inital tick for the engine frame
+		/// Initial tick for the engine frame
 		/// </summary>
 		virtual void Tick();
 

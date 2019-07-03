@@ -115,6 +115,11 @@ namespace Fling
         void CreateImageViews();
 
         /**
+        * Create the graphics pipeline (IA, VS, FS, etc)
+        */
+        void CreateGraphicsPipeline();
+
+        /**
         * Check the swap chain support of a given device
         * @param 	The device to check support on
         *
@@ -163,6 +168,14 @@ namespace Fling
         * @see Renderer::m_DeviceExtensions
         */
         bool CheckDeviceExtensionSupport(VkPhysicalDevice t_Device);
+
+        /**
+        * Create a shader module based on the given shader code
+        * @param 	Vector of the shader code
+        *
+        * @return   Shader module from the given code
+        */
+        VkShaderModule CreateShaderModule(const std::vector<char>& t_ShaderCode);
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,

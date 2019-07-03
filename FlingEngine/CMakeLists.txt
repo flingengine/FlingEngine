@@ -18,6 +18,7 @@ include_directories(
   Core/inc
   Graphics/inc
   Utils/inc
+  Resources/inc
 )
 
 ##################### Linking #################

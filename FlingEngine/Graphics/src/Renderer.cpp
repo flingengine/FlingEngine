@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Renderer.h"
+#include "ResourceManager.h"
 
 namespace Fling
 {
@@ -391,6 +392,36 @@ namespace Fling
         }
     }
 
+    void Renderer::CreateGraphicsPipeline()
+    {
+        // Load shaders
+        // #TODO Load each file in a directory
+        // #TODO Create a way to re-compile shaders in-engine at runtime
+        std::vector<char> VertShaderCode = ResourceManager::ReadFile("Shaders/vert.spv");
+        std::vector<char> FragShaderCode = ResourceManager::ReadFile("Shaders/frag.spv");
+
+        // Create modules
+        VkShaderModule VertModule = CreateShaderModule(VertShaderCode);
+        VkShaderModule FragModule = CreateShaderModule(FragShaderCode);
+
+        VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
+        VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        VertShaderStageInfo.module = VertModule;
+        VertShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo FragShaderStageInfo = {};
+        FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        FragShaderStageInfo.module = FragModule;
+        FragShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo, FragShaderStageInfo };
+
+        vkDestroyShaderModule(m_Device, FragModule, nullptr);
+        vkDestroyShaderModule(m_Device, VertModule, nullptr);
+    }
+
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
     {
         SwapChainSupportDetails Details = {};
@@ -501,6 +532,22 @@ namespace Fling
         }
 
         return RequiredExtensions.empty();
+    }
+
+    VkShaderModule Renderer::CreateShaderModule(const std::vector<char>& t_ShaderCode)
+    {
+        VkShaderModuleCreateInfo CreateInfo = {};
+        CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        CreateInfo.codeSize = t_ShaderCode.size();
+        CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode.data());
+
+        VkShaderModule ShaderModule;
+        if (vkCreateShaderModule(m_Device, &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create shader module!");
+        }
+
+        return ShaderModule;
     }
 
     VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(

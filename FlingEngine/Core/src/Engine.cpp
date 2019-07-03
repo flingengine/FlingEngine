@@ -9,7 +9,6 @@ namespace Fling
 
 	Engine::~Engine()
 	{
-
 	}
 
 	UINT64 Engine::Run()
@@ -27,6 +26,7 @@ namespace Fling
 	{
 		Random::Init();
 
+        ResourceManager::instance().Init();
 		Logger::instance().Init();
 		Timing::instance().Init();
         Renderer::instance().CreateGameWindow(FLING_DEFAULT_WINDOW_WIDTH, FLING_DEFAULT_WINDOW_HEIGHT);
@@ -48,6 +48,7 @@ namespace Fling
 	void Engine::Shutdown()
 	{
 		// Cleanup any resources
+        ResourceManager::instance().Shutdown();
 		Logger::instance().Shutdown();
 		Timing::instance().Shutdown();
 		Renderer::instance().Shutdown();
