@@ -11,4 +11,5 @@ include_directories( external/spdlog/include )
 
 
 # Add the engine subdir
+add_subdirectory ( "external/glfw" )
 add_subdirectory ( "FlingEngine" )
