@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+    jenkins:
+        build: . 
+        ports:
+        - '8080:8080'
+        volumes:
+        - ./jenkins_data:/usr/share/jenkins_data
