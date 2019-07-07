@@ -30,3 +30,7 @@ On Linux you can either `export` these variables or set them in your `.bashrc`
 To get started just run `Init.bat` on Windows and it will clone all external SDKs and 
 compile the ones that are necessary. If you are using Visual Studio then you project 
 files will be in the `build` folder, and you can start editing! 
+
+## Shaders
+As of right now (7/7/2019) the shaders are relative paths to the engine, make sure that you 
+copy the `FlingEngine/Shaders` folder to the directory of your executable! 
