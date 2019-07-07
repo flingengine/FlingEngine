@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 #include "Singleton.hpp"
 
+#include "Vertex.h"
+
 namespace Fling
 {
     /// <summary>
@@ -158,6 +160,8 @@ namespace Fling
         * Re-create the image views, render passes, and command buffers
         */
         void RecreateSwapChain();
+
+        void CreateVertexBuffer();
 
         /**
         * Check the swap chain support of a given device
@@ -333,6 +337,13 @@ namespace Fling
 
         GLFWwindow* Window() const { return m_Window; }
 
+    };
+
+    const std::vector<Vertex> Temp_Vertices =
+    {
+        { {0.0f, -0.5f},     {1.0f, 0.0f, 0.0f} },
+        { {0.5f, 0.5f},      {0.0f, 1.0f, 0.0f} },
+        { {-0.5f, 0.5f},     {0.0f, 0.0f, 1.0f} }
     };
 
 }	// namespace Fling

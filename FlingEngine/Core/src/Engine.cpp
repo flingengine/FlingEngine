@@ -28,8 +28,17 @@ namespace Fling
 
         ResourceManager::instance().Init();
 		Logger::instance().Init();
+        FlingConfig::instance().Init();
+        // #TODO Have a file system abstraction for different files and what not
+        FlingConfig::instance().LoadConfigFile("EngineConf.ini");
+
 		Timing::instance().Init();
-        Renderer::instance().CreateGameWindow(FLING_DEFAULT_WINDOW_WIDTH, FLING_DEFAULT_WINDOW_HEIGHT);
+
+        Renderer::instance().CreateGameWindow(
+            FlingConfig::instance().GetInt("Engine", "WindowWidth"),
+            FlingConfig::instance().GetInt("Engine", "WindowHeight")
+        );
+
 		Renderer::instance().Init();
 	}
 
@@ -73,6 +82,7 @@ namespace Fling
 		// Cleanup any resources
         ResourceManager::instance().Shutdown();
 		Logger::instance().Shutdown();
+        FlingConfig::instance().Shutdown();
 		Timing::instance().Shutdown();
 		Renderer::instance().Shutdown();
 	}

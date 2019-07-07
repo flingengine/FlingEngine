@@ -17,9 +17,10 @@ echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 echo Cloning external repos...
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-if not exist "external/glm" git clone https://github.com/g-truc/glm.git --recursive --quiet external/glm
-if not exist "external/glfw" git clone https://github.com/glfw/glfw.git --recursive --quiet external/glfw
-if not exist "external/spdlog" git clone https://github.com/gabime/spdlog.git --recursive --quiet external/spdlog
+if not exist "external/glm"		git clone https://github.com/g-truc/glm.git		--recursive --quiet external/glm
+if not exist "external/glfw"	git clone https://github.com/glfw/glfw.git		--recursive --quiet external/glfw
+if not exist "external/spdlog"	git clone https://github.com/gabime/spdlog.git	--recursive --quiet external/spdlog
+if not exist "external/inih"	git clone https://github.com/jtilly/inih.git	--recursive --quiet external/inih
 
 :: Build GLFW in release and debug
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

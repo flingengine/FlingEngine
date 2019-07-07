@@ -15,6 +15,7 @@
 #include <map>
 #include <cstring>
 #include <set>
+#include <array>
 
 #include "FlingTypes.h" 
 #include "Random.h"

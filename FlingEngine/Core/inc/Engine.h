@@ -4,6 +4,7 @@
 #include "Timing.h"
 #include "ResourceManager.h"
 #include "Renderer.h"
+#include "FlingConfig.h"
 
 namespace Fling
 {

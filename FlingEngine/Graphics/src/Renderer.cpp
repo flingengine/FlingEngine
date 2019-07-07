@@ -479,12 +479,15 @@ namespace Fling
         VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo, FragShaderStageInfo };
 
         // Vertex input ----------------------
+        VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
+        std::array<VkVertexInputAttributeDescription, 2> AttributeDescriptions = Vertex::GetAttributeDescriptions();
+
         VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
         VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        VertexInputInfo.vertexBindingDescriptionCount = 0;
-        VertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-        VertexInputInfo.vertexAttributeDescriptionCount = 0;
-        VertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+        VertexInputInfo.vertexBindingDescriptionCount = 1;
+        VertexInputInfo.pVertexBindingDescriptions = &BindingDescription; 
+        VertexInputInfo.vertexAttributeDescriptionCount = static_cast<UINT32>(AttributeDescriptions.size());;
+        VertexInputInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
 
         // Input Assembly ----------------------
         VkPipelineInputAssemblyStateCreateInfo InputAssembly = {};
