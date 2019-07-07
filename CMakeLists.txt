@@ -1,5 +1,6 @@
 cmake_minimum_required ( VERSION 3.13 )
 set( CMAKE_SUPPRESS_REGENERATION true )
+set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
 project ( "FlingEngine" )
 

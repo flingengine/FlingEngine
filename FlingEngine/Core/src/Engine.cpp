@@ -35,14 +35,37 @@ namespace Fling
 
 	void Engine::Tick()
 	{
+        const static float FallbackDeltaTime = 1.0f / 60.0f;
+        const static float MaxDeltaTime = 1.0f;
+
+        float deltaTime = FallbackDeltaTime;
+        float totalTime = 0.0f;
+
 		while( !glfwWindowShouldClose( Renderer::instance().Window() ) )
 		{
+            // Update events
 			glfwPollEvents();
-			Timing::instance().Update();
 
-			float deltaTime = Timing::instance().GetDeltaTime();
-			float totalTime = Timing::instance().GetTimef();
+            // #TODO Update any game play systems here
+
+            // Render
+            Renderer::instance().DrawFrame();
+            
+            // Update timing
+            Timing::instance().Update();
+            deltaTime = Timing::instance().GetDeltaTime();
+			totalTime = Timing::instance().GetTimef();
+
+            // #TODO If delta time is greater than 1 second, simulate it as 1/60 FPS 
+            // because we can assume that it is like that because of debugging
+            if (deltaTime >= MaxDeltaTime)
+            {
+                deltaTime = FallbackDeltaTime;
+            }
 		}
+
+        // Pre-shutdown options here
+        Renderer::instance().PrepShutdown();
 	}
 
 	void Engine::Shutdown()

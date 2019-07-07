@@ -11,6 +11,8 @@
 
 namespace Fling
 {
+    // #TODO Have all the logs actually go out to a file as well
+
 	class Logger : public Singleton<Logger>
 	{
 	public:

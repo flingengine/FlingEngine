@@ -65,6 +65,16 @@ namespace Fling
         /// <returns>Queue family flags</returns>
         QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
 
+        /**
+        * Draw the frame!
+        */
+        void DrawFrame();
+
+        /**
+        * Prepare for shutdown of the rendering pipeline, close any open semaphores
+        */
+        void PrepShutdown();
+
     private:
 
         /// <summary>
@@ -120,6 +130,36 @@ namespace Fling
         void CreateGraphicsPipeline();
 
         /**
+        * Create the frame buffer that will be used by the graphics piipeline
+        */
+        void CreateRenderPass();
+
+        /**
+        * Create the frame buffers for use by the swap chain
+        */
+        void CreateFrameBuffers();
+
+        /**
+        * Create the command pool to be sent every frame
+        */
+        void CreateCommandPool();
+
+        void CreateCommandBuffers();
+
+        /**
+        * Create semaphores and fence objects
+        */
+        void CreateSyncObjects();
+
+
+        void CleanUpSwapChain();
+
+        /**
+        * Re-create the image views, render passes, and command buffers
+        */
+        void RecreateSwapChain();
+
+        /**
         * Check the swap chain support of a given device
         * @param 	The device to check support on
         *
@@ -160,7 +200,7 @@ namespace Fling
         std::vector<const char*> GetRequiredExtensions();
 
         /**
-        * Check if the given device supports the extensinos that this application requires
+        * Check if the given device supports the extensions that this application requires
         * 
         * @param t_Device       The device to check  		
         *
@@ -195,6 +235,8 @@ namespace Fling
             VkDebugUtilsMessengerEXT debugMessenger,
             const VkAllocationCallbacks* pAllocator );
 
+        static void FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height);
+
         /** The window that the game is being drawn to */
         GLFWwindow* m_Window = nullptr;
 
@@ -226,10 +268,27 @@ namespace Fling
 
         VkFormat m_SwapChainImageFormat;
 
+        VkRenderPass m_RenderPass;
+
+        /** Pipeline layout stores uniforms (global shader vars) */
+        VkPipelineLayout m_PipelineLayout;
+
+        VkPipeline m_GraphicsPipeline;
+
+        /** @see Renderer::CreateCommandPool */
+        VkCommandPool m_CommandPool;
+
         /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
         UINT32 m_WindowWidth = 800;
         /** Height of the window that GLFW creates  @see Renderer::CreateGameWindow */
         UINT32 m_WindowHeight = 600;
+
+        size_t CurrentFrameIndex = 0;
+
+        /** Used to determine if the frame buffer has been resized or not */
+        bool m_FrameBufferResized = false;
+
+        static const int MAX_FRAMES_IN_FLIGHT;
 
 #ifdef NDEBUG
         const bool m_EnableValidationLayers = false;
@@ -253,6 +312,22 @@ namespace Fling
 
         /** Image views from the swap chain */
         std::vector<VkImageView> m_SwapChainImageViews;
+
+        /** 
+        * The frame buffers for the swap chain 
+        * @see Renderer::CreateFrameBuffers 
+        */
+        std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+
+        /**
+        * Command buffers 
+        * @see m_CommandPool
+        */
+        std::vector<VkCommandBuffer> m_CommandBuffers;
+
+        std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+        std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+        std::vector<VkFence> m_InFlightFences;
 
     public:
 

@@ -10,6 +10,8 @@
 
 namespace Fling
 {
+    // #TODO Have a "game time" and "real time" 
+    // @see 8.5.4 in Game Engine arch
 	class Timing : public Singleton<Timing>
 	{
 	public:

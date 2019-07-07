@@ -24,9 +24,13 @@ namespace Fling
         *
         * @return   A vector of char's that are the contents of the file
         */
-        static std::vector<char> ReadFile(const char* t_Filename);
+        static std::vector<char> ReadFile(const std::string& t_Filename);
         
         // #TODO Make a file level abstraction for handling
+        
+        // #TODO Assign every resource that is loaded in a GUID to ensure only 1 is loaded
+        // #TODO Allow users to specific the custom allocators that may be needed in the future
+        // @see Chap. 8 of Game Engine arch
     };
 
 }   // namespace Fling
