@@ -15,6 +15,9 @@ namespace Fling
 
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    // Config file settings
+
     bool FlingConfig::LoadConfigFile(const std::string& t_File)
     {
         m_IniReader = INIReader(t_File);
@@ -50,6 +53,24 @@ namespace Fling
     double FlingConfig::GetDouble(const std::string& t_Section, const std::string& t_Key)
     {
         return m_IniReader.GetReal(t_Section, t_Key, -1);
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Command line parsing
+
+    UINT32 FlingConfig::LoadCommandLineOpts(int argc, char* argv[])
+    {
+        UINT32 ArgsLoaded = 0;
+        
+        // Use regex to try and parse out if things are a key/val etc
+
+        for (int i = 0; i < argc; ++i)
+        {
+            // Parse out if this is a key or not
+            
+        }
+
+        return ArgsLoaded;
     }
 
 }   // namespace Fling

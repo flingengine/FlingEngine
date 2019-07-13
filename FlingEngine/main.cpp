@@ -10,7 +10,7 @@
 int main( int argc, char* argv[] )
 {
 	// #TODO: Make an ini file for the resolution and other settings
-	Fling::Engine engine = {};
+	Fling::Engine engine = { argc, argv };
 
 	try
 	{

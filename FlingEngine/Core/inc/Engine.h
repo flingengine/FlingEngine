@@ -15,6 +15,8 @@ namespace Fling
 
 		Engine();
 
+        Engine(int argc, char* argv[]);
+
 		~Engine();
 
 		/// <summary>
@@ -39,6 +41,9 @@ namespace Fling
 		/// Shutdown all engine systems and do any necessary cleanup
 		/// </summary>
 		virtual void Shutdown();
+
+        int m_CmdLineArgCount = 0;
+        char** m_CmdLineArgs = nullptr;
 
 	};
 }	// namespace Fling

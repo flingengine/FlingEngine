@@ -7,6 +7,13 @@ namespace Fling
 	{
 	}
 
+    Engine::Engine(int argc, char* argv[])
+        : Engine()
+    {
+        m_CmdLineArgCount = argc;
+        m_CmdLineArgs = argv;
+    }
+
 	Engine::~Engine()
 	{
 	}
@@ -26,20 +33,22 @@ namespace Fling
 	{
 		Random::Init();
 
-        ResourceManager::instance().Init();
-		Logger::instance().Init();
-        FlingConfig::instance().Init();
-        // #TODO Have a file system abstraction for different files and what not
-        FlingConfig::instance().LoadConfigFile("EngineConf.ini");
+        ResourceManager::Get().Init();
+		Logger::Get().Init();
 
-		Timing::instance().Init();
+        FlingConfig::Get().Init();
+        // Load command line args and any ini files
+        UINT32 ArgsLoaded = FlingConfig::Get().LoadCommandLineOpts(m_CmdLineArgCount, m_CmdLineArgs);
+        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("EngineConf.ini");
 
-        Renderer::instance().CreateGameWindow(
-            FlingConfig::instance().GetInt("Engine", "WindowWidth"),
-            FlingConfig::instance().GetInt("Engine", "WindowHeight")
+		Timing::Get().Init();
+
+        Renderer::Get().CreateGameWindow(
+            ConfigLoaded ? FlingConfig::Get().GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
+            ConfigLoaded ? FlingConfig::Get().GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
         );
 
-		Renderer::instance().Init();
+		Renderer::Get().Init();
 	}
 
 	void Engine::Tick()
@@ -50,7 +59,7 @@ namespace Fling
         float deltaTime = FallbackDeltaTime;
         float totalTime = 0.0f;
 
-		while( !glfwWindowShouldClose( Renderer::instance().Window() ) )
+		while( !glfwWindowShouldClose( Renderer::Get().Window() ) )
 		{
             // Update events
 			glfwPollEvents();
@@ -58,12 +67,12 @@ namespace Fling
             // #TODO Update any game play systems here
 
             // Render
-            Renderer::instance().DrawFrame();
+            Renderer::Get().DrawFrame();
             
             // Update timing
-            Timing::instance().Update();
-            deltaTime = Timing::instance().GetDeltaTime();
-			totalTime = Timing::instance().GetTimef();
+            Timing::Get().Update();
+            deltaTime = Timing::Get().GetDeltaTime();
+			totalTime = Timing::Get().GetTimef();
 
             // #TODO If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
@@ -74,16 +83,16 @@ namespace Fling
 		}
 
         // Pre-shutdown options here
-        Renderer::instance().PrepShutdown();
+        Renderer::Get().PrepShutdown();
 	}
 
 	void Engine::Shutdown()
 	{
 		// Cleanup any resources
-        ResourceManager::instance().Shutdown();
-		Logger::instance().Shutdown();
-        FlingConfig::instance().Shutdown();
-		Timing::instance().Shutdown();
-		Renderer::instance().Shutdown();
+        ResourceManager::Get().Shutdown();
+		Logger::Get().Shutdown();
+        FlingConfig::Get().Shutdown();
+		Timing::Get().Shutdown();
+		Renderer::Get().Shutdown();
 	}
 }

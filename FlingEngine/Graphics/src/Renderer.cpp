@@ -101,6 +101,7 @@ namespace Fling
         CreateGraphicsPipeline();
         CreateFrameBuffers();
         CreateCommandPool();
+        CreateVertexBuffer();
         CreateCommandBuffers();
         CreateSyncObjects();
 	}
@@ -784,6 +785,21 @@ namespace Fling
         CreateCommandBuffers();
     }
 
+    void Renderer::CreateVertexBuffer()
+    {
+        VkBufferCreateInfo bufferInfo = {};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
+
+        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateBuffer(m_Device, &bufferInfo, nullptr, &m_VertexBuffer) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create vertex buffer!");
+        }
+    }
+
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
     {
         SwapChainSupportDetails Details = {};
@@ -965,13 +981,24 @@ namespace Fling
 
     void Renderer::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
     {
-        Renderer::instance().m_FrameBufferResized = true;
+        Renderer::Get().m_FrameBufferResized = true;
     }
 
 	void Renderer::CreateGameWindow( const UINT32 t_width, const UINT32 t_height )
 	{
-		m_WindowWidth = t_width;
-		m_WindowHeight = m_WindowHeight;
+        // Ensure the window width is valid
+        if (t_width > 0 && t_width < 5000 && t_height > 0 && t_height < 5000)
+        {
+            m_WindowWidth = t_width;
+            m_WindowHeight = m_WindowHeight;
+        }
+        else
+        {
+            F_LOG_ERROR("Window Width of {} or height of {} is invalid! Using default values", t_width, t_height);
+            m_WindowWidth = FLING_DEFAULT_WINDOW_WIDTH;
+            m_WindowHeight = FLING_DEFAULT_WINDOW_HEIGHT;
+        }
+
 		glfwInit();
 
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
@@ -1058,6 +1085,8 @@ namespace Fling
 	{
 		// Cleanup Vulkan ------
         CleanUpSwapChain();
+
+        vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {

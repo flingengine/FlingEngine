@@ -282,6 +282,8 @@ namespace Fling
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
+        VkBuffer m_VertexBuffer;
+
         /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
         UINT32 m_WindowWidth = 800;
         /** Height of the window that GLFW creates  @see Renderer::CreateGameWindow */

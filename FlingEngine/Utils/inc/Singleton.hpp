@@ -5,7 +5,7 @@ class Singleton
 {
 public:
 
-	static T& instance();
+	static T& Get();
 
 	// Have separate virtual init and shutdown functions so that we 
 	// can control the creation order
@@ -26,7 +26,7 @@ protected:
 };
 
 template<typename T>
-T& Singleton<T>::instance()
+T& Singleton<T>::Get()
 {
 	static_assert( std::is_default_constructible<T>::value,
 		"T is required to be default constructible" );
