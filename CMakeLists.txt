@@ -15,7 +15,9 @@ include_directories( external/glfw/include )
 include_directories( external/glm )
 include_directories( external/spdlog/include )
 include_directories( external/inih )
+#include_directories( external/Catch2/include )
 
 # Add the engine subdir
 add_subdirectory ( "external/glfw" )
 add_subdirectory ( "FlingEngine" )
+add_subdirectory ( "FlingTests" )

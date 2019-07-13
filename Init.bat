@@ -21,6 +21,7 @@ if not exist "external/glm"		git clone https://github.com/g-truc/glm.git		--recu
 if not exist "external/glfw"	git clone https://github.com/glfw/glfw.git		--recursive --quiet external/glfw
 if not exist "external/spdlog"	git clone https://github.com/gabime/spdlog.git	--recursive --quiet external/spdlog
 if not exist "external/inih"	git clone https://github.com/jtilly/inih.git	--recursive --quiet external/inih
+if not exist "external/Catch2"	git clone https://github.com/catchorg/Catch2.git	--recursive --quiet external/Catch2
 
 :: Build GLFW in release and debug
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
