@@ -1,0 +1,15 @@
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = https://github.com/flingengine/spdlog.git
+[submodule "external/Catch2"]
+	path = external/Catch2
+	url = https://github.com/flingengine/Catch2.git
+[submodule "external/glm"]
+	path = external/glm
+	url = https://github.com/flingengine/glm.git
+[submodule "external/glfw"]
+	path = external/glfw
+	url = https://github.com/flingengine/glfw.git
+[submodule "external/inih"]
+	path = external/inih
+	url = https://github.com/flingengine/inih.git
