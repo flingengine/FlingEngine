@@ -6,6 +6,23 @@
 
 namespace Fling
 {
+    struct CommandLineOption
+    {
+        std::string m_CommandName;
+
+        template <class T>
+        T& as()
+        {
+            // get this data as...
+        }
+
+        bool empty() const;
+
+        bool is_defaulted() const;
+
+
+    };
+
     /**
     * Provide simple access to engine configuration options from an INI file
     * #TODO Parse command line options as well
@@ -50,6 +67,8 @@ namespace Fling
 
         const std::string& GetCmdLineString(const std::string& t_Key);
 
+        void PrintHelp() const;
+
     private:
 
         /** Ini config file reader */
@@ -57,6 +76,8 @@ namespace Fling
 
         /** A map of the passed in command line vars */
         std::unordered_map<std::string, std::string> m_CommandLineVars;
+
+
 
     };
 

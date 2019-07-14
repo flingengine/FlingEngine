@@ -68,6 +68,16 @@ namespace Fling
         QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
 
         /**
+        * Find a suitable memory type for use on the current device
+        * 
+        * @param t_Filter   Type of memory types that are suitable for this application
+        * @param t_Props    Memory properties
+        *
+        * @return The 
+        */
+        UINT32 FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props);
+
+        /**
         * Draw the frame!
         */
         void DrawFrame();
@@ -284,6 +294,8 @@ namespace Fling
 
         VkBuffer m_VertexBuffer;
 
+        VkDeviceMemory m_VertexBufferMemory;
+
         /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
         UINT32 m_WindowWidth = 800;
         /** Height of the window that GLFW creates  @see Renderer::CreateGameWindow */
@@ -343,7 +355,7 @@ namespace Fling
 
     const std::vector<Vertex> Temp_Vertices =
     {
-        { {0.0f, -0.5f},     {1.0f, 0.0f, 0.0f} },
+        { {0.0f, -0.5f},     {1.0f, 1.0f, 1.0f} },
         { {0.5f, 0.5f},      {0.0f, 1.0f, 0.0f} },
         { {-0.5f, 0.5f},     {0.0f, 0.0f, 1.0f} }
     };

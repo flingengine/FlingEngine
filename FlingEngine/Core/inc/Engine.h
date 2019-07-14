@@ -8,7 +8,7 @@
 
 namespace Fling
 {
-	class FLING_API Engine
+	class Engine
 	{
 
 	public:

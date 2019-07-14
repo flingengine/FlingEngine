@@ -2,12 +2,18 @@
 
 #include "catch2/catch.hpp"
 
-//#include "pch.h"
+#include "pch.h"
 
-TEST_CASE("Engine Config File", "[tests]")
+#include "Engine.h"
+
+TEST_CASE("Smoke test", "[core]")
 {
-    SECTION("valid Config")
+
+    SECTION("No options")
     {
+        //Fling::Engine e = {};
+
         REQUIRE(true);
     }
+    
 }

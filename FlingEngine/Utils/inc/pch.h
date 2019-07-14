@@ -3,7 +3,9 @@
 /************************************************************************/
 /* Common Headers                                                       */
 /************************************************************************/
-#define FLING_API
+
+//#define FLING_API __declspec(dllexport)
+
 #define F_ENABLE_LOGGING
 
 #include <iostream>

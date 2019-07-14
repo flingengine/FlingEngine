@@ -3,8 +3,15 @@ cmake_minimum_required ( VERSION 3.13 )
 project( "FlingTests" )
 
 ################### include folders ###########
+
+set( ENGINE_DIR ../FlingEngine/ )
+
 include_directories(
   src
+  ${ENGINE_DIR}Core/inc
+  ${ENGINE_DIR}Graphics/inc
+  ${ENGINE_DIR}Resources/inc
+  ${ENGINE_DIR}Utils/inc
 )
 
 ##################### Linking #################

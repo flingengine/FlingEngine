@@ -67,10 +67,37 @@ namespace Fling
         for (int i = 0; i < argc; ++i)
         {
             // Parse out if this is a key or not
-            
+            std::string value = argv[i];
+
         }
 
         return ArgsLoaded;
+    }
+
+    int FlingConfig::GetCmdLineInt(const std::string& t_Key)
+    {
+        return 0;
+    }
+
+    bool FlingConfig::GetCmdLineBool(const std::string& t_Key)
+    {
+        return false;
+    }
+
+    double FlingConfig::GetCmdLineDouble(const std::string& t_Key)
+    {
+        return 0.0;
+    }
+
+    float FlingConfig::GetCmdLineFloat(const std::string& t_Key)
+    {
+        return 0.0f;
+    }
+
+    const std::string& FlingConfig::GetCmdLineString(const std::string& t_Key)
+    {
+        static std::string temp = "";
+        return temp;
     }
 
 }   // namespace Fling

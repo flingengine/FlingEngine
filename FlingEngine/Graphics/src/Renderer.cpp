@@ -88,6 +88,24 @@ namespace Fling
         return Indecies;
     }
 
+    UINT32 Renderer::FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props)
+    {
+        VkPhysicalDeviceMemoryProperties MemProperties;
+        vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &MemProperties);
+        
+        for (UINT32 i = 0; i < MemProperties.memoryTypeCount; ++i)
+        {
+            // Check if this filter bit flag is set and it matches our memory properties
+            if ((t_Filter & (1 << i)) && (MemProperties.memoryTypes[i].propertyFlags & t_Props) == t_Props)
+            {
+                return i;
+            }
+        }
+
+        F_LOG_FATAL("Failed to find suitable memory type!");
+        return 0;
+    }
+
     void Renderer::InitGraphics()
 	{
 		CreateGraphicsInstance();
@@ -706,7 +724,11 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            vkCmdDraw(m_CommandBuffers[i], 3, 1, 0, 0);
+            VkBuffer VertexBuffers[] = { m_VertexBuffer };
+            VkDeviceSize offsets[] = { 0 };
+            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
+
+            vkCmdDraw(m_CommandBuffers[i], static_cast<UINT32>(Temp_Vertices.size()), 1, 0, 0);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -787,6 +809,7 @@ namespace Fling
 
     void Renderer::CreateVertexBuffer()
     {
+        // Create a vertex buffer
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.size = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
@@ -798,6 +821,33 @@ namespace Fling
         {
             F_LOG_FATAL("Failed to create vertex buffer!");
         }
+
+        // Get the memory requirements
+        VkMemoryRequirements MemRequirments = {};
+        vkGetBufferMemoryRequirements(m_Device, m_VertexBuffer, &MemRequirments);
+
+        VkMemoryAllocateInfo AllocInfo = {};
+        AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        AllocInfo.allocationSize = MemRequirments.size;
+        // Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
+        // we could use explicit flushing with vkFlushMappedMemoryRanges
+        AllocInfo.memoryTypeIndex = FindMemoryType(
+            MemRequirments.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        );
+
+        // Allocate the vertex buffer memory
+        if (vkAllocateMemory(m_Device, &AllocInfo, nullptr, &m_VertexBufferMemory) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to alocate vertex buffer memory!");
+        }
+        vkBindBufferMemory(m_Device, m_VertexBuffer, m_VertexBufferMemory, 0);
+
+        // Map the data to the vertex buffer memory and memcpy the vertex data to it
+        void* data;
+        vkMapMemory(m_Device, m_VertexBufferMemory, 0, bufferInfo.size, 0, &data);
+        memcpy(data, Temp_Vertices.data(), (size_t)bufferInfo.size);
+        vkUnmapMemory(m_Device, m_VertexBufferMemory);
     }
 
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
@@ -1087,6 +1137,7 @@ namespace Fling
         CleanUpSwapChain();
 
         vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
+        vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {
