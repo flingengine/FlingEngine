@@ -53,6 +53,7 @@ namespace Fling
 
 	void Engine::Tick()
 	{
+        // Calculate a fallback delta time in case the engine ever gets out of sync
         const static float FallbackDeltaTime = 1.0f / 60.0f;
         const static float MaxDeltaTime = 1.0f;
 
@@ -64,9 +65,10 @@ namespace Fling
             // Update events
 			glfwPollEvents();
 
-            // #TODO Update any game play systems here
+            // #TODO Provide a game play layer that we can use to put any application
+            // specific update systems in (i.e. an actual scene graph model)
 
-            // Render
+            // Renderer
             Renderer::Get().DrawFrame();
             
             // Update timing
@@ -74,7 +76,7 @@ namespace Fling
             deltaTime = Timing::Get().GetDeltaTime();
 			totalTime = Timing::Get().GetTimef();
 
-            // #TODO If delta time is greater than 1 second, simulate it as 1/60 FPS 
+            // If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
             if (deltaTime >= MaxDeltaTime)
             {

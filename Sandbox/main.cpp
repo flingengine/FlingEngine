@@ -2,11 +2,13 @@
 
 #include "Engine.h"
 
-#include <iostream>
+/**
+* Entry point for using the Fling Engine! 
+* 
+*/
 
 int main( int argc, char* argv[] )
 {
-	// #TODO: Make an ini file for the resolution and other settings
 	Fling::Engine engine = { argc, argv };
 
 	try
@@ -18,7 +20,6 @@ int main( int argc, char* argv[] )
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
-
 
 	return EXIT_SUCCESS;
 }

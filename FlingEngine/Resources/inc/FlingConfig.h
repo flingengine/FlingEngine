@@ -2,27 +2,9 @@
 
 #include "Singleton.hpp"
 #include "INIReader.h"
-#include <regex>
 
 namespace Fling
 {
-    struct CommandLineOption
-    {
-        std::string m_CommandName;
-
-        template <class T>
-        T& as()
-        {
-            // get this data as...
-        }
-
-        bool empty() const;
-
-        bool is_defaulted() const;
-
-
-    };
-
     /**
     * Provide simple access to engine configuration options from an INI file
     * #TODO Parse command line options as well
@@ -55,29 +37,20 @@ namespace Fling
 
         double GetDouble(const std::string& t_Section, const std::string& t_Key);
 
+        /**
+        * Load in the command line options and store them somewhere that is 
+        * globally accessible
+        * 
+        * @param argc   Argument count
+        * @param argv   Command line args
+        * @return Number of options loaded
+        */
         UINT32 LoadCommandLineOpts( int argc, char* argv[] );
-
-        int GetCmdLineInt(const std::string& t_Key);
-
-        bool GetCmdLineBool(const std::string& t_Key);
-
-        double GetCmdLineDouble(const std::string& t_Key);
-
-        float GetCmdLineFloat(const std::string& t_Key);
-
-        const std::string& GetCmdLineString(const std::string& t_Key);
-
-        void PrintHelp() const;
-
+        
     private:
 
         /** Ini config file reader */
         static INIReader m_IniReader;
-
-        /** A map of the passed in command line vars */
-        std::unordered_map<std::string, std::string> m_CommandLineVars;
-
-
 
     };
 

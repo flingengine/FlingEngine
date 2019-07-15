@@ -1,26 +1,23 @@
-:: Fling Engine initalize script
-:: Download any third party libs/API's and build them so that 
-:: the devs can get to work faster! 
+#!/bin/sh
 
-@echo off 
+# Fling Engine initalize script
 
 echo   =======================================================================
 echo ================= Fling Engine initalize script ============================
 echo   =======================================================================
 
-:: Create the build folders if they are not created already
-if not exist "build" mkdir build
+# Create the build folders if they are not created already
+mkdir build -p
 
-:: Clone any external libararies or other things that we are using 
+# Make sure that we have all external libraries that we need
 git submodule update --init --recursive
 
-:: Build GLFW in release and debug so that we can actually use it
-
+# Build GLFW in debuf and release mode
 cd "external/glfw"
 cmake . -A x64
 cmake --build . --target ALL_BUILD --config Release
 cmake --build . --target ALL_BUILD --config Debug
 
-:: Run cmake to generate the local x64 files in the build folder
+# Run cmake to generate the local x64 files in the build folder
 cd "../.."
 cmake . -A x64 -B build

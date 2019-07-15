@@ -5,15 +5,20 @@
 #include "FlingConfig.h"
 #include "ResourceManager.h"
 
-TEST_CASE("Engine Config File", "[tests]")
+TEST_CASE("Engine Config File", "[resource]")
 {
     SECTION("valid Config")
     {
-        //using namespace Fling;
-        //FlingConfig::Get().Init();
+        using namespace Fling;
+        ResourceManager::Get().Init();
+        Logger::Get().Init();
+        FlingConfig::Get().Init();
         
-        //REQUIRE(true);
+        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("EngineConf.ini");
+        REQUIRE(ConfigLoaded);
 
-        //FlingConfig::Get().Shutdown();
+        ResourceManager::Get().Shutdown();
+        Logger::Get().Shutdown();
+        FlingConfig::Get().Shutdown();
     }
 }

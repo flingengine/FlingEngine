@@ -1,6 +1,18 @@
 cmake_minimum_required ( VERSION 3.13 )
 
-project( "FlingTests" )
+project( "Sandbox" )
+
+# Set Build Dir
+set( CMAKE_BINARY_DIR    "/build" )
+set_property( GLOBAL PROPERTY USE_FOLDERS ON )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_Output/$<CONFIG> )
+set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
+
+# Sets the output directory
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin" )
+
+message( STATUS "Using compiler:\t " ${CMAKE_CXX_COMPILER} )
 
 ################### include folders ###########
 
@@ -20,15 +32,9 @@ set( LINK_DIRS
     $ENV{VULKAN_LIB}
 )
 
-# Prepare "Catch" library for other executables
-set( CATCH_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/../external/Catch2/single_include )
-add_library ( Catch INTERFACE )
-target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
-
 set ( LINK_LIBS
     glfw3.lib
     vulkan-1.lib
-	Catch
 	"FlingEngine"
 )
 
@@ -70,6 +76,5 @@ endif()
 link_directories( ${LINK_DIRS} )
 add_executable( ${PROJECT_NAME} ${_source_list} )
 
-
-# Link Catch2
+# Link libs
 target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )

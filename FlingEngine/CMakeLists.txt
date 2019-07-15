@@ -69,6 +69,10 @@ message ( STATUS "\tcxx Flags:" ${CMAKE_CXX_FLAGS} )
 
 link_directories( ${LINK_DIRS} )
 
-add_executable( ${PROJECT_NAME} ${_source_list} )
+add_library ( ${PROJECT_NAME} ${_source_list} )
 
-target_link_libraries( ${PROJECT_NAME} ${LINK_LIBS} )
+# Make sure the compiler can find include files for our Engine library
+target_include_directories (${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# link against the libs that the engine needs
+target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )

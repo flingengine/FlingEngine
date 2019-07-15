@@ -8,6 +8,9 @@
 
 #define F_ENABLE_LOGGING
 
+#define F_INLINE    inline
+
+
 #include <iostream>
 #include <assert.h>
 #include <functional>

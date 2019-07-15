@@ -6,7 +6,7 @@
 
 TEST_CASE("Renderer", "[Renderer]")
 {
-    SECTION("valid Config")
+    SECTION("Smoke test")
     {
         REQUIRE(true);
     }

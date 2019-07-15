@@ -9,11 +9,20 @@
 TEST_CASE("Smoke test", "[core]")
 {
 
-    SECTION("No options")
+    SECTION("No command line options")
     {
-        //Fling::Engine e = {};
+        Fling::Engine e = {};
 
         REQUIRE(true);
     }
-    
+ 
+    SECTION("Test command line flags")
+    {
+        int argc = 2;
+        char* argv[] = { "-flag", "--flag2" };
+        Fling::Engine e = { argc, argv };
+
+        REQUIRE(true);
+    }
+
 }
