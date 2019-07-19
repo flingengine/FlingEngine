@@ -1,11 +1,12 @@
 # Fling Engine
 
-This is a testing grounds for messing around with making a Vulkan game engine.
+This project is a testing grounds for messing around with making a Vulkan game engine.
 The goals of this project are as follows:
 
 * Gain some insight on different low-level engine systems implementations
 * See how a modern graphics API like Vulkan affects engine architecture
 * Explore cross platform game engine architecture (in this case with GLFW) 
+
 
 I am basing the core of the rendering pipeline off of the [Vulkan Tutorial](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers)
 

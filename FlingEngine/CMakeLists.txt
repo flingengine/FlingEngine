@@ -12,7 +12,7 @@ set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 # Sets the output directory
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin" )
 
-message( STATUS "Using compiler:\t " ${CMAKE_CXX_COMPILER} )
+
 
 ################### include folders ###########
 include_directories(
@@ -23,14 +23,20 @@ include_directories(
 )
 
 ##################### Linking #################
-set( LINK_DIRS
-    ../external/glfw/src/$<CONFIG>
-    $ENV{VULKAN_LIB}
-)
+
+### Find Vulkan
+find_package(Vulkan REQUIRED)
+
+## Ensure we have Vulkan
+if(Vulkan_FOUND)
+    message(STATUS "Vulkan found!" )
+else()
+    message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
+endif()
 
 set ( LINK_LIBS
-    glfw3.lib
-    vulkan-1.lib
+    glfw ${GLFW_LIBRARIES}
+    Vulkan::Vulkan  
 )
 
 # link pthread if we need to
@@ -39,7 +45,7 @@ if ( NOT WIN32 )
     message( STATUS "Added pthread!" )
 endif()
 
-message ( STATUS "LINK_DIRS: " ${LINK_DIRS} )
+message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
 ################# Complier Options ############
 if( MSVC )
@@ -64,10 +70,7 @@ if( MSVC )
     endforeach()
 endif()
 
-################# Add Exe and link ######################
-message ( STATUS "\tcxx Flags:" ${CMAKE_CXX_FLAGS} )
-
-link_directories( ${LINK_DIRS} )
+################# Add library and link ######################
 
 add_library ( ${PROJECT_NAME} ${_source_list} )
 

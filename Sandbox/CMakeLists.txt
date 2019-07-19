@@ -12,8 +12,6 @@ set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 # Sets the output directory
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin" )
 
-message( STATUS "Using compiler:\t " ${CMAKE_CXX_COMPILER} )
-
 ################### include folders ###########
 
 set( ENGINE_DIR ../FlingEngine/ )
@@ -27,14 +25,20 @@ include_directories(
 )
 
 ##################### Linking #################
-set( LINK_DIRS
-    ../external/glfw/src/$<CONFIG>
-    $ENV{VULKAN_LIB}
-)
+
+### Find Vulkan
+find_package(Vulkan REQUIRED)
+
+## Ensure we have Vulkan
+if(Vulkan_FOUND)
+    message(STATUS "Vulkan found!" )
+else()
+    message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
+endif()
 
 set ( LINK_LIBS
-    glfw3.lib
-    vulkan-1.lib
+    glfw ${GLFW_LIBRARIES}
+    Vulkan::Vulkan  
 	"FlingEngine"
 )
 
@@ -44,7 +48,7 @@ if ( NOT WIN32 )
     message( STATUS "Added pthread!" )
 endif()
 
-message ( STATUS "LINK_DIRS: " ${LINK_DIRS} )
+message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
 ################# Complier Options ############
 if( MSVC )
@@ -55,12 +59,12 @@ endif()
 
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
 
-
 ### Setup visual studio source groups / filters ###
 file( GLOB_RECURSE _source_list
     *.cpp* src/*.h* src/*.hpp* *.h*
 )
 
+# Make visual studio look purdy
 if( MSVC )
     foreach( _source IN ITEMS ${_source_list} )
     	get_filename_component( _source_path "${_source}" PATH )
@@ -73,7 +77,6 @@ endif()
 ################# Add Exe and link ######################
 
 # Link our normal libraries and create an executeable 
-link_directories( ${LINK_DIRS} )
 add_executable( ${PROJECT_NAME} ${_source_list} )
 
 # Link libs
