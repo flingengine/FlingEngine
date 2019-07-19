@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ResourceManager.h"
+#include <unistd.h>
 
 namespace Fling
 {
@@ -32,8 +33,24 @@ namespace Fling
                 SetCurrentDirectory(currentDir);
             }
         }
-#endif
+#else
+        {
+            char cwd[1024] = {};
+            if (getcwd(cwd, 1024) != nullptr) 
+            {
+                F_LOG_TRACE("Current working dir: {}\n", cwd);
+            }
+            else 
+            {
+                F_LOG_FATAL("getcwd() error");
+            }
 
+            if (chdir(cwd) == -1) 
+            {
+                F_LOG_FATAL("chdir() error");
+            }
+        }
+#endif
     }
 
     void ResourceManager::Shutdown()

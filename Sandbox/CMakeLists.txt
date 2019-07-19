@@ -50,7 +50,7 @@ endif()
 
 message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
-################# Complier Options ############
+################# Complier Options #################
 if( MSVC )
     set ( MY_COMPILER_FLAGS "/W3" )
 else()

@@ -32,9 +32,8 @@ namespace Fling
 	void Engine::Startup()
 	{
 		Random::Init();
-
-        ResourceManager::Get().Init();
 		Logger::Get().Init();
+        ResourceManager::Get().Init();
 
         FlingConfig::Get().Init();
         // Load command line args and any ini files
