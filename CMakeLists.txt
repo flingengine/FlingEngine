@@ -14,7 +14,6 @@ if( MSVC )
 endif()
 
 # Include external libraries
-include_directories( $ENV{VULKAN_INCLUDE} )
 add_subdirectory( external/glfw )
 include_directories( external/glfw/include )
 

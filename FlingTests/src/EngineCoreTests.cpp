@@ -18,9 +18,9 @@ TEST_CASE("Smoke test", "[core]")
  
     SECTION("Test command line flags")
     {
-        int argc = 2;
-        char* argv[] = { "-flag", "--flag2" };
-        Fling::Engine e = { argc, argv };
+        //int argc = 2;
+        //char* argv[] = { "-flag", "--flag2" };
+        //Fling::Engine e = { argc, argv };
 
         REQUIRE(true);
     }

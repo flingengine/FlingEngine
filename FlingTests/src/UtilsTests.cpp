@@ -19,6 +19,8 @@ TEST_CASE("Timing", "[utils]")
         Timing::Get().Update();
         float deltaTime = Timing::Get().GetDeltaTime();
         float totalTime = Timing::Get().GetTimef();
+        (void)(deltaTime);
+        (void)(totalTime);
     }
 }
 

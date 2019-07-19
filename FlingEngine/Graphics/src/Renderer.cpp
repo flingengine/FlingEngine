@@ -716,7 +716,7 @@ namespace Fling
             renderPassInfo.renderArea.offset = { 0, 0 };
             renderPassInfo.renderArea.extent = m_SwapChainExtents;
 
-            VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+            VkClearValue clearColor = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
             renderPassInfo.clearValueCount = 1;
             renderPassInfo.pClearValues = &clearColor;
 
@@ -1040,7 +1040,7 @@ namespace Fling
         if (t_width > 0 && t_width < 5000 && t_height > 0 && t_height < 5000)
         {
             m_WindowWidth = t_width;
-            m_WindowHeight = m_WindowHeight;
+            m_WindowHeight = t_height;
         }
         else
         {

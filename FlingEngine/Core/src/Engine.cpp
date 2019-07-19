@@ -38,7 +38,10 @@ namespace Fling
 
         FlingConfig::Get().Init();
         // Load command line args and any ini files
+        //#TODO Handle command line args
         UINT32 ArgsLoaded = FlingConfig::Get().LoadCommandLineOpts(m_CmdLineArgCount, m_CmdLineArgs);
+        (void)(ArgsLoaded);
+
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("Config/EngineConf.ini");
 
 		Timing::Get().Init();
