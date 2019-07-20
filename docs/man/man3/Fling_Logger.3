@@ -1,0 +1,60 @@
+.TH "Fling::Logger" 3 "Fri Jul 19 2019" "Version 0.00.1" "Fling Engine" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Fling::Logger
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <Logger\&.h>\fP
+.PP
+Inherits \fBFling::Singleton< Logger >\fP\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBInit\fP () override"
+.br
+.in -1c
+.SS "Static Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "static std::shared_ptr< spdlog::logger > \fBGetCurrentConsole\fP ()"
+.br
+.RI "Gets a reference to the current logging console "
+.in -1c
+.SS "Static Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "static std::shared_ptr< spdlog::logger > \fBm_Console\fP = nullptr"
+.br
+.in -1c
+.SS "Additional Inherited Members"
+.SH "Member Function Documentation"
+.PP 
+.SS "std::shared_ptr< spdlog::logger > Fling::Logger::GetCurrentConsole ()\fC [static]\fP"
+
+.PP
+Gets a reference to the current logging console 
+.PP
+\fBReturns:\fP
+.RS 4
+Shader ptr to the current console
+.RE
+.PP
+
+.SS "void Fling::Logger::Init ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Reimplemented from \fBFling::Singleton< Logger >\fP\&.
+.SH "Member Data Documentation"
+.PP 
+.SS "std::shared_ptr< spdlog::logger > Fling::Logger::m_Console = nullptr\fC [static]\fP, \fC [protected]\fP"
+Pointer to the current console that is being used for logging 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Fling Engine from the source code\&.

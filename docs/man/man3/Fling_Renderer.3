@@ -1,0 +1,609 @@
+.TH "Fling::Renderer" 3 "Fri Jul 19 2019" "Version 0.00.1" "Fling Engine" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Fling::Renderer \- Core renderer for the application  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <Renderer\&.h>\fP
+.PP
+Inherits \fBFling::Singleton< Renderer >\fP\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBInit\fP () override"
+.br
+.ti -1c
+.RI "virtual void \fBShutdown\fP () override"
+.br
+.ti -1c
+.RI "void \fBCreateGameWindow\fP (const \fBUINT32\fP t_width, const \fBUINT32\fP t_height)"
+.br
+.RI "Init GLFW and create the game window "
+.ti -1c
+.RI "\fBUINT16\fP \fBGetDeviceRating\fP (VkPhysicalDevice const t_Device)"
+.br
+.RI "Get a rating of how good this device is for this application\&. Scores range from 0 - 1000 "
+.ti -1c
+.RI "\fBQueueFamilyIndices\fP \fBFindQueueFamilies\fP (VkPhysicalDevice const t_Device)"
+.br
+.RI "Find what queue families are supported by a given "
+.ti -1c
+.RI "\fBUINT32\fP \fBFindMemoryType\fP (\fBUINT32\fP t_Filter, VkMemoryPropertyFlags t_Props)"
+.br
+.ti -1c
+.RI "void \fBDrawFrame\fP ()"
+.br
+.ti -1c
+.RI "void \fBPrepShutdown\fP ()"
+.br
+.ti -1c
+.RI "GLFWwindow * \fBWindow\fP () const"
+.br
+.in -1c
+.SS "Private Member Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBInitGraphics\fP ()"
+.br
+.RI "Init the current graphics API "
+.ti -1c
+.RI "void \fBCreateGraphicsInstance\fP ()"
+.br
+.RI "Create a vulkan instance "
+.ti -1c
+.RI "bool \fBCheckValidationLayerSupport\fP ()"
+.br
+.RI "Determine if all requested layers are available\&. "
+.ti -1c
+.RI "void \fBPickPhysicalDevice\fP ()"
+.br
+.RI "Determines what physical device to use for this Vulkan instance\&. "
+.ti -1c
+.RI "void \fBCreateLogicalDevice\fP ()"
+.br
+.RI "Create the logical vulkan device "
+.ti -1c
+.RI "void \fBSetupDebugMessesages\fP ()"
+.br
+.RI "Configure graphics API debug callbacks [Vulkan] "
+.ti -1c
+.RI "void \fBCreateSurface\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateSwapChain\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateImageViews\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateGraphicsPipeline\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateRenderPass\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateFrameBuffers\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateCommandPool\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateCommandBuffers\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateSyncObjects\fP ()"
+.br
+.ti -1c
+.RI "void \fBCleanUpSwapChain\fP ()"
+.br
+.ti -1c
+.RI "void \fBRecreateSwapChain\fP ()"
+.br
+.ti -1c
+.RI "void \fBCreateVertexBuffer\fP ()"
+.br
+.ti -1c
+.RI "\fBSwapChainSupportDetails\fP \fBQuerySwapChainSupport\fP (VkPhysicalDevice t_Device)"
+.br
+.ti -1c
+.RI "VkSurfaceFormatKHR \fBChooseSwapChainSurfaceFormat\fP (const std::vector< VkSurfaceFormatKHR > &t_AvailableFormats)"
+.br
+.ti -1c
+.RI "VkPresentModeKHR \fBChooseSwapChainPresentMode\fP (const std::vector< VkPresentModeKHR > &t_AvialableFormats)"
+.br
+.ti -1c
+.RI "VkExtent2D \fBChooseSwapExtent\fP (const VkSurfaceCapabilitiesKHR &t_Capabilies)"
+.br
+.ti -1c
+.RI "std::vector< const char * > \fBGetRequiredExtensions\fP ()"
+.br
+.ti -1c
+.RI "bool \fBCheckDeviceExtensionSupport\fP (VkPhysicalDevice t_Device)"
+.br
+.ti -1c
+.RI "VkShaderModule \fBCreateShaderModule\fP (const std::vector< char > &t_ShaderCode)"
+.br
+.ti -1c
+.RI "VkResult \fBCreateDebugUtilsMessengerEXT\fP (VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)"
+.br
+.ti -1c
+.RI "void \fBDestroyDebugUtilsMessengerEXT\fP (VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator)"
+.br
+.in -1c
+.SS "Static Private Member Functions"
+
+.in +1c
+.ti -1c
+.RI "static VKAPI_ATTR VkBool32 VKAPI_CALL \fBDebugCallback\fP (VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity, VkDebugUtilsMessageTypeFlagsEXT t_messageType, const VkDebugUtilsMessengerCallbackDataEXT *t_CallbackData, void *t_UserData)"
+.br
+.ti -1c
+.RI "static void \fBFrameBufferResizeCallback\fP (GLFWwindow *t_Window, int t_Width, int t_Height)"
+.br
+.in -1c
+.SS "Private Attributes"
+
+.in +1c
+.ti -1c
+.RI "GLFWwindow * \fBm_Window\fP = nullptr"
+.br
+.ti -1c
+.RI "VkInstance \fBm_Instance\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkPhysicalDevice \fBm_PhysicalDevice\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkDevice \fBm_Device\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkQueue \fBm_GraphicsQueue\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkQueue \fBm_PresentQueue\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkDebugUtilsMessengerEXT \fBm_DebugMessenger\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkSurfaceKHR \fBm_Surface\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkSwapchainKHR \fBm_SwapChain\fP = VK_NULL_HANDLE"
+.br
+.ti -1c
+.RI "VkExtent2D \fBm_SwapChainExtents\fP"
+.br
+.ti -1c
+.RI "VkFormat \fBm_SwapChainImageFormat\fP"
+.br
+.ti -1c
+.RI "VkRenderPass \fBm_RenderPass\fP"
+.br
+.ti -1c
+.RI "VkPipelineLayout \fBm_PipelineLayout\fP"
+.br
+.ti -1c
+.RI "VkPipeline \fBm_GraphicsPipeline\fP"
+.br
+.ti -1c
+.RI "VkCommandPool \fBm_CommandPool\fP"
+.br
+.ti -1c
+.RI "VkBuffer \fBm_VertexBuffer\fP"
+.br
+.ti -1c
+.RI "VkDeviceMemory \fBm_VertexBufferMemory\fP"
+.br
+.ti -1c
+.RI "\fBUINT32\fP \fBm_WindowWidth\fP = 800"
+.br
+.ti -1c
+.RI "\fBUINT32\fP \fBm_WindowHeight\fP = 600"
+.br
+.ti -1c
+.RI "size_t \fBCurrentFrameIndex\fP = 0"
+.br
+.ti -1c
+.RI "bool \fBm_FrameBufferResized\fP = false"
+.br
+.ti -1c
+.RI "const bool \fBm_EnableValidationLayers\fP = true"
+.br
+.ti -1c
+.RI "const std::vector< const char * > \fBm_ValidationLayers\fP"
+.br
+.ti -1c
+.RI "const std::vector< const char * > \fBm_DeviceExtensions\fP"
+.br
+.ti -1c
+.RI "std::vector< VkImage > \fBm_SwapChainImages\fP"
+.br
+.ti -1c
+.RI "std::vector< VkImageView > \fBm_SwapChainImageViews\fP"
+.br
+.ti -1c
+.RI "std::vector< VkFramebuffer > \fBm_SwapChainFramebuffers\fP"
+.br
+.ti -1c
+.RI "std::vector< VkCommandBuffer > \fBm_CommandBuffers\fP"
+.br
+.ti -1c
+.RI "std::vector< VkSemaphore > \fBm_ImageAvailableSemaphores\fP"
+.br
+.ti -1c
+.RI "std::vector< VkSemaphore > \fBm_RenderFinishedSemaphores\fP"
+.br
+.ti -1c
+.RI "std::vector< VkFence > \fBm_InFlightFences\fP"
+.br
+.in -1c
+.SS "Static Private Attributes"
+
+.in +1c
+.ti -1c
+.RI "static const int \fBMAX_FRAMES_IN_FLIGHT\fP = 2"
+.br
+.in -1c
+.SS "Additional Inherited Members"
+.SH "Detailed Description"
+.PP 
+Core renderer for the application 
+
+
+.SH "Member Function Documentation"
+.PP 
+.SS "bool Fling::Renderer::CheckDeviceExtensionSupport (VkPhysicalDevice t_Device)\fC [private]\fP"
+Check if the given device supports the extensions that this application requires
+.PP
+\fBParameters:\fP
+.RS 4
+\fIt_Device\fP The device to check
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+True if device supports our listed extensions 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBRenderer::m_DeviceExtensions\fP 
+.RE
+.PP
+
+.SS "bool Fling::Renderer::CheckValidationLayerSupport ()\fC [private]\fP"
+
+.PP
+Determine if all requested layers are available\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+Returns true if layers are found, false otherwise
+.RE
+.PP
+
+.SS "VkPresentModeKHR Fling::Renderer::ChooseSwapChainPresentMode (const std::vector< VkPresentModeKHR > & t_AvialableFormats)\fC [private]\fP"
+Choose a present mode for the swap chain based on the given formats\&. Prefer VK_PRESENT_MODE_MAILBOX_KHR If none are available, than return VK_PRESENT_MODE_FIFO_KHR or VK_PRESENT_MODE_IMMEDIATE_KHR based on support
+.PP
+\fBParameters:\fP
+.RS 4
+\fIVector\fP of available formats
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Preferred present mode from the available formats 
+.RE
+.PP
+
+.SS "VkSurfaceFormatKHR Fling::Renderer::ChooseSwapChainSurfaceFormat (const std::vector< VkSurfaceFormatKHR > & t_AvailableFormats)\fC [private]\fP"
+Choose a swap chain format based on the available formats\&. Prefer to format that has VK_FORMAT_B8G8R8A8_UNORM and VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, otherwise get the first available\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIAvailable\fP swap chain formats
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Best swap chain surface formate based on the available ones 
+.RE
+.PP
+
+.SS "VkExtent2D Fling::Renderer::ChooseSwapExtent (const VkSurfaceCapabilitiesKHR & t_Capabilies)\fC [private]\fP"
+Determine the best match extents based on our window width and height
+.PP
+\fBParameters:\fP
+.RS 4
+\fIt_Capabilies\fP The available capabilities of the swap chain on this device
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Extents with the best matching resolution 
+.RE
+.PP
+
+.SS "void Fling::Renderer::CleanUpSwapChain ()\fC [private]\fP"
+
+.SS "void Fling::Renderer::CreateCommandBuffers ()\fC [private]\fP"
+
+.SS "void Fling::Renderer::CreateCommandPool ()\fC [private]\fP"
+Create the command pool to be sent every frame 
+.SS "VkResult Fling::Renderer::CreateDebugUtilsMessengerEXT (VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT * pCreateInfo, const VkAllocationCallbacks * pAllocator, VkDebugUtilsMessengerEXT * pDebugMessenger)\fC [private]\fP"
+
+.SS "void Fling::Renderer::CreateFrameBuffers ()\fC [private]\fP"
+Create the frame buffers for use by the swap chain 
+.SS "void Fling::Renderer::CreateGameWindow (const \fBUINT32\fP t_width, const \fBUINT32\fP t_height)"
+
+.PP
+Init GLFW and create the game window 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIt_width\fP Width of the window
+.br
+\fIt_height\fP Height of the window
+.RE
+.PP
+
+.SS "void Fling::Renderer::CreateGraphicsInstance ()\fC [private]\fP"
+
+.PP
+Create a vulkan instance 
+.SS "void Fling::Renderer::CreateGraphicsPipeline ()\fC [private]\fP"
+Create the graphics pipeline (IA, VS, FS, etc) 
+.SS "void Fling::Renderer::CreateImageViews ()\fC [private]\fP"
+Create the image views from the swap chain so that we can actually render them 
+.SS "void Fling::Renderer::CreateLogicalDevice ()\fC [private]\fP"
+
+.PP
+Create the logical vulkan device 
+.SS "void Fling::Renderer::CreateRenderPass ()\fC [private]\fP"
+Create the frame buffer that will be used by the graphics piipeline 
+.SS "VkShaderModule Fling::Renderer::CreateShaderModule (const std::vector< char > & t_ShaderCode)\fC [private]\fP"
+Create a shader module based on the given shader code 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIVector\fP of the shader code
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Shader module from the given code 
+.RE
+.PP
+
+.SS "void Fling::Renderer::CreateSurface ()\fC [private]\fP"
+Create the surface for Vulkan to use for integration with the window system this surface can have an effect on the selection of physical device 
+.SS "void Fling::Renderer::CreateSwapChain ()\fC [private]\fP"
+Create the swap chain and select the format, present mode, and extents 
+.SS "void Fling::Renderer::CreateSyncObjects ()\fC [private]\fP"
+Create semaphores and fence objects 
+.SS "void Fling::Renderer::CreateVertexBuffer ()\fC [private]\fP"
+
+.SS "VKAPI_ATTR VkBool32 VKAPI_CALL Fling::Renderer::DebugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity, VkDebugUtilsMessageTypeFlagsEXT t_messageType, const VkDebugUtilsMessengerCallbackDataEXT * t_CallbackData, void * t_UserData)\fC [static]\fP, \fC [private]\fP"
+
+.SS "void Fling::Renderer::DestroyDebugUtilsMessengerEXT (VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks * pAllocator)\fC [private]\fP"
+
+.SS "void Fling::Renderer::DrawFrame ()"
+Draw the frame! 
+.SS "\fBUINT32\fP Fling::Renderer::FindMemoryType (\fBUINT32\fP t_Filter, VkMemoryPropertyFlags t_Props)"
+Find a suitable memory type for use on the current device
+.PP
+\fBParameters:\fP
+.RS 4
+\fIt_Filter\fP Type of memory types that are suitable for this application 
+.br
+\fIt_Props\fP Memory properties
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+The 
+.RE
+.PP
+
+.SS "\fBQueueFamilyIndices\fP Fling::Renderer::FindQueueFamilies (VkPhysicalDevice const t_Device)"
+
+.PP
+Find what queue families are supported by a given 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIt_Device\fP Device to check
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Queue family flags
+.RE
+.PP
+
+.SS "void Fling::Renderer::FrameBufferResizeCallback (GLFWwindow * t_Window, int t_Width, int t_Height)\fC [static]\fP, \fC [private]\fP"
+
+.SS "\fBUINT16\fP Fling::Renderer::GetDeviceRating (VkPhysicalDevice const t_Device)"
+
+.PP
+Get a rating of how good this device is for this application\&. Scores range from 0 - 1000 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIt_Device\fP Device to consider
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Score on a scale of 0 to 1000
+.RE
+.PP
+
+.SS "std::vector< const char * > Fling::Renderer::GetRequiredExtensions ()\fC [private]\fP"
+
+.SS "void Fling::Renderer::Init ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Reimplemented from \fBFling::Singleton< Renderer >\fP\&.
+.SS "void Fling::Renderer::InitGraphics ()\fC [private]\fP"
+
+.PP
+Init the current graphics API 
+.SS "void Fling::Renderer::PickPhysicalDevice ()\fC [private]\fP"
+
+.PP
+Determines what physical device to use for this Vulkan instance\&. 
+.SS "void Fling::Renderer::PrepShutdown ()"
+Prepare for shutdown of the rendering pipeline, close any open semaphores 
+.SS "\fBSwapChainSupportDetails\fP Fling::Renderer::QuerySwapChainSupport (VkPhysicalDevice t_Device)\fC [private]\fP"
+Check the swap chain support of a given device 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIThe\fP device to check support on
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Details of the the swap chain support on this device 
+.RE
+.PP
+
+.SS "void Fling::Renderer::RecreateSwapChain ()\fC [private]\fP"
+Re-create the image views, render passes, and command buffers 
+.SS "void Fling::Renderer::SetupDebugMessesages ()\fC [private]\fP"
+
+.PP
+Configure graphics API debug callbacks [Vulkan] 
+.SS "void Fling::Renderer::Shutdown ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Reimplemented from \fBFling::Singleton< Renderer >\fP\&.
+.SS "GLFWwindow* Fling::Renderer::Window () const\fC [inline]\fP"
+
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t Fling::Renderer::CurrentFrameIndex = 0\fC [private]\fP"
+
+.SS "std::vector<VkCommandBuffer> Fling::Renderer::m_CommandBuffers\fC [private]\fP"
+Command buffers 
+.PP
+\fBSee also:\fP
+.RS 4
+\fBm_CommandPool\fP 
+.RE
+.PP
+
+.SS "VkCommandPool Fling::Renderer::m_CommandPool\fC [private]\fP"
+
+.PP
+\fBSee also:\fP
+.RS 4
+\fBRenderer::CreateCommandPool\fP 
+.RE
+.PP
+
+.SS "VkDebugUtilsMessengerEXT Fling::Renderer::m_DebugMessenger = VK_NULL_HANDLE\fC [private]\fP"
+Debug message handler for Vulkan 
+.SS "VkDevice Fling::Renderer::m_Device = VK_NULL_HANDLE\fC [private]\fP"
+Logical Vulkan device 
+.SS "const std::vector<const char*> Fling::Renderer::m_DeviceExtensions\fC [private]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= 
+        {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        }
+.fi
+Device extension support for the swap chain 
+.SS "const bool Fling::Renderer::m_EnableValidationLayers = true\fC [private]\fP"
+
+.SS "bool Fling::Renderer::m_FrameBufferResized = false\fC [private]\fP"
+Used to determine if the frame buffer has been resized or not 
+.SS "VkPipeline Fling::Renderer::m_GraphicsPipeline\fC [private]\fP"
+
+.SS "VkQueue Fling::Renderer::m_GraphicsQueue = VK_NULL_HANDLE\fC [private]\fP"
+Handle for the graphics queue 
+.SS "std::vector<VkSemaphore> Fling::Renderer::m_ImageAvailableSemaphores\fC [private]\fP"
+
+.SS "std::vector<VkFence> Fling::Renderer::m_InFlightFences\fC [private]\fP"
+
+.SS "VkInstance Fling::Renderer::m_Instance = VK_NULL_HANDLE\fC [private]\fP"
+The Vulkan instance 
+.SS "VkPhysicalDevice Fling::Renderer::m_PhysicalDevice = VK_NULL_HANDLE\fC [private]\fP"
+Physical device for Vulkan\&. Destroyed in cleanup\&. 
+.SS "VkPipelineLayout Fling::Renderer::m_PipelineLayout\fC [private]\fP"
+Pipeline layout stores uniforms (global shader vars) 
+.SS "VkQueue Fling::Renderer::m_PresentQueue = VK_NULL_HANDLE\fC [private]\fP"
+Handle to the presentation queue 
+.SS "std::vector<VkSemaphore> Fling::Renderer::m_RenderFinishedSemaphores\fC [private]\fP"
+
+.SS "VkRenderPass Fling::Renderer::m_RenderPass\fC [private]\fP"
+
+.SS "VkSurfaceKHR Fling::Renderer::m_Surface = VK_NULL_HANDLE\fC [private]\fP"
+Handle to the surface extension used to interact with the windows system 
+.SS "VkSwapchainKHR Fling::Renderer::m_SwapChain = VK_NULL_HANDLE\fC [private]\fP"
+The swap chain of this renderer 
+.SS "VkExtent2D Fling::Renderer::m_SwapChainExtents\fC [private]\fP"
+
+.SS "std::vector<VkFramebuffer> Fling::Renderer::m_SwapChainFramebuffers\fC [private]\fP"
+The frame buffers for the swap chain 
+.PP
+\fBSee also:\fP
+.RS 4
+\fBRenderer::CreateFrameBuffers\fP 
+.RE
+.PP
+
+.SS "VkFormat Fling::Renderer::m_SwapChainImageFormat\fC [private]\fP"
+
+.SS "std::vector<VkImage> Fling::Renderer::m_SwapChainImages\fC [private]\fP"
+The images inside of the swap chain 
+.SS "std::vector<VkImageView> Fling::Renderer::m_SwapChainImageViews\fC [private]\fP"
+Image views from the swap chain 
+.SS "const std::vector<const char*> Fling::Renderer::m_ValidationLayers\fC [private]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+=
+        {
+            "VK_LAYER_KHRONOS_validation"
+        }
+.fi
+.SS "VkBuffer Fling::Renderer::m_VertexBuffer\fC [private]\fP"
+
+.SS "VkDeviceMemory Fling::Renderer::m_VertexBufferMemory\fC [private]\fP"
+
+.SS "GLFWwindow* Fling::Renderer::m_Window = nullptr\fC [private]\fP"
+The window that the game is being drawn to 
+.SS "\fBUINT32\fP Fling::Renderer::m_WindowHeight = 600\fC [private]\fP"
+Height of the window that GLFW creates 
+.PP
+\fBSee also:\fP
+.RS 4
+\fBRenderer::CreateGameWindow\fP 
+.RE
+.PP
+
+.SS "\fBUINT32\fP Fling::Renderer::m_WindowWidth = 800\fC [private]\fP"
+Width of the window that GLFW creates\&. 
+.PP
+\fBSee also:\fP
+.RS 4
+\fBRenderer::CreateGameWindow\fP 
+.RE
+.PP
+
+.SS "const int Fling::Renderer::MAX_FRAMES_IN_FLIGHT = 2\fC [static]\fP, \fC [private]\fP"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Fling Engine from the source code\&.

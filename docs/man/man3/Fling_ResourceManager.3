@@ -1,0 +1,61 @@
+.TH "Fling::ResourceManager" 3 "Fri Jul 19 2019" "Version 0.00.1" "Fling Engine" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Fling::ResourceManager
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <ResourceManager\&.h>\fP
+.PP
+Inherits \fBFling::Singleton< ResourceManager >\fP\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBInit\fP () override"
+.br
+.ti -1c
+.RI "virtual void \fBShutdown\fP () override"
+.br
+.in -1c
+.SS "Static Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "static std::vector< char > \fBReadFile\fP (const std::string &t_Filename)"
+.br
+.in -1c
+.SS "Additional Inherited Members"
+.SH "Detailed Description"
+.PP 
+The resource manager handles loading in of any file resources from disk\&. 
+.SH "Member Function Documentation"
+.PP 
+.SS "void Fling::ResourceManager::Init ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Reimplemented from \fBFling::Singleton< ResourceManager >\fP\&.
+.SS "std::vector< char > Fling::ResourceManager::ReadFile (const std::string & t_Filename)\fC [static]\fP"
+Read in the given file name and place it's contents into a vector of char's
+.PP
+\fBParameters:\fP
+.RS 4
+\fIName\fP of the file to read in
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+A vector of char's that are the contents of the file 
+.RE
+.PP
+
+.SS "void Fling::ResourceManager::Shutdown ()\fC [override]\fP, \fC [virtual]\fP"
+
+.PP
+Reimplemented from \fBFling::Singleton< ResourceManager >\fP\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Fling Engine from the source code\&.

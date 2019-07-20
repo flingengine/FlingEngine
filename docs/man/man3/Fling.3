@@ -1,0 +1,75 @@
+.TH "Fling" 3 "Fri Jul 19 2019" "Version 0.00.1" "Fling Engine" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Fling
+.SH SYNOPSIS
+.br
+.PP
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "class \fBEngine\fP"
+.br
+.ti -1c
+.RI "class \fBFlingConfig\fP"
+.br
+.ti -1c
+.RI "class \fBLogger\fP"
+.br
+.ti -1c
+.RI "struct \fBQueueFamilyIndices\fP"
+.br
+.RI "Used to keep track of what properties a given queue satisfies "
+.ti -1c
+.RI "class \fBRandom\fP"
+.br
+.ti -1c
+.RI "class \fBRenderer\fP"
+.br
+.RI "Core renderer for the application "
+.ti -1c
+.RI "class \fBResourceManager\fP"
+.br
+.ti -1c
+.RI "class \fBSingleton\fP"
+.br
+.ti -1c
+.RI "struct \fBSwapChainSupportDetails\fP"
+.br
+.ti -1c
+.RI "class \fBTiming\fP"
+.br
+.ti -1c
+.RI "struct \fBVertex\fP"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "const std::vector< \fBVertex\fP > \fBTemp_Vertices\fP"
+.br
+.ti -1c
+.RI "std::chrono::high_resolution_clock::time_point \fBsStartTime\fP"
+.br
+.in -1c
+.SH "Variable Documentation"
+.PP 
+.SS "std::chrono::high_resolution_clock::time_point Fling::sStartTime"
+
+.SS "const std::vector<\fBVertex\fP> Fling::Temp_Vertices"
+\fBInitial value:\fP
+.PP
+.nf
+=
+    {
+        { {0\&.0f, -0\&.5f},     {1\&.0f, 1\&.0f, 1\&.0f} },
+        { {0\&.5f, 0\&.5f},      {0\&.0f, 1\&.0f, 0\&.0f} },
+        { {-0\&.5f, 0\&.5f},     {0\&.0f, 0\&.0f, 1\&.0f} }
+    }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Fling Engine from the source code\&.
