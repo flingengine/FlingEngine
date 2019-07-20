@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "ResourceManager.h"
+// #TODO Create a platform abstraction
+#ifndef _WIN32
 #include <unistd.h>
-
+#endif
 namespace Fling
 {
     void ResourceManager::Init()
