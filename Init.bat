@@ -16,11 +16,11 @@ git submodule update --init --recursive
 
 :: Build GLFW in release and debug so that we can actually use it
 
-cd "external/glfw"
-cmake . -A x64
-cmake --build . --target ALL_BUILD --config Release
-cmake --build . --target ALL_BUILD --config Debug
+::cd "external/glfw"
+::cmake . -A x64
+::cmake --build . --target ALL_BUILD --config Release
+::cmake --build . --target ALL_BUILD --config Debug
 
 :: Run cmake to generate the local x64 files in the build folder
-cd "../.."
+::cd "../.."
 cmake . -A x64 -B build
