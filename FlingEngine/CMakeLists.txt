@@ -2,26 +2,8 @@ cmake_minimum_required ( VERSION 3.13 )
 
 project( "FlingEngine" )
 
-# Set Build Dir
-set( CMAKE_BINARY_DIR    "/build" )
-set_property( GLOBAL PROPERTY USE_FOLDERS ON )
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_Output/$<CONFIG> )
-set( CMAKE_CXX_STANDARD 17 )
-set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
-
-# Sets the output directory
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin" )
-
-
-
-################### include folders ###########
-include_directories(
-  Core/inc
-  Graphics/inc
-  Utils/inc
-  Resources/inc
-  Platform/inc
-)
+# Include the Fling Engine source files that we may need
+FLING_ENGINE_INC("")
 
 ##################### Linking #################
 

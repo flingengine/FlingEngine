@@ -12,23 +12,14 @@ TEST_CASE("Timing", "[utils]")
     SECTION("valid Config")
     {
         using namespace Fling;
-        REQUIRE(true);
         Timing::Get().Init();
 
-        // Update timing
         Timing::Get().Update();
         float deltaTime = Timing::Get().GetDeltaTime();
         float totalTime = Timing::Get().GetTimef();
-        (void)(deltaTime);
-        (void)(totalTime);
-    }
-}
 
-TEST_CASE("Logger", "[utils]")
-{
-    SECTION("valid Config")
-    {
-        REQUIRE(true);
+		REQUIRE(totalTime >= 0.0f);
+		REQUIRE(deltaTime >= 0.0f);
     }
 }
 
@@ -39,4 +30,19 @@ TEST_CASE("Random", "[utils]")
     Fling::Random::Init();
 
     REQUIRE(Fling::Random::bIsInitalized);
+}
+
+TEST_CASE("Logger", "[utils]")
+{
+	SECTION("Logger Creation")
+	{
+		using namespace Fling;
+
+		//Logger::Get().Init();
+
+		// Require the current console to exist
+		REQUIRE(Logger::GetCurrentConsole() != nullptr);
+
+		//Logger::Get().Shutdown();
+	}
 }

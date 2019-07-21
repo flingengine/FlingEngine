@@ -4,9 +4,11 @@ set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
 project ( "FlingEngine" )
 
-# Print out what compilers are being used
-message( STATUS "Using C   compiler:\t " ${CMAKE_C_COMPILER} )
-message( STATUS "Using CXX compiler:\t " ${CMAKE_CXX_COMPILER} )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
+include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
+
+message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 
 # Take care of warnings about strcpy
 if( MSVC )

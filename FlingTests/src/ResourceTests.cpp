@@ -14,7 +14,7 @@ TEST_CASE("Engine Config File", "[resource]")
         Logger::Get().Init();
         FlingConfig::Get().Init();
         
-        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("EngineConf.ini");
+        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("Config/EngineConf.ini");
         REQUIRE(ConfigLoaded);
 
         ResourceManager::Get().Shutdown();
