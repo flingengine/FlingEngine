@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
+#include "FlingConfig.h"
 
 namespace Fling
 {
@@ -108,6 +109,8 @@ namespace Fling
 
     void Renderer::InitGraphics()
 	{
+		ReadConfig();
+
 		CreateGraphicsInstance();
 		SetupDebugMessesages();
         CreateSurface();
@@ -119,9 +122,18 @@ namespace Fling
         CreateGraphicsPipeline();
         CreateFrameBuffers();
         CreateCommandPool();
-        CreateVertexBuffer();
+        
+		CreateVertexBuffer();
+		CreateIndexBuffer();
+
         CreateCommandBuffers();
         CreateSyncObjects();
+	}
+
+	void Renderer::ReadConfig()
+	{
+		m_EnableValidationLayers = FlingConfig::Get().GetBool("Vulkan", "EnableValidationLayers");
+		F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", m_EnableValidationLayers);
 	}
 
 	void Renderer::CreateGraphicsInstance()
@@ -727,8 +739,10 @@ namespace Fling
             VkBuffer VertexBuffers[] = { m_VertexBuffer };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-            vkCmdDraw(m_CommandBuffers[i], static_cast<UINT32>(Temp_Vertices.size()), 1, 0, 0);
+            //vkCmdDraw(m_CommandBuffers[i], static_cast<UINT32>(Temp_Vertices.size()), 1, 0, 0);
+			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(Temp_indices.size()), 1, 0, 0, 0);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -809,46 +823,135 @@ namespace Fling
 
     void Renderer::CreateVertexBuffer()
     {
-        // Create a vertex buffer
-        VkBufferCreateInfo bufferInfo = {};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
+		VkDeviceSize bufferSize = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
+		
+		VkBuffer StagingBuffer;
+		VkDeviceMemory StagingBufferMemory;
 
-        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		CreateBuffer(bufferSize, 
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			StagingBuffer,
+			StagingBufferMemory);
+        
+		// Map the data to the vertex buffer memory and memcpy the vertex data to it
+        void* Data;
+        vkMapMemory(m_Device, StagingBufferMemory, 0, bufferSize, 0, &Data);
+        memcpy(Data, Temp_Vertices.data(), (size_t)bufferSize);
+        vkUnmapMemory(m_Device, StagingBufferMemory);
 
-        if (vkCreateBuffer(m_Device, &bufferInfo, nullptr, &m_VertexBuffer) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to create vertex buffer!");
-        }
+		CreateBuffer(bufferSize,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			m_VertexBuffer,
+			m_VertexBufferMemory);
 
-        // Get the memory requirements
-        VkMemoryRequirements MemRequirments = {};
-        vkGetBufferMemoryRequirements(m_Device, m_VertexBuffer, &MemRequirments);
+		// Copy the vertex buffer to the GPU memory
+		CopyBuffer(StagingBuffer, m_VertexBuffer, bufferSize);
 
-        VkMemoryAllocateInfo AllocInfo = {};
-        AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        AllocInfo.allocationSize = MemRequirments.size;
-        // Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
-        // we could use explicit flushing with vkFlushMappedMemoryRanges
-        AllocInfo.memoryTypeIndex = FindMemoryType(
-            MemRequirments.memoryTypeBits,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-        );
-
-        // Allocate the vertex buffer memory
-        if (vkAllocateMemory(m_Device, &AllocInfo, nullptr, &m_VertexBufferMemory) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to alocate vertex buffer memory!");
-        }
-        vkBindBufferMemory(m_Device, m_VertexBuffer, m_VertexBufferMemory, 0);
-
-        // Map the data to the vertex buffer memory and memcpy the vertex data to it
-        void* data;
-        vkMapMemory(m_Device, m_VertexBufferMemory, 0, bufferInfo.size, 0, &data);
-        memcpy(data, Temp_Vertices.data(), (size_t)bufferInfo.size);
-        vkUnmapMemory(m_Device, m_VertexBufferMemory);
+		// Cleanup the staging buffer
+		vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+		vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
     }
+
+	void Renderer::CreateIndexBuffer()
+	{
+		VkDeviceSize bufferSize = sizeof(Temp_indices[0]) * Temp_indices.size();
+		// Create staging buffer
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+		// Map to the stage buffer
+		void* data;
+		vkMapMemory(m_Device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, Temp_indices.data(), (size_t)bufferSize);
+		vkUnmapMemory(m_Device, stagingBufferMemory);
+
+		// Create the index buffer
+		CreateBuffer(bufferSize, 
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+			m_IndexBuffer, 
+			m_IndexBufferMemory);
+
+		// Copy the staging buffer to the index buffer
+		CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
+
+		vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
+		vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
+	}
+
+	void Renderer::CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer & t_Buffer, VkDeviceMemory & t_BuffMemory)
+	{
+		// Create a buffer
+		VkBufferCreateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = t_Size;
+		bufferInfo.usage = t_Usage;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		if (vkCreateBuffer(m_Device, &bufferInfo, nullptr, &t_Buffer) != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to create buffer!");
+		}
+
+		// Get the memory requirements
+		VkMemoryRequirements MemRequirments = {};
+		vkGetBufferMemoryRequirements(m_Device, t_Buffer, &MemRequirments);
+
+		VkMemoryAllocateInfo AllocInfo = {};
+		AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		AllocInfo.allocationSize = MemRequirments.size;
+		// Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
+		// we could use explicit flushing with vkFlushMappedMemoryRanges
+		AllocInfo.memoryTypeIndex = FindMemoryType(MemRequirments.memoryTypeBits, t_Properties);
+
+		// Allocate the vertex buffer memory
+		// #TODO Don't call vkAllocateMemory every time, we should use a custom allocator or
+		// VulkanMemoryAllocator library
+		if (vkAllocateMemory(m_Device, &AllocInfo, nullptr, &t_BuffMemory) != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to alocate buffer memory!");
+		}
+		vkBindBufferMemory(m_Device, t_Buffer, t_BuffMemory, 0);
+	}
+
+	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
+	{
+		VkCommandBufferAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = m_CommandPool;
+		allocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		vkAllocateCommandBuffers(m_Device, &allocInfo, &commandBuffer);
+
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+		VkBufferCopy copyRegion = {};
+		copyRegion.srcOffset = 0; // Optional
+		copyRegion.dstOffset = 0; // Optional
+		copyRegion.size = t_Size;
+		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
+
+		vkEndCommandBuffer(commandBuffer);
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+
+		vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		vkQueueWaitIdle(m_GraphicsQueue);
+
+		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &commandBuffer);
+	}
 
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
     {
@@ -1135,6 +1238,9 @@ namespace Fling
 	{
 		// Cleanup Vulkan ------
         CleanUpSwapChain();
+
+		vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
+		vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
 
         vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
         vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);

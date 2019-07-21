@@ -94,6 +94,11 @@ namespace Fling
         /// </summary>
         void InitGraphics();
 
+		/**
+		 * Read any vars that may have been set in the engine config
+		 */
+		void ReadConfig();
+
         /// <summary>
         /// Create a vulkan instance
         /// </summary>
@@ -171,7 +176,23 @@ namespace Fling
         */
         void RecreateSwapChain();
 
+		/**
+		* Create a vertex buffer using Temp_Vertices
+		*/
         void CreateVertexBuffer();
+
+		/**
+		* Create an index buffer using Temp_Indecies
+		*/
+		void CreateIndexBuffer();
+
+		void CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory);
+		
+		/**
+		* Copy source buffer to the destination buffer given it's size.
+		* Creates a one-off commandBuffer to do this
+		*/
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
         /**
         * Check the swap chain support of a given device
@@ -292,9 +313,13 @@ namespace Fling
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
+		/** Vertex buffer */
         VkBuffer m_VertexBuffer;
-
         VkDeviceMemory m_VertexBufferMemory;
+
+		/** Index buffer */
+		VkBuffer m_IndexBuffer;
+		VkDeviceMemory m_IndexBufferMemory;
 
         /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
         UINT32 m_WindowWidth = 800;
@@ -309,9 +334,9 @@ namespace Fling
         static const int MAX_FRAMES_IN_FLIGHT;
 
 #ifdef NDEBUG
-        const bool m_EnableValidationLayers = false;
+        bool m_EnableValidationLayers = false;
 #else
-        const bool m_EnableValidationLayers = true;
+        bool m_EnableValidationLayers = true;
 #endif
 
         const std::vector<const char*> m_ValidationLayers =
@@ -353,11 +378,17 @@ namespace Fling
 
     };
 
-    const std::vector<Vertex> Temp_Vertices =
-    {
-        { {0.0f, -0.5f},     {1.0f, 1.0f, 1.0f} },
-        { {0.5f, 0.5f},      {0.0f, 1.0f, 0.0f} },
-        { {-0.5f, 0.5f},     {0.0f, 0.0f, 1.0f} }
-    };
+	const std::vector<UINT16> Temp_indices = 
+	{
+		0, 1, 2, 2, 3, 0
+	};
+
+	const std::vector<Vertex> Temp_Vertices = 
+	{
+		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+	};
 
 }	// namespace Fling

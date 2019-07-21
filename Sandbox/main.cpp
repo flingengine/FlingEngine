@@ -4,7 +4,6 @@
 
 /**
 * Entry point for using the Fling Engine! 
-* 
 */
 
 int main( int argc, char* argv[] )

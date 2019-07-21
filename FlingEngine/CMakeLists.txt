@@ -20,6 +20,7 @@ include_directories(
   Graphics/inc
   Utils/inc
   Resources/inc
+  Platform/inc
 )
 
 ##################### Linking #################

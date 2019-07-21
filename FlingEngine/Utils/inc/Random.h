@@ -5,7 +5,7 @@
 
 namespace Fling
 {
-	class Random
+	class FLING_API Random
 	{
 	public:
 

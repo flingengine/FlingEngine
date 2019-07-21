@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Platform.h"
 #include "Logger.h"
 #include "Timing.h"
 #include "ResourceManager.h"
@@ -8,7 +9,7 @@
 
 namespace Fling
 {
-	class Engine
+	class FLING_API Engine
 	{
 
 	public:

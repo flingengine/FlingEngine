@@ -1,15 +1,12 @@
 #include "pch.h"
 #include "ResourceManager.h"
-// #TODO Create a platform abstraction
-#ifndef _WIN32
-#include <unistd.h>
-#endif
+
 namespace Fling
 {
     void ResourceManager::Init()
     {
         // Thank god for Chris
-#ifdef _WIN32
+#ifdef FLING_WINDOWS
         // Ensure "Current Directory" (relative path) is always the .exe's folder
         // - Without this, the relative path is different when running through VS
         //    and when running the .exe directly, which makes it a pain to load files
@@ -35,7 +32,7 @@ namespace Fling
                 SetCurrentDirectory(currentDir);
             }
         }
-#else
+#elif FLING_LINUX
         {
             char cwd[1024] = {};
             if (getcwd(cwd, 1024) != nullptr) 
@@ -49,7 +46,7 @@ namespace Fling
 
             if (chdir(cwd) == -1) 
             {
-                F_LOG_FATAL("chdir() error");
+                F_LOG_FATAL("chdir() error : {}", cwd);
             }
         }
 #endif

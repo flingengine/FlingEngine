@@ -22,6 +22,7 @@ include_directories(
   ${ENGINE_DIR}Graphics/inc
   ${ENGINE_DIR}Resources/inc
   ${ENGINE_DIR}Utils/inc
+  ${ENGINE_DIR}Platform/inc
 )
 
 ##################### Linking #################

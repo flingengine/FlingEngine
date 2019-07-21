@@ -1,16 +1,8 @@
 #pragma once
 
 /************************************************************************/
-/* Common Headers                                                       */
+/* STD library Functionality                                            */
 /************************************************************************/
-
-//#define FLING_API __declspec(dllexport)
-
-#define F_ENABLE_LOGGING
-
-#define F_INLINE    inline
-
-
 #include <iostream>
 #include <assert.h>
 #include <functional>
@@ -22,6 +14,17 @@
 #include <set>
 #include <array>
 
+/************************************************************************/
+/* Fling Engine Functionality                                           */
+/************************************************************************/
+
+// Enable Fling Logging (even applies in release)
+#define F_ENABLE_LOGGING
+
+// If defined then Fling will export functions to the DLL/Shared lib
+#define FLING_EXPORT
+
+#include "Platform.h"
 #include "FlingTypes.h" 
 #include "Random.h"
 #include "Logger.h"
@@ -35,6 +38,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+
+
 
 #define FLING_DEFAULT_WINDOW_WIDTH		800
 #define FLING_DEFAULT_WINDOW_HEIGHT		600
