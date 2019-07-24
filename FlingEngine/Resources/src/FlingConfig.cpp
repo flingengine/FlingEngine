@@ -27,6 +27,10 @@ namespace Fling
             F_LOG_ERROR("Cannot load config file: {} " , t_File);
             return false;
         }
+        else
+        {
+            F_LOG_TRACE("Loaded config file {}", t_File);
+        }
         return true;
     }
 

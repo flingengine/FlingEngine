@@ -336,7 +336,7 @@ namespace Fling
 #ifdef NDEBUG
         bool m_EnableValidationLayers = false;
 #else
-        bool m_EnableValidationLayers = true;
+        bool m_EnableValidationLayers = false;
 #endif
 
         const std::vector<const char*> m_ValidationLayers =

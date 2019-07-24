@@ -6,7 +6,7 @@ namespace Fling
     void ResourceManager::Init()
     {
         // Thank god for Chris
-#ifdef FLING_WINDOWS
+#if defined(FLING_WINDOWS)
         // Ensure "Current Directory" (relative path) is always the .exe's folder
         // - Without this, the relative path is different when running through VS
         //    and when running the .exe directly, which makes it a pain to load files
@@ -32,7 +32,7 @@ namespace Fling
                 SetCurrentDirectory(currentDir);
             }
         }
-#elif FLING_LINUX
+#elif defined(FLING_LINUX)
         {
             char cwd[1024] = {};
             if (getcwd(cwd, 1024) != nullptr) 
@@ -46,7 +46,7 @@ namespace Fling
 
             if (chdir(cwd) == -1) 
             {
-                F_LOG_FATAL("chdir() error : {}", cwd);
+                F_LOG_FATAL("chdir() error :");
             }
         }
 #endif
