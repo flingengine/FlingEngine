@@ -10,10 +10,12 @@ TEST_CASE("Engine Config File", "[resource]")
     SECTION("valid Config")
     {
         using namespace Fling;
-        ResourceManager::Get().Init();
+        // Logger HAS to be initalized first
         Logger::Get().Init();
+        ResourceManager::Get().Init();
         FlingConfig::Get().Init();
         
+        // Load a test config
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("Config/EngineConf.ini");
         REQUIRE(ConfigLoaded);
 
