@@ -19,17 +19,20 @@ addons:
       - g++-7
       - clang-7
 
+# Handle submodules yourself
 git:
-  submodules: true
+  submodules: false
 
+before_install:
+  - git submodule update --init --recursive
 
 install:
   - if [[ "$CXX" == "g++" ]];     then export CC="gcc-7"      ;fi
   - if [[ "$CXX" == "g++" ]];     then export CXX="g++-7"     ;fi
-  
+
 # Universal Setup
 before_script:
   - mkdir build
-  - cmake . -B build
   - cd build
+  - cmake ..
   - cmake --build . 
