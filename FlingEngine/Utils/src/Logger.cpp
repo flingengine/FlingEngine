@@ -9,7 +9,7 @@ namespace Fling
 
 	void Logger::Init()
 	{
-		// Create the logs direcotry if needed
+		// Create the logs directory if needed
 		if(!FlingPaths::DirExists( FlingPaths::EngineLogDir().c_str() ))
 		{
 			FlingPaths::MakeDir( FlingPaths::EngineLogDir().c_str() );

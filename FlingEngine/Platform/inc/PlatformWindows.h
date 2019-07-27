@@ -3,6 +3,7 @@
 #if defined FLING_WINDOWS
 
 #include <Windows.h>
+#include <direct.h>
 
 #	define INLINE			inline
 #	define FORCEINLINE		__forceinline

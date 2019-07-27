@@ -38,15 +38,6 @@ namespace Fling
         Res = mkdir(t_Dir, 0755);
 #endif
 
-        if(Res == 0)
-        {
-            F_LOG_TRACE("Successfully created directory {}", t_Dir);
-        }
-        else
-        {
-            F_LOG_ERROR("Problem creating directory {} Error code: {}", t_Dir, Res);
-        }
-
         return Res;
     }
 
@@ -57,9 +48,9 @@ namespace Fling
         int statRC = stat( t_Dir, &info );
         if( statRC != 0 )
         {
-            if (errno == ENOENT)  { return 0; } // something along the path does not exist
-            if (errno == ENOTDIR) { return 0; } // something in path prefix is not a dir
-            return -1;
+            if (errno == ENOENT)  { return false; } // something along the path does not exist
+            if (errno == ENOTDIR) { return false; } // something in path prefix is not a dir
+            return false;
         }
 
         return ( info.st_mode & S_IFDIR ) ? 1 : 0;        

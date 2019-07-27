@@ -1155,7 +1155,12 @@ namespace Fling
 		glfwInit();
 
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-		m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, "Engine Window", nullptr, nullptr );
+		
+		// Get the window title
+		std::string Title = FlingConfig::Get().GetString("Engine", "WindowTitle");
+		Title += " // " + Version::ToString();
+
+		m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
         glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
 	}
 
