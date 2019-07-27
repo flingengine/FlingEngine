@@ -2,13 +2,10 @@ language: cpp
 
 os:
   - linux
-  - windows
 
 compiler:
   - gcc
   - clang
-  - msvc
-
 
 addons:
   apt:
@@ -22,26 +19,14 @@ addons:
       - g++-7
       - clang-7
 
-matrix:
-  exclude:
-  - os: linux 
-    compiler: msvc
-  - os: windows
-    compiler: clang
-  - os: windows
-    compiler: gcc
-
-
 git:
-    submodules: true
+  submodules: true
 
 
 install:
   - if [[ "$CXX" == "g++" ]];     then export CC="gcc-7"      ;fi
   - if [[ "$CXX" == "g++" ]];     then export CXX="g++-7"     ;fi
-  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CC="clang-7"    ;fi
-  - if [[ "$CXX" == "clang++" && "${TRAVIS_OS_NAME}" != "osx" ]]; then export CXX="clang++-7" ;fi
-
+  
 # Universal Setup
 before_script:
   - mkdir build
