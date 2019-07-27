@@ -9,9 +9,20 @@ namespace Fling
 
 	void Logger::Init()
 	{
+		// Create the logs direcotry if needed
+		if(!FlingPaths::DirExists( FlingPaths::EngineLogDir().c_str() ))
+		{
+			FlingPaths::MakeDir( FlingPaths::EngineLogDir().c_str() );
+		}
+
 		// Create the SPD log console 
 		m_Console = spdlog::stdout_color_mt( "LOG" );
-		m_FileLog = spdlog::create_async<spdlog::sinks::basic_file_sink_mt>("async_file_logger", "fling_log.txt");
+		
+		// Create an async file logger for errors/warnings
+		m_FileLog = spdlog::create_async<spdlog::sinks::basic_file_sink_mt>(
+			"async_file_logger", 
+			FlingPaths::EngineLogDir() + "/fling_log.txt"
+			);
 		spdlog::set_pattern( "[%H:%M:%S] [%^%L%$] [thread %t] %v" );
 		
 		F_LOG_TRACE( "Logger initalized!" );

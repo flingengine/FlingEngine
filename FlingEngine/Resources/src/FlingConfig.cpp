@@ -66,13 +66,12 @@ namespace Fling
     {
         UINT32 ArgsLoaded = 0;
         
-        // Use regex to try and parse out if things are a key/val etc
+        // TODO: Use regex to try and parse out if things are a key/val etc
 
         for (int i = 0; i < argc; ++i)
         {
             // Parse out if this is a key or not
             std::string value = argv[i];
-            //F_LOG_TRACE("Command line options: {}", value);
         }
 
         return ArgsLoaded;
