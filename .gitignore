@@ -11,6 +11,9 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+# CPP check results
+cpp_check_res.txt
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
