@@ -36,12 +36,18 @@ namespace Fling
         ResourceManager::Get().Init();
 
         FlingConfig::Get().Init();
+
+        F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
+        F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
+        F_LOG_TRACE("Fling Engine Logs dir:   \t{}", Fling::FlingPaths::EngineLogDir());
+        F_LOG_TRACE("Fling Engine Config dir: \t{}", Fling::FlingPaths::EngineConfigDir());
+
         // Load command line args and any ini files
         //#TODO Handle command line args
         UINT32 ArgsLoaded = FlingConfig::Get().LoadCommandLineOpts(m_CmdLineArgCount, m_CmdLineArgs);
         (void)(ArgsLoaded);
 
-        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile("Config/EngineConf.ini");
+        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
 
 		Timing::Get().Init();
 

@@ -26,6 +26,14 @@ configure_file(
     ${GENERATED_INC_FOLDER}/GitVersion.h
 )
 
+set ( FLING_ENGINE_SOURCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+# Generate the asset path stuff 
+configure_file(
+    Resources/src/FlingAssetPaths.cpp.in
+    ${GENERATED_INC_FOLDER}/FlingAssetPaths.cpp
+)
+
 # Include the Fling Engine source files that we may need
 FLING_ENGINE_INC("")
 
@@ -65,7 +73,7 @@ set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
 
 ### Setup visual studio source groups / filters ###
 file( GLOB_RECURSE _source_list
-    *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h
+    *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h ${GENERATED_INC_FOLDER}/*.cpp
 )
 
 if( MSVC )

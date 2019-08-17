@@ -3,30 +3,6 @@
 
 namespace Fling
 {
-    std::string FlingPaths::EngineConfigDir()
-    {
-        return "Config";
-    }
-
-    std::string FlingPaths::EngineAssetsDir()
-    {
-        return "Assets";
-    }
-
-    std::string FlingPaths::BinaryDir()
-    {
-        return "";
-    }
-    
-    std::string FlingPaths::EngineLogDir()
-    {
-        return "Logs";
-    }
-    
-    std::string FlingPaths::EngineSourceDir()
-    {
-        return "";
-    }
 
     int FlingPaths::MakeDir(const char* t_Dir)
     {

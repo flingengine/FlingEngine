@@ -1,0 +1,34 @@
+#include "pch.h"
+#include "FlingPaths.h"
+
+namespace Fling
+{
+    std::string FlingPaths::BinaryDir()
+    {
+        return "";
+    }
+    
+    std::string FlingPaths::EngineAssetsDir()
+    {
+        static std::string AssetPath = "@FLING_ROOT_DIR@/Assets";
+        return AssetPath;
+    }
+
+    std::string FlingPaths::EngineLogDir()
+    {
+        static std::string LogPath = "@FLING_ROOT_DIR@/Logs";
+        return LogPath;
+    }
+
+    std::string FlingPaths::EngineConfigDir()
+    {
+        static std::string ConfigPath = "@FLING_ROOT_DIR@/Config";
+        return ConfigPath;
+    }
+
+    std::string FlingPaths::EngineSourceDir()
+    {
+        return "@FLING_ENGINE_SOURCE_PATH@";
+    }
+
+}   // Fling

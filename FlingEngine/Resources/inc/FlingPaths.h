@@ -2,6 +2,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+/** 
+ * @see FlingAssetPaths.cpp.in
+ */
 namespace Fling
 {
     /** Static set of useful engine paths and directories */
@@ -20,7 +23,7 @@ namespace Fling
         static std::string EngineLogDir();
 
         /** Returns directory where the engine source files are kept */
-        static std::string EngineSourceDir();
+        static std::string EngineSourceDir(); 
 
         /**
          * Makes a directory given the specified path. 

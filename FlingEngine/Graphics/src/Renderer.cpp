@@ -488,8 +488,8 @@ namespace Fling
         // Load shaders
         // #TODO Load each file in a directory
         // #TODO Create a way to re-compile shaders in-engine at runtime
-        std::vector<char> VertShaderCode = ResourceManager::ReadFile("Assets/Shaders/vert.spv");
-        std::vector<char> FragShaderCode = ResourceManager::ReadFile("Assets/Shaders/frag.spv");
+        std::vector<char> VertShaderCode = ResourceManager::ReadFile(FlingPaths::EngineAssetsDir() + "/Shaders/vert.spv");
+        std::vector<char> FragShaderCode = ResourceManager::ReadFile(FlingPaths::EngineAssetsDir() + "/Shaders/frag.spv");
 
         // Create modules
         VkShaderModule VertModule = CreateShaderModule(VertShaderCode);

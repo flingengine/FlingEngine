@@ -4,6 +4,8 @@ set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
 project ( "FlingEngine" )
 
+set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
+
 # Generated folder used for Cmake generated files 
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
 message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
