@@ -2,6 +2,30 @@ cmake_minimum_required ( VERSION 3.13 )
 
 project( "FlingEngine" )
 
+#### Setup Git version numbers ######
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Get the latest abbreviated commit hash of the working branch
+execute_process(
+    COMMAND git log -1 --format=%h
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+message( STATUS "Generated git file is : ${EngineDir}Core/inc/GitVersion_TEMPLATE.h" )
+
+# Configure my generated files from cmake 
+configure_file(
+    Core/inc/GitVersion_TEMPLATE.h.in
+    ${GENERATED_INC_FOLDER}/GitVersion.h
+)
+
 # Include the Fling Engine source files that we may need
 FLING_ENGINE_INC("")
 
@@ -41,7 +65,7 @@ set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
 
 ### Setup visual studio source groups / filters ###
 file( GLOB_RECURSE _source_list
-    *.cpp* src/*.h* src/*.hpp* *.h*
+    *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h
 )
 
 if( MSVC )

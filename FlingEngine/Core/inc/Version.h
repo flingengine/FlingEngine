@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GitVersion.h"
+
 namespace Fling
 {
 	struct Version
@@ -9,6 +11,5 @@ namespace Fling
 		static int Patch;
 
 		static const std::string& ToString();
-
 	};
 }	// namespace Fling

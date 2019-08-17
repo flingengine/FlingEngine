@@ -18,10 +18,10 @@ MACRO(FLING_ENGINE_INC EngineDir )
 		${EngineDir}Resources/inc
 		${EngineDir}Utils/inc
 		${EngineDir}Platform/inc
+		${GENERATED_INC_FOLDER}		# Generated include files that cmake will handle (i.e. GitVersion)
 	)
 
 ENDMACRO(FLING_ENGINE_INC)
-
 
 # Example usage 
 
