@@ -22,7 +22,7 @@ def buildShaders():
 
 			# Compile the shader 
 			call([ 
-				os.environ['VK_SDK_PATH'] + "/Bin/glslangValidator.exe",
+				os.environ['VK_BIN_PATH'] + "/glslangValidator",
 				"-V",
 				filename
 				#"-o", outFileaName + ".spv"
