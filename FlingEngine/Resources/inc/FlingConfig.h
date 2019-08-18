@@ -27,15 +27,15 @@ namespace Fling
         */
         bool LoadConfigFile(const std::string& t_File);
 
-        std::string GetString(const std::string& t_Section, const std::string& t_Key);
+        std::string GetString(const std::string& t_Section, const std::string& t_Key) const;
 
-        int GetInt(const std::string& t_Section, const std::string& t_Key);
+        int GetInt(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) const;
 
-        bool GetBool(const std::string& t_Section, const std::string& t_Key);
+        bool GetBool(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal = false) const;
 
-        float GetFloat(const std::string& t_Section, const std::string& t_Key);
+        float GetFloat(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) const;
 
-        double GetDouble(const std::string& t_Section, const std::string& t_Key);
+        double GetDouble(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) const;
 
         /**
         * Load in the command line options and store them somewhere that is 

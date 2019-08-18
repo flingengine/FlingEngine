@@ -1158,7 +1158,15 @@ namespace Fling
 		
 		// Get the window title
 		std::string Title = FlingConfig::Get().GetString("Engine", "WindowTitle");
-		Title += " // Version: " + Version::ToString() + " // Built from: " + GIT_BRANCH + " -- " + GIT_COMMIT_HASH;
+        if(FlingConfig::Get().GetBool("Engine", "DisplayVersionInfoInTitle", true))
+        {
+            Title += " // Version: " + Version::ToString();
+        }
+		
+        if(FlingConfig::Get().GetBool("Engine", "DisplayBuildInfoInTitle", true))
+        {
+            Title += " // Built from: " + (std::string)(GIT_BRANCH) + " -- " + GIT_COMMIT_HASH;
+        }
 
 		m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
         glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
