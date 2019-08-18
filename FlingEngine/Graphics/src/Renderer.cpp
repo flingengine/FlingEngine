@@ -71,7 +71,7 @@ namespace Fling
         {
             if (Family.queueCount > 0)
             {
-                Indecies.GraphicsFamily = Family.queueFlags & VK_QUEUE_GRAPHICS_BIT ? i : 0;
+                Indecies.GraphicsFamily = ((Family.queueFlags & VK_QUEUE_GRAPHICS_BIT) ? i : 0);
                 
                 VkBool32 PresentSupport = false;
                 vkGetPhysicalDeviceSurfaceSupportKHR(t_Device, i, m_Surface, &PresentSupport);
@@ -211,7 +211,7 @@ namespace Fling
 		for( const char* layerName : m_ValidationLayers )
 		{
 			bool layerFound = false;
-			for( const auto& layerProperties : availableLayers )
+			for( const VkLayerProperties& layerProperties : availableLayers )
 			{
 				if( strcmp( layerName, layerProperties.layerName ) == 0 )
 				{

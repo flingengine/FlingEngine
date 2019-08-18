@@ -66,7 +66,6 @@ namespace Fling
         const static float MaxDeltaTime = 1.0f;
 
         float deltaTime = FallbackDeltaTime;
-        float totalTime = 0.0f;
 
 		while( !glfwWindowShouldClose( Renderer::Get().Window() ) )
 		{
@@ -82,8 +81,7 @@ namespace Fling
             // Update timing
             Timing::Get().Update();
             deltaTime = Timing::Get().GetDeltaTime();
-			totalTime = Timing::Get().GetTimef();
-
+            
             // If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
             if (deltaTime >= MaxDeltaTime)

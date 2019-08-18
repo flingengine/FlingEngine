@@ -72,6 +72,7 @@ namespace Fling
         {
             // Parse out if this is a key or not
             std::string value = argv[i];
+            (void)(value);
         }
 
         return ArgsLoaded;
