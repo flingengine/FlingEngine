@@ -91,6 +91,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a626e15a5adc77e872cd024d11a7769a4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a626e15a5adc77e872cd024d11a7769a4">CreateGameWindow</a> (const <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_width, const <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_height)</td></tr>
 <tr class="memdesc:a626e15a5adc77e872cd024d11a7769a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Init GLFW and create the game window  <a href="#a626e15a5adc77e872cd024d11a7769a4">More...</a><br /></td></tr>
 <tr class="separator:a626e15a5adc77e872cd024d11a7769a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab67aab170c5ba2e3867413494aab48f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ab67aab170c5ba2e3867413494aab48f6">DrawFrame</a> ()</td></tr>
+<tr class="memdesc:ab67aab170c5ba2e3867413494aab48f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draw the frame!  <a href="#ab67aab170c5ba2e3867413494aab48f6">More...</a><br /></td></tr>
+<tr class="separator:ab67aab170c5ba2e3867413494aab48f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e2c47f5839c09eb12cb46a652adffba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a0e2c47f5839c09eb12cb46a652adffba">PrepShutdown</a> ()</td></tr>
+<tr class="memdesc:a0e2c47f5839c09eb12cb46a652adffba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare for shutdown of the rendering pipeline, close any open semaphores.  <a href="#a0e2c47f5839c09eb12cb46a652adffba">More...</a><br /></td></tr>
+<tr class="separator:a0e2c47f5839c09eb12cb46a652adffba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d3474cc127ccdb5ffd122d40b106e34"><td class="memItemLeft" align="right" valign="top">GLFWwindow *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a7d3474cc127ccdb5ffd122d40b106e34">Window</a> () const</td></tr>
+<tr class="memdesc:a7d3474cc127ccdb5ffd122d40b106e34"><td class="mdescLeft">&#160;</td><td class="mdescRight">The current window of the application.  <a href="#a7d3474cc127ccdb5ffd122d40b106e34">More...</a><br /></td></tr>
+<tr class="separator:a7d3474cc127ccdb5ffd122d40b106e34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
 <tr class="memitem:abbc24880331f21ca92b9013256c985e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="FlingTypes_8h.html#a09f1a1fb2293e33483cc8d44aefb1eb1">UINT16</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#abbc24880331f21ca92b9013256c985e7">GetDeviceRating</a> (VkPhysicalDevice const t_Device)</td></tr>
 <tr class="memdesc:abbc24880331f21ca92b9013256c985e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a rating of how good this device is for this application.  <a href="#abbc24880331f21ca92b9013256c985e7">More...</a><br /></td></tr>
 <tr class="separator:abbc24880331f21ca92b9013256c985e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -100,20 +112,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a212914bf2f0687a93da7371f60a80e8a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a212914bf2f0687a93da7371f60a80e8a">FindMemoryType</a> (<a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Filter, VkMemoryPropertyFlags t_Props)</td></tr>
 <tr class="memdesc:a212914bf2f0687a93da7371f60a80e8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find a suitable memory type for use on the current device.  <a href="#a212914bf2f0687a93da7371f60a80e8a">More...</a><br /></td></tr>
 <tr class="separator:a212914bf2f0687a93da7371f60a80e8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab67aab170c5ba2e3867413494aab48f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ab67aab170c5ba2e3867413494aab48f6">DrawFrame</a> ()</td></tr>
-<tr class="memdesc:ab67aab170c5ba2e3867413494aab48f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draw the frame!  <a href="#ab67aab170c5ba2e3867413494aab48f6">More...</a><br /></td></tr>
-<tr class="separator:ab67aab170c5ba2e3867413494aab48f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e2c47f5839c09eb12cb46a652adffba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a0e2c47f5839c09eb12cb46a652adffba">PrepShutdown</a> ()</td></tr>
-<tr class="memdesc:a0e2c47f5839c09eb12cb46a652adffba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare for shutdown of the rendering pipeline, close any open semaphores.  <a href="#a0e2c47f5839c09eb12cb46a652adffba">More...</a><br /></td></tr>
-<tr class="separator:a0e2c47f5839c09eb12cb46a652adffba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d3474cc127ccdb5ffd122d40b106e34"><td class="memItemLeft" align="right" valign="top">GLFWwindow *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a7d3474cc127ccdb5ffd122d40b106e34">Window</a> () const</td></tr>
-<tr class="separator:a7d3474cc127ccdb5ffd122d40b106e34"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
-Private Member Functions</h2></td></tr>
 <tr class="memitem:ad4a934299258069b0b7f9571e37f3914"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ad4a934299258069b0b7f9571e37f3914">InitGraphics</a> ()</td></tr>
 <tr class="memdesc:ad4a934299258069b0b7f9571e37f3914"><td class="mdescLeft">&#160;</td><td class="mdescRight">Init the current graphics API  <a href="#ad4a934299258069b0b7f9571e37f3914">More...</a><br /></td></tr>
 <tr class="separator:ad4a934299258069b0b7f9571e37f3914"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6023f475c2c5efdfbcbf5873c5dcda1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ab6023f475c2c5efdfbcbf5873c5dcda1">ReadConfig</a> ()</td></tr>
+<tr class="memdesc:ab6023f475c2c5efdfbcbf5873c5dcda1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read any vars that may have been set in the engine config.  <a href="#ab6023f475c2c5efdfbcbf5873c5dcda1">More...</a><br /></td></tr>
+<tr class="separator:ab6023f475c2c5efdfbcbf5873c5dcda1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab64cbde6a3b9f595346bfd5b94cc0509"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ab64cbde6a3b9f595346bfd5b94cc0509">CreateGraphicsInstance</a> ()</td></tr>
 <tr class="memdesc:ab64cbde6a3b9f595346bfd5b94cc0509"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a vulkan instance  <a href="#ab64cbde6a3b9f595346bfd5b94cc0509">More...</a><br /></td></tr>
 <tr class="separator:ab64cbde6a3b9f595346bfd5b94cc0509"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -138,6 +142,9 @@ Private Member Functions</h2></td></tr>
 <tr class="memitem:a18801305bd46518da4d75f29d18904c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a18801305bd46518da4d75f29d18904c8">CreateImageViews</a> ()</td></tr>
 <tr class="memdesc:a18801305bd46518da4d75f29d18904c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the image views from the swap chain so that we can actually render them.  <a href="#a18801305bd46518da4d75f29d18904c8">More...</a><br /></td></tr>
 <tr class="separator:a18801305bd46518da4d75f29d18904c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a566aa4af96d10c9714a972a9c8837398"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a566aa4af96d10c9714a972a9c8837398">CreateDescriptorLayout</a> ()</td></tr>
+<tr class="memdesc:a566aa4af96d10c9714a972a9c8837398"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a Descriptor Layout object.  <a href="#a566aa4af96d10c9714a972a9c8837398">More...</a><br /></td></tr>
+<tr class="separator:a566aa4af96d10c9714a972a9c8837398"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d96f499a331ceefe333ffca4cf55a5a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a7d96f499a331ceefe333ffca4cf55a5a">CreateGraphicsPipeline</a> ()</td></tr>
 <tr class="memdesc:a7d96f499a331ceefe333ffca4cf55a5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the graphics pipeline (IA, VS, FS, etc)  <a href="#a7d96f499a331ceefe333ffca4cf55a5a">More...</a><br /></td></tr>
 <tr class="separator:a7d96f499a331ceefe333ffca4cf55a5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,7 +168,16 @@ Private Member Functions</h2></td></tr>
 <tr class="memdesc:aca9379f0448c55526da7179446bcfd29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Re-create the image views, render passes, and command buffers.  <a href="#aca9379f0448c55526da7179446bcfd29">More...</a><br /></td></tr>
 <tr class="separator:aca9379f0448c55526da7179446bcfd29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a607a106af1bd0695a7225d0580c8c209"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a607a106af1bd0695a7225d0580c8c209">CreateVertexBuffer</a> ()</td></tr>
+<tr class="memdesc:a607a106af1bd0695a7225d0580c8c209"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a vertex buffer using Temp_Vertices.  <a href="#a607a106af1bd0695a7225d0580c8c209">More...</a><br /></td></tr>
 <tr class="separator:a607a106af1bd0695a7225d0580c8c209"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66924945c3b9190867e5cf00ff5079c6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a66924945c3b9190867e5cf00ff5079c6">CreateIndexBuffer</a> ()</td></tr>
+<tr class="memdesc:a66924945c3b9190867e5cf00ff5079c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an index buffer using Temp_Indecies.  <a href="#a66924945c3b9190867e5cf00ff5079c6">More...</a><br /></td></tr>
+<tr class="separator:a66924945c3b9190867e5cf00ff5079c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c1e526e923c5481da281c05a754e087"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a2c1e526e923c5481da281c05a754e087">CreateBuffer</a> (VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer &amp;t_Buffer, VkDeviceMemory &amp;t_BuffMemory)</td></tr>
+<tr class="separator:a2c1e526e923c5481da281c05a754e087"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf1fa930abf74c9b164a7664bb85b2b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#acf1fa930abf74c9b164a7664bb85b2b3">CopyBuffer</a> (VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)</td></tr>
+<tr class="memdesc:acf1fa930abf74c9b164a7664bb85b2b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy source buffer to the destination buffer given it's size.  <a href="#acf1fa930abf74c9b164a7664bb85b2b3">More...</a><br /></td></tr>
+<tr class="separator:acf1fa930abf74c9b164a7664bb85b2b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0b673b616c70a1630b210a9c658b581"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structFling_1_1SwapChainSupportDetails.html">SwapChainSupportDetails</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ac0b673b616c70a1630b210a9c658b581">QuerySwapChainSupport</a> (VkPhysicalDevice t_Device)</td></tr>
 <tr class="memdesc:ac0b673b616c70a1630b210a9c658b581"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the swap chain support of a given device.  <a href="#ac0b673b616c70a1630b210a9c658b581">More...</a><br /></td></tr>
 <tr class="separator:ac0b673b616c70a1630b210a9c658b581"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -229,17 +245,25 @@ Private Attributes</h2></td></tr>
 <tr class="separator:aa3a3fdd35db6153e979e41534c392527"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a687d268cb4d4cdc1be8e125c2a86824a"><td class="memItemLeft" align="right" valign="top">VkRenderPass&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a687d268cb4d4cdc1be8e125c2a86824a">m_RenderPass</a></td></tr>
 <tr class="separator:a687d268cb4d4cdc1be8e125c2a86824a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1b7d16a2387d8759aa65c893ab6c2d9"><td class="memItemLeft" align="right" valign="top">VkDescriptorSetLayout&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ae1b7d16a2387d8759aa65c893ab6c2d9">m_DescriptorSetLayout</a></td></tr>
+<tr class="memdesc:ae1b7d16a2387d8759aa65c893ab6c2d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pipeline layout stores uniforms (global shader vars)  <a href="#ae1b7d16a2387d8759aa65c893ab6c2d9">More...</a><br /></td></tr>
+<tr class="separator:ae1b7d16a2387d8759aa65c893ab6c2d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4b9b13a6f00f8e190c7923b84c5f8c9c"><td class="memItemLeft" align="right" valign="top">VkPipelineLayout&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a4b9b13a6f00f8e190c7923b84c5f8c9c">m_PipelineLayout</a></td></tr>
-<tr class="memdesc:a4b9b13a6f00f8e190c7923b84c5f8c9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pipeline layout stores uniforms (global shader vars)  <a href="#a4b9b13a6f00f8e190c7923b84c5f8c9c">More...</a><br /></td></tr>
 <tr class="separator:a4b9b13a6f00f8e190c7923b84c5f8c9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbcc119725c43bc2c7303c2ff663a0bc"><td class="memItemLeft" align="right" valign="top">VkPipeline&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#adbcc119725c43bc2c7303c2ff663a0bc">m_GraphicsPipeline</a></td></tr>
 <tr class="separator:adbcc119725c43bc2c7303c2ff663a0bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50262937e0f7230c29d942f2d3248a99"><td class="memItemLeft" align="right" valign="top">VkCommandPool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a50262937e0f7230c29d942f2d3248a99">m_CommandPool</a></td></tr>
 <tr class="separator:a50262937e0f7230c29d942f2d3248a99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88433e3164ac412f3477e43002461d6a"><td class="memItemLeft" align="right" valign="top">VkBuffer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a88433e3164ac412f3477e43002461d6a">m_VertexBuffer</a></td></tr>
+<tr class="memdesc:a88433e3164ac412f3477e43002461d6a"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structFling_1_1Vertex.html" title="Basic Vertex outline for use with our vertex buffers. ">Vertex</a> buffer.  <a href="#a88433e3164ac412f3477e43002461d6a">More...</a><br /></td></tr>
 <tr class="separator:a88433e3164ac412f3477e43002461d6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac47b4a6fb28f05c2f57f17a8b6a4524b"><td class="memItemLeft" align="right" valign="top">VkDeviceMemory&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ac47b4a6fb28f05c2f57f17a8b6a4524b">m_VertexBufferMemory</a></td></tr>
 <tr class="separator:ac47b4a6fb28f05c2f57f17a8b6a4524b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8229fe2bef29babdac85ad468d49c71b"><td class="memItemLeft" align="right" valign="top">VkBuffer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a8229fe2bef29babdac85ad468d49c71b">m_IndexBuffer</a></td></tr>
+<tr class="memdesc:a8229fe2bef29babdac85ad468d49c71b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Index buffer.  <a href="#a8229fe2bef29babdac85ad468d49c71b">More...</a><br /></td></tr>
+<tr class="separator:a8229fe2bef29babdac85ad468d49c71b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cb4696c3a0b4178c16f6842b9822894"><td class="memItemLeft" align="right" valign="top">VkDeviceMemory&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a5cb4696c3a0b4178c16f6842b9822894">m_IndexBufferMemory</a></td></tr>
+<tr class="separator:a5cb4696c3a0b4178c16f6842b9822894"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a969fe637aa140d66b4515ce43732f54f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a969fe637aa140d66b4515ce43732f54f">m_WindowWidth</a> = 800</td></tr>
 <tr class="memdesc:a969fe637aa140d66b4515ce43732f54f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Width of the window that GLFW creates.  <a href="#a969fe637aa140d66b4515ce43732f54f">More...</a><br /></td></tr>
 <tr class="separator:a969fe637aa140d66b4515ce43732f54f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -251,8 +275,13 @@ Private Attributes</h2></td></tr>
 <tr class="memitem:af97174dc307e1aa6deb96f29448a8489"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#af97174dc307e1aa6deb96f29448a8489">m_FrameBufferResized</a> = false</td></tr>
 <tr class="memdesc:af97174dc307e1aa6deb96f29448a8489"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used to determine if the frame buffer has been resized or not.  <a href="#af97174dc307e1aa6deb96f29448a8489">More...</a><br /></td></tr>
 <tr class="separator:af97174dc307e1aa6deb96f29448a8489"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1a1a0fafd3d50e887e876985c617e5a"><td class="memItemLeft" align="right" valign="top">const bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#aa1a1a0fafd3d50e887e876985c617e5a">m_EnableValidationLayers</a> = true</td></tr>
-<tr class="separator:aa1a1a0fafd3d50e887e876985c617e5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea11b5d4d116935d437c000397e73027"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#aea11b5d4d116935d437c000397e73027">m_EnableValidationLayers</a> = false</td></tr>
+<tr class="separator:aea11b5d4d116935d437c000397e73027"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56160c5ae0e3ed5388b5c66da0f0d8de"><td class="memItemLeft" align="right" valign="top">std::vector&lt; VkBuffer &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a56160c5ae0e3ed5388b5c66da0f0d8de">m_UniformBuffers</a></td></tr>
+<tr class="memdesc:a56160c5ae0e3ed5388b5c66da0f0d8de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uniform buffers.  <a href="#a56160c5ae0e3ed5388b5c66da0f0d8de">More...</a><br /></td></tr>
+<tr class="separator:a56160c5ae0e3ed5388b5c66da0f0d8de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aece8b1c5d88ae3acb2a71cc1972be0cf"><td class="memItemLeft" align="right" valign="top">std::vector&lt; VkDeviceMemory &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#aece8b1c5d88ae3acb2a71cc1972be0cf">m_UniformBuffersMemory</a></td></tr>
+<tr class="separator:aece8b1c5d88ae3acb2a71cc1972be0cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26f3417b71e7850c17596b39e955e134"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; const char * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#a26f3417b71e7850c17596b39e955e134">m_ValidationLayers</a></td></tr>
 <tr class="separator:a26f3417b71e7850c17596b39e955e134"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad604a2cb824747eef0d3165b313ed9c6"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; const char * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html#ad604a2cb824747eef0d3165b313ed9c6">m_DeviceExtensions</a></td></tr>
@@ -491,6 +520,105 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="acf1fa930abf74c9b164a7664bb85b2b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf1fa930abf74c9b164a7664bb85b2b3">&#9670;&nbsp;</a></span>CopyBuffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Renderer::CopyBuffer </td>
+          <td>(</td>
+          <td class="paramtype">VkBuffer&#160;</td>
+          <td class="paramname"><em>srcBuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkBuffer&#160;</td>
+          <td class="paramname"><em>dstBuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkDeviceSize&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Copy source buffer to the destination buffer given it's size. </p>
+<p>Creates a one-off commandBuffer to do this </p>
+
+</div>
+</div>
+<a id="a2c1e526e923c5481da281c05a754e087"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c1e526e923c5481da281c05a754e087">&#9670;&nbsp;</a></span>CreateBuffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Renderer::CreateBuffer </td>
+          <td>(</td>
+          <td class="paramtype">VkDeviceSize&#160;</td>
+          <td class="paramname"><em>t_Size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkBufferUsageFlags&#160;</td>
+          <td class="paramname"><em>t_Usage</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkMemoryPropertyFlags&#160;</td>
+          <td class="paramname"><em>t_Properties</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkBuffer &amp;&#160;</td>
+          <td class="paramname"><em>t_Buffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkDeviceMemory &amp;&#160;</td>
+          <td class="paramname"><em>t_BuffMemory</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a324262a6d4f0a52a653a364a4248615c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a324262a6d4f0a52a653a364a4248615c">&#9670;&nbsp;</a></span>CreateCommandBuffers()</h2>
 
@@ -588,6 +716,34 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a566aa4af96d10c9714a972a9c8837398"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a566aa4af96d10c9714a972a9c8837398">&#9670;&nbsp;</a></span>CreateDescriptorLayout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Renderer::CreateDescriptorLayout </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a Descriptor Layout object. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="UniformBufferObject_8h.html">UniformBufferObject.h</a> </dd></dl>
 
 </div>
 </div>
@@ -733,6 +889,33 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Create the image views from the swap chain so that we can actually render them. </p>
+
+</div>
+</div>
+<a id="a66924945c3b9190867e5cf00ff5079c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66924945c3b9190867e5cf00ff5079c6">&#9670;&nbsp;</a></span>CreateIndexBuffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Renderer::CreateIndexBuffer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create an index buffer using Temp_Indecies. </p>
 
 </div>
 </div>
@@ -929,6 +1112,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
+<p>Create a vertex buffer using Temp_Vertices. </p>
+
 </div>
 </div>
 <a id="a9ee929271d26d2b0d5a568f1dab22d5b"></a>
@@ -1045,6 +1230,9 @@ Additional Inherited Members</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> Fling::Renderer::FindMemoryType </td>
@@ -1064,6 +1252,11 @@ Additional Inherited Members</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Find a suitable memory type for use on the current device. </p>
@@ -1083,6 +1276,9 @@ Additional Inherited Members</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structFling_1_1QueueFamilyIndices.html">QueueFamilyIndices</a> Fling::Renderer::FindQueueFamilies </td>
@@ -1092,6 +1288,11 @@ Additional Inherited Members</h2></td></tr>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Find what queue families are supported by a given </p>
@@ -1152,6 +1353,9 @@ Additional Inherited Members</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="FlingTypes_8h.html#a09f1a1fb2293e33483cc8d44aefb1eb1">UINT16</a> Fling::Renderer::GetDeviceRating </td>
@@ -1161,6 +1365,11 @@ Additional Inherited Members</h2></td></tr>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Get a rating of how good this device is for this application. </p>
@@ -1335,6 +1544,33 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ab6023f475c2c5efdfbcbf5873c5dcda1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6023f475c2c5efdfbcbf5873c5dcda1">&#9670;&nbsp;</a></span>ReadConfig()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Renderer::ReadConfig </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read any vars that may have been set in the engine config. </p>
+
+</div>
+</div>
 <a id="aca9379f0448c55526da7179446bcfd29"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aca9379f0448c55526da7179446bcfd29">&#9670;&nbsp;</a></span>RecreateSwapChain()</h2>
 
@@ -1439,6 +1675,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
+<p>The current window of the application. </p>
+
 </div>
 </div>
 <h2 class="groupheader">Field Documentation</h2>
@@ -1536,6 +1774,30 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ae1b7d16a2387d8759aa65c893ab6c2d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1b7d16a2387d8759aa65c893ab6c2d9">&#9670;&nbsp;</a></span>m_DescriptorSetLayout</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkDescriptorSetLayout Fling::Renderer::m_DescriptorSetLayout</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pipeline layout stores uniforms (global shader vars) </p>
+
+</div>
+</div>
 <a id="a315b9cb52116a8bfd826e0a631ee22e2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a315b9cb52116a8bfd826e0a631ee22e2">&#9670;&nbsp;</a></span>m_Device</h2>
 
@@ -1584,8 +1846,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="aa1a1a0fafd3d50e887e876985c617e5a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa1a1a0fafd3d50e887e876985c617e5a">&#9670;&nbsp;</a></span>m_EnableValidationLayers</h2>
+<a id="aea11b5d4d116935d437c000397e73027"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aea11b5d4d116935d437c000397e73027">&#9670;&nbsp;</a></span>m_EnableValidationLayers</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1594,7 +1856,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const bool Fling::Renderer::m_EnableValidationLayers = true</td>
+          <td class="memname">bool Fling::Renderer::m_EnableValidationLayers = false</td>
         </tr>
       </table>
   </td>
@@ -1698,6 +1960,52 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a8229fe2bef29babdac85ad468d49c71b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8229fe2bef29babdac85ad468d49c71b">&#9670;&nbsp;</a></span>m_IndexBuffer</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkBuffer Fling::Renderer::m_IndexBuffer</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Index buffer. </p>
+
+</div>
+</div>
+<a id="a5cb4696c3a0b4178c16f6842b9822894"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cb4696c3a0b4178c16f6842b9822894">&#9670;&nbsp;</a></span>m_IndexBufferMemory</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkDeviceMemory Fling::Renderer::m_IndexBufferMemory</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="afe8329b790d0f1874c05b3a3c263beaf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afe8329b790d0f1874c05b3a3c263beaf">&#9670;&nbsp;</a></span>m_InFlightFences</h2>
 
@@ -1788,8 +2096,6 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Pipeline layout stores uniforms (global shader vars) </p>
 
 </div>
 </div>
@@ -2026,6 +2332,52 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a56160c5ae0e3ed5388b5c66da0f0d8de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56160c5ae0e3ed5388b5c66da0f0d8de">&#9670;&nbsp;</a></span>m_UniformBuffers</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;VkBuffer&gt; Fling::Renderer::m_UniformBuffers</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Uniform buffers. </p>
+
+</div>
+</div>
+<a id="aece8b1c5d88ae3acb2a71cc1972be0cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aece8b1c5d88ae3acb2a71cc1972be0cf">&#9670;&nbsp;</a></span>m_UniformBuffersMemory</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;VkDeviceMemory&gt; Fling::Renderer::m_UniformBuffersMemory</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a26f3417b71e7850c17596b39e955e134"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a26f3417b71e7850c17596b39e955e134">&#9670;&nbsp;</a></span>m_ValidationLayers</h2>
 
@@ -2067,6 +2419,8 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p><a class="el" href="structFling_1_1Vertex.html" title="Basic Vertex outline for use with our vertex buffers. ">Vertex</a> buffer. </p>
 
 </div>
 </div>

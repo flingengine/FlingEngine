@@ -90,6 +90,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a213d4af1de4e026e2a0cebd500b383de"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr&lt; spdlog::logger &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Logger.html#a213d4af1de4e026e2a0cebd500b383de">GetCurrentConsole</a> ()</td></tr>
 <tr class="memdesc:a213d4af1de4e026e2a0cebd500b383de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a reference to the current logging console  <a href="#a213d4af1de4e026e2a0cebd500b383de">More...</a><br /></td></tr>
 <tr class="separator:a213d4af1de4e026e2a0cebd500b383de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6dbddf8afe9e82da81eec7f516e07864"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr&lt; spdlog::logger &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Logger.html#a6dbddf8afe9e82da81eec7f516e07864">GetCurrentLogFile</a> ()</td></tr>
+<tr class="memdesc:a6dbddf8afe9e82da81eec7f516e07864"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current async log file that is being written to.  <a href="#a6dbddf8afe9e82da81eec7f516e07864">More...</a><br /></td></tr>
+<tr class="separator:a6dbddf8afe9e82da81eec7f516e07864"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classFling_1_1Singleton"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classFling_1_1Singleton')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classFling_1_1Singleton.html">Fling::Singleton&lt; Logger &gt;</a></td></tr>
 <tr class="memitem:a6540b71da5a5c9dcaf23766e45ca1547 inherit pub_static_methods_classFling_1_1Singleton"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classFling_1_1Logger.html">Logger</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Singleton.html#a6540b71da5a5c9dcaf23766e45ca1547">Get</a> ()</td></tr>
 <tr class="separator:a6540b71da5a5c9dcaf23766e45ca1547 inherit pub_static_methods_classFling_1_1Singleton"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -99,6 +102,9 @@ Static Protected Attributes</h2></td></tr>
 <tr class="memitem:a07d825421fb00d9e5b1ff931b97dc5bd"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr&lt; spdlog::logger &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Logger.html#a07d825421fb00d9e5b1ff931b97dc5bd">m_Console</a> = nullptr</td></tr>
 <tr class="memdesc:a07d825421fb00d9e5b1ff931b97dc5bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the current console that is being used for logging.  <a href="#a07d825421fb00d9e5b1ff931b97dc5bd">More...</a><br /></td></tr>
 <tr class="separator:a07d825421fb00d9e5b1ff931b97dc5bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade8791b704eabf05d7a1d40a117fb45d"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr&lt; spdlog::logger &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Logger.html#ade8791b704eabf05d7a1d40a117fb45d">m_FileLog</a> = nullptr</td></tr>
+<tr class="memdesc:ade8791b704eabf05d7a1d40a117fb45d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the log file logger.  <a href="#ade8791b704eabf05d7a1d40a117fb45d">More...</a><br /></td></tr>
+<tr class="separator:ade8791b704eabf05d7a1d40a117fb45d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -133,6 +139,33 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Gets a reference to the current logging console </p>
 <dl class="section return"><dt>Returns</dt><dd>Shader ptr to the current console</dd></dl>
+
+</div>
+</div>
+<a id="a6dbddf8afe9e82da81eec7f516e07864"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6dbddf8afe9e82da81eec7f516e07864">&#9670;&nbsp;</a></span>GetCurrentLogFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt; spdlog::logger &gt; Fling::Logger::GetCurrentLogFile </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the current async log file that is being written to. </p>
 
 </div>
 </div>
@@ -185,6 +218,30 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Pointer to the current console that is being used for logging. </p>
+
+</div>
+</div>
+<a id="ade8791b704eabf05d7a1d40a117fb45d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade8791b704eabf05d7a1d40a117fb45d">&#9670;&nbsp;</a></span>m_FileLog</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt; spdlog::logger &gt; Fling::Logger::m_FileLog = nullptr</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pointer to the log file logger. </p>
 
 </div>
 </div>
