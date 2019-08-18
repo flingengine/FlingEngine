@@ -193,6 +193,12 @@ namespace Fling
 		*/
 		void CreateIndexBuffer();
 
+        void CreateUniformBuffers();
+
+        void CreateDescriptorPool();
+
+        void CreateDescriptorSets();
+
 		void CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory);
 		
 		/**
@@ -238,6 +244,13 @@ namespace Fling
         * @return   Extents with the best matching resolution
         */
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies);
+
+        /**
+         * @brief Update the uniform buffer data. Called during DrawFrame
+         * 
+         * @param t_CurrentImage The current image index that we are using
+         */
+        void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
         std::vector<const char*> GetRequiredExtensions();
 
@@ -321,6 +334,9 @@ namespace Fling
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
+        /** @see CreateDescriptorPool */
+        VkDescriptorPool m_DescriptorPool;
+
 		/** Vertex buffer */
         VkBuffer m_VertexBuffer;
         VkDeviceMemory m_VertexBufferMemory;
@@ -350,6 +366,8 @@ namespace Fling
         /** Uniform buffers */
         std::vector<VkBuffer> m_UniformBuffers;
         std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+        
+        std::vector<VkDescriptorSet> m_DescriptorSets;
 
         const std::vector<const char*> m_ValidationLayers =
         {

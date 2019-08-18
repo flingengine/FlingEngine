@@ -12,7 +12,7 @@ I am basing the core of the rendering pipeline off of the
 There are a few basic steps to compiling Fling on your platform. 
 
 ## [CMake 3.13](https://cmake.org/download/) or higher!
-This project requires uses CMake 3.13 or higher, you can install it [here](https://cmake.org/download/).
+This project requires CMake 3.13 or higher, you can install it [here](https://cmake.org/download/).
 
 ## Vulkan SDK
 Obviously this project is build using Vulkan, so you will need to install it before compiling 

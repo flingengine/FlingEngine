@@ -41,6 +41,8 @@ namespace Fling
 
 		double GetStartTime() const { return m_startTime; }
 
+		float GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
+
 	private:
 
 		float m_deltaTime = 0.0f;

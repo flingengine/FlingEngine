@@ -34,7 +34,7 @@ namespace Fling
 		Random::Init();
 		Logger::Get().Init();
         ResourceManager::Get().Init();
-
+		Timing::Get().Init();
         FlingConfig::Get().Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
@@ -48,8 +48,6 @@ namespace Fling
         (void)(ArgsLoaded);
 
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
-
-		Timing::Get().Init();
 
         Renderer::Get().CreateGameWindow(
             ConfigLoaded ? FlingConfig::Get().GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,

@@ -126,6 +126,9 @@ namespace Fling
         
 		CreateVertexBuffer();
 		CreateIndexBuffer();
+        CreateUniformBuffers();
+        CreateDescriptorPool();
+        CreateDescriptorSets();
 
         CreateCommandBuffers();
         CreateSyncObjects();
@@ -577,7 +580,9 @@ namespace Fling
         Rasterizer.lineWidth = 1.0f;
 
         Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        Rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE; // Specify the vertex order! 
+        Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // Specify the vertex order! 
+        //Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        //Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
         Rasterizer.depthBiasEnable = VK_FALSE;
         Rasterizer.depthBiasConstantFactor = 0.0f;  // Optional
@@ -763,8 +768,8 @@ namespace Fling
             vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
 			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-            //vkCmdDraw(m_CommandBuffers[i], static_cast<UINT32>(Temp_Vertices.size()), 1, 0, 0);
-			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(Temp_indices.size()), 1, 0, 0, 0);
+            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(Temp_indices.size()), 1, 0, 0, 0);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -818,6 +823,15 @@ namespace Fling
         }
 
         vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+
+        // Cleanup uniform buffers -------------------------
+        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+        {
+            vkDestroyBuffer(m_Device, m_UniformBuffers[i], nullptr);
+            vkFreeMemory(m_Device, m_UniformBuffersMemory[i], nullptr);
+        }
+
+        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
     }
 
     void Renderer::RecreateSwapChain()
@@ -840,6 +854,11 @@ namespace Fling
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFrameBuffers();
+
+        CreateUniformBuffers();
+        CreateDescriptorPool();
+        CreateDescriptorSets();
+        
         CreateCommandBuffers();
     }
 
@@ -903,6 +922,85 @@ namespace Fling
 		vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
 		vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
 	}
+
+    void Renderer::CreateUniformBuffers()
+    {
+        VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+        m_UniformBuffers.resize(m_SwapChainImages.size());
+        m_UniformBuffersMemory.resize(m_SwapChainImages.size());
+
+        for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
+        {
+            CreateBuffer(
+                bufferSize,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                m_UniformBuffers[i],
+                m_UniformBuffersMemory[i]
+            );
+        }
+    }
+
+    void Renderer::CreateDescriptorPool()
+    {
+        VkDescriptorPoolSize PoolSize = {};
+        PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        PoolSize.descriptorCount = static_cast<UINT32>(m_SwapChainImages.size());
+
+        VkDescriptorPoolCreateInfo PoolInfo = {};
+        PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        PoolInfo.poolSizeCount = 1;
+        PoolInfo.pPoolSizes = &PoolSize;
+
+        PoolInfo.maxSets = static_cast<UINT32>(m_SwapChainImages.size());
+
+        if(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create discriptor pool!");
+        }
+    }
+
+    void Renderer::CreateDescriptorSets()
+    {
+        // Specify what descriptor pool to allocate from and how many
+        std::vector<VkDescriptorSetLayout> layouts(m_SwapChainImages.size(), m_DescriptorSetLayout);
+        VkDescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = m_DescriptorPool;
+        allocInfo.descriptorSetCount = static_cast<UINT32>(m_SwapChainImages.size());
+        allocInfo.pSetLayouts = layouts.data();
+
+        m_DescriptorSets.resize(m_SwapChainImages.size());
+        // Sets will be cleaned up when the descriptor pool is, no need for an explict free call in cleanup
+        if(vkAllocateDescriptorSets(m_Device, &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to allocate descriptor sets!");
+        }
+
+        // Configure descriptor sets
+        for (size_t i = 0; i < m_SwapChainImages.size(); ++i) 
+        {
+            VkDescriptorBufferInfo BufferInfo = {};
+            BufferInfo.buffer = m_UniformBuffers[i];
+            BufferInfo.offset = 0;
+            BufferInfo.range = sizeof(UniformBufferObject);
+
+            VkWriteDescriptorSet descriptorWrite = {};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = m_DescriptorSets[i];
+            descriptorWrite.dstBinding = 0;
+            descriptorWrite.dstArrayElement = 0;
+
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &BufferInfo;
+            descriptorWrite.pImageInfo = nullptr;
+            descriptorWrite.pTexelBufferView = nullptr;
+
+            vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+        }
+    }
 
 	void Renderer::CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer & t_Buffer, VkDeviceMemory & t_BuffMemory)
 	{
@@ -1213,6 +1311,8 @@ namespace Fling
             F_LOG_FATAL("Failed to acquire swap chain image!");
         }
 
+        UpdateUniformBuffer(ImageIndex);
+
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -1262,6 +1362,25 @@ namespace Fling
         }
 
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+    }
+
+    void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
+    {
+        float TimeSinceStart = Timing::Get().GetTimeSinceStart();
+
+        UniformBufferObject ubo = {};
+        ubo.Model = glm::rotate(glm::mat4(1.0f), TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.Proj = glm::perspective(glm::radians(45.0f), m_SwapChainExtents.width / (float) m_SwapChainExtents.height, 0.1f, 10.0f);
+        
+        // Invert here because glm has the Y coorinate inverted
+        ubo.Proj[1][1] *= -1.0f;
+
+        // Copy the ubo to the GPU
+        void* data = nullptr;
+        vkMapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
+        memcpy(data, &ubo, sizeof(ubo));
+        vkUnmapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage]);
     }
 
     void Renderer::PrepShutdown()
