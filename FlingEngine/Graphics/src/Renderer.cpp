@@ -119,6 +119,7 @@ namespace Fling
         CreateSwapChain();
         CreateImageViews();
         CreateRenderPass();
+        CreateDescriptorLayout();
         CreateGraphicsPipeline();
         CreateFrameBuffers();
         CreateCommandPool();
@@ -483,6 +484,27 @@ namespace Fling
         }
     }
 
+    void Renderer::CreateDescriptorLayout()
+    {
+        // Create a binding for the UBO
+        VkDescriptorSetLayoutBinding UboLayout = {};
+        UboLayout.binding = 0;
+        UboLayout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        UboLayout.descriptorCount = 1;
+        UboLayout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        UboLayout.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
+        LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        LayoutInfo.bindingCount = 1;
+        LayoutInfo.pBindings = &UboLayout;
+
+        if(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create descipror set layout!");
+        }
+    }
+
     void Renderer::CreateGraphicsPipeline()
     {
         // Load shaders
@@ -608,8 +630,8 @@ namespace Fling
         // Pipeline layout ---------------------
         VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
         PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        PipelineLayoutInfo.setLayoutCount = 0;              // Optional
-        PipelineLayoutInfo.pSetLayouts = nullptr;           // Optional
+        PipelineLayoutInfo.setLayoutCount = 1;
+        PipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
         PipelineLayoutInfo.pushConstantRangeCount = 0;      // Optional
         PipelineLayoutInfo.pPushConstantRanges = nullptr;   // Optional
 
@@ -1165,7 +1187,7 @@ namespace Fling
 		
         if(FlingConfig::Get().GetBool("Engine", "DisplayBuildInfoInTitle", true))
         {
-            Title += " // Built from: " + (std::string)(GIT_BRANCH) + " -- " + GIT_COMMIT_HASH;
+            Title += " // Built from " + (std::string)(GIT_BRANCH) + " @ " + GIT_COMMIT_HASH;
         }
 
 		m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
@@ -1251,6 +1273,8 @@ namespace Fling
 	{
 		// Cleanup Vulkan ------
         CleanUpSwapChain();
+
+        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
 
 		vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
 		vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);

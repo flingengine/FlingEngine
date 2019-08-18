@@ -6,6 +6,7 @@
 #include "Singleton.hpp"
 
 #include "Vertex.h"
+#include "UniformBufferObject.h"
 
 namespace Fling
 {
@@ -52,6 +53,18 @@ namespace Fling
         /// <param name="t_height">Height of the window</param>
         void CreateGameWindow( const UINT32 t_width, const UINT32 t_height );
 
+        /**
+        * Draw the frame!
+        */
+        void DrawFrame();
+
+        /**
+        * Prepare for shutdown of the rendering pipeline, close any open semaphores
+        */
+        void PrepShutdown();
+
+    private:
+
         /// <summary>
         /// Get a rating of how good this device is for this application.
         /// Scores range from 0 - 1000
@@ -76,18 +89,6 @@ namespace Fling
         * @return The 
         */
         UINT32 FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props);
-
-        /**
-        * Draw the frame!
-        */
-        void DrawFrame();
-
-        /**
-        * Prepare for shutdown of the rendering pipeline, close any open semaphores
-        */
-        void PrepShutdown();
-
-    private:
 
         /// <summary>
         /// Init the current graphics API
@@ -140,6 +141,12 @@ namespace Fling
         * Create the image views from the swap chain so that we can actually render them 
         */
         void CreateImageViews();
+
+        /**
+         * @brief Create a Descriptor Layout object
+         * @see UniformBufferObject.h
+         */
+        void CreateDescriptorLayout();
 
         /**
         * Create the graphics pipeline (IA, VS, FS, etc)
@@ -306,6 +313,7 @@ namespace Fling
         VkRenderPass m_RenderPass;
 
         /** Pipeline layout stores uniforms (global shader vars) */
+        VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineLayout m_PipelineLayout;
 
         VkPipeline m_GraphicsPipeline;
@@ -338,6 +346,10 @@ namespace Fling
 #else
         bool m_EnableValidationLayers = false;
 #endif
+
+        /** Uniform buffers */
+        std::vector<VkBuffer> m_UniformBuffers;
+        std::vector<VkDeviceMemory> m_UniformBuffersMemory;
 
         const std::vector<const char*> m_ValidationLayers =
         {
@@ -374,9 +386,12 @@ namespace Fling
 
     public:
 
+        /** The current window of the application */
         GLFWwindow* Window() const { return m_Window; }
 
     };
+
+    // Temp vectors of indecies/verts for testing while setting up the renderer
 
 	const std::vector<UINT16> Temp_indices = 
 	{
