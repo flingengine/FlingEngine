@@ -1,6 +1,12 @@
 #pragma once
+
+#include "Platform.h"
+
 namespace Fling
 {
+    /**
+     * @brief Class that can have only one instance. 
+     */
     template <class T>
     class Singleton
     {
@@ -11,9 +17,9 @@ namespace Fling
         // Have separate virtual init and shutdown functions so that we 
         // can control the creation order
 
-        virtual void Init() {}
+        FLING_API virtual void Init() {}
 
-        virtual void Shutdown() {}
+        FLING_API virtual void Shutdown() {}
 
     protected:
 

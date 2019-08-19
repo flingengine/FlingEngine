@@ -9,7 +9,7 @@ namespace Fling
     * Provide simple access to engine configuration options from an INI file
     * #TODO Parse command line options as well
     */
-    class FlingConfig : public Singleton<FlingConfig>
+    class FLING_API FlingConfig : public Singleton<FlingConfig>
     {
 
     public:

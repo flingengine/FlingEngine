@@ -9,8 +9,8 @@ namespace Fling
     */
     struct Vertex
     {
-        glm::vec2 Pos;
-        glm::vec3 Color;
+        FLING_API glm::vec2 Pos;
+        FLING_API glm::vec3 Color;
 
         static VkVertexInputBindingDescription GetBindingDescription() 
         {

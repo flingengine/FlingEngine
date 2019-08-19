@@ -8,7 +8,7 @@
 namespace Fling
 {
     /** Static set of useful engine paths and directories */
-    struct FlingPaths
+    struct FLING_API FlingPaths
     {
         /** Returns directory where engine config files are kept */
         static std::string EngineConfigDir();

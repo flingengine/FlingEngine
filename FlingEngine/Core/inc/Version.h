@@ -1,10 +1,10 @@
 #pragma once
-
+#include "pch.h"
 #include "GitVersion.h"
 
 namespace Fling
 {
-	struct Version
+	struct FLING_API Version
 	{
 		static int Major;
 		static int Minor;

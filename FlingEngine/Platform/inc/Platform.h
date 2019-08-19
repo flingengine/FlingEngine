@@ -12,7 +12,7 @@
 
 #define FLING_APPLE
 
-#error Fling does not support Apple
+#error Fling does not support Apple... does it?
 
 #elif __linux__							
 

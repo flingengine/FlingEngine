@@ -26,8 +26,8 @@
 // If defined then Fling will export functions to the DLL/Shared lib
 #define FLING_EXPORT
 
-#include "Version.h"
 #include "Platform.h"
+#include "Version.h"
 #include "FlingTypes.h" 
 #include "Random.h"
 #include "Logger.h"

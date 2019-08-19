@@ -13,9 +13,11 @@
 
 namespace Fling
 {
-    // #TODO Have all the logs actually go out to a file as well
-
-	class Logger : public Singleton<Logger>
+	/**
+	 * @brief 	Singleton class that allows logging to the console as well as async to a file.
+	 * 			Use the defines to actually log strings out.  
+	 */
+	class FLING_API Logger : public Singleton<Logger>
 	{
 	public:
 
