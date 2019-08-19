@@ -34,15 +34,18 @@ TEST_CASE("Random", "[utils]")
 
 TEST_CASE("Logger", "[utils]")
 {
-	SECTION("Logger Creation")
-	{
-		using namespace Fling;
+    using namespace Fling;
+    Logger::Get().Init();
 
-		//Logger::Get().Init();
 
+	SECTION("Logger Console Creation")
+	{		
 		// Require the current console to exist
 		REQUIRE(Logger::GetCurrentConsole() != nullptr);
-
-		//Logger::Get().Shutdown();
 	}
+
+    SECTION("Logger File Creation")
+    {
+		REQUIRE(Logger::GetCurrentLogFile() != nullptr);
+    }
 }

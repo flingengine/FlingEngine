@@ -16,14 +16,20 @@ namespace Fling
 		}
 
 		// Create the SPD log console 
-		m_Console = spdlog::stdout_color_mt( "LOG" );
+		if(!m_Console)
+		{
+			m_Console = spdlog::stdout_color_mt( "LOG" );
+		}
 		
 		// Create an async file logger for errors/warnings
-		m_FileLog = spdlog::create_async<spdlog::sinks::basic_file_sink_mt>(
-			"async_file_logger", 
-			FlingPaths::EngineLogDir() + "/fling_log.txt"
+		if(!m_FileLog)
+		{
+			m_FileLog = spdlog::create_async<spdlog::sinks::basic_file_sink_mt>(
+				"async_file_logger", 
+				FlingPaths::EngineLogDir() + "/fling_log.txt"
 			);
-		spdlog::set_pattern( "[%H:%M:%S] [%^%L%$] [thread %t] %v" );
+			spdlog::set_pattern( "[%H:%M:%S] [%^%L%$] [thread %t] %v" );
+		}
 		
 		F_LOG_TRACE( "Logger initalized!" );
 	}
