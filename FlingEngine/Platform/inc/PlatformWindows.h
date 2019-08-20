@@ -22,7 +22,7 @@
 #		define FLING_API        __declspec(dllexport) 
 #       define FLING_EXTERN      
 #	else					        // Not exporting function
-#		define FLING_API        __declspec(dllimport) 
+#		define FLING_API        
 #       define FLING_EXTERN        extern
 #	endif
 

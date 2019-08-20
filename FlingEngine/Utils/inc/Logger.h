@@ -17,7 +17,7 @@ namespace Fling
 	 * @brief 	Singleton class that allows logging to the console as well as async to a file.
 	 * 			Use the defines to actually log strings out.  
 	 */
-	class FLING_API Logger : public Singleton<Logger>
+	class Logger : public Singleton<Logger>
 	{
 	public:
 
