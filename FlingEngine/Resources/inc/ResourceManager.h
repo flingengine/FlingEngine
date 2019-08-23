@@ -6,7 +6,6 @@
 
 #include <fstream>
 #include <vector>
-#include <unordered_map>
 #include <map>
 
 namespace Fling
@@ -19,6 +18,16 @@ namespace Fling
 
 		virtual void Shutdown() override;
 
+		template<class T, class ...ARGS>
+		std::shared_ptr<T> AddResource(ARGS&& ... args)
+		{
+
+
+
+		}
+
+		template <class T>
+		std::shared_ptr<T> GetResourceOfType(const Guid& t_ID) const;
 
 		std::shared_ptr<Resource> GetResource(const Guid& t_ID) const;
 
@@ -44,9 +53,19 @@ namespace Fling
 		typedef std::map<Fling::Guid, std::shared_ptr<Resource>>::iterator ResourceMapIt;
 		typedef std::map<Fling::Guid, std::shared_ptr<Resource>>::const_iterator ResourceMapConstIt;
 
+		/** Map of currently loaded resources */
 		std::map<Fling::Guid, std::shared_ptr<Resource>> m_ResourceMap;
 
 	};
 
 
+	template<class T>
+	inline std::shared_ptr<T> ResourceManager::GetResourceOfType(const Guid& t_ID) const
+	{
+		if (std::shared_ptr<Resource> Res = GetResource(t_ID))
+		{
+			reinterpret_cast<std::shared_ptr<T>>(Res);
+		}
+		return nullptr;
+	}
 }	// namespace Fling

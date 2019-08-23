@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Platform.h"
-#include "Guid.h"
+#include "FlingTypes.h"
 
 namespace Fling
 {
@@ -10,6 +10,8 @@ namespace Fling
 	*/
 	class FLING_API Resource
 	{
+		friend class ResourceManager;
+
 	public:
 		Resource() = default;
 		virtual ~Resource() = default;
@@ -17,6 +19,6 @@ namespace Fling
 	private:
 
 		/** GUID of this resource */
-		Guid GUID;
+		Guid m_GUID;
 	};
 }	// namespace Fling

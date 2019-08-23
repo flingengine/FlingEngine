@@ -13,3 +13,5 @@ typedef int8_t                  INT8;
 typedef signed short            INT16;
 typedef int32_t                 INT32;
 typedef int64_t                 INT64;
+
+#include "Guid.h"

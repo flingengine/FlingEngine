@@ -44,7 +44,6 @@ namespace Fling
 		return (m_ResourceMap.find(t_ID) != m_ResourceMap.end());
 	}
 
-	
 	std::vector<char> ResourceManager::ReadFile(const std::string& t_Filename)
 	{
 		std::vector<char> Buffer;
