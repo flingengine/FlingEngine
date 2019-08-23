@@ -8,7 +8,11 @@
 #include <direct.h>
 
 #   ifdef _MSC_VER
-    // #TODO Any MSVC specific wanring disables and what not
+
+#	pragma warning(disable:26495)
+#	pragma warning(disable:4267)
+#	pragma warning(disable:26451)
+
 #   endif   // _MSC_VER
 
 #	define INLINE			        inline

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Platform.h"
 #include "Singleton.hpp"
 
 #define SPDLOG_TRACE_ON

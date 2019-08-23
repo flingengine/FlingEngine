@@ -6,10 +6,11 @@
 #include "ResourceManager.h"
 #include "Renderer.h"
 #include "FlingConfig.h"
+#include "NonCopyable.hpp"
 
 namespace Fling
 {
-	class FLING_API Engine
+	class FLING_API Engine : public NonCopyable
 	{
 
 	public:
