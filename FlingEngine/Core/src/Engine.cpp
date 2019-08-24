@@ -36,6 +36,7 @@ namespace Fling
         ResourceManager::Get().Init();
 		Timing::Get().Init();
         FlingConfig::Get().Init();
+		Input::Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
@@ -65,15 +66,16 @@ namespace Fling
 
         float deltaTime = FallbackDeltaTime;
 
-		while( !glfwWindowShouldClose( Renderer::Get().Window() ) )
+		while(!Renderer::Get().GetCurrentWindow()->ShouldClose())
 		{
             // Update events
-			glfwPollEvents();
+			//glfwPollEvents();
 
             // #TODO Provide a game play layer that we can use to put any application
             // specific update systems in (i.e. an actual scene graph model)
 
             // Renderer
+			Renderer::Get().Tick();
             Renderer::Get().DrawFrame();
             
             // Update timing
@@ -95,10 +97,14 @@ namespace Fling
 	void Engine::Shutdown()
 	{
 		// Cleanup any resources
+		Input::Shutdown();
         ResourceManager::Get().Shutdown();
 		Logger::Get().Shutdown();
         FlingConfig::Get().Shutdown();
 		Timing::Get().Shutdown();
 		Renderer::Get().Shutdown();
+
+		// #TODO : Move this to window shutdown
+		glfwTerminate();
 	}
 }

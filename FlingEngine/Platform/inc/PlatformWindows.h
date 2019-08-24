@@ -30,4 +30,9 @@
 #       define FLING_EXTERN        extern
 #	endif
 
+#include "DesktopWindow.h"
+
+#include "WindowsKeycodes.h"
+#include "WindowsInput.h"
+
 #endif	// FLING_WINDOWS

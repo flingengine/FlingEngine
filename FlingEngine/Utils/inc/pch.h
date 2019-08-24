@@ -30,6 +30,7 @@
 #include "Platform.h"
 #include "Version.h"
 #include "FlingTypes.h" 
+#include "Input.h"
 #include "Random.h"
 #include "Logger.h"
 #include "FlingPaths.h"

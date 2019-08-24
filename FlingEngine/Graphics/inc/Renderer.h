@@ -4,12 +4,17 @@
 #include "Platform.h"
 
 // GLFW
-#define GLFW_INCLUDE_VULKAN
+#ifndef GLFW_INCLUDE_VULKAN
+#	define GLFW_INCLUDE_VULKAN
+#endif
 #include <GLFW/glfw3.h>
+
 #include "Singleton.hpp"
 
 #include "Vertex.h"
 #include "UniformBufferObject.h"
+
+#include "FlingWindow.h"
 
 namespace Fling
 {
@@ -55,6 +60,11 @@ namespace Fling
         /// <param name="t_width">Width of the window</param>
         /// <param name="t_height">Height of the window</param>
         void CreateGameWindow( const UINT32 t_width, const UINT32 t_height );
+
+		FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
+
+		/** Happens before draw frame. Update the window  */
+		void Tick();
 
         /**
         * Draw the frame!
@@ -296,7 +306,9 @@ namespace Fling
         static void FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height);
 
         /** The window that the game is being drawn to */
-        GLFWwindow* m_Window = nullptr;
+        //GLFWwindow* m_Window = nullptr;
+
+		FlingWindow* m_CurrentWindow = nullptr;
 
         /** The Vulkan instance */
         VkInstance m_Instance = VK_NULL_HANDLE;
@@ -347,11 +359,6 @@ namespace Fling
 		/** Index buffer */
 		VkBuffer m_IndexBuffer;
 		VkDeviceMemory m_IndexBufferMemory;
-
-        /** Width of the window that GLFW creates.  @see Renderer::CreateGameWindow */
-        UINT32 m_WindowWidth = 800;
-        /** Height of the window that GLFW creates  @see Renderer::CreateGameWindow */
-        UINT32 m_WindowHeight = 600;
 
         size_t CurrentFrameIndex = 0;
 
@@ -404,12 +411,6 @@ namespace Fling
         std::vector<VkSemaphore> m_ImageAvailableSemaphores;
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
-
-    public:
-
-        /** The current window of the application */
-        GLFWwindow* Window() const { return m_Window; }
-
     };
 
     // Temp vectors of indecies/verts for testing while setting up the renderer
