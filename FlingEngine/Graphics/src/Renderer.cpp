@@ -1242,7 +1242,7 @@ namespace Fling
 		}
 	}
 
-    void Renderer::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
+    void Renderer::FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height)
     {
         Renderer::Get().m_FrameBufferResized = true;
     }

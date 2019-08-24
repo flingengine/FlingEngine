@@ -20,15 +20,44 @@ namespace Fling
 
 	bool LinuxInput::IsKeyDownImpl(int t_Keycode)
 	{
-		// #TODO: Get the window
-		int State = glfwGetKey(nullptr, t_Keycode);
-		return (State == GLFW_PRESS || State == GLFW_REPEAT);
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		if (Window)
+		{
+			int State = glfwGetKey(Window->GetGlfwWindow(), t_Keycode);
+			return (State == GLFW_PRESS);
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool LinuxInput::IsKeyHeldImpl(int t_Keycode)
+	{
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		if (Window)
+		{
+			int State = glfwGetKey(Window->GetGlfwWindow(), t_Keycode);
+			return (State == GLFW_PRESS || State == GLFW_REPEAT);
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	bool LinuxInput::IsMouseButtonPressedImpl(int t_Button)
 	{
-		int State = glfwGetMouseButton(nullptr, t_Button);
-		return (State == GLFW_PRESS);
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		if (Window)
+		{
+			int State = glfwGetMouseButton(Window->GetGlfwWindow(), t_Button);
+			return (State == GLFW_PRESS);
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 } // namespace Fling

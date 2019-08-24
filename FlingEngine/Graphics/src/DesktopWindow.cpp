@@ -50,7 +50,7 @@ namespace Fling
 	DesktopWindow::~DesktopWindow()
 	{
 		glfwDestroyWindow(m_Window);
-		//glfwTerminate();
+		glfwTerminate();
 	}
 
 	void DesktopWindow::Update()

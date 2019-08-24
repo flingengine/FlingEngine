@@ -17,7 +17,9 @@ namespace Fling
 		virtual void ShutdownImpl() override;
 
 		virtual bool IsKeyDownImpl(int t_Keycode) override;
+		virtual bool IsKeyHeldImpl(int t_Keycode) override;
 		virtual bool IsMouseButtonPressedImpl(int t_Button) override;
+
 	};
 } // namespace Fling
 

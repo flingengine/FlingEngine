@@ -68,14 +68,18 @@ namespace Fling
 
 		while(!Renderer::Get().GetCurrentWindow()->ShouldClose())
 		{
-            // Update events
-			//glfwPollEvents();
-
-            // #TODO Provide a game play layer that we can use to put any application
-            // specific update systems in (i.e. an actual scene graph model)
-
             // Renderer
 			Renderer::Get().Tick();
+
+			// #TODO: Remove this and make a "Game" class for people to override
+			if (Input::IsKeyDown(FL_KEY_H))
+			{
+				F_LOG_TRACE("User pressed H!");
+			}
+
+			// #TODO Provide a game play layer that we can use to put any application
+			// specific update systems in (i.e. an actual scene graph model)
+
             Renderer::Get().DrawFrame();
             
             // Update timing
@@ -103,8 +107,5 @@ namespace Fling
         FlingConfig::Get().Shutdown();
 		Timing::Get().Shutdown();
 		Renderer::Get().Shutdown();
-
-		// #TODO : Move this to window shutdown
-		glfwTerminate();
 	}
 }

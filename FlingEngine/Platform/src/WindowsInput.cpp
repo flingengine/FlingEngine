@@ -4,6 +4,7 @@
 #if defined FLING_WINDOWS
 
 // Oof on this renderer dependency
+// #TODO: Figure something else that's better for this
 #include "Renderer.h"
 #include <GLFW/glfw3.h>
 
@@ -15,7 +16,7 @@ namespace Fling
 
 	void WindowsInput::InitImpl()
 	{
-		
+		// Any specific input binds that may be needed
 	}
 
 	void WindowsInput::ShutdownImpl()
@@ -24,6 +25,20 @@ namespace Fling
 	}
 
 	bool WindowsInput::IsKeyDownImpl(int t_Keycode)
+	{
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		if (Window)
+		{
+			int State = glfwGetKey(Window->GetGlfwWindow(), t_Keycode);
+			return (State == GLFW_PRESS);
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool WindowsInput::IsKeyHeldImpl(int t_Keycode)
 	{
 		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
 		if (Window)

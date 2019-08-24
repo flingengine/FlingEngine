@@ -303,7 +303,7 @@ namespace Fling
             VkDebugUtilsMessengerEXT debugMessenger,
             const VkAllocationCallbacks* pAllocator );
 
-        static void FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height);
+        static void FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height);
 
         /** The window that the game is being drawn to */
         //GLFWwindow* m_Window = nullptr;

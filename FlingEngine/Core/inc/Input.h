@@ -24,6 +24,7 @@ namespace Fling
 		}
 
 		static bool IsKeyDown(int t_Keycode) { return m_Instace->IsKeyDownImpl(t_Keycode); }
+		static bool IsKeyHeld(int t_Keycode) { return m_Instace->IsKeyDownImpl(t_Keycode); }
 		static bool IsMouseButtonPressed(int t_Button) { return m_Instace->IsMouseButtonPressedImpl(t_Button); }
 
 	protected:
@@ -32,6 +33,7 @@ namespace Fling
 		virtual void ShutdownImpl() = 0;
 
 		virtual bool IsKeyDownImpl(int t_Keycode) = 0;
+		virtual bool IsKeyHeldImpl(int t_Keycode) = 0;
 		virtual bool IsMouseButtonPressedImpl(int t_Button) = 0;
 
 		/** Created by the implementation class @see WindowInput */
