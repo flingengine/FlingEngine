@@ -20,6 +20,12 @@ namespace Fling
 
 	UINT64 Engine::Run()
 	{
+		// Ensure that we have set the game type! 
+		if(m_GameInstance == nullptr)
+		{
+			return 1;
+		}
+
 		Startup();
 
 		Tick();
@@ -65,7 +71,8 @@ namespace Fling
         const static float MaxDeltaTime = 1.0f;
 
         float deltaTime = FallbackDeltaTime;
-
+		m_GameInstance->Start();
+		
 		while(!Renderer::Get().GetCurrentWindow()->ShouldClose())
 		{
             // Renderer
@@ -73,6 +80,7 @@ namespace Fling
 
 			// #TODO Provide a game play layer that we can use to put any application
 			// specific update systems in (i.e. an actual scene graph model)
+			m_GameInstance->Update(deltaTime);
 
             Renderer::Get().DrawFrame();
             

@@ -9,7 +9,8 @@
 int main( int argc, char* argv[] )
 {
 	Fling::Engine engine = { argc, argv };
-
+	engine.SetGame<Fling::Game>();
+	
 	try
 	{
 		engine.Run();

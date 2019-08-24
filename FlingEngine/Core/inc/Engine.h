@@ -7,6 +7,9 @@
 #include "Renderer.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
+#include "Game.h"
+
+#include <memory>
 
 namespace Fling
 {
@@ -20,6 +23,15 @@ namespace Fling
         Engine(int argc, char* argv[]);
 
 		~Engine();
+
+		/***
+		* @brief	Set the game type to that which you want! 
+		*/
+		template<class GameType>
+		void SetGame()
+		{
+			m_GameInstance = std::make_unique<GameType>();
+		}
 
 		/// <summary>
 		/// Run the engine
@@ -46,6 +58,9 @@ namespace Fling
 
         int m_CmdLineArgCount = 0;
         char** m_CmdLineArgs = nullptr;
+
+		/** The game instance */
+		std::unique_ptr<Game> m_GameInstance;
 
 	};
 }	// namespace Fling
