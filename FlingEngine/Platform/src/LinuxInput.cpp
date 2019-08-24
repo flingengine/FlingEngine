@@ -2,6 +2,8 @@
 #include "LinuxInput.h"
 
 #ifdef FLING_LINUX
+#include "Renderer.h"
+
 #include <GLFW/glfw3.h>
 
 namespace Fling

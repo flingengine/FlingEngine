@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "FlingTypes.h"
 #include "NonCopyable.hpp"
 
 namespace Fling
