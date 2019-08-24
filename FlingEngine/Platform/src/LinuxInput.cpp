@@ -25,6 +25,7 @@ namespace Fling
 		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
 		if (Window)
 		{
+			// Check the old state of this input! 
 			int State = glfwGetKey(Window->GetGlfwWindow(), t_Keycode);
 			return (State == GLFW_PRESS);
 		}
