@@ -22,7 +22,6 @@ namespace Fling
 
     }
 
-    
     Level::~Level()
     {
         // Clean up any actors in this level

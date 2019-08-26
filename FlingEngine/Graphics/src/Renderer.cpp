@@ -136,7 +136,7 @@ namespace Fling
 
 	void Renderer::ReadConfig()
 	{
-		m_EnableValidationLayers = FlingConfig::Get().GetBool("Vulkan", "EnableValidationLayers");
+		m_EnableValidationLayers = FlingConfig::GetBool("Vulkan", "EnableValidationLayers");
 		F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", m_EnableValidationLayers);
 	}
 
@@ -1267,24 +1267,24 @@ namespace Fling
         }
 		
 		// Get the window title
-		std::string Title = FlingConfig::Get().GetString("Engine", "WindowTitle");
-        if(FlingConfig::Get().GetBool("Engine", "DisplayVersionInfoInTitle", true))
+		std::string Title = FlingConfig::GetString("Engine", "WindowTitle");
+
+        if(FlingConfig::GetBool("Engine", "DisplayVersionInfoInTitle", true))
         {
             Title += " // Version: " + Version::ToString();
         }
 		
-        if(FlingConfig::Get().GetBool("Engine", "DisplayBuildInfoInTitle", true))
+        if(FlingConfig::GetBool("Engine", "DisplayBuildInfoInTitle", true))
         {
             Title += " // Built from " + (std::string)(GIT_BRANCH) + " @ " + GIT_COMMIT_HASH;
         }
 
-		//glfwInit();
-		//glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		Props.m_Title = Title;
 
 		m_CurrentWindow = FlingWindow::Create(Props);
 
-		
+		// #TODO: Add a resize callback to the window!
+
 		//m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
 		//DesktopWindow* Window = static_cast<DesktopWindow*>(m_CurrentWindow);
 		

@@ -9,7 +9,7 @@ namespace Fling
         F_LOG_TRACE("World Init!");
 
 		// Load the that is specific in the config file
-		std::string LevelToLoad = FlingConfig::Get().GetString("Game", "StartLevel");
+		std::string LevelToLoad = FlingConfig::GetString("Game", "StartLevel");
 		
 		LoadLevel(LevelToLoad);
     }

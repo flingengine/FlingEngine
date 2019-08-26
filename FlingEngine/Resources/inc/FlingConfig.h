@@ -27,15 +27,15 @@ namespace Fling
         */
         bool LoadConfigFile(const std::string& t_File);
 
-        std::string GetString(const std::string& t_Section, const std::string& t_Key) const;
+		static std::string GetString(const std::string& t_Section, const std::string& t_Key) { return FlingConfig::Get().GetStringImpl(t_Section, t_Key); }
 
-        int GetInt(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) const;
+		static int GetInt(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) { return FlingConfig::Get().GetIntImpl(t_Section, t_Key); }
 
-        bool GetBool(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal = false) const;
+		static bool GetBool(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal = false) { return FlingConfig::Get().GetBoolImpl(t_Section, t_Key); }
 
-        float GetFloat(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) const;
+		static float GetFloat(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) { return FlingConfig::Get().GetFloatImpl(t_Section, t_Key); }
 
-        double GetDouble(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) const;
+		static double GetDouble(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) { return FlingConfig::Get().GetDoubleImpl(t_Section, t_Key); }
 
         /**
         * Load in the command line options and store them somewhere that is 
@@ -51,6 +51,16 @@ namespace Fling
 
         /** Ini config file reader */
         static INIReader m_IniReader;
+
+		std::string GetStringImpl(const std::string& t_Section, const std::string& t_Key) const;
+
+		int GetIntImpl(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) const;
+
+		bool GetBoolImpl(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal = false) const;
+
+		float GetFloatImpl(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) const;
+
+		double GetDoubleImpl(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) const;
 
     };
 
