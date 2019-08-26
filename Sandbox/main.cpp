@@ -8,12 +8,11 @@
 
 int main( int argc, char* argv[] )
 {
-	Fling::Engine engine = { argc, argv };
-	engine.SetGame<Fling::Game>();
+	Fling::Engine Engine = { argc, argv };
 	
 	try
 	{
-		engine.Run();
+		Engine.Run();
 	}
 	catch( const std::exception& e )
 	{

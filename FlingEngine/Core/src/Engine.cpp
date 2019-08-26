@@ -3,10 +3,6 @@
 
 namespace Fling
 {
-	Engine::Engine()
-	{
-	}
-
     Engine::Engine(int argc, char* argv[])
         : Engine()
     {
@@ -14,18 +10,8 @@ namespace Fling
         m_CmdLineArgs = argv;
     }
 
-	Engine::~Engine()
-	{
-	}
-
 	UINT64 Engine::Run()
 	{
-		// Ensure that we have set the game type! 
-		if(m_GameInstance == nullptr)
-		{
-			return 1;
-		}
-
 		Startup();
 
 		Tick();
@@ -62,46 +48,50 @@ namespace Fling
         );
 
 		Renderer::Get().Init();
+
+		World::Get().Init();
 	}
 
 	void Engine::Tick()
 	{
-        // Calculate a fallback delta time in case the engine ever gets out of sync
+        // Calculate a fall back delta time in case the engine ever gets out of sync
         const static float FallbackDeltaTime = 1.0f / 60.0f;
         const static float MaxDeltaTime = 1.0f;
 
-        float deltaTime = FallbackDeltaTime;
-		m_GameInstance->Start();
+        float DeltaTime = FallbackDeltaTime;
 		
-		while(!Renderer::Get().GetCurrentWindow()->ShouldClose())
+		World& World = World::Get();
+		Renderer& Renderer = Renderer::Get();
+		Timing& Timing = Timing::Get();
+
+		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
-            // Renderer
-			Renderer::Get().Tick();
+			Renderer.Tick();
 
-			// #TODO Provide a game play layer that we can use to put any application
-			// specific update systems in (i.e. an actual scene graph model)
-			m_GameInstance->Update(deltaTime);
-
-            Renderer::Get().DrawFrame();
+			World.Update(DeltaTime);
+			
+			Renderer.DrawFrame();
             
             // Update timing
-            Timing::Get().Update();
-            deltaTime = Timing::Get().GetDeltaTime();
+			Timing.Update();
+            DeltaTime = Timing.GetDeltaTime();
             
             // If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
-            if (deltaTime >= MaxDeltaTime)
+            if (DeltaTime >= MaxDeltaTime)
             {
-                deltaTime = FallbackDeltaTime;
+				DeltaTime = FallbackDeltaTime;
             }
 		}
 
         // Pre-shutdown options here
-        Renderer::Get().PrepShutdown();
+		Renderer.PrepShutdown();
 	}
 
 	void Engine::Shutdown()
 	{
+		World::Get().Shutdown();
+		
 		// Cleanup any resources
 		Input::Shutdown();
         ResourceManager::Get().Shutdown();
