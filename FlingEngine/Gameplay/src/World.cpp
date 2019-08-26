@@ -41,7 +41,7 @@ namespace Fling
 	// #TODO: Add a callback func for when the level loading is complete
     void World::LoadLevel(const std::string& t_LevelPath)
     {
-		const std::string FullLevelPath = FlingPaths::EngineAssetsDir() + t_LevelPath;
+		const std::string FullLevelPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelPath;
 
 		F_LOG_TRACE("World loading level: {}", FullLevelPath);
 

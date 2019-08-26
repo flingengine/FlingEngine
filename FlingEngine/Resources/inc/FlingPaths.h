@@ -11,19 +11,19 @@ namespace Fling
     struct FLING_API FlingPaths
     {
         /** Returns directory where engine config files are kept */
-        static std::string EngineConfigDir();
+        static const std::string& EngineConfigDir();
         
         /** Returns directory where engine assets are kept */
-        static std::string EngineAssetsDir();
+        static const std::string& EngineAssetsDir();
         
         /** Returns directory where your current binary is */
-        static std::string BinaryDir();
+        static const std::string& BinaryDir();
 
         /** Returns directory where engine log files are kept */
-        static std::string EngineLogDir();
+        static const std::string& EngineLogDir();
 
         /** Returns directory where the engine source files are kept */
-        static std::string EngineSourceDir(); 
+        static const std::string& EngineSourceDir();
 
         /**
          * Makes a directory given the specified path. 

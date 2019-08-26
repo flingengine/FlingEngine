@@ -1,10 +1,13 @@
 #include "pch.h"
 #include "Level.h"
+#include "ResourceManager.h"
 
 namespace Fling
 {
     Level::Level(const std::string& t_LevelFile)
     {
+		m_LevelFileName = t_LevelFile;
+
         // Load in a file resource based on this file
         LoadLevel();
 
@@ -14,7 +17,8 @@ namespace Fling
 
     void Level::LoadLevel()
     {
-
+		std::vector<char> LevelData = ResourceManager::ReadFile(m_LevelFileName);
+		// #TODO: Parse this data here from JSON!
     }
 
     void Level::PostLoad()
