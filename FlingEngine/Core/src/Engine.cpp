@@ -72,6 +72,11 @@ namespace Fling
 			
 			Renderer.DrawFrame();
             
+			if(Input::IsKeyDown(KeyNames::FL_KEY_W))
+			{
+				F_LOG_TRACE("W is pressed!");
+			}
+
             // Update timing
 			Timing.Update();
             DeltaTime = Timing.GetDeltaTime();

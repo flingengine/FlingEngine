@@ -16,9 +16,13 @@ namespace Fling
 		virtual void InitImpl() override;
 		virtual void ShutdownImpl() override;
 
-		virtual bool IsKeyDownImpl(int t_Keycode) override;
-		virtual bool IsKeyHeldImpl(int t_Keycode) override;
-		virtual bool IsMouseButtonPressedImpl(int t_Button) override;
+		virtual void InitKeyMap() override;
+		
+		virtual void PollImpl() override;
+
+		virtual bool IsKeyDownImpl(const std::string& t_KeyName) override;
+		virtual bool IsKeyHeldImpl(const std::string& t_KeyName) override;
+		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) override;
 
 	};
 } // namespace Fling

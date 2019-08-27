@@ -20,7 +20,7 @@
 
 #include "DesktopWindow.h"
 
-#include "LinuxKeycodes.h"
-#include "LinuxInput.h"
+#include "Input/LinuxKeycodes.h"
+#include "Input/LinuxInput.h"
 
 #endif	// FLING_LINUX

@@ -32,7 +32,7 @@
 
 #include "DesktopWindow.h"
 
-#include "WindowsKeycodes.h"
-#include "WindowsInput.h"
+#include "Input/WindowsKeycodes.h"
+#include "Input/WindowsInput.h"
 
 #endif	// FLING_WINDOWS
