@@ -28,7 +28,7 @@ namespace Fling
 		static bool IsMouseButtonPressed(int t_Button) { return m_Instace->IsMouseButtonPressedImpl(t_Button); }
 
 	protected:
-
+	
 		virtual void InitImpl() = 0;
 		virtual void ShutdownImpl() = 0;
 

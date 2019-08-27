@@ -5,7 +5,8 @@ namespace Fling
 {
     const std::string& FlingPaths::BinaryDir()
     {
-        return "";
+        static std::string BinDir = "";
+        return BinDir;
     }
     
     const std::string& FlingPaths::EngineAssetsDir()
@@ -28,7 +29,8 @@ namespace Fling
 
     const std::string& FlingPaths::EngineSourceDir()
     {
-        return "@FLING_ENGINE_SOURCE_PATH@";
+        static std::string SourceDir = "@FLING_ENGINE_SOURCE_PATH@";
+        return SourceDir;
     }
 
 }   // Fling

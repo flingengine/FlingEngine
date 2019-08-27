@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Input.h"
+#include "Input/Input.h"
 
 #ifdef FLING_LINUX
 

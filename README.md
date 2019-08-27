@@ -23,11 +23,13 @@ Ubuntu:
 ```
 sudo apt-get update
 sudo apt-get install doxygen
-sudo apt-get install libglfw3
-sudo apt-get install libglfw3-dev
+sudo apt-get install -y libglm-dev libxcb-dri3-0 libxcb-present0
+sudo apt-get install -y libpciaccess0 libpng-dev libxcb-keysyms1-dev
+sudo apt-get install -y libxcb-dri3-dev libx11-dev libmirclient-dev
+sudo apt-get install -y libwayland-dev libxrandr-dev
+sudo apt-get install -y libglfw3-dev
+sudo apt-get install -y xorg-dev
 ```
-
-
 
 ## Vulkan SDK
 Obviously this project is build using Vulkan, so you will need to install it before compiling 
