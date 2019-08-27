@@ -153,9 +153,9 @@ namespace Fling
 		// the pNext values 
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Engine Bay 0.1";
-		appInfo.applicationVersion = VK_MAKE_VERSION( 0, 1, 0 );
+		appInfo.applicationVersion = VK_MAKE_VERSION(Version::EngineVersion.Major, Version::EngineVersion.Minor, Version::EngineVersion.Patch);
 		appInfo.pEngineName = "Fling Engine";
-		appInfo.engineVersion = VK_MAKE_VERSION( 0, 1, 0 );
+		appInfo.engineVersion = VK_MAKE_VERSION(Version::EngineVersion.Major, Version::EngineVersion.Minor, Version::EngineVersion.Patch);
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
 		// Instance creation info, similar to how DX11 worked
@@ -1271,7 +1271,7 @@ namespace Fling
 
         if(FlingConfig::GetBool("Engine", "DisplayVersionInfoInTitle", true))
         {
-            Title += " // Version: " + Version::ToString();
+            Title += " // Version: " + Version::EngineVersion.ToString();
         }
 		
         if(FlingConfig::GetBool("Engine", "DisplayBuildInfoInTitle", true))
