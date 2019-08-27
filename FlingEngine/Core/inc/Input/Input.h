@@ -31,7 +31,7 @@ namespace Fling
 		static void Poll() { m_Instace->PollImpl();  }
 		
 		static bool IsKeyDown(const std::string& t_KeyName) { return m_Instace->IsKeyDownImpl(t_KeyName); }
-		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instace->IsKeyHeldImpl(t_KeyName); }
+		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instace->IsKeyHelpImpl(t_KeyName); }
 		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instace->IsMouseButtonPressedImpl(t_KeyName); }
 
 		typedef std::map<std::string, Fling::Key> KeyMap;
@@ -65,7 +65,7 @@ namespace Fling
 		virtual void InitKeyMap() = 0;
 
 		virtual bool IsKeyDownImpl(const std::string& t_KeyName) = 0;
-		virtual bool IsKeyHeldImpl(const std::string& t_KeyName) = 0;
+		virtual bool IsKeyHelpImpl(const std::string& t_KeyName) = 0;
 		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) = 0;
 	};
 

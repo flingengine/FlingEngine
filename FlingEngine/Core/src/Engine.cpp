@@ -77,6 +77,16 @@ namespace Fling
 				F_LOG_TRACE("W is pressed!");
 			}
 
+			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_1))
+			{
+				F_LOG_TRACE("Mouse 1 pressed!");
+			}
+
+			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_2))
+			{
+				F_LOG_TRACE("Mouse 2 pressed!");
+			}
+
             // Update timing
 			Timing.Update();
             DeltaTime = Timing.GetDeltaTime();

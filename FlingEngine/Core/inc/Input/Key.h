@@ -15,14 +15,15 @@ namespace Fling
         /** The current state of this key. Updated when input is polled */
         KeyState m_State;
 
-        /** The keycode that is mapped to this key to the current platform */
+        /** The key code that is mapped to this key to the current platform */
         UINT32 m_KeyCode;
 
     public:
 
         explicit Key(const std::string& t_Name, UINT32 t_KeyCode)
             : m_Name(t_Name)
-            , m_KeyCode(t_KeyCode)
+			, m_State(KeyState::UP)
+			, m_KeyCode(t_KeyCode)
         {}
 
         ~Key() = default;
@@ -35,7 +36,7 @@ namespace Fling
         inline const std::string& GetName() const { return m_Name; }
 
         inline bool IsPressed() const { return m_State == KeyState::DOWN; }
-        inline bool IsUp() const { return (m_State == KeyState::UP || m_State == KeyState::NONE); }
+        inline bool IsUp() const { return m_State == KeyState::UP; }
 
     };
 
