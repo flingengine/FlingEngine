@@ -28,6 +28,7 @@ include_directories( external/glfw/include )
 include_directories( external/glm )
 include_directories( external/spdlog/include )
 include_directories( external/inih )
+include_directories( external/entt/single_include )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

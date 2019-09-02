@@ -13,3 +13,6 @@
 [submodule "external/inih"]
 	path = external/inih
 	url = https://github.com/flingengine/inih.git
+[submodule "external/entt"]
+	path = external/entt
+	url = https://github.com/skypjack/entt.git
