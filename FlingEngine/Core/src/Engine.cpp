@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Engine.h"
+#include <cstdint>
 
 namespace Fling
 {
@@ -49,6 +50,8 @@ namespace Fling
 
 		Renderer::Get().Init();
 
+		ComponentManager::Get().Init();
+
 		World::Get().Init();
 	}
 
@@ -86,7 +89,7 @@ namespace Fling
 			{
 				F_LOG_TRACE("Mouse 2 pressed!");
 			}
-
+			
             // Update timing
 			Timing.Update();
             DeltaTime = Timing.GetDeltaTime();
@@ -105,6 +108,7 @@ namespace Fling
 
 	void Engine::Shutdown()
 	{
+		ComponentManager::Get().Shutdown();
 		World::Get().Shutdown();
 		
 		// Cleanup any resources
