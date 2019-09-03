@@ -9,7 +9,7 @@
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
 #include "World.h"
-
+#include <nlohmann/json.hpp>
 
 namespace Fling
 {

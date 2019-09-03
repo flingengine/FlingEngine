@@ -36,6 +36,10 @@ namespace Fling
         F_LOG_TRACE("Fling Engine Logs dir:   \t{}", Fling::FlingPaths::EngineLogDir());
         F_LOG_TRACE("Fling Engine Config dir: \t{}", Fling::FlingPaths::EngineConfigDir());
 
+	#ifdef FLING_SHIPPING
+		F_LOG_TRACE("Fling Engine: Shipping");
+	#endif
+
         // Load command line args and any ini files
         //#TODO Handle command line args
         UINT32 ArgsLoaded = FlingConfig::Get().LoadCommandLineOpts(m_CmdLineArgCount, m_CmdLineArgs);
@@ -89,7 +93,7 @@ namespace Fling
 			{
 				F_LOG_TRACE("Mouse 2 pressed!");
 			}
-			
+
             // Update timing
 			Timing.Update();
             DeltaTime = Timing.GetDeltaTime();
