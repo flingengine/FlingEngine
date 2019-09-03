@@ -16,7 +16,7 @@ namespace Fling
 		Resource() = default;
 		virtual ~Resource() = default;
 
-	private:
+	protected:
 
 		/** GUID of this resource */
 		Guid m_GUID;
