@@ -14,13 +14,5 @@ if not exist "build" mkdir build
 :: Clone any external libararies or other things that we are using 
 git submodule update --init --recursive
 
-:: Build GLFW in release and debug so that we can actually use it
-
-::cd "external/glfw"
-::cmake . -A x64
-::cmake --build . --target ALL_BUILD --config Release
-::cmake --build . --target ALL_BUILD --config Debug
-
 :: Run cmake to generate the local x64 files in the build folder
-::cd "../.."
-cmake . -A x64 -B build
+cmake . -G "Visual Studio 15 2017" -A x64 -B build

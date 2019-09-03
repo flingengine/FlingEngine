@@ -6,6 +6,10 @@ namespace Fling
 
     class Image : public Resource
     {
+    public:
+
+        
+
 
     }
 

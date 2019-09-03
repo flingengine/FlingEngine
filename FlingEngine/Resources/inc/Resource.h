@@ -8,17 +8,21 @@ namespace Fling
 	/**
 	* Base class that represents a loaded resource in the engine
 	*/
-	class FLING_API Resource
+	class Resource
 	{
 		friend class ResourceManager;
 
 	public:
-		Resource() = default;
-		virtual ~Resource() = default;
+        Resource(Fling::Guid t_ID)
+            : m_Guid(t_ID)
+        { }
+		
+        Resource() = default;
 
-	protected:
+        virtual ~Resource() = default;
+    
+    protected:
 
-		/** GUID of this resource */
-		Guid m_GUID;
+        Fling::Guid m_Guid;
 	};
 }	// namespace Fling

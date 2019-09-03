@@ -28,7 +28,7 @@ namespace Fling
 		// Unload all assets BB
 	}
 
-	std::shared_ptr<Resource> ResourceManager::GetResource(const Guid& t_ID) const
+	std::shared_ptr<Resource> ResourceManager::GetResource(Guid t_ID) const
 	{
 		ResourceMapConstIt It = m_ResourceMap.find(t_ID);
 		if (It != m_ResourceMap.end())
@@ -39,9 +39,9 @@ namespace Fling
 		return nullptr;
 	}
 
-	bool ResourceManager::IsLoaded(const Guid& t_ID) const
+	bool ResourceManager::IsLoaded(Guid t_ID) const
 	{
-		return (m_ResourceMap.find(t_ID) != m_ResourceMap.end());
+        return (m_ResourceMap.find(t_ID) != m_ResourceMap.end());
 	}
 
 	std::vector<char> ResourceManager::ReadFile(const std::string& t_Filename)

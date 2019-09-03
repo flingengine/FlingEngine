@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Singleton.hpp"
-#include "Guid.h"
 #include "Resource.h"
+#include "FlingTypes.h" // Guid
 
 #include <fstream>
 #include <vector>
@@ -19,23 +19,32 @@ namespace Fling
 		virtual void Shutdown() override;
 
 		template<class T, class ...ARGS>
-		std::shared_ptr<T> AddResource(ARGS&& ... args)
+		std::shared_ptr<T> LoadResource(Guid t_ID, ARGS&& ... args)
 		{
+            // If this resource exists already then just return that
+            if (std::shared_ptr<T> Existing = GetResourceOfType<T>(t_ID))
+            {
+                return Existing;
+            }
 
+            // Create a new resource of type T and return it
+            std::shared_ptr<Resource> NewResource = std::make_shared<T>(std::forward<ARGS>(args)...);
+            NewResource->m_Guid = t_ID;
 
-
+            //m_ResourceMap.emplace()
+            return NewResource;
 		}
 
 		template <class T>
-		std::shared_ptr<T> GetResourceOfType(const Guid& t_ID) const;
+		std::shared_ptr<T> GetResourceOfType(Guid t_ID) const;
 
-		std::shared_ptr<Resource> GetResource(const Guid& t_ID) const;
+		std::shared_ptr<Resource> GetResource(Guid t_ID) const;
 
 		/**
 		* Check if there is a resource with this ID loaded or not
 		* @return	If the resource ID is loaded or not
 		*/
-		bool IsLoaded(const Guid& t_ID) const;
+		bool IsLoaded(Guid t_ID) const;
 
 		// #TODO Make this a file resource
 		/**
@@ -52,15 +61,13 @@ namespace Fling
 
 		typedef std::map<Fling::Guid, std::shared_ptr<Resource>>::iterator ResourceMapIt;
 		typedef std::map<Fling::Guid, std::shared_ptr<Resource>>::const_iterator ResourceMapConstIt;
-
-		/** Map of currently loaded resources */
+        
+		///** Map of currently loaded resources */
 		std::map<Fling::Guid, std::shared_ptr<Resource>> m_ResourceMap;
-
 	};
 
-
 	template<class T>
-	inline std::shared_ptr<T> ResourceManager::GetResourceOfType(const Guid& t_ID) const
+	inline std::shared_ptr<T> ResourceManager::GetResourceOfType(Guid t_ID) const
 	{
 		if (std::shared_ptr<Resource> Res = GetResource(t_ID))
 		{
