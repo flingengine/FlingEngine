@@ -28,23 +28,24 @@ namespace Fling
             }
 
             // Create a new resource of type T and return it
-            std::shared_ptr<Resource> NewResource = std::make_shared<T>(std::forward<ARGS>(args)...);
-            NewResource->m_Guid = t_ID;
+            std::shared_ptr<Resource> NewResource = std::make_shared<T>(t_ID, std::forward<ARGS>(args)...);
+            //NewResource->m_Guid = t_ID;
 
-            //m_ResourceMap.emplace()
-            return NewResource;
+            // Keep track of this resource in the map
+            m_ResourceMap[t_ID] = NewResource;
+            return std::static_pointer_cast<T>( NewResource );
 		}
 
 		template <class T>
-		std::shared_ptr<T> GetResourceOfType(Guid t_ID) const;
+		std::shared_ptr<T> GetResourceOfType(Guid_Handle t_ID) const;
 
-		std::shared_ptr<Resource> GetResource(Guid t_ID) const;
+		std::shared_ptr<Resource> GetResource(Guid_Handle t_ID) const;
 
 		/**
 		* Check if there is a resource with this ID loaded or not
 		* @return	If the resource ID is loaded or not
 		*/
-		bool IsLoaded(Guid t_ID) const;
+		bool IsLoaded(Guid_Handle t_ID) const;
 
 		// #TODO Make this a file resource
 		/**
@@ -59,19 +60,19 @@ namespace Fling
 
 	private:
 
-		typedef std::map<Fling::Guid, std::shared_ptr<Resource>>::iterator ResourceMapIt;
-		typedef std::map<Fling::Guid, std::shared_ptr<Resource>>::const_iterator ResourceMapConstIt;
+		typedef std::map<Fling::Guid_Handle, std::shared_ptr<Resource>>::iterator ResourceMapIt;
+		typedef std::map<Fling::Guid_Handle, std::shared_ptr<Resource>>::const_iterator ResourceMapConstIt;
         
 		///** Map of currently loaded resources */
-		std::map<Fling::Guid, std::shared_ptr<Resource>> m_ResourceMap;
+		std::map<Fling::Guid_Handle, std::shared_ptr<Resource>> m_ResourceMap;
 	};
 
 	template<class T>
-	inline std::shared_ptr<T> ResourceManager::GetResourceOfType(Guid t_ID) const
+	inline std::shared_ptr<T> ResourceManager::GetResourceOfType(Guid_Handle t_ID) const
 	{
 		if (std::shared_ptr<Resource> Res = GetResource(t_ID))
 		{
-			reinterpret_cast<std::shared_ptr<T>>(Res);
+			return std::static_pointer_cast<T>(Res);
 		}
 		return nullptr;
 	}

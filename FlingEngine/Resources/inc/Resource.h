@@ -13,12 +13,12 @@ namespace Fling
 		friend class ResourceManager;
 
 	public:
-        Resource(Fling::Guid t_ID)
+        //Resource() = default;
+
+        explicit Resource(Fling::Guid t_ID)
             : m_Guid(t_ID)
         { }
 		
-        Resource() = default;
-
         virtual ~Resource() = default;
     
     protected:

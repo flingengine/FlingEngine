@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Engine.h"
 #include <cstdint>
+#include "File.h"
 
 namespace Fling
 {
@@ -71,6 +72,8 @@ namespace Fling
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
 
+        std::shared_ptr<File> TestFile = ResourceManager::Get().LoadResource<File>("TestFile.txt"_hs);
+        
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
 			Renderer.Tick();

@@ -15,10 +15,9 @@ typedef signed short            INT16;
 typedef int32_t                 INT32;
 typedef int64_t                 INT64;
 
-#define FLING_GUID( t_String ) entt::hashed_string{ t_String }
-
 namespace Fling
 {
     // Use hashed strings as Guid's
-    typedef entt::hashed_string::hash_type Guid;
+    typedef entt::hashed_string                     Guid;
+    typedef entt::hashed_string::hash_type          Guid_Handle;
 }
