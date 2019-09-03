@@ -6,10 +6,12 @@ namespace Fling
 {
 	struct FLING_API Version
 	{
-		static int Major;
-		static int Minor;
-		static int Patch;
+		int Major;
+		int Minor;
+		int Patch;
 
-		static const std::string& ToString();
+		std::string ToString() const;
+		
+		static Version EngineVersion;
 	};
 }	// namespace Fling

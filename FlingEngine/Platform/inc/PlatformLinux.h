@@ -18,4 +18,9 @@
 #       define FLING_EXTERN         extern
 #   endif
 
+#include "DesktopWindow.h"
+
+#include "Input/LinuxKeycodes.h"
+#include "Input/LinuxInput.h"
+
 #endif	// FLING_LINUX

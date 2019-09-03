@@ -1,22 +1,15 @@
 #include "pch.h"
 #include "Engine.h"
+#include <cstdint>
 
 namespace Fling
 {
-	Engine::Engine()
-	{
-	}
-
     Engine::Engine(int argc, char* argv[])
         : Engine()
     {
         m_CmdLineArgCount = argc;
         m_CmdLineArgs = argv;
     }
-
-	Engine::~Engine()
-	{
-	}
 
 	UINT64 Engine::Run()
 	{
@@ -36,11 +29,16 @@ namespace Fling
         ResourceManager::Get().Init();
 		Timing::Get().Init();
         FlingConfig::Get().Init();
+		Input::Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
         F_LOG_TRACE("Fling Engine Logs dir:   \t{}", Fling::FlingPaths::EngineLogDir());
         F_LOG_TRACE("Fling Engine Config dir: \t{}", Fling::FlingPaths::EngineConfigDir());
+
+	#ifdef FLING_SHIPPING
+		F_LOG_TRACE("Fling Engine: Shipping");
+	#endif
 
         // Load command line args and any ini files
         //#TODO Handle command line args
@@ -50,51 +48,75 @@ namespace Fling
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
 
         Renderer::Get().CreateGameWindow(
-            ConfigLoaded ? FlingConfig::Get().GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
-            ConfigLoaded ? FlingConfig::Get().GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
+            ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
+            ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
         );
 
 		Renderer::Get().Init();
+
+		ComponentManager::Get().Init();
+
+		World::Get().Init();
 	}
 
 	void Engine::Tick()
 	{
-        // Calculate a fallback delta time in case the engine ever gets out of sync
+        // Calculate a fall back delta time in case the engine ever gets out of sync
         const static float FallbackDeltaTime = 1.0f / 60.0f;
         const static float MaxDeltaTime = 1.0f;
 
-        float deltaTime = FallbackDeltaTime;
+        float DeltaTime = FallbackDeltaTime;
+		
+		World& World = World::Get();
+		Renderer& Renderer = Renderer::Get();
+		Timing& Timing = Timing::Get();
 
-		while( !glfwWindowShouldClose( Renderer::Get().Window() ) )
+		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
-            // Update events
-			glfwPollEvents();
+			Renderer.Tick();
 
-            // #TODO Provide a game play layer that we can use to put any application
-            // specific update systems in (i.e. an actual scene graph model)
-
-            // Renderer
-            Renderer::Get().DrawFrame();
+			World.Update(DeltaTime);
+			
+			Renderer.DrawFrame();
             
+			if(Input::IsKeyDown(KeyNames::FL_KEY_W))
+			{
+				F_LOG_TRACE("W is pressed!");
+			}
+
+			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_1))
+			{
+				F_LOG_TRACE("Mouse 1 pressed!");
+			}
+
+			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_2))
+			{
+				F_LOG_TRACE("Mouse 2 pressed!");
+			}
+
             // Update timing
-            Timing::Get().Update();
-            deltaTime = Timing::Get().GetDeltaTime();
+			Timing.Update();
+            DeltaTime = Timing.GetDeltaTime();
             
             // If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
-            if (deltaTime >= MaxDeltaTime)
+            if (DeltaTime >= MaxDeltaTime)
             {
-                deltaTime = FallbackDeltaTime;
+				DeltaTime = FallbackDeltaTime;
             }
 		}
 
         // Pre-shutdown options here
-        Renderer::Get().PrepShutdown();
+		Renderer.PrepShutdown();
 	}
 
 	void Engine::Shutdown()
 	{
+		ComponentManager::Get().Shutdown();
+		World::Get().Shutdown();
+		
 		// Cleanup any resources
+		Input::Shutdown();
         ResourceManager::Get().Shutdown();
 		Logger::Get().Shutdown();
         FlingConfig::Get().Shutdown();

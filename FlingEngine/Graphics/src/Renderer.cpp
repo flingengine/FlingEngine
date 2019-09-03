@@ -136,7 +136,7 @@ namespace Fling
 
 	void Renderer::ReadConfig()
 	{
-		m_EnableValidationLayers = FlingConfig::Get().GetBool("Vulkan", "EnableValidationLayers");
+		m_EnableValidationLayers = FlingConfig::GetBool("Vulkan", "EnableValidationLayers");
 		F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", m_EnableValidationLayers);
 	}
 
@@ -153,9 +153,9 @@ namespace Fling
 		// the pNext values 
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Engine Bay 0.1";
-		appInfo.applicationVersion = VK_MAKE_VERSION( 0, 1, 0 );
+		appInfo.applicationVersion = VK_MAKE_VERSION(Version::EngineVersion.Major, Version::EngineVersion.Minor, Version::EngineVersion.Patch);
 		appInfo.pEngineName = "Fling Engine";
-		appInfo.engineVersion = VK_MAKE_VERSION( 0, 1, 0 );
+		appInfo.engineVersion = VK_MAKE_VERSION(Version::EngineVersion.Major, Version::EngineVersion.Minor, Version::EngineVersion.Patch);
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
 		// Instance creation info, similar to how DX11 worked
@@ -334,10 +334,7 @@ namespace Fling
 
     void Renderer::CreateSurface()
     {
-        if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to created the window surface!");
-        }
+		m_CurrentWindow->CreateSurface(m_Instance, &m_Surface);
     }
 
     void Renderer::CreateSwapChain()
@@ -836,14 +833,7 @@ namespace Fling
 
     void Renderer::RecreateSwapChain()
     {
-        // If the window is minimized then wait for it to come to the foreground before displaying it again
-        // #TODO: Handle minimizing windows asynchronously or in a way that the renderer doesn't block
-        int width = 0, height = 0;
-        while (width == 0 || height == 0) 
-        {
-            glfwGetFramebufferSize(m_Window, &width, &height);
-            glfwWaitEvents();
-        }
+		m_CurrentWindow->RecreateSwapChain();
 
         vkDeviceWaitIdle(m_Device);
 
@@ -1139,10 +1129,10 @@ namespace Fling
         }
         else
         {
-            int width, height;
-            glfwGetFramebufferSize(m_Window, &width, &height);
+			UINT32 width = m_CurrentWindow->GetWidth();
+			UINT32 height = m_CurrentWindow->GetHeight();
 
-            VkExtent2D actualExtent = { static_cast<UINT32>(width), static_cast<UINT32>(height) };
+            VkExtent2D actualExtent = { width, height };
 
             actualExtent.width = std::max(t_Capabilies.minImageExtent.width, 
                 std::min(t_Capabilies.maxImageExtent.width, actualExtent.width));
@@ -1252,44 +1242,58 @@ namespace Fling
 		}
 	}
 
-    void Renderer::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
+    void Renderer::FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height)
     {
         Renderer::Get().m_FrameBufferResized = true;
     }
 
 	void Renderer::CreateGameWindow( const UINT32 t_width, const UINT32 t_height )
 	{
+		WindowProps Props = {};
+		Props.m_Height = t_width;
+		Props.m_Width = t_width;
+
         // Ensure the window width is valid
         if (t_width > 0 && t_width < 5000 && t_height > 0 && t_height < 5000)
         {
-            m_WindowWidth = t_width;
-            m_WindowHeight = t_height;
+			Props.m_Height = t_width;
+			Props.m_Height = t_height;
         }
         else
         {
             F_LOG_ERROR("Window Width of {} or height of {} is invalid! Using default values", t_width, t_height);
-            m_WindowWidth = FLING_DEFAULT_WINDOW_WIDTH;
-            m_WindowHeight = FLING_DEFAULT_WINDOW_HEIGHT;
+			Props.m_Height = FLING_DEFAULT_WINDOW_WIDTH;
+			Props.m_Height = FLING_DEFAULT_WINDOW_HEIGHT;
         }
-
-		glfwInit();
-
-		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
 		
 		// Get the window title
-		std::string Title = FlingConfig::Get().GetString("Engine", "WindowTitle");
-        if(FlingConfig::Get().GetBool("Engine", "DisplayVersionInfoInTitle", true))
+		std::string Title = FlingConfig::GetString("Engine", "WindowTitle");
+
+        if(FlingConfig::GetBool("Engine", "DisplayVersionInfoInTitle", true))
         {
-            Title += " // Version: " + Version::ToString();
+            Title += " // Version: " + Version::EngineVersion.ToString();
         }
 		
-        if(FlingConfig::Get().GetBool("Engine", "DisplayBuildInfoInTitle", true))
+        if(FlingConfig::GetBool("Engine", "DisplayBuildInfoInTitle", true))
         {
             Title += " // Built from " + (std::string)(GIT_BRANCH) + " @ " + GIT_COMMIT_HASH;
         }
 
-		m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
-        glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
+		Props.m_Title = Title;
+
+		m_CurrentWindow = FlingWindow::Create(Props);
+
+		// #TODO: Add a resize callback to the window!
+
+		//m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
+		//DesktopWindow* Window = static_cast<DesktopWindow*>(m_CurrentWindow);
+		
+        //glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
+	}
+
+	void Renderer::Tick()
+	{
+		m_CurrentWindow->Update();
 	}
 
     void Renderer::DrawFrame()
@@ -1421,9 +1425,15 @@ namespace Fling
         vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 		vkDestroyInstance( m_Instance, nullptr );
 
-		// Cleanup GLFW --------
-		glfwDestroyWindow( m_Window );
-		glfwTerminate();
+		// Cleanup Window --------
+		if (m_CurrentWindow)
+		{
+			delete m_CurrentWindow;
+			m_CurrentWindow = nullptr;
+		}
+
+		//glfwDestroyWindow(m_Window);
+		//glfwTerminate();
 	}
 
 }	// namespace Fling

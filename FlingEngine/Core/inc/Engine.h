@@ -5,21 +5,23 @@
 #include "Timing.h"
 #include "ResourceManager.h"
 #include "Renderer.h"
+#include "ComponentManager.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
+#include "World.h"
+#include <nlohmann/json.hpp>
 
 namespace Fling
 {
 	class FLING_API Engine : public NonCopyable
 	{
-
 	public:
 
-		Engine();
+		Engine() = default;
 
         Engine(int argc, char* argv[]);
 
-		~Engine();
+		~Engine() = default;
 
 		/// <summary>
 		/// Run the engine
@@ -32,20 +34,19 @@ namespace Fling
 		/// <summary>
 		/// Start any systems or subsystems that may be needed
 		/// </summary>
-		virtual void Startup();
+		void Startup();
 
 		/// <summary>
 		/// Initial tick for the engine frame
 		/// </summary>
-		virtual void Tick();
+		void Tick();
 
 		/// <summary>
 		/// Shutdown all engine systems and do any necessary cleanup
 		/// </summary>
-		virtual void Shutdown();
+		void Shutdown();
 
         int m_CmdLineArgCount = 0;
         char** m_CmdLineArgs = nullptr;
-
 	};
 }	// namespace Fling

@@ -3,32 +3,53 @@
 
 namespace Fling
 {
-    std::string FlingPaths::BinaryDir()
+    const std::string& FlingPaths::BinaryDir()
     {
-        return "";
+    #ifdef FLING_SHIPPING
+        static std::string BinDir = "";
+    #else
+        static std::string BinDir = "";
+    #endif
+        return BinDir;
     }
     
-    std::string FlingPaths::EngineAssetsDir()
+    const std::string& FlingPaths::EngineAssetsDir()
     {
+    #ifdef FLING_SHIPPING
+        static std::string AssetPath = "Assets";
+    #else
         static std::string AssetPath = "@FLING_ROOT_DIR@/Assets";
+    #endif
         return AssetPath;
     }
 
-    std::string FlingPaths::EngineLogDir()
+    const std::string& FlingPaths::EngineLogDir()
     {
+    #ifdef FLING_SHIPPING
+        static std::string LogPath = "Logs";
+    #else
         static std::string LogPath = "@FLING_ROOT_DIR@/Logs";
+    #endif
         return LogPath;
     }
 
-    std::string FlingPaths::EngineConfigDir()
+    const std::string& FlingPaths::EngineConfigDir()
     {
+    #ifdef FLING_SHIPPING
+        static std::string ConfigPath = "Config";
+    #else
         static std::string ConfigPath = "@FLING_ROOT_DIR@/Config";
+    #endif
         return ConfigPath;
     }
 
-    std::string FlingPaths::EngineSourceDir()
+    const std::string& FlingPaths::EngineSourceDir()
     {
-        return "@FLING_ENGINE_SOURCE_PATH@";
+    #ifdef FLING_SHIPPING
+        static std::string SourceDir = "";
+    #else
+        static std::string SourceDir = "@FLING_ENGINE_SOURCE_PATH@";
+    #endif
+        return SourceDir;
     }
-
 }   // Fling

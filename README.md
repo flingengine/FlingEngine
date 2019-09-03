@@ -9,10 +9,27 @@ I am basing the core of the rendering pipeline off of the
 [Vulkan Tutorial](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers)
 
 # Getting Started
+
 There are a few basic steps to compiling Fling on your platform. 
 
 ## [CMake 3.13](https://cmake.org/download/) or higher!
 This project requires CMake 3.13 or higher, you can install it [here](https://cmake.org/download/).
+
+## For Linux
+This project uses GLFW, so you will need to install those libraries to your machine.
+GLFW also depends on having Doxygen, so you may want to have that as well.
+
+Ubuntu:
+```
+sudo apt-get update
+sudo apt-get install doxygen
+sudo apt-get install -y libglm-dev libxcb-dri3-0 libxcb-present0
+sudo apt-get install -y libpciaccess0 libpng-dev libxcb-keysyms1-dev
+sudo apt-get install -y libxcb-dri3-dev libx11-dev libmirclient-dev
+sudo apt-get install -y libwayland-dev libxrandr-dev
+sudo apt-get install -y libglfw3-dev
+sudo apt-get install -y xorg-dev
+```
 
 ## Vulkan SDK
 Obviously this project is build using Vulkan, so you will need to install it before compiling 
