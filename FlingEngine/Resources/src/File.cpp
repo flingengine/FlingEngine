@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "Image.h"
 #include "File.h"
 
 namespace Fling
@@ -12,15 +11,13 @@ namespace Fling
 
     void File::LoadFile()
     {
-        const std::string t_Filename = FlingPaths::EngineAssetsDir() + GetGuidString();
+        const std::string FilePath = GetFilepathReleativeToAssets();
         
-        std::ifstream File(t_Filename, std::ios::ate | std::ios::binary);
-
-        F_LOG_WARN("Load file: {}", t_Filename);
+        std::ifstream File(FilePath, std::ios::ate | std::ios::binary);
 
         if (!File.is_open())
         {
-            F_LOG_ERROR("Failed to open file: {}", t_Filename);
+            F_LOG_ERROR("Failed to open file: {}", FilePath);
         }
         else
         {
@@ -32,5 +29,4 @@ namespace Fling
             File.close();
         }
     }
-
 } // namespace Fling

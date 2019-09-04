@@ -72,8 +72,6 @@ namespace Fling
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
 
-        std::shared_ptr<File> TestFile = ResourceManager::Get().LoadResource<File>("TestFile.txt"_hs);
-        
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
 			Renderer.Tick();
@@ -81,21 +79,6 @@ namespace Fling
 			World.Update(DeltaTime);
 			
 			Renderer.DrawFrame();
-            
-			if(Input::IsKeyDown(KeyNames::FL_KEY_W))
-			{
-				F_LOG_TRACE("W is pressed!");
-			}
-
-			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_1))
-			{
-				F_LOG_TRACE("Mouse 1 pressed!");
-			}
-
-			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_2))
-			{
-				F_LOG_TRACE("Mouse 2 pressed!");
-			}
 
             // Update timing
 			Timing.Update();

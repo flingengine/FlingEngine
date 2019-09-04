@@ -3,5 +3,8 @@
 
 namespace Fling
 {
-
+    std::string Resource::GetFilepathReleativeToAssets() const
+    {
+        return (FlingPaths::EngineAssetsDir() + "/" + GetGuidString());
+    }
 }

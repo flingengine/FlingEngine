@@ -4,12 +4,11 @@
 
 #include <fstream>
 #include <vector>
-#include <map>
 
 namespace Fling
 {
     /**
-     * @brief   A file is a basic text file that contains a basic string 
+     * @brief   A file is a basic text file that contains a basic text file
      */
     class File : public Resource
     {
@@ -18,8 +17,7 @@ namespace Fling
         /**
          * @brief Construct a new File object
          * 
-         * @param t_ID The GUID that represents the file path to this file. 
-         * @note All file paths are relative to the ASSETS directory.
+         * @param t_ID              The GUID that represents the file path to this file.
          */
         explicit File(Guid t_ID);
         
@@ -37,12 +35,18 @@ namespace Fling
          */
         size_t GetFileLength() const { return m_Characters.size(); }
 
+        /**
+         * @brief   Returns true if this file resource is loaded or not (i.e. has any characters in the file)
+         */
+        bool IsLoaded() const { return m_Characters.size() != 0; }
+
     private:
 
         /**
-         * @brief Loads the file based on Guid path. 
+         * @brief Loads the file based on Guid path.
          * @note All Guid paths are relative to the assets directory. 
          */
+
         void LoadFile();
 
         /** Array of characters that represents this file */

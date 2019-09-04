@@ -34,6 +34,11 @@ namespace Fling
 		 */
 		std::string GetGuidString() const { return m_Guid.data(); }
 
+        /**
+         * @brief   Returns the full file path that is relative to the assets path based on the GUID of this resource. 
+         */
+        std::string GetFilepathReleativeToAssets() const;
+
     protected:
 
         Fling::Guid m_Guid;

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Level.h"
 #include "ResourceManager.h"
-#include "File.h"
+#include "JsonFile.h"
 
 namespace Fling
 {
@@ -17,10 +17,11 @@ namespace Fling
 
     void Level::LoadLevel()
     {
-        std::shared_ptr<File> VertShaderCode = 
-            ResourceManager::Get().LoadResource<File>(entt::hashed_string{ m_LevelFileName.c_str() });
+        std::shared_ptr<JsonFile> LevelFileData = 
+            ResourceManager::Get().LoadResource<JsonFile>(entt::hashed_string{ m_LevelFileName.c_str() });
 
 		// #TODO: Parse this data here from JSON!
+        
     }
 
     void Level::PostLoad()

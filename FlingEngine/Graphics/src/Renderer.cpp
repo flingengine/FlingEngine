@@ -509,13 +509,11 @@ namespace Fling
     void Renderer::CreateGraphicsPipeline()
     {
         // Load shaders
-        // #TODO Load each file in a directory
         // #TODO Create a way to re-compile shaders in-engine at runtime
-        //std::vector<char> VertShaderCode = ResourceManager::ReadFile(FlingPaths::EngineAssetsDir() + "/Shaders/vert.spv");
-        std::shared_ptr<File> VertShaderCode = ResourceManager::Get().LoadResource<File>("/Shaders/vert.spv"_hs);
+        std::shared_ptr<File> VertShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/vert.spv"_hs);
         assert(VertShaderCode);
 
-        std::shared_ptr<File> FragShaderCode = ResourceManager::Get().LoadResource<File>("/Shaders/frag.spv"_hs);
+        std::shared_ptr<File> FragShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/frag.spv"_hs);
         assert(FragShaderCode);
 
         // Create modules
