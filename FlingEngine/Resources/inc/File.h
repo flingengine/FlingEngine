@@ -23,8 +23,18 @@ namespace Fling
          */
         explicit File(Guid t_ID);
         
+        /**
+         * @brief Get char* that represents the text in this file
+         * 
+         * @return const char* 
+         */
         const char* GetData() const { return m_Characters.data(); }
 
+        /**
+         * @brief Get the File Length object
+         * 
+         * @return size_t Length of the file in characters
+         */
         size_t GetFileLength() const { return m_Characters.size(); }
 
     private:

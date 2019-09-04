@@ -19,8 +19,19 @@ namespace Fling
 		
         virtual ~Resource() = default;
 
-		Fling::Guid_Handle GetHUIDHandle() const {return m_Guid; }
+		/**
+		 * @brief 	Get GUID handle (just an int) for this resources guid. Use this to pass around 
+		 * 			to different functions instead of the whole GUID
+		 * 
+		 * @return Fling::Guid_Handle 
+		 */
+		Fling::Guid_Handle GetGuidHandle() const { return m_Guid; }
 
+		/**
+		 * @brief Get the human-readable string representation of this GUID
+		 * 
+		 * @return std::string 
+		 */
 		std::string GetGuidString() const { return m_Guid.data(); }
 
     protected:

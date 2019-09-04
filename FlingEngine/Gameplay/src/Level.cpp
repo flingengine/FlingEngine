@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "Level.h"
 #include "ResourceManager.h"
+#include "File.h"
 
 namespace Fling
 {
     Level::Level(const std::string& t_LevelFile)
+        : m_LevelFileName(t_LevelFile)
     {
-		m_LevelFileName = t_LevelFile;
-
-        // Load in a file resource based on this file
+		// Load in a file resource based on this file
         LoadLevel();
 
         // Parse the file appropriately!
@@ -17,13 +17,15 @@ namespace Fling
 
     void Level::LoadLevel()
     {
-		std::vector<char> LevelData = ResourceManager::ReadFile(m_LevelFileName);
+        std::shared_ptr<File> VertShaderCode = 
+            ResourceManager::Get().LoadResource<File>(entt::hashed_string{ m_LevelFileName.c_str() });
+
 		// #TODO: Parse this data here from JSON!
     }
 
     void Level::PostLoad()
     {
-
+        F_LOG_TRACE("Level '{}' Post Load", m_LevelFileName);
     }
 
     Level::~Level()
@@ -42,6 +44,6 @@ namespace Fling
 
     void Level::Unload()
     {
-
+        F_LOG_TRACE("Unload Level '{}'", m_LevelFileName);
     }
 }   // namespace Fling
