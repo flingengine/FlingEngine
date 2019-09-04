@@ -13,14 +13,16 @@ namespace Fling
 		friend class ResourceManager;
 
 	public:
-        //Resource() = default;
-
         explicit Resource(Fling::Guid t_ID)
             : m_Guid(t_ID)
         { }
 		
         virtual ~Resource() = default;
-    
+
+		Fling::Guid_Handle GetHUIDHandle() const {return m_Guid; }
+
+		std::string GetGuidString() const { return m_Guid.data(); }
+
     protected:
 
         Fling::Guid m_Guid;

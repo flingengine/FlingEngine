@@ -47,17 +47,6 @@ namespace Fling
 		*/
 		bool IsLoaded(Guid_Handle t_ID) const;
 
-		// #TODO Make this a file resource
-		/**
-		* Read in the given file name and place it's contents into a vector
-		* of char's
-		*
-		* @param 	Name of the file to read in
-		*
-		* @return   A vector of char's that are the contents of the file
-		*/
-		static std::vector<char> ReadFile(const std::string& t_Filename);
-
 	private:
 
 		typedef std::map<Fling::Guid_Handle, std::shared_ptr<Resource>>::iterator ResourceMapIt;

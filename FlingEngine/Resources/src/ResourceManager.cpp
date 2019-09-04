@@ -43,26 +43,4 @@ namespace Fling
 	{
         return (m_ResourceMap.find(t_ID) != m_ResourceMap.end());
 	}
-
-	std::vector<char> ResourceManager::ReadFile(const std::string& t_Filename)
-	{
-		std::vector<char> Buffer;
-		std::ifstream File(t_Filename, std::ios::ate | std::ios::binary);
-
-		if (!File.is_open())
-		{
-			F_LOG_ERROR("Failed to open file: {}", t_Filename);
-		}
-		else
-		{
-			size_t Filesize = (size_t)(File.tellg());
-			Buffer.resize(Filesize);
-
-			File.seekg(0);
-			File.read(Buffer.data(), Filesize);
-			File.close();
-		}
-
-		return Buffer;
-	}
 }	// namespace Fling
