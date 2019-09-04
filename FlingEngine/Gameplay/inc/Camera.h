@@ -3,15 +3,15 @@
 
 namespace Fling
 {
-	constexper float DEFAULT_NEAR_PLANE = 1.0f;
-	constexper float DEFAULT_FAR_PLANE = 1000.0f;
-	constexper float DEFAULT_FOV = 45.0f;
-	constexper float DEFAULT_MOUSE_SENSITIVITY = 2.5f;
-	constexper float DEFAULT_ZOOM = 45.0f;
-	constexper float DEFAULT_SPEED = 2.5f;
-
 	class Camera
 	{
+		const float DEFAULT_NEAR_PLANE = 1.0f;
+		const float DEFAULT_FAR_PLANE = 1000.0f;
+		const float DEFAULT_FOV = 45.0f;
+		const float DEFAULT_MOUSE_SENSITIVITY = 2.5f;
+		const float DEFAULT_ZOOM = 45.0f;
+		const float DEFAULT_SPEED = 2.5f;
+
 	public:
 		Camera() :
 			m_nearPlane(DEFAULT_NEAR_PLANE),
@@ -21,10 +21,10 @@ namespace Fling
 			m_up(glm::vec3(0.0f, 1.0f, 0.0f)),
 			m_yaw(-90.0f),
 			m_pitch(0.0f),
-			m_front(glm::vec3(0.0f, 0.0f, -1.0f),
+			m_front(glm::vec3(0.0f, 0.0f, -1.0f)),
 			m_speed(DEFAULT_SPEED),
 			m_mouseSentivity(DEFAULT_MOUSE_SENSITIVITY),
-			m_zoom(DEFAULT_ZOOM))
+			m_zoom(DEFAULT_ZOOM)
 		{
 			UpdateCameraVectors();
 		}
@@ -63,10 +63,10 @@ namespace Fling
 		void SetFieldOfView(const float& fieldOfView) { m_fieldOfView = fieldOfView; }
 
 		const glm::vec3& GetPosition() { return m_position; }
-		const glm::vec3& GetCameraSpeed() { return m_speed; }
+		const float& GetCameraSpeed() { return m_speed; }
 
 		const glm::mat4& GetViewMatrix() {return m_viewMatrix; }
-		const glm::mat4& GetProjectionMatrix() { return m_ProjectionMatrix; }
+		const glm::mat4& GetProjectionMatrix() { return m_projectionMatrix; }
 
 	private:
 		glm::mat4 m_viewMatrix;
