@@ -4,10 +4,9 @@ namespace Fling
 {
     void Camera::UpdateViewPrespective()
     {
-        m_projectionMatrix = glm::prespective(
+        m_projectionMatrix = glm::perspective(
             m_fieldOfView, 
-            m_width, 
-            m_height, 
+            m_width / m_height, 
             m_nearPlane, 
             m_nearPlane);
 

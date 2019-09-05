@@ -13,6 +13,7 @@
 
 #include "Vertex.h"
 #include "UniformBufferObject.h"
+#include "Camera.h"
 
 #include "FlingWindow.h"
 
