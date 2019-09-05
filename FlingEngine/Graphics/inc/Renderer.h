@@ -18,6 +18,9 @@
 
 namespace Fling
 {
+    // File resource
+    class File;
+
     /// <summary>
     /// Used to keep track of what properties a given queue satisfies
     /// </summary>
@@ -283,7 +286,7 @@ namespace Fling
         *
         * @return   Shader module from the given code
         */
-        VkShaderModule CreateShaderModule(const std::vector<char>& t_ShaderCode);
+        VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,
