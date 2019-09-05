@@ -21,7 +21,23 @@ namespace Fling
             ResourceManager::Get().LoadResource<JsonFile>(entt::hashed_string{ m_LevelFileName.c_str() });
 
 		// #TODO: Parse this data here from JSON!
-        
+        if(LevelFileData)
+        {
+            json& LevelData = LevelFileData->GetJsonData();
+            
+            // Load the title
+            std::string Title = LevelData["title"];
+            F_LOG_TRACE("Level Title: {}", Title);
+
+            json entityArray = LevelData [ "Entities" ];
+
+            for(const json& EntityData : entityArray)
+            {
+                // Load it in with the entity manager!
+                std::string EntityName = EntityData["name"];
+                F_LOG_TRACE("Entity name: {}", EntityName);
+            }
+        }
     }
 
     void Level::PostLoad()

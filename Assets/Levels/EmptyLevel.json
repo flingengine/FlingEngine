@@ -1,6 +1,19 @@
 {
   "title": "Empty Level",
-  "Objects": {
+  "EntityCount" : 0,
+  "Entities": [
+    {
+      "name" : "TestName",
+      
+      "components" : [
+        {
+          "name": "lol"
+        }
 
-  }
+      ]
+
+    }
+
+  ]
+
 }
