@@ -34,7 +34,7 @@ namespace Fling
             for(const json& EntityData : entityArray)
             {
                 // Load it in with the entity manager!
-                std::string EntityName = EntityData["name"];
+                const std::string& EntityName = EntityData["name"];
                 F_LOG_TRACE("Entity name: {}", EntityName);
             }
         }
