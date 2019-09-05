@@ -308,6 +308,8 @@ namespace Fling
 
         static void FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height);
 
+        void CreateTextureImage();
+
         /** The window that the game is being drawn to */
         //GLFWwindow* m_Window = nullptr;
 

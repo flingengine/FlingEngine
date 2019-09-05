@@ -3,6 +3,7 @@
 #include "ResourceManager.h"
 #include "FlingConfig.h"
 #include "File.h"
+#include "Image.h"
 
 namespace Fling
 {
@@ -125,6 +126,8 @@ namespace Fling
         CreateFrameBuffers();
         CreateCommandPool();
         
+        CreateTextureImage();
+
 		CreateVertexBuffer();
 		CreateIndexBuffer();
         CreateUniformBuffers();
@@ -853,6 +856,11 @@ namespace Fling
         CreateDescriptorSets();
         
         CreateCommandBuffers();
+    }
+
+    void Renderer::CreateTextureImage()
+    {
+        std::shared_ptr<Image> TestImage = ResourceManager::Get().LoadResource<Image>("Textures/TestImage.jpg"_hs);
     }
 
     void Renderer::CreateVertexBuffer()
