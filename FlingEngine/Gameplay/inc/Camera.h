@@ -19,6 +19,7 @@ namespace Fling
 		}
 
 		virtual ~Camera() = default;
+		virtual void Update();
 
 		/**
 		 * @brief Gets the near plane of the view frustrum
@@ -47,7 +48,7 @@ namespace Fling
 		const glm::vec3& GetPosition() const { return m_position; }
 		const glm::vec3& GetVelocity() const { return m_velocity; }
 		const glm::vec3& GetRotation() const { return m_rotation; }
-		const glm::vec3& GetAspectRatio() const { return m_aspectRatio; }
+		const float& GetAspectRatio() const { return m_aspectRatio; }
 
 		/**
 		 * @brief Gets the view matrix created by the current camera position and rotation
