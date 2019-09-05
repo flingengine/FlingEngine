@@ -861,6 +861,19 @@ namespace Fling
     void Renderer::CreateTextureImage()
     {
         std::shared_ptr<Image> TestImage = ResourceManager::Get().LoadResource<Image>("Textures/TestImage.jpg"_hs);
+        VkBuffer StagingBuffer;
+        VkDeviceMemory StagingBufferMemory;
+        VkDeviceSize ImageSize = TestImage->GetImageSize();
+        CreateBuffer(
+            ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            StagingBuffer, StagingBufferMemory);
+
+        void* Data;
+        vkMapMemory(m_Device, StagingBufferMemory, 0, ImageSize, 0, &Data);
+        memcpy(Data, TestImage->GetPixelData(), static_cast<size_t>(ImageSize));
+        vkUnmapMemory(m_Device, StagingBufferMemory);
+        
     }
 
     void Renderer::CreateVertexBuffer()

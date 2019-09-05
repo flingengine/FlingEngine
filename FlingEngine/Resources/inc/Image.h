@@ -24,7 +24,7 @@ namespace Fling
          *          Multiply by 4 because the pixel is laid out row by row with 4 bytes per pixel
          * @return INT32 
          */
-        INT32 GetImageSize() const { return m_Width * m_Height * 4; } 
+        UINT64 GetImageSize() const { return m_Width * m_Height * 4; } 
 
     private:
 

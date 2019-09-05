@@ -22,7 +22,11 @@ namespace Fling
         
         if(!m_PixelData)
         {
-            F_LOG_ERROR("Failed to load image file {}", Filepath);
+            F_LOG_ERROR("Failed to load image file: {}", Filepath);
+        }
+        else
+        {
+            F_LOG_TRACE("Loaded image file: {}", Filepath);
         }
     }
 
