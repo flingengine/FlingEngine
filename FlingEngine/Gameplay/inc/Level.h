@@ -61,6 +61,6 @@ namespace Fling
         void PostLoad();
 
         /** The owning work that this level exists in */
-        World* m_OwningWorld;
+        World* m_OwningWorld = nullptr;
     };
 }   // namespace Fling
