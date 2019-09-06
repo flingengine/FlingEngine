@@ -311,7 +311,9 @@ namespace Fling
 
         /** The window that the game is being drawn to */
         //GLFWwindow* m_Window = nullptr;
-        FirstPersonCamera camera;
+        
+		/** Camera Instance */
+		FirstPersonCamera* camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
 

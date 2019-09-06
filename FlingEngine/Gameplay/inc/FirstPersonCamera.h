@@ -1,6 +1,5 @@
 #pragma once
 #include "Camera.h"
-#include "FlingMath.h"
 
 namespace Fling 
 {
@@ -9,13 +8,16 @@ namespace Fling
         public:
             FirstPersonCamera(float width, float height);
             
-            virtual void Update(float dt) override;
+            void Update(float dt) override;
 
-			
         private:
-            float m_sensitivity;
-            
+			glm::vec3 m_front;
+			glm::vec3 m_up;
+			glm::vec3 m_right;
+			glm::vec3 m_worldUp;
+
             void UpdateViewMatrix();
             void UpdateProjectionMatrix();
+			void UpdateCameraVectors();
     };
 }

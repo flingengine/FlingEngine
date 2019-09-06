@@ -11,7 +11,7 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-        camera = FirstPersonCamera(
+        camera = new FirstPersonCamera(
 			static_cast<float>(m_CurrentWindow->GetWidth()), 
 			static_cast<float>(m_CurrentWindow->GetHeight()));
 	}
@@ -1376,29 +1376,27 @@ namespace Fling
 
     void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
     {
-        float TimeSinceStart = Timing::Get().GetTimeSinceStart();
+		float TimeSinceStart = Timing::Get().GetTimeSinceStart();
+		float DeltaTime = Timing::Get().GetDeltaTime();
 
-        // UniformBufferObject ubo = {};
-        // ubo.Model = glm::rotate(glm::mat4(1.0f), TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        // ubo.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        // ubo.Proj = glm::perspective(glm::radians(45.0f), m_SwapChainExtents.width / (float) m_SwapChainExtents.height, 0.1f, 10.0f);
-        
-        // // Invert here because glm has the Y coorinate inverted
-        // ubo.Proj[1][1] *= -1.0f;
+		camera->Update(DeltaTime);
 
-        camera.Update(Timing::Get().GetDeltaTime());
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        UniformBufferObject ubo = {};
-        ubo.Model = glm::rotate(glm::mat4(1.0f), TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.View = camera.GetViewMatrix();
-        ubo.Proj = camera.GetProjectionMatrix();
-
-        // Copy the ubo to the GPU
-        void* data = nullptr;
-        vkMapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage]);
-    }
+		UniformBufferObject ubo = {};
+		ubo.Model = model;
+		ubo.View = camera->GetViewMatrix();
+		ubo.Proj = camera->GetProjectionMatrix();
+		ubo.Proj[1][1] *= -1.0f;
+		
+		// Copy the ubo to the GPU
+		void* data = nullptr;
+		vkMapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
+		memcpy(data, &ubo, sizeof(ubo));
+		vkUnmapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage]);
+    }	
 
     void Renderer::PrepShutdown()
     {
