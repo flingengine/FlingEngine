@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Engine.h"
+#include <cstdint>
+#include "File.h"
 
 namespace Fling
 {
@@ -35,6 +37,10 @@ namespace Fling
         F_LOG_TRACE("Fling Engine Logs dir:   \t{}", Fling::FlingPaths::EngineLogDir());
         F_LOG_TRACE("Fling Engine Config dir: \t{}", Fling::FlingPaths::EngineConfigDir());
 
+	#ifdef FLING_SHIPPING
+		F_LOG_TRACE("Fling Engine: Shipping");
+	#endif
+
         // Load command line args and any ini files
         //#TODO Handle command line args
         UINT32 ArgsLoaded = FlingConfig::Get().LoadCommandLineOpts(m_CmdLineArgCount, m_CmdLineArgs);
@@ -48,6 +54,8 @@ namespace Fling
         );
 
 		Renderer::Get().Init();
+
+		ComponentManager::Get().Init();
 
 		World::Get().Init();
 	}
@@ -71,21 +79,6 @@ namespace Fling
 			World.Update(DeltaTime);
 			
 			Renderer.DrawFrame();
-            
-			if(Input::IsKeyDown(KeyNames::FL_KEY_W))
-			{
-				F_LOG_TRACE("W is pressed!");
-			}
-
-			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_1))
-			{
-				F_LOG_TRACE("Mouse 1 pressed!");
-			}
-
-			if (Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_2))
-			{
-				F_LOG_TRACE("Mouse 2 pressed!");
-			}
 
             // Update timing
 			Timing.Update();
@@ -105,6 +98,7 @@ namespace Fling
 
 	void Engine::Shutdown()
 	{
+		ComponentManager::Get().Shutdown();
 		World::Get().Shutdown();
 		
 		// Cleanup any resources

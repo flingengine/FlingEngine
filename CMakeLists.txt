@@ -6,6 +6,16 @@ project ( "FlingEngine" )
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 
+# Option for seperate "shipping" config 
+OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF ) # disabled by default
+
+IF( DEFINE_SHIPPING )
+    message( STATUS "Build set to SHIPPING configuration!" )
+    ADD_DEFINITIONS ( -DFLING_SHIPPING )
+    SET( CMAKE_BUILD_TYPE Release )
+ENDIF( DEFINE_SHIPPING )
+
+
 # Generated folder used for Cmake generated files 
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
 message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
@@ -19,6 +29,7 @@ message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 # Take care of warnings about strcpy
 if( MSVC )
     add_definitions( -D_CRT_SECURE_NO_WARNINGS )
+    add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro 
 endif()
 
 # Include external libraries
@@ -28,6 +39,8 @@ include_directories( external/glfw/include )
 include_directories( external/glm )
 include_directories( external/spdlog/include )
 include_directories( external/inih )
+include_directories( external/entt/src )
+include_directories( external/json/single_include )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

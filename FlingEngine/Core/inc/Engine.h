@@ -5,9 +5,11 @@
 #include "Timing.h"
 #include "ResourceManager.h"
 #include "Renderer.h"
+#include "ComponentManager.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
 #include "World.h"
+#include <nlohmann/json.hpp>
 
 namespace Fling
 {
