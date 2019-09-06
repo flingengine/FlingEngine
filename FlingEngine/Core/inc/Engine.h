@@ -13,6 +13,10 @@
 
 namespace Fling
 {
+	/**
+	 * @brief Core engine class of Fling. This is where the core update loop lives 
+	 * along with all startup/shutdown ordering. 
+	 */
 	class FLING_API Engine : public NonCopyable
 	{
 	public:
@@ -23,10 +27,11 @@ namespace Fling
 
 		~Engine() = default;
 
-		/// <summary>
-		/// Run the engine
-		/// </summary>
-		/// <returns>Error code or 0 for success</returns>
+		/**
+		 * @brief Run the engine (Startup, Tick until should stop, and shutodwn)
+		 * 
+		 * @return UINT64 0 for success, otherwise an error has occured
+		 */
 		UINT64 Run();
 
 	private:
@@ -48,5 +53,8 @@ namespace Fling
 
         int m_CmdLineArgCount = 0;
         char** m_CmdLineArgs = nullptr;
+
+		/** Persistant world object that can be used to load levels, entities, etc */
+		World* m_World = nullptr;
 	};
 }	// namespace Fling

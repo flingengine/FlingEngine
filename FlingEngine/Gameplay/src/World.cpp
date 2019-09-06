@@ -45,6 +45,6 @@ namespace Fling
 
 		// #TODO: Unload the current level? Depends on how we want to do async loading in the future
 
-		m_ActiveLevels.emplace_back(std::move(std::make_unique<Level>(t_LevelPath)));
+		m_ActiveLevels.emplace_back(std::move(std::make_unique<Level>(t_LevelPath, this)));
     }
 } // namespace Fling
