@@ -6,7 +6,7 @@ namespace Fling
     class FirstPersonCamera : public Camera
     {
         public:
-            FirstPersonCamera(float width, float height);
+            FirstPersonCamera(float aspectRatio);
             
             void Update(float dt) override;
 

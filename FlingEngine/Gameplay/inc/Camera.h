@@ -19,7 +19,7 @@ namespace Fling
 		}
 
 		virtual ~Camera() = default;
-		virtual void Update(float dt) {} 
+		virtual void Update(float dt) = 0;
 
 		/**
 		 * @brief Gets the near plane of the view frustrum

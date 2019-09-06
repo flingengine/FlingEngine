@@ -11,9 +11,7 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-        camera = new FirstPersonCamera(
-			static_cast<float>(m_CurrentWindow->GetWidth()), 
-			static_cast<float>(m_CurrentWindow->GetHeight()));
+		camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio());
 	}
 
     UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )

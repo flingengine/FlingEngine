@@ -4,13 +4,13 @@
 
 namespace Fling 
 {
-    FirstPersonCamera::FirstPersonCamera(float width, float height) :
+    FirstPersonCamera::FirstPersonCamera(float aspectRatio) :
 		m_front(glm::vec3(-1.0f))
     {
 		m_nearPlane   =   0.1f;
 		m_farPlane    =   1000.0f;
 		m_speed       =   100.0f;
-        m_aspectRatio =   width / height;
+        m_aspectRatio =   aspectRatio;
 		m_fieldOfView =   glm::radians(45.0f);
 		m_position    =   glm::vec3(2.0f, 2.0f, 2.0f);
 		m_rotation    =   glm::vec3(0.0f, 0.0f, 0.0f);
