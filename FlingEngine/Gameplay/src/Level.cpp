@@ -2,11 +2,13 @@
 #include "Level.h"
 #include "ResourceManager.h"
 #include "JsonFile.h"
+#include "World.h"
 
 namespace Fling
 {
-    Level::Level(const std::string& t_LevelFile)
+    Level::Level(const std::string& t_LevelFile, World* t_OwningWorld)
         : m_LevelFileName(t_LevelFile)
+        , m_OwningWorld(t_OwningWorld)
     {
 		// Load in a file resource based on this file
         LoadLevel();

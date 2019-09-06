@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Singleton.hpp"
+#include "NonCopyable.hpp"
 #include "Level.h"
 
 #include <string>
@@ -14,15 +14,16 @@ namespace Fling
 	* instance at any given time. 
 	* @see Level
 	*/
-    class World : public Singleton<World>
+    class World : public NonCopyable
     {
     public: 
 		/**
 		* @brief	Initializes the world. Loads the StartLevel that is specified in the config.  
+		* @note		Keep explict Init and Shutdown functions to make the startup order more readable
 		*/
-        virtual void Init() override;
+        void Init();
 
-        virtual void Shutdown() override;
+        void Shutdown();
 
 		/**
 		* Called before the first Update tick on the world. 
