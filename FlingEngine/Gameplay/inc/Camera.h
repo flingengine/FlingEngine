@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+#include "FlingMath.h"
 
 namespace Fling
 {
@@ -19,7 +19,7 @@ namespace Fling
 		}
 
 		virtual ~Camera() = default;
-		virtual void Update();
+		virtual void Update(float dt) {} 
 
 		/**
 		 * @brief Gets the near plane of the view frustrum
@@ -46,8 +46,8 @@ namespace Fling
 		void SetFieldOfView(const float& fieldOfView) { m_fieldOfView = fieldOfView; }
 
 		const glm::vec3& GetPosition() const { return m_position; }
-		const glm::vec3& GetVelocity() const { return m_velocity; }
 		const glm::vec3& GetRotation() const { return m_rotation; }
+		const float& GetSpeed() const { return m_speed; }
 		const float& GetAspectRatio() const { return m_aspectRatio; }
 
 		/**
@@ -69,8 +69,8 @@ namespace Fling
 
 		glm::vec3 m_position;
 		glm::vec3 m_rotation;
-		glm::vec3 m_velocity;
 
+		float m_speed;
 		float m_aspectRatio;
 		float m_nearPlane;
 		float m_farPlane;

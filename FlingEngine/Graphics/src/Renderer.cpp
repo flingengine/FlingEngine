@@ -10,6 +10,9 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
+        camera = FirstPersonCamera(
+			static_cast<float>(m_CurrentWindow->GetWidth()), 
+			static_cast<float>(m_CurrentWindow->GetHeight()));
 	}
 
     UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
@@ -1372,13 +1375,20 @@ namespace Fling
     {
         float TimeSinceStart = Timing::Get().GetTimeSinceStart();
 
+        // UniformBufferObject ubo = {};
+        // ubo.Model = glm::rotate(glm::mat4(1.0f), TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // ubo.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // ubo.Proj = glm::perspective(glm::radians(45.0f), m_SwapChainExtents.width / (float) m_SwapChainExtents.height, 0.1f, 10.0f);
+        
+        // // Invert here because glm has the Y coorinate inverted
+        // ubo.Proj[1][1] *= -1.0f;
+
+        camera.Update(Timing::Get().GetDeltaTime());
+
         UniformBufferObject ubo = {};
         ubo.Model = glm::rotate(glm::mat4(1.0f), TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.Proj = glm::perspective(glm::radians(45.0f), m_SwapChainExtents.width / (float) m_SwapChainExtents.height, 0.1f, 10.0f);
-        
-        // Invert here because glm has the Y coorinate inverted
-        ubo.Proj[1][1] *= -1.0f;
+        ubo.View = camera.GetViewMatrix();
+        ubo.Proj = camera.GetProjectionMatrix();
 
         // Copy the ubo to the GPU
         void* data = nullptr;

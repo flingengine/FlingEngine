@@ -1,16 +1,17 @@
 #pragma once
-#include "Camera.h" 
+#include "Camera.h"
+#include "FlingMath.h"
 
-namespace fling 
+namespace Fling 
 {
     class FirstPersonCamera : public Camera
     {
         public:
-            FirstPersonCamera(float& width, float& height);
+            FirstPersonCamera(float width, float height);
             
-            void Update() override;
+            virtual void Update(float dt) override;
 
-
+			
         private:
             float m_sensitivity;
             

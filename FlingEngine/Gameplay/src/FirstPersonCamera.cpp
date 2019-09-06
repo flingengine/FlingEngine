@@ -1,19 +1,19 @@
 #include "FirstPersonCamera.h"
-#include "Input.h"
+#include "Input/Input.h"
 
 namespace Fling 
 {
-    FirstPersonCamera::FirstPersonCamera(float& width, float& height) :
-        m_nearPlane(0.1f),
-        m_farPlane(1000.0f),
-        m_fieldOfView(glm::radians(45.0f),
-        m_sensitivity(1.0f))
+    FirstPersonCamera::FirstPersonCamera(float width, float height) :
+        m_sensitivity(1.0f)
     {
+		m_nearPlane = 0.1f;
+		m_farPlane = 1000.0f;
+		m_fieldOfView= glm::radians(45.0f);
         m_aspectRatio = width / height;
     }
 
 
-    void FirstPersonCamera::Update(float dt)
+	void FirstPersonCamera::Update(float dt)
     {
 
         glm::vec3 cameraFront;
@@ -32,16 +32,16 @@ namespace Fling
 				m_position -= cameraFront * moveSpeed;
 
         if(Input::IsKeyDown(KeyNames::FL_KEY_S))
-                m_position -= glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
+                m_position -= glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
 
         if(Input::IsKeyDown(KeyNames::FL_KEY_D))
-                m_position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
+                m_position += glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
 
         UpdateViewMatrix();
         UpdateProjectionMatrix();
     }
 
-    void FirstPersonCamera::UpdateViewMatrix()
+	void FirstPersonCamera::UpdateViewMatrix()
     {
         glm::mat4 rotMatrix = glm::mat4(1.0f);
         glm::mat4 transMatrix;
@@ -55,8 +55,9 @@ namespace Fling
         m_viewMatrix = rotMatrix * transMatrix;
     }
 
-    void FirstPersonCamera::UpdateProjectionMatrix()
+	void FirstPersonCamera::UpdateProjectionMatrix()
     {
         m_projectionMatrix = glm::perspective(m_fieldOfView, m_aspectRatio, m_nearPlane, m_farPlane);
     }
-}
+
+} //namespace Fling 
