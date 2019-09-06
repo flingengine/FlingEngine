@@ -29,6 +29,8 @@ namespace Fling
 
     void World::Update(float t_DeltaTime)
     {
+		m_ShouldQuit = (m_ShouldQuit ? m_ShouldQuit : Input::IsKeyDown(KeyNames::FL_KEY_ESCAPE));
+
 		for (const std::unique_ptr<Level>& Level : m_ActiveLevels)
 		{
 			if (Level)
