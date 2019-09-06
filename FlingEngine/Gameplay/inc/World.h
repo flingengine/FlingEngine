@@ -43,11 +43,21 @@ namespace Fling
 		*/
         void LoadLevel(const std::string& t_LevelPath);
 
+		/**
+		 * @brief Check if the world wants to exit the program. 
+		 * @see Engine::Tick 
+		 * 
+		 * @return True if the world has signlaed for exit
+		 */
+		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
+
     private:
 
 		// #TODO: Pointer to the player!
 
         /** Currently active levels in the world */
         std::vector<std::unique_ptr<Level>> m_ActiveLevels;
+
+		UINT8 m_ShouldQuit = false;
     };
 } // namespace Fling
