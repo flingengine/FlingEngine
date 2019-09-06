@@ -57,7 +57,7 @@ namespace Fling
 
 		ComponentManager::Get().Init();
 
-		World::Get().Init();
+		m_World = new World();
 	}
 
 	void Engine::Tick()
@@ -68,7 +68,8 @@ namespace Fling
 
         float DeltaTime = FallbackDeltaTime;
 		
-		World& World = World::Get();
+		assert(m_World);		// We HAVE to have a world
+		
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
 
@@ -76,8 +77,13 @@ namespace Fling
 		{
 			Renderer.Tick();
 
-			World.Update(DeltaTime);
-			
+			m_World->Update(DeltaTime);
+			if(m_World->ShouldQuit())
+			{
+				F_LOG_TRACE("World should quit! Exiting engine loop...");
+				break;
+			}
+
 			Renderer.DrawFrame();
 
             // Update timing
@@ -99,7 +105,13 @@ namespace Fling
 	void Engine::Shutdown()
 	{
 		ComponentManager::Get().Shutdown();
-		World::Get().Shutdown();
+		
+		if(m_World)
+		{
+			m_World->Shutdown();
+			delete m_World;
+			m_World = nullptr;
+		}
 		
 		// Cleanup any resources
 		Input::Shutdown();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Singleton.hpp"
+#include "NonCopyable.hpp"
 #include "Level.h"
 
 #include <string>
@@ -14,15 +14,16 @@ namespace Fling
 	* instance at any given time. 
 	* @see Level
 	*/
-    class World : public Singleton<World>
+    class World : public NonCopyable
     {
     public: 
 		/**
 		* @brief	Initializes the world. Loads the StartLevel that is specified in the config.  
+		* @note		Keep explict Init and Shutdown functions to make the startup order more readable
 		*/
-        virtual void Init() override;
+        void Init();
 
-        virtual void Shutdown() override;
+        void Shutdown();
 
 		/**
 		* Called before the first Update tick on the world. 
@@ -42,11 +43,21 @@ namespace Fling
 		*/
         void LoadLevel(const std::string& t_LevelPath);
 
+		/**
+		 * @brief Check if the world wants to exit the program. 
+		 * @see Engine::Tick 
+		 * 
+		 * @return True if the world has signlaed for exit
+		 */
+		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
+
     private:
 
 		// #TODO: Pointer to the player!
 
         /** Currently active levels in the world */
         std::vector<std::unique_ptr<Level>> m_ActiveLevels;
+
+		UINT8 m_ShouldQuit = false;
     };
 } // namespace Fling

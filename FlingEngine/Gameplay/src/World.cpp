@@ -29,6 +29,8 @@ namespace Fling
 
     void World::Update(float t_DeltaTime)
     {
+		m_ShouldQuit = (m_ShouldQuit ? m_ShouldQuit : Input::IsKeyDown(KeyNames::FL_KEY_ESCAPE));
+
 		for (const std::unique_ptr<Level>& Level : m_ActiveLevels)
 		{
 			if (Level)
@@ -45,6 +47,6 @@ namespace Fling
 
 		// #TODO: Unload the current level? Depends on how we want to do async loading in the future
 
-		m_ActiveLevels.emplace_back(std::move(std::make_unique<Level>(t_LevelPath)));
+		m_ActiveLevels.emplace_back(std::move(std::make_unique<Level>(t_LevelPath, this)));
     }
 } // namespace Fling
