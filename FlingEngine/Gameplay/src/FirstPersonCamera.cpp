@@ -24,15 +24,15 @@ namespace Fling
 		float aspectRatio) :
 		m_front(glm::vec3(-1.0f))
 	{
-		m_position = position;
-		m_rotation = rotation;
-		m_speed = speed;
-		m_aspectRatio = aspectRatio;
+		m_position     = position;
+		m_rotation     = rotation;
+		m_speed        = speed;
+		m_aspectRatio  = aspectRatio;
 
-		m_nearPlane = 0.1f;
-		m_farPlane = 1000.0f;
-		m_worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
-		m_fieldOfView = glm::radians(45.0f);
+		m_nearPlane    = 0.1f;
+		m_farPlane     = 1000.0f;
+		m_worldUp      = glm::vec3(0.0f, 0.0f, 1.0f);
+		m_fieldOfView  = glm::radians(45.0f);
 	}
 
 	FirstPersonCamera::FirstPersonCamera(
@@ -44,12 +44,12 @@ namespace Fling
 		float aspectRatio) :
 		m_front(front)
 	{
-		m_worldUp = up;
-		m_position = position;
-		m_rotation = rotation;
-		m_speed = speed;
-		m_nearPlane = nearPlane;
-		m_farPlane = farPlane;
+		m_worldUp     = up;
+		m_position    = position;
+		m_rotation    = rotation;
+		m_speed       = speed;
+		m_nearPlane   = nearPlane;
+		m_farPlane    = farPlane;
 		m_fieldOfView = glm::radians(fov);
 		m_aspectRatio = aspectRatio;
 	}
