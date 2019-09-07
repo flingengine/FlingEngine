@@ -9,13 +9,50 @@ namespace Fling
     {
 		m_nearPlane   =   0.1f;
 		m_farPlane    =   1000.0f;
-		m_speed       =   100.0f;
+		m_speed       =   10.0f;
         m_aspectRatio =   aspectRatio;
 		m_fieldOfView =   glm::radians(45.0f);
 		m_position    =   glm::vec3(2.0f, 2.0f, 2.0f);
 		m_rotation    =   glm::vec3(0.0f, 0.0f, 0.0f);
 		m_worldUp     =   glm::vec3(0.0f, 0.0f, 1.0f);
     }
+
+	FirstPersonCamera::FirstPersonCamera(
+		glm::vec3 position,
+		glm::vec3 rotation,
+		float speed,
+		float aspectRatio) :
+		m_front(glm::vec3(-1.0f))
+	{
+		m_position = position;
+		m_rotation = rotation;
+		m_speed = speed;
+		m_aspectRatio = aspectRatio;
+
+		m_nearPlane = 0.1f;
+		m_farPlane = 1000.0f;
+		m_worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
+		m_fieldOfView = glm::radians(45.0f);
+	}
+
+	FirstPersonCamera::FirstPersonCamera(
+		glm::vec3 front, glm::vec3 up, 
+		glm::vec3 position, glm::vec3 rotation, 
+		float speed, 
+		float nearPlane, float farPlane, 
+		float fov, 
+		float aspectRatio) :
+		m_front(front)
+	{
+		m_worldUp = up;
+		m_position = position;
+		m_rotation = rotation;
+		m_speed = speed;
+		m_nearPlane = nearPlane;
+		m_farPlane = farPlane;
+		m_fieldOfView = glm::radians(fov);
+		m_aspectRatio = aspectRatio;
+	}
 
 
 	void FirstPersonCamera::Update(float dt)
@@ -52,8 +89,10 @@ namespace Fling
 		if (m_rotation.y < -89.0f)
 			m_rotation.y = -89.0f;
 		
+		//TO DO: Only update camera vectors and view matrix when camera moves or rotate
 		UpdateCameraVectors();
         UpdateViewMatrix();
+		//TO DO: Only update when camera changes field of view
         UpdateProjectionMatrix();
     }
 

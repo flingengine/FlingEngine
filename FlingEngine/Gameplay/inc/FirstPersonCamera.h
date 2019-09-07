@@ -7,6 +7,20 @@ namespace Fling
     {
         public:
             FirstPersonCamera(float aspectRatio);
+
+			FirstPersonCamera(
+				glm::vec3 position, 
+				glm::vec3 rotation, 
+				float speed, 
+				float aspectRatio);
+
+			FirstPersonCamera(
+				glm::vec3 front, glm::vec3 up,
+				glm::vec3 position, glm::vec3 rotation,
+				float speed,
+				float nearPlane, float farPlane,
+                float fov, float aspectRatio);
+
             
             void Update(float dt) override;
 
