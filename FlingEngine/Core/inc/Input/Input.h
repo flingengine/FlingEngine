@@ -6,13 +6,22 @@
 namespace Fling
 {
 	/**
+	 * @brief	represents the current mouse position in screen space
+	 */
+	struct MousePos
+	{
+		float X;
+		float Y;
+	};
+
+	/**
 	* Base input class for polling input in the Fling Engine
 	*/
 	class Input : public NonCopyable
 	{
 	public:
 
-		/** Initalize the input instance on this platform. Handle and input mapping on this platform */
+		/** Initialize the input instance on this platform. Handle and input mapping on this platform */
 		static void Init() { m_Instace->InitImpl(); }
 		
 		/**
@@ -33,6 +42,11 @@ namespace Fling
 		static bool IsKeyDown(const std::string& t_KeyName) { return m_Instace->IsKeyDownImpl(t_KeyName); }
 		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instace->IsKeyHelpImpl(t_KeyName); }
 		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instace->IsMouseButtonPressedImpl(t_KeyName); }
+
+		/**
+		 * Get the current mouse position in screen space
+		 */
+		static MousePos GetMousePos() { return m_Instace->GetMousePosImpl(); }
 
 		typedef std::map<std::string, Fling::Key> KeyMap;
 		typedef std::pair<std::string, Fling::Key> KeyPair;
@@ -67,6 +81,8 @@ namespace Fling
 		virtual bool IsKeyDownImpl(const std::string& t_KeyName) = 0;
 		virtual bool IsKeyHelpImpl(const std::string& t_KeyName) = 0;
 		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) = 0;
+
+		virtual MousePos GetMousePosImpl() = 0;
 	};
 
 }	// namespace Fling
