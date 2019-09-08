@@ -3,10 +3,9 @@
 // Resolve warnings
 #include "Platform.h"
 
-// GLFW
-#ifndef GLFW_INCLUDE_VULKAN
-#	define GLFW_INCLUDE_VULKAN
-#endif
+#include <vulkan/vulkan.h>
+#include <vulkan/vk_sdk_platform.h>
+
 #include <GLFW/glfw3.h>
 
 #include "Singleton.hpp"

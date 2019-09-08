@@ -869,11 +869,52 @@ namespace Fling
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             StagingBuffer, StagingBufferMemory);
 
+        // Map the image data to a Vk buffer
         void* Data;
         vkMapMemory(m_Device, StagingBufferMemory, 0, ImageSize, 0, &Data);
         memcpy(Data, TestImage->GetPixelData(), static_cast<size_t>(ImageSize));
         vkUnmapMemory(m_Device, StagingBufferMemory);
         
+        VkImage TextureImage;
+        VkDeviceMemory TextureImageMemory;
+
+        VkImageCreateInfo ImageInfo = {};
+        ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+        ImageInfo.extent.width = TestImage->GetWidth();
+        ImageInfo.extent.height = TestImage->GetHeight();
+        ImageInfo.extent.depth = 1;
+        ImageInfo.mipLevels = 1;
+        ImageInfo.arrayLayers = 1;
+
+        ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+        ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        
+        ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+        ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        ImageInfo.flags = 0;
+        
+        if(vkCreateImage(m_Device, &ImageInfo, nullptr, &TextureImage) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Renderer failed to create image!");
+        }
+
+        VkMemoryRequirements MemReqs;
+        vkGetImageMemoryRequirements(m_Device, TextureImage, &MemReqs);
+
+        VkMemoryAllocateInfo AllocInfo = {};
+        AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        AllocInfo.allocationSize = MemReqs.size;
+        AllocInfo.memoryTypeIndex = FindMemoryType(MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        if(vkAllocateMemory(m_Device, &AllocInfo, nullptr, &TextureImageMemory) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to alloca image memory!");
+        }
+        vkBindImageMemory(m_Device, TextureImage, TextureImageMemory, 0);
     }
 
     void Renderer::CreateVertexBuffer()
