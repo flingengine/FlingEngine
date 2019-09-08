@@ -29,7 +29,9 @@ message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 # Take care of warnings about strcpy
 if( MSVC )
     add_definitions( -D_CRT_SECURE_NO_WARNINGS )
-    add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro 
+	if ( NOT DEFINED NOMINMAX )
+		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro 
+	endif()
 endif()
 
 # Include external libraries

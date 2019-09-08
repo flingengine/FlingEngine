@@ -5,7 +5,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "Image.h"
 
-#include <vulkan/vulkan.h>
+#include "FlingVulkan.h"
+
 #include "GraphicsHelpers.h"
 
 namespace Fling
@@ -40,6 +41,21 @@ namespace Fling
 		{
 			F_LOG_TRACE("Loaded image file: {}", Filepath);
 		}
+
+		// Put the image data in a staging buffer for Vulkan
+		VkBuffer StagingBuffer;
+		VkDeviceMemory StagingBufferMemory;
+		VkDeviceSize ImageSize = GetImageSize();
+		GraphicsHelpers::CreateBuffer(m_Device, t_PhysDevice,
+			ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			StagingBuffer, StagingBufferMemory);
+
+		// Map the image data to a Vk buffer
+		void* Data;
+		vkMapMemory(m_Device, StagingBufferMemory, 0, ImageSize, 0, &Data);
+		memcpy(Data, GetPixelData(), static_cast<size_t>(ImageSize));
+		vkUnmapMemory(m_Device, StagingBufferMemory);
 
 		VkImageCreateInfo ImageInfo = {};
 		ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

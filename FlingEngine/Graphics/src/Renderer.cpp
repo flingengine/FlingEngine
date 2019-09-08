@@ -4,6 +4,7 @@
 #include "FlingConfig.h"
 #include "File.h"
 #include "Image.h"
+#include "GraphicsHelpers.h"
 
 namespace Fling
 {
@@ -12,7 +13,7 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-		camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio());
+		m_Camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio());
 	}
 
     UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
@@ -496,10 +497,10 @@ namespace Fling
     {
         // Load shaders
         // #TODO Create a way to re-compile shaders in-engine at runtime
-        std::shared_ptr<File> VertShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/vert.spv"_hs);
+        std::shared_ptr<File> VertShaderCode = ResourceManager::LoadResource<File>("Shaders/vert.spv"_hs);
         assert(VertShaderCode);
 
-        std::shared_ptr<File> FragShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/frag.spv"_hs);
+        std::shared_ptr<File> FragShaderCode = ResourceManager::LoadResource<File>("Shaders/frag.spv"_hs);
         assert(FragShaderCode);
 
         // Create modules
@@ -843,61 +844,8 @@ namespace Fling
 
     void Renderer::CreateTextureImage()
     {
-        std::shared_ptr<Image> TestImage = ResourceManager::Get().LoadResource<Image>("Textures/TestImage.jpg"_hs, m_Device, m_PhysicalDevice);
-        VkBuffer StagingBuffer;
-        VkDeviceMemory StagingBufferMemory;
-        VkDeviceSize ImageSize = TestImage->GetImageSize();
-        CreateBuffer(
-            ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            StagingBuffer, StagingBufferMemory);
+        std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs, m_Device, m_PhysicalDevice);
 
-        // Map the image data to a Vk buffer
-        void* Data;
-        vkMapMemory(m_Device, StagingBufferMemory, 0, ImageSize, 0, &Data);
-        memcpy(Data, TestImage->GetPixelData(), static_cast<size_t>(ImageSize));
-        vkUnmapMemory(m_Device, StagingBufferMemory);
-        
-        VkImage TextureImage;
-        VkDeviceMemory TextureImageMemory;
-
-        VkImageCreateInfo ImageInfo = {};
-        ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-        ImageInfo.extent.width = TestImage->GetWidth();
-        ImageInfo.extent.height = TestImage->GetHeight();
-        ImageInfo.extent.depth = 1;
-        ImageInfo.mipLevels = 1;
-        ImageInfo.arrayLayers = 1;
-
-        ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-        ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-        
-        ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-        ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-        ImageInfo.flags = 0;
-        
-        if(vkCreateImage(m_Device, &ImageInfo, nullptr, &TextureImage) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Renderer failed to create image!");
-        }
-
-        VkMemoryRequirements MemReqs;
-        vkGetImageMemoryRequirements(m_Device, TextureImage, &MemReqs);
-
-        VkMemoryAllocateInfo AllocInfo = {};
-        AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        AllocInfo.allocationSize = MemReqs.size;
-        AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(m_PhysicalDevice, MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        if(vkAllocateMemory(m_Device, &AllocInfo, nullptr, &TextureImageMemory) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to alloca image memory!");
-        }
-        vkBindImageMemory(m_Device, TextureImage, TextureImageMemory, 0);
     }
 
     void Renderer::CreateVertexBuffer()
@@ -907,7 +855,7 @@ namespace Fling
 		VkBuffer StagingBuffer;
 		VkDeviceMemory StagingBufferMemory;
 
-		CreateBuffer(bufferSize, 
+		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize, 
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			StagingBuffer,
@@ -919,7 +867,7 @@ namespace Fling
         memcpy(Data, Temp_Vertices.data(), (size_t)bufferSize);
         vkUnmapMemory(m_Device, StagingBufferMemory);
 
-		CreateBuffer(bufferSize,
+		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			m_VertexBuffer,
@@ -939,7 +887,7 @@ namespace Fling
 		// Create staging buffer
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 		// Map to the stage buffer
 		void* data;
@@ -948,7 +896,7 @@ namespace Fling
 		vkUnmapMemory(m_Device, stagingBufferMemory);
 
 		// Create the index buffer
-		CreateBuffer(bufferSize, 
+		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize, 
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
 			m_IndexBuffer, 
@@ -970,7 +918,7 @@ namespace Fling
 
         for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
         {
-            CreateBuffer(
+            GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,
                 bufferSize,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1040,42 +988,20 @@ namespace Fling
         }
     }
 
-	void Renderer::CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer & t_Buffer, VkDeviceMemory & t_BuffMemory)
+	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
 	{
-		// Create a buffer
-		VkBufferCreateInfo bufferInfo = {};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = t_Size;
-		bufferInfo.usage = t_Usage;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
-		if (vkCreateBuffer(m_Device, &bufferInfo, nullptr, &t_Buffer) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to create buffer!");
-		}
+		VkBufferCopy copyRegion = {};
+		copyRegion.srcOffset = 0; // Optional
+		copyRegion.dstOffset = 0; // Optional
+		copyRegion.size = t_Size;
+		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
 
-		// Get the memory requirements
-		VkMemoryRequirements MemRequirments = {};
-		vkGetBufferMemoryRequirements(m_Device, t_Buffer, &MemRequirments);
-
-		VkMemoryAllocateInfo AllocInfo = {};
-		AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		AllocInfo.allocationSize = MemRequirments.size;
-		// Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
-		// we could use explicit flushing with vkFlushMappedMemoryRanges
-		AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(m_PhysicalDevice, MemRequirments.memoryTypeBits, t_Properties);
-
-		// Allocate the vertex buffer memory
-		// #TODO Don't call vkAllocateMemory every time, we should use a custom allocator or
-		// VulkanMemoryAllocator library
-		if (vkAllocateMemory(m_Device, &AllocInfo, nullptr, &t_BuffMemory) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to alocate buffer memory!");
-		}
-		vkBindBufferMemory(m_Device, t_Buffer, t_BuffMemory, 0);
+		EndSingleTimeCommands(commandBuffer);
 	}
 
-	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
+	VkCommandBuffer Renderer::BeginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1091,24 +1017,88 @@ namespace Fling
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		return commandBuffer;
+	}
 
-		VkBufferCopy copyRegion = {};
-		copyRegion.srcOffset = 0; // Optional
-		copyRegion.dstOffset = 0; // Optional
-		copyRegion.size = t_Size;
-		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
-
-		vkEndCommandBuffer(commandBuffer);
+	void Renderer::EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
+	{
+		vkEndCommandBuffer(t_CommandBuffer);
 
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
+		submitInfo.pCommandBuffers = &t_CommandBuffer;
 
 		vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(m_GraphicsQueue);
 
-		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &commandBuffer);
+		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &t_CommandBuffer);
+	}
+
+	void Renderer::TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
+	{
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = t_oldLayout;
+		barrier.newLayout = t_NewLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+		barrier.image = t_Image;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		barrier.srcAccessMask = 0; // TODO
+		barrier.dstAccessMask = 0; // TODO
+
+		vkCmdPipelineBarrier(
+			commandBuffer,
+			0 /* TODO */, 0 /* TODO */,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &barrier
+		);
+
+		EndSingleTimeCommands(commandBuffer);
+	}
+
+	void Renderer::CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height)
+	{
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+
+		region.imageOffset = { 0, 0, 0 };
+		region.imageExtent = {
+			t_Width,
+			t_Height,
+			1
+		};
+
+		vkCmdCopyBufferToImage(
+			commandBuffer,
+			t_Buffer,
+			t_Image,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region
+		);
+
+		EndSingleTimeCommands(commandBuffer);
 	}
 
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
@@ -1421,7 +1411,7 @@ namespace Fling
 		float TimeSinceStart = Timing::Get().GetTimeSinceStart();
 		float DeltaTime = Timing::Get().GetDeltaTime();
 
-		camera->Update(DeltaTime);
+		m_Camera->Update(DeltaTime);
 
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -1429,8 +1419,8 @@ namespace Fling
 
 		UniformBufferObject ubo = {};
 		ubo.Model = model;
-		ubo.View = camera->GetViewMatrix();
-		ubo.Proj = camera->GetProjectionMatrix();
+		ubo.View = m_Camera->GetViewMatrix();
+		ubo.Proj = m_Camera->GetProjectionMatrix();
 		ubo.Proj[1][1] *= -1.0f;
 		
 		// Copy the ubo to the GPU

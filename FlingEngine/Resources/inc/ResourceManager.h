@@ -29,7 +29,10 @@ namespace Fling
 		virtual void Shutdown() override;
 
 		template<class T, class ...ARGS>
-		std::shared_ptr<T> LoadResource(Guid t_ID, ARGS&& ... args);
+		static std::shared_ptr<T> LoadResource(Guid t_ID, ARGS&& ... args)
+		{
+			return ResourceManager::Get().LoadResourceImpl<T>(t_ID, std::forward<ARGS>(args)...);
+		}
 
 		template <class T>
 		std::shared_ptr<T> GetResourceOfType(Guid_Handle t_ID) const;
@@ -50,6 +53,9 @@ namespace Fling
 
 	private:
 
+		template<class T, class ...ARGS>
+		std::shared_ptr<T> LoadResourceImpl(Guid t_ID, ARGS&& ... args);
+
 		typedef std::map<Fling::Guid_Handle, std::shared_ptr<Resource>>::iterator ResourceMapIt;
 		typedef std::map<Fling::Guid_Handle, std::shared_ptr<Resource>>::const_iterator ResourceMapConstIt;
         
@@ -59,7 +65,7 @@ namespace Fling
 
 
 	template<class T, class ...ARGS>
-	inline std::shared_ptr<T> ResourceManager:: LoadResource(Guid t_ID, ARGS&& ... args)
+	inline std::shared_ptr<T> ResourceManager::LoadResourceImpl(Guid t_ID, ARGS&& ... args)
 	{
 		// If this resource exists already then just return that
 		if (std::shared_ptr<T> Existing = GetResourceOfType<T>(t_ID))

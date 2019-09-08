@@ -8,7 +8,7 @@ namespace Fling
     /**
      * @brief   An image represents a 2D file that has data about each pixel in the image
      */
-    class FLING_API Image : public Resource
+    class Image : public Resource
     {
     public:
         explicit Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice);

@@ -3,8 +3,7 @@
 // Resolve warnings
 #include "Platform.h"
 
-#include <vulkan/vulkan.h>
-#include <vulkan/vk_sdk_platform.h>
+#include "FlingVulkan.h"
 
 #include <GLFW/glfw3.h>
 
@@ -15,7 +14,6 @@
 #include "FirstPersonCamera.h"
 
 #include "FlingWindow.h"
-#include "GraphicsHelpers.h"
 
 namespace Fling
 {
@@ -205,14 +203,20 @@ namespace Fling
         void CreateDescriptorPool();
 
         void CreateDescriptorSets();
-
-		void CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory);
 		
 		/**
 		* Copy source buffer to the destination buffer given it's size.
 		* Creates a one-off commandBuffer to do this
 		*/
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+		VkCommandBuffer BeginSingleTimeCommands();
+
+		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
+
+		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
+
+		void CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height);
 
         /**
         * Check the swap chain support of a given device
@@ -305,7 +309,7 @@ namespace Fling
         //GLFWwindow* m_Window = nullptr;
         
 		/** Camera Instance */
-		FirstPersonCamera* camera;
+		FirstPersonCamera* m_Camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
 
