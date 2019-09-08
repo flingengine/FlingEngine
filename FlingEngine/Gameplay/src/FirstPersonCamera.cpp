@@ -12,7 +12,7 @@ namespace Fling
 		m_speed       =   10.0f;
         m_aspectRatio =   aspectRatio;
 		m_fieldOfView =   glm::radians(45.0f);
-		m_position    =   glm::vec3(2.0f, 2.0f, 2.0f);
+		m_position    =   glm::vec3(-6.0f, 0.0f, 2.0f);
 		m_rotation    =   glm::vec3(0.0f, 0.0f, 0.0f);
 		m_worldUp     =   glm::vec3(0.0f, 0.0f, 1.0f);
     }
@@ -59,40 +59,69 @@ namespace Fling
     {
         float moveSpeed = m_speed * dt;
 
+		//translation
+		//forward
         if(Input::IsKeyHeld(KeyNames::FL_KEY_W))
+		{
 			m_position += m_front * moveSpeed;
+		}
 
+		//backward
         if(Input::IsKeyHeld(KeyNames::FL_KEY_S))
+		{
 			m_position -= m_front * moveSpeed;
+		}
 
+		//left
         if(Input::IsKeyHeld(KeyNames::FL_KEY_A))
+		{
 			m_position -= m_right* moveSpeed;
+		}
 
+		//right
         if(Input::IsKeyHeld(KeyNames::FL_KEY_D))
+		{
 			m_position += m_right * moveSpeed;
+		}
 
 		//Rotation
+		//Rotate left
 		if (Input::IsKeyHeld(KeyNames::FL_KEY_Q))
+		{
 			m_rotation.x += moveSpeed;
+		}
 
+		//Rotate right
 		if (Input::IsKeyHeld(KeyNames::FL_KEY_E))
+		{
 			m_rotation.x -= moveSpeed;
+		}
 
+		//Rotate up
 		if (Input::IsKeyHeld(KeyNames::FL_KEY_Z))
+		{
 			m_rotation.y += moveSpeed;
+		}
 
+		//Rotate down
 		if (Input::IsKeyHeld(KeyNames::FL_KEY_X))
+		{
 			m_rotation.y -= moveSpeed;
+		}
 
+
+		//Pitch constraints
 		if (m_rotation.y > 89.0f)
+		{
 			m_rotation.y = 89.0f;
+		}
 		if (m_rotation.y < -89.0f)
+		{ 
 			m_rotation.y = -89.0f;
+		}
 		
-		//TO DO: Only update camera vectors and view matrix when camera moves or rotate
 		UpdateCameraVectors();
         UpdateViewMatrix();
-		//TO DO: Only update when camera changes field of view
         UpdateProjectionMatrix();
     }
 

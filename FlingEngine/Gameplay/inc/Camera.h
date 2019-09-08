@@ -26,7 +26,7 @@ namespace Fling
 		 * 
 		 * @return const float& m_nearPlane
 		 */
-		const float& GetNearPlane() const { return m_nearPlane; }
+		const float GetNearPlane() const { return m_nearPlane; }
 		void SetNearPlane(const float& nearPlane) { m_nearPlane = nearPlane; }
 
 		/**
@@ -34,7 +34,7 @@ namespace Fling
 		 * 
 		 * @return const float& m_farPlane
 		 */
-		const float& GetFarPlane() const { return m_farPlane; }
+		const float GetFarPlane() const { return m_farPlane; }
 		void SetFarPlane(const float& farPlane) { m_farPlane = farPlane; }
 
 		/**
@@ -42,13 +42,13 @@ namespace Fling
 		 * 
 		 * @return const float& m_fieldOfView
 		 */
-		const float& GetFieldOfView() const { return m_fieldOfView; }
+		const float GetFieldOfView() const { return m_fieldOfView; }
 		void SetFieldOfView(const float& fieldOfView) { m_fieldOfView = fieldOfView; }
 
 		const glm::vec3& GetPosition() const { return m_position; }
 		const glm::vec3& GetRotation() const { return m_rotation; }
-		const float& GetSpeed() const { return m_speed; }
-		const float& GetAspectRatio() const { return m_aspectRatio; }
+		const float GetSpeed() const { return m_speed; }
+		const float GetAspectRatio() const { return m_aspectRatio; }
 
 		/**
 		 * @brief Gets the view matrix created by the current camera position and rotation
@@ -56,6 +56,7 @@ namespace Fling
 		 * @return const glm::mat4& viewMatrix
 		 */
 		const glm::mat4& GetViewMatrix() const {return m_viewMatrix; }
+
 		/**
 		 * @brief Gets the projection matrix used by camera
 		 * 
@@ -68,10 +69,11 @@ namespace Fling
 		glm::mat4 m_projectionMatrix;
 
 		glm::vec3 m_position;
+		float m_speed; //padding 12 + 4 = 16
+		
 		glm::vec3 m_rotation;
-
-		float m_speed;
 		float m_aspectRatio;
+
 		float m_nearPlane;
 		float m_farPlane;
 		float m_fieldOfView;

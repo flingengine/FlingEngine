@@ -20,9 +20,8 @@ namespace Fling
 				float speed,
 				float nearPlane, float farPlane,
                 float fov, float aspectRatio);
-
-            
-            void Update(float dt) override;
+			
+			void Update(float dt) override;
 
         private:
 			glm::vec3 m_front;
