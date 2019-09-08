@@ -11,11 +11,11 @@ namespace Fling
     class FLING_API Image : public Resource
     {
     public:
-        explicit Image(Guid t_ID);
+        explicit Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice);
         virtual ~Image();
 
-        INT32 GetWidth() const { return m_Width; }
-        INT32 GetHeight() const { return m_Height; }
+		INT32 GetWidth() const { return m_Width; }
+		INT32 GetHeight() const { return m_Height; }
         INT32 GetChannels() const { return m_Channels; }
         stbi_uc* GetPixelData() const { return m_PixelData; }
 
@@ -28,16 +28,30 @@ namespace Fling
 
     private:
 
+		/**
+		* @brief	Loads the Vulkan resources needed for this image
+		*/
+		void LoadVulkanImage(VkPhysicalDevice t_PhysDevice);
+
         /** Width of this image */
-        INT32 m_Width = 0;
+		INT32 m_Width = 0;
 
         /** Height of this image */
-        INT32 m_Height = 0;
+		INT32 m_Height = 0;
 
         /** The color channels of this image */
         INT32 m_Channels = 0;
 
         /** the actual pixel data that represents this image */
         stbi_uc* m_PixelData;
+
+		/** The Vulkan image data */
+		VkImage m_vVkImage;
+
+		/** The Vulkan memory resource for this image */
+		VkDeviceMemory m_VkMemory;
+
+		/** The device that this image was created with */
+		VkDevice m_Device;
     };
 }   // namespace Fling

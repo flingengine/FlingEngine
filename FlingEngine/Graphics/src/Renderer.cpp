@@ -91,24 +91,6 @@ namespace Fling
         return Indecies;
     }
 
-    UINT32 Renderer::FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props)
-    {
-        VkPhysicalDeviceMemoryProperties MemProperties;
-        vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &MemProperties);
-        
-        for (UINT32 i = 0; i < MemProperties.memoryTypeCount; ++i)
-        {
-            // Check if this filter bit flag is set and it matches our memory properties
-            if ((t_Filter & (1 << i)) && (MemProperties.memoryTypes[i].propertyFlags & t_Props) == t_Props)
-            {
-                return i;
-            }
-        }
-
-        F_LOG_FATAL("Failed to find suitable memory type!");
-        return 0;
-    }
-
     void Renderer::InitGraphics()
 	{
 		ReadConfig();
@@ -860,7 +842,7 @@ namespace Fling
 
     void Renderer::CreateTextureImage()
     {
-        std::shared_ptr<Image> TestImage = ResourceManager::Get().LoadResource<Image>("Textures/TestImage.jpg"_hs);
+        std::shared_ptr<Image> TestImage = ResourceManager::Get().LoadResource<Image>("Textures/TestImage.jpg"_hs, m_Device, m_PhysicalDevice);
         VkBuffer StagingBuffer;
         VkDeviceMemory StagingBufferMemory;
         VkDeviceSize ImageSize = TestImage->GetImageSize();
@@ -908,7 +890,7 @@ namespace Fling
         VkMemoryAllocateInfo AllocInfo = {};
         AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         AllocInfo.allocationSize = MemReqs.size;
-        AllocInfo.memoryTypeIndex = FindMemoryType(MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(m_PhysicalDevice, MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         if(vkAllocateMemory(m_Device, &AllocInfo, nullptr, &TextureImageMemory) != VK_SUCCESS)
         {
@@ -1080,7 +1062,7 @@ namespace Fling
 		AllocInfo.allocationSize = MemRequirments.size;
 		// Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
 		// we could use explicit flushing with vkFlushMappedMemoryRanges
-		AllocInfo.memoryTypeIndex = FindMemoryType(MemRequirments.memoryTypeBits, t_Properties);
+		AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(m_PhysicalDevice, MemRequirments.memoryTypeBits, t_Properties);
 
 		// Allocate the vertex buffer memory
 		// #TODO Don't call vkAllocateMemory every time, we should use a custom allocator or

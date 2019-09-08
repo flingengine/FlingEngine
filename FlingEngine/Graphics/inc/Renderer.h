@@ -14,6 +14,7 @@
 #include "UniformBufferObject.h"
 
 #include "FlingWindow.h"
+#include "GraphicsHelpers.h"
 
 namespace Fling
 {
@@ -94,16 +95,6 @@ namespace Fling
         /// <param name="t_Device">Device to check</param>
         /// <returns>Queue family flags</returns>
         QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
-
-        /**
-        * Find a suitable memory type for use on the current device
-        * 
-        * @param t_Filter   Type of memory types that are suitable for this application
-        * @param t_Props    Memory properties
-        *
-        * @return The 
-        */
-        UINT32 FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props);
 
         /// <summary>
         /// Init the current graphics API
