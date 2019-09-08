@@ -11,7 +11,7 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-		camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio());
+		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio());
 	}
 
     UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
@@ -1377,16 +1377,17 @@ namespace Fling
 		float TimeSinceStart = Timing::Get().GetTimeSinceStart();
 		float DeltaTime = Timing::Get().GetDeltaTime();
 
-		camera->Update(DeltaTime);
+		m_camera->Update(DeltaTime);
+
+		UniformBufferObject ubo = {};
 
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-		UniformBufferObject ubo = {};
 		ubo.Model = model;
-		ubo.View = camera->GetViewMatrix();
-		ubo.Proj = camera->GetProjectionMatrix();
+		ubo.View = m_camera->GetViewMatrix();
+		ubo.Proj = m_camera->GetProjectionMatrix();
 		ubo.Proj[1][1] *= -1.0f;
 		
 		// Copy the ubo to the GPU

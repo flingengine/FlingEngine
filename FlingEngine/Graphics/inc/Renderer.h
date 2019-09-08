@@ -313,7 +313,7 @@ namespace Fling
         //GLFWwindow* m_Window = nullptr;
         
 		/** Camera Instance */
-		FirstPersonCamera* camera;
+		std::unique_ptr<FirstPersonCamera> m_camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
 
