@@ -56,8 +56,8 @@ namespace Fling
 
 
 	void FirstPersonCamera::Update(float dt)
-    {
-        float moveSpeed = m_speed * dt;
+	{
+		float moveSpeed = m_speed * dt;
 
 		//translation
 		//forward
@@ -132,7 +132,7 @@ namespace Fling
 
 	void FirstPersonCamera::UpdateProjectionMatrix()
 	{
-        m_projectionMatrix = glm::perspective(m_fieldOfView, m_aspectRatio, m_nearPlane, m_farPlane);
+		m_projectionMatrix = glm::perspective(m_fieldOfView, m_aspectRatio, m_nearPlane, m_farPlane);
 	}
 
 	void Fling::FirstPersonCamera::UpdateCameraVectors()
