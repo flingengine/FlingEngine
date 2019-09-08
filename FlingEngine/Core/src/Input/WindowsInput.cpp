@@ -220,6 +220,25 @@ namespace Fling
 
 		return false;
 	}
+
+	MousePos WindowsInput::GetMousePosImpl()
+	{
+		MousePos CurPos = {};
+
+		// #TODO Get rid of this WINDOW DEPENDECNY!!!!
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		if (Window)
+		{
+			double xPos = 0.0;
+			double yPos = 0.0;
+			glfwGetCursorPos(Window->GetGlfwWindow(), &xPos, &yPos);
+			CurPos.X = static_cast<float>(xPos);
+			CurPos.Y = static_cast<float>(yPos);
+		}
+
+		return CurPos;
+	}
+	
 } // namespace Fling
 
 #endif	// FLING_WINDOWS

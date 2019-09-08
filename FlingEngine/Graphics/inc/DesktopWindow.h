@@ -40,6 +40,8 @@ namespace Fling
 
 		virtual UINT32 GetHeight() const override;
 
+		virtual float GetAspectRatio() const override;
+
 		/** get the current GLFW window */
 		GLFWwindow* GetGlfwWindow() const { return m_Window; }
 

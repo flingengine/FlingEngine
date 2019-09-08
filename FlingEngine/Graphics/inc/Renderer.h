@@ -12,6 +12,7 @@
 
 #include "Vertex.h"
 #include "UniformBufferObject.h"
+#include "FirstPersonCamera.h"
 
 #include "FlingWindow.h"
 #include "GraphicsHelpers.h"
@@ -302,6 +303,9 @@ namespace Fling
 
         /** The window that the game is being drawn to */
         //GLFWwindow* m_Window = nullptr;
+        
+		/** Camera Instance */
+		FirstPersonCamera* camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
 
