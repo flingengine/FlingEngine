@@ -61,25 +61,25 @@ namespace Fling
 
 		//translation
 		//forward
-        if(Input::IsKeyHeld(KeyNames::FL_KEY_W))
+		if(Input::IsKeyHeld(KeyNames::FL_KEY_W))
 		{
 			m_position += m_front * moveSpeed;
 		}
 
 		//backward
-        if(Input::IsKeyHeld(KeyNames::FL_KEY_S))
+		if(Input::IsKeyHeld(KeyNames::FL_KEY_S))
 		{
 			m_position -= m_front * moveSpeed;
 		}
 
 		//left
-        if(Input::IsKeyHeld(KeyNames::FL_KEY_A))
+		if(Input::IsKeyHeld(KeyNames::FL_KEY_A))
 		{
 			m_position -= m_right* moveSpeed;
 		}
 
 		//right
-        if(Input::IsKeyHeld(KeyNames::FL_KEY_D))
+		if(Input::IsKeyHeld(KeyNames::FL_KEY_D))
 		{
 			m_position += m_right * moveSpeed;
 		}
@@ -126,14 +126,14 @@ namespace Fling
     }
 
 	void FirstPersonCamera::UpdateViewMatrix()
-    {
+	{
 		m_viewMatrix = glm::lookAt(m_position, m_position + m_front, m_up);
-    }
+	}
 
 	void FirstPersonCamera::UpdateProjectionMatrix()
-    {
+	{
         m_projectionMatrix = glm::perspective(m_fieldOfView, m_aspectRatio, m_nearPlane, m_farPlane);
-    }
+	}
 
 	void Fling::FirstPersonCamera::UpdateCameraVectors()
 	{

@@ -31,6 +31,6 @@ namespace Fling
 
             void UpdateViewMatrix();
             void UpdateProjectionMatrix();
-			void UpdateCameraVectors();
+            void UpdateCameraVectors();
     };
 }
