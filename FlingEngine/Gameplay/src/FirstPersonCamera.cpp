@@ -121,8 +121,8 @@ namespace Fling
 		}
 		
 		UpdateCameraVectors();
-        UpdateViewMatrix();
-        UpdateProjectionMatrix();
+		UpdateViewMatrix();
+		UpdateProjectionMatrix();
     }
 
 	void FirstPersonCamera::UpdateViewMatrix()
