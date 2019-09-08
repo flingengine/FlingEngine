@@ -58,7 +58,7 @@ namespace Fling
 
 	int DesktopWindow::ShouldClose()
 	{
-		return glfwWindowShouldClose(m_Window);
+		return glfwWindowShouldClose(m_Window);	
 	}
 
 	bool DesktopWindow::IsMinimized() const
@@ -78,6 +78,16 @@ namespace Fling
 	{
 		int width, height;
 		glfwGetFramebufferSize(m_Window, &width, &height);
+
 		return height;
+	}
+
+
+	float DesktopWindow::GetAspectRatio() const
+	{
+		int width, height;
+		glfwGetFramebufferSize(m_Window, &width, &height);
+
+		return static_cast<float>(width) / static_cast<float>(height);
 	}
 }   // namespace Fling

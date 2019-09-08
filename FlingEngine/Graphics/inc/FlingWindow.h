@@ -41,6 +41,9 @@ namespace Fling
 		/** The current height of this window */
 		virtual UINT32 GetHeight() const = 0;
 
+		/** The current aspect ratio of this windows*/
+		virtual float GetAspectRatio() const = 0;
+
 		/** Int representing if this window should close or not */
 		virtual int ShouldClose() = 0;
 		
