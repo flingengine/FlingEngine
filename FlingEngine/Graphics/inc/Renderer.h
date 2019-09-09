@@ -305,11 +305,8 @@ namespace Fling
 
         void CreateTextureImage();
 
-        /** The window that the game is being drawn to */
-        //GLFWwindow* m_Window = nullptr;
-        
 		/** Camera Instance */
-		FirstPersonCamera* m_Camera;
+		std::unique_ptr<FirstPersonCamera> m_camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
 
