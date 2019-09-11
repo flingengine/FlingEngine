@@ -7,21 +7,19 @@
 
 #include "FlingVulkan.h"
 
+#include "Renderer.h"		// For getting the devices 
 #include "GraphicsHelpers.h"
 #include "Buffer.h"
 
 namespace Fling
 {
-    Image::Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice, void* t_Data)
+    Image::Image(Guid t_ID, void* t_Data)
         : Resource(t_ID)
-		, m_Device(t_Device)
     {
-		assert(m_Device != VK_NULL_HANDLE);
-
-		LoadVulkanImage(t_PhysDevice);
+		LoadVulkanImage();
     }
 
-	void Image::LoadVulkanImage(VkPhysicalDevice t_PhysDevice)
+	void Image::LoadVulkanImage()
 	{
 		const std::string Filepath = GetFilepathReleativeToAssets();
 
@@ -43,20 +41,12 @@ namespace Fling
 			F_LOG_TRACE("Loaded image file: {}", Filepath);
 		}
 
-		// Put the image data in a staging buffer for Vulkan
-		VkBuffer StagingBuffer;
-		VkDeviceMemory StagingBufferMemory;
-		VkDeviceSize ImageSize = GetImageSize();
-		GraphicsHelpers::CreateBuffer(m_Device, t_PhysDevice,
-			ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			StagingBuffer, StagingBufferMemory);
+		VkDevice Device = Renderer::Get().GetDevice();
+		VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalDevice();
 
-		// Map the image data to a Vk buffer
-		void* Data;
-		vkMapMemory(m_Device, StagingBufferMemory, 0, ImageSize, 0, &Data);
-		memcpy(Data, GetPixelData(), static_cast<size_t>(ImageSize));
-		vkUnmapMemory(m_Device, StagingBufferMemory);
+		// Put the image data in a staging buffer for Vulkan
+		VkDeviceSize ImageSize = GetImageSize();
+		Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, GetPixelData());
 
 		VkImageCreateInfo ImageInfo = {};
 		ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -77,33 +67,33 @@ namespace Fling
 		ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		ImageInfo.flags = 0;
 
-		if (vkCreateImage(m_Device, &ImageInfo, nullptr, &m_vVkImage) != VK_SUCCESS)
+		if (vkCreateImage(Device, &ImageInfo, nullptr, &m_vVkImage) != VK_SUCCESS)
 		{
 			F_LOG_FATAL("Renderer failed to create image!");
 		}
 
 		VkMemoryRequirements MemReqs;
-		vkGetImageMemoryRequirements(m_Device, m_vVkImage, &MemReqs);
+		vkGetImageMemoryRequirements(Device, m_vVkImage, &MemReqs);
 
 		VkMemoryAllocateInfo AllocInfo = {};
 		AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		AllocInfo.allocationSize = MemReqs.size;
-		AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(t_PhysDevice, MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(PhysDevice, MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		if (vkAllocateMemory(m_Device, &AllocInfo, nullptr, &m_VkMemory) != VK_SUCCESS)
+		if (vkAllocateMemory(Device, &AllocInfo, nullptr, &m_VkMemory) != VK_SUCCESS)
 		{
 			F_LOG_FATAL("Failed to alloca image memory!");
 		}
-		vkBindImageMemory(m_Device, m_vVkImage, m_VkMemory, 0);
+		vkBindImageMemory(Device, m_vVkImage, m_VkMemory, 0);
 	}
 
     Image::~Image()
     {
-		assert(m_Device != VK_NULL_HANDLE);
+		VkDevice Device = Renderer::Get().GetDevice();
 
 		// Cleanup the Vulkan memory
-		vkDestroyImage(m_Device, m_vVkImage, nullptr);
-		vkFreeMemory(m_Device, m_VkMemory, nullptr);
+		vkDestroyImage(Device, m_vVkImage, nullptr);
+		vkFreeMemory(Device, m_VkMemory, nullptr);
 
         // Cleanup pixel data if we have to
         stbi_image_free(m_PixelData);

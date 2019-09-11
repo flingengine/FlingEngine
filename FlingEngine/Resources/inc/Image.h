@@ -11,7 +11,7 @@ namespace Fling
     class Image : public Resource
     {
     public:
-        explicit Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice, void* t_Data = nullptr);
+        explicit Image(Guid t_ID, void* t_Data = nullptr);
         virtual ~Image();
 
 		INT32 GetWidth() const { return m_Width; }
@@ -31,7 +31,7 @@ namespace Fling
 		/**
 		* @brief	Loads the Vulkan resources needed for this image
 		*/
-		void LoadVulkanImage(VkPhysicalDevice t_PhysDevice);
+		void LoadVulkanImage();
 
         /** Width of this image */
 		INT32 m_Width = 0;
@@ -50,8 +50,5 @@ namespace Fling
 
 		/** The Vulkan memory resource for this image */
 		VkDeviceMemory m_VkMemory;
-
-		/** The device that this image was created with */
-		VkDevice m_Device;
     };
 }   // namespace Fling
