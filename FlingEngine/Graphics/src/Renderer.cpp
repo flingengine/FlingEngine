@@ -991,7 +991,7 @@ namespace Fling
 
 	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
 	{
-		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(m_Device, m_CommandPool);
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.srcOffset = 0; // Optional
@@ -1000,25 +1000,6 @@ namespace Fling
 		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
 
 		EndSingleTimeCommands(commandBuffer);
-	}
-
-	VkCommandBuffer Renderer::BeginSingleTimeCommands()
-	{
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = m_CommandPool;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(m_Device, &allocInfo, &commandBuffer);
-
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
-		return commandBuffer;
 	}
 
 	void Renderer::EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
@@ -1038,7 +1019,7 @@ namespace Fling
 
 	void Renderer::TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
 	{
-		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(m_Device, m_CommandPool);
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1071,7 +1052,7 @@ namespace Fling
 
 	void Renderer::CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height)
 	{
-		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(m_Device, m_CommandPool);
 
 		VkBufferImageCopy region = {};
 		region.bufferOffset = 0;

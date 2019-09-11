@@ -18,17 +18,7 @@
 #	define INLINE			        inline
 #	define FORCEINLINE		        __forceinline
 
-// API Export/Import
-
-#	define FLING_NOT_EXPORTED
-
-#	ifdef FLING_EXPORT		        // Export functions
-#		define FLING_API        __declspec(dllexport) 
-#       define FLING_EXTERN      
-#	else					        // Not exporting function
-#		define FLING_API        
-#       define FLING_EXTERN        extern
-#	endif
+#include "FlingWindowsExports.h"
 
 #include "DesktopWindow.h"
 

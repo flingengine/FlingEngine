@@ -14,6 +14,7 @@
 #include "FirstPersonCamera.h"
 
 #include "FlingWindow.h"
+#include "Buffer.h"
 
 namespace Fling
 {
@@ -209,8 +210,6 @@ namespace Fling
 		* Creates a one-off commandBuffer to do this
 		*/
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-		VkCommandBuffer BeginSingleTimeCommands();
 
 		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
