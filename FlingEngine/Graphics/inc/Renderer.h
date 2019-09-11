@@ -79,6 +79,24 @@ namespace Fling
         */
         void PrepShutdown();
 
+        /**
+         * @brief Get the logical graphics Device object
+         * 
+         * @return const ref to VkDevice
+         */
+        const VkDevice& GetDevice() const { return m_Device; }
+
+        /**
+         * @brief Get the Physical Device object used by this renderer
+         * 
+         * @return const VkPhysicalDevice& 
+         */
+        const VkPhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice;  } 
+
+        const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
+
+        const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
+
     private:
 
         /// <summary>
@@ -210,8 +228,6 @@ namespace Fling
 		* Creates a one-off commandBuffer to do this
 		*/
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
 		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
 
@@ -351,13 +367,9 @@ namespace Fling
         /** @see CreateDescriptorPool */
         VkDescriptorPool m_DescriptorPool;
 
-		/** Vertex buffer */
-        VkBuffer m_VertexBuffer;
-        VkDeviceMemory m_VertexBufferMemory;
-
-		/** Index buffer */
-		VkBuffer m_IndexBuffer;
-		VkDeviceMemory m_IndexBufferMemory;
+        /** Vertex and index buffers */
+        Buffer* m_VertexBuffer = nullptr;
+        Buffer* m_IndexBuffer = nullptr;
 
         size_t CurrentFrameIndex = 0;
 

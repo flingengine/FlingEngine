@@ -709,6 +709,8 @@ namespace Fling
 
     void Renderer::CreateCommandBuffers()
     {
+        assert(m_VertexBuffer && m_IndexBuffer);
+        
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
         VkCommandBufferAllocateInfo allocInfo = {};
@@ -751,10 +753,10 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            VkBuffer VertexBuffers[] = { m_VertexBuffer };
+            VkBuffer VertexBuffers[] = { m_VertexBuffer->GetVkBuffer() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(Temp_indices.size()), 1, 0, 0, 0);
@@ -845,69 +847,42 @@ namespace Fling
 
     void Renderer::CreateTextureImage()
     {
-        std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs, m_Device, m_PhysicalDevice);
+        //std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs, m_Device, m_PhysicalDevice);
 
     }
 
     void Renderer::CreateVertexBuffer()
     {
+        F_LOG_TRACE("Create vertex buffer!");
 		VkDeviceSize bufferSize = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
 		
-		VkBuffer StagingBuffer;
-		VkDeviceMemory StagingBufferMemory;
-
-		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize, 
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			StagingBuffer,
-			StagingBufferMemory);
-        
-		// Map the data to the vertex buffer memory and memcpy the vertex data to it
-        void* Data;
-        vkMapMemory(m_Device, StagingBufferMemory, 0, bufferSize, 0, &Data);
-        memcpy(Data, Temp_Vertices.data(), (size_t)bufferSize);
-        vkUnmapMemory(m_Device, StagingBufferMemory);
-
-		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize,
-			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			m_VertexBuffer,
-			m_VertexBufferMemory);
+        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_Vertices.data());
+        F_LOG_TRACE("Create staging buffer : Complete");
+        // Create the actual vertex buffer
+        m_VertexBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		//GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize,
+		//	VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		//	m_VertexBuffer,
+		//	m_VertexBufferMemory);
 
 		// Copy the vertex buffer to the GPU memory
-		CopyBuffer(StagingBuffer, m_VertexBuffer, bufferSize);
-
-		// Cleanup the staging buffer
-		vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-		vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+		Buffer::CopyBuffer(&StagingBuffer, m_VertexBuffer, bufferSize);
     }
 
 	void Renderer::CreateIndexBuffer()
 	{
 		VkDeviceSize bufferSize = sizeof(Temp_indices[0]) * Temp_indices.size();
-		// Create staging buffer
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-		// Map to the stage buffer
-		void* data;
-		vkMapMemory(m_Device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, Temp_indices.data(), (size_t)bufferSize);
-		vkUnmapMemory(m_Device, stagingBufferMemory);
-
-		// Create the index buffer
-		GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize, 
-			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-			m_IndexBuffer, 
-			m_IndexBufferMemory);
+        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_indices.data());
+		
+        m_IndexBuffer = new Buffer(
+            bufferSize, 
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
 
 		// Copy the staging buffer to the index buffer
-		CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
-
-		vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
-		vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
+		Buffer::CopyBuffer(&StagingBuffer, m_IndexBuffer, bufferSize);
 	}
 
     void Renderer::CreateUniformBuffers()
@@ -999,22 +974,7 @@ namespace Fling
 		copyRegion.size = t_Size;
 		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
 
-		EndSingleTimeCommands(commandBuffer);
-	}
-
-	void Renderer::EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
-	{
-		vkEndCommandBuffer(t_CommandBuffer);
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &t_CommandBuffer;
-
-		vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(m_GraphicsQueue);
-
-		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &t_CommandBuffer);
+		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
 	}
 
 	void Renderer::TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
@@ -1047,7 +1007,7 @@ namespace Fling
 			1, &barrier
 		);
 
-		EndSingleTimeCommands(commandBuffer);
+		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
 	}
 
 	void Renderer::CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height)
@@ -1080,7 +1040,7 @@ namespace Fling
 			&region
 		);
 
-		EndSingleTimeCommands(commandBuffer);
+		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
 	}
 
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
@@ -1425,11 +1385,20 @@ namespace Fling
 
         vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
 
-		vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
-		vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
+        if(m_IndexBuffer)
+        {
+            delete m_IndexBuffer;
+            m_IndexBuffer = nullptr;
+        }
 
-        vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
-        vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
+        if(m_VertexBuffer)
+        {
+            delete m_VertexBuffer;
+            m_VertexBuffer = nullptr;
+        }
+
+        //vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
+        //vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {

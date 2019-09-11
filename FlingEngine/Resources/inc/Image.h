@@ -11,7 +11,7 @@ namespace Fling
     class Image : public Resource
     {
     public:
-        explicit Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice);
+        explicit Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice, void* t_Data = nullptr);
         virtual ~Image();
 
 		INT32 GetWidth() const { return m_Width; }

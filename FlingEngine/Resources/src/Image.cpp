@@ -8,10 +8,11 @@
 #include "FlingVulkan.h"
 
 #include "GraphicsHelpers.h"
+#include "Buffer.h"
 
 namespace Fling
 {
-    Image::Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice)
+    Image::Image(Guid t_ID, VkDevice t_Device, VkPhysicalDevice t_PhysDevice, void* t_Data)
         : Resource(t_ID)
 		, m_Device(t_Device)
     {

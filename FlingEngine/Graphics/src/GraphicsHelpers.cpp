@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "GraphicsHelpers.h"
+#include "Renderer.h"		// For getting devices/queue/command pools
 
 namespace Fling
 {
@@ -77,5 +78,25 @@ namespace Fling
 			vkBeginCommandBuffer(commandBuffer, &beginInfo);
 			return commandBuffer;
 		}
+
+		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
+		{
+			VkDevice Device = Renderer::Get().GetDevice();
+			VkCommandPool CmdPool = Renderer::Get().GetCommandPool();
+			VkQueue GraphicsQueue = Renderer::Get().GetGraphicsQueue();
+
+			vkEndCommandBuffer(t_CommandBuffer);
+
+			VkSubmitInfo submitInfo = {};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &t_CommandBuffer;
+
+			vkQueueSubmit(GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+			vkQueueWaitIdle(GraphicsQueue);
+
+			vkFreeCommandBuffers(Device, CmdPool, 1, &t_CommandBuffer);
+		}
+
 	}	// namespace GraphicsHelpers
 }   // namespace Fling
