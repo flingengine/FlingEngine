@@ -24,6 +24,3 @@
 #   error "Unknown compiler"
 
 #endif
-
-
-// #TODO: Any other platform (i.e. consoles, android, etc)

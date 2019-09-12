@@ -497,7 +497,6 @@ namespace Fling
     void Renderer::CreateGraphicsPipeline()
     {
         // Load shaders
-        // #TODO Create a way to re-compile shaders in-engine at runtime
         std::shared_ptr<File> VertShaderCode = ResourceManager::LoadResource<File>("Shaders/vert.spv"_hs);
         assert(VertShaderCode);
 
@@ -963,85 +962,6 @@ namespace Fling
             vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
         }
     }
-
-	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
-	{
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
-
-		VkBufferCopy copyRegion = {};
-		copyRegion.srcOffset = 0; // Optional
-		copyRegion.dstOffset = 0; // Optional
-		copyRegion.size = t_Size;
-		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
-
-		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
-	}
-
-	void Renderer::TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
-	{
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
-
-		VkImageMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = t_oldLayout;
-		barrier.newLayout = t_NewLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-		barrier.image = t_Image;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		barrier.srcAccessMask = 0; // TODO
-		barrier.dstAccessMask = 0; // TODO
-
-		vkCmdPipelineBarrier(
-			commandBuffer,
-			0 /* TODO */, 0 /* TODO */,
-			0,
-			0, nullptr,
-			0, nullptr,
-			1, &barrier
-		);
-
-		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
-	}
-
-	void Renderer::CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height)
-	{
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
-
-		VkBufferImageCopy region = {};
-		region.bufferOffset = 0;
-		region.bufferRowLength = 0;
-		region.bufferImageHeight = 0;
-
-		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		region.imageSubresource.mipLevel = 0;
-		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
-
-		region.imageOffset = { 0, 0, 0 };
-		region.imageExtent = {
-			t_Width,
-			t_Height,
-			1
-		};
-
-		vkCmdCopyBufferToImage(
-			commandBuffer,
-			t_Buffer,
-			t_Image,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1,
-			&region
-		);
-
-		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
-	}
 
 	// Swapchain support --------------------------------------
 

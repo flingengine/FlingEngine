@@ -222,16 +222,6 @@ namespace Fling
         void CreateDescriptorPool();
 
         void CreateDescriptorSets();
-		
-		/**
-		* Copy source buffer to the destination buffer given it's size.
-		* Creates a one-off commandBuffer to do this
-		*/
-		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
-
-		void CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height);
 
         /**
         * Check the swap chain support of a given device
