@@ -1,20 +1,22 @@
+#include "pch.h"
+
 #include "FirstPersonCamera.h"
 #include "FlingMath.h"
-#include "pch.h"
 
 namespace Fling 
 {
-    FirstPersonCamera::FirstPersonCamera(float aspectRatio) :
-		m_front(glm::vec3(-1.0f))
+    FirstPersonCamera::FirstPersonCamera(float aspectRatio, float t_MoveSpeed, float t_RotSpeed) 
+		: m_front(glm::vec3(-1.0f))
+		, m_RotationSpeed(t_RotSpeed)
     {
-		m_nearPlane   =   0.1f;
-		m_farPlane    =   1000.0f;
-		m_speed       =   10.0f;
-        m_aspectRatio =   aspectRatio;
-		m_fieldOfView =   glm::radians(45.0f);
-		m_position    =   glm::vec3(-6.0f, 0.0f, 2.0f);
-		m_rotation    =   glm::vec3(0.0f, 0.0f, 0.0f);
-		m_worldUp     =   glm::vec3(0.0f, 0.0f, 1.0f);
+		m_nearPlane = 0.1f;
+		m_farPlane = 1000.0f;
+		m_speed = t_MoveSpeed;
+		m_aspectRatio = aspectRatio;
+		m_fieldOfView = glm::radians(45.0f);
+		m_position = glm::vec3(-6.0f, 0.0f, 2.0f);
+		m_rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		m_worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
     }
 
 	FirstPersonCamera::FirstPersonCamera(
@@ -75,7 +77,7 @@ namespace Fling
 		//left
 		if(Input::IsKeyHeld(KeyNames::FL_KEY_A))
 		{
-			m_position -= m_right* moveSpeed;
+			m_position -= m_right * moveSpeed;
 		}
 
 		//right
@@ -85,40 +87,33 @@ namespace Fling
 		}
 
 		//Rotation
-		//Rotate left
-		if (Input::IsKeyHeld(KeyNames::FL_KEY_Q))
+		// Check if we should rotate
+		m_IsRotating = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+		MousePos CurMousePos = Input::GetMousePos();
+		if (m_IsRotating)
 		{
-			m_rotation.x += moveSpeed;
-		}
+			float RotSpeed = dt * m_RotationSpeed;
 
-		//Rotate right
-		if (Input::IsKeyHeld(KeyNames::FL_KEY_E))
-		{
-			m_rotation.x -= moveSpeed;
-		}
+			float MouseDeltaX = CurMousePos.X - m_PrevMousePos.X;
+			float MouseDeltaY = CurMousePos.Y - m_PrevMousePos.Y;
 
-		//Rotate up
-		if (Input::IsKeyHeld(KeyNames::FL_KEY_Z))
-		{
-			m_rotation.y += moveSpeed;
-		}
+			// Invert x rotation because it otherwise it's south paw
+			m_rotation.x += RotSpeed * -MouseDeltaX;	
+			m_rotation.y += RotSpeed * MouseDeltaY;
 
-		//Rotate down
-		if (Input::IsKeyHeld(KeyNames::FL_KEY_X))
-		{
-			m_rotation.y -= moveSpeed;
+			// Constrain the rotation
+			if (m_rotation.y > 89.0f)
+			{
+				m_rotation.y = 89.0f;
+			}
+			if (m_rotation.y < -89.0f)
+			{
+				m_rotation.y = -89.0f;
+			}
 		}
-
-
-		//Pitch constraints
-		if (m_rotation.y > 89.0f)
-		{
-			m_rotation.y = 89.0f;
-		}
-		if (m_rotation.y < -89.0f)
-		{ 
-			m_rotation.y = -89.0f;
-		}
+		
+		// Keep track of the mouse position
+		m_PrevMousePos = CurMousePos;
 		
 		UpdateCameraVectors();
 		UpdateViewMatrix();

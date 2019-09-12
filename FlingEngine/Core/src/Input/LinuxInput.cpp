@@ -218,6 +218,20 @@ namespace Fling
 		return false;
 	}
 
+	bool LinuxInput::IsMouseDownImpl(const std::string& t_KeyName)
+	{
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		if (Window)
+		{
+			Key& CurKey = m_KeyMap.at(t_KeyName);
+
+			int State = glfwGetMouseButton(Window->GetGlfwWindow(), CurKey.GetCode());
+			// If the current key was up last time we looked and is 
+			return (State == GLFW_PRESS || State == GLFW_REPEAT);
+		}
+		return false;
+	}
+
 	MousePos LinuxInput::GetMousePosImpl()
 	{
 		MousePos CurPos = {};

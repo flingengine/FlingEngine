@@ -41,7 +41,10 @@ namespace Fling
 		
 		static bool IsKeyDown(const std::string& t_KeyName) { return m_Instace->IsKeyDownImpl(t_KeyName); }
 		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instace->IsKeyHelpImpl(t_KeyName); }
+		
 		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instace->IsMouseButtonPressedImpl(t_KeyName); }
+		static bool IsMouseDown(const std::string& t_KeyName) { return m_Instace->IsMouseDownImpl(t_KeyName); }
+
 
 		/**
 		 * Get the current mouse position in screen space
@@ -80,8 +83,9 @@ namespace Fling
 
 		virtual bool IsKeyDownImpl(const std::string& t_KeyName) = 0;
 		virtual bool IsKeyHelpImpl(const std::string& t_KeyName) = 0;
+		
 		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) = 0;
-
+		virtual bool IsMouseDownImpl(const std::string& t_KeyName) = 0;
 		virtual MousePos GetMousePosImpl() = 0;
 	};
 

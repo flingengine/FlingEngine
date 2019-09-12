@@ -13,8 +13,9 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-
-		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio());
+		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
+		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
+		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 	}
 
     UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
