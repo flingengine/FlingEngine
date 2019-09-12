@@ -14,8 +14,8 @@ namespace Fling
         explicit Image(Guid t_ID, void* t_Data = nullptr);
         virtual ~Image();
 
-		INT32 GetWidth() const { return m_Width; }
-		INT32 GetHeight() const { return m_Height; }
+		UINT32 GetWidth() const { return m_Width; }
+		UINT32 GetHeight() const { return m_Height; }
         INT32 GetChannels() const { return m_Channels; }
         stbi_uc* GetPixelData() const { return m_PixelData; }
 
@@ -26,6 +26,11 @@ namespace Fling
          */
         UINT64 GetImageSize() const { return m_Width * m_Height * 4; } 
 
+		/**
+		* @brief	Release the Vulkan resources of this image 
+		*/
+		void Release();
+
     private:
 
 		/**
@@ -33,11 +38,15 @@ namespace Fling
 		*/
 		void LoadVulkanImage();
 
+		void TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
+
+		void CopyBufferToImage(VkBuffer t_Buffer);
+
         /** Width of this image */
-		INT32 m_Width = 0;
+		UINT32 m_Width = 0;
 
         /** Height of this image */
-		INT32 m_Height = 0;
+		UINT32 m_Height = 0;
 
         /** The color channels of this image */
         INT32 m_Channels = 0;

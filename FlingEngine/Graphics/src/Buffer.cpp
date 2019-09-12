@@ -91,8 +91,8 @@ namespace Fling
 		VkDevice Device = Renderer::Get().GetDevice();
 		VkCommandPool CmdPool = Renderer::Get().GetCommandPool();
 
-		// #TODO: Replace this grphaics helper with a command buffer wrapper that handles the creation for us
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(Device, CmdPool);
+		// #TODO: Replace this graphics helper with a command buffer wrapper that handles the creation for us
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.srcOffset = 0; // Optional

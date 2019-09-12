@@ -26,6 +26,8 @@ namespace Fling
 	void ResourceManager::Shutdown()
 	{
 		// Unload all assets BB
+		// This will remove all owning references to the shared_ptr's
+		m_ResourceMap.clear();
 	}
 
 	std::shared_ptr<Resource> ResourceManager::GetResource(Guid_Handle t_ID) const

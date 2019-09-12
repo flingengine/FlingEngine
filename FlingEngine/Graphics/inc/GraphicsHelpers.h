@@ -19,7 +19,7 @@ namespace Fling
 
 		void CreateBuffer(VkDevice t_Device, VkPhysicalDevice t_PhysicalDevice, VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory);
 
-		VkCommandBuffer BeginSingleTimeCommands(VkDevice t_Device, VkCommandPool t_CommandPool);
+		VkCommandBuffer BeginSingleTimeCommands();
 		
 		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 

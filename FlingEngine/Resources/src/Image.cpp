@@ -24,13 +24,18 @@ namespace Fling
 		const std::string Filepath = GetFilepathReleativeToAssets();
 
 		// Load the image from STB
+		int Width = 0;
+		int Height = 0;
 		m_PixelData = stbi_load(
 			Filepath.c_str(),
-			&m_Width,
-			&m_Height,
+			&Width,
+			&Height,
 			&m_Channels,
 			STBI_rgb_alpha
 		);
+
+		m_Width = static_cast<UINT32>(Width);
+		m_Height = static_cast<UINT32>(Height);
 
 		if (!m_PixelData)
 		{
@@ -69,9 +74,10 @@ namespace Fling
 
 		if (vkCreateImage(Device, &ImageInfo, nullptr, &m_vVkImage) != VK_SUCCESS)
 		{
-			F_LOG_FATAL("Renderer failed to create image!");
+			F_LOG_FATAL("Failed to create image!");
 		}
 
+		// Allocate the memory for the image
 		VkMemoryRequirements MemReqs;
 		vkGetImageMemoryRequirements(Device, m_vVkImage, &MemReqs);
 
@@ -82,20 +88,124 @@ namespace Fling
 
 		if (vkAllocateMemory(Device, &AllocInfo, nullptr, &m_VkMemory) != VK_SUCCESS)
 		{
-			F_LOG_FATAL("Failed to alloca image memory!");
+			F_LOG_FATAL("Failed to allocate image memory!");
 		}
+
 		vkBindImageMemory(Device, m_vVkImage, m_VkMemory, 0);
+		
+		// Transition and copy the image layout to the staging buffer
+		TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		CopyBufferToImage(StagingBuffer.GetVkBuffer());
+
+		// transition the image memory to be optimal so that we can sample it in the shader
+		TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
-    Image::~Image()
-    {
+	void Image::TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
+	{
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
+
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = t_oldLayout;
+		barrier.newLayout = t_NewLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+		barrier.image = m_vVkImage;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		// Handle transition barrier masks
+		VkPipelineStageFlags SourceStage;
+		VkPipelineStageFlags DestinationStage;
+
+		if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+			SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			DestinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		}
+		else if (t_oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && t_NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		{
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			DestinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else
+		{
+			F_LOG_ERROR("Unsupported layout transition in image!");
+		}
+
+		barrier.srcAccessMask = 0; // TODO
+		barrier.dstAccessMask = 0; // TODO
+
+		vkCmdPipelineBarrier(
+			commandBuffer,
+			SourceStage, DestinationStage,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &barrier
+		);
+
+		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
+	}
+
+	void Image::CopyBufferToImage(VkBuffer t_Buffer)
+	{
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
+
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+
+		region.imageOffset = { 0, 0, 0 };
+		region.imageExtent = {
+			m_Width,
+			m_Height,
+			1
+		};
+
+		vkCmdCopyBufferToImage(
+			commandBuffer,
+			t_Buffer,
+			m_vVkImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region
+		);
+
+		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
+	}
+
+	void Image::Release()
+	{
 		VkDevice Device = Renderer::Get().GetDevice();
 
 		// Cleanup the Vulkan memory
 		vkDestroyImage(Device, m_vVkImage, nullptr);
 		vkFreeMemory(Device, m_VkMemory, nullptr);
 
-        // Cleanup pixel data if we have to
-        stbi_image_free(m_PixelData);
+		// Cleanup pixel data if we have to
+		stbi_image_free(m_PixelData);
+	}
+
+    Image::~Image()
+    {
+		Release();
     }
 } // namespace Fling

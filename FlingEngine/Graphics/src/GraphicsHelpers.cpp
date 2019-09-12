@@ -60,16 +60,19 @@ namespace Fling
 			vkBindBufferMemory(t_Device, t_Buffer, t_BuffMemory, 0);
 		}
 
-		VkCommandBuffer BeginSingleTimeCommands(VkDevice t_Device, VkCommandPool t_CommandPool)
+		VkCommandBuffer BeginSingleTimeCommands()
 		{
+			VkDevice Device = Renderer::Get().GetDevice();
+			VkCommandPool CommandPool = Renderer::Get().GetCommandPool();
+
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = t_CommandPool;
+			allocInfo.commandPool = CommandPool;
 			allocInfo.commandBufferCount = 1;
 
 			VkCommandBuffer commandBuffer;
-			vkAllocateCommandBuffers(t_Device, &allocInfo, &commandBuffer);
+			vkAllocateCommandBuffers(Device, &allocInfo, &commandBuffer);
 
 			VkCommandBufferBeginInfo beginInfo = {};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

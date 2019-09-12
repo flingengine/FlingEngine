@@ -847,7 +847,7 @@ namespace Fling
 
     void Renderer::CreateTextureImage()
     {
-        //std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs, m_Device, m_PhysicalDevice);
+        std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs);
 
     }
 
@@ -966,7 +966,7 @@ namespace Fling
 
 	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
 	{
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(m_Device, m_CommandPool);
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.srcOffset = 0; // Optional
@@ -979,7 +979,7 @@ namespace Fling
 
 	void Renderer::TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
 	{
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(m_Device, m_CommandPool);
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1012,7 +1012,7 @@ namespace Fling
 
 	void Renderer::CopyBufferToImage(VkBuffer t_Buffer, VkImage t_Image, UINT32 t_Width, UINT32 t_Height)
 	{
-		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands(m_Device, m_CommandPool);
+		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
 		VkBufferImageCopy region = {};
 		region.bufferOffset = 0;
@@ -1042,6 +1042,8 @@ namespace Fling
 
 		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
 	}
+
+	// Swapchain support --------------------------------------
 
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
     {
@@ -1372,6 +1374,8 @@ namespace Fling
 		memcpy(data, &ubo, sizeof(ubo));
 		vkUnmapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage]);
     }	
+
+	// Shutdown steps -------------------------------------------
 
     void Renderer::PrepShutdown()
     {
