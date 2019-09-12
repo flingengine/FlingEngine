@@ -14,7 +14,11 @@
 #include "FirstPersonCamera.h"
 
 #include "FlingWindow.h"
+#include "Instance.h"
+#include "PhyscialDevice.h"
+#include "LogicalDevice.h"
 #include "Buffer.h"
+#include "SwapChain.h"
 
 namespace Fling
 {
@@ -37,13 +41,6 @@ namespace Fling
         {
             return GraphicsFamily && PresentFamily;
         }
-    };
-
-    struct SwapChainSupportDetails
-    {
-        VkSurfaceCapabilitiesKHR Capabilities;
-        std::vector<VkSurfaceFormatKHR> Formats;
-        std::vector<VkPresentModeKHR> PresentModes;
     };
 
     /// <summary>
@@ -122,22 +119,6 @@ namespace Fling
         /// Init the current graphics API
         /// </summary>
         void InitGraphics();
-
-		/**
-		 * Read any vars that may have been set in the engine config
-		 */
-		void ReadConfig();
-
-        /// <summary>
-        /// Create a vulkan instance
-        /// </summary>
-        void CreateGraphicsInstance();
-
-        /// <summary>
-        /// Determine if all requested layers are available.
-        /// </summary>
-        /// <returns>Returns true if layers are found, false otherwise</returns>
-        bool CheckValidationLayerSupport();
 
         /// <summary>
         /// Determines what physical device to use for this Vulkan instance.
@@ -272,8 +253,6 @@ namespace Fling
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
-        std::vector<const char*> GetRequiredExtensions();
-
         /**
         * Check if the given device supports the extensions that this application requires
         * 
@@ -292,24 +271,6 @@ namespace Fling
         */
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
-        static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT t_messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT* t_CallbackData,
-            void* t_UserData
-        );
-
-        VkResult CreateDebugUtilsMessengerEXT(
-            VkInstance instance,
-            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-            const VkAllocationCallbacks* pAllocator,
-            VkDebugUtilsMessengerEXT* pDebugMessenger );
-
-        void DestroyDebugUtilsMessengerEXT(
-            VkInstance instance,
-            VkDebugUtilsMessengerEXT debugMessenger,
-            const VkAllocationCallbacks* pAllocator );
-
         void CreateTextureImage();
 
 		/** Camera Instance */
@@ -317,8 +278,7 @@ namespace Fling
 
 		FlingWindow* m_CurrentWindow = nullptr;
 
-        /** The Vulkan instance */
-        VkInstance m_Instance = VK_NULL_HANDLE;
+        Instance* m_Instance = nullptr;
 
         /** Physical device for Vulkan. Destroyed in cleanup. */
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
@@ -331,9 +291,6 @@ namespace Fling
 
         /** Handle to the presentation queue */
         VkQueue m_PresentQueue = VK_NULL_HANDLE;
-
-        /** Debug message handler for Vulkan */
-        VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
 
         /** Handle to the surface extension used to interact with the windows system */
         VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
@@ -370,22 +327,12 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-#ifdef NDEBUG
-        bool m_EnableValidationLayers = false;
-#else
-        bool m_EnableValidationLayers = false;
-#endif
-
         /** Uniform buffers */
         std::vector<VkBuffer> m_UniformBuffers;
         std::vector<VkDeviceMemory> m_UniformBuffersMemory;
         
         std::vector<VkDescriptorSet> m_DescriptorSets;
 
-        const std::vector<const char*> m_ValidationLayers =
-        {
-            "VK_LAYER_KHRONOS_validation"
-        };
 
         /** Device extension support for the swap chain */
         const std::vector<const char*> m_DeviceExtensions = 

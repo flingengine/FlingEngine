@@ -19,6 +19,9 @@ namespace Fling
         INT32 GetChannels() const { return m_Channels; }
         stbi_uc* GetPixelData() const { return m_PixelData; }
 
+        const VkImage& GetVkImage() const { return m_vVkImage; }
+        const VkImageView& GetVkImageView() const { return m_ImageView; }
+
         /**
          * @brief   Get the Image Size object (width * height * 4)
          *          Multiply by 4 because the pixel is laid out row by row with 4 bytes per pixel
@@ -38,6 +41,11 @@ namespace Fling
 		*/
 		void LoadVulkanImage();
 
+        /**
+         * @brief Create a Image View object that is needed to sample this image from the swap chain
+         */
+        void CreateImageView();
+
 		void TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
 
 		void CopyBufferToImage(VkBuffer t_Buffer);
@@ -56,6 +64,9 @@ namespace Fling
 
 		/** The Vulkan image data */
 		VkImage m_vVkImage;
+
+        /** The view of this image for the swap chain */
+        VkImageView m_ImageView;
 
 		/** The Vulkan memory resource for this image */
 		VkDeviceMemory m_VkMemory;
