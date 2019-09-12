@@ -120,8 +120,8 @@ namespace Fling
 		barrier.subresourceRange.layerCount = 1;
 
 		// Handle transition barrier masks
-		VkPipelineStageFlags SourceStage;
-		VkPipelineStageFlags DestinationStage;
+		VkPipelineStageFlags SourceStage = 0;
+		VkPipelineStageFlags DestinationStage = 0;
 
 		if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 		{

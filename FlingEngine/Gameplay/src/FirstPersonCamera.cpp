@@ -86,6 +86,19 @@ namespace Fling
 			m_position += m_right * moveSpeed;
 		}
 
+		// Move world up with Q
+		if(Input::IsKeyHeld(KeyNames::FL_KEY_Q))
+		{
+			m_position += m_worldUp * moveSpeed;
+		}
+
+		// Move world down with E
+		if(Input::IsKeyHeld(KeyNames::FL_KEY_E))
+		{
+			m_position += -m_worldUp * moveSpeed;
+		}
+		
+
 		//Rotation
 		// Check if we should rotate
 		m_IsRotating = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);

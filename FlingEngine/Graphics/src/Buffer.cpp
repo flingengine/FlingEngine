@@ -88,9 +88,6 @@ namespace Fling
 	{
 		assert(t_SrcBuffer && t_SrcBuffer->IsUsed() && t_DstBuffer && t_DstBuffer->IsUsed());
 
-		VkDevice Device = Renderer::Get().GetDevice();
-		VkCommandPool CmdPool = Renderer::Get().GetCommandPool();
-
 		// #TODO: Replace this graphics helper with a command buffer wrapper that handles the creation for us
 		VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 

@@ -97,6 +97,10 @@ namespace Fling
 
         const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
 
+        static void FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height);
+
+        void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
+
     private:
 
         /// <summary>
@@ -305,8 +309,6 @@ namespace Fling
             VkInstance instance,
             VkDebugUtilsMessengerEXT debugMessenger,
             const VkAllocationCallbacks* pAllocator );
-
-        static void FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height);
 
         void CreateTextureImage();
 
