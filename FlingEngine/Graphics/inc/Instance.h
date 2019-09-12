@@ -25,6 +25,7 @@ namespace Fling
         const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
 
     private:
+
         /** The Vulkan instance */
         VkInstance m_Instance = VK_NULL_HANDLE;
 
@@ -42,11 +43,10 @@ namespace Fling
          */
         void CreateInstance();
 
-
         std::vector<const char*> GetRequiredExtensions();
 
-
         bool CheckValidationLayerSupport();
+
 
         // Debug messenger callbacks ---------------------------
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -71,7 +71,7 @@ namespace Fling
 
         void SetupDebugMessages();
 
-
+        /** The validation layers that we want to look for on this instance */
         const std::vector<const char*> m_ValidationLayers =
         {
             "VK_LAYER_KHRONOS_validation"

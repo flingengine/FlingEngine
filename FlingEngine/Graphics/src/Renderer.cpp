@@ -18,50 +18,6 @@ namespace Fling
 		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 	}
 
-    UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
-    {
-        UINT16 Score = 0;
-
-        VkPhysicalDeviceProperties DeviceProperties;
-        VkPhysicalDeviceFeatures DeviceFeatures;
-        vkGetPhysicalDeviceProperties( t_Device, &DeviceProperties );
-        vkGetPhysicalDeviceFeatures( t_Device, &DeviceFeatures );
-
-        // Necessary application features, if the device doesn't have one then return 0
-        if( !DeviceFeatures.geometryShader )
-        {
-            return 0;
-        }
-
-        // Ensure that this devices supports all necessary extensions
-        if (!CheckDeviceExtensionSupport(t_Device))
-        {
-            return 0;
-        }
-
-        // This device must have swap chain support
-        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(t_Device);
-        if (SwapChainSupport.Formats.empty() || SwapChainSupport.PresentModes.empty())
-        {
-            return 0;
-        }
-
-        // Favor discrete GPU's
-        if( DeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU )
-        {
-            Score += 500;
-        }
-
-        // Favor complete queue sets
-        QueueFamilyIndices QueueFamily = FindQueueFamilies( t_Device );
-        if( QueueFamily.IsComplete() )
-        {
-            Score += 500;
-        }
-
-        return Score;
-    }
-
     QueueFamilyIndices Renderer::FindQueueFamilies( VkPhysicalDevice const t_Device )
     {
         QueueFamilyIndices Indecies = {};
@@ -98,9 +54,12 @@ namespace Fling
     void Renderer::InitGraphics()
 	{
         m_Instance = new Instance();
+        assert(m_Instance);
 
-        CreateSurface();
-		PickPhysicalDevice();
+        CreateSurface();    
+
+        m_PhysicalDevice = new PhysicalDevice(m_Instance);
+        
         CreateLogicalDevice();
         CreateSwapChain();
         CreateImageViews();
@@ -122,42 +81,10 @@ namespace Fling
         CreateSyncObjects();
 	}
 
-	void Renderer::PickPhysicalDevice()
-	{
-        // Enumerate available devices
-		UINT32 DeviceCount = 0;
-		vkEnumeratePhysicalDevices( m_Instance->GetRawVkInstance(), &DeviceCount, nullptr );
-
-		if( DeviceCount == 0 )
-		{
-            F_LOG_FATAL( "Failed to find GPU's with Vulkan support!" );
-		}
-
-        std::vector<VkPhysicalDevice> Devices( DeviceCount );
-        vkEnumeratePhysicalDevices( m_Instance->GetRawVkInstance(), &DeviceCount, Devices.data() );
-        
-        // Find the best device for this application
-        UINT16 MaxRating = 0;
-        for( const VkPhysicalDevice& Device : Devices )
-        {
-            UINT16 Rating = GetDeviceRating( Device );
-            if( Rating > 0 && Rating > MaxRating )
-            {
-                MaxRating = Rating;
-                m_PhysicalDevice = Device;
-            }
-        }
-
-        if( m_PhysicalDevice == VK_NULL_HANDLE )
-        {
-            F_LOG_FATAL( "Failed to find a suitable GPU!" );
-        }
-	}
-
     void Renderer::CreateLogicalDevice()
     {
         // Queue creation
-        QueueFamilyIndices Indecies = FindQueueFamilies( m_PhysicalDevice );
+        QueueFamilyIndices Indecies = FindQueueFamilies( m_PhysicalDevice->GetVkPhysicalDevice() );
   
         std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
         std::set<UINT32> UniqueQueueFamilies = { Indecies.GraphicsFamily, Indecies.PresentFamily };
@@ -197,7 +124,7 @@ namespace Fling
             CreateInfo.enabledLayerCount = 0;
         }
 
-        if( vkCreateDevice( m_PhysicalDevice, &CreateInfo, nullptr, &m_Device ) != VK_SUCCESS ) 
+        if( vkCreateDevice( m_PhysicalDevice->GetVkPhysicalDevice(), &CreateInfo, nullptr, &m_Device ) != VK_SUCCESS ) 
         {
             F_LOG_FATAL( "failed to create logical Device!" );
         }
@@ -213,7 +140,7 @@ namespace Fling
 
     void Renderer::CreateSwapChain()
     {
-        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
+        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice->GetVkPhysicalDevice());
 
         VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
         VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
@@ -241,7 +168,7 @@ namespace Fling
         CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Specify the handling of multiple queue families
-        QueueFamilyIndices Indices = FindQueueFamilies(m_PhysicalDevice);
+        QueueFamilyIndices Indices = FindQueueFamilies(m_PhysicalDevice->GetVkPhysicalDevice());
         UINT32 queueFamilyIndices[] = { Indices.GraphicsFamily, Indices.PresentFamily };
 
         if (Indices.GraphicsFamily != Indices.PresentFamily) 
@@ -578,7 +505,7 @@ namespace Fling
 
     void Renderer::CreateCommandPool()
     {
-        QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_PhysicalDevice);
+        QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_PhysicalDevice->GetVkPhysicalDevice());
 
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -744,7 +671,7 @@ namespace Fling
         F_LOG_TRACE("Create staging buffer : Complete");
         // Create the actual vertex buffer
         m_VertexBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		//GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,bufferSize,
+		//GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice->GetVkPhysicalDevice(),bufferSize,
 		//	VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		//	m_VertexBuffer,
@@ -778,7 +705,7 @@ namespace Fling
 
         for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
         {
-            GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice,
+            GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice->GetVkPhysicalDevice(),
                 bufferSize,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -965,11 +892,6 @@ namespace Fling
         return ShaderModule;
     }
 
-    void Renderer::FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height)
-    {
-        Renderer::Get().m_FrameBufferResized = true;
-    }
-
 	void Renderer::CreateGameWindow( const UINT32 t_width, const UINT32 t_height )
 	{
 		WindowProps Props = {};
@@ -1005,13 +927,6 @@ namespace Fling
 		Props.m_Title = Title;
 
 		m_CurrentWindow = FlingWindow::Create(Props);
-
-		// #TODO: Add a resize callback to the window!
-
-		//m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
-		//DesktopWindow* Window = static_cast<DesktopWindow*>(m_CurrentWindow);
-		
-        //glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
 	}
 
 	void Renderer::Tick()
@@ -1154,6 +1069,12 @@ namespace Fling
         vkDestroyDevice(m_Device, nullptr);
 
         vkDestroySurfaceKHR (m_Instance->GetRawVkInstance(), m_Surface, nullptr);
+
+        if(m_PhysicalDevice)
+        {
+            delete m_PhysicalDevice;
+            m_PhysicalDevice = nullptr;
+        }
 
         if(m_Instance)
         {

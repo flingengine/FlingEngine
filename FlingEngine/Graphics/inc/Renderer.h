@@ -26,24 +26,6 @@ namespace Fling
     class File;
 
     /// <summary>
-    /// Used to keep track of what properties a given queue satisfies
-    /// </summary>
-    struct QueueFamilyIndices
-    {
-        UINT32 GraphicsFamily = 0;
-        UINT32 PresentFamily = 0;
-
-        /// <summary>
-        /// Determines if this 
-        /// </summary>
-        /// <returns>True if queue family is complete</returns>
-        bool IsComplete() const
-        {
-            return GraphicsFamily && PresentFamily;
-        }
-    };
-
-    /// <summary>
     /// Core renderer for the application
     /// </summary>
     class Renderer : public Singleton<Renderer>
@@ -88,25 +70,15 @@ namespace Fling
          * 
          * @return const VkPhysicalDevice& 
          */
-        const VkPhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice;  } 
+        const VkPhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); } 
 
         const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
 
         const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
 
-        static void FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height);
-
         void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
 
     private:
-
-        /// <summary>
-        /// Get a rating of how good this device is for this application.
-        /// Scores range from 0 - 1000
-        /// </summary>
-        /// <param name="t_Device">Device to consider</param>
-        /// <returns>Score on a scale of 0 to 1000</returns>
-        UINT16 GetDeviceRating( VkPhysicalDevice const t_Device );
 
         /// <summary>
         /// Find what queue families are supported by a given 
@@ -119,11 +91,6 @@ namespace Fling
         /// Init the current graphics API
         /// </summary>
         void InitGraphics();
-
-        /// <summary>
-        /// Determines what physical device to use for this Vulkan instance.
-        /// </summary>
-        void PickPhysicalDevice();
 
         /// <summary>
         /// Create the logical vulkan device
@@ -280,8 +247,9 @@ namespace Fling
 
         Instance* m_Instance = nullptr;
 
-        /** Physical device for Vulkan. Destroyed in cleanup. */
-        VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
+        LogicalDevice* m_LogicalDevice = nullptr;
+
+        PhysicalDevice* m_PhysicalDevice = nullptr;
 
         /** Logical Vulkan device */
         VkDevice m_Device = VK_NULL_HANDLE;
