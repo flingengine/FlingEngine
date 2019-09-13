@@ -18,49 +18,20 @@ namespace Fling
 		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 	}
 
-    QueueFamilyIndices Renderer::FindQueueFamilies( VkPhysicalDevice const t_Device )
-    {
-        QueueFamilyIndices Indecies = {};
-
-        UINT32 QueueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, nullptr );
-
-        std::vector<VkQueueFamilyProperties> QueueFamilies( QueueFamilyCount );
-        vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, QueueFamilies.data() );
-        // Set the family flags we are interested in
-        int i = 0;
-        for( const VkQueueFamilyProperties& Family : QueueFamilies )
-        {
-            if (Family.queueCount > 0)
-            {
-                Indecies.GraphicsFamily = ((Family.queueFlags & VK_QUEUE_GRAPHICS_BIT) ? i : 0);
-                
-                VkBool32 PresentSupport = false;
-                vkGetPhysicalDeviceSurfaceSupportKHR(t_Device, i, m_Surface, &PresentSupport);
-
-                Indecies.PresentFamily = PresentSupport ? i : 0;
-            }
-                    
-            if( Indecies.IsComplete() )
-            {
-                break;
-            }
-            i++;
-        }
-
-        return Indecies;
-    }
-
     void Renderer::InitGraphics()
 	{
         m_Instance = new Instance();
         assert(m_Instance);
 
-        CreateSurface();    
+        m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_Surface);
 
-        m_PhysicalDevice = new PhysicalDevice(m_Instance);
-        
+        m_PhysicalDevice = new PhysicalDevice(m_Instance, m_Surface);
+        assert(m_PhysicalDevice);
+
         CreateLogicalDevice();
+        m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice);
+        assert(m_LogicalDevice);
+
         CreateSwapChain();
         CreateImageViews();
         CreateRenderPass();
@@ -83,59 +54,7 @@ namespace Fling
 
     void Renderer::CreateLogicalDevice()
     {
-        // Queue creation
-        QueueFamilyIndices Indecies = FindQueueFamilies( m_PhysicalDevice->GetVkPhysicalDevice() );
-  
-        std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
-        std::set<UINT32> UniqueQueueFamilies = { Indecies.GraphicsFamily, Indecies.PresentFamily };
-
-        // Generate the CreatinInfo for each queue family 
-        float Priority = 1.0f;
-        for (const UINT32 fam : UniqueQueueFamilies)
-        {
-            VkDeviceQueueCreateInfo QueueCreateInfo = {};
-            QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            QueueCreateInfo.queueFamilyIndex = fam;
-            QueueCreateInfo.queueCount = 1;
-            QueueCreateInfo.pQueuePriorities = &Priority;
-            QueueCreateInfos.push_back(QueueCreateInfo);
-        }
-
-        VkPhysicalDeviceFeatures DevicesFeatures = {};
-
-        // Device creation 
-        VkDeviceCreateInfo CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        CreateInfo.queueCreateInfoCount = static_cast<UINT32>(QueueCreateInfos.size());
-        CreateInfo.pQueueCreateInfos = QueueCreateInfos.data();
-        CreateInfo.pEnabledFeatures = &DevicesFeatures;
-
-        // Set the enabled extensions
-        CreateInfo.enabledExtensionCount = static_cast<UINT32>(m_DeviceExtensions.size());
-        CreateInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
-
-        if( m_Instance->IsValidationEnabled() ) 
-        {
-            CreateInfo.enabledLayerCount = m_Instance->EnabledValidationLayerCount();
-            CreateInfo.ppEnabledLayerNames = m_Instance->GetEnabledValidationLayers().data();
-        }
-        else 
-        {
-            CreateInfo.enabledLayerCount = 0;
-        }
-
-        if( vkCreateDevice( m_PhysicalDevice->GetVkPhysicalDevice(), &CreateInfo, nullptr, &m_Device ) != VK_SUCCESS ) 
-        {
-            F_LOG_FATAL( "failed to create logical Device!" );
-        }
-
-        vkGetDeviceQueue( m_Device, Indecies.GraphicsFamily, 0, &m_GraphicsQueue );
-        vkGetDeviceQueue(m_Device, Indecies.PresentFamily, 0, &m_PresentQueue);
-    }
-
-    void Renderer::CreateSurface()
-    {
-		m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_Surface);
+        
     }
 
     void Renderer::CreateSwapChain()
@@ -168,7 +87,7 @@ namespace Fling
         CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Specify the handling of multiple queue families
-        QueueFamilyIndices Indices = FindQueueFamilies(m_PhysicalDevice->GetVkPhysicalDevice());
+        QueueFamilyIndices Indices = m_PhysicalDevice->FindQueueFamilies();
         UINT32 queueFamilyIndices[] = { Indices.GraphicsFamily, Indices.PresentFamily };
 
         if (Indices.GraphicsFamily != Indices.PresentFamily) 
@@ -505,7 +424,7 @@ namespace Fling
 
     void Renderer::CreateCommandPool()
     {
-        QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_PhysicalDevice->GetVkPhysicalDevice());
+        QueueFamilyIndices queueFamilyIndices = m_PhysicalDevice->FindQueueFamilies();
 
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -1066,7 +985,11 @@ namespace Fling
 
         vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 
-        vkDestroyDevice(m_Device, nullptr);
+        if(m_LogicalDevice)
+        {
+            delete m_LogicalDevice;
+            m_LogicalDevice = nullptr;
+        }
 
         vkDestroySurfaceKHR (m_Instance->GetRawVkInstance(), m_Surface, nullptr);
 

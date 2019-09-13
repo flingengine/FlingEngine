@@ -4,8 +4,9 @@
 
 namespace Fling
 {
-    PhysicalDevice::PhysicalDevice(Instance* t_Instance)
+    PhysicalDevice::PhysicalDevice(Instance* t_Instance, VkSurfaceKHR t_Surface)
         : m_Instance(t_Instance)
+        , m_Surface(t_Surface)
     {
         assert(m_Instance);
         PickPhysicalDevice();
@@ -44,6 +45,39 @@ namespace Fling
             F_LOG_FATAL( "Failed to find a suitable GPU!" );
         }
     }
+
+    QueueFamilyIndices PhysicalDevice::FindQueueFamilies(VkPhysicalDevice t_PhysDevice, VkSurfaceKHR t_Surface)
+    {
+        QueueFamilyIndices Indecies = {};
+
+        UINT32 QueueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties( t_PhysDevice, &QueueFamilyCount, nullptr );
+
+        std::vector<VkQueueFamilyProperties> QueueFamilies( QueueFamilyCount );
+        vkGetPhysicalDeviceQueueFamilyProperties( t_PhysDevice, &QueueFamilyCount, QueueFamilies.data() );
+        // Set the family flags we are interested in
+        int i = 0;
+        for( const VkQueueFamilyProperties& Family : QueueFamilies )
+        {
+            if (Family.queueCount > 0)
+            {
+                Indecies.GraphicsFamily = ((Family.queueFlags & VK_QUEUE_GRAPHICS_BIT) ? i : 0);
+                
+                VkBool32 PresentSupport = false;
+                vkGetPhysicalDeviceSurfaceSupportKHR(t_PhysDevice, i, t_Surface, &PresentSupport);
+
+                Indecies.PresentFamily = PresentSupport ? i : 0;
+            }
+                    
+            if( Indecies.IsComplete() )
+            {
+                break;
+            }
+            i++;
+        }
+
+        return Indecies;
+    }
     
     PhysicalDeviceRating PhysicalDevice::GetDeviceRating( VkPhysicalDevice const t_Device )
     {
@@ -78,11 +112,11 @@ namespace Fling
         }
 
         // Favor complete queue sets
-        //QueueFamilyIndices QueueFamily = FindQueueFamilies( t_Device );
-        //if( QueueFamily.IsComplete() )
-        //{
-        //    Score += 500;
-        //}
+        QueueFamilyIndices QueueFamily = FindQueueFamilies();
+        if( QueueFamily.IsComplete() )
+        {
+            Rating.Score += 500;
+        }
 
         return Rating;
     }

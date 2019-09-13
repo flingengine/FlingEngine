@@ -81,13 +81,6 @@ namespace Fling
     private:
 
         /// <summary>
-        /// Find what queue families are supported by a given 
-        /// </summary>
-        /// <param name="t_Device">Device to check</param>
-        /// <returns>Queue family flags</returns>
-        QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
-
-        /// <summary>
         /// Init the current graphics API
         /// </summary>
         void InitGraphics();
@@ -96,17 +89,6 @@ namespace Fling
         /// Create the logical vulkan device
         /// </summary>
         void CreateLogicalDevice();
-
-        /// <summary>
-        /// Configure graphics API debug callbacks [Vulkan]
-        /// </summary>
-        void SetupDebugMessesages();
-
-        /**
-        * Create the surface for Vulkan to use for integration with the window system
-        * this surface can have an effect on the selection of physical device
-        */
-        void CreateSurface();
 
         /**
         * Create the swap chain and select the format, present mode, and extents
@@ -300,13 +282,6 @@ namespace Fling
         std::vector<VkDeviceMemory> m_UniformBuffersMemory;
         
         std::vector<VkDescriptorSet> m_DescriptorSets;
-
-
-        /** Device extension support for the swap chain */
-        const std::vector<const char*> m_DeviceExtensions = 
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
 
         /** The images inside of the swap chain */
         std::vector<VkImage> m_SwapChainImages;

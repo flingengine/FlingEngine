@@ -41,7 +41,7 @@ namespace Fling
     {
     public:
 
-        explicit PhysicalDevice(class Instance* t_Instance);
+        explicit PhysicalDevice(class Instance* t_Instance, VkSurfaceKHR t_Surface);
         
         ~PhysicalDevice();
 
@@ -52,6 +52,8 @@ namespace Fling
         const VkPhysicalDeviceFeatures& GetDeivceFeatures() const { return m_DeviceFeatures; } 
 
         UINT16 GetDeviceRating() const { return m_DeviceRating; }
+
+        static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice t_PhysDevice, VkSurfaceKHR t_Surface);
 
     private:
 
@@ -67,6 +69,8 @@ namespace Fling
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
 
         const class Instance* m_Instance;
+
+        const VkSurfaceKHR m_Surface;
 
         VkPhysicalDeviceProperties m_DeviceProperties;
         VkPhysicalDeviceFeatures m_DeviceFeatures;
