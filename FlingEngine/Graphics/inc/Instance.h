@@ -6,13 +6,13 @@
 namespace Fling
 {
     /**
-     * @brief The instance is a represenation of this application graphics instance in Vulkan
+     * @brief The instance is a representation of this application graphics instance in Vulkan
      */
     class Instance : NonCopyable
     {
     public:
 
-        Instance();
+        explicit Instance();
 
         ~Instance();
 
@@ -22,7 +22,9 @@ namespace Fling
 
         UINT32 EnabledValidationLayerCount() const { return static_cast<UINT32>(m_ValidationLayers.size()); }
 
-        const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
+		FORCEINLINE const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
+
+		FORCEINLINE const std::vector<const char*>& GetEnabledExtensinos() const { return m_DeviceExtensions; };
 
     private:
 
@@ -47,7 +49,6 @@ namespace Fling
 
         bool CheckValidationLayerSupport();
 
-
         // Debug messenger callbacks ---------------------------
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,
@@ -69,13 +70,23 @@ namespace Fling
             const VkAllocationCallbacks* pAllocator 
         );
 
+		/**
+		 * Create a debug message callback from vulkan and allow us to log errors from it
+		 * @see Instance::DebugCallback
+		 */
         void SetupDebugMessages();
 
         /** The validation layers that we want to look for on this instance */
         const std::vector<const char*> m_ValidationLayers =
         {
-            "VK_LAYER_KHRONOS_validation"
+            "VK_LAYER_LUNARG_standard_validation"
         };
+
+		/** Device extension support for the swap chain */
+		const std::vector<const char*> m_DeviceExtensions =
+		{
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		};
 
     };
 }   // namespace Fling

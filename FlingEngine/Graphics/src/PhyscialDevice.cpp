@@ -2,128 +2,172 @@
 #include "PhyscialDevice.h"
 #include "Instance.h"
 
+// @note
+// Referenced the Acid Engine for some of the vendor numbers and scoring technique: 
+// https://github.com/EQMG/Acid/blob/master/Sources/Devices/PhysicalDevice.cpp
+
 namespace Fling
 {
-    PhysicalDevice::PhysicalDevice(Instance* t_Instance, VkSurfaceKHR t_Surface)
+    PhysicalDevice::PhysicalDevice(Instance* t_Instance)
         : m_Instance(t_Instance)
-        , m_Surface(t_Surface)
-    {
-        assert(m_Instance);
-        PickPhysicalDevice();
-    }
-
-    void PhysicalDevice::PickPhysicalDevice()
-    {
-        // Enumerate available devices
+    {		
+		// Enumerate available devices
 		UINT32 DeviceCount = 0;
-		vkEnumeratePhysicalDevices( m_Instance->GetRawVkInstance(), &DeviceCount, nullptr );
+		vkEnumeratePhysicalDevices(m_Instance->GetRawVkInstance(), &DeviceCount, nullptr);
 
-		if( DeviceCount == 0 )
+		if (DeviceCount == 0)
 		{
-            F_LOG_FATAL( "Failed to find GPU's with Vulkan support!" );
+			F_LOG_FATAL("Failed to find GPU's with Vulkan support!");
 		}
 
-        std::vector<VkPhysicalDevice> Devices( DeviceCount );
-        vkEnumeratePhysicalDevices( m_Instance->GetRawVkInstance(), &DeviceCount, Devices.data() );
-        
-        // Find the best device for this application
-        PhysicalDeviceRating MaxRating = {};
-        for( const VkPhysicalDevice& Device : Devices )
-        {
-            PhysicalDeviceRating Rating = GetDeviceRating( Device );
-            if( Rating.Score > 0 && Rating.Score > MaxRating.Score )
-            {
-                MaxRating.Score = Rating.Score;
-                MaxRating.DeviceFeatures = Rating.DeviceFeatures;
-                MaxRating.DeviceProperties = Rating.DeviceProperties;
-                m_PhysicalDevice = Device;
-            }
-        }
+		std::vector<VkPhysicalDevice> Devices(DeviceCount);
+		vkEnumeratePhysicalDevices(m_Instance->GetRawVkInstance(), &DeviceCount, Devices.data());
 
-        if( m_PhysicalDevice == VK_NULL_HANDLE )
-        {
-            F_LOG_FATAL( "Failed to find a suitable GPU!" );
-        }
+		m_PhysicalDevice = ChooseBestPhyscialDevice(Devices);
+
+		if (m_PhysicalDevice == VK_NULL_HANDLE)
+		{
+			F_LOG_FATAL("Could not choose a physical device!");
+		}
+
+		// Grab the properties of this device
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_DeviceProperties);
+		vkGetPhysicalDeviceFeatures(m_PhysicalDevice, &m_DeviceFeatures);
+		vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &m_MemoryProperties);
+		
+		LogPhysicalDeviceInfo();
     }
 
-    QueueFamilyIndices PhysicalDevice::FindQueueFamilies(VkPhysicalDevice t_PhysDevice, VkSurfaceKHR t_Surface)
-    {
-        QueueFamilyIndices Indecies = {};
+	void PhysicalDevice::LogPhysicalDeviceInfo()
+	{
+		// Checks if the requested extensions are supported.
+		uint32_t extensionPropertyCount;
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, nullptr);
+		std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, extensionProperties.data());
 
-        UINT32 QueueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties( t_PhysDevice, &QueueFamilyCount, nullptr );
+		std::string DeviceInfo = "\nPhysical Device Info: \n\tType: ";
 
-        std::vector<VkQueueFamilyProperties> QueueFamilies( QueueFamilyCount );
-        vkGetPhysicalDeviceQueueFamilyProperties( t_PhysDevice, &QueueFamilyCount, QueueFamilies.data() );
-        // Set the family flags we are interested in
-        int i = 0;
-        for( const VkQueueFamilyProperties& Family : QueueFamilies )
-        {
-            if (Family.queueCount > 0)
-            {
-                Indecies.GraphicsFamily = ((Family.queueFlags & VK_QUEUE_GRAPHICS_BIT) ? i : 0);
-                
-                VkBool32 PresentSupport = false;
-                vkGetPhysicalDeviceSurfaceSupportKHR(t_PhysDevice, i, t_Surface, &PresentSupport);
+		// Type 
+		switch (static_cast<int>(m_DeviceProperties.deviceType))
+		{
+		case 1:
+			DeviceInfo +="Integrated";
+			break;
+		case 2:
+			DeviceInfo += "Discrete";
+			break;
+		case 3:
+			DeviceInfo += "Virtual";
+			break;
+		case 4:
+			DeviceInfo += "CPU";
+			break;
+		default:
+			DeviceInfo += "Other";
+		}
 
-                Indecies.PresentFamily = PresentSupport ? i : 0;
-            }
-                    
-            if( Indecies.IsComplete() )
-            {
-                break;
-            }
-            i++;
-        }
+		// ID
+		DeviceInfo += "\n\tID: " + m_DeviceProperties.deviceID;
 
-        return Indecies;
-    }
-    
-    PhysicalDeviceRating PhysicalDevice::GetDeviceRating( VkPhysicalDevice const t_Device )
-    {
-        PhysicalDeviceRating Rating = {};
+		// Vendor
+		DeviceInfo += "\n\tVendor:";
+		switch (m_DeviceProperties.vendorID)
+		{
+		case 0x8086:
+			DeviceInfo += " 'Intel'";
+			break;
+		case 0x10DE:
+			DeviceInfo += " 'Nvidia'";
+			break;
+		case 0x1002:
+			DeviceInfo += " 'AMD'";
+			break;
+		default:
+			DeviceInfo += " " + m_DeviceProperties.vendorID;
+		}
 
-        vkGetPhysicalDeviceProperties( t_Device, &Rating.DeviceProperties );
-        vkGetPhysicalDeviceFeatures( t_Device, &Rating.DeviceFeatures );
+		//// Versions
+		//uint32_t supportedVersion[]
+		//{ 
+		//	VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), 
+		//	VK_VERSION_MINOR(m_DeviceProperties.apiVersion),
+		//	VK_VERSION_PATCH(m_DeviceProperties.apiVersion) 
+		//};
+		//
+		//DeviceInfo += "\n\n\tAPI Version: " + supportedVersion[0];
+		//DeviceInfo += "." + supportedVersion[1];
+		//DeviceInfo += "." + supportedVersion[2];
 
-        // Necessary application features, if the device doesn't have one then return 0
-        if( !Rating.DeviceFeatures.geometryShader )
-        {
-            return Rating;
-        }
+		F_LOG_TRACE("{}\n", DeviceInfo);
+	}
 
-        // Ensure that this devices supports all necessary extensions
-        //if (!CheckDeviceExtensionSupport(t_Device))
-        //{
-        //    return 0;
-        //}
+	VkPhysicalDevice PhysicalDevice::ChooseBestPhyscialDevice(std::vector<VkPhysicalDevice>& t_AvailableDevices)
+	{
+		std::multimap<INT32, VkPhysicalDevice> SortedDevices;
 
-        // This device must have swap chain support
-        //SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(t_Device);
-        //if (SwapChainSupport.Formats.empty() || SwapChainSupport.PresentModes.empty())
-        //{
-        //  return 0;
-        //}
+		// Lambda for scoring a physical device 
+		auto ScoreDeviceLambda = [this](VkPhysicalDevice t_Device)
+		{
+			INT32 Score = 0;
 
-        // Favor discrete GPU's
-        if( Rating.DeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU )
-        {
-            Rating.Score += 500;
-        }
+			// Get the extension support of this device
+			uint32_t ExtensionPropertyCount;
+			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, nullptr);
+			std::vector<VkExtensionProperties> ExtensionProperties(ExtensionPropertyCount);
+			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, ExtensionProperties.data());
 
-        // Favor complete queue sets
-        QueueFamilyIndices QueueFamily = FindQueueFamilies();
-        if( QueueFamily.IsComplete() )
-        {
-            Rating.Score += 500;
-        }
+			// Check to make sure that this device support all needed extensions
+			for (const char* currentExtension : m_Instance->GetEnabledExtensinos())
+			{
+				bool ExtensionFound = false;
 
-        return Rating;
-    }
+				for (const VkExtensionProperties Extension : ExtensionProperties)
+				{
+					if (strcmp(currentExtension, Extension.extensionName) == 0)
+					{
+						ExtensionFound = true;
+						break;
+					}
+				}
 
-    PhysicalDevice::~PhysicalDevice()
-    {
-        // Will get cleaned up when the instance is destroyed
-    }
+				// If not, then just return 0 because we won't want to use this device
+				if (!ExtensionFound)
+				{
+					return 0;
+				}
 
+				// Obtain the device features and properties of the current device being rated
+				VkPhysicalDeviceProperties physicalDeviceProperties;
+				VkPhysicalDeviceFeatures physicalDeviceFeatures;
+				vkGetPhysicalDeviceProperties(t_Device, &physicalDeviceProperties);
+				vkGetPhysicalDeviceFeatures(t_Device, &physicalDeviceFeatures);
+
+				// Adds a large score boost for discrete GPUs (dedicated graphics cards).
+				if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+				{
+					Score += 1000;
+				}
+
+				// Gives a higher score to devices with a higher maximum texture size.
+				Score += physicalDeviceProperties.limits.maxImageDimension2D;
+			}
+
+			return Score;
+		};
+
+		// Calculate device scores
+		for (const VkPhysicalDevice& CurDevice : t_AvailableDevices)
+		{
+			SortedDevices.emplace(ScoreDeviceLambda(CurDevice), CurDevice);
+		}
+
+		// Return the device with the best score
+		if (SortedDevices.rbegin()->first > 0)
+		{
+			return SortedDevices.rbegin()->second;
+		}
+
+		return VK_NULL_HANDLE;
+	}
 }   // namespace Fling

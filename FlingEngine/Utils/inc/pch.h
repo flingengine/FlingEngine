@@ -16,6 +16,7 @@
 #include <cstring>
 #include <set>
 #include <array>
+#include <optional>
 
 /************************************************************************/
 /* Fling Engine Functionality                                           */

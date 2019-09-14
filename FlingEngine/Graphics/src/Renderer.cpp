@@ -25,11 +25,10 @@ namespace Fling
 
         m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_Surface);
 
-        m_PhysicalDevice = new PhysicalDevice(m_Instance, m_Surface);
+        m_PhysicalDevice = new PhysicalDevice(m_Instance);
         assert(m_PhysicalDevice);
 
-        CreateLogicalDevice();
-        m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice);
+        m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_Surface);
         assert(m_LogicalDevice);
 
         CreateSwapChain();
@@ -51,11 +50,6 @@ namespace Fling
         CreateCommandBuffers();
         CreateSyncObjects();
 	}
-
-    void Renderer::CreateLogicalDevice()
-    {
-        
-    }
 
     void Renderer::CreateSwapChain()
     {
@@ -87,10 +81,12 @@ namespace Fling
         CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         // Specify the handling of multiple queue families
-        QueueFamilyIndices Indices = m_PhysicalDevice->FindQueueFamilies();
-        UINT32 queueFamilyIndices[] = { Indices.GraphicsFamily, Indices.PresentFamily };
+		UINT32 GraphicsFam = m_LogicalDevice->GetGraphicsFamily();
+		UINT32 PresentFam = m_LogicalDevice->GetPresentFamily();
 
-        if (Indices.GraphicsFamily != Indices.PresentFamily) 
+        UINT32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
+
+        if (GraphicsFam != PresentFam)
         {
             CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             CreateInfo.queueFamilyIndexCount = 2;
@@ -110,15 +106,15 @@ namespace Fling
         CreateInfo.clipped = VK_TRUE;
         CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-        if (vkCreateSwapchainKHR(m_Device, &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
+        if (vkCreateSwapchainKHR(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create swap chain!");
         }
 
         // Get handles to the swap chain images
-        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &ImageCount, nullptr);
+        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, &ImageCount, nullptr);
         m_SwapChainImages.resize(ImageCount);
-        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &ImageCount, m_SwapChainImages.data());
+        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, &ImageCount, m_SwapChainImages.data());
     }
 
     void Renderer::CreateImageViews()
@@ -145,7 +141,7 @@ namespace Fling
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(m_Device, &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS)
+            if (vkCreateImageView(m_LogicalDevice->GetVkDevice(), &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to create image views!");
             }
@@ -198,7 +194,7 @@ namespace Fling
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS) 
+        if (vkCreateRenderPass(m_LogicalDevice->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to create render pass!");
         }
@@ -219,7 +215,7 @@ namespace Fling
         LayoutInfo.bindingCount = 1;
         LayoutInfo.pBindings = &UboLayout;
 
-        if(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+        if(vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create descipror set layout!");
         }
@@ -358,7 +354,7 @@ namespace Fling
         PipelineLayoutInfo.pushConstantRangeCount = 0;      // Optional
         PipelineLayoutInfo.pPushConstantRanges = nullptr;   // Optional
 
-        if (vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) 
+        if (vkCreatePipelineLayout(m_LogicalDevice->GetVkDevice(), &PipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to create pipeline layout!");
         }
@@ -385,20 +381,20 @@ namespace Fling
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;   // Optional
         pipelineInfo.basePipelineIndex = -1;                // Optional
 
-        if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
+        if (vkCreateGraphicsPipelines(m_LogicalDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
         {
             F_LOG_FATAL("failed to create graphics pipeline!");
         }
 
-        vkDestroyShaderModule(m_Device, FragModule, nullptr);
-        vkDestroyShaderModule(m_Device, VertModule, nullptr);
+        vkDestroyShaderModule(m_LogicalDevice->GetVkDevice(), FragModule, nullptr);
+        vkDestroyShaderModule(m_LogicalDevice->GetVkDevice(), VertModule, nullptr);
     }
 
     void Renderer::CreateFrameBuffers()
     {
         m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
 
-        // Create the frame buffers basedon the image views
+        // Create the frame buffers based on the image views
         for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
         {
             VkImageView attachments[] = 
@@ -415,7 +411,7 @@ namespace Fling
             framebufferInfo.height = m_SwapChainExtents.height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
+            if (vkCreateFramebuffer(m_LogicalDevice->GetVkDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
             {
                 F_LOG_FATAL("Failed to create framebuffer!");
             }
@@ -424,14 +420,13 @@ namespace Fling
 
     void Renderer::CreateCommandPool()
     {
-        QueueFamilyIndices queueFamilyIndices = m_PhysicalDevice->FindQueueFamilies();
-
+		UINT32 GraphicsFamily = m_LogicalDevice->GetGraphicsFamily();
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.GraphicsFamily;
+        poolInfo.queueFamilyIndex = GraphicsFamily;
         poolInfo.flags = 0; 
 
-        if (vkCreateCommandPool(m_Device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) 
+        if (vkCreateCommandPool(m_LogicalDevice->GetVkDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to create command pool!");
         }
@@ -449,7 +444,7 @@ namespace Fling
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = (UINT32)m_CommandBuffers.size();
 
-        if (vkAllocateCommandBuffers(m_Device, &allocInfo, m_CommandBuffers.data()) != VK_SUCCESS) 
+        if (vkAllocateCommandBuffers(m_LogicalDevice->GetVkDevice(), &allocInfo, m_CommandBuffers.data()) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
@@ -515,9 +510,9 @@ namespace Fling
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(m_Device, &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
+            if (vkCreateSemaphore(m_LogicalDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(m_LogicalDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) != VK_SUCCESS ||
+                vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to create semaphores or fence!");
             }
@@ -528,37 +523,37 @@ namespace Fling
     {
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++) 
         {
-            vkDestroyFramebuffer(m_Device, m_SwapChainFramebuffers[i], nullptr);
+            vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
         }
 
-        vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
+        vkFreeCommandBuffers(m_LogicalDevice->GetVkDevice(), m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
 
-        vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
-        vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
+        vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_GraphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
+        vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
         for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
         {
-            vkDestroyImageView(m_Device, m_SwapChainImageViews[i], nullptr);
+            vkDestroyImageView(m_LogicalDevice->GetVkDevice(), m_SwapChainImageViews[i], nullptr);
         }
 
-        vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+        vkDestroySwapchainKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, nullptr);
 
         // Cleanup uniform buffers -------------------------
         for (size_t i = 0; i < m_SwapChainImages.size(); i++)
         {
-            vkDestroyBuffer(m_Device, m_UniformBuffers[i], nullptr);
-            vkFreeMemory(m_Device, m_UniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[i], nullptr);
+            vkFreeMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffersMemory[i], nullptr);
         }
 
-        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
 
     void Renderer::RecreateSwapChain()
     {
 		m_CurrentWindow->RecreateSwapChain();
 
-        vkDeviceWaitIdle(m_Device);
+        vkDeviceWaitIdle(m_LogicalDevice->GetVkDevice());
 
         CleanUpSwapChain();
 
@@ -578,23 +573,15 @@ namespace Fling
     void Renderer::CreateTextureImage()
     {
         std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs);
-
     }
 
     void Renderer::CreateVertexBuffer()
     {
-        F_LOG_TRACE("Create vertex buffer!");
 		VkDeviceSize bufferSize = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
 		
         Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_Vertices.data());
-        F_LOG_TRACE("Create staging buffer : Complete");
         // Create the actual vertex buffer
         m_VertexBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		//GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice->GetVkPhysicalDevice(),bufferSize,
-		//	VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		//	m_VertexBuffer,
-		//	m_VertexBufferMemory);
 
 		// Copy the vertex buffer to the GPU memory
 		Buffer::CopyBuffer(&StagingBuffer, m_VertexBuffer, bufferSize);
@@ -624,7 +611,7 @@ namespace Fling
 
         for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
         {
-            GraphicsHelpers::CreateBuffer(m_Device, m_PhysicalDevice->GetVkPhysicalDevice(),
+            GraphicsHelpers::CreateBuffer(m_LogicalDevice->GetVkDevice(), m_PhysicalDevice->GetVkPhysicalDevice(),
                 bufferSize,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -647,7 +634,7 @@ namespace Fling
 
         PoolInfo.maxSets = static_cast<UINT32>(m_SwapChainImages.size());
 
-        if(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        if(vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create discriptor pool!");
         }
@@ -665,7 +652,7 @@ namespace Fling
 
         m_DescriptorSets.resize(m_SwapChainImages.size());
         // Sets will be cleaned up when the descriptor pool is, no need for an explict free call in cleanup
-        if(vkAllocateDescriptorSets(m_Device, &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
+        if(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to allocate descriptor sets!");
         }
@@ -690,7 +677,7 @@ namespace Fling
             descriptorWrite.pImageInfo = nullptr;
             descriptorWrite.pTexelBufferView = nullptr;
 
-            vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+            vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), 1, &descriptorWrite, 0, nullptr);
         }
     }
 
@@ -776,25 +763,6 @@ namespace Fling
         }
     }
 
-    bool Renderer::CheckDeviceExtensionSupport(VkPhysicalDevice t_Device)
-    {
-        UINT32 ExtensionCount = 0;
-
-        // Determine how many extensions are available
-        vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionCount, nullptr);
-        std::vector<VkExtensionProperties> AvailableExtensions(ExtensionCount);
-        vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionCount, AvailableExtensions.data());
-
-        std::set<std::string> RequiredExtensions(m_DeviceExtensions.begin(), m_DeviceExtensions.end());
-
-        for (const VkExtensionProperties& Extension : AvailableExtensions)
-        {
-            RequiredExtensions.erase(Extension.extensionName);
-        }
-
-        return RequiredExtensions.empty();
-    }
-
     VkShaderModule Renderer::CreateShaderModule(std::shared_ptr<File> t_ShaderCode)
     {
         VkShaderModuleCreateInfo CreateInfo = {};
@@ -803,7 +771,7 @@ namespace Fling
         CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode->GetData());
 
         VkShaderModule ShaderModule;
-        if (vkCreateShaderModule(m_Device, &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
+        if (vkCreateShaderModule(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create shader module!");
         }
@@ -856,10 +824,10 @@ namespace Fling
     void Renderer::DrawFrame()
     {
         // Wait for the frame to be finished before beginning
-        vkWaitForFences(m_Device, 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
+        vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
         UINT32 ImageIndex;
-        VkResult iResult = vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
+        VkResult iResult = vkAcquireNextImageKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
@@ -890,9 +858,9 @@ namespace Fling
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(m_Device, 1, &m_InFlightFences[CurrentFrameIndex]);
+        vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
-        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]) != VK_SUCCESS)
+        if (vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to submit draw command buffer!");
         }
@@ -910,7 +878,7 @@ namespace Fling
         presentInfo.pImageIndices = &ImageIndex;
         presentInfo.pResults = nullptr;
 
-        iResult = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+        iResult = vkQueuePresentKHR(m_LogicalDevice->GetPresentQueue(), &presentInfo);
 
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || m_FrameBufferResized)
         {
@@ -945,16 +913,16 @@ namespace Fling
 		
 		// Copy the ubo to the GPU
 		void* data = nullptr;
-		vkMapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
+		vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
 		memcpy(data, &ubo, sizeof(ubo));
-		vkUnmapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage]);
+		vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffersMemory[t_CurrentImage]);
     }	
 
 	// Shutdown steps -------------------------------------------
 
     void Renderer::PrepShutdown()
     {
-        vkDeviceWaitIdle(m_Device);
+        vkDeviceWaitIdle(m_LogicalDevice->GetVkDevice());
     }
 
 	void Renderer::Shutdown()
@@ -962,7 +930,7 @@ namespace Fling
 		// Cleanup Vulkan ------
         CleanUpSwapChain();
 
-        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
         if(m_IndexBuffer)
         {
@@ -978,12 +946,12 @@ namespace Fling
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {
-            vkDestroySemaphore(m_Device, m_RenderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
+            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_RenderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
         }
 
-        vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+        vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
         if(m_LogicalDevice)
         {
@@ -1011,9 +979,6 @@ namespace Fling
 			delete m_CurrentWindow;
 			m_CurrentWindow = nullptr;
 		}
-
-		//glfwDestroyWindow(m_Window);
-		//glfwTerminate();
 	}
 
 }	// namespace Fling

@@ -11,12 +11,20 @@ namespace Fling
     {
     public:
 
-        explicit LogicalDevice(class Instance* t_Instance, class PhysicalDevice* t_PhysicalDevice);
+        explicit LogicalDevice(class Instance* t_Instance, class PhysicalDevice* t_PhysDevice, const VkSurfaceKHR t_Surface);
 
         ~LogicalDevice();
 
-
         const VkDevice& GetVkDevice() const { return m_Device; }
+
+		const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
+		const VkQueue& GetPresentQueue() const { return m_PresentQueue; }
+
+		const VkQueueFlags& GetSupportedQueues() const { return m_SupportedQueues; }
+
+		UINT32 GetGraphicsFamily() const { return m_GraphicsFamily; }
+		UINT32 GetPresentFamily() const { return m_PresentFamily; }
+
 
         /**
          * @brief Prepare for shutdown of this device
@@ -25,24 +33,30 @@ namespace Fling
 
     private:
 
-        /** The vulkan logical device  */
+        /** The vulkan logical device */
         VkDevice m_Device = VK_NULL_HANDLE;
 
         const class Instance* m_Instance;
-
-        const class PhysicalDevice* m_PhysDevice;
-
+		const class PhysicalDevice* m_PhysicalDevice;
+		const VkSurfaceKHR m_Surface;
+        
         /** Handle for the graphics queue */
         VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 
         /** Handle to the presentation queue */
         VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
-        /** Device extension support for the swap chain */
-        const std::vector<const char*> m_DeviceExtensions = 
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
+		/** Queue families */
+		VkQueueFlags m_SupportedQueues{};
+		UINT32 m_GraphicsFamily = 0;
+		UINT32 m_PresentFamily = 0;
+		UINT32 m_ComputeFamily = 0;
+		UINT32 m_TransferFamily = 0;
+
+		/**
+		 * @brief	Get what queue Indecies/families this device should use
+		 */
+		void CreateQueueIndecies();
 
         /**
          * @brief Create the Vk resoruces for this logical device

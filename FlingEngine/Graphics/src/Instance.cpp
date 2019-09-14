@@ -8,12 +8,11 @@ namespace Fling
     Instance::Instance()
     {
         m_EnableValidationLayers = FlingConfig::GetBool("Vulkan", "EnableValidationLayers", false);
-		F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", m_EnableValidationLayers);
+		F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", (m_EnableValidationLayers ? "TRUE" : "FALSE"));
 
         CreateInstance();
 
         SetupDebugMessages();
-        F_LOG_WARN("Vulkan Instance created!");
     }
 
     void Instance::CreateInstance()
@@ -180,17 +179,15 @@ namespace Fling
 
 	void Instance::DestroyDebugUtilsMessengerEXT( VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator )
 	{
-		PFN_vkDestroyDebugUtilsMessengerEXT func = 
-			(PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" );
+		PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" );
 		if( func != nullptr ) 
 		{
-			func( instance, m_DebugMessenger, pAllocator );
+			func(instance, m_DebugMessenger, pAllocator);
 		}
 	}
 
     Instance::~Instance()
     {
-
         // Debug messenger
         if (m_EnableValidationLayers)
         {
@@ -198,6 +195,5 @@ namespace Fling
         }
 
 		vkDestroyInstance( m_Instance, nullptr );
-
     }
 }   // namespace Fling

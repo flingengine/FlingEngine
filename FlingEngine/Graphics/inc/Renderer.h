@@ -63,7 +63,9 @@ namespace Fling
          * 
          * @return const ref to VkDevice
          */
-        const VkDevice& GetDevice() const { return m_Device; }
+        const VkDevice& GetDevice() const { return m_LogicalDevice->GetVkDevice(); }
+
+		LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
         /**
          * @brief Get the Physical Device object used by this renderer
@@ -72,9 +74,9 @@ namespace Fling
          */
         const VkPhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); } 
 
-        const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
+        VkCommandPool GetCommandPool() const { return m_CommandPool; }
 
-        const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
+        const VkQueue& GetGraphicsQueue() const { return m_LogicalDevice->GetGraphicsQueue(); }
 
         void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
 
@@ -84,11 +86,6 @@ namespace Fling
         /// Init the current graphics API
         /// </summary>
         void InitGraphics();
-
-        /// <summary>
-        /// Create the logical vulkan device
-        /// </summary>
-        void CreateLogicalDevice();
 
         /**
         * Create the swap chain and select the format, present mode, and extents
@@ -112,7 +109,7 @@ namespace Fling
         void CreateGraphicsPipeline();
 
         /**
-        * Create the frame buffer that will be used by the graphics piipeline
+        * Create the frame buffer that will be used by the graphics pipeline
         */
         void CreateRenderPass();
 
@@ -203,16 +200,6 @@ namespace Fling
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
         /**
-        * Check if the given device supports the extensions that this application requires
-        * 
-        * @param t_Device       The device to check  		
-        *
-        * @return True if device supports our listed extensions
-        * @see Renderer::m_DeviceExtensions
-        */
-        bool CheckDeviceExtensionSupport(VkPhysicalDevice t_Device);
-
-        /**
         * Create a shader module based on the given shader code
         * @param 	Vector of the shader code
         *
@@ -232,15 +219,6 @@ namespace Fling
         LogicalDevice* m_LogicalDevice = nullptr;
 
         PhysicalDevice* m_PhysicalDevice = nullptr;
-
-        /** Logical Vulkan device */
-        VkDevice m_Device = VK_NULL_HANDLE;
-
-        /** Handle for the graphics queue */
-        VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
-
-        /** Handle to the presentation queue */
-        VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
         /** Handle to the surface extension used to interact with the windows system */
         VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
@@ -306,8 +284,8 @@ namespace Fling
         std::vector<VkFence> m_InFlightFences;
     };
 
-    // Temp vectors of indecies/verts for testing while setting up the renderer
 
+    // Temp vectors of indecies/verts for testing while setting up the renderer
 	const std::vector<UINT16> Temp_indices = 
 	{
 		0, 1, 2, 2, 3, 0
@@ -320,5 +298,4 @@ namespace Fling
 		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
 		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 	};
-
 }	// namespace Fling
