@@ -63,7 +63,7 @@ namespace Fling
 		VkCommandBuffer BeginSingleTimeCommands()
 		{
 			VkDevice Device = Renderer::Get().GetDevice();
-			VkCommandPool CommandPool = Renderer::Get().GetCommandPool();
+			const VkCommandPool& CommandPool = Renderer::Get().GetCommandPool();
 
 			VkCommandBufferAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

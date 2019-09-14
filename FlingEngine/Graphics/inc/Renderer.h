@@ -74,11 +74,13 @@ namespace Fling
          */
         const VkPhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); } 
 
-        VkCommandPool GetCommandPool() const { return m_CommandPool; }
+		const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
 
         const VkQueue& GetGraphicsQueue() const { return m_LogicalDevice->GetGraphicsQueue(); }
 
         void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
+
+		VkCommandBuffer BeginSingleTimeCommands();
 
     private:
 

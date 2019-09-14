@@ -18,7 +18,7 @@ namespace Fling
 		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 	}
 
-    void Renderer::InitGraphics()
+	void Renderer::InitGraphics()
 	{
         m_Instance = new Instance();
         assert(m_Instance);

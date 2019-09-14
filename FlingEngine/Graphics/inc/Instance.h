@@ -22,9 +22,9 @@ namespace Fling
 
         UINT32 EnabledValidationLayerCount() const { return static_cast<UINT32>(m_ValidationLayers.size()); }
 
-		FORCEINLINE const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
+		const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
 
-		FORCEINLINE const std::vector<const char*>& GetEnabledExtensinos() const { return m_DeviceExtensions; };
+		const std::vector<const char*>& GetEnabledExtensinos() const { return m_DeviceExtensions; };
 
     private:
 
