@@ -16,7 +16,7 @@ namespace Fling
 	void Swapchain::Recreate()
 	{
 		CreateResources();
-		//CreateImageViews();
+		CreateImageViews();
 	}
 	
 	void Swapchain::Cleanup()
@@ -24,18 +24,12 @@ namespace Fling
 		LogicalDevice* LogicalDevice = Renderer::Get().GetLogicalDevice();
 		assert(LogicalDevice);
 		VkDevice Device = LogicalDevice->GetVkDevice();
-
-		//// Frame buffers
-		//for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
-		//{
-		//	vkDestroyFramebuffer(Device, m_SwapChainFramebuffers[i], nullptr);
-		//}
-		//
-		//// Image views
-		//for (size_t i = 0; i < m_ImageViews.size(); i++)
-		//{
-		//	vkDestroyImageView(Device, m_ImageViews[i], nullptr);
-		//}
+		
+		// Image views
+		for (size_t i = 0; i < m_ImageViews.size(); i++)
+		{
+			vkDestroyImageView(Device, m_ImageViews[i], nullptr);
+		}
 
 		vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
 	}
@@ -205,41 +199,6 @@ namespace Fling
 		}
 
 		return BestMode;
-	}
-
-	void Swapchain::CreateFrameBuffers(const VkRenderPass& t_RenderPass)
-	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-
-		m_SwapChainFramebuffers.resize(m_ImageViews.size());
-
-		// Create the frame buffers based on the image views
-		for (size_t i = 0; i < m_ImageViews.size(); i++)
-		{
-			VkImageView attachments[] =
-			{
-				m_ImageViews[i]
-			};
-
-			VkFramebufferCreateInfo framebufferInfo = {};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = t_RenderPass;
-			framebufferInfo.attachmentCount = 1;
-			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = m_Extents.width;
-			framebufferInfo.height = m_Extents.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(Device, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS)
-			{
-				F_LOG_FATAL("Failed to create framebuffer!");
-			}
-		}
-	}
-
-	Swapchain::~Swapchain()
-	{
-		Cleanup();
 	}
 
 	VkResult Swapchain::AquireNextImage(const VkSemaphore& t_CompletedSemaphore)

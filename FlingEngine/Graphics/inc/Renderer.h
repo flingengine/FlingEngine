@@ -92,16 +92,6 @@ namespace Fling
         void InitGraphics();
 
         /**
-        * Create the swap chain and select the format, present mode, and extents
-        */
-        void CreateSwapChain();
-
-        /**
-        * Create the image views from the swap chain so that we can actually render them 
-        */
-        void CreateImageViews();
-
-        /**
          * @brief Create a Descriptor Layout object
          * @see UniformBufferObject.h
          */
@@ -134,13 +124,12 @@ namespace Fling
         */
         void CreateSyncObjects();
 
-
-        void CleanUpSwapChain();
+        void CleanupFrameResources();
 
         /**
         * Re-create the image views, render passes, and command buffers
         */
-        void RecreateSwapChain();
+        void RecreateFrameResources();
 
 		/**
 		* Create a vertex buffer using Temp_Vertices
@@ -257,12 +246,6 @@ namespace Fling
         
         std::vector<VkDescriptorSet> m_DescriptorSets;
 
-        /** The images inside of the swap chain */
-        std::vector<VkImage> m_SwapChainImages;
-
-        /** Image views from the swap chain */
-        std::vector<VkImageView> m_SwapChainImageViews;
-
         /** 
         * The frame buffers for the swap chain 
         * @see Renderer::CreateFrameBuffers 
@@ -279,7 +262,6 @@ namespace Fling
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
     };
-
 
     // Temp vectors of indecies/verts for testing while setting up the renderer
 	const std::vector<UINT16> Temp_indices = 

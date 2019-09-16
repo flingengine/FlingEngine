@@ -34,9 +34,6 @@ namespace Fling
 		VkExtent2D Extent = ChooseSwapExtent();
 		m_SwapChain = new Swapchain(Extent);
 
-        CreateSwapChain();
-        CreateImageViews();
-
         CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
@@ -57,104 +54,6 @@ namespace Fling
         CreateCommandBuffers();
         CreateSyncObjects();
 	}
-
-    void Renderer::CreateSwapChain()
-    {
-        //SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice->GetVkPhysicalDevice());
-		//
-        //VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
-        //VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
-        //m_SwapChainExtents = ChooseSwapExtent(SwapChainSupport.Capabilities);
-        //m_SwapChainImageFormat = SwapChainSurfaceFormat.format;
-		//
-        //// Use one more than the minimum image count so that we don't have to wait for the 
-        //// driver to finish some internal things before we start sending another image
-        //UINT32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
-		//
-        //// Check that we don't exceed the max image count
-        //if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
-        //{
-        //    ImageCount = SwapChainSupport.Capabilities.maxImageCount;
-        //}
-		//
-        //VkSwapchainCreateInfoKHR CreateInfo = {};
-        //CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        //CreateInfo.surface = m_Surface;
-        //CreateInfo.minImageCount = ImageCount;
-        //CreateInfo.imageFormat = SwapChainSurfaceFormat.format;
-        //CreateInfo.imageColorSpace = SwapChainSurfaceFormat.colorSpace;
-        //CreateInfo.imageExtent = m_SwapChainExtents;
-        //CreateInfo.imageArrayLayers = 1;
-        //CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		//
-        //// Specify the handling of multiple queue families
-		//UINT32 GraphicsFam = m_LogicalDevice->GetGraphicsFamily();
-		//UINT32 PresentFam = m_LogicalDevice->GetPresentFamily();
-		//
-        //UINT32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
-		//
-        //if (GraphicsFam != PresentFam)
-        //{
-        //    CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        //    CreateInfo.queueFamilyIndexCount = 2;
-        //    CreateInfo.pQueueFamilyIndices = queueFamilyIndices;
-        //}
-        //else 
-        //{
-        //    CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        //    CreateInfo.queueFamilyIndexCount = 0; // Optional
-        //    CreateInfo.pQueueFamilyIndices = nullptr; // Optional
-        //}
-		//
-        //// Transparency settings of this swap chain
-        //CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
-        //CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        //CreateInfo.presentMode = PresentMode;
-        //CreateInfo.clipped = VK_TRUE;
-        //CreateInfo.oldSwapchain = VK_NULL_HANDLE;
-		//
-        //if (vkCreateSwapchainKHR(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
-        //{
-        //    F_LOG_FATAL("Failed to create swap chain!");
-        //}
-
-		UINT32 ImageCount = m_SwapChain->GetImageCount();
-        // Get handles to the swap chain images
-        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), &ImageCount, nullptr);
-        m_SwapChainImages.resize(ImageCount);
-        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), &ImageCount, m_SwapChainImages.data());
-    }
-
-    void Renderer::CreateImageViews()
-    {
-        m_SwapChainImageViews.resize(m_SwapChainImages.size());
-        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            VkImageViewCreateInfo createInfo = {};
-            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = m_SwapChainImages[i];
-
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;		// use 3D for cube maps
-            createInfo.format = m_SwapChain->GetImageFormat();
-
-            // Map all color channels to their defaults
-            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            createInfo.subresourceRange.baseMipLevel = 0;
-            createInfo.subresourceRange.levelCount = 1;
-            createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.layerCount = 1;
-
-            if (vkCreateImageView(m_LogicalDevice->GetVkDevice(), &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS)
-            {
-                F_LOG_FATAL("Failed to create image views!");
-            }
-        }
-    }
 
     void Renderer::CreateRenderPass()
     {
@@ -400,14 +299,18 @@ namespace Fling
 
     void Renderer::CreateFrameBuffers()
     {
-        m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+		assert(m_SwapChain);
+
+        m_SwapChainFramebuffers.resize(m_SwapChain->GetImageViewCount());
+
+		const std::vector<VkImageView>& ImageViews = m_SwapChain->GetImageViews();
 
         // Create the frame buffers based on the image views
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
+        for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); i++)
         {
             VkImageView attachments[] = 
             {
-                m_SwapChainImageViews[i]
+				ImageViews[i]
             };
 
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -527,7 +430,7 @@ namespace Fling
         }
     }
 
-    void Renderer::CleanUpSwapChain()
+    void Renderer::CleanupFrameResources()
     {
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
@@ -540,13 +443,7 @@ namespace Fling
         vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
         vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
-        {
-            vkDestroyImageView(m_LogicalDevice->GetVkDevice(), m_SwapChainImageViews[i], nullptr);
-        }
-
 		m_SwapChain->Cleanup();
-        //vkDestroySwapchainKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), nullptr);
 
         // Cleanup uniform buffers -------------------------
 		for (size_t i = 0; i < m_UniformBuffers.size(); ++i)
@@ -562,20 +459,20 @@ namespace Fling
         vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
 
-    void Renderer::RecreateSwapChain()
+    void Renderer::RecreateFrameResources()
     {
 		m_CurrentWindow->RecreateSwapChain();
 
         vkDeviceWaitIdle(m_LogicalDevice->GetVkDevice());
 
-        CleanUpSwapChain();
+        CleanupFrameResources();
 
 		// #TODO Recreate the swap images and views
 		// m_CustomSwap->Recreate();
 		m_SwapChain->Recreate();
 
-        CreateSwapChain();
-        CreateImageViews();
+        //CreateSwapChain();
+        //CreateImageViews();
 
         CreateRenderPass();
         CreateGraphicsPipeline();
@@ -624,9 +521,11 @@ namespace Fling
     {
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-        m_UniformBuffers.resize(m_SwapChainImages.size());
+		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 
-        for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
+        m_UniformBuffers.resize(Images.size());
+
+        for(size_t i = 0; i < Images.size(); ++i)
         {
 			m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         }
@@ -634,16 +533,18 @@ namespace Fling
 
     void Renderer::CreateDescriptorPool()
     {
+		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+
         VkDescriptorPoolSize PoolSize = {};
         PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        PoolSize.descriptorCount = static_cast<UINT32>(m_SwapChainImages.size());
+        PoolSize.descriptorCount = static_cast<UINT32>(Images.size());
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         PoolInfo.poolSizeCount = 1;
         PoolInfo.pPoolSizes = &PoolSize;
 
-        PoolInfo.maxSets = static_cast<UINT32>(m_SwapChainImages.size());
+        PoolInfo.maxSets = static_cast<UINT32>(Images.size());
 
         if(vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
@@ -653,15 +554,17 @@ namespace Fling
 
     void Renderer::CreateDescriptorSets()
     {
+		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+
         // Specify what descriptor pool to allocate from and how many
-        std::vector<VkDescriptorSetLayout> layouts(m_SwapChainImages.size(), m_DescriptorSetLayout);
+        std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorSetLayout);
         VkDescriptorSetAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = m_DescriptorPool;
-        allocInfo.descriptorSetCount = static_cast<UINT32>(m_SwapChainImages.size());
+        allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
         allocInfo.pSetLayouts = layouts.data();
 
-        m_DescriptorSets.resize(m_SwapChainImages.size());
+        m_DescriptorSets.resize(Images.size());
         // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
         if(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
         {
@@ -669,7 +572,7 @@ namespace Fling
         }
 
         // Configure descriptor sets
-        for (size_t i = 0; i < m_SwapChainImages.size(); ++i) 
+        for (size_t i = 0; i < Images.size(); ++i)
         {
             VkDescriptorBufferInfo BufferInfo = {};
             BufferInfo.buffer = m_UniformBuffers[i]->GetVkBuffer();
@@ -840,13 +743,13 @@ namespace Fling
         // Wait for the frame to be finished before beginning
         vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
-        UINT32 ImageIndex;
-        VkResult iResult = vkAcquireNextImageKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
+		VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
+		UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            RecreateSwapChain();
+            RecreateFrameResources();
             return;
         }
         else if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
@@ -879,25 +782,12 @@ namespace Fling
             F_LOG_FATAL("Failed to submit draw command buffer!");
         }
 
-        // Presentation
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
-
-        VkSwapchainKHR swapChains[] = { m_SwapChain->GetVkSwapChain() };
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &ImageIndex;
-        presentInfo.pResults = nullptr;
-
-        iResult = vkQueuePresentKHR(m_LogicalDevice->GetPresentQueue(), &presentInfo);
+		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), *signalSemaphores);
 
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || m_FrameBufferResized)
         {
             m_FrameBufferResized = false;
-            RecreateSwapChain();
+            RecreateFrameResources();
         }
         else if (iResult != VK_SUCCESS) 
         {
@@ -942,7 +832,13 @@ namespace Fling
 	void Renderer::Shutdown()
 	{
 		// Cleanup Vulkan ------
-        CleanUpSwapChain();
+        CleanupFrameResources();
+
+		if (m_SwapChain)
+		{
+			delete m_SwapChain;
+			m_SwapChain = nullptr;
+		}
 
         vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 

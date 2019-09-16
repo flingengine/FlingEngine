@@ -13,7 +13,8 @@ namespace Fling
     };
 
     /**
-     * @brief Represents a swap chain that can be used throughout the program
+     * @brief	Represents a swap chain that can be used throughout the program
+	 * @note	You must EXPLICITLY call Cleanup() on the swap chain
      */
     class Swapchain
     {
@@ -21,7 +22,7 @@ namespace Fling
 
 		explicit Swapchain(const VkExtent2D& t_Extent);
 
-		~Swapchain();
+		~Swapchain() noexcept {}
 
 		VkResult AquireNextImage(const VkSemaphore& t_CompletedSemaphore);
 
@@ -38,8 +39,6 @@ namespace Fling
 		 */
 		void Cleanup();
 
-		void CreateFrameBuffers(const VkRenderPass& t_RenderPass);
-
 		const VkSwapchainKHR& GetVkSwapChain() const { return m_SwapChain; }
 		const VkPresentModeKHR& GetPresentMode() const { return m_PresentMode; }
 		const VkExtent2D& GetExtents() const { return m_Extents; }
@@ -50,8 +49,8 @@ namespace Fling
 		const VkImage& GetActiveImage() const { return m_Images[m_ActiveImageIndex]; }
 		const UINT32 GetActiveImageIndex() const { return m_ActiveImageIndex; }
 
-		const std::vector<VkFramebuffer>& GetFrameBuffers() const { return m_SwapChainFramebuffers; }
-		const size_t GetFrameBufferCount() const { return m_SwapChainFramebuffers.size(); }
+		const size_t GetImageViewCount() const { return m_ImageViews.size(); }
+		const std::vector<VkImageView>& GetImageViews() const { return m_ImageViews; }
 
     private:
 
@@ -70,13 +69,7 @@ namespace Fling
 		std::vector<VkImageView> m_ImageViews;
 
 		/**
-		* The frame buffers for the swap chain
-		* @see Renderer::CreateFrameBuffers
-		*/
-		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
-
-		/**
-		 * @brief	Create any swap chain resources (presnet mode, KGR swap chain)
+		 * @brief	Create any swap chain resources (present mode, KGR swap chain)
 		 */
 		void CreateResources();
 
