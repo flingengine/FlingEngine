@@ -31,6 +31,9 @@ namespace Fling
         m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_Surface);
         assert(m_LogicalDevice);
 
+		VkExtent2D Extent = ChooseSwapExtent();
+		m_SwapChain = new Swapchain(Extent);
+
         CreateSwapChain();
         CreateImageViews();
 
@@ -57,68 +60,69 @@ namespace Fling
 
     void Renderer::CreateSwapChain()
     {
-        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice->GetVkPhysicalDevice());
+        //SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice->GetVkPhysicalDevice());
+		//
+        //VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
+        //VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
+        //m_SwapChainExtents = ChooseSwapExtent(SwapChainSupport.Capabilities);
+        //m_SwapChainImageFormat = SwapChainSurfaceFormat.format;
+		//
+        //// Use one more than the minimum image count so that we don't have to wait for the 
+        //// driver to finish some internal things before we start sending another image
+        //UINT32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
+		//
+        //// Check that we don't exceed the max image count
+        //if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
+        //{
+        //    ImageCount = SwapChainSupport.Capabilities.maxImageCount;
+        //}
+		//
+        //VkSwapchainCreateInfoKHR CreateInfo = {};
+        //CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        //CreateInfo.surface = m_Surface;
+        //CreateInfo.minImageCount = ImageCount;
+        //CreateInfo.imageFormat = SwapChainSurfaceFormat.format;
+        //CreateInfo.imageColorSpace = SwapChainSurfaceFormat.colorSpace;
+        //CreateInfo.imageExtent = m_SwapChainExtents;
+        //CreateInfo.imageArrayLayers = 1;
+        //CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		//
+        //// Specify the handling of multiple queue families
+		//UINT32 GraphicsFam = m_LogicalDevice->GetGraphicsFamily();
+		//UINT32 PresentFam = m_LogicalDevice->GetPresentFamily();
+		//
+        //UINT32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
+		//
+        //if (GraphicsFam != PresentFam)
+        //{
+        //    CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        //    CreateInfo.queueFamilyIndexCount = 2;
+        //    CreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        //}
+        //else 
+        //{
+        //    CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        //    CreateInfo.queueFamilyIndexCount = 0; // Optional
+        //    CreateInfo.pQueueFamilyIndices = nullptr; // Optional
+        //}
+		//
+        //// Transparency settings of this swap chain
+        //CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
+        //CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        //CreateInfo.presentMode = PresentMode;
+        //CreateInfo.clipped = VK_TRUE;
+        //CreateInfo.oldSwapchain = VK_NULL_HANDLE;
+		//
+        //if (vkCreateSwapchainKHR(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
+        //{
+        //    F_LOG_FATAL("Failed to create swap chain!");
+        //}
 
-        VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
-        VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
-        m_SwapChainExtents = ChooseSwapExtent(SwapChainSupport.Capabilities);
-        m_SwapChainImageFormat = SwapChainSurfaceFormat.format;
-
-        // Use one more than the minimum image count so that we don't have to wait for the 
-        // driver to finish some internal things before we start sending another image
-        UINT32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
-
-        // Check that we don't exceed the max image count
-        if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
-        {
-            ImageCount = SwapChainSupport.Capabilities.maxImageCount;
-        }
-
-        VkSwapchainCreateInfoKHR CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        CreateInfo.surface = m_Surface;
-        CreateInfo.minImageCount = ImageCount;
-        CreateInfo.imageFormat = SwapChainSurfaceFormat.format;
-        CreateInfo.imageColorSpace = SwapChainSurfaceFormat.colorSpace;
-        CreateInfo.imageExtent = m_SwapChainExtents;
-        CreateInfo.imageArrayLayers = 1;
-        CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-        // Specify the handling of multiple queue families
-		UINT32 GraphicsFam = m_LogicalDevice->GetGraphicsFamily();
-		UINT32 PresentFam = m_LogicalDevice->GetPresentFamily();
-
-        UINT32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
-
-        if (GraphicsFam != PresentFam)
-        {
-            CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            CreateInfo.queueFamilyIndexCount = 2;
-            CreateInfo.pQueueFamilyIndices = queueFamilyIndices;
-        }
-        else 
-        {
-            CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            CreateInfo.queueFamilyIndexCount = 0; // Optional
-            CreateInfo.pQueueFamilyIndices = nullptr; // Optional
-        }
-
-        // Transparency settings of this swap chain
-        CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
-        CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        CreateInfo.presentMode = PresentMode;
-        CreateInfo.clipped = VK_TRUE;
-        CreateInfo.oldSwapchain = VK_NULL_HANDLE;
-
-        if (vkCreateSwapchainKHR(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to create swap chain!");
-        }
-
+		UINT32 ImageCount = m_SwapChain->GetImageCount();
         // Get handles to the swap chain images
-        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, &ImageCount, nullptr);
+        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), &ImageCount, nullptr);
         m_SwapChainImages.resize(ImageCount);
-        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, &ImageCount, m_SwapChainImages.data());
+        vkGetSwapchainImagesKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), &ImageCount, m_SwapChainImages.data());
     }
 
     void Renderer::CreateImageViews()
@@ -130,8 +134,8 @@ namespace Fling
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = m_SwapChainImages[i];
 
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cubemaps
-            createInfo.format = m_SwapChainImageFormat;
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;		// use 3D for cube maps
+            createInfo.format = m_SwapChain->GetImageFormat();
 
             // Map all color channels to their defaults
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -156,7 +160,7 @@ namespace Fling
     {
         // We have a single color buffer for the images in the swap chain
         VkAttachmentDescription ColorAttachment = {};
-        ColorAttachment.format = m_SwapChainImageFormat;
+        ColorAttachment.format = m_SwapChain->GetImageFormat();
         ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;       // Clear the frame buffer to black
         ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -273,14 +277,14 @@ namespace Fling
         VkViewport viewport = {};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = (float)m_SwapChainExtents.width;       // These values can differ from the width/height of the window!
-        viewport.height = (float)m_SwapChainExtents.height;
+        viewport.width = (float)m_SwapChain->GetExtents().width;       // These values can differ from the width/height of the window!
+        viewport.height = (float)m_SwapChain->GetExtents().height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
         VkRect2D scissor = {};
         scissor.offset = { 0, 0 };
-        scissor.extent = m_SwapChainExtents;
+        scissor.extent = m_SwapChain->GetExtents();
 
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -411,8 +415,8 @@ namespace Fling
             framebufferInfo.renderPass = m_RenderPass;
             framebufferInfo.attachmentCount = 1;
             framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = m_SwapChainExtents.width;
-            framebufferInfo.height = m_SwapChainExtents.height;
+            framebufferInfo.width = m_SwapChain->GetExtents().width;
+            framebufferInfo.height = m_SwapChain->GetExtents().height;
             framebufferInfo.layers = 1;
 
             if (vkCreateFramebuffer(m_LogicalDevice->GetVkDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
@@ -472,7 +476,7 @@ namespace Fling
             renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
 
             renderPassInfo.renderArea.offset = { 0, 0 };
-            renderPassInfo.renderArea.extent = m_SwapChainExtents;
+            renderPassInfo.renderArea.extent = m_SwapChain->GetExtents();
 
             VkClearValue clearColor = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
             renderPassInfo.clearValueCount = 1;
@@ -541,7 +545,8 @@ namespace Fling
             vkDestroyImageView(m_LogicalDevice->GetVkDevice(), m_SwapChainImageViews[i], nullptr);
         }
 
-        vkDestroySwapchainKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, nullptr);
+		m_SwapChain->Cleanup();
+        //vkDestroySwapchainKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), nullptr);
 
         // Cleanup uniform buffers -------------------------
 		for (size_t i = 0; i < m_UniformBuffers.size(); ++i)
@@ -567,6 +572,8 @@ namespace Fling
 
 		// #TODO Recreate the swap images and views
 		// m_CustomSwap->Recreate();
+		m_SwapChain->Recreate();
+
         CreateSwapChain();
         CreateImageViews();
 
@@ -745,8 +752,11 @@ namespace Fling
         return BestMode;
     }
 
-    VkExtent2D Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies)
+    VkExtent2D Renderer::ChooseSwapExtent()
     {
+		VkSurfaceCapabilitiesKHR t_Capabilies = {};
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice->GetVkPhysicalDevice(), m_Surface, &t_Capabilies);
+
         if (t_Capabilies.currentExtent.width != std::numeric_limits<UINT32>::max())
         {
             return t_Capabilies.currentExtent;
@@ -831,7 +841,7 @@ namespace Fling
         vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
         UINT32 ImageIndex;
-        VkResult iResult = vkAcquireNextImageKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
+        VkResult iResult = vkAcquireNextImageKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain->GetVkSwapChain(), std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
@@ -876,7 +886,7 @@ namespace Fling
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = { m_SwapChain };
+        VkSwapchainKHR swapChains[] = { m_SwapChain->GetVkSwapChain() };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &ImageIndex;

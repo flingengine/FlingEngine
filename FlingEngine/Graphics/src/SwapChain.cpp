@@ -16,7 +16,7 @@ namespace Fling
 	void Swapchain::Recreate()
 	{
 		CreateResources();
-		CreateImageViews();
+		//CreateImageViews();
 	}
 	
 	void Swapchain::Cleanup()
@@ -25,17 +25,17 @@ namespace Fling
 		assert(LogicalDevice);
 		VkDevice Device = LogicalDevice->GetVkDevice();
 
-		// Frame buffers
-		for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
-		{
-			vkDestroyFramebuffer(Device, m_SwapChainFramebuffers[i], nullptr);
-		}
-
-		// Image views
-		for (size_t i = 0; i < m_ImageViews.size(); i++)
-		{
-			vkDestroyImageView(Device, m_ImageViews[i], nullptr);
-		}
+		//// Frame buffers
+		//for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
+		//{
+		//	vkDestroyFramebuffer(Device, m_SwapChainFramebuffers[i], nullptr);
+		//}
+		//
+		//// Image views
+		//for (size_t i = 0; i < m_ImageViews.size(); i++)
+		//{
+		//	vkDestroyImageView(Device, m_ImageViews[i], nullptr);
+		//}
 
 		vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
 	}

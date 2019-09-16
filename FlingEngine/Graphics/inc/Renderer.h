@@ -189,12 +189,10 @@ namespace Fling
 
         /**
         * Determine the best match extents based on our window width and height
-        * 
-        * @param 	t_Capabilies    The available capabilities of the swap chain on this device
-        *
+		*
         * @return   Extents with the best matching resolution
         */
-        VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies);
+        VkExtent2D ChooseSwapExtent();
 
         /**
          * @brief Update the uniform buffer data. Called during DrawFrame
@@ -227,12 +225,7 @@ namespace Fling
         /** Handle to the surface extension used to interact with the windows system */
         VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 
-        /** The swap chain of this renderer */
-        VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
-
-        VkExtent2D m_SwapChainExtents;
-
-        VkFormat m_SwapChainImageFormat;
+		Swapchain* m_SwapChain = nullptr;
 
         VkRenderPass m_RenderPass;
 
