@@ -260,8 +260,7 @@ namespace Fling
         static const int MAX_FRAMES_IN_FLIGHT;
 
         /** Uniform buffers */
-        std::vector<VkBuffer> m_UniformBuffers;
-        std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+        std::vector<Buffer*> m_UniformBuffers;
         
         std::vector<VkDescriptorSet> m_DescriptorSets;
 

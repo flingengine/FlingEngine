@@ -544,11 +544,15 @@ namespace Fling
         vkDestroySwapchainKHR(m_LogicalDevice->GetVkDevice(), m_SwapChain, nullptr);
 
         // Cleanup uniform buffers -------------------------
-        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            vkDestroyBuffer(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[i], nullptr);
-            vkFreeMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffersMemory[i], nullptr);
-        }
+		for (size_t i = 0; i < m_UniformBuffers.size(); ++i)
+		{
+			if (m_UniformBuffers[i])
+			{
+				delete m_UniformBuffers[i];
+				m_UniformBuffers[i] = nullptr;
+			}
+		}
+		m_UniformBuffers.clear();
 
         vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
@@ -614,17 +618,10 @@ namespace Fling
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
         m_UniformBuffers.resize(m_SwapChainImages.size());
-        m_UniformBuffersMemory.resize(m_SwapChainImages.size());
 
         for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
         {
-            GraphicsHelpers::CreateBuffer(m_LogicalDevice->GetVkDevice(), m_PhysicalDevice->GetVkPhysicalDevice(),
-                bufferSize,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                m_UniformBuffers[i],
-                m_UniformBuffersMemory[i]
-            );
+			m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         }
     }
 
@@ -658,7 +655,7 @@ namespace Fling
         allocInfo.pSetLayouts = layouts.data();
 
         m_DescriptorSets.resize(m_SwapChainImages.size());
-        // Sets will be cleaned up when the descriptor pool is, no need for an explict free call in cleanup
+        // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
         if(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to allocate descriptor sets!");
@@ -668,7 +665,7 @@ namespace Fling
         for (size_t i = 0; i < m_SwapChainImages.size(); ++i) 
         {
             VkDescriptorBufferInfo BufferInfo = {};
-            BufferInfo.buffer = m_UniformBuffers[i];
+            BufferInfo.buffer = m_UniformBuffers[i]->GetVkBuffer();
             BufferInfo.offset = 0;
             BufferInfo.range = sizeof(UniformBufferObject);
 
@@ -920,9 +917,9 @@ namespace Fling
 		
 		// Copy the ubo to the GPU
 		void* data = nullptr;
-		vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
+		vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
 		memcpy(data, &ubo, sizeof(ubo));
-		vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffersMemory[t_CurrentImage]);
+		vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory());
     }	
 
 	// Shutdown steps -------------------------------------------
