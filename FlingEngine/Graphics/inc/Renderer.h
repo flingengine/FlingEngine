@@ -63,7 +63,7 @@ namespace Fling
          * 
          * @return const ref to VkDevice
          */
-        const VkDevice& GetDevice() const { return m_LogicalDevice->GetVkDevice(); }
+        const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
 
 		LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
@@ -72,7 +72,9 @@ namespace Fling
          * 
          * @return const VkPhysicalDevice& 
          */
-        const VkPhysicalDevice& GetPhysicalDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); } 
+        const VkPhysicalDevice& GetPhysicalVkDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); }
+
+		PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 
 		const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
 
@@ -80,7 +82,7 @@ namespace Fling
 
         void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
 
-		VkCommandBuffer BeginSingleTimeCommands();
+		const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
     private:
 

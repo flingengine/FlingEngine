@@ -25,11 +25,8 @@ namespace Fling
 		UINT32 GetGraphicsFamily() const { return m_GraphicsFamily; }
 		UINT32 GetPresentFamily() const { return m_PresentFamily; }
 
+		void WaitForIdle();
 
-        /**
-         * @brief Prepare for shutdown of this device
-         */
-        void PrepShutdown();
 
     private:
 

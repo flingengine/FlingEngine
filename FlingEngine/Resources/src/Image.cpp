@@ -46,8 +46,8 @@ namespace Fling
 			F_LOG_TRACE("Loaded image file: {}", Filepath);
 		}
 
-		VkDevice Device = Renderer::Get().GetDevice();
-		VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalDevice();
+		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
 
 		// Put the image data in a staging buffer for Vulkan
 		VkDeviceSize ImageSize = GetImageSize();
@@ -229,7 +229,7 @@ namespace Fling
 
 	void Image::Release()
 	{
-		VkDevice Device = Renderer::Get().GetDevice();
+		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
 		// Cleanup the Vulkan memory
 		vkDestroyImage(Device, m_vVkImage, nullptr);

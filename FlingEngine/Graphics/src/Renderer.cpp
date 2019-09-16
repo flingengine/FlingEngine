@@ -33,10 +33,14 @@ namespace Fling
 
         CreateSwapChain();
         CreateImageViews();
+
         CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
+
+
         CreateFrameBuffers();
+
         CreateCommandPool();
         
         CreateTextureImage();
@@ -521,7 +525,7 @@ namespace Fling
 
     void Renderer::CleanUpSwapChain()
     {
-        for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++) 
+        for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
             vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
         }
@@ -557,8 +561,11 @@ namespace Fling
 
         CleanUpSwapChain();
 
+		// #TODO Recreate the swap images and views
+		// m_CustomSwap->Recreate();
         CreateSwapChain();
         CreateImageViews();
+
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFrameBuffers();

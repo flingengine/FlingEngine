@@ -126,14 +126,14 @@ namespace Fling
         vkGetDeviceQueue(m_Device, m_PresentFamily, 0, &m_PresentQueue);
     }
 
-    void LogicalDevice::PrepShutdown()
-    {
-        vkDeviceWaitIdle(m_Device);
-    }
+	void LogicalDevice::WaitForIdle()
+	{
+		vkDeviceWaitIdle(m_Device);
+	}
 
     LogicalDevice::~LogicalDevice()
     {
-		PrepShutdown();
+		WaitForIdle();
 
         vkDestroyDevice(m_Device, nullptr);
     }

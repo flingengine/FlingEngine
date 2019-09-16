@@ -62,7 +62,7 @@ namespace Fling
 
 		VkCommandBuffer BeginSingleTimeCommands()
 		{
-			VkDevice Device = Renderer::Get().GetDevice();
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 			const VkCommandPool& CommandPool = Renderer::Get().GetCommandPool();
 
 			VkCommandBufferAllocateInfo allocInfo = {};
@@ -84,7 +84,7 @@ namespace Fling
 
 		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
 		{
-			VkDevice Device = Renderer::Get().GetDevice();
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 			VkCommandPool CmdPool = Renderer::Get().GetCommandPool();
 			VkQueue GraphicsQueue = Renderer::Get().GetGraphicsQueue();
 

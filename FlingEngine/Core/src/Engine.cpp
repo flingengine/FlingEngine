@@ -98,8 +98,8 @@ namespace Fling
             }
 		}
 
-        // Pre-shutdown options here
-		Renderer.PrepShutdown();
+
+		// Any waiting that we may need to do before the shutdown function should go here
 	}
 
 	void Engine::Shutdown()
