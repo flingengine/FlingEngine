@@ -17,6 +17,9 @@ namespace Fling
         : Resource(t_ID)
     {
 		LoadVulkanImage();
+
+		// Create the image views for sampling
+		CreateImageView();
     }
 
 	void Image::LoadVulkanImage()
@@ -99,9 +102,6 @@ namespace Fling
 
 		// transition the image memory to be optimal so that we can sample it in the shader
 		TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		
-		// Create the image views for smapling
-		CreateImageView();
 	}
 
 	void Image::TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
@@ -195,36 +195,30 @@ namespace Fling
 		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
 	}
 
-
 	void Image::CreateImageView()
 	{
-		/*m_SwapChainImageViews.resize(m_SwapChainImages.size());
-        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            VkImageViewCreateInfo createInfo = {};
-            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = m_SwapChainImages[i];
+		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		Swapchain* SwapChain = Renderer::Get().GetSwapChain();
 
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cubemaps
-            createInfo.format = m_SwapChainImageFormat;
+		assert(SwapChain && Device != VK_NULL_HANDLE);
 
-            // Map all color channels to their defaults
-            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            createInfo.subresourceRange.baseMipLevel = 0;
-            createInfo.subresourceRange.levelCount = 1;
-            createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.layerCount = 1;
-
-            if (vkCreateImageView(m_Device, &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS)
-            {
-                F_LOG_FATAL("Failed to create image views!");
-            }
-        }*/
+        //VkImageViewCreateInfo createInfo = {};
+        //createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        //createInfo.image = m_vVkImage;
+		//
+        //createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cube maps
+        //createInfo.format = SwapChain->GetImageFormat();
+		//
+        //createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        //createInfo.subresourceRange.baseMipLevel = 0;
+        //createInfo.subresourceRange.levelCount = 1;
+        //createInfo.subresourceRange.baseArrayLayer = 0;
+        //createInfo.subresourceRange.layerCount = 1;
+		//
+        //if (vkCreateImageView(Device, &createInfo, nullptr, &m_ImageView) != VK_SUCCESS)
+        //{
+        //    F_LOG_FATAL("Failed to create image views!");
+        //}
 	}
 
 	void Image::Release()
@@ -234,6 +228,8 @@ namespace Fling
 		// Cleanup the Vulkan memory
 		vkDestroyImage(Device, m_vVkImage, nullptr);
 		vkFreeMemory(Device, m_VkMemory, nullptr);
+
+		//vkDestroyImageView(Device, m_ImageView, nullptr);
 
 		// Cleanup pixel data if we have to
 		stbi_image_free(m_PixelData);

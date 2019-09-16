@@ -467,12 +467,7 @@ namespace Fling
 
         CleanupFrameResources();
 
-		// #TODO Recreate the swap images and views
-		// m_CustomSwap->Recreate();
 		m_SwapChain->Recreate();
-
-        //CreateSwapChain();
-        //CreateImageViews();
 
         CreateRenderPass();
         CreateGraphicsPipeline();
@@ -826,7 +821,7 @@ namespace Fling
 
     void Renderer::PrepShutdown()
     {
-        vkDeviceWaitIdle(m_LogicalDevice->GetVkDevice());
+		m_LogicalDevice->WaitForIdle();
     }
 
 	void Renderer::Shutdown()

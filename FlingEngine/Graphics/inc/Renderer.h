@@ -84,6 +84,8 @@ namespace Fling
 
 		const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
+		Swapchain* GetSwapChain() const { return m_SwapChain; }
+
     private:
 
         /// <summary>
