@@ -117,10 +117,20 @@ namespace Fling
         UboLayout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         UboLayout.pImmutableSamplers = nullptr;
 
+		// Image sampler layout binding
+		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { UboLayout, samplerLayoutBinding };
+
         VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
         LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        LayoutInfo.bindingCount = 1;
-        LayoutInfo.pBindings = &UboLayout;
+        LayoutInfo.bindingCount = static_cast<UINT32>(bindings.size());
+        LayoutInfo.pBindings = bindings.data();
 
         if(vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
         {
@@ -157,7 +167,7 @@ namespace Fling
 
         // Vertex input ----------------------
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        std::array<VkVertexInputAttributeDescription, 2> AttributeDescriptions = Vertex::GetAttributeDescriptions();
+        std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
         VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -482,7 +492,7 @@ namespace Fling
 
     void Renderer::CreateTextureImage()
     {
-        std::shared_ptr<Image> TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs);
+        m_TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs);
     }
 
     void Renderer::CreateVertexBuffer()
@@ -528,18 +538,19 @@ namespace Fling
 
     void Renderer::CreateDescriptorPool()
     {
-		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-
-        VkDescriptorPoolSize PoolSize = {};
-        PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        PoolSize.descriptorCount = static_cast<UINT32>(Images.size());
+		std::array<VkDescriptorPoolSize, 2> PoolSizes = {};
+		// UBO
+		PoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		PoolSizes[0].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
+		// Image smapler
+		PoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		PoolSizes[1].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        PoolInfo.poolSizeCount = 1;
-        PoolInfo.pPoolSizes = &PoolSize;
-
-        PoolInfo.maxSets = static_cast<UINT32>(Images.size());
+        PoolInfo.poolSizeCount = static_cast<UINT32>(PoolSizes.size());
+        PoolInfo.pPoolSizes = PoolSizes.data();
+        PoolInfo.maxSets = static_cast<UINT32>(m_SwapChain->GetImageCount());
 
         if(vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
@@ -574,19 +585,30 @@ namespace Fling
             BufferInfo.offset = 0;
             BufferInfo.range = sizeof(UniformBufferObject);
 
-            VkWriteDescriptorSet descriptorWrite = {};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = m_DescriptorSets[i];
-            descriptorWrite.dstBinding = 0;
-            descriptorWrite.dstArrayElement = 0;
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = m_TestImage->GetVkImageView();
+			imageInfo.sampler = m_TestImage->GetSampler();
 
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &BufferInfo;
-            descriptorWrite.pImageInfo = nullptr;
-            descriptorWrite.pTexelBufferView = nullptr;
+			std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 
-            vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), 1, &descriptorWrite, 0, nullptr);
+			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[0].dstSet = m_DescriptorSets[i];
+			descriptorWrites[0].dstBinding = 0;
+			descriptorWrites[0].dstArrayElement = 0;
+			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrites[0].descriptorCount = 1;
+			descriptorWrites[0].pBufferInfo = &BufferInfo;
+
+			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[1].dstSet = m_DescriptorSets[i];
+			descriptorWrites[1].dstBinding = 1;
+			descriptorWrites[1].dstArrayElement = 0;
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorCount = 1;
+			descriptorWrites[1].pImageInfo = &imageInfo;
+
+			vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
     }
 
@@ -822,6 +844,12 @@ namespace Fling
     void Renderer::PrepShutdown()
     {
 		m_LogicalDevice->WaitForIdle();
+		// You have to free images before before the renderer gets shutdown because they need to the 
+		// physical device free their VK resources
+		if (m_TestImage)
+		{
+			m_TestImage.reset();
+		}
     }
 
 	void Renderer::Shutdown()
