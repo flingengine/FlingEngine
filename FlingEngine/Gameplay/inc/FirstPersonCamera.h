@@ -9,7 +9,7 @@ namespace Fling
     class FirstPersonCamera : public Camera
     {
         public:
-            FirstPersonCamera(float aspectRatio, float t_MoveSpeed = 10.0f, float t_RotSpeed =- 40.f);
+            FirstPersonCamera(float aspectRatio, float t_MoveSpeed = 10.0f, float t_RotSpeed = 40.f);
 
 			FirstPersonCamera(
 				glm::vec3 position, 

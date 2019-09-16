@@ -20,6 +20,8 @@ namespace Fling
 
 		// Create the image views for sampling
 		CreateImageView();
+
+		CreateTextureSampler();
     }
 
 	void Image::LoadVulkanImage()
@@ -29,7 +31,7 @@ namespace Fling
 		// Load the image from STB
 		int Width = 0;
 		int Height = 0;
-		m_PixelData = stbi_load(
+		stbi_uc* PixelData = stbi_load(
 			Filepath.c_str(),
 			&Width,
 			&Height,
@@ -40,7 +42,7 @@ namespace Fling
 		m_Width = static_cast<UINT32>(Width);
 		m_Height = static_cast<UINT32>(Height);
 
-		if (!m_PixelData)
+		if (!PixelData)
 		{
 			F_LOG_ERROR("Failed to load image file: {}", Filepath);
 		}
@@ -54,7 +56,7 @@ namespace Fling
 
 		// Put the image data in a staging buffer for Vulkan
 		VkDeviceSize ImageSize = GetImageSize();
-		Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, GetPixelData());
+		Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, PixelData);
 
 		VkImageCreateInfo ImageInfo = {};
 		ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -102,6 +104,9 @@ namespace Fling
 
 		// transition the image memory to be optimal so that we can sample it in the shader
 		TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		// We don't need this stbi pixel data any more
+		stbi_image_free(PixelData);
 	}
 
 	void Image::TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
@@ -198,27 +203,58 @@ namespace Fling
 	void Image::CreateImageView()
 	{
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		Swapchain* SwapChain = Renderer::Get().GetSwapChain();
+		
+		assert(Device != VK_NULL_HANDLE);
 
-		assert(SwapChain && Device != VK_NULL_HANDLE);
+        VkImageViewCreateInfo createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        createInfo.image = m_vVkImage;
+		
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cube maps
+        createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+		
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.baseMipLevel = 0;
+        createInfo.subresourceRange.levelCount = 1;
+        createInfo.subresourceRange.baseArrayLayer = 0;
+        createInfo.subresourceRange.layerCount = 1;
+		
+        if (vkCreateImageView(Device, &createInfo, nullptr, &m_ImageView) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create image views!");
+        }
+	}
 
-        //VkImageViewCreateInfo createInfo = {};
-        //createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        //createInfo.image = m_vVkImage;
-		//
-        //createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cube maps
-        //createInfo.format = SwapChain->GetImageFormat();
-		//
-        //createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        //createInfo.subresourceRange.baseMipLevel = 0;
-        //createInfo.subresourceRange.levelCount = 1;
-        //createInfo.subresourceRange.baseArrayLayer = 0;
-        //createInfo.subresourceRange.layerCount = 1;
-		//
-        //if (vkCreateImageView(Device, &createInfo, nullptr, &m_ImageView) != VK_SUCCESS)
-        //{
-        //    F_LOG_FATAL("Failed to create image views!");
-        //}
+	void Image::CreateTextureSampler()
+	{
+		VkSamplerCreateInfo SamplerInfo = {};
+		SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		SamplerInfo.magFilter = VK_FILTER_LINEAR;
+		SamplerInfo.minFilter = VK_FILTER_LINEAR;
+
+		SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		SamplerInfo.anisotropyEnable = VK_TRUE;
+		SamplerInfo.maxAnisotropy = 16;
+
+		SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		SamplerInfo.unnormalizedCoordinates = VK_FALSE;
+		SamplerInfo.compareEnable = VK_FALSE;
+		SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		SamplerInfo.mipLodBias = 0.0f;
+		SamplerInfo.minLod = 0.0f;
+		SamplerInfo.maxLod = 0.0f;
+
+		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
+		if (vkCreateSampler(Device, &SamplerInfo, nullptr, &m_TextureSampler) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Failed to create texture sampler!");
+		}
 	}
 
 	void Image::Release()
@@ -229,10 +265,8 @@ namespace Fling
 		vkDestroyImage(Device, m_vVkImage, nullptr);
 		vkFreeMemory(Device, m_VkMemory, nullptr);
 
-		//vkDestroyImageView(Device, m_ImageView, nullptr);
-
-		// Cleanup pixel data if we have to
-		stbi_image_free(m_PixelData);
+		vkDestroySampler(Device, m_TextureSampler, nullptr);
+		vkDestroyImageView(Device, m_ImageView, nullptr);
 	}
 
     Image::~Image()

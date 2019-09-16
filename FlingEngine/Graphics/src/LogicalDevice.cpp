@@ -95,6 +95,7 @@ namespace Fling
         }
 
         VkPhysicalDeviceFeatures DevicesFeatures = {};
+		DevicesFeatures.samplerAnisotropy = VK_TRUE;
 
         // Device creation 
         VkDeviceCreateInfo CreateInfo = {};

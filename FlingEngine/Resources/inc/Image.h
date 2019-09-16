@@ -14,13 +14,13 @@ namespace Fling
         explicit Image(Guid t_ID, void* t_Data = nullptr);
         virtual ~Image();
 
-		UINT32 GetWidth() const { return m_Width; }
-		UINT32 GetHeight() const { return m_Height; }
-        INT32 GetChannels() const { return m_Channels; }
-        stbi_uc* GetPixelData() const { return m_PixelData; }
-
-        const VkImage& GetVkImage() const { return m_vVkImage; }
-        const VkImageView& GetVkImageView() const { return m_ImageView; }
+		FORCEINLINE UINT32 GetWidth() const { return m_Width; }
+		FORCEINLINE UINT32 GetHeight() const { return m_Height; }
+		FORCEINLINE INT32 GetChannels() const { return m_Channels; }
+        
+		FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
+		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
+		FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
 
         /**
          * @brief   Get the Image Size object (width * height * 4)
@@ -46,6 +46,8 @@ namespace Fling
          */
         void CreateImageView();
 
+		void CreateTextureSampler();
+
 		void TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
 
 		void CopyBufferToImage(VkBuffer t_Buffer);
@@ -59,14 +61,13 @@ namespace Fling
         /** The color channels of this image */
         INT32 m_Channels = 0;
 
-        /** the actual pixel data that represents this image */
-        stbi_uc* m_PixelData;
-
 		/** The Vulkan image data */
 		VkImage m_vVkImage;
 
         /** The view of this image for the swap chain */
         VkImageView m_ImageView;
+
+		VkSampler m_TextureSampler;
 
 		/** The Vulkan memory resource for this image */
 		VkDeviceMemory m_VkMemory;
