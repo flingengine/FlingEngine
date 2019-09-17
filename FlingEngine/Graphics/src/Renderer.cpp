@@ -11,7 +11,7 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio());
+		m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio());
 	}
 
     UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
@@ -1404,6 +1404,12 @@ namespace Fling
 
 	void Renderer::Shutdown()
 	{
+		if (m_camera)
+		{
+			delete m_camera;
+			m_camera = nullptr;
+		}
+
 		// Cleanup Vulkan ------
         CleanUpSwapChain();
 
