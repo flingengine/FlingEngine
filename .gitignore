@@ -13,6 +13,7 @@
 
 # CPP check results
 cpp_check_res.txt
+MEM_REPORT.txt
 
 # Build results
 [Dd]ebug/
