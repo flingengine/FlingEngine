@@ -472,9 +472,8 @@ namespace Fling
     void Renderer::RecreateFrameResources()
     {
 		m_CurrentWindow->RecreateSwapChain();
-
-        vkDeviceWaitIdle(m_LogicalDevice->GetVkDevice());
-
+		m_LogicalDevice->WaitForIdle();
+        
         CleanupFrameResources();
 
 		m_SwapChain->Recreate();
