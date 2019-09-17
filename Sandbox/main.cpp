@@ -1,19 +1,17 @@
-#include "pch.h"
-
-#include "Engine.h"
+#include "FlingEngine.h"
 
 /**
-* Entry point for using the Fling Engine! 
+* Entry point for using the Fling Engine!
 */
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
-	Fling::Engine Engine = { argc, argv };
-	
+	Fling::Engine Engine = {};
+
 	try
 	{
 		Engine.Run();
 	}
-	catch( const std::exception& e )
+	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;

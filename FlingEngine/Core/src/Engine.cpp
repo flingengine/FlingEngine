@@ -53,7 +53,7 @@ namespace Fling
             ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
         );
 
-		Renderer::Get().Init();
+		//Renderer::Get().Init();
 
 		ComponentManager::Get().Init();
 
@@ -84,7 +84,7 @@ namespace Fling
 				break;
 			}
 
-			Renderer.DrawFrame();
+			//Renderer.DrawFrame();
 
             // Update timing
 			Timing.Update();
@@ -99,7 +99,7 @@ namespace Fling
 		}
 
 		// Any waiting that we may need to do before the shutdown function should go here
-		Renderer.PrepShutdown();
+		//Renderer.PrepShutdown();
 	}
 
 	void Engine::Shutdown()
@@ -119,6 +119,6 @@ namespace Fling
 		Logger::Get().Shutdown();
         FlingConfig::Get().Shutdown();
 		Timing::Get().Shutdown();
-		Renderer::Get().Shutdown();
+		//Renderer::Get().Shutdown();
 	}
 }
