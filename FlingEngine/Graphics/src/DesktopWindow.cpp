@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "DesktopWindow.h"
+#include "Renderer.h"
 
 namespace Fling
 {
@@ -22,7 +23,12 @@ namespace Fling
 
 		m_Window = glfwCreateWindow(t_Props.m_Width, t_Props.m_Height, t_Props.m_Title.c_str(), nullptr, nullptr);
 
-		//glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
+		glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
+	}
+
+	void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
+	{
+		Renderer::Get().SetFrameBufferHasBeenResized(true);
 	}
 
 	void DesktopWindow::CreateSurface(void* t_GraphicsInstance, void* t_SurfData)

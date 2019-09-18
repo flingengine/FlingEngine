@@ -3,6 +3,8 @@
 #include "ResourceManager.h"
 #include "FlingConfig.h"
 #include "File.h"
+#include "Image.h"
+#include "GraphicsHelpers.h"
 
 namespace Fling
 {
@@ -11,121 +13,38 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-		m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio());
+		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
+		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
+		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 	}
 
-    UINT16 Renderer::GetDeviceRating( VkPhysicalDevice t_Device )
-    {
-        UINT16 Score = 0;
-
-        VkPhysicalDeviceProperties DeviceProperties;
-        VkPhysicalDeviceFeatures DeviceFeatures;
-        vkGetPhysicalDeviceProperties( t_Device, &DeviceProperties );
-        vkGetPhysicalDeviceFeatures( t_Device, &DeviceFeatures );
-
-        // Necessary application features, if the device doesn't have one then return 0
-        if( !DeviceFeatures.geometryShader )
-        {
-            return 0;
-        }
-
-        // Ensure that this devices supports all necessary extensions
-        if (!CheckDeviceExtensionSupport(t_Device))
-        {
-            return 0;
-        }
-
-        // This device must have swap chain support
-        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(t_Device);
-        if (SwapChainSupport.Formats.empty() || SwapChainSupport.PresentModes.empty())
-        {
-            return 0;
-        }
-
-        // Favor discrete GPU's
-        if( DeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU )
-        {
-            Score += 500;
-        }
-
-        // Favor complete queue sets
-        QueueFamilyIndices QueueFamily = FindQueueFamilies( t_Device );
-        if( QueueFamily.IsComplete() )
-        {
-            Score += 500;
-        }
-
-        return Score;
-    }
-
-    QueueFamilyIndices Renderer::FindQueueFamilies( VkPhysicalDevice const t_Device )
-    {
-        QueueFamilyIndices Indecies = {};
-
-        UINT32 QueueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, nullptr );
-
-        std::vector<VkQueueFamilyProperties> QueueFamilies( QueueFamilyCount );
-        vkGetPhysicalDeviceQueueFamilyProperties( t_Device, &QueueFamilyCount, QueueFamilies.data() );
-        // Set the family flags we are interested in
-        int i = 0;
-        for( const VkQueueFamilyProperties& Family : QueueFamilies )
-        {
-            if (Family.queueCount > 0)
-            {
-                Indecies.GraphicsFamily = ((Family.queueFlags & VK_QUEUE_GRAPHICS_BIT) ? i : 0);
-                
-                VkBool32 PresentSupport = false;
-                vkGetPhysicalDeviceSurfaceSupportKHR(t_Device, i, m_Surface, &PresentSupport);
-
-                Indecies.PresentFamily = PresentSupport ? i : 0;
-            }
-                    
-            if( Indecies.IsComplete() )
-            {
-                break;
-            }
-            i++;
-        }
-
-        return Indecies;
-    }
-
-    UINT32 Renderer::FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props)
-    {
-        VkPhysicalDeviceMemoryProperties MemProperties;
-        vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &MemProperties);
-        
-        for (UINT32 i = 0; i < MemProperties.memoryTypeCount; ++i)
-        {
-            // Check if this filter bit flag is set and it matches our memory properties
-            if ((t_Filter & (1 << i)) && (MemProperties.memoryTypes[i].propertyFlags & t_Props) == t_Props)
-            {
-                return i;
-            }
-        }
-
-        F_LOG_FATAL("Failed to find suitable memory type!");
-        return 0;
-    }
-
-    void Renderer::InitGraphics()
+	void Renderer::InitGraphics()
 	{
-		ReadConfig();
+        m_Instance = new Instance();
+        assert(m_Instance);
 
-		CreateGraphicsInstance();
-		SetupDebugMessesages();
-        CreateSurface();
-		PickPhysicalDevice();
-        CreateLogicalDevice();
-        CreateSwapChain();
-        CreateImageViews();
+        m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_Surface);
+
+        m_PhysicalDevice = new PhysicalDevice(m_Instance);
+        assert(m_PhysicalDevice);
+
+        m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_Surface);
+        assert(m_LogicalDevice);
+
+		VkExtent2D Extent = ChooseSwapExtent();
+		m_SwapChain = new Swapchain(Extent);
+
         CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
+
+
         CreateFrameBuffers();
+
         CreateCommandPool();
         
+        CreateTextureImage();
+
 		CreateVertexBuffer();
 		CreateIndexBuffer();
         CreateUniformBuffers();
@@ -136,309 +55,11 @@ namespace Fling
         CreateSyncObjects();
 	}
 
-	void Renderer::ReadConfig()
-	{
-		m_EnableValidationLayers = FlingConfig::GetBool("Vulkan", "EnableValidationLayers");
-		F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", m_EnableValidationLayers);
-	}
-
-	void Renderer::CreateGraphicsInstance()
-	{
-		if( m_EnableValidationLayers && !CheckValidationLayerSupport() )
-		{
-            F_LOG_FATAL( "Validation layers are requested, but not available!" );
-		}
-
-		// Basic app data that we can modify 
-		VkApplicationInfo appInfo = {};
-		// Most structs in Vulkan require you to specify the sType and 
-		// the pNext values 
-		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "Engine Bay 0.1";
-		appInfo.applicationVersion = VK_MAKE_VERSION(Version::EngineVersion.Major, Version::EngineVersion.Minor, Version::EngineVersion.Patch);
-		appInfo.pEngineName = "Fling Engine";
-		appInfo.engineVersion = VK_MAKE_VERSION(Version::EngineVersion.Major, Version::EngineVersion.Minor, Version::EngineVersion.Patch);
-		appInfo.apiVersion = VK_API_VERSION_1_0;
-
-		// Instance creation info, similar to how DX11 worked
-		VkInstanceCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		createInfo.pApplicationInfo = &appInfo;
-
-		// Because we are using GLFW as an extension interface for window creation
-		// Vulkan needs to know how many extensions are available
-		std::vector<const char*> extensions = GetRequiredExtensions();
-		createInfo.enabledExtensionCount = static_cast<uint32_t>( extensions.size() );
-		createInfo.ppEnabledExtensionNames = extensions.data();
-
-		// Determine global validation layer count
-		if( m_EnableValidationLayers )
-		{
-			createInfo.enabledLayerCount = static_cast<UINT32>( m_ValidationLayers.size() );
-			createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
-		}
-		else 
-		{
-			createInfo.enabledLayerCount = 0;
-			createInfo.pNext = nullptr;
-		}
-
-		// Create the vulkan instance! Throw exception if it fails
-		if( vkCreateInstance( &createInfo, nullptr, &m_Instance ) != VK_SUCCESS )
-		{
-            F_LOG_FATAL( "Failed to create the Vulkan instance!" );
-		}
-
-		// Find out what extensions are available
-		uint32_t extensionCount = 0;
-		vkEnumerateInstanceExtensionProperties( nullptr, &extensionCount, nullptr );
-		std::vector<VkExtensionProperties> vk_extensions( extensionCount );
-		vkEnumerateInstanceExtensionProperties( nullptr, &extensionCount, vk_extensions.data() );
-
-		F_LOG_TRACE( "{} Extensions are supported!", extensionCount );
-		for( const auto& extension : vk_extensions )
-		{
-			F_LOG_TRACE( "\t{}", extension.extensionName );
-		}
-	}
-
-	bool Renderer::CheckValidationLayerSupport()
-	{
-		// Get the list of available validation layers
-		// Validation layers are ways for us to choose what types of debugging
-		// features we want from the Vulkan SDK
-		UINT32 layerCount = 0;
-		vkEnumerateInstanceLayerProperties( &layerCount, nullptr );
-
-		std::vector<VkLayerProperties> availableLayers( layerCount );
-		vkEnumerateInstanceLayerProperties( &layerCount, availableLayers.data() );
-
-		for( const char* layerName : m_ValidationLayers )
-		{
-			bool layerFound = false;
-			for( const VkLayerProperties& layerProperties : availableLayers )
-			{
-				if( strcmp( layerName, layerProperties.layerName ) == 0 )
-				{
-					layerFound = true;
-					break;
-				}
-			}
-			if( !layerFound )
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	void Renderer::PickPhysicalDevice()
-	{
-        // Enumerate available devices
-		UINT32 DeviceCount = 0;
-		vkEnumeratePhysicalDevices( m_Instance, &DeviceCount, nullptr );
-
-		if( DeviceCount == 0 )
-		{
-            F_LOG_FATAL( "Failed to find GPU's with Vulkan support!" );
-		}
-
-        std::vector<VkPhysicalDevice> Devices( DeviceCount );
-        vkEnumeratePhysicalDevices( m_Instance, &DeviceCount, Devices.data() );
-        
-        // Find the best device for this application
-        UINT16 MaxRating = 0;
-        for( const VkPhysicalDevice& Device : Devices )
-        {
-            UINT16 Rating = GetDeviceRating( Device );
-            if( Rating > 0 && Rating > MaxRating )
-            {
-                MaxRating = Rating;
-                m_PhysicalDevice = Device;
-            }
-        }
-
-        if( m_PhysicalDevice == VK_NULL_HANDLE )
-        {
-            F_LOG_FATAL( "Failed to find a suitable GPU!" );
-        }
-	}
-
-    void Renderer::CreateLogicalDevice()
-    {
-        // Queue creation
-        QueueFamilyIndices Indecies = FindQueueFamilies( m_PhysicalDevice );
-  
-        std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
-        std::set<UINT32> UniqueQueueFamilies = { Indecies.GraphicsFamily, Indecies.PresentFamily };
-
-        // Generate the CreatinInfo for each queue family 
-        float Priority = 1.0f;
-        for (const UINT32 fam : UniqueQueueFamilies)
-        {
-            VkDeviceQueueCreateInfo QueueCreateInfo = {};
-            QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            QueueCreateInfo.queueFamilyIndex = fam;
-            QueueCreateInfo.queueCount = 1;
-            QueueCreateInfo.pQueuePriorities = &Priority;
-            QueueCreateInfos.push_back(QueueCreateInfo);
-        }
-
-        VkPhysicalDeviceFeatures DevicesFeatures = {};
-
-        // Device creation 
-        VkDeviceCreateInfo CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        CreateInfo.queueCreateInfoCount = static_cast<UINT32>(QueueCreateInfos.size());
-        CreateInfo.pQueueCreateInfos = QueueCreateInfos.data();
-        CreateInfo.pEnabledFeatures = &DevicesFeatures;
-
-        // Set the enabled extensions
-        CreateInfo.enabledExtensionCount = static_cast<UINT32>(m_DeviceExtensions.size());
-        CreateInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
-
-        if( m_EnableValidationLayers ) 
-        {
-            CreateInfo.enabledLayerCount = static_cast<UINT32>( m_ValidationLayers.size() );
-            CreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
-        }
-        else 
-        {
-            CreateInfo.enabledLayerCount = 0;
-        }
-
-        if( vkCreateDevice( m_PhysicalDevice, &CreateInfo, nullptr, &m_Device ) != VK_SUCCESS ) 
-        {
-            F_LOG_FATAL( "failed to create logical Device!" );
-        }
-
-        vkGetDeviceQueue( m_Device, Indecies.GraphicsFamily, 0, &m_GraphicsQueue );
-        vkGetDeviceQueue(m_Device, Indecies.PresentFamily, 0, &m_PresentQueue);
-    }
-
-	void Renderer::SetupDebugMessesages()
-	{
-		if( !m_EnableValidationLayers ) { return; }
-
-		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		createInfo.pfnUserCallback = DebugCallback;
-		createInfo.pUserData = nullptr; // Optional
-		
-		if( CreateDebugUtilsMessengerEXT( m_Instance, &createInfo, nullptr, &m_DebugMessenger ) != VK_SUCCESS )
-		{
-            F_LOG_FATAL( "Failed to set up debug messenger!" );
-		}
-	}
-
-    void Renderer::CreateSurface()
-    {
-		m_CurrentWindow->CreateSurface(m_Instance, &m_Surface);
-    }
-
-    void Renderer::CreateSwapChain()
-    {
-        SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(m_PhysicalDevice);
-
-        VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
-        VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
-        m_SwapChainExtents = ChooseSwapExtent(SwapChainSupport.Capabilities);
-        m_SwapChainImageFormat = SwapChainSurfaceFormat.format;
-
-        // Use one more than the minimum image count so that we don't have to wait for the 
-        // driver to finish some internal things before we start sending another image
-        UINT32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
-
-        // Check that we don't exceed the max image count
-        if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
-        {
-            ImageCount = SwapChainSupport.Capabilities.maxImageCount;
-        }
-
-        VkSwapchainCreateInfoKHR CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        CreateInfo.surface = m_Surface;
-        CreateInfo.minImageCount = ImageCount;
-        CreateInfo.imageFormat = SwapChainSurfaceFormat.format;
-        CreateInfo.imageColorSpace = SwapChainSurfaceFormat.colorSpace;
-        CreateInfo.imageExtent = m_SwapChainExtents;
-        CreateInfo.imageArrayLayers = 1;
-        CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-        // Specify the handling of multiple queue families
-        QueueFamilyIndices Indices = FindQueueFamilies(m_PhysicalDevice);
-        UINT32 queueFamilyIndices[] = { Indices.GraphicsFamily, Indices.PresentFamily };
-
-        if (Indices.GraphicsFamily != Indices.PresentFamily) 
-        {
-            CreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            CreateInfo.queueFamilyIndexCount = 2;
-            CreateInfo.pQueueFamilyIndices = queueFamilyIndices;
-        }
-        else 
-        {
-            CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            CreateInfo.queueFamilyIndexCount = 0; // Optional
-            CreateInfo.pQueueFamilyIndices = nullptr; // Optional
-        }
-
-        // Transparency settings of this swap chain
-        CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
-        CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        CreateInfo.presentMode = PresentMode;
-        CreateInfo.clipped = VK_TRUE;
-        CreateInfo.oldSwapchain = VK_NULL_HANDLE;
-
-        if (vkCreateSwapchainKHR(m_Device, &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to create swap chain!");
-        }
-
-        // Get handles to the swap chain images
-        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &ImageCount, nullptr);
-        m_SwapChainImages.resize(ImageCount);
-        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &ImageCount, m_SwapChainImages.data());
-    }
-
-    void Renderer::CreateImageViews()
-    {
-        m_SwapChainImageViews.resize(m_SwapChainImages.size());
-        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            VkImageViewCreateInfo createInfo = {};
-            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = m_SwapChainImages[i];
-
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cubemaps
-            createInfo.format = m_SwapChainImageFormat;
-
-            // Map all color channels to their defaults
-            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            createInfo.subresourceRange.baseMipLevel = 0;
-            createInfo.subresourceRange.levelCount = 1;
-            createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.layerCount = 1;
-
-            if (vkCreateImageView(m_Device, &createInfo, nullptr, &m_SwapChainImageViews[i]) != VK_SUCCESS)
-            {
-                F_LOG_FATAL("Failed to create image views!");
-            }
-        }
-    }
-
     void Renderer::CreateRenderPass()
     {
         // We have a single color buffer for the images in the swap chain
         VkAttachmentDescription ColorAttachment = {};
-        ColorAttachment.format = m_SwapChainImageFormat;
+        ColorAttachment.format = m_SwapChain->GetImageFormat();
         ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;       // Clear the frame buffer to black
         ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -480,7 +101,7 @@ namespace Fling
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS) 
+        if (vkCreateRenderPass(m_LogicalDevice->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to create render pass!");
         }
@@ -496,12 +117,22 @@ namespace Fling
         UboLayout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         UboLayout.pImmutableSamplers = nullptr;
 
+		// Image sampler layout binding
+		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { UboLayout, samplerLayoutBinding };
+
         VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
         LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        LayoutInfo.bindingCount = 1;
-        LayoutInfo.pBindings = &UboLayout;
+        LayoutInfo.bindingCount = static_cast<UINT32>(bindings.size());
+        LayoutInfo.pBindings = bindings.data();
 
-        if(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+        if(vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create descipror set layout!");
         }
@@ -510,11 +141,10 @@ namespace Fling
     void Renderer::CreateGraphicsPipeline()
     {
         // Load shaders
-        // #TODO Create a way to re-compile shaders in-engine at runtime
-        std::shared_ptr<File> VertShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/vert.spv"_hs);
+        std::shared_ptr<File> VertShaderCode = ResourceManager::LoadResource<File>("Shaders/vert.spv"_hs);
         assert(VertShaderCode);
 
-        std::shared_ptr<File> FragShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/frag.spv"_hs);
+        std::shared_ptr<File> FragShaderCode = ResourceManager::LoadResource<File>("Shaders/frag.spv"_hs);
         assert(FragShaderCode);
 
         // Create modules
@@ -537,7 +167,7 @@ namespace Fling
 
         // Vertex input ----------------------
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        std::array<VkVertexInputAttributeDescription, 2> AttributeDescriptions = Vertex::GetAttributeDescriptions();
+        std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
         VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -556,14 +186,14 @@ namespace Fling
         VkViewport viewport = {};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = (float)m_SwapChainExtents.width;       // These values can differ from the width/height of the window!
-        viewport.height = (float)m_SwapChainExtents.height;
+        viewport.width = (float)m_SwapChain->GetExtents().width;       // These values can differ from the width/height of the window!
+        viewport.height = (float)m_SwapChain->GetExtents().height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
         VkRect2D scissor = {};
         scissor.offset = { 0, 0 };
-        scissor.extent = m_SwapChainExtents;
+        scissor.extent = m_SwapChain->GetExtents();
 
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -641,7 +271,7 @@ namespace Fling
         PipelineLayoutInfo.pushConstantRangeCount = 0;      // Optional
         PipelineLayoutInfo.pPushConstantRanges = nullptr;   // Optional
 
-        if (vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) 
+        if (vkCreatePipelineLayout(m_LogicalDevice->GetVkDevice(), &PipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to create pipeline layout!");
         }
@@ -668,25 +298,29 @@ namespace Fling
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;   // Optional
         pipelineInfo.basePipelineIndex = -1;                // Optional
 
-        if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
+        if (vkCreateGraphicsPipelines(m_LogicalDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
         {
             F_LOG_FATAL("failed to create graphics pipeline!");
         }
 
-        vkDestroyShaderModule(m_Device, FragModule, nullptr);
-        vkDestroyShaderModule(m_Device, VertModule, nullptr);
+        vkDestroyShaderModule(m_LogicalDevice->GetVkDevice(), FragModule, nullptr);
+        vkDestroyShaderModule(m_LogicalDevice->GetVkDevice(), VertModule, nullptr);
     }
 
     void Renderer::CreateFrameBuffers()
     {
-        m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+		assert(m_SwapChain);
 
-        // Create the frame buffers basedon the image views
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
+        m_SwapChainFramebuffers.resize(m_SwapChain->GetImageViewCount());
+
+		const std::vector<VkImageView>& ImageViews = m_SwapChain->GetImageViews();
+
+        // Create the frame buffers based on the image views
+        for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); i++)
         {
             VkImageView attachments[] = 
             {
-                m_SwapChainImageViews[i]
+				ImageViews[i]
             };
 
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -694,11 +328,11 @@ namespace Fling
             framebufferInfo.renderPass = m_RenderPass;
             framebufferInfo.attachmentCount = 1;
             framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = m_SwapChainExtents.width;
-            framebufferInfo.height = m_SwapChainExtents.height;
+            framebufferInfo.width = m_SwapChain->GetExtents().width;
+            framebufferInfo.height = m_SwapChain->GetExtents().height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
+            if (vkCreateFramebuffer(m_LogicalDevice->GetVkDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) 
             {
                 F_LOG_FATAL("Failed to create framebuffer!");
             }
@@ -707,14 +341,13 @@ namespace Fling
 
     void Renderer::CreateCommandPool()
     {
-        QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_PhysicalDevice);
-
+		UINT32 GraphicsFamily = m_LogicalDevice->GetGraphicsFamily();
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.GraphicsFamily;
+        poolInfo.queueFamilyIndex = GraphicsFamily;
         poolInfo.flags = 0; 
 
-        if (vkCreateCommandPool(m_Device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) 
+        if (vkCreateCommandPool(m_LogicalDevice->GetVkDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to create command pool!");
         }
@@ -722,6 +355,8 @@ namespace Fling
 
     void Renderer::CreateCommandBuffers()
     {
+        assert(m_VertexBuffer && m_IndexBuffer);
+        
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
         VkCommandBufferAllocateInfo allocInfo = {};
@@ -730,7 +365,7 @@ namespace Fling
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = (UINT32)m_CommandBuffers.size();
 
-        if (vkAllocateCommandBuffers(m_Device, &allocInfo, m_CommandBuffers.data()) != VK_SUCCESS) 
+        if (vkAllocateCommandBuffers(m_LogicalDevice->GetVkDevice(), &allocInfo, m_CommandBuffers.data()) != VK_SUCCESS) 
         {
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
@@ -754,7 +389,7 @@ namespace Fling
             renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
 
             renderPassInfo.renderArea.offset = { 0, 0 };
-            renderPassInfo.renderArea.extent = m_SwapChainExtents;
+            renderPassInfo.renderArea.extent = m_SwapChain->GetExtents();
 
             VkClearValue clearColor = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
             renderPassInfo.clearValueCount = 1;
@@ -764,10 +399,10 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            VkBuffer VertexBuffers[] = { m_VertexBuffer };
+            VkBuffer VertexBuffers[] = { m_VertexBuffer->GetVkBuffer() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(Temp_indices.size()), 1, 0, 0, 0);
@@ -796,55 +431,53 @@ namespace Fling
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(m_Device, &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
+            if (vkCreateSemaphore(m_LogicalDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(m_LogicalDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]) != VK_SUCCESS ||
+                vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to create semaphores or fence!");
             }
         }
     }
 
-    void Renderer::CleanUpSwapChain()
+    void Renderer::CleanupFrameResources()
     {
-        for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++) 
+        for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
-            vkDestroyFramebuffer(m_Device, m_SwapChainFramebuffers[i], nullptr);
+            vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
         }
 
-        vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
+        vkFreeCommandBuffers(m_LogicalDevice->GetVkDevice(), m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
 
-        vkDestroyPipeline(m_Device, m_GraphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
-        vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
+        vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_GraphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
+        vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) 
-        {
-            vkDestroyImageView(m_Device, m_SwapChainImageViews[i], nullptr);
-        }
-
-        vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+		m_SwapChain->Cleanup();
 
         // Cleanup uniform buffers -------------------------
-        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            vkDestroyBuffer(m_Device, m_UniformBuffers[i], nullptr);
-            vkFreeMemory(m_Device, m_UniformBuffersMemory[i], nullptr);
-        }
+		for (size_t i = 0; i < m_UniformBuffers.size(); ++i)
+		{
+			if (m_UniformBuffers[i])
+			{
+				delete m_UniformBuffers[i];
+				m_UniformBuffers[i] = nullptr;
+			}
+		}
+		m_UniformBuffers.clear();
 
-        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
 
-    void Renderer::RecreateSwapChain()
+    void Renderer::RecreateFrameResources()
     {
 		m_CurrentWindow->RecreateSwapChain();
+		m_LogicalDevice->WaitForIdle();
+        
+        CleanupFrameResources();
 
-        vkDeviceWaitIdle(m_Device);
+		m_SwapChain->Recreate(ChooseSwapExtent());
 
-        CleanUpSwapChain();
-
-        CreateSwapChain();
-        CreateImageViews();
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFrameBuffers();
@@ -856,100 +489,69 @@ namespace Fling
         CreateCommandBuffers();
     }
 
+    void Renderer::CreateTextureImage()
+    {
+        m_TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs);
+    }
+
     void Renderer::CreateVertexBuffer()
     {
 		VkDeviceSize bufferSize = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
 		
-		VkBuffer StagingBuffer;
-		VkDeviceMemory StagingBufferMemory;
-
-		CreateBuffer(bufferSize, 
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			StagingBuffer,
-			StagingBufferMemory);
-        
-		// Map the data to the vertex buffer memory and memcpy the vertex data to it
-        void* Data;
-        vkMapMemory(m_Device, StagingBufferMemory, 0, bufferSize, 0, &Data);
-        memcpy(Data, Temp_Vertices.data(), (size_t)bufferSize);
-        vkUnmapMemory(m_Device, StagingBufferMemory);
-
-		CreateBuffer(bufferSize,
-			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			m_VertexBuffer,
-			m_VertexBufferMemory);
+        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_Vertices.data());
+        // Create the actual vertex buffer
+        m_VertexBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		// Copy the vertex buffer to the GPU memory
-		CopyBuffer(StagingBuffer, m_VertexBuffer, bufferSize);
-
-		// Cleanup the staging buffer
-		vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-		vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+		Buffer::CopyBuffer(&StagingBuffer, m_VertexBuffer, bufferSize);
     }
 
 	void Renderer::CreateIndexBuffer()
 	{
 		VkDeviceSize bufferSize = sizeof(Temp_indices[0]) * Temp_indices.size();
-		// Create staging buffer
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-		// Map to the stage buffer
-		void* data;
-		vkMapMemory(m_Device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, Temp_indices.data(), (size_t)bufferSize);
-		vkUnmapMemory(m_Device, stagingBufferMemory);
-
-		// Create the index buffer
-		CreateBuffer(bufferSize, 
-			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-			m_IndexBuffer, 
-			m_IndexBufferMemory);
+        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_indices.data());
+		
+        m_IndexBuffer = new Buffer(
+            bufferSize, 
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
 
 		// Copy the staging buffer to the index buffer
-		CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
-
-		vkDestroyBuffer(m_Device, stagingBuffer, nullptr);
-		vkFreeMemory(m_Device, stagingBufferMemory, nullptr);
+		Buffer::CopyBuffer(&StagingBuffer, m_IndexBuffer, bufferSize);
 	}
 
     void Renderer::CreateUniformBuffers()
     {
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-        m_UniformBuffers.resize(m_SwapChainImages.size());
-        m_UniformBuffersMemory.resize(m_SwapChainImages.size());
+		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 
-        for(size_t i = 0; i < m_SwapChainImages.size(); ++i)
+        m_UniformBuffers.resize(Images.size());
+
+        for(size_t i = 0; i < Images.size(); ++i)
         {
-            CreateBuffer(
-                bufferSize,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                m_UniformBuffers[i],
-                m_UniformBuffersMemory[i]
-            );
+			m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         }
     }
 
     void Renderer::CreateDescriptorPool()
     {
-        VkDescriptorPoolSize PoolSize = {};
-        PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        PoolSize.descriptorCount = static_cast<UINT32>(m_SwapChainImages.size());
+		std::array<VkDescriptorPoolSize, 2> PoolSizes = {};
+		// UBO
+		PoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		PoolSizes[0].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
+		// Image smapler
+		PoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		PoolSizes[1].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        PoolInfo.poolSizeCount = 1;
-        PoolInfo.pPoolSizes = &PoolSize;
+        PoolInfo.poolSizeCount = static_cast<UINT32>(PoolSizes.size());
+        PoolInfo.pPoolSizes = PoolSizes.data();
+        PoolInfo.maxSets = static_cast<UINT32>(m_SwapChain->GetImageCount());
 
-        PoolInfo.maxSets = static_cast<UINT32>(m_SwapChainImages.size());
-
-        if(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        if(vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create discriptor pool!");
         }
@@ -957,115 +559,59 @@ namespace Fling
 
     void Renderer::CreateDescriptorSets()
     {
+		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+
         // Specify what descriptor pool to allocate from and how many
-        std::vector<VkDescriptorSetLayout> layouts(m_SwapChainImages.size(), m_DescriptorSetLayout);
+        std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorSetLayout);
         VkDescriptorSetAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = m_DescriptorPool;
-        allocInfo.descriptorSetCount = static_cast<UINT32>(m_SwapChainImages.size());
+        allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
         allocInfo.pSetLayouts = layouts.data();
 
-        m_DescriptorSets.resize(m_SwapChainImages.size());
-        // Sets will be cleaned up when the descriptor pool is, no need for an explict free call in cleanup
-        if(vkAllocateDescriptorSets(m_Device, &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
+        m_DescriptorSets.resize(Images.size());
+        // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
+        if(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to allocate descriptor sets!");
         }
 
         // Configure descriptor sets
-        for (size_t i = 0; i < m_SwapChainImages.size(); ++i) 
+        for (size_t i = 0; i < Images.size(); ++i)
         {
             VkDescriptorBufferInfo BufferInfo = {};
-            BufferInfo.buffer = m_UniformBuffers[i];
+            BufferInfo.buffer = m_UniformBuffers[i]->GetVkBuffer();
             BufferInfo.offset = 0;
             BufferInfo.range = sizeof(UniformBufferObject);
 
-            VkWriteDescriptorSet descriptorWrite = {};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = m_DescriptorSets[i];
-            descriptorWrite.dstBinding = 0;
-            descriptorWrite.dstArrayElement = 0;
+			VkDescriptorImageInfo imageInfo = {};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = m_TestImage->GetVkImageView();
+			imageInfo.sampler = m_TestImage->GetSampler();
 
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &BufferInfo;
-            descriptorWrite.pImageInfo = nullptr;
-            descriptorWrite.pTexelBufferView = nullptr;
+			std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 
-            vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[0].dstSet = m_DescriptorSets[i];
+			descriptorWrites[0].dstBinding = 0;
+			descriptorWrites[0].dstArrayElement = 0;
+			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrites[0].descriptorCount = 1;
+			descriptorWrites[0].pBufferInfo = &BufferInfo;
+
+			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[1].dstSet = m_DescriptorSets[i];
+			descriptorWrites[1].dstBinding = 1;
+			descriptorWrites[1].dstArrayElement = 0;
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorCount = 1;
+			descriptorWrites[1].pImageInfo = &imageInfo;
+
+			vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
     }
 
-	void Renderer::CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer & t_Buffer, VkDeviceMemory & t_BuffMemory)
-	{
-		// Create a buffer
-		VkBufferCreateInfo bufferInfo = {};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = t_Size;
-		bufferInfo.usage = t_Usage;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		if (vkCreateBuffer(m_Device, &bufferInfo, nullptr, &t_Buffer) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to create buffer!");
-		}
-
-		// Get the memory requirements
-		VkMemoryRequirements MemRequirments = {};
-		vkGetBufferMemoryRequirements(m_Device, t_Buffer, &MemRequirments);
-
-		VkMemoryAllocateInfo AllocInfo = {};
-		AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		AllocInfo.allocationSize = MemRequirments.size;
-		// Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
-		// we could use explicit flushing with vkFlushMappedMemoryRanges
-		AllocInfo.memoryTypeIndex = FindMemoryType(MemRequirments.memoryTypeBits, t_Properties);
-
-		// Allocate the vertex buffer memory
-		// #TODO Don't call vkAllocateMemory every time, we should use a custom allocator or
-		// VulkanMemoryAllocator library
-		if (vkAllocateMemory(m_Device, &AllocInfo, nullptr, &t_BuffMemory) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to alocate buffer memory!");
-		}
-		vkBindBufferMemory(m_Device, t_Buffer, t_BuffMemory, 0);
-	}
-
-	void Renderer::CopyBuffer(VkBuffer t_SrcBuffer, VkBuffer t_DstBuffer, VkDeviceSize t_Size)
-	{
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = m_CommandPool;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(m_Device, &allocInfo, &commandBuffer);
-
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-		VkBufferCopy copyRegion = {};
-		copyRegion.srcOffset = 0; // Optional
-		copyRegion.dstOffset = 0; // Optional
-		copyRegion.size = t_Size;
-		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer, t_DstBuffer, 1, &copyRegion);
-
-		vkEndCommandBuffer(commandBuffer);
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(m_GraphicsQueue);
-
-		vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &commandBuffer);
-	}
+	// Swapchain support --------------------------------------
 
     SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
     {
@@ -1125,8 +671,11 @@ namespace Fling
         return BestMode;
     }
 
-    VkExtent2D Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies)
+    VkExtent2D Renderer::ChooseSwapExtent()
     {
+		VkSurfaceCapabilitiesKHR t_Capabilies = {};
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice->GetVkPhysicalDevice(), m_Surface, &t_Capabilies);
+
         if (t_Capabilies.currentExtent.width != std::numeric_limits<UINT32>::max())
         {
             return t_Capabilies.currentExtent;
@@ -1147,41 +696,6 @@ namespace Fling
         }
     }
 
-    std::vector<const char*> Renderer::GetRequiredExtensions()
-	{
-		UINT32 glfwExtensionCount = 0;
-		const char** glfwExtensions;
-		glfwExtensions = glfwGetRequiredInstanceExtensions( &glfwExtensionCount );
-
-		std::vector<const char*> extensions( glfwExtensions, glfwExtensions + glfwExtensionCount );
-
-		if( m_EnableValidationLayers ) 
-		{
-			extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
-		}
-
-		return extensions;
-	}
-
-    bool Renderer::CheckDeviceExtensionSupport(VkPhysicalDevice t_Device)
-    {
-        UINT32 ExtensionCount = 0;
-
-        // Determine how many extensions are available
-        vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionCount, nullptr);
-        std::vector<VkExtensionProperties> AvailableExtensions(ExtensionCount);
-        vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionCount, AvailableExtensions.data());
-
-        std::set<std::string> RequiredExtensions(m_DeviceExtensions.begin(), m_DeviceExtensions.end());
-
-        for (const VkExtensionProperties& Extension : AvailableExtensions)
-        {
-            RequiredExtensions.erase(Extension.extensionName);
-        }
-
-        return RequiredExtensions.empty();
-    }
-
     VkShaderModule Renderer::CreateShaderModule(std::shared_ptr<File> t_ShaderCode)
     {
         VkShaderModuleCreateInfo CreateInfo = {};
@@ -1190,65 +704,12 @@ namespace Fling
         CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode->GetData());
 
         VkShaderModule ShaderModule;
-        if (vkCreateShaderModule(m_Device, &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
+        if (vkCreateShaderModule(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create shader module!");
         }
 
         return ShaderModule;
-    }
-
-    VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity, 
-		VkDebugUtilsMessageTypeFlagsEXT t_messageType, 
-		const VkDebugUtilsMessengerCallbackDataEXT* t_CallbackData, 
-		void* t_UserData )
-	{
-		switch( t_messageSeverity )
-		{
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-			F_LOG_WARN( "Validation layer: {}", t_CallbackData->pMessage );
-			break;
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
-			F_LOG_ERROR( "Validation layer error: {}", t_CallbackData->pMessage );
-			break;
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-		default:
-			F_LOG_TRACE( "Validation layer: {}", t_CallbackData->pMessage );
-			break;
-		}
-
-		return VK_FALSE;
-	}
-
-	VkResult Renderer::CreateDebugUtilsMessengerEXT( VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger )
-	{
-		PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkCreateDebugUtilsMessengerEXT" );
-		if( func != nullptr ) 
-		{
-			return func( instance, pCreateInfo, pAllocator, pDebugMessenger );
-		}
-		else 
-		{
-			return VK_ERROR_EXTENSION_NOT_PRESENT;
-		}
-	}
-
-	void Renderer::DestroyDebugUtilsMessengerEXT( VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator )
-	{
-		PFN_vkDestroyDebugUtilsMessengerEXT func = 
-			(PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" );
-		if( func != nullptr ) 
-		{
-			func( instance, m_DebugMessenger, pAllocator );
-		}
-	}
-
-    void Renderer::FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height)
-    {
-        Renderer::Get().m_FrameBufferResized = true;
     }
 
 	void Renderer::CreateGameWindow( const UINT32 t_width, const UINT32 t_height )
@@ -1286,13 +747,6 @@ namespace Fling
 		Props.m_Title = Title;
 
 		m_CurrentWindow = FlingWindow::Create(Props);
-
-		// #TODO: Add a resize callback to the window!
-
-		//m_Window = glfwCreateWindow( m_WindowWidth, m_WindowHeight, Title.c_str(), nullptr, nullptr );
-		//DesktopWindow* Window = static_cast<DesktopWindow*>(m_CurrentWindow);
-		
-        //glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
 	}
 
 	void Renderer::Tick()
@@ -1303,15 +757,15 @@ namespace Fling
     void Renderer::DrawFrame()
     {
         // Wait for the frame to be finished before beginning
-        vkWaitForFences(m_Device, 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
+        vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
-        UINT32 ImageIndex;
-        VkResult iResult = vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
+		VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
+		UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            RecreateSwapChain();
+            RecreateFrameResources();
             return;
         }
         else if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
@@ -1337,32 +791,19 @@ namespace Fling
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(m_Device, 1, &m_InFlightFences[CurrentFrameIndex]);
+        vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
-        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]) != VK_SUCCESS)
+        if (vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to submit draw command buffer!");
         }
 
-        // Presentation
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
-
-        VkSwapchainKHR swapChains[] = { m_SwapChain };
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &ImageIndex;
-        presentInfo.pResults = nullptr;
-
-        iResult = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), *signalSemaphores);
 
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || m_FrameBufferResized)
         {
             m_FrameBufferResized = false;
-            RecreateSwapChain();
+            RecreateFrameResources();
         }
         else if (iResult != VK_SUCCESS) 
         {
@@ -1392,54 +833,77 @@ namespace Fling
 		
 		// Copy the ubo to the GPU
 		void* data = nullptr;
-		vkMapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage], 0, sizeof(ubo), 0, &data);
+		vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
 		memcpy(data, &ubo, sizeof(ubo));
-		vkUnmapMemory(m_Device, m_UniformBuffersMemory[t_CurrentImage]);
+		vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory());
     }	
+
+	// Shutdown steps -------------------------------------------
 
     void Renderer::PrepShutdown()
     {
-        vkDeviceWaitIdle(m_Device);
+		m_LogicalDevice->WaitForIdle();
+		// You have to free images before before the renderer gets shutdown because they need to the 
+		// physical device free their VK resources
+		if (m_TestImage)
+		{
+			m_TestImage.reset();
+		}
     }
 
 	void Renderer::Shutdown()
 	{
-		if (m_camera)
+		// Cleanup Vulkan ------
+        CleanupFrameResources();
+
+		if (m_SwapChain)
 		{
-			delete m_camera;
-			m_camera = nullptr;
+			delete m_SwapChain;
+			m_SwapChain = nullptr;
 		}
 
-		// Cleanup Vulkan ------
-        CleanUpSwapChain();
+        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
-        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
+        if(m_IndexBuffer)
+        {
+            delete m_IndexBuffer;
+            m_IndexBuffer = nullptr;
+        }
 
-		vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
-		vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
-
-        vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
-        vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
+        if(m_VertexBuffer)
+        {
+            delete m_VertexBuffer;
+            m_VertexBuffer = nullptr;
+        }
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {
-            vkDestroySemaphore(m_Device, m_RenderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
+            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_RenderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
         }
 
-        vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+        vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
-        vkDestroyDevice(m_Device, nullptr);
-
-        // Debug messenger
-        if (m_EnableValidationLayers)
+        if(m_LogicalDevice)
         {
-            DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
+            delete m_LogicalDevice;
+            m_LogicalDevice = nullptr;
         }
 
-        vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-		vkDestroyInstance( m_Instance, nullptr );
+        vkDestroySurfaceKHR (m_Instance->GetRawVkInstance(), m_Surface, nullptr);
+
+        if(m_PhysicalDevice)
+        {
+            delete m_PhysicalDevice;
+            m_PhysicalDevice = nullptr;
+        }
+
+        if(m_Instance)
+        {
+            delete m_Instance;
+            m_Instance = nullptr;
+        }
 
 		// Cleanup Window --------
 		if (m_CurrentWindow)
@@ -1447,9 +911,6 @@ namespace Fling
 			delete m_CurrentWindow;
 			m_CurrentWindow = nullptr;
 		}
-
-		//glfwDestroyWindow(m_Window);
-		//glfwTerminate();
 	}
 
 }	// namespace Fling

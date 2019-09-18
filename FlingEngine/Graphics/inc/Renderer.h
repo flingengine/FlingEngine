@@ -3,10 +3,8 @@
 // Resolve warnings
 #include "Platform.h"
 
-// GLFW
-#ifndef GLFW_INCLUDE_VULKAN
-#	define GLFW_INCLUDE_VULKAN
-#endif
+#include "FlingVulkan.h"
+
 #include <GLFW/glfw3.h>
 
 #include "Singleton.hpp"
@@ -16,36 +14,16 @@
 #include "FirstPersonCamera.h"
 
 #include "FlingWindow.h"
+#include "Instance.h"
+#include "PhyscialDevice.h"
+#include "LogicalDevice.h"
+#include "Buffer.h"
+#include "SwapChain.h"
 
 namespace Fling
 {
     // File resource
     class File;
-
-    /// <summary>
-    /// Used to keep track of what properties a given queue satisfies
-    /// </summary>
-    struct QueueFamilyIndices
-    {
-        UINT32 GraphicsFamily = 0;
-        UINT32 PresentFamily = 0;
-
-        /// <summary>
-        /// Determines if this 
-        /// </summary>
-        /// <returns>True if queue family is complete</returns>
-        bool IsComplete() const
-        {
-            return GraphicsFamily && PresentFamily;
-        }
-    };
-
-    struct SwapChainSupportDetails
-    {
-        VkSurfaceCapabilitiesKHR Capabilities;
-        std::vector<VkSurfaceFormatKHR> Formats;
-        std::vector<VkPresentModeKHR> PresentModes;
-    };
 
     /// <summary>
     /// Core renderer for the application
@@ -80,84 +58,40 @@ namespace Fling
         */
         void PrepShutdown();
 
-    private:
+        /**
+         * @brief Get the logical graphics Device object
+         * 
+         * @return const ref to VkDevice
+         */
+        const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
 
-        /// <summary>
-        /// Get a rating of how good this device is for this application.
-        /// Scores range from 0 - 1000
-        /// </summary>
-        /// <param name="t_Device">Device to consider</param>
-        /// <returns>Score on a scale of 0 to 1000</returns>
-        UINT16 GetDeviceRating( VkPhysicalDevice const t_Device );
-
-        /// <summary>
-        /// Find what queue families are supported by a given 
-        /// </summary>
-        /// <param name="t_Device">Device to check</param>
-        /// <returns>Queue family flags</returns>
-        QueueFamilyIndices FindQueueFamilies( VkPhysicalDevice const t_Device );
+		LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
         /**
-        * Find a suitable memory type for use on the current device
-        * 
-        * @param t_Filter   Type of memory types that are suitable for this application
-        * @param t_Props    Memory properties
-        *
-        * @return The 
-        */
-        UINT32 FindMemoryType(UINT32 t_Filter, VkMemoryPropertyFlags t_Props);
+         * @brief Get the Physical Device object used by this renderer
+         * 
+         * @return const VkPhysicalDevice& 
+         */
+        const VkPhysicalDevice& GetPhysicalVkDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); }
+
+		PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+
+		const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
+
+        const VkQueue& GetGraphicsQueue() const { return m_LogicalDevice->GetGraphicsQueue(); }
+
+        void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
+
+		const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
+
+		Swapchain* GetSwapChain() const { return m_SwapChain; }
+
+    private:
 
         /// <summary>
         /// Init the current graphics API
         /// </summary>
         void InitGraphics();
-
-		/**
-		 * Read any vars that may have been set in the engine config
-		 */
-		void ReadConfig();
-
-        /// <summary>
-        /// Create a vulkan instance
-        /// </summary>
-        void CreateGraphicsInstance();
-
-        /// <summary>
-        /// Determine if all requested layers are available.
-        /// </summary>
-        /// <returns>Returns true if layers are found, false otherwise</returns>
-        bool CheckValidationLayerSupport();
-
-        /// <summary>
-        /// Determines what physical device to use for this Vulkan instance.
-        /// </summary>
-        void PickPhysicalDevice();
-
-        /// <summary>
-        /// Create the logical vulkan device
-        /// </summary>
-        void CreateLogicalDevice();
-
-        /// <summary>
-        /// Configure graphics API debug callbacks [Vulkan]
-        /// </summary>
-        void SetupDebugMessesages();
-
-        /**
-        * Create the surface for Vulkan to use for integration with the window system
-        * this surface can have an effect on the selection of physical device
-        */
-        void CreateSurface();
-
-        /**
-        * Create the swap chain and select the format, present mode, and extents
-        */
-        void CreateSwapChain();
-
-        /**
-        * Create the image views from the swap chain so that we can actually render them 
-        */
-        void CreateImageViews();
 
         /**
          * @brief Create a Descriptor Layout object
@@ -171,7 +105,7 @@ namespace Fling
         void CreateGraphicsPipeline();
 
         /**
-        * Create the frame buffer that will be used by the graphics piipeline
+        * Create the frame buffer that will be used by the graphics pipeline
         */
         void CreateRenderPass();
 
@@ -192,13 +126,12 @@ namespace Fling
         */
         void CreateSyncObjects();
 
-
-        void CleanUpSwapChain();
+        void CleanupFrameResources();
 
         /**
         * Re-create the image views, render passes, and command buffers
         */
-        void RecreateSwapChain();
+        void RecreateFrameResources();
 
 		/**
 		* Create a vertex buffer using Temp_Vertices
@@ -215,14 +148,6 @@ namespace Fling
         void CreateDescriptorPool();
 
         void CreateDescriptorSets();
-
-		void CreateBuffer(VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory);
-		
-		/**
-		* Copy source buffer to the destination buffer given it's size.
-		* Creates a one-off commandBuffer to do this
-		*/
-		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
         /**
         * Check the swap chain support of a given device
@@ -255,12 +180,10 @@ namespace Fling
 
         /**
         * Determine the best match extents based on our window width and height
-        * 
-        * @param 	t_Capabilies    The available capabilities of the swap chain on this device
-        *
+		*
         * @return   Extents with the best matching resolution
         */
-        VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& t_Capabilies);
+        VkExtent2D ChooseSwapExtent();
 
         /**
          * @brief Update the uniform buffer data. Called during DrawFrame
@@ -268,18 +191,6 @@ namespace Fling
          * @param t_CurrentImage The current image index that we are using
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
-
-        std::vector<const char*> GetRequiredExtensions();
-
-        /**
-        * Check if the given device supports the extensions that this application requires
-        * 
-        * @param t_Device       The device to check  		
-        *
-        * @return True if device supports our listed extensions
-        * @see Renderer::m_DeviceExtensions
-        */
-        bool CheckDeviceExtensionSupport(VkPhysicalDevice t_Device);
 
         /**
         * Create a shader module based on the given shader code
@@ -289,61 +200,23 @@ namespace Fling
         */
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
-        static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT t_messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT* t_CallbackData,
-            void* t_UserData
-        );
+        void CreateTextureImage();
 
-        VkResult CreateDebugUtilsMessengerEXT(
-            VkInstance instance,
-            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-            const VkAllocationCallbacks* pAllocator,
-            VkDebugUtilsMessengerEXT* pDebugMessenger );
-
-        void DestroyDebugUtilsMessengerEXT(
-            VkInstance instance,
-            VkDebugUtilsMessengerEXT debugMessenger,
-            const VkAllocationCallbacks* pAllocator );
-
-        static void FrameBufferResizeCallback(FlingWindow* t_Window, int t_Width, int t_Height);
-
-        /** The window that the game is being drawn to */
-        //GLFWwindow* m_Window = nullptr;
-        
 		/** Camera Instance */
-		FirstPersonCamera* m_camera = nullptr;
+		std::unique_ptr<FirstPersonCamera> m_camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
 
-        /** The Vulkan instance */
-        VkInstance m_Instance = VK_NULL_HANDLE;
+        Instance* m_Instance = nullptr;
 
-        /** Physical device for Vulkan. Destroyed in cleanup. */
-        VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
+        LogicalDevice* m_LogicalDevice = nullptr;
 
-        /** Logical Vulkan device */
-        VkDevice m_Device = VK_NULL_HANDLE;
-
-        /** Handle for the graphics queue */
-        VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
-
-        /** Handle to the presentation queue */
-        VkQueue m_PresentQueue = VK_NULL_HANDLE;
-
-        /** Debug message handler for Vulkan */
-        VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+        PhysicalDevice* m_PhysicalDevice = nullptr;
 
         /** Handle to the surface extension used to interact with the windows system */
         VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 
-        /** The swap chain of this renderer */
-        VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
-
-        VkExtent2D m_SwapChainExtents;
-
-        VkFormat m_SwapChainImageFormat;
+		Swapchain* m_SwapChain = nullptr;
 
         VkRenderPass m_RenderPass;
 
@@ -359,13 +232,9 @@ namespace Fling
         /** @see CreateDescriptorPool */
         VkDescriptorPool m_DescriptorPool;
 
-		/** Vertex buffer */
-        VkBuffer m_VertexBuffer;
-        VkDeviceMemory m_VertexBufferMemory;
-
-		/** Index buffer */
-		VkBuffer m_IndexBuffer;
-		VkDeviceMemory m_IndexBufferMemory;
+        /** Vertex and index buffers */
+        Buffer* m_VertexBuffer = nullptr;
+        Buffer* m_IndexBuffer = nullptr;
 
         size_t CurrentFrameIndex = 0;
 
@@ -374,34 +243,10 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-#ifdef NDEBUG
-        bool m_EnableValidationLayers = false;
-#else
-        bool m_EnableValidationLayers = false;
-#endif
-
         /** Uniform buffers */
-        std::vector<VkBuffer> m_UniformBuffers;
-        std::vector<VkDeviceMemory> m_UniformBuffersMemory;
+        std::vector<Buffer*> m_UniformBuffers;
         
         std::vector<VkDescriptorSet> m_DescriptorSets;
-
-        const std::vector<const char*> m_ValidationLayers =
-        {
-            "VK_LAYER_KHRONOS_validation"
-        };
-
-        /** Device extension support for the swap chain */
-        const std::vector<const char*> m_DeviceExtensions = 
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-
-        /** The images inside of the swap chain */
-        std::vector<VkImage> m_SwapChainImages;
-
-        /** Image views from the swap chain */
-        std::vector<VkImageView> m_SwapChainImageViews;
 
         /** 
         * The frame buffers for the swap chain 
@@ -418,10 +263,11 @@ namespace Fling
         std::vector<VkSemaphore> m_ImageAvailableSemaphores;
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
+
+		std::shared_ptr<class Image> m_TestImage;
     };
 
     // Temp vectors of indecies/verts for testing while setting up the renderer
-
 	const std::vector<UINT16> Temp_indices = 
 	{
 		0, 1, 2, 2, 3, 0
@@ -429,10 +275,9 @@ namespace Fling
 
 	const std::vector<Vertex> Temp_Vertices = 
 	{
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 	};
-
 }	// namespace Fling

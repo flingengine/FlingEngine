@@ -22,7 +22,6 @@ namespace Fling
         std::shared_ptr<JsonFile> LevelFileData = 
             ResourceManager::Get().LoadResource<JsonFile>(entt::hashed_string{ m_LevelFileName.c_str() });
 
-		// #TODO: Parse this data here from JSON!
         if(LevelFileData)
         {
             json& LevelData = LevelFileData->GetJsonData();
@@ -38,6 +37,7 @@ namespace Fling
                 // Load it in with the entity manager!
                 const std::string& EntityName = EntityData["name"];
                 F_LOG_TRACE("Entity name: {}", EntityName);
+				// #TODO We need SOME kind of type ID or reflection so that we can map components to their proper registries
             }
         }
     }

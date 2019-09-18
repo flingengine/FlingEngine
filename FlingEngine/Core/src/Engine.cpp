@@ -98,7 +98,7 @@ namespace Fling
             }
 		}
 
-        // Pre-shutdown options here
+		// Any waiting that we may need to do before the shutdown function should go here
 		Renderer.PrepShutdown();
 	}
 

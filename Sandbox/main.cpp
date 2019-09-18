@@ -5,7 +5,7 @@
 */
 int main(int argc, char* argv[])
 {
-	Fling::Engine Engine = { argc, argv };
+	Fling::Engine Engine = {};
 
 	try
 	{
