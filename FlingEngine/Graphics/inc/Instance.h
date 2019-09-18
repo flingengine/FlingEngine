@@ -24,7 +24,7 @@ namespace Fling
 
 		const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
 
-		const std::vector<const char*>& GetEnabledExtensinos() const { return m_DeviceExtensions; };
+		const std::vector<const char*>& GetEnabledExtensions() const { return m_DeviceExtensions; };
 
     private:
 

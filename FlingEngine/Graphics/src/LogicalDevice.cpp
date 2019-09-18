@@ -105,8 +105,8 @@ namespace Fling
         CreateInfo.pEnabledFeatures = &DevicesFeatures;
 
         // Set the enabled extensions
-        CreateInfo.enabledExtensionCount = static_cast<UINT32>(m_Instance->GetEnabledExtensinos().size());
-        CreateInfo.ppEnabledExtensionNames = m_Instance->GetEnabledExtensinos().data();
+        CreateInfo.enabledExtensionCount = static_cast<UINT32>(m_Instance->GetEnabledExtensions().size());
+        CreateInfo.ppEnabledExtensionNames = m_Instance->GetEnabledExtensions().data();
 
         if( m_Instance->IsValidationEnabled() ) 
         {

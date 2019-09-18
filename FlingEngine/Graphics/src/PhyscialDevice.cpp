@@ -118,7 +118,7 @@ namespace Fling
 			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, ExtensionProperties.data());
 
 			// Check to make sure that this device support all needed extensions
-			for (const char* currentExtension : m_Instance->GetEnabledExtensinos())
+			for (const char* currentExtension : m_Instance->GetEnabledExtensions())
 			{
 				bool ExtensionFound = false;
 
