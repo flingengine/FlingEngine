@@ -476,7 +476,7 @@ namespace Fling
         
         CleanupFrameResources();
 
-		m_SwapChain->Recreate();
+		m_SwapChain->Recreate(ChooseSwapExtent());
 
         CreateRenderPass();
         CreateGraphicsPipeline();

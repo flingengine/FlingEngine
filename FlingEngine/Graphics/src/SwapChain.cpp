@@ -10,11 +10,17 @@ namespace Fling
 	Swapchain::Swapchain(const VkExtent2D& t_Extent)
 		: m_Extents{ t_Extent }
 	{
-		Recreate();
+		Recreate(m_Extents);
 	}
 
-	void Swapchain::Recreate()
+	void Swapchain::Recreate(const VkExtent2D& t_Extent)
 	{
+		// Make sure that we have a valid extent first
+		if (m_Extents.width != t_Extent.width || m_Extents.height != t_Extent.height)
+		{
+			m_Extents = { t_Extent };
+		}
+
 		CreateResources();
 		CreateImageViews();
 	}

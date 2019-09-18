@@ -32,7 +32,7 @@ namespace Fling
 		 * @brief	Recreate this swap chain including image views, render passes, and command buffers.
 		 *			DOES NOT Clean up any resources. 
 		 */
-		void Recreate();
+		void Recreate(const VkExtent2D& t_Extent);
 
 		/**
 		 * @brief Cleanup all swapchain resources

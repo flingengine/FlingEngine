@@ -19,7 +19,7 @@ namespace Fling
     {
         if( m_EnableValidationLayers && !CheckValidationLayerSupport() )
 		{
-            F_LOG_FATAL( "Validation layers are requested, but not available!" );
+            F_LOG_WARN( "Validation layers are requested, but not available!" );
 		}
 
 		// Basic app data that we can modify 
