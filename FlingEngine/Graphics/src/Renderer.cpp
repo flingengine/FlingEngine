@@ -38,11 +38,12 @@ namespace Fling
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
 
-
         CreateFrameBuffers();
-
         CreateCommandPool();
         
+		m_DepthBuffer = new DepthBuffer();
+
+		// A test function for loading in images
         CreateTextureImage();
 
 		CreateVertexBuffer();

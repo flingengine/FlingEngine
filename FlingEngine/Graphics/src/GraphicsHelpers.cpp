@@ -101,5 +101,26 @@ namespace Fling
 			vkFreeCommandBuffers(Device, CmdPool, 1, &t_CommandBuffer);
 		}
 
+		VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features)
+		{
+			VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
+			for (VkFormat CurFormat : t_Candidates)
+			{
+				VkFormatProperties Props;
+				vkGetPhysicalDeviceFormatProperties(PhysDevice, CurFormat, &Props);
+
+				if (t_Tiling == VK_IMAGE_TILING_LINEAR && (Props.linearTilingFeatures & t_Features) == t_Features)
+				{
+					return CurFormat;
+				}
+				else if (t_Tiling == VK_IMAGE_TILING_OPTIMAL && (Props.optimalTilingFeatures & t_Features) == t_Features)
+				{
+					return CurFormat;
+				}
+			}
+			// Ruh ro
+			F_LOG_ERROR("Failed to find supported format! Returning VK_FORMAT_D32_SFLOAT by default");
+			return VK_FORMAT_D32_SFLOAT;
+		}
 	}	// namespace GraphicsHelpers
 }   // namespace Fling

@@ -53,7 +53,7 @@ namespace Fling
 
 #define  F_LOG_TRACE( ... )    Logger::GetCurrentConsole()->info( __VA_ARGS__ ); Logger::GetCurrentLogFile()->info( __VA_ARGS__ )
 #define  F_LOG_WARN( ... )     Logger::GetCurrentConsole()->warn( __VA_ARGS__ ); Logger::GetCurrentLogFile()->warn( __VA_ARGS__ )
-#define  F_LOG_ERROR( ... )    Logger::GetCurrentConsole()->error( __VA_ARGS__ ); Logger::GetCurrentLogFile()->error( __VA_ARGS__ )
+#define  F_LOG_ERROR( ... )    Logger::GetCurrentConsole()->error( __VA_ARGS__ ); Logger::GetCurrentLogFile()->error( __VA_ARGS__ ); FLING_BREAK
 
 /** Log a message to the error console AND throw a runtime exception. Only use for fatal asserts!
     Left in in release builds! */

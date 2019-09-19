@@ -19,6 +19,7 @@
 #include "LogicalDevice.h"
 #include "Buffer.h"
 #include "SwapChain.h"
+#include "DepthBuffer.h"
 
 namespace Fling
 {
@@ -235,6 +236,8 @@ namespace Fling
         /** Vertex and index buffers */
         Buffer* m_VertexBuffer = nullptr;
         Buffer* m_IndexBuffer = nullptr;
+
+		DepthBuffer* m_DepthBuffer = nullptr;
 
         size_t CurrentFrameIndex = 0;
 

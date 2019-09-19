@@ -23,5 +23,9 @@ namespace Fling
 		
 		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
+
+		VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
+
+
 	}	// namespace GraphicsHelpers
 }   // namespace Fling
