@@ -15,6 +15,8 @@ namespace Fling
 		FORCEINLINE const VkImage& GetVkImage() const { return m_Image; }
 		FORCEINLINE const VkDeviceMemory& GetVkMemory() const { return m_Memory; }
 		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
+		FORCEINLINE const VkFormat& GetFormat() const { return m_Format; }
+
 
 		/**
 		* @brief	Creates all VK resources. Assumes that they are null. Uses swap chain extents 
@@ -28,6 +30,8 @@ namespace Fling
 		*			Called automatically on destruction
 		*/
 		void Cleanup();
+
+		static VkFormat GetDepthBufferFormat();
 
 	private:
 

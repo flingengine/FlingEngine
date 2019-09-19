@@ -43,5 +43,10 @@ namespace Fling
 
 		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
 
+		/**
+		 * @brief	Returns true if the given format has a stencil component 
+		 */
+		bool HasStencilComponent(VkFormat t_format);
+
 	}	// namespace GraphicsHelpers
 }   // namespace Fling

@@ -213,9 +213,23 @@ namespace Fling
 			barrier.newLayout = t_NewLayout;
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
 			barrier.image = t_Image;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+			// Make sure that we use the correct aspect bit depending on if we are for the depth buffer or not
+			if (t_NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+			{
+				barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+				if (GraphicsHelpers::HasStencilComponent(t_Format)) 
+				{
+					barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+				}
+			}
+			else 
+			{
+				barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			}
+
 			barrier.subresourceRange.baseMipLevel = 0;
 			barrier.subresourceRange.levelCount = 1;
 			barrier.subresourceRange.baseArrayLayer = 0;
@@ -241,9 +255,17 @@ namespace Fling
 				SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 				DestinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 			}
-			else
+			else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 			{
-				F_LOG_ERROR("Unsupported layout transition in image!");
+				barrier.srcAccessMask = 0;
+				barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+				SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				DestinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			}
+			else 
+			{
+				F_LOG_ERROR("Unsupported layout transition!");
 			}
 
 			vkCmdPipelineBarrier(
@@ -256,6 +278,11 @@ namespace Fling
 			);
 
 			GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
+		}
+
+		bool HasStencilComponent(VkFormat t_format)
+		{
+			return t_format == VK_FORMAT_D32_SFLOAT_S8_UINT || t_format == VK_FORMAT_D24_UNORM_S8_UINT;
 		}
 
 }	// namespace GraphicsHelpers
