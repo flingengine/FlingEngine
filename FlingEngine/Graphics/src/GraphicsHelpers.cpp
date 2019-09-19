@@ -202,5 +202,61 @@ namespace Fling
 			F_LOG_ERROR("Failed to find supported format! Returning VK_FORMAT_D32_SFLOAT by default");
 			return VK_FORMAT_D32_SFLOAT;
 		}
-	}	// namespace GraphicsHelpers
+
+		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
+		{
+			VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
+
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = t_oldLayout;
+			barrier.newLayout = t_NewLayout;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+			barrier.image = t_Image;
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+
+			// Handle transition barrier masks
+			VkPipelineStageFlags SourceStage = 0;
+			VkPipelineStageFlags DestinationStage = 0;
+
+			if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			{
+				barrier.srcAccessMask = 0;
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+				SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				DestinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			}
+			else if (t_oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && t_NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+			{
+				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+				SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+				DestinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			}
+			else
+			{
+				F_LOG_ERROR("Unsupported layout transition in image!");
+			}
+
+			vkCmdPipelineBarrier(
+				commandBuffer,
+				SourceStage, DestinationStage,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier
+			);
+
+			GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
+		}
+
+}	// namespace GraphicsHelpers
 }   // namespace Fling

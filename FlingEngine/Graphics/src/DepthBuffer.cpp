@@ -79,6 +79,10 @@ namespace Fling
 
 	void DepthBuffer::CreateImageView()
 	{
-
+		m_ImageView = GraphicsHelpers::CreateVkImageView(
+			m_Image,
+			m_Format,
+			VK_IMAGE_ASPECT_DEPTH_BIT
+		);
 	}
 }   // namespace Fling

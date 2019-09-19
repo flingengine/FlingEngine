@@ -41,6 +41,7 @@ namespace Fling
 
 		VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
 
+		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
 
 	}	// namespace GraphicsHelpers
 }   // namespace Fling
