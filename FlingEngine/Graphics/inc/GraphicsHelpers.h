@@ -23,6 +23,21 @@ namespace Fling
 		
 		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
+		void CreateVkImage(
+			UINT32 t_Width,
+			UINT32 t_Height,
+			VkFormat t_Format,
+			VkImageTiling t_Tiling,
+			VkImageUsageFlags t_Useage,
+			VkMemoryPropertyFlags t_Props,
+			VkImage& t_Image,
+			VkDeviceMemory& t_Memory
+		);
+
+		/**
+		 * @brief	Create a an image view for vulkan with the given format
+		 */
+		VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs);
 
 		VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
 

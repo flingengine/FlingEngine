@@ -443,6 +443,8 @@ namespace Fling
 
     void Renderer::CleanupFrameResources()
     {
+		m_DepthBuffer->Cleanup();
+
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
             vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
@@ -482,6 +484,7 @@ namespace Fling
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFrameBuffers();
+		m_DepthBuffer->Create();
 
         CreateUniformBuffers();
         CreateDescriptorPool();

@@ -54,49 +54,20 @@ namespace Fling
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 		VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
 
+		GraphicsHelpers::CreateVkImage(
+			m_Width,
+			m_Height,
+			/* Format */ VK_FORMAT_R8G8B8A8_UNORM,
+			/* Tiling */ VK_IMAGE_TILING_OPTIMAL,
+			/* Usage */ VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			/* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			m_vVkImage,
+			m_VkMemory
+		);
+
 		// Put the image data in a staging buffer for Vulkan
 		VkDeviceSize ImageSize = GetImageSize();
 		Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, PixelData);
-
-		VkImageCreateInfo ImageInfo = {};
-		ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-		ImageInfo.extent.width = m_Width;
-		ImageInfo.extent.height = m_Height;
-		ImageInfo.extent.depth = 1;
-		ImageInfo.mipLevels = 1;
-		ImageInfo.arrayLayers = 1;
-
-		ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-
-		ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-		ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		ImageInfo.flags = 0;
-
-		if (vkCreateImage(Device, &ImageInfo, nullptr, &m_vVkImage) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to create image!");
-		}
-
-		// Allocate the memory for the image
-		VkMemoryRequirements MemReqs;
-		vkGetImageMemoryRequirements(Device, m_vVkImage, &MemReqs);
-
-		VkMemoryAllocateInfo AllocInfo = {};
-		AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		AllocInfo.allocationSize = MemReqs.size;
-		AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(PhysDevice, MemReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		if (vkAllocateMemory(Device, &AllocInfo, nullptr, &m_VkMemory) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to allocate image memory!");
-		}
-
-		vkBindImageMemory(Device, m_vVkImage, m_VkMemory, 0);
 		
 		// Transition and copy the image layout to the staging buffer
 		TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -202,27 +173,12 @@ namespace Fling
 
 	void Image::CreateImageView()
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		
-		assert(Device != VK_NULL_HANDLE);
-
-        VkImageViewCreateInfo createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = m_vVkImage;
-		
-        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cube maps
-        createInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		
-        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        createInfo.subresourceRange.baseMipLevel = 0;
-        createInfo.subresourceRange.levelCount = 1;
-        createInfo.subresourceRange.baseArrayLayer = 0;
-        createInfo.subresourceRange.layerCount = 1;
-		
-        if (vkCreateImageView(Device, &createInfo, nullptr, &m_ImageView) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to create image views!");
-        }
+		m_ImageView = GraphicsHelpers::CreateVkImageView(
+			m_vVkImage,
+			VK_FORMAT_R8G8B8A8_UNORM, 
+			VK_IMAGE_ASPECT_COLOR_BIT
+		);
+		assert(m_ImageView != VK_NULL_HANDLE);
 	}
 
 	void Image::CreateTextureSampler()
@@ -262,11 +218,27 @@ namespace Fling
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
 		// Cleanup the Vulkan memory
-		vkDestroyImage(Device, m_vVkImage, nullptr);
-		vkFreeMemory(Device, m_VkMemory, nullptr);
+		if (m_vVkImage != VK_NULL_HANDLE)
+		{
+			vkDestroyImage(Device, m_vVkImage, nullptr);
+			m_vVkImage = VK_NULL_HANDLE;
+		}
 
-		vkDestroySampler(Device, m_TextureSampler, nullptr);
-		vkDestroyImageView(Device, m_ImageView, nullptr);
+		if (m_VkMemory != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(Device, m_VkMemory, nullptr);
+			m_VkMemory;
+		}
+		if (m_TextureSampler != VK_NULL_HANDLE)
+		{
+			vkDestroySampler(Device, m_TextureSampler, nullptr);
+			m_TextureSampler = VK_NULL_HANDLE;
+		}
+		if (m_ImageView != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(Device, m_ImageView, nullptr);
+			m_ImageView = VK_NULL_HANDLE;
+		}
 	}
 
     Image::~Image()

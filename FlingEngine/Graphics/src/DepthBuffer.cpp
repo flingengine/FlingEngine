@@ -65,6 +65,16 @@ namespace Fling
 		Swapchain* Swap = Renderer::Get().GetSwapChain();
 		assert(Swap);
 
+		GraphicsHelpers::CreateVkImage(
+			Swap->GetExtents().width,
+			Swap->GetExtents().height,
+			/* Format */ m_Format,
+			/* Tiling */ VK_IMAGE_TILING_OPTIMAL,
+			/* Usage */ VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			/* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			m_Image,
+			m_Memory
+		);
 	}
 
 	void DepthBuffer::CreateImageView()

@@ -101,6 +101,86 @@ namespace Fling
 			vkFreeCommandBuffers(Device, CmdPool, 1, &t_CommandBuffer);
 		}
 
+		void CreateVkImage(
+			UINT32 t_Width,
+			UINT32 t_Height,
+			VkFormat t_Format, 
+			VkImageTiling t_Tiling, 
+			VkImageUsageFlags t_Useage, 
+			VkMemoryPropertyFlags t_Props, 
+			VkImage& t_Image,
+			VkDeviceMemory& t_Memory
+		)
+		{
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+			VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
+
+			VkImageCreateInfo imageInfo = {};
+			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			imageInfo.imageType = VK_IMAGE_TYPE_2D;
+			imageInfo.extent.width = t_Width;
+			imageInfo.extent.height = t_Height;
+			imageInfo.extent.depth = 1;
+			imageInfo.mipLevels = 1;
+			imageInfo.arrayLayers = 1;
+
+			imageInfo.format = t_Format;
+			imageInfo.tiling = t_Tiling;
+
+			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageInfo.usage = t_Useage;
+
+			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			if (vkCreateImage(Device, &imageInfo, nullptr, &t_Image) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Failed to create image!");
+			}
+
+			VkMemoryRequirements memRequirements;
+			vkGetImageMemoryRequirements(Device, t_Image, &memRequirements);
+
+			VkMemoryAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memRequirements.size;
+			allocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(PhysDevice, memRequirements.memoryTypeBits, t_Props);
+
+			if (vkAllocateMemory(Device, &allocInfo, nullptr, &t_Memory) != VK_SUCCESS) 
+			{
+				F_LOG_FATAL("Failed to allocate image memory!");
+			}
+
+			vkBindImageMemory(Device, t_Image, t_Memory, 0);
+		}
+
+		VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)
+		{
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
+			assert(Device != VK_NULL_HANDLE);
+
+			VkImageViewCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = t_Image;
+
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cube maps
+			createInfo.format = t_Format;
+
+			createInfo.subresourceRange.aspectMask = t_AspectFalgs;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+
+			VkImageView imageView = VK_NULL_HANDLE;
+			if (vkCreateImageView(Device, &createInfo, nullptr, &imageView) != VK_SUCCESS)
+			{
+				F_LOG_ERROR("Failed to create image views!");
+			}
+			return imageView;
+		}
+
 		VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features)
 		{
 			VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
