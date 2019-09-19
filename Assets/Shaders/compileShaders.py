@@ -1,8 +1,6 @@
 import os;
-import sys;
 from subprocess import call;
 from pathlib import Path
-
 
 def cleanShaders():
 	# For each file in the current directory
