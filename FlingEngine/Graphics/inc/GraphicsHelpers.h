@@ -23,5 +23,30 @@ namespace Fling
 		
 		void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
+		void CreateVkImage(
+			UINT32 t_Width,
+			UINT32 t_Height,
+			VkFormat t_Format,
+			VkImageTiling t_Tiling,
+			VkImageUsageFlags t_Useage,
+			VkMemoryPropertyFlags t_Props,
+			VkImage& t_Image,
+			VkDeviceMemory& t_Memory
+		);
+
+		/**
+		 * @brief	Create a an image view for vulkan with the given format
+		 */
+		VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs);
+
+		VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
+
+		void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
+
+		/**
+		 * @brief	Returns true if the given format has a stencil component 
+		 */
+		bool HasStencilComponent(VkFormat t_format);
+
 	}	// namespace GraphicsHelpers
 }   // namespace Fling

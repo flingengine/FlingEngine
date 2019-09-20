@@ -12,6 +12,12 @@
 #	define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #	define new DEBUG_NEW
 
+#ifdef _MSC_VER
+#	define FLING_BREAK	__debugbreak()
+#else
+#	define FLING_BREAK	asm("int $3")
+#endif	// _MSC_VER
+
 #endif	// _DEBUG
 
 

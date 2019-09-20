@@ -34,15 +34,16 @@ namespace Fling
 		VkExtent2D Extent = ChooseSwapExtent();
 		m_SwapChain = new Swapchain(Extent);
 
-        CreateRenderPass();
+		CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
-
-
-        CreateFrameBuffers();
-
         CreateCommandPool();
-        
+
+		m_DepthBuffer = new DepthBuffer();
+
+		CreateFrameBuffers();
+
+		// A test function for loading in images
         CreateTextureImage();
 
 		CreateVertexBuffer();
@@ -70,24 +71,31 @@ namespace Fling
         ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        // Subpasses 
+		VkAttachmentDescription DepthAttatchment = {};
+		DepthAttatchment.format = DepthBuffer::GetDepthBufferFormat();
+		DepthAttatchment.samples = VK_SAMPLE_COUNT_1_BIT;
+		DepthAttatchment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		DepthAttatchment.storeOp= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		DepthAttatchment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		DepthAttatchment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		DepthAttatchment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		DepthAttatchment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        // Subpass -------------------
         VkAttachmentReference ColorAttachmentRef = {};
         ColorAttachmentRef.attachment = 0;
         ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+		VkAttachmentReference DepthAttatchmentRef = {};
+		DepthAttatchmentRef.attachment = 1;
+		DepthAttatchmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
         VkSubpassDescription Subpass = {};
         Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;    // You need to be explicit that this is
-                                                                        // a graphics subpass because we may support comput passes in the future
+                                                                        // a graphics subpass because we may support compute passes in the future
         Subpass.colorAttachmentCount = 1;
         Subpass.pColorAttachments = &ColorAttachmentRef;
-
-        // Create the render pass
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &ColorAttachment;
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &Subpass;
+		Subpass.pDepthStencilAttachment = &DepthAttatchmentRef;
 
         // Add a subpass dependency
         VkSubpassDependency dependency = {};
@@ -97,6 +105,15 @@ namespace Fling
         dependency.srcAccessMask = 0;
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		// Create the render pass
+		std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttatchment };
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = static_cast<UINT32>(Attachments.size());
+		renderPassInfo.pAttachments = Attachments.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &Subpass;
 
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
@@ -276,6 +293,19 @@ namespace Fling
             F_LOG_FATAL("Failed to create pipeline layout!");
         }
 
+		// Depth Stencil
+		VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencil.depthTestEnable = VK_TRUE;
+		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.minDepthBounds = 0.0f;
+		depthStencil.maxDepthBounds = 1.0f;
+		depthStencil.stencilTestEnable = VK_FALSE;
+		depthStencil.front = {};
+		depthStencil.back = {};
+
         // Create graphics pipeline ------------------------
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -287,7 +317,7 @@ namespace Fling
         pipelineInfo.pViewportState = &viewportState;
         pipelineInfo.pRasterizationState = &Rasterizer;
         pipelineInfo.pMultisampleState = &Multisampling;
-        pipelineInfo.pDepthStencilState = nullptr; // Optional
+        pipelineInfo.pDepthStencilState = &depthStencil;
         pipelineInfo.pColorBlendState = &ColorBlending;
         pipelineInfo.pDynamicState = nullptr; // Optional
 
@@ -309,7 +339,7 @@ namespace Fling
 
     void Renderer::CreateFrameBuffers()
     {
-		assert(m_SwapChain);
+		assert(m_SwapChain && m_DepthBuffer);
 
         m_SwapChainFramebuffers.resize(m_SwapChain->GetImageViewCount());
 
@@ -318,16 +348,17 @@ namespace Fling
         // Create the frame buffers based on the image views
         for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); i++)
         {
-            VkImageView attachments[] = 
+			std::array<VkImageView, 2> attachments = 
             {
-				ImageViews[i]
+				ImageViews[i],
+				m_DepthBuffer->GetVkImageView()
             };
 
             VkFramebufferCreateInfo framebufferInfo = {};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.renderPass = m_RenderPass;
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.attachmentCount = static_cast<UINT32>(attachments.size());
+            framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = m_SwapChain->GetExtents().width;
             framebufferInfo.height = m_SwapChain->GetExtents().height;
             framebufferInfo.layers = 1;
@@ -391,9 +422,12 @@ namespace Fling
             renderPassInfo.renderArea.offset = { 0, 0 };
             renderPassInfo.renderArea.extent = m_SwapChain->GetExtents();
 
-            VkClearValue clearColor = {{ 0.0f, 0.0f, 0.0f, 1.0f }};
-            renderPassInfo.clearValueCount = 1;
-            renderPassInfo.pClearValues = &clearColor;
+			// Clear values ---------------------
+			std::array<VkClearValue, 2> clearValues = {};
+			clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+			clearValues[1].depthStencil = {1.0f, 0};
+            renderPassInfo.clearValueCount = static_cast<UINT32>(clearValues.size());
+            renderPassInfo.pClearValues = clearValues.data();
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -442,6 +476,8 @@ namespace Fling
 
     void Renderer::CleanupFrameResources()
     {
+		m_DepthBuffer->Cleanup();
+
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
             vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
@@ -480,7 +516,10 @@ namespace Fling
 
         CreateRenderPass();
         CreateGraphicsPipeline();
-        CreateFrameBuffers();
+
+		m_DepthBuffer->Create();
+
+		CreateFrameBuffers();
 
         CreateUniformBuffers();
         CreateDescriptorPool();
@@ -823,8 +862,8 @@ namespace Fling
 		UniformBufferObject ubo = {};
 
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+		//model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		ubo.Model = model;
 		ubo.View = m_camera->GetViewMatrix();

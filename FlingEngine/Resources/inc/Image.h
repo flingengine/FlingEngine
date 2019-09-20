@@ -48,8 +48,6 @@ namespace Fling
 
 		void CreateTextureSampler();
 
-		void TransitionImageLayout(VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
-
 		void CopyBufferToImage(VkBuffer t_Buffer);
 
         /** Width of this image */
