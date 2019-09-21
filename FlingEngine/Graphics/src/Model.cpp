@@ -14,7 +14,9 @@ namespace Fling
 
 	Model::~Model()
 	{
+		// #TODO Make the buffer allocations from a pool allocator instead of new's and deletes
 		delete m_VertexBuffer;
+		delete m_IndexBuffer;
 	}
 
 	void Model::LoadModel()
@@ -68,11 +70,17 @@ namespace Fling
 		}
 
 		// Create vertex buffer
-		VkDeviceSize bufferSize = sizeof(m_Verts[0]) * m_Verts.size();
-		Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Verts.data());
-		m_VertexBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		Buffer::CopyBuffer(&StagingBuffer, m_VertexBuffer, bufferSize);
+		VkDeviceSize VertBufferSize = sizeof(m_Verts[0]) * m_Verts.size();
+		// We use a staging buffer to get to a more optimial memory layout for the GPU
+		Buffer VertexStagingBuffer(VertBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Verts.data());
+		m_VertexBuffer = new Buffer(VertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		Buffer::CopyBuffer(&VertexStagingBuffer, m_VertexBuffer, VertBufferSize);
 
+		// Create Index buffer
+		VkDeviceSize IndexBufferSize = sizeof(m_Indices[0]) * GetIndexCount();
+        Buffer IndexStagingBuffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Indices.data());
+        m_IndexBuffer = new Buffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		Buffer::CopyBuffer(&IndexStagingBuffer, m_IndexBuffer, IndexBufferSize);
 	}
 
 }	// namespace Fling

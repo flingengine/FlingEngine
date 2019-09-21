@@ -135,16 +135,6 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-		/**
-		* Create a vertex buffer using Temp_Vertices
-		*/
-        void CreateVertexBuffer();
-
-		/**
-		* Create an index buffer using Temp_Indecies
-		*/
-		void CreateIndexBuffer();
-
         void CreateUniformBuffers();
 
         void CreateDescriptorPool();
@@ -231,10 +221,6 @@ namespace Fling
 
         /** @see CreateDescriptorPool */
         VkDescriptorPool m_DescriptorPool;
-
-        /** Vertex and index buffers */
-		// #TODO Move this to the model class
-        Buffer* m_IndexBuffer = nullptr;
 
 		DepthBuffer* m_DepthBuffer = nullptr;
 

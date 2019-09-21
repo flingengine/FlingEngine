@@ -46,8 +46,6 @@ namespace Fling
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
 		m_TestModel = ResourceManager::LoadResource<Model>("Models/chalet.obj"_hs);
 
-		CreateVertexBuffer();
-		CreateIndexBuffer();
         CreateUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
@@ -386,7 +384,7 @@ namespace Fling
 
     void Renderer::CreateCommandBuffers()
     {
-        assert(m_TestModel->GetVertexBuffer() && m_IndexBuffer);
+        assert(m_TestModel);
         
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
@@ -436,7 +434,7 @@ namespace Fling
             VkBuffer VertexBuffers[] = { m_TestModel->GetVertexBuffer()->GetVkBuffer() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_TestModel->GetIndexBuffer()->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(m_TestModel->GetIndices().size()), 1, 0, 0, 0);
@@ -527,33 +525,6 @@ namespace Fling
         
         CreateCommandBuffers();
     }
-
-    void Renderer::CreateVertexBuffer()
-    {
-		/*VkDeviceSize bufferSize = sizeof(m_TestModel->GetVerts()[0]) * m_TestModel->GetVerts().size();
-		
-        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_TestModel->GetIndices().data());
-        // Create the actual vertex buffer
-        m_TestModel->GetVertexBuffer() = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		// Copy the vertex buffer to the GPU memory
-		Buffer::CopyBuffer(&StagingBuffer, m_TestModel->GetVertexBuffer(), bufferSize);*/
-    }
-
-	void Renderer::CreateIndexBuffer()
-	{
-		VkDeviceSize bufferSize = sizeof(m_TestModel->GetIndices()[0]) * m_TestModel->GetIndexCount();
-        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_TestModel->GetIndices().data());
-		
-        m_IndexBuffer = new Buffer(
-            bufferSize, 
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-        );
-
-		// Copy the staging buffer to the index buffer
-		Buffer::CopyBuffer(&StagingBuffer, m_IndexBuffer, bufferSize);
-	}
 
     void Renderer::CreateUniformBuffers()
     {
@@ -902,12 +873,6 @@ namespace Fling
 		}
 
         vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
-
-        if(m_IndexBuffer)
-        {
-            delete m_IndexBuffer;
-            m_IndexBuffer = nullptr;
-        }
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {

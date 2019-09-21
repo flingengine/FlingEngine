@@ -19,6 +19,7 @@ namespace Fling
 		~Model();
 
 		FORCEINLINE Buffer* GetVertexBuffer() const { return m_VertexBuffer; }
+		FORCEINLINE Buffer* GetIndexBuffer() const { return m_IndexBuffer; }
 
 		FORCEINLINE const std::vector<Vertex>& GetVerts() const { return m_Verts; }
 		FORCEINLINE const std::vector<UINT32>& GetIndices() const { return m_Indices; }
@@ -30,6 +31,7 @@ namespace Fling
 		std::vector<UINT32> m_Indices;
 
 		Buffer* m_VertexBuffer = nullptr;
+		Buffer* m_IndexBuffer = nullptr;
 
 		/**
 		 * @brief	Load this model from Tiny Obj loader
