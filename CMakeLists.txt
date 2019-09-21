@@ -44,6 +44,7 @@ include_directories( external/inih )
 include_directories( external/entt/src )
 include_directories( external/json/single_include )
 include_directories( external/stb )
+include_directories( external/tinyobjloader )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

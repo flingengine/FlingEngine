@@ -436,7 +436,7 @@ namespace Fling
             VkBuffer VertexBuffers[] = { m_VertexBuffer->GetVkBuffer() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(Temp_indices.size()), 1, 0, 0, 0);

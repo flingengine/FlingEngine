@@ -20,6 +20,7 @@
 #include "Buffer.h"
 #include "SwapChain.h"
 #include "DepthBuffer.h"
+#include "Model.h"
 
 namespace Fling
 {
