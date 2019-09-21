@@ -3,9 +3,15 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include "ResourceManager.h"
 
 namespace Fling
 {
+	std::shared_ptr<Fling::Model> Model::Create(Guid t_ID)
+	{
+		return ResourceManager::LoadResource<Model>(t_ID);
+	}
+
 	Model::Model(Guid t_ID)
 		: Resource(t_ID)
 	{
@@ -83,4 +89,21 @@ namespace Fling
 		Buffer::CopyBuffer(&IndexStagingBuffer, m_IndexBuffer, IndexBufferSize);
 	}
 
+	bool Model::CmdRender(const VkCommandBuffer& t_CmdBuf) const
+	{
+		if(m_VertexBuffer && m_IndexBuffer)
+		{
+			VkBuffer vertexBuffers[1] = { m_VertexBuffer->GetVkBuffer() };
+			VkDeviceSize offsets[1] = { 0 };
+			vkCmdBindVertexBuffers(t_CmdBuf, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(t_CmdBuf, m_IndexBuffer->GetVkBuffer(), 0, GetIndexType());
+			vkCmdDrawIndexed(t_CmdBuf, GetIndexCount(), /* instances */ 1, 0, 0, 0);
+		}
+		else
+		{
+			return false;
+		}
+
+		return true;
+	}
 }	// namespace Fling

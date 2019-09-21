@@ -44,7 +44,7 @@ namespace Fling
 		CreateFrameBuffers();
 
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
-		m_TestModel = ResourceManager::LoadResource<Model>("Models/chalet.obj"_hs);
+		m_TestModel = Model::Create("Models/chalet.obj"_hs);
 
         CreateUniformBuffers();
         CreateDescriptorPool();
@@ -431,13 +431,15 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            VkBuffer VertexBuffers[] = { m_TestModel->GetVertexBuffer()->GetVkBuffer() };
-            VkDeviceSize offsets[] = { 0 };
-            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_TestModel->GetIndexBuffer()->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            //VkBuffer VertexBuffers[] = { m_TestModel->GetVertexBuffer()->GetVkBuffer() };
+            //VkDeviceSize offsets[] = { 0 };
+            //vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
+			//vkCmdBindIndexBuffer(m_CommandBuffers[i], m_TestModel->GetIndexBuffer()->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
+			//vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(m_TestModel->GetIndices().size()), 1, 0, 0, 0);
+
+            m_TestModel->CmdRender(m_CommandBuffers[i]);
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(m_TestModel->GetIndices().size()), 1, 0, 0, 0);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
