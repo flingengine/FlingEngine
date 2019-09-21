@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Resource.h"
-#include "tiny_obj_loader.h"
+
 #include "Buffer.h"
 #include "Vertex.h"
 
@@ -19,6 +19,10 @@ namespace Fling
 		~Model();
 
 		FORCEINLINE Buffer* GetVertexBuffer() const { return m_VertexBuffer; }
+
+		FORCEINLINE const std::vector<Vertex>& GetVerts() const { return m_Verts; }
+		FORCEINLINE const std::vector<UINT32>& GetIndices() const { return m_Indices; }
+		FORCEINLINE const UINT32 GetIndexCount() const { return static_cast<UINT32>(m_Indices.size()); }
 
 	private:
 
