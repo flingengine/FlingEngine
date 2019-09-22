@@ -18,7 +18,6 @@ matrix:
         - libglu1-mesa-dev
         - libvulkan-dev
         - libglfw3-dev
-        - assimp
         - libwayland-dev
         - libx11-dev
     language: cpp
