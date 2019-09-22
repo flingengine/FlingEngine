@@ -29,12 +29,12 @@ matrix:
     - sudo apt-get update -qq
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
     install:
-    - wget -O VulkanSDK.tar.gz https://sdk.lunarg.com/sdk/download/1.1.92.1/linux/vulkansdk-linux-x86_64-1.1.92.1.tar.gz?u=true && mkdir VulkanSDK && cd VulkanSDK && tar xvf /VulkanSDK.tar.gz && cd VulkanSDK/1.1.92.1
-    - cd VulkanSDK/1.1.92.1
-    - export	VULKAN_SDK="/VulkanSDK/1.1.92.1/x86_64:${VULKAN_SDK}"
-    - export	PATH="${VULKAN_SDK}/bin:${PATH}"
-    - export	LD_LIBRARY_PATH="${VULKAN_SDK}/lib:${LD_LIBRARY_PATH}"
-    - export	VK_LAYER_PATH="${VULKAN_SDK}/etc/explicit_layer.d:${VK_LAYER_PATH}"
+    - wget -O VulkanSDK.tar.gz https://sdk.lunarg.com/sdk/download/1.1.92.1/linux/vulkansdk-linux-x86_64-1.1.92.1.tar.gz?u=true 
+    - tar xvf ./VulkanSDK.tar.gz
+    - export VULKAN_SDK="$TRAVIS_BUILD_DIR/1.1.92.1/x86_64"
+    - export PATH="${VULKAN_SDK}/bin:${PATH}"
+    - export LD_LIBRARY_PATH="${VULKAN_SDK}/lib:${LD_LIBRARY_PATH}"
+    - export VK_LAYER_PATH="${VULKAN_SDK}/etc/explicit_layer.d:${VK_LAYER_PATH}"
     # Go back to travis build dir at the end of it! 
     - cd $TRAVIS_BUILD_DIR
 
