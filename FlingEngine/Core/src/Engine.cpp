@@ -55,8 +55,6 @@ namespace Fling
 
 		Renderer::Get().Init();
 
-		ComponentManager::Get().Init();
-
 		m_World = new World();
 	}
 
@@ -103,9 +101,7 @@ namespace Fling
 	}
 
 	void Engine::Shutdown()
-	{
-		ComponentManager::Get().Shutdown();
-		
+	{		
 		if(m_World)
 		{
 			m_World->Shutdown();

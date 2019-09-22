@@ -67,8 +67,6 @@ namespace Fling
 
 	void DepthBuffer::CreateImage()
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
 		Swapchain* Swap = Renderer::Get().GetSwapChain();
 		assert(Swap);
 

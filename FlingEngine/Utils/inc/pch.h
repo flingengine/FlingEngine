@@ -17,6 +17,7 @@
 #include <set>
 #include <array>
 #include <optional>
+#include <sstream>      // std::stringstream
 
 /************************************************************************/
 /* Fling Engine Functionality                                           */

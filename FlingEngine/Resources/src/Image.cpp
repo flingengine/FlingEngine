@@ -51,9 +51,6 @@ namespace Fling
 			F_LOG_TRACE("Loaded image file: {}", Filepath);
 		}
 
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
-
 		GraphicsHelpers::CreateVkImage(
 			m_Width,
 			m_Height,
@@ -159,17 +156,23 @@ namespace Fling
 	{
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
+		if(Device == VK_NULL_HANDLE)
+		{
+			F_LOG_WARN("Vk Device was null in Image::Release");
+			return;
+		}
+
 		// Cleanup the Vulkan memory
 		if (m_vVkImage != VK_NULL_HANDLE)
 		{
 			vkDestroyImage(Device, m_vVkImage, nullptr);
 			m_vVkImage = VK_NULL_HANDLE;
 		}
-
+		
 		if (m_VkMemory != VK_NULL_HANDLE)
 		{
 			vkFreeMemory(Device, m_VkMemory, nullptr);
-			m_VkMemory;
+			m_VkMemory = VK_NULL_HANDLE;
 		}
 		if (m_TextureSampler != VK_NULL_HANDLE)
 		{

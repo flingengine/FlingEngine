@@ -45,61 +45,62 @@ namespace Fling
 		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, nullptr);
 		std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
 		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, extensionProperties.data());
+  		std::stringstream DeviceInfo;
 
-		std::string DeviceInfo = "\nPhysical Device Info: \n\tType: ";
+		DeviceInfo << "\nPhysical Device Info: \n\tType: ";
 
 		// Type 
-		switch (static_cast<int>(m_DeviceProperties.deviceType))
+		switch (static_cast<UINT32>(m_DeviceProperties.deviceType))
 		{
 		case 1:
-			DeviceInfo +="Integrated";
+			DeviceInfo << "Integrated";
 			break;
 		case 2:
-			DeviceInfo += "Discrete";
+			DeviceInfo << "Discrete";
 			break;
 		case 3:
-			DeviceInfo += "Virtual";
+			DeviceInfo << "Virtual";
 			break;
 		case 4:
-			DeviceInfo += "CPU";
+			DeviceInfo << "CPU";
 			break;
 		default:
-			DeviceInfo += "Other";
+			DeviceInfo << "Other";
 		}
 
 		// ID
-		DeviceInfo += "\n\tID: " + m_DeviceProperties.deviceID;
+		DeviceInfo << "\n\tID: " << m_DeviceProperties.deviceID;
 
 		// Vendor
-		DeviceInfo += "\n\tVendor:";
+		DeviceInfo << "\n\tVendor:";
 		switch (m_DeviceProperties.vendorID)
 		{
 		case 0x8086:
-			DeviceInfo += " 'Intel'";
+			DeviceInfo << " 'Intel'";
 			break;
 		case 0x10DE:
-			DeviceInfo += " 'Nvidia'";
+			DeviceInfo << " 'Nvidia'";
 			break;
 		case 0x1002:
-			DeviceInfo += " 'AMD'";
+			DeviceInfo << " 'AMD'";
 			break;
 		default:
-			DeviceInfo += " " + m_DeviceProperties.vendorID;
+			DeviceInfo << " " << m_DeviceProperties.vendorID;
 		}
 
-		//// Versions
-		//uint32_t supportedVersion[]
-		//{ 
-		//	VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), 
-		//	VK_VERSION_MINOR(m_DeviceProperties.apiVersion),
-		//	VK_VERSION_PATCH(m_DeviceProperties.apiVersion) 
-		//};
-		//
-		//DeviceInfo += "\n\n\tAPI Version: " + supportedVersion[0];
-		//DeviceInfo += "." + supportedVersion[1];
-		//DeviceInfo += "." + supportedVersion[2];
-
-		F_LOG_TRACE("{}\n", DeviceInfo);
+		// Versions
+		UINT32 supportedVersion[]
+		{ 
+			VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), 
+			VK_VERSION_MINOR(m_DeviceProperties.apiVersion),
+			VK_VERSION_PATCH(m_DeviceProperties.apiVersion) 
+		};
+		
+		DeviceInfo << "\n\tAPI Version: " << supportedVersion[0];
+		DeviceInfo << "." << supportedVersion[1];
+		DeviceInfo << "." << supportedVersion[2];
+		
+		F_LOG_TRACE("{}\n", DeviceInfo.str());
 	}
 
 	VkPhysicalDevice PhysicalDevice::ChooseBestPhyscialDevice(std::vector<VkPhysicalDevice>& t_AvailableDevices)
