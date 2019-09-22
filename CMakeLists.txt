@@ -15,6 +15,11 @@ IF( DEFINE_SHIPPING )
     SET( CMAKE_BUILD_TYPE Release )
 ENDIF( DEFINE_SHIPPING )
 
+# C++17 standard
+set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 
 # Generated folder used for Cmake generated files 
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
