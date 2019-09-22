@@ -25,10 +25,10 @@ matrix:
     - GSL_CXX_STANDARD=17
     - BUILD_TYPE=Release
     - BUILD_SHARED=ON
+    - VULKAN_SDK="$TRAVIS_BUILD_DIR/1.1.92.1/x86_64"
     before_install:
     - sudo apt-get update -qq
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
-    install:
     - wget -O VulkanSDK.tar.gz https://sdk.lunarg.com/sdk/download/1.1.92.1/linux/vulkansdk-linux-x86_64-1.1.92.1.tar.gz?u=true 
     - tar xvf ./VulkanSDK.tar.gz
     - export VULKAN_SDK="$TRAVIS_BUILD_DIR/1.1.92.1/x86_64"
@@ -41,5 +41,5 @@ matrix:
 script:
 - git submodule update --init --recursive
 - mkdir build && cd build
-- cmake .. -DCMAKE_BUILD_TYPE=Debug
+- cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 - cmake --build . 
