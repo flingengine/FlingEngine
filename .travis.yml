@@ -29,48 +29,19 @@ matrix:
     - sudo apt-get update -qq
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
     install:
-    - wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha11/premake-5.0.0-alpha11-linux.tar.gz?Human=true -O premake-5.0.0-alpha11-linux.tar.gz
-    - tar -xzvf premake-5.0.0-alpha11-linux.tar.gz
-    - sudo apt-get -qq update
-    - sudo apt-get install -y libassimp-dev libglm-dev graphviz libxcb-dri3-0 libxcb-present0 libpciaccess0 cmake libpng-dev libxcb-dri3-dev libx11-dev libx11-xcb-dev libmirclient-dev libwayland-dev libxrandr-dev
-    - export VK_VERSION=1.1.82.1
-    - wget -O vulkansdk-linux-x86_64-$VK_VERSION.tar.gz https://sdk.lunarg.com/sdk/download/$VK_VERSION/linux/vulkansdk-linux-x86_64-$VK_VERSION.tar.gz
-    - tar zxf vulkansdk-linux-x86_64-$VK_VERSION.tar.gz
-    - export VULKAN_SDK=$TRAVIS_BUILD_DIR/$VK_VERSION/x86_64
-
-  # Clang 8
-  # - os: linux
-  #   dist: xenial
-  #   sudo: required
-  #   addons: &clang8
-  #     apt:
-  #       sources:
-  #       - ubuntu-toolchain-r-test
-  #       - llvm-toolchain-xenial-8
-  #       - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main'
-  #         key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-  #       packages:
-  #       - pkg-config
-  #       - ninja-build
-  #       - cmake
-  #       - g++-8
-  #       - clang-8
-  #       - xorg-dev
-  #       - libglu1-mesa-dev
-  #       - libvulkan-dev
-  #       - libopenal-dev
-  #   language: cpp
-  #   compiler: clang
-  #   env:
-  #   - COMPILER=clang++-8
-  #   - GSL_CXX_STANDARD=17
-  #   - BUILD_TYPE=Release
-  #   - BUILD_SHARED=ON
-  #   before_install:
-  #   - sudo apt-get update -qq
+    - wget -O VulkanSDK.tar.gz https://sdk.lunarg.com/sdk/download/1.1.92.1/linux/vulkansdk-linux-x86_64-1.1.92.1.tar.gz?u=true
+    - mkdir VulkanSDK
+    - cd VulkanSDK
+    - tar xvf /VulkanSDK.tar.gz
+    - cd VulkanSDK/1.1.92.1
+    - export	VULKAN_SDK="/VulkanSDK/1.1.92.1/x86_64:${VULKAN_SDK}"
+    - export	PATH="${VULKAN_SDK}/bin:${PATH}"
+    - export	LD_LIBRARY_PATH="${VULKAN_SDK}/lib:${LD_LIBRARY_PATH}"
+    - export	VK_LAYER_PATH="${VULKAN_SDK}/etc/explicit_layer.d:${VK_LAYER_PATH}"
+    # Go back to travis build dir at the end of it! 
+    - cd $TRAVIS_BUILD_DIR
 
 script:
 - git submodule update --init --recursive
 - mkdir build && cd build
-- cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release
-- ninja
+- cmake .. -DCMAKE_BUILD_TYPE=Release
