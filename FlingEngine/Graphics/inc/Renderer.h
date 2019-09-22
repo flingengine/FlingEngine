@@ -20,6 +20,7 @@
 #include "Buffer.h"
 #include "SwapChain.h"
 #include "DepthBuffer.h"
+#include "Model.h"
 
 namespace Fling
 {
@@ -134,16 +135,6 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-		/**
-		* Create a vertex buffer using Temp_Vertices
-		*/
-        void CreateVertexBuffer();
-
-		/**
-		* Create an index buffer using Temp_Indecies
-		*/
-		void CreateIndexBuffer();
-
         void CreateUniformBuffers();
 
         void CreateDescriptorPool();
@@ -201,8 +192,6 @@ namespace Fling
         */
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
-        void CreateTextureImage();
-
 		/** Camera Instance */
 		std::unique_ptr<FirstPersonCamera> m_camera;
 
@@ -232,10 +221,6 @@ namespace Fling
 
         /** @see CreateDescriptorPool */
         VkDescriptorPool m_DescriptorPool;
-
-        /** Vertex and index buffers */
-        Buffer* m_VertexBuffer = nullptr;
-        Buffer* m_IndexBuffer = nullptr;
 
 		DepthBuffer* m_DepthBuffer = nullptr;
 
@@ -268,25 +253,7 @@ namespace Fling
         std::vector<VkFence> m_InFlightFences;
 
 		std::shared_ptr<class Image> m_TestImage;
+
+		std::shared_ptr<Model> m_TestModel;
     };
-
-    // Temp vectors of indecies/verts for testing while setting up the renderer
-	const std::vector<UINT16> Temp_indices = 
-	{
-		0, 1, 2, 2, 3, 0,
-		4, 5, 6, 6, 7, 4
-	};
-
-	const std::vector<Vertex> Temp_Vertices = 
-	{
-		{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-		{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-		{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-		{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-		{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-		{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	};
 }	// namespace Fling

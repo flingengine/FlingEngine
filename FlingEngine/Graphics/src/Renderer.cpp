@@ -43,11 +43,9 @@ namespace Fling
 
 		CreateFrameBuffers();
 
-		// A test function for loading in images
-        CreateTextureImage();
+		m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
+		m_TestModel = Model::Create("Models/chalet.obj"_hs);
 
-		CreateVertexBuffer();
-		CreateIndexBuffer();
         CreateUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
@@ -386,7 +384,7 @@ namespace Fling
 
     void Renderer::CreateCommandBuffers()
     {
-        assert(m_VertexBuffer && m_IndexBuffer);
+        assert(m_TestModel);
         
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
@@ -433,13 +431,15 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            VkBuffer VertexBuffers[] = { m_VertexBuffer->GetVkBuffer() };
-            VkDeviceSize offsets[] = { 0 };
-            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
+            //VkBuffer VertexBuffers[] = { m_TestModel->GetVertexBuffer()->GetVkBuffer() };
+            //VkDeviceSize offsets[] = { 0 };
+            //vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
+			//vkCmdBindIndexBuffer(m_CommandBuffers[i], m_TestModel->GetIndexBuffer()->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
+			//vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(m_TestModel->GetIndices().size()), 1, 0, 0, 0);
+
+            m_TestModel->CmdRender(m_CommandBuffers[i]);
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-			vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(Temp_indices.size()), 1, 0, 0, 0);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -528,38 +528,6 @@ namespace Fling
         CreateCommandBuffers();
     }
 
-    void Renderer::CreateTextureImage()
-    {
-        m_TestImage = ResourceManager::LoadResource<Image>("Textures/TestImage.jpg"_hs);
-    }
-
-    void Renderer::CreateVertexBuffer()
-    {
-		VkDeviceSize bufferSize = sizeof(Temp_Vertices[0]) * Temp_Vertices.size();
-		
-        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_Vertices.data());
-        // Create the actual vertex buffer
-        m_VertexBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		// Copy the vertex buffer to the GPU memory
-		Buffer::CopyBuffer(&StagingBuffer, m_VertexBuffer, bufferSize);
-    }
-
-	void Renderer::CreateIndexBuffer()
-	{
-		VkDeviceSize bufferSize = sizeof(Temp_indices[0]) * Temp_indices.size();
-        Buffer StagingBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, Temp_indices.data());
-		
-        m_IndexBuffer = new Buffer(
-            bufferSize, 
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-        );
-
-		// Copy the staging buffer to the index buffer
-		Buffer::CopyBuffer(&StagingBuffer, m_IndexBuffer, bufferSize);
-	}
-
     void Renderer::CreateUniformBuffers()
     {
         VkDeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -580,7 +548,7 @@ namespace Fling
 		// UBO
 		PoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		PoolSizes[0].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
-		// Image smapler
+		// Image sampler
 		PoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		PoolSizes[1].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
 
@@ -862,8 +830,8 @@ namespace Fling
 		UniformBufferObject ubo = {};
 
 		glm::mat4 model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
-		//model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 		ubo.Model = model;
 		ubo.View = m_camera->GetViewMatrix();
@@ -888,6 +856,11 @@ namespace Fling
 		{
 			m_TestImage.reset();
 		}
+
+		if (m_TestModel)
+		{
+			m_TestModel.reset();
+		}
     }
 
 	void Renderer::Shutdown()
@@ -902,18 +875,6 @@ namespace Fling
 		}
 
         vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
-
-        if(m_IndexBuffer)
-        {
-            delete m_IndexBuffer;
-            m_IndexBuffer = nullptr;
-        }
-
-        if(m_VertexBuffer)
-        {
-            delete m_VertexBuffer;
-            m_VertexBuffer = nullptr;
-        }
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
         {

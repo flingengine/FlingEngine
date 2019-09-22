@@ -13,6 +13,14 @@ namespace Fling
         glm::vec3 Color;
 		glm::vec2 TexCoord;
 
+		bool operator==(const Vertex& other) const 
+		{
+			return Pos == other.Pos && Color == other.Color && TexCoord == other.TexCoord;
+		}
+
+		/**
+		 * @brief	Gets the shader binding of a vertex
+		 */
         static VkVertexInputBindingDescription GetBindingDescription() 
         {
             VkVertexInputBindingDescription bindingDescription = {};
@@ -23,6 +31,7 @@ namespace Fling
             return bindingDescription;
         }
 
+		//#TODO Use shader reflection to get our bindings for this vertex instead
         static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
         {
             std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
@@ -47,3 +56,18 @@ namespace Fling
 
     };
 }   // namespace Fling
+
+// Hash function for a vertex so that we can put thing std::maps and what not
+// @see https://vulkan-tutorial.com/Loading_models
+namespace std
+{
+	template<> struct hash<Fling::Vertex>
+	{
+		size_t operator()(Fling::Vertex const& vertex) const
+		{
+			return	((hash<glm::vec3>()(vertex.Pos) ^
+					(hash<glm::vec3>()(vertex.Color) << 1)) >> 1) ^
+					(hash<glm::vec2>()(vertex.TexCoord) << 1);
+		}
+	};
+}
