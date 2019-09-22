@@ -88,5 +88,5 @@ matrix:
 script:
 - git submodule update --init --recursive
 - mkdir build && cd build
-- cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+- cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release
 - ninja
