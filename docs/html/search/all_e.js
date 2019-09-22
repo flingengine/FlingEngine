@@ -1,11 +1,7 @@
 var searchData=
 [
-  ['uint16',['UINT16',['../FlingTypes_8h.html#a09f1a1fb2293e33483cc8d44aefb1eb1',1,'FlingTypes.h']]],
-  ['uint32',['UINT32',['../FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b',1,'FlingTypes.h']]],
-  ['uint64',['UINT64',['../FlingTypes_8h.html#a95df6cdb32afc350ff070f2fe8a54a67',1,'FlingTypes.h']]],
-  ['uint8',['UINT8',['../FlingTypes_8h.html#af3037cbae2cdbc45fb75983c08b87935',1,'FlingTypes.h']]],
-  ['uniformbufferobject',['UniformBufferObject',['../structFling_1_1UniformBufferObject.html',1,'Fling']]],
-  ['uniformbufferobject_2eh',['UniformBufferObject.h',['../UniformBufferObject_8h.html',1,'']]],
-  ['update',['Update',['../classFling_1_1Timing.html#a3d4c013cd9cd01f2b40e589a22f2f239',1,'Fling::Timing']]],
-  ['utilstests_2ecpp',['UtilsTests.cpp',['../UtilsTests_8cpp.html',1,'']]]
+  ['operator_20const_20vkphysicaldevice_20_26',['operator const VkPhysicalDevice &amp;',['../classFling_1_1PhysicalDevice.html#af2b97a32a6cc8183c9c57c9fb27b5b06',1,'Fling::PhysicalDevice']]],
+  ['operator_28_29',['operator()',['../structstd_1_1hash_3_01Fling_1_1Vertex_01_4.html#aa6c78885ab6bcbb23802d7809d22aeda',1,'std::hash&lt; Fling::Vertex &gt;']]],
+  ['operator_3d',['operator=',['../classFling_1_1NonCopyable.html#a385a8a119c375a588b1fd3baf71a0f49',1,'Fling::NonCopyable::operator=(const NonCopyable &amp;)=delete'],['../classFling_1_1NonCopyable.html#aebd129e5ef04011b39ba97328c6fb0ec',1,'Fling::NonCopyable::operator=(NonCopyable &amp;&amp;)=default']]],
+  ['operator_3d_3d',['operator==',['../structFling_1_1Vertex.html#a3815ce887f252fb593baef91ffce04d6',1,'Fling::Vertex']]]
 ];
