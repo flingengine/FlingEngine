@@ -17,7 +17,10 @@ matrix:
         - xorg-dev
         - libglu1-mesa-dev
         - libvulkan-dev
-        - libopenal-dev
+        - libglfw3-dev
+        - assimp
+        - libwayland-dev
+        - libx11-dev
     language: cpp
     compiler: gcc
     env:
@@ -27,6 +30,7 @@ matrix:
     - BUILD_SHARED=ON
     - VULKAN_SDK="$TRAVIS_BUILD_DIR/1.1.92.1/x86_64"
     before_install:
+    - sudo apt-get install assimp
     - sudo apt-get update -qq
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
     - wget -O VulkanSDK.tar.gz https://sdk.lunarg.com/sdk/download/1.1.92.1/linux/vulkansdk-linux-x86_64-1.1.92.1.tar.gz?u=true 
