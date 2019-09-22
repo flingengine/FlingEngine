@@ -1,21 +1,8 @@
 var searchData=
 [
-  ['get',['Get',['../classFling_1_1Singleton.html#a6540b71da5a5c9dcaf23766e45ca1547',1,'Fling::Singleton']]],
-  ['getattributedescriptions',['GetAttributeDescriptions',['../structFling_1_1Vertex.html#a3928166e7211b405ad3e5ed527e8cd5f',1,'Fling::Vertex']]],
-  ['getbindingdescription',['GetBindingDescription',['../structFling_1_1Vertex.html#aadbd90e345e28d2016732cbb8427475a',1,'Fling::Vertex']]],
-  ['getbool',['GetBool',['../classFling_1_1FlingConfig.html#aa031847db1404e7f479bebc6599032fe',1,'Fling::FlingConfig']]],
-  ['getcurrentconsole',['GetCurrentConsole',['../classFling_1_1Logger.html#a213d4af1de4e026e2a0cebd500b383de',1,'Fling::Logger']]],
-  ['getcurrentlogfile',['GetCurrentLogFile',['../classFling_1_1Logger.html#a6dbddf8afe9e82da81eec7f516e07864',1,'Fling::Logger']]],
-  ['getcurrentworkingdir',['GetCurrentWorkingDir',['../structFling_1_1FlingPaths.html#a6cd80e739fbdc6aa4e7a0c6bdfe96dcc',1,'Fling::FlingPaths']]],
-  ['getdeltatime',['GetDeltaTime',['../classFling_1_1Timing.html#a9ccc7a77a717afd9589f5e85dd5e085d',1,'Fling::Timing']]],
-  ['getdevicerating',['GetDeviceRating',['../classFling_1_1Renderer.html#abbc24880331f21ca92b9013256c985e7',1,'Fling::Renderer']]],
-  ['getdouble',['GetDouble',['../classFling_1_1FlingConfig.html#aea0e0244bdaede5cf3071ad30098c247',1,'Fling::FlingConfig']]],
-  ['getfloat',['GetFloat',['../classFling_1_1FlingConfig.html#a7e14564504f0baade96438f066f041c2',1,'Fling::FlingConfig']]],
-  ['getframestarttime',['GetFrameStartTime',['../classFling_1_1Timing.html#acada39bd3fb7c181d4182bd7447cb3b5',1,'Fling::Timing']]],
-  ['getint',['GetInt',['../classFling_1_1FlingConfig.html#a6f91c70b69057417a9aef4b68c9085ff',1,'Fling::FlingConfig']]],
-  ['getrequiredextensions',['GetRequiredExtensions',['../classFling_1_1Renderer.html#a9b909c8da23a7a657df896fc38d9ff5d',1,'Fling::Renderer']]],
-  ['getstarttime',['GetStartTime',['../classFling_1_1Timing.html#a8f388f85cc4e63554d379d68f48717b0',1,'Fling::Timing']]],
-  ['getstring',['GetString',['../classFling_1_1FlingConfig.html#a30d143dc419178fa861d047d9d222f7c',1,'Fling::FlingConfig']]],
-  ['gettime',['GetTime',['../classFling_1_1Timing.html#a8f7c477446e57f4e85dc5c7c8d5557b1',1,'Fling::Timing']]],
-  ['gettimef',['GetTimef',['../classFling_1_1Timing.html#adee6390b70984289d52506d86c1de425',1,'Fling::Timing']]]
+  ['file',['File',['../classFling_1_1File.html#a2d76d52041d0286c8b68373b6874204f',1,'Fling::File']]],
+  ['findmemorytype',['FindMemoryType',['../namespaceFling_1_1GraphicsHelpers.html#af5f04359271d1e8d69fc67d795982c87',1,'Fling::GraphicsHelpers']]],
+  ['findsupportedformat',['FindSupportedFormat',['../namespaceFling_1_1GraphicsHelpers.html#a5e743da279e0d5257dff676949240be0',1,'Fling::GraphicsHelpers']]],
+  ['firstpersoncamera',['FirstPersonCamera',['../classFling_1_1FirstPersonCamera.html#ac8b0fb207d72b547cf206f3f4a6cbe4b',1,'Fling::FirstPersonCamera::FirstPersonCamera(float aspectRatio, float t_MoveSpeed=10.0f, float t_RotSpeed=40.f)'],['../classFling_1_1FirstPersonCamera.html#af819aa3fb22f521d1d955400a83a39b7',1,'Fling::FirstPersonCamera::FirstPersonCamera(glm::vec3 position, glm::vec3 rotation, float speed, float aspectRatio)'],['../classFling_1_1FirstPersonCamera.html#ad35bc00173c7d0ac89ed3377c9e09817',1,'Fling::FirstPersonCamera::FirstPersonCamera(glm::vec3 front, glm::vec3 up, glm::vec3 position, glm::vec3 rotation, float speed, float nearPlane, float farPlane, float fov, float aspectRatio)']]],
+  ['framebufferresizecallback',['FrameBufferResizeCallback',['../classFling_1_1DesktopWindow.html#ae157ec3da7901d671c25a9935bd96f1b',1,'Fling::DesktopWindow']]]
 ];

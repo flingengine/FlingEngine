@@ -1,19 +1,10 @@
 var searchData=
 [
-  ['get',['Get',['../classFling_1_1Singleton.html#a6540b71da5a5c9dcaf23766e45ca1547',1,'Fling::Singleton']]],
-  ['getattributedescriptions',['GetAttributeDescriptions',['../structFling_1_1Vertex.html#a3928166e7211b405ad3e5ed527e8cd5f',1,'Fling::Vertex']]],
-  ['getbindingdescription',['GetBindingDescription',['../structFling_1_1Vertex.html#aadbd90e345e28d2016732cbb8427475a',1,'Fling::Vertex']]],
-  ['getbool',['GetBool',['../classFling_1_1FlingConfig.html#a5c889d214617a4ad45b22d0195e70c94',1,'Fling::FlingConfig']]],
-  ['getcurrentconsole',['GetCurrentConsole',['../classFling_1_1Logger.html#a213d4af1de4e026e2a0cebd500b383de',1,'Fling::Logger']]],
-  ['getdeltatime',['GetDeltaTime',['../classFling_1_1Timing.html#a9ccc7a77a717afd9589f5e85dd5e085d',1,'Fling::Timing']]],
-  ['getdevicerating',['GetDeviceRating',['../classFling_1_1Renderer.html#abbc24880331f21ca92b9013256c985e7',1,'Fling::Renderer']]],
-  ['getdouble',['GetDouble',['../classFling_1_1FlingConfig.html#ad17bc95a314a410c9453235cb4a44b25',1,'Fling::FlingConfig']]],
-  ['getfloat',['GetFloat',['../classFling_1_1FlingConfig.html#a76a5885c14757c21a75725e3db0bc236',1,'Fling::FlingConfig']]],
-  ['getframestarttime',['GetFrameStartTime',['../classFling_1_1Timing.html#acada39bd3fb7c181d4182bd7447cb3b5',1,'Fling::Timing']]],
-  ['getint',['GetInt',['../classFling_1_1FlingConfig.html#a1328511819d452bc897da13baab8dd55',1,'Fling::FlingConfig']]],
-  ['getrequiredextensions',['GetRequiredExtensions',['../classFling_1_1Renderer.html#a9b909c8da23a7a657df896fc38d9ff5d',1,'Fling::Renderer']]],
-  ['getstarttime',['GetStartTime',['../classFling_1_1Timing.html#a8f388f85cc4e63554d379d68f48717b0',1,'Fling::Timing']]],
-  ['getstring',['GetString',['../classFling_1_1FlingConfig.html#aa4342f419779668163cd49bed2e647ff',1,'Fling::FlingConfig']]],
-  ['gettime',['GetTime',['../classFling_1_1Timing.html#a8f7c477446e57f4e85dc5c7c8d5557b1',1,'Fling::Timing']]],
-  ['gettimef',['GetTimef',['../classFling_1_1Timing.html#adee6390b70984289d52506d86c1de425',1,'Fling::Timing']]]
+  ['enabledvalidationlayercount',['EnabledValidationLayerCount',['../classFling_1_1Instance.html#a5d0e93887656e58c9efbb0acb0f1d311',1,'Fling::Instance']]],
+  ['endsingletimecommands',['EndSingleTimeCommands',['../namespaceFling_1_1GraphicsHelpers.html#a9bc566f39b853a637b04d84ca3f12eb4',1,'Fling::GraphicsHelpers']]],
+  ['engine',['Engine',['../classFling_1_1Engine.html#ad7a3276b2221f50c9c2218eb20de4975',1,'Fling::Engine::Engine()=default'],['../classFling_1_1Engine.html#ae78e96a6dd0987377308df45c4461a68',1,'Fling::Engine::Engine(int argc, char *argv[])']]],
+  ['engineassetsdir',['EngineAssetsDir',['../structFling_1_1FlingPaths.html#a5e78889b6a20ce1ebb581dd9a349147c',1,'Fling::FlingPaths']]],
+  ['engineconfigdir',['EngineConfigDir',['../structFling_1_1FlingPaths.html#a671f3e2197c86b1cda396b0bdcea3194',1,'Fling::FlingPaths']]],
+  ['enginelogdir',['EngineLogDir',['../structFling_1_1FlingPaths.html#a6ed59bcf08050d41934231bb4732beb6',1,'Fling::FlingPaths']]],
+  ['enginesourcedir',['EngineSourceDir',['../structFling_1_1FlingPaths.html#aa9e2589ef2755b0fc88f94c34e57ebe8',1,'Fling::FlingPaths']]]
 ];
