@@ -6,16 +6,16 @@ namespace Sandbox
 	void Game::Init(entt::registry& t_Reg)
 	{
 		// Lets create an entity! 
-		entt::entity ent = t_Reg.create();
+		F_LOG_TRACE("Sandbox Game Init!");
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
 	{
+		F_LOG_TRACE("Sandbox Game Shutdown!");
 	}
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		F_LOG_TRACE("Sandbox Game update!");
 	}
 
 	bool Game::Read(entt::registry& t_Reg)
