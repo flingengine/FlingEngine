@@ -7,7 +7,6 @@ namespace Sandbox
 	{
 		// Lets create an entity! 
 		entt::entity ent = t_Reg.create();
-
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
