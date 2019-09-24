@@ -39,6 +39,9 @@ if( MSVC )
 	endif()
 endif()
 
+# This is needed for Clang support of glm::hash
+ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
+
 # Include external libraries
 add_subdirectory( external/glfw )
 include_directories( external/glfw/include )
