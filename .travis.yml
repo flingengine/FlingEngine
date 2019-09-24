@@ -31,12 +31,39 @@ matrix:
     - sudo apt-get update -qq
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
 
-script:
-- echo $VULKAN_SDK
-- echo $VK_LAYER_PATH
-- echo $LD_LIBRARY_PATH
+# Clang 8
+  - os: linux
+    dist: xenial
+    sudo: required
+    addons: &clang8
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-xenial-8
+        - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main'
+          key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+        packages:
+        - pkg-config
+        - ninja-build
+        - cmake
+        - g++-8
+        - clang-8
+        - xorg-dev
+        - libglu1-mesa-dev
+        - libvulkan-dev
+        - libopenal-dev
+    language: cpp
+    compiler: clang
+    env:
+    - COMPILER=clang++-8
+    - GSL_CXX_STANDARD=17
+    - BUILD_TYPE=Release
+    - BUILD_SHARED=ON
+    before_install:
+    - sudo apt-get update -qq
 
+script:
 - git submodule update --init --recursive
-- mkdir build && cd build
-- cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-- cmake --build . 
+- mkdir Build && cd Build
+- cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_SHARED_LIBS=$BUILD_SHARED
+- ninja
