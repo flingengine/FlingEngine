@@ -49,7 +49,7 @@ namespace Fling
 }	// namespace Fling
 
 // Debug/release mode defs
-#if defined( DEBUG ) || defined ( _DEBUG ) || defined ( F_ENABLE_LOGGING )
+#if FLING_DEBUG || defined ( F_ENABLE_LOGGING )
 
 #define  F_LOG_TRACE( ... )    Logger::GetCurrentConsole()->info( __VA_ARGS__ ); Logger::GetCurrentLogFile()->info( __VA_ARGS__ )
 #define  F_LOG_WARN( ... )     Logger::GetCurrentConsole()->warn( __VA_ARGS__ ); Logger::GetCurrentLogFile()->warn( __VA_ARGS__ )

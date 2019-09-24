@@ -12,7 +12,9 @@ namespace Fling
 
         CreateInstance();
 
+#if FLING_DEBUG
         SetupDebugMessages();
+#endif
     }
 
     void Instance::CreateInstance()
@@ -116,15 +118,22 @@ namespace Fling
 
 		if( m_EnableValidationLayers ) 
 		{
+#if FLING_DEBUG
 			extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
+#endif
 		}
 
 		return extensions;
 	}
 
+
+#if FLING_DEBUG
+
     void Instance::SetupDebugMessages()
     {
         if( !m_EnableValidationLayers ) { return; }
+		
+		F_LOG_TRACE("Setup VK Debug messages!");
 
 		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -186,12 +195,16 @@ namespace Fling
 		}
 	}
 
+#endif	// FLING_DEBUG
+
     Instance::~Instance()
     {
         // Debug messenger
         if (m_EnableValidationLayers)
         {
+#if FLING_DEBUG
             DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
+#endif
         }
 
 		vkDestroyInstance( m_Instance, nullptr );

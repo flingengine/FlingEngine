@@ -2,6 +2,12 @@
 
 #ifdef FLING_LINUX
 
+#ifndef NDEBUG
+#   define FLING_DEBUG 1
+#else
+#   define FLING_DEBUG 0
+#endif
+
 #include <unistd.h>
 
 // Break point, see https://stackoverflow.com/questions/17516855/portable-equivalent-of-debugbreak

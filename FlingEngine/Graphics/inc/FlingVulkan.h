@@ -1,7 +1,11 @@
 #pragma once
 
 
-#ifdef NOMINMAX
+
+#include <vulkan/vulkan.h>
+#include <vulkan/vk_sdk_platform.h>
+
+/*#ifdef NOMINMAX
 
 #undef NOMINMAX
 
@@ -17,4 +21,4 @@
 
 #undef NOMINMAX
 
-#endif // NOMINMAX
+#endif // NOMINMAX*/
