@@ -11,6 +11,8 @@ I am basing the core of the rendering pipeline off of the
 
 [![Gitter](https://badges.gitter.im/fling-engine/community.svg)](https://gitter.im/fling-engine/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
+[![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
+
 # Getting Started
 
 There are a few basic steps to compiling Fling on your platform. 
