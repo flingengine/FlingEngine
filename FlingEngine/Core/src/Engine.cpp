@@ -5,24 +5,6 @@
 
 namespace Fling
 {
-    Engine::Engine(int argc, char* argv[])
-        : Engine()
-    {
-        m_CmdLineArgCount = argc;
-        m_CmdLineArgs = argv;
-    }
-
-	UINT64 Engine::Run()
-	{
-		Startup();
-
-		Tick();
-
-		Shutdown();
-
-		return 0;
-	}
-
 	void Engine::Startup()
 	{
 		Random::Init();
@@ -43,9 +25,6 @@ namespace Fling
 
         // Load command line args and any ini files
         //#TODO Handle command line args
-        UINT32 ArgsLoaded = FlingConfig::Get().LoadCommandLineOpts(m_CmdLineArgCount, m_CmdLineArgs);
-        (void)(ArgsLoaded);
-
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
 
         Renderer::Get().CreateGameWindow(
@@ -66,16 +45,21 @@ namespace Fling
 
         float DeltaTime = FallbackDeltaTime;
 		
-		assert(m_World);		// We HAVE to have a world
+		assert(m_World && m_GameImpl);		// We HAVE to have a world
 		
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
+
+		m_GameImpl->Init();
 
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
 			Renderer.Tick();
 
 			m_World->Update(DeltaTime);
+			
+			m_GameImpl->Update(DeltaTime);
+
 			if(m_World->ShouldQuit())
 			{
 				F_LOG_TRACE("World should quit! Exiting engine loop...");
@@ -101,7 +85,15 @@ namespace Fling
 	}
 
 	void Engine::Shutdown()
-	{		
+	{	
+		// Cleanup game play stuff
+		if (m_GameImpl)
+		{
+			m_GameImpl->Shutdown();
+			delete m_GameImpl;
+			m_GameImpl = nullptr;
+		}
+
 		if(m_World)
 		{
 			m_World->Shutdown();
