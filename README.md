@@ -9,6 +9,8 @@ The Fling Engine aims to be a cross platform Vulkan game engine that will experi
 I am basing the core of the rendering pipeline off of the 
 [Vulkan Tutorial](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers)
 
+<img src="https://travis-ci.com/flingengine/FlingEngine.svg?branch=master">
+
 [![Gitter](https://badges.gitter.im/fling-engine/community.svg)](https://gitter.im/fling-engine/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 [![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
