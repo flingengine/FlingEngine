@@ -12,14 +12,17 @@ namespace Fling
 		std::string LevelToLoad = FlingConfig::GetString("Game", "StartLevel");
 		
 		LoadLevel(LevelToLoad);
+
+		// Initalize the game!
+		m_Game->Init(m_Registry);
     }
 
     void World::Shutdown()
     {
         F_LOG_TRACE("World shutdown!");
 		
-		// Unload the current levels
-		m_ActiveLevels.clear();
+		// Shut down the game
+		m_Game->Shutdown(m_Registry);
     }
 
 	void World::PreTick()
@@ -32,6 +35,9 @@ namespace Fling
 		m_ShouldQuit = (m_ShouldQuit ? m_ShouldQuit : Input::IsKeyDown(KeyNames::FL_KEY_ESCAPE));
 		// TODO: Update any _world_ systems 
 			// The transforms of objects
+
+		// Once we are done with core updates, then call the game!
+		m_Game->Update(m_Registry, t_DeltaTime);
     }
 
 	// #TODO: Add a callback func for when the level loading is complete
@@ -42,5 +48,7 @@ namespace Fling
 		// #TODO: Unload the current level? Depends on how we want to do async loading in the future
 
 		m_ActiveLevels.emplace_back(std::make_unique<Level>(t_LevelPath, this));
+
+		m_Game->Read(m_Registry);
     }
 } // namespace Fling

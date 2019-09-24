@@ -2,6 +2,7 @@
 
 #include "NonCopyable.hpp"
 #include "Level.h"
+#include "Game.h"
 
 #include <string>
 #include <vector>
@@ -19,8 +20,9 @@ namespace Fling
     {
     public: 
 
-		explicit World(entt::registry& t_Reg)
+		explicit World(entt::registry& t_Reg, Fling::Game* t_Game)
 			: m_Registry(t_Reg)
+			, m_Game(t_Game)
 		{
 		}
 
@@ -62,7 +64,8 @@ namespace Fling
 
 		entt::registry& m_Registry;
 
-		// #TODO: Pointer to the player!
+
+		Fling::Game* m_Game = nullptr;
 
         /** Currently active levels in the world */
         std::vector<std::unique_ptr<Level>> m_ActiveLevels;
