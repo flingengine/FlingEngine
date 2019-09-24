@@ -4,6 +4,7 @@
 
 #if defined(_DEBUG)
 
+#   define FLING_DEBUG 1
 #	define _CRTDBG_MAP_ALLOC  
 
 #include <stdlib.h>
@@ -17,6 +18,10 @@
 #else
 #	define FLING_BREAK	asm("int $3")
 #endif	// _MSC_VER
+
+#else   // Not debug
+
+#   define FLING_DEBUG 0
 
 #endif	// _DEBUG
 

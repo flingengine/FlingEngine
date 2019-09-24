@@ -31,9 +31,6 @@ namespace Fling
         /** The Vulkan instance */
         VkInstance m_Instance = VK_NULL_HANDLE;
 
-        /** Debug message handler for Vulkan */
-        VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
-
         /**
          * If this instance has validation layers enabled. This is read from the config file. 
          * Default to false if no config 
@@ -49,7 +46,11 @@ namespace Fling
 
         bool CheckValidationLayerSupport();
 
+#if FLING_DEBUG
         // Debug messenger callbacks ---------------------------
+        /** Debug message handler for Vulkan */
+        VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+        
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT t_messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT t_messageType,
@@ -75,6 +76,7 @@ namespace Fling
 		 * @see Instance::DebugCallback
 		 */
         void SetupDebugMessages();
+#endif
 
         /** The validation layers that we want to look for on this instance */
         const std::vector<const char*> m_ValidationLayers =

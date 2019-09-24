@@ -10,4 +10,4 @@ mkdir build -p
 git submodule update --init --recursive
 
 # Run cmake!
-cmake . -B build
+cmake . -B build -DGSL_CXX_STANDARD=17
