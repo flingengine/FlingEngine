@@ -2,6 +2,7 @@
 
 #include "NonCopyable.hpp"
 #include <string>
+#include <entt/entity/registry.hpp>
 
 namespace Fling
 {
@@ -20,27 +21,27 @@ namespace Fling
 		/**
 		 * TODO
 		 */
-		virtual void Init() = 0;
+		virtual void Init(entt::registry& t_Reg) = 0;
 
 		/* Called when the engine is shutting down */
-		virtual void Shutdown() = 0;
+		virtual void Shutdown(entt::registry& t_Reg) = 0;
 
 		/**
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
-		virtual void Update(float DeltaTime) = 0;
+		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
 		
 		/**
 		 * Read is called when a level file is read from disk. Here is where you can 
 		 * read in a file stream and based the data inside it, initalize your gameplay
 		 * systems
 		 */
-		virtual bool Read(/* TODO: Cereal stream */) = 0;
+		virtual bool Read(entt::registry& t_Reg/* TODO: Cereal stream */) = 0;
 		
 		/**
 		 * TODO
 		 */
-		virtual bool Write(/* TODO: Cereal stream  */) = 0;
+		virtual bool Write(entt::registry& t_Reg/* TODO: Cereal stream  */) = 0;
 
 	protected:
 
