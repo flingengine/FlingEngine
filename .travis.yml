@@ -75,7 +75,6 @@ script:
 # Codecov
 - cd ..
 - sudo ./get_code_cov.sh
-- codecov
 
 after_success: 
 # Codecov
