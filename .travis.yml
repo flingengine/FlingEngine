@@ -30,9 +30,6 @@ matrix:
     before_install:
     - sudo apt-get update -qq
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
-    install:
-    - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-5 90
-
 
 # Clang 8
   - os: linux
@@ -64,18 +61,9 @@ matrix:
     - BUILD_SHARED=ON
     before_install:
     - sudo apt-get update -qq
-    install:
-    - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-5 90
 
 script:
 - git submodule update --init --recursive
 - mkdir Build && cd Build
 - cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_SHARED_LIBS=$BUILD_SHARED
 - ninja
-# Codecov
-- cd ..
-- sudo ./get_code_cov.sh
-
-after_success: 
-# Codecov
-- bash <(curl -s https://codecov.io/bash)
