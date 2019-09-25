@@ -85,15 +85,17 @@ namespace Fling
 	void Engine::Shutdown()
 	{	
 		// Cleanup game play stuff
-		if (m_GameImpl)
-		{
-			delete m_GameImpl;
-			m_GameImpl = nullptr;
-		}
 
 		if(m_World)
 		{
 			m_World->Shutdown();
+
+			if (m_GameImpl)
+			{
+				delete m_GameImpl;
+				m_GameImpl = nullptr;
+			}
+
 			delete m_World;
 			m_World = nullptr;
 		}

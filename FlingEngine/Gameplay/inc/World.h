@@ -20,11 +20,7 @@ namespace Fling
     {
     public: 
 
-		explicit World(entt::registry& t_Reg, Fling::Game* t_Game)
-			: m_Registry(t_Reg)
-			, m_Game(t_Game)
-		{
-		}
+		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
 
 		/**
 		* @brief	Initializes the world. Loads the StartLevel that is specified in the config.  
@@ -61,15 +57,18 @@ namespace Fling
 		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
 
     private:
+		
+		void WriteLevel();
 
+		std::string m_CurrentLevelFile = "INVALID";
+
+		/** The registry and represents all active entitiets in this world */
 		entt::registry& m_Registry;
 
-
+		/** The game will allow users to specify their own update/read/write functions */
 		Fling::Game* m_Game = nullptr;
 
-        /** Currently active levels in the world */
-        std::vector<std::unique_ptr<Level>> m_ActiveLevels;
-
+		/** Flag if the world should quit or not! */
 		UINT8 m_ShouldQuit = false;
     };
 } // namespace Fling

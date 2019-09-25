@@ -6,7 +6,7 @@ project ( "FlingEngine" )
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 
-# Option for seperate "shipping" config 
+# Option for seperate "shipping" config
 OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF ) # disabled by default
 
 IF( DEFINE_SHIPPING )
@@ -21,7 +21,7 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
-# Generated folder used for Cmake generated files 
+# Generated folder used for Cmake generated files
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
 message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
 
@@ -35,9 +35,20 @@ message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 if( MSVC )
     add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 	if ( NOT DEFINED NOMINMAX )
-		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro 
+		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
 	endif()
+# GCC
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+
+    #add_definitions( -Wno-class-memaccess )
+
+# Clang
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+
 endif()
+
+
+# -Wclass-memaccess
 
 # This is needed for Clang support of glm::hash
 ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
@@ -53,6 +64,7 @@ include_directories( external/entt/src )
 include_directories( external/json/single_include )
 include_directories( external/stb )
 include_directories( external/tinyobjloader )
+include_directories( external/cereal/include  )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

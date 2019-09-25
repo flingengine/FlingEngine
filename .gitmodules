@@ -25,3 +25,6 @@
 [submodule "external/tinyobjloader"]
 	path = external/tinyobjloader
 	url = https://github.com/flingengine/tinyobjloader.git
+[submodule "external/cereal"]
+	path = external/cereal
+	url = https://github.com/flingengine/cereal.git

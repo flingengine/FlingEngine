@@ -1,19 +1,14 @@
 {
-  "title": "Empty Level",
-  "EntityCount" : 0,
-  "Entities": [
-    {
-      "name" : "TestName",
-      
-      "components" : [
-        {
-          "name": "lol"
-        }
-
-      ]
-
-    }
-
-  ]
-
+    "value0": 0.0,
+    "value1": 0.0,
+    "value2": 0.0,
+    "value3": 0.0,
+    "value4": 0.0,
+    "value5": 0.0,
+    "value6": 0.0,
+    "value7": 0.0,
+    "value8": 0.0,
+    "value9": 0.0,
+    "value10": 0.0,
+    "value11": 0.0
 }
