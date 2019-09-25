@@ -46,6 +46,11 @@ namespace Fling
 		void Tick();
 
 		/// <summary>
+		/// Updates fps count
+		/// </summary>
+		void UpdateFps(const float& totalTime);
+		
+		/// <summary>
 		/// Shutdown all engine systems and do any necessary cleanup
 		/// </summary>
 		void Shutdown();
@@ -55,5 +60,9 @@ namespace Fling
 
 		/** Persistant world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
+
+		/** updates the timer for this frame */
+		float m_fpsTimeElapsed = 0.0f;
+		int m_fpsFrameCount = 0; 
 	};
 }	// namespace Fling
