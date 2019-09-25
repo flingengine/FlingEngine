@@ -69,8 +69,8 @@ script:
 - mkdir Build && cd Build
 - cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_SHARED_LIBS=$BUILD_SHARED
 - ninja
-
 # Codecov
+- cd ..
 - ./get_code_cov
 - codecov
 
