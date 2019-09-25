@@ -29,6 +29,7 @@ matrix:
     - BUILD_SHARED=ON
     before_install:
     - sudo apt-get update -qq
+    - sudo pip install codecov
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
 
 # Clang 8
@@ -61,9 +62,18 @@ matrix:
     - BUILD_SHARED=ON
     before_install:
     - sudo apt-get update -qq
+    - sudo pip install codecov
 
 script:
 - git submodule update --init --recursive
 - mkdir Build && cd Build
 - cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_SHARED_LIBS=$BUILD_SHARED
 - ninja
+
+# Codecov
+- ./get_code_cov
+- codecov
+
+after_success: 
+# Codecov
+- bash <(curl -s https://codecov.io/bash)
