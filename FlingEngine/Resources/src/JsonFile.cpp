@@ -1,15 +1,34 @@
 #include "pch.h"
 #include "JsonFile.h"
+#include "ResourceManager.h"
 
 namespace Fling
 {
-    JsonFile::JsonFile(Guid t_ID)
+	std::shared_ptr<Fling::JsonFile> JsonFile::Create(Guid t_ID)
+	{
+		return ResourceManager::LoadResource<Fling::JsonFile>(t_ID);
+	}
+
+	JsonFile::JsonFile(Guid t_ID)
         : Resource(t_ID)
     {
         LoadJsonFile();
     }
 
-    void JsonFile::LoadJsonFile()
+	void JsonFile::Write()
+	{
+		const std::string FilePath = GetFilepathReleativeToAssets();
+
+		std::ofstream OutStream(FilePath);
+		if (OutStream.is_open())
+		{
+			OutStream << std::setw(4) << m_JsonData << std::endl;
+		}
+
+		OutStream.close();
+	}
+
+	void JsonFile::LoadJsonFile()
     {
         const std::string FilePath = GetFilepathReleativeToAssets();
 

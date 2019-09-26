@@ -1,8 +1,7 @@
 #include "pch.h"
 #include "World.h"
 #include "FlingConfig.h"
-#include <cereal/archives/json.hpp>
-#include <fstream>
+#include "JsonFile.h"
 
 // Test component serialization
 #include "Components/Transform.hpp"
@@ -67,26 +66,24 @@ namespace Fling
 	void World::WriteLevel()
 	{
 		F_LOG_TRACE("Write the world to: {}", m_CurrentLevelFile);
-		std::ofstream OutStream(m_CurrentLevelFile);
-		cereal::JSONOutputArchive Archive(OutStream);
+
+		if (!m_CurrentLevelFile)
+		{
+			F_LOG_ERROR("Uh oh");
+			return;
+		}
 
 		entt::entity e0 = m_Registry.create();
 		m_Registry.assign<Fling::Transform>(e0);
+		m_Registry.assign<NamedEntity>(e0, "Entity 0 Name");
 
 		entt::entity e1 = m_Registry.create();
 		m_Registry.assign<Fling::Transform>(e1);
+		m_Registry.assign<NamedEntity>(e1, "Entity 1 Name");
 
-		m_Registry.view<Fling::Transform>().each([&Archive](Fling::Transform& t_Transform) 
+		m_Registry.view<NamedEntity, Fling::Transform>().each([&](NamedEntity& t_Name, Fling::Transform& t_Transform)
 		{
-			// gets all the components of the view at once ...
-			Archive(
-				CEREAL_NVP(t_Transform.Pos.x),
-				CEREAL_NVP(t_Transform.Pos.y),
-				CEREAL_NVP(t_Transform.Pos.z),
-				CEREAL_NVP(t_Transform.Scale.x),
-				CEREAL_NVP(t_Transform.Scale.y),
-				CEREAL_NVP(t_Transform.Scale.z)
-			);
+			F_LOG_TRACE("Entity name: {}", t_Name);
    		});
 
 		m_Registry.reset();
@@ -99,10 +96,9 @@ namespace Fling
 
 		F_LOG_TRACE("World loading level: {}", FullPath);
 
-		m_CurrentLevelFile = FullPath;
+		m_CurrentLevelFile = JsonFile::Create(entt::hashed_string{ FullPath.c_str() });
 
 		// #TODO: Unload the current level? Depends on how we want to do async loading in the future
-
 		m_Game->Read(m_Registry);
     }
 } // namespace Fling

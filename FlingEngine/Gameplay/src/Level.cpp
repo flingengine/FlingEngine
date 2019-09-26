@@ -24,15 +24,15 @@ namespace Fling
 
         if(LevelFileData)
         {
-            json& LevelData = LevelFileData->GetJsonData();
+            nlohmann::json& LevelData = LevelFileData->GetJsonData();
             
             // Load the title
             std::string Title = LevelData["title"];
             F_LOG_TRACE("Level Title: {}", Title);
 
-            json entityArray = LevelData [ "Entities" ];
+			nlohmann::json entityArray = LevelData [ "Entities" ];
 
-            for(const json& EntityData : entityArray)
+            for(const nlohmann::json& EntityData : entityArray)
             {
                 // Load it in with the entity manager!
                 const std::string& EntityName = EntityData["name"];

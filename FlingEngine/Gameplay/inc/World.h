@@ -11,6 +11,11 @@
 
 namespace Fling
 {
+	struct NamedEntity
+	{
+		std::string Name;
+	};
+
 	/**
 	* The world holds all active levels in the game. There will only ever be exactly one World
 	* instance at any given time. 
@@ -52,7 +57,7 @@ namespace Fling
 		 * @brief Check if the world wants to exit the program. 
 		 * @see Engine::Tick 
 		 * 
-		 * @return True if the world has signlaed for exit
+		 * @return True if the world has signaled for exit
 		 */
 		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
 
@@ -60,9 +65,9 @@ namespace Fling
 		
 		void WriteLevel();
 
-		std::string m_CurrentLevelFile = "INVALID";
+		std::shared_ptr<class JsonFile> m_CurrentLevelFile;
 
-		/** The registry and represents all active entitiets in this world */
+		/** The registry and represents all active entities in this world */
 		entt::registry& m_Registry;
 
 		/** The game will allow users to specify their own update/read/write functions */
