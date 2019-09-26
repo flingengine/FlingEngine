@@ -65,8 +65,6 @@ namespace Fling
 
 	void World::WriteLevel()
 	{
-		F_LOG_TRACE("Write the world to: {}", m_CurrentLevelFile);
-
 		if (!m_CurrentLevelFile)
 		{
 			F_LOG_ERROR("Uh oh");
@@ -83,7 +81,7 @@ namespace Fling
 
 		m_Registry.view<NamedEntity, Fling::Transform>().each([&](NamedEntity& t_Name, Fling::Transform& t_Transform)
 		{
-			F_LOG_TRACE("Entity name: {}", t_Name);
+			F_LOG_TRACE("Entity name: {}", t_Name.Name);
    		});
 
 		m_Registry.reset();
