@@ -83,7 +83,7 @@ namespace Fling
 
 		nlohmann::json& JsonData = m_CurrentLevelFile->GetJsonData();
 		nlohmann::json EntityArray = nlohmann::json::array();
-		
+				
 		// #TODO: Move the serialization to the owning system
 		m_Registry.view<NamedEntity, Fling::Transform>().each([&EntityArray](NamedEntity& t_Name, Fling::Transform& t_Transform)
 		{
