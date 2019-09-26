@@ -18,13 +18,16 @@ namespace Sandbox
 	{
 	}
 
-	bool Game::Read(entt::registry& t_Reg)
+	void Game::Read(entt::registry& t_Reg, nlohmann::json& t_JsonData)
 	{
-		return false;
+		F_LOG_TRACE("Sandbox Game Read!");
+
+		// #TODO Read in custom game component systems
 	}
 
-	bool Game::Write(entt::registry& t_Reg)
+	void Game::Write(entt::registry& t_Reg, nlohmann::json& t_JsonData)
 	{
-		return false;
+		F_LOG_TRACE("Sandbox Game Write!");
+		// #TODO Write out custom game component systems
 	}
 }	// namespace Sandbox

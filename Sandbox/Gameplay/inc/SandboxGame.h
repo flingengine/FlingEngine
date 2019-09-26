@@ -21,11 +21,11 @@ namespace Sandbox
 		 * read in a file stream and based the data inside it, initalize your gameplay
 		 * systems
 		 */
-		bool Read(entt::registry& t_Reg/* TODO: Cereal stream */) override;
+		void Read(entt::registry& t_Reg, nlohmann::json& t_JsonData) override;
 
 		/**
 		 * TODO
 		 */
-		bool Write(entt::registry& t_Reg/* TODO: Cereal stream  */) override;
+		void Write(entt::registry& t_Reg, nlohmann::json& t_JsonData) override;
 	};
 }	// namespace Sandbox

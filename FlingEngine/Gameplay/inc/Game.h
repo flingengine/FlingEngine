@@ -3,6 +3,7 @@
 #include "NonCopyable.hpp"
 #include <string>
 #include <entt/entity/registry.hpp>
+#include "JsonFile.h"
 
 namespace Fling
 {
@@ -36,12 +37,12 @@ namespace Fling
 		 * read in a file stream and based the data inside it, initalize your gameplay
 		 * systems
 		 */
-		virtual bool Read(entt::registry& t_Reg/* TODO: Cereal stream */) = 0;
+		virtual void Read(entt::registry& t_Reg, nlohmann::json& t_JsonData) = 0;
 		
 		/**
 		 * TODO
 		 */
-		virtual bool Write(entt::registry& t_Reg/* TODO: Cereal stream  */) = 0;
+		virtual void Write(entt::registry& t_Reg, nlohmann::json& t_JsonData) = 0;
 
 	protected:
 
