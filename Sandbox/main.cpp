@@ -1,4 +1,5 @@
 #include "FlingEngine.h"
+#include "SandboxGame.h"
 
 /**
 * Entry point for using the Fling Engine!
@@ -9,7 +10,7 @@ int main(int argc, char* argv[])
 
 	try
 	{
-		Engine.Run();
+		Engine.Run<Sandbox::Game>();
 	}
 	catch (const std::exception& e)
 	{

@@ -9,6 +9,9 @@
 #include "NonCopyable.hpp"
 #include "World.h"
 #include <nlohmann/json.hpp>
+#include <entt/entity/registry.hpp>
+
+#include "Game.h"
 
 namespace Fling
 {
@@ -16,22 +19,21 @@ namespace Fling
 	 * @brief Core engine class of Fling. This is where the core update loop lives 
 	 * along with all startup/shutdown ordering. 
 	 */
-	class FLING_API Engine : public NonCopyable
+	class Engine : public NonCopyable
 	{
 	public:
 
-		Engine() = default;
+		FLING_API Engine() = default;
 
-        Engine(int argc, char* argv[]);
-
-		~Engine() = default;
+		FLING_API ~Engine() = default;
 
 		/**
-		 * @brief Run the engine (Startup, Tick until should stop, and shutodwn)
+		 * @brief Run the engine (Startup, Tick until should stop, and shutdown)
 		 * 
 		 * @return UINT64 0 for success, otherwise an error has occured
 		 */
-		UINT64 Run();
+		template<class T_GameType>
+		FLING_API UINT64 Run();
 
 	private:
 
@@ -55,14 +57,36 @@ namespace Fling
 		/// </summary>
 		void Shutdown();
 
-        int m_CmdLineArgCount = 0;
-        char** m_CmdLineArgs = nullptr;
-
-		/** Persistant world object that can be used to load levels, entities, etc */
+		/** Persistent world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
 
+<<<<<<< HEAD
 		/** updates the timer for this frame */
 		float m_fpsTimeElapsed = 0.0f;
 		int m_fpsFrameCount = 0; 
+=======
+		Fling::Game* m_GameImpl = nullptr;
+
+		/** Global registry that stores entities and components */
+		entt::registry g_Registry;
+>>>>>>> ff4dec47bbed9d9cddcaa8f2d518363f3a3158ae
 	};
+
+	template<class T_GameType>
+	FLING_API UINT64 Engine::Run()
+	{
+		static_assert(std::is_default_constructible<T_GameType>::value, "T_GameType requires default-constructible elements");
+		static_assert(std::is_base_of<Fling::Game, T_GameType>::value, "T_GameType must inherit from Fling::Game");
+
+		// #TODO Use a pool allocator for new
+		m_GameImpl = new T_GameType();
+
+		Startup();
+
+		Tick();
+
+		Shutdown();
+
+		return 0;
+	}
 }	// namespace Fling

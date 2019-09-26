@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <entt/entity/registry.hpp>
 
 namespace Fling
 {
@@ -17,9 +18,15 @@ namespace Fling
     class World : public NonCopyable
     {
     public: 
+
+		explicit World(entt::registry& t_Reg)
+			: m_Registry(t_Reg)
+		{
+		}
+
 		/**
 		* @brief	Initializes the world. Loads the StartLevel that is specified in the config.  
-		* @note		Keep explict Init and Shutdown functions to make the startup order more readable
+		* @note		Keep explicit Init and Shutdown functions to make the startup order more readable
 		*/
         void Init();
 
@@ -52,6 +59,8 @@ namespace Fling
 		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
 
     private:
+
+		entt::registry& m_Registry;
 
 		// #TODO: Pointer to the player!
 

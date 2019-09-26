@@ -44,7 +44,7 @@ namespace Fling
 		CreateFrameBuffers();
 
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
-		m_TestModel = Model::Create("Models/chalet.obj"_hs);
+		m_TestModels.push_back(Model::Create("Models/chalet.obj"_hs));
 
         CreateUniformBuffers();
         CreateDescriptorPool();
@@ -383,9 +383,7 @@ namespace Fling
     }
 
     void Renderer::CreateCommandBuffers()
-    {
-        assert(m_TestModel);
-        
+    {        
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
         VkCommandBufferAllocateInfo allocInfo = {};
@@ -431,14 +429,12 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            //VkBuffer VertexBuffers[] = { m_TestModel->GetVertexBuffer()->GetVkBuffer() };
-            //VkDeviceSize offsets[] = { 0 };
-            //vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, offsets);
-			//vkCmdBindIndexBuffer(m_CommandBuffers[i], m_TestModel->GetIndexBuffer()->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            // Load the models
+            for(const std::shared_ptr<Model>& Model : m_TestModels)
+            {
+                Model->CmdRender(m_CommandBuffers[i]);
+            }
 
-			//vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<UINT32>(m_TestModel->GetIndices().size()), 1, 0, 0, 0);
-
-            m_TestModel->CmdRender(m_CommandBuffers[i]);
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
@@ -620,64 +616,6 @@ namespace Fling
 
 	// Swapchain support --------------------------------------
 
-    SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice t_Device)
-    {
-        SwapChainSupportDetails Details = {};
-
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(t_Device, m_Surface, &Details.Capabilities);
-
-        UINT32 FormatCount = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(t_Device, m_Surface, &FormatCount, nullptr);
-        if (FormatCount != 0)
-        {
-            Details.Formats.resize(FormatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(t_Device, m_Surface, &FormatCount, Details.Formats.data());
-        }
-
-        UINT32 PresentModeCount = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(t_Device, m_Surface, &PresentModeCount, nullptr);
-
-        if (PresentModeCount != 0)
-        {
-            Details.PresentModes.resize(PresentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(t_Device, m_Surface, &PresentModeCount, Details.PresentModes.data());
-        }
-
-        return Details;
-    }
-
-    VkSurfaceFormatKHR Renderer::ChooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& t_AvailableFormats)
-    {
-        for (const VkSurfaceFormatKHR& Format : t_AvailableFormats)
-        {
-            if (Format.format == VK_FORMAT_B8G8R8A8_UNORM && Format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-            {
-                return Format;
-            }
-        }
-
-        return t_AvailableFormats[0];
-    }
-
-    VkPresentModeKHR Renderer::ChooseSwapChainPresentMode(const std::vector<VkPresentModeKHR>& t_AvialableFormats)
-    {
-        VkPresentModeKHR BestMode = VK_PRESENT_MODE_FIFO_KHR;
-
-        for (const VkPresentModeKHR& Mode : t_AvialableFormats)
-        {
-            if (Mode == VK_PRESENT_MODE_MAILBOX_KHR)
-            {
-                return Mode;
-            }
-            else if (Mode == VK_PRESENT_MODE_IMMEDIATE_KHR) 
-            {
-                BestMode = Mode;
-            }
-        }
-
-        return BestMode;
-    }
-
     VkExtent2D Renderer::ChooseSwapExtent()
     {
 		VkSurfaceCapabilitiesKHR t_Capabilies = {};
@@ -857,10 +795,12 @@ namespace Fling
 			m_TestImage.reset();
 		}
 
-		if (m_TestModel)
-		{
-			m_TestModel.reset();
-		}
+        for(std::shared_ptr<Model>& Model : m_TestModels)
+        {
+            Model.reset();
+        }
+
+        m_TestModels.clear();
     }
 
 	void Renderer::Shutdown()
