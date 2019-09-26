@@ -32,7 +32,7 @@ namespace Fling
 		 * 
 		 * @return std::string 
 		 */
-		std::string GetGuidString() const { return m_Guid.data(); }
+		std::string GetGuidString() const { return std::string(m_Guid.data()); }
 
         /**
          * @brief   Returns the full file path that is relative to the assets path based on the GUID of this resource. 

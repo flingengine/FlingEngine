@@ -20,7 +20,7 @@ namespace Fling
 		// Load the that is specific in the config file
 		std::string LevelToLoad = FlingConfig::GetString("Game", "StartLevel");
 		
-		LoadLevel(LevelToLoad);
+		//LoadLevel(LevelToLoad);
 
 		// Initalize the game!
 		m_Game->Init(m_Registry);
@@ -71,6 +71,7 @@ namespace Fling
 			return;
 		}
 
+		// For testing -------------------
 		entt::entity e0 = m_Registry.create();
 		m_Registry.assign<Fling::Transform>(e0);
 		m_Registry.assign<NamedEntity>(e0, "Entity 0 Name");
@@ -78,23 +79,40 @@ namespace Fling
 		entt::entity e1 = m_Registry.create();
 		m_Registry.assign<Fling::Transform>(e1);
 		m_Registry.assign<NamedEntity>(e1, "Entity 1 Name");
+		// end For testing -------------------
 
-		m_Registry.view<NamedEntity, Fling::Transform>().each([&](NamedEntity& t_Name, Fling::Transform& t_Transform)
+		nlohmann::json& JsonData = m_CurrentLevelFile->GetJsonData();
+
+		nlohmann::json EntityJsonArray = nlohmann::json::array();
+
+		JsonData["entities"] = EntityJsonArray;
+
+		m_Registry.view<NamedEntity, Fling::Transform>().each([&EntityJsonArray](NamedEntity& t_Name, Fling::Transform& t_Transform)
 		{
-			F_LOG_TRACE("Entity name: {}", t_Name.Name);
+			nlohmann::json EntityObject = nlohmann::json::object();
+
+			EntityObject["name"] = t_Name.Name;
+
+			EntityObject["transform"]["pos"]["x"] = t_Transform.Pos.x;
+			EntityObject["transform"]["pos"]["y"] = t_Transform.Pos.y;
+			EntityObject["transform"]["pos"]["z"] = t_Transform.Pos.z;
+
+			EntityObject["transform"]["scale"]["x"] = t_Transform.Scale.x;
+			EntityObject["transform"]["scale"]["y"] = t_Transform.Scale.y;
+			EntityObject["transform"]["scale"]["z"] = t_Transform.Scale.z;
+
+			EntityJsonArray.push_back(EntityObject);
    		});
+
+		m_CurrentLevelFile->Write();
 
 		m_Registry.reset();
 	}
 
-	// #TODO: Add a callback func for when the level loading is complete
     void World::LoadLevel(const std::string& t_LevelPath)
     {
-		std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelPath;
-
-		F_LOG_TRACE("World loading level: {}", FullPath);
-
-		m_CurrentLevelFile = JsonFile::Create(entt::hashed_string{ FullPath.c_str() });
+		F_LOG_TRACE("World Load Level {}", t_LevelPath);
+		m_CurrentLevelFile = JsonFile::Create(entt::hashed_string{ t_LevelPath.c_str() });
 
 		// #TODO: Unload the current level? Depends on how we want to do async loading in the future
 		m_Game->Read(m_Registry);

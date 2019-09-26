@@ -23,7 +23,12 @@ namespace Fling
 		if (OutStream.is_open())
 		{
 			OutStream << std::setw(4) << m_JsonData << std::endl;
+            F_LOG_TRACE("Successfully Wrote JSON file {}", FilePath);
 		}
+        else
+        {
+            F_LOG_ERROR("Failed to write JSON file {}", FilePath);
+        }
 
 		OutStream.close();
 	}
@@ -32,12 +37,15 @@ namespace Fling
     {
         const std::string FilePath = GetFilepathReleativeToAssets();
 
+        F_LOG_TRACE("Attempting to Load JSON {}", FilePath);
+
         std::ifstream ifs(FilePath.c_str());
 
         if (ifs.is_open())
         {
             // Store the info in the scene file in the JSON object
             ifs >> m_JsonData;
+            F_LOG_TRACE("Successfully Loaded JSON file {}", FilePath);
         }
         else
         {
