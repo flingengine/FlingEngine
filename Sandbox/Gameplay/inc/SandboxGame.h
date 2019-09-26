@@ -6,7 +6,7 @@ namespace Sandbox
 {
 	class Game : public Fling::Game
 	{
-		void Init(entt::registry& t_Reg) override;
+		void Init(entt::registry& t_Reg, class World* t_OwningWorld) override;
 
 		/* Called when the engine is shutting down */
 		void Shutdown(entt::registry& t_Reg) override;

@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "World.h"
-#include "FlingConfig.h"
 #include "JsonFile.h"
 
 // Test component serialization
 #include "Components/Transform.hpp"
+#include <cereal/archives/json.hpp>
 
 namespace Fling
 {
@@ -20,8 +20,6 @@ namespace Fling
 		// Load the that is specific in the config file
 		std::string LevelToLoad = FlingConfig::GetString("Game", "StartLevel");
 		
-		//LoadLevel(LevelToLoad);
-
 		// Initalize the game!
 		m_Game->Init(m_Registry);
     }
@@ -81,42 +79,13 @@ namespace Fling
 		m_Registry.assign<NamedEntity>(e1, "Entity 1 Name");
 		// end For testing -------------------
 
-		nlohmann::json& JsonData = m_CurrentLevelFile->GetJsonData();
-		nlohmann::json EntityArray = nlohmann::json::array();
-				
-		// #TODO: Move the serialization to the owning system
-		m_Registry.view<NamedEntity, Fling::Transform>().each([&EntityArray](NamedEntity& t_Name, Fling::Transform& t_Transform)
-		{
-			nlohmann::json EntityObject = nlohmann::json::object();
-
-			nlohmann::json ComponentArray = nlohmann::json::array();
-
-			// #TODO Give each component a static Read/Write function
-			nlohmann::json TransformComponent = nlohmann::json::object();
-			TransformComponent["name"] = "Transform";
-			TransformComponent["pos"]["x"] = t_Transform.Pos.x;
-			TransformComponent["pos"]["y"] = t_Transform.Pos.y;
-			TransformComponent["pos"]["z"] = t_Transform.Pos.z;
-
-			TransformComponent["scale"]["x"] = t_Transform.Scale.x;
-			TransformComponent["scale"]["y"] = t_Transform.Scale.y;
-			TransformComponent["scale"]["z"] = t_Transform.Scale.z;
-			// Add this component to the component array
-			ComponentArray.push_back(TransformComponent);
-			EntityObject["components"] = ComponentArray;
-
-			EntityObject["name"] = t_Name.Name;
-
-			EntityArray.push_back(EntityObject);
-   		});
-
-		JsonData["entities"] = EntityArray;
+		nlohmann::json data;
 
 		// Allow the individual game to write data as well
-		m_Game->Write(m_Registry, JsonData);
+		m_Game->Write(m_Registry, data);
 
 		// Write the file to disk and reset the registry
-		m_CurrentLevelFile->Write();
+		//m_CurrentLevelFile->Write();
 		m_Registry.reset();
 	}
 
@@ -125,18 +94,12 @@ namespace Fling
 		F_LOG_TRACE("World Load Level {}", t_LevelPath);
 		m_CurrentLevelFile = JsonFile::Create(entt::hashed_string{ t_LevelPath.c_str() });
 
-		nlohmann::json EntityArray = m_CurrentLevelFile->GetJsonData()["entities"];
-
-		if(EntityArray.is_array())
-		{
-			nlohmann::json::iterator EntityItr = EntityArray.begin();
-
-			while(EntityItr != EntityArray.end())
-			{
-				
-				EntityItr++;
-			}
-		}
+		std::ifstream InputStream(m_CurrentLevelFile->GetFilepathReleativeToAssets());
+    	cereal::JSONInputArchive archive(InputStream);
+		m_Registry.reset();
+		m_Registry.loader()
+			.entities(archive)
+			.component<NamedEntity, Fling::Transform>(archive);
 
 		// #TODO: Unload the current level? Depends on how we want to do async loading in the future
 		m_Game->Read(m_Registry, m_CurrentLevelFile->GetJsonData());

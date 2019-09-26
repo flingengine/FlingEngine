@@ -4,6 +4,7 @@
 #include <string>
 #include <entt/entity/registry.hpp>
 #include "JsonFile.h"
+#include "World.h" 
 
 namespace Fling
 {
@@ -22,7 +23,7 @@ namespace Fling
 		/**
 		 * TODO
 		 */
-		virtual void Init(entt::registry& t_Reg) = 0;
+		virtual void Init(entt::registry& t_Reg, World* t_OwningWorld) = 0;
 
 		/* Called when the engine is shutting down */
 		virtual void Shutdown(entt::registry& t_Reg) = 0;
@@ -44,10 +45,14 @@ namespace Fling
 		 */
 		virtual void Write(entt::registry& t_Reg, nlohmann::json& t_JsonData) = 0;
 
+		FORCEINLINE World* GetWorld() const { return m_OwningWorld; }
+
 	protected:
 
 		// You really should not be implementing the game's ctor
 		Game() = default;
 		virtual ~Game() = default;
+		
+		World* m_OwningWorld = nullptr;
 	};
 }   // namespace Fling

@@ -1,12 +1,14 @@
 #include "pch.h"
 #include "SandboxGame.h"
+#include "World.h"
 
 namespace Sandbox
 {
-	void Game::Init(entt::registry& t_Reg)
+	void Game::Init(entt::registry& t_Reg, World* t_OwningWorld)
 	{
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
+		m_OwningWorld = t_OwningWorld;
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)

@@ -2,6 +2,19 @@
 ## And set some project settings that are the same on everything that uses Fling
 MACRO(FLING_ENGINE_INC EngineDir )
 
+	# Take care of warnings about strcpy
+	if( MSVC )
+		add_definitions( -D_CRT_SECURE_NO_WARNINGS )
+	# GCC
+	elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+
+		add_definitions( -Wno-class-memaccess )
+
+	# Clang
+	elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+
+	endif()
+
 	# Set Build Dir
 	set( CMAKE_BINARY_DIR    "/build" )
 	set_property( GLOBAL PROPERTY USE_FOLDERS ON )
