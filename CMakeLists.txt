@@ -41,6 +41,8 @@ if( MSVC )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
     #add_definitions( -Wno-class-memaccess )
+    add_definitions( -Wno-unused-private-field )
+    add_definitions( -Wno-exceptions )
 
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

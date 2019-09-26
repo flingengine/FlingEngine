@@ -35,6 +35,7 @@ namespace Fling
 		Renderer::Get().Init();
 
 		m_World = new World(g_Registry, m_GameImpl);
+		m_GameImpl->m_OwningWorld = m_World;
 	}
 
 	void Engine::Tick()

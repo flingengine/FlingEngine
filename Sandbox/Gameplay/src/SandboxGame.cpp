@@ -1,14 +1,17 @@
 #include "pch.h"
 #include "SandboxGame.h"
 #include "World.h"
+#include "Components/Name.hpp"
+#include "Components/Transform.hpp"
 
 namespace Sandbox
 {
-	void Game::Init(entt::registry& t_Reg, World* t_OwningWorld)
+	using namespace Fling;
+
+	void Game::Init(entt::registry& t_Reg)
 	{
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
-		m_OwningWorld = t_OwningWorld;
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -18,18 +21,35 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-	}
+		Fling::World* World = GetWorld();
+		assert(World);
 
-	void Game::Read(entt::registry& t_Reg, nlohmann::json& t_JsonData)
-	{
-		F_LOG_TRACE("Sandbox Game Read!");
+		if(Fling::Input::IsKeyDown(Fling::KeyNames::FL_KEY_O))
+		{
+			// Add some test entities  -------------------
+			entt::entity e0 = t_Reg.create();
+			t_Reg.assign<Fling::Transform>(e0);
+			t_Reg.assign<Fling::NameComponent>(e0, "Entity 0 Name");
 
-		// #TODO Read in custom game component systems
-	}
+			entt::entity e1 = t_Reg.create();
+			t_Reg.assign<Fling::Transform>(e1);
+			t_Reg.assign<Fling::NameComponent>(e1, "Entity 1 Name");
+			// end For testing -------------------
 
-	void Game::Write(entt::registry& t_Reg, nlohmann::json& t_JsonData)
-	{
-		F_LOG_TRACE("Sandbox Game Write!");
-		// #TODO Write out custom game component systems
+			// Write out the file
+			World->OutputLevelFile<Fling::NameComponent, Fling::Transform>();
+		}
+		else if(Fling::Input::IsKeyDown(Fling::KeyNames::FL_KEY_P))
+		{
+			// Load in the file
+			World->LoadLevelFile<Fling::NameComponent, Fling::Transform>();
+
+			t_Reg.view<NameComponent, Transform>().each([&](entt::entity t_Ent, NameComponent& t_Name, Transform& t_Trans)
+			{
+				F_LOG_TRACE("Entity has name {}  and pos {},{},{}",
+				 	t_Name.Name, t_Trans.Pos.x, t_Trans.Pos.y, t_Trans.Pos.z
+				);
+			});
+		}
 	}
 }	// namespace Sandbox

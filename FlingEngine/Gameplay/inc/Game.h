@@ -3,8 +3,7 @@
 #include "NonCopyable.hpp"
 #include <string>
 #include <entt/entity/registry.hpp>
-#include "JsonFile.h"
-#include "World.h" 
+//#include "World.h" 
 
 namespace Fling
 {
@@ -23,7 +22,7 @@ namespace Fling
 		/**
 		 * TODO
 		 */
-		virtual void Init(entt::registry& t_Reg, World* t_OwningWorld) = 0;
+		virtual void Init(entt::registry& t_Reg) = 0;
 
 		/* Called when the engine is shutting down */
 		virtual void Shutdown(entt::registry& t_Reg) = 0;
@@ -32,20 +31,8 @@ namespace Fling
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
-		
-		/**
-		 * Read is called when a level file is read from disk. Here is where you can 
-		 * read in a file stream and based the data inside it, initalize your gameplay
-		 * systems
-		 */
-		virtual void Read(entt::registry& t_Reg, nlohmann::json& t_JsonData) = 0;
-		
-		/**
-		 * TODO
-		 */
-		virtual void Write(entt::registry& t_Reg, nlohmann::json& t_JsonData) = 0;
 
-		FORCEINLINE World* GetWorld() const { return m_OwningWorld; }
+		FORCEINLINE class World* GetWorld() const { return m_OwningWorld; }
 
 	protected:
 
@@ -53,6 +40,6 @@ namespace Fling
 		Game() = default;
 		virtual ~Game() = default;
 		
-		World* m_OwningWorld = nullptr;
+		class World* m_OwningWorld = nullptr;
 	};
 }   // namespace Fling
