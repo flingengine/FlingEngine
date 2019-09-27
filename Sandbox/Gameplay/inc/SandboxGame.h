@@ -4,8 +4,15 @@
 
 namespace Sandbox
 {
+	/**
+	 * @brief Custom game class that will have control of it's gameplay systems.
+	 */
 	class Game : public Fling::Game
 	{
+		/**
+		 * @brief 	Called before the first gameplay loop tick. 
+		 * 			Do any initalization for custom gameplay systems here. 
+		 */
 		void Init(entt::registry& t_Reg) override;
 
 		/* Called when the engine is shutting down */

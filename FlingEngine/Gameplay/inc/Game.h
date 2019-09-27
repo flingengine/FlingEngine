@@ -15,12 +15,13 @@ namespace Fling
 	 */
 	class Game : public NonCopyable
 	{
+		// Friend class to the engine so that we can ensure the proper world is setup
 		friend class Engine;
 
 	public:
 		
 		/**
-		 * TODO
+		 * Called before the first Update tick. 
 		 */
 		virtual void Init(entt::registry& t_Reg) = 0;
 
@@ -32,7 +33,13 @@ namespace Fling
 		*/
 		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
 
-		FORCEINLINE class World* GetWorld() const { return m_OwningWorld; }
+		/**
+		 * @brief 	Gets the owning world of this game. You can use the world to add entities to
+		 * 			the world. Asserts that world exists first
+		 * 
+		 * @return FORCEINLINE* GetWorld 
+		 */
+		FORCEINLINE class World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
 
 	protected:
 
@@ -40,6 +47,7 @@ namespace Fling
 		Game() = default;
 		virtual ~Game() = default;
 		
+		/** The world that updates this game. Set in the Engine::Startup */
 		class World* m_OwningWorld = nullptr;
 	};
 }   // namespace Fling

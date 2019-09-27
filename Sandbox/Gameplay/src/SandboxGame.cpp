@@ -24,7 +24,8 @@ namespace Sandbox
 		Fling::World* World = GetWorld();
 		assert(World);
 
-		if(Fling::Input::IsKeyDown(Fling::KeyNames::FL_KEY_O))
+		// #TODO Move this input polling to a delete function instead of polling every frame
+		if(Input::IsKeyDown(Fling::KeyNames::FL_KEY_O))
 		{
 			// Add some test entities  -------------------
 			entt::entity e0 = t_Reg.create();
@@ -37,12 +38,12 @@ namespace Sandbox
 			// end For testing -------------------
 
 			// Write out the file
-			World->OutputLevelFile<Fling::NameComponent, Fling::Transform>();
+			World->OutputLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
 		}
-		else if(Fling::Input::IsKeyDown(Fling::KeyNames::FL_KEY_P))
+		else if(Input::IsKeyDown(Fling::KeyNames::FL_KEY_P))
 		{
 			// Load in the file
-			World->LoadLevelFile<Fling::NameComponent, Fling::Transform>();
+			World->LoadLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
 
 			t_Reg.view<NameComponent, Transform>().each([&](entt::entity t_Ent, NameComponent& t_Name, Transform& t_Trans)
 			{

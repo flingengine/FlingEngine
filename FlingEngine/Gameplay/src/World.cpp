@@ -26,12 +26,7 @@ namespace Fling
 		// Shut down the game
 		m_Game->Shutdown(m_Registry);
     }
-
-	void World::PreTick()
-	{
-		F_LOG_TRACE("World PreTick!");
-	}
-
+	
     void World::Update(float t_DeltaTime)
     {
 		m_ShouldQuit = (m_ShouldQuit ? m_ShouldQuit : Input::IsKeyDown(KeyNames::FL_KEY_ESCAPE));
