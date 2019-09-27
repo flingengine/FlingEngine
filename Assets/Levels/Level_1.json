@@ -1,0 +1,33 @@
+{
+    "value0": 2,
+    "value1": 1,
+    "value2": 0,
+    "value3": 2,
+    "value4": 0,
+    "value5": {
+        "Name": "Entity 0 Name"
+    },
+    "value6": 1,
+    "value7": {
+        "Name": "Entity 1 Name"
+    },
+    "value8": 2,
+    "value9": 0,
+    "value10": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 0.0,
+        "SCALE_Y": 0.0,
+        "SCALE_Z": 0.0
+    },
+    "value11": 1,
+    "value12": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 0.0,
+        "SCALE_Y": 0.0,
+        "SCALE_Z": 0.0
+    }
+}

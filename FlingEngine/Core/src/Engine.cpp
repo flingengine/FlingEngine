@@ -34,7 +34,8 @@ namespace Fling
 
 		Renderer::Get().Init();
 
-		m_World = new World(g_Registry);
+		m_World = new World(g_Registry, m_GameImpl);
+		m_GameImpl->m_OwningWorld = m_World;
 	}
 
 	void Engine::Tick()
@@ -50,16 +51,14 @@ namespace Fling
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
 
-		m_GameImpl->Init(g_Registry);
+		m_World->Init();
 
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
 			Renderer.Tick();
 
 			m_World->Update(DeltaTime);
-			
-			m_GameImpl->Update(g_Registry, DeltaTime);
-
+		
 			if(m_World->ShouldQuit())
 			{
 				F_LOG_TRACE("World should quit! Exiting engine loop...");
@@ -87,16 +86,17 @@ namespace Fling
 	void Engine::Shutdown()
 	{	
 		// Cleanup game play stuff
-		if (m_GameImpl)
-		{
-			m_GameImpl->Shutdown(g_Registry);
-			delete m_GameImpl;
-			m_GameImpl = nullptr;
-		}
 
 		if(m_World)
 		{
 			m_World->Shutdown();
+
+			if (m_GameImpl)
+			{
+				delete m_GameImpl;
+				m_GameImpl = nullptr;
+			}
+
 			delete m_World;
 			m_World = nullptr;
 		}
