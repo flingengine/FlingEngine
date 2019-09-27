@@ -12,6 +12,7 @@ namespace Sandbox
 	{
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
+		Input::BindKeyPress<&Sandbox::Game::OnKeyPress>(KeyNames::FL_KEY_M, *this);
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -53,4 +54,10 @@ namespace Sandbox
 			});
 		}
 	}
+
+	void Game::OnKeyPress()
+	{
+		F_LOG_TRACE("THE KEY WAS PRESSED FROM A DELEGATE BOI");
+	}
+
 }	// namespace Sandbox

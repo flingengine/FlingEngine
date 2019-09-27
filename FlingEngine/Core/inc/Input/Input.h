@@ -2,6 +2,8 @@
 
 #include "NonCopyable.hpp"
 #include "Input/Key.h"
+#include <entt/signal/delegate.hpp>
+#include <entt/signal/sigh.hpp>
 
 namespace Fling
 {
@@ -45,11 +47,17 @@ namespace Fling
 		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instace->IsMouseButtonPressedImpl(t_KeyName); }
 		static bool IsMouseDown(const std::string& t_KeyName) { return m_Instace->IsMouseDownImpl(t_KeyName); }
 
-
 		/**
 		 * Get the current mouse position in screen space
 		 */
 		static MousePos GetMousePos() { return m_Instace->GetMousePosImpl(); }
+		
+		template<auto Candidate, typename Type>
+		static void BindKeyPress(const std::string& t_KeyName, Type& t_Instance)
+		{
+			entt::delegate<void()> delegate{};
+			delegate.connect<Candidate>(t_Instance);
+		}
 
 		typedef std::map<std::string, Fling::Key> KeyMap;
 		typedef std::pair<std::string, Fling::Key> KeyPair;

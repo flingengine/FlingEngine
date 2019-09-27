@@ -23,6 +23,8 @@
 /* Fling Engine Functionality                                           */
 /************************************************************************/
 
+#include <entt/signal/delegate.hpp>
+
 // Enable Fling Logging (even applies in release)
 #define F_ENABLE_LOGGING
 

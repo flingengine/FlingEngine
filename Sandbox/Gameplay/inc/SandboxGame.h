@@ -22,5 +22,7 @@ namespace Sandbox
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
+
+		void OnKeyPress();
 	};
 }	// namespace Sandbox
