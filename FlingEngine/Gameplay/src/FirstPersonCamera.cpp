@@ -113,10 +113,9 @@ namespace Fling
 		{
 			float RotSpeed = dt * m_RotationSpeed;
 
-			float MouseDeltaX = CurMousePos.X - m_PrevMousePos.X;
+			float MouseDeltaX = m_PrevMousePos.X - CurMousePos.X;
 			float MouseDeltaY = CurMousePos.Y - m_PrevMousePos.Y;
 
-			// Invert x rotation because it otherwise it's south paw
 			m_rotation.x += RotSpeed * -MouseDeltaX;	
 			m_rotation.y += RotSpeed * MouseDeltaY;
 
