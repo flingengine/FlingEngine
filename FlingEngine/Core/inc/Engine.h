@@ -60,16 +60,14 @@ namespace Fling
 		/** Persistent world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
 
-<<<<<<< HEAD
 		/** updates the timer for this frame */
 		float m_fpsTimeElapsed = 0.0f;
 		int m_fpsFrameCount = 0; 
-=======
-		Fling::Game* m_GameImpl = nullptr;
 
 		/** Global registry that stores entities and components */
 		entt::registry g_Registry;
->>>>>>> ff4dec47bbed9d9cddcaa8f2d518363f3a3158ae
+		
+		Fling::Game* m_GameImpl = nullptr;
 	};
 
 	template<class T_GameType>

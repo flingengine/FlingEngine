@@ -22,6 +22,8 @@
 #include "DepthBuffer.h"
 #include "Model.h"
 
+#include "Imgui.h" 
+
 namespace Fling
 {
     // File resource
@@ -142,6 +144,35 @@ namespace Fling
         void CreateDescriptorSets();
 
         /**
+        * Check the swap chain support of a given device
+        * @param 	The device to check support on
+        *
+        * @return   Details of the the swap chain support on this device
+        */
+        SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice t_Device);
+
+        /**
+        * Choose a swap chain format based on the available formats. Prefer to format
+        * that has VK_FORMAT_B8G8R8A8_UNORM and VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, otherwise
+        * get the first available. 
+        * 
+        * @param    Available swap chain formats
+        *
+        * @return   Best swap chain surface formate based on the available ones
+        */
+        VkSurfaceFormatKHR ChooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& t_AvailableFormats);
+
+        /**
+        * Choose a present mode for the swap chain based on the given formats. Prefer VK_PRESENT_MODE_MAILBOX_KHR
+        * If none are available, than return VK_PRESENT_MODE_FIFO_KHR or VK_PRESENT_MODE_IMMEDIATE_KHR based on support
+        * 
+        * @param    Vector of available formats
+        *
+        * @return   Preferred present mode from the available formats   	
+        */
+        VkPresentModeKHR ChooseSwapChainPresentMode(const std::vector< VkPresentModeKHR>& t_AvialableFormats);
+
+        /**
         * Determine the best match extents based on our window width and height
 		*
         * @return   Extents with the best matching resolution
@@ -163,7 +194,7 @@ namespace Fling
         */
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
-		/** Camera Instance */
+		/** Camera Instance */          
 		std::unique_ptr<FirstPersonCamera> m_camera;
 
 		FlingWindow* m_CurrentWindow = nullptr;
@@ -225,6 +256,8 @@ namespace Fling
 
 		std::shared_ptr<class Image> m_TestImage;
 
-		std::vector<std::shared_ptr<Model>> m_TestModels;
+		std::shared_ptr<Model> m_TestModel;
+
+        //friend class imgui; //just testing 
     };
 }	// namespace Fling
