@@ -37,9 +37,12 @@ namespace Fling
 			glm::vec3 m_right;
 			glm::vec3 m_worldUp;
 
+			float m_yaw, m_pitch;
+
 			float m_RotationSpeed = 20.0f;
 			bool m_IsRotating = false;
 
+			const float MAX_PITCH = (glm::pi<float>() / 2.0f) - .017f;
 			MousePos m_PrevMousePos;
 
             void UpdateViewMatrix();
