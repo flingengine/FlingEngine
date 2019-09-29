@@ -4,7 +4,9 @@
 #include "Renderer.h"
 #include "Buffer.h"
 #include "LogicalDevice.h"
+#include "PhyscialDevice.h"
 #include "imgui.h"
+#include "GraphicsHelpers.h"
 
 namespace Fling 
 {
@@ -29,14 +31,15 @@ namespace Fling
 		INT32 m_indexCount;
 		VkDeviceMemory m_fontMemory = VK_NULL_HANDLE;
 		VkImage m_fontImage = VK_NULL_HANDLE;
-		VkImageView m_fontView = VK_NULL_HANDLE;
+		VkImageView m_fontImageView = VK_NULL_HANDLE;
 		VkPipelineCache m_pipelineCache;
 		VkPipelineLayout m_pipeLineLayout;
 		VkPipeline m_pipeLine;
 		VkDescriptorPool m_descriptorPool;
 		VkDescriptorSetLayout m_descriptorSetLayout;
 		VkDescriptorSet m_descriptorSet;
-		LogicalDevice* m_device;
+		LogicalDevice* m_LogicalDevice;
+		PhysicalDevice* m_physicalDevice;
 		Renderer& m_renderer;
 	};
 } //namespace fling
