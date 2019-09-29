@@ -59,13 +59,20 @@ namespace Fling
 			delegate.connect<Candidate>(t_Instance);
 		}
 
+		/** Input Key mappings */
 		typedef std::map<std::string, Fling::Key> KeyMap;
 		typedef std::pair<std::string, Fling::Key> KeyPair;
+
+		/** Key press delegate mappings */
+		typedef std::map<std::string, entt::delegate<void()>> KeyDownMap;
+		typedef std::pair<std::string, Fling::Key> KeyDownMapPair;
 
 	protected:
 
 		/** The actual key map */
 		static KeyMap m_KeyMap;
+
+		static KeyDownMap m_KeyDownMap;
 
 		/** Created by the implementation class @see WindowInput */
 		static Input* m_Instace;

@@ -1,5 +1,7 @@
 ![Fling Engine Logo](docs/Fling-Engine-logo/cover.png)
 
+
+
 The Fling Engine aims to be a cross platform Vulkan game engine that will experiment with the following:
 
 * Low-level engine systems such as render API abstraction, file systems, and custom allocators.
@@ -12,6 +14,9 @@ I am basing the core of the rendering pipeline off of the
 [![Build Status](https://travis-ci.com/flingengine/FlingEngine.svg?branch=master)](https://travis-ci.com/flingengine/FlingEngine)
 [![Gitter](https://badges.gitter.im/fling-engine/community.svg)](https://gitter.im/fling-engine/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
+[![GitHub license](https://img.shields.io/github/license/flingengine/FlingEngine)](https://github.com/flingengine/FlingEngine/blob/master/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/Naereen/StrapDown.js.svg)](https://github.com/flingengine/FlingEngine/releases)
+[![Work in progress badge](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)
 
 # Getting Started
 
