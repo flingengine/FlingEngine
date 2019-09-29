@@ -44,8 +44,8 @@ namespace Fling
 		CreateFrameBuffers();
 
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
-		//m_TestModels.push_back(Model::Create("Models/chalet.obj"_hs));
-		m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
+		m_TestModels.push_back(Model::Create("Models/chalet.obj"_hs));
+		//m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
 		//m_TestModels.push_back(Model::Create("Models/cone.obj"_hs));
 
 
