@@ -34,6 +34,69 @@ namespace Fling
 			VkDeviceMemory& t_Memory
 		);
 
+
+		void CreateVkSampler(
+			VkFilter t_magFilter,
+			VkFilter t_minFilter,
+			VkSamplerMipmapMode t_mipmapMode,
+			VkSamplerAddressMode t_addressModeU,
+			VkSamplerAddressMode t_addressModeV,
+			VkSamplerAddressMode t_addressModeM,
+			VkBorderColor t_borderColor,
+			VkSampler& t_sampler
+		);
+
+		VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType t_type, UINT32 t_descriptorCount);
+
+		VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo(
+			const std::vector<VkDescriptorPoolSize>& t_poolSizes,
+			UINT32 t_maxSets
+		);
+
+		VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
+			VkDescriptorType t_type,
+			VkShaderStageFlags t_stageFlags,
+			uint32_t t_binding,
+			uint32_t t_descriptorCount = 1
+		);
+
+		VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(
+			const std::vector<VkDescriptorSetLayoutBinding>& t_bindings
+		);
+
+		VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(
+			VkDescriptorPool t_descriptorPool, 
+			const VkDescriptorSetLayout* t_pSetLayouts,
+			UINT32 t_descriptorSetCount
+		);
+
+
+		VkDescriptorImageInfo DescriptorImageInfo(
+			VkSampler t_sampler,
+			VkImageView t_imageView,
+			VkImageLayout t_imageLayout
+		);
+
+		VkWriteDescriptorSet WriteDescriptorSet(
+			VkDescriptorSet t_dstSet,
+			VkDescriptorType t_type,
+			UINT32 t_binding,
+			VkDescriptorImageInfo* imageInfo,
+			UINT32 descriptorCount = 1
+		);
+
+
+		VkPushConstantRange PushConstantRange(
+			VkShaderStageFlags t_stageFlags,
+			UINT32 t_size,
+			UINT32 t_offset
+		);
+
+		VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(
+			const VkDescriptorSetLayout* t_pSetLayouts,
+			UINT32 t_setLayoutCount = 1
+		);
+
 		/**
 		 * @brief	Create a an image view for vulkan with the given format
 		 */

@@ -63,18 +63,91 @@ namespace Fling
             VK_IMAGE_ASPECT_COLOR_BIT
         );
 
-        Buffer stagingBuffer(
-            uploadSize, 
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            fontData);
-
 		Fling::GraphicsHelpers::TransitionImageLayout(
 			m_fontImage,
 			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+		Fling::GraphicsHelpers::CreateVkSampler(
+			VK_FILTER_LINEAR,
+			VK_FILTER_LINEAR,
+			VK_SAMPLER_MIPMAP_MODE_LINEAR,
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+			VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+			m_sampler);
+
+		//Descriptor pool
+		std::vector<VkDescriptorPoolSize> poolSizes = 
+		{
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
+		};
+
+		VkDescriptorPoolCreateInfo descriptorPoolInfo = Fling::GraphicsHelpers::DescriptorPoolCreateInfo(poolSizes, 2);
+
+		if (vkCreateDescriptorPool(logicalDevice, &descriptorPoolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Could not create descriptor pool for imgui");
+		}
+
+		//Descriptor set layout
+		std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =
+		{
+			Fling::GraphicsHelpers::DescriptorSetLayoutBindings(
+				VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 
+				VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+		};
+
+		VkDescriptorSetLayoutCreateInfo descriptorLayout = Fling::GraphicsHelpers::DescriptorSetLayoutCreateInfo(setLayoutBindings);
+		if (vkCreateDescriptorSetLayout(logicalDevice, &descriptorLayout, nullptr, &m_descriptorSetLayout) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Could not create descriptor set layout for imgui");
+		}
+
+		//Descriptor set 
+		VkDescriptorSetAllocateInfo allocInfo = Fling::GraphicsHelpers::DescriptorSetAllocateInfo(m_descriptorPool, &m_descriptorSetLayout, 1);
+		if (vkAllocateDescriptorSets(logicalDevice, &allocInfo, &m_descriptorSet) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Could not allocate descriptor sets for imgui");
+		}
+
+		VkDescriptorImageInfo fontDescriptor = Fling::GraphicsHelpers::DescriptorImageInfo(
+			m_sampler,
+			m_fontImageView,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		);
+
+		std::vector<VkWriteDescriptorSet> writeDescriptorSet = {
+			Fling::GraphicsHelpers::WriteDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &fontDescriptor),
+		};
+		
+		vkUpdateDescriptorSets(logicalDevice, static_cast<UINT32>(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, nullptr);
+        
+		//Pipeline cache 
+		VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+		pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+		if (vkCreatePipelineCache(logicalDevice, &pipelineCacheCreateInfo, nullptr, &m_pipelineCache) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Could not create pipeline cache for imgui");
+		}
+
+
+		//Pipeline layout
+		//Push constants for UI rendering 
+		VkPushConstantRange pushConstantRange = Fling::GraphicsHelpers::PushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock), 0);
+		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = Fling::GraphicsHelpers::PiplineLayoutCreateInfo(&m_descriptorSetLayout, 1);
+		pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+		pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+
+		if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Could not create pipline layout for imgui");
+		}
+
+		//Setup graphics pipeline for UI rendering 
+		VkPipelineInputAssemblyStateCreateFlags inputAssemblyState = 
 
 
 	}

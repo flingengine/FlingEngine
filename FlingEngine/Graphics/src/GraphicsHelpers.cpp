@@ -154,6 +154,114 @@ namespace Fling
 			vkBindImageMemory(Device, t_Image, t_Memory, 0);
 		}
 
+		void CreateVkSampler(VkFilter t_magFilter, VkFilter t_minFilter, VkSamplerMipmapMode t_mipmapMode, VkSamplerAddressMode t_addressModeU, VkSamplerAddressMode t_addressModeV, VkSamplerAddressMode t_addressModeM, VkBorderColor t_borderColor, VkSampler& t_sampler)
+		{
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
+			VkSamplerCreateInfo samplerInfo = {};
+			samplerInfo.magFilter = t_magFilter;
+			samplerInfo.minFilter = t_minFilter;
+			samplerInfo.mipmapMode = t_mipmapMode;
+			samplerInfo.addressModeU = t_addressModeU;
+			samplerInfo.addressModeV = t_addressModeV;
+			samplerInfo.addressModeW = t_addressModeM;
+			samplerInfo.borderColor = t_borderColor;
+			
+
+			if (vkCreateSampler(Device, &samplerInfo, nullptr, &t_sampler) != VK_SUCCESS)
+			{
+				F_LOG_ERROR("Failed to create sampler");
+			}
+		}
+
+		VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType t_type, UINT32 t_descriptorCount)
+		{
+			VkDescriptorPoolSize descriptorPoolSize = {};
+			descriptorPoolSize.type = t_type;
+			descriptorPoolSize.descriptorCount = t_descriptorCount;
+			return descriptorPoolSize;
+		}
+
+		VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo(
+			const std::vector<VkDescriptorPoolSize>& t_poolSizes, 
+			UINT32 t_maxSets)
+		{
+			VkDescriptorPoolCreateInfo descriptorPoolInfo{};
+			descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			descriptorPoolInfo.poolSizeCount = static_cast<uint32_t>(t_poolSizes.size());
+			descriptorPoolInfo.pPoolSizes = t_poolSizes.data();
+			descriptorPoolInfo.maxSets = t_maxSets;
+			return descriptorPoolInfo;
+		}
+
+		VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(VkDescriptorType t_type, VkShaderStageFlags t_stageFlags, uint32_t t_binding, uint32_t t_descriptorCount)
+		{
+			VkDescriptorSetLayoutBinding setLayoutBinding = {};
+			setLayoutBinding.descriptorType = t_type;
+			setLayoutBinding.stageFlags = t_stageFlags;
+			setLayoutBinding.binding = t_binding;
+			setLayoutBinding.descriptorCount = t_descriptorCount;
+			return setLayoutBinding;
+		}
+
+		VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(const std::vector<VkDescriptorSetLayoutBinding>& t_bindings)
+		{
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
+			descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			descriptorSetLayoutCreateInfo.pBindings = t_bindings.data();
+			descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(t_bindings.size());
+			return descriptorSetLayoutCreateInfo;
+		}
+
+		VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool t_descriptorPool, const VkDescriptorSetLayout * t_pSetLayouts, UINT32 t_descriptorSetCount)
+		{
+			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
+			descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descriptorSetAllocateInfo.descriptorPool = t_descriptorPool;
+			descriptorSetAllocateInfo.pSetLayouts = t_pSetLayouts;
+			descriptorSetAllocateInfo.descriptorSetCount = t_descriptorSetCount;
+			return descriptorSetAllocateInfo;
+		}
+
+		VkDescriptorImageInfo DescriptorImageInfo(VkSampler t_sampler, VkImageView t_imageView, VkImageLayout t_imageLayout)
+		{
+			VkDescriptorImageInfo descriptorImageInfo{};
+			descriptorImageInfo.sampler = t_sampler;
+			descriptorImageInfo.imageView = t_imageView;
+			descriptorImageInfo.imageLayout = t_imageLayout;
+			return descriptorImageInfo;
+		}
+
+		VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet t_dstSet, VkDescriptorType t_type, UINT32 t_binding, VkDescriptorImageInfo * imageInfo, UINT32 descriptorCount)
+		{
+			VkWriteDescriptorSet writeDescriptorSet{};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.dstSet = t_dstSet;
+			writeDescriptorSet.descriptorType = t_type;
+			writeDescriptorSet.dstBinding = t_binding;
+			writeDescriptorSet.pImageInfo = imageInfo;
+			writeDescriptorSet.descriptorCount = descriptorCount;
+			return writeDescriptorSet;
+		}
+
+		VkPushConstantRange PushConstantRange(VkShaderStageFlags t_stageFlags, UINT32 t_size, UINT32 t_offset)
+		{
+			VkPushConstantRange pushConstantRange{};
+			pushConstantRange.stageFlags = t_stageFlags;
+			pushConstantRange.offset = t_offset;
+			pushConstantRange.size = t_size;
+			return pushConstantRange;
+		}
+
+		VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(const VkDescriptorSetLayout * t_pSetLayouts, UINT32 t_setLayoutCount)
+		{
+			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+			pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutCreateInfo.setLayoutCount = t_setLayoutCount;
+			pipelineLayoutCreateInfo.pSetLayouts = t_pSetLayouts;
+			return pipelineLayoutCreateInfo;
+		}
+
 		VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)
 		{
 			VkDevice Device = Renderer::Get().GetLogicalVkDevice();

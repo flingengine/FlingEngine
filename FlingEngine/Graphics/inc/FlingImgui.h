@@ -13,6 +13,12 @@ namespace Fling
 	class FlingImgui
 	{
 	public:
+		// UI params are set via push constants
+		struct PushConstBlock {
+			glm::vec2 scale;
+			glm::vec2 translate;
+		} pushConstBlock;
+
 		FlingImgui();
 		~FlingImgui();
 		
@@ -33,7 +39,7 @@ namespace Fling
 		VkImage m_fontImage = VK_NULL_HANDLE;
 		VkImageView m_fontImageView = VK_NULL_HANDLE;
 		VkPipelineCache m_pipelineCache;
-		VkPipelineLayout m_pipeLineLayout;
+		VkPipelineLayout m_pipelineLayout;
 		VkPipeline m_pipeLine;
 		VkDescriptorPool m_descriptorPool;
 		VkDescriptorSetLayout m_descriptorSetLayout;
