@@ -22,5 +22,19 @@ namespace Sandbox
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
+
+		void OnKeyPress();
+
+		/**
+		 * @brief Called when player presses the button to initate loading
+		 * 
+		 */
+		void OnLoadInitated();
+
+		/**
+		 * @brief Called when the user presses the button to initalize saving
+		 * 
+		 */
+		void OnSaveInitated();
 	};
 }	// namespace Sandbox

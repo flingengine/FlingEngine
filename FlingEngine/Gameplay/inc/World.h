@@ -74,6 +74,8 @@ namespace Fling
 		template<class ...ARGS>
 		bool LoadLevelFile(const std::string& t_LevelToLoad);
 
+		FORCEINLINE entt::registry& GetRegistry() const { return m_Registry; }
+
     private:
 		
 		void WriteLevel();
