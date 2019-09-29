@@ -4,8 +4,15 @@
 
 namespace Sandbox
 {
+	/**
+	 * @brief Custom game class that will have control of it's gameplay systems.
+	 */
 	class Game : public Fling::Game
 	{
+		/**
+		 * @brief 	Called before the first gameplay loop tick. 
+		 * 			Do any initalization for custom gameplay systems here. 
+		 */
 		void Init(entt::registry& t_Reg) override;
 
 		/* Called when the engine is shutting down */
@@ -15,17 +22,5 @@ namespace Sandbox
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
-
-		/**
-		 * Read is called when a level file is read from disk. Here is where you can
-		 * read in a file stream and based the data inside it, initalize your gameplay
-		 * systems
-		 */
-		bool Read(entt::registry& t_Reg/* TODO: Cereal stream */) override;
-
-		/**
-		 * TODO
-		 */
-		bool Write(entt::registry& t_Reg/* TODO: Cereal stream  */) override;
 	};
 }	// namespace Sandbox

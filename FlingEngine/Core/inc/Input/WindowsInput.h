@@ -25,7 +25,6 @@ namespace Fling
 		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) override;
 		virtual bool IsMouseDownImpl(const std::string& t_KeyName) override;
 
-
 		virtual MousePos GetMousePosImpl() override;
 	};
 } // namespace Fling

@@ -3,6 +3,7 @@
 #include "NonCopyable.hpp"
 #include <string>
 #include <entt/entity/registry.hpp>
+//#include "World.h" 
 
 namespace Fling
 {
@@ -14,12 +15,13 @@ namespace Fling
 	 */
 	class Game : public NonCopyable
 	{
+		// Friend class to the engine so that we can ensure the proper world is setup
 		friend class Engine;
 
 	public:
 		
 		/**
-		 * TODO
+		 * Called before the first Update tick. 
 		 */
 		virtual void Init(entt::registry& t_Reg) = 0;
 
@@ -30,23 +32,22 @@ namespace Fling
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
-		
+
 		/**
-		 * Read is called when a level file is read from disk. Here is where you can 
-		 * read in a file stream and based the data inside it, initalize your gameplay
-		 * systems
+		 * @brief 	Gets the owning world of this game. You can use the world to add entities to
+		 * 			the world. Asserts that world exists first
+		 * 
+		 * @return FORCEINLINE* GetWorld 
 		 */
-		virtual bool Read(entt::registry& t_Reg/* TODO: Cereal stream */) = 0;
-		
-		/**
-		 * TODO
-		 */
-		virtual bool Write(entt::registry& t_Reg/* TODO: Cereal stream  */) = 0;
+		FORCEINLINE class World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
 
 	protected:
 
 		// You really should not be implementing the game's ctor
 		Game() = default;
 		virtual ~Game() = default;
+		
+		/** The world that updates this game. Set in the Engine::Startup */
+		class World* m_OwningWorld = nullptr;
 	};
 }   // namespace Fling

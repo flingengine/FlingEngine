@@ -16,6 +16,20 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+# Take care of warnings about strcpy
+if( MSVC )
+    add_definitions( -D_CRT_SECURE_NO_WARNINGS )
+# GCC
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+
+    add_definitions( -Wno-class-memaccess )
+
+# Clang
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+
+endif()
+
+
 message( STATUS "Generated git file is : ${EngineDir}Core/inc/GitVersion_TEMPLATE.h" )
 
 # Configure my generated files from cmake 
@@ -71,7 +85,7 @@ set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
 
 ### Setup visual studio source groups / filters ###
 file( GLOB_RECURSE _source_list
-    *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h ${GENERATED_INC_FOLDER}/*.cpp
+    *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h ${GENERATED_INC_FOLDER}/*.cpp *.inl
 )
 
 if( MSVC )

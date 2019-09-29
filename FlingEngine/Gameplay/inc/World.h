@@ -2,11 +2,14 @@
 
 #include "NonCopyable.hpp"
 #include "Level.h"
+#include "Game.h"
+#include "FlingConfig.h"
 
 #include <string>
-#include <vector>
-#include <memory>
+#include <fstream>
+
 #include <entt/entity/registry.hpp>
+#include <cereal/archives/json.hpp>
 
 namespace Fling
 {
@@ -19,23 +22,18 @@ namespace Fling
     {
     public: 
 
-		explicit World(entt::registry& t_Reg)
-			: m_Registry(t_Reg)
-		{
-		}
+		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
 
 		/**
 		* @brief	Initializes the world. Loads the StartLevel that is specified in the config.  
 		* @note		Keep explicit Init and Shutdown functions to make the startup order more readable
 		*/
         void Init();
-
-        void Shutdown();
-
+		
 		/**
-		* Called before the first Update tick on the world. 
-		*/
-		void PreTick();
+		 * @brief Called just before destruction.
+		 */
+        void Shutdown();
 
         /**
          * @brief   Tick all active levels in the world
@@ -44,29 +42,52 @@ namespace Fling
          */
         void Update(float t_DeltaTime);
 
-		/** 
-		* @brief				Load a level into the world
-		* @param t_LevelPath	The path to the current level. (Relative to the assets dir)
-		*/
-        void LoadLevel(const std::string& t_LevelPath);
-
 		/**
 		 * @brief Check if the world wants to exit the program. 
 		 * @see Engine::Tick 
 		 * 
-		 * @return True if the world has signlaed for exit
+		 * @return True if the world has signaled for exit
 		 */
 		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
 
-    private:
+		/**
+		 * @brief 	Based on all current entities in the registry serialize that data to a JSON file
+		 * 			This will write out some core engine components along with the specified custom 
+		 * 			game components.
+		 * 
+		 * @tparam ARGS Any component types from your game that need to be serialized 
+		 * @param t_LevelToLoad File path to load (relative to the assets directory)
+		 * @return True on success
+		 */
+		template<class ...ARGS>
+		bool OutputLevelFile(const std::string& t_LevelToLoad);
 
+		/**
+		 * @brief 	Reset the current registry and load in new entities/components from a JSON file
+		 * 			This will read in some core engine components along with the specified custom 
+		 * 			game components.
+		 * 
+		 * @tparam ARGS Any component types from your game that need to be serialized 
+		 * @param t_LevelToLoad File path to load (relative to the assets directory)
+		 * @return True on success
+		 */
+		template<class ...ARGS>
+		bool LoadLevelFile(const std::string& t_LevelToLoad);
+
+    private:
+		
+		void WriteLevel();
+
+		/** The registry and represents all active entities in this world */
 		entt::registry& m_Registry;
 
-		// #TODO: Pointer to the player!
+		/** The game will allow users to specify their own update/read/write functions */
+		Fling::Game* m_Game = nullptr;
 
-        /** Currently active levels in the world */
-        std::vector<std::unique_ptr<Level>> m_ActiveLevels;
-
+		/** Flag if the world should quit or not! */
 		UINT8 m_ShouldQuit = false;
     };
+
 } // namespace Fling
+
+#include "World.inl"

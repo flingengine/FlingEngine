@@ -66,8 +66,11 @@ include_directories( external/entt/src )
 include_directories( external/json/single_include )
 include_directories( external/stb )
 include_directories( external/tinyobjloader )
+<<<<<<< HEAD
 include_directories( external/imgui )
+=======
 include_directories( external/cereal/include )
+>>>>>>> d5f27d9b998070cbe0b9db4c5892baca3bd2c066
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )
