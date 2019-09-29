@@ -154,7 +154,15 @@ namespace Fling
 			vkBindImageMemory(Device, t_Image, t_Memory, 0);
 		}
 
-		void CreateVkSampler(VkFilter t_magFilter, VkFilter t_minFilter, VkSamplerMipmapMode t_mipmapMode, VkSamplerAddressMode t_addressModeU, VkSamplerAddressMode t_addressModeV, VkSamplerAddressMode t_addressModeM, VkBorderColor t_borderColor, VkSampler& t_sampler)
+		void CreateVkSampler(
+			VkFilter t_magFilter, 
+			VkFilter t_minFilter, 
+			VkSamplerMipmapMode t_mipmapMode, 
+			VkSamplerAddressMode t_addressModeU, 
+			VkSamplerAddressMode t_addressModeV, 
+			VkSamplerAddressMode t_addressModeM, 
+			VkBorderColor t_borderColor, 
+			VkSampler& t_sampler)
 		{
 			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
@@ -194,7 +202,10 @@ namespace Fling
 			return descriptorPoolInfo;
 		}
 
-		VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(VkDescriptorType t_type, VkShaderStageFlags t_stageFlags, uint32_t t_binding, uint32_t t_descriptorCount)
+		VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
+			VkDescriptorType t_type, 
+			VkShaderStageFlags t_stageFlags, 
+			UINT32 t_binding, UINT32 t_descriptorCount)
 		{
 			VkDescriptorSetLayoutBinding setLayoutBinding = {};
 			setLayoutBinding.descriptorType = t_type;
@@ -206,7 +217,7 @@ namespace Fling
 
 		VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(const std::vector<VkDescriptorSetLayoutBinding>& t_bindings)
 		{
-			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
 			descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			descriptorSetLayoutCreateInfo.pBindings = t_bindings.data();
 			descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(t_bindings.size());
@@ -225,7 +236,7 @@ namespace Fling
 
 		VkDescriptorImageInfo DescriptorImageInfo(VkSampler t_sampler, VkImageView t_imageView, VkImageLayout t_imageLayout)
 		{
-			VkDescriptorImageInfo descriptorImageInfo{};
+			VkDescriptorImageInfo descriptorImageInfo = {};
 			descriptorImageInfo.sampler = t_sampler;
 			descriptorImageInfo.imageView = t_imageView;
 			descriptorImageInfo.imageLayout = t_imageLayout;
@@ -234,7 +245,7 @@ namespace Fling
 
 		VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet t_dstSet, VkDescriptorType t_type, UINT32 t_binding, VkDescriptorImageInfo * imageInfo, UINT32 descriptorCount)
 		{
-			VkWriteDescriptorSet writeDescriptorSet{};
+			VkWriteDescriptorSet writeDescriptorSet = {};
 			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSet.dstSet = t_dstSet;
 			writeDescriptorSet.descriptorType = t_type;
@@ -246,20 +257,162 @@ namespace Fling
 
 		VkPushConstantRange PushConstantRange(VkShaderStageFlags t_stageFlags, UINT32 t_size, UINT32 t_offset)
 		{
-			VkPushConstantRange pushConstantRange{};
+			VkPushConstantRange pushConstantRange = {};
 			pushConstantRange.stageFlags = t_stageFlags;
 			pushConstantRange.offset = t_offset;
 			pushConstantRange.size = t_size;
 			return pushConstantRange;
 		}
 
-		VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(const VkDescriptorSetLayout * t_pSetLayouts, UINT32 t_setLayoutCount)
+		VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(
+			const VkDescriptorSetLayout * t_pSetLayouts, 
+			UINT32 t_setLayoutCount)
 		{
-			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+			VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 			pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutCreateInfo.setLayoutCount = t_setLayoutCount;
 			pipelineLayoutCreateInfo.pSetLayouts = t_pSetLayouts;
 			return pipelineLayoutCreateInfo;
+		}
+
+		VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo(
+			VkPrimitiveTopology t_topology, 
+			VkPipelineInputAssemblyStateCreateFlags t_flags, 
+			VkBool32 t_primitiveRestartEnable)
+		{
+			VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
+			pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+			pipelineInputAssemblyStateCreateInfo.topology = t_topology;
+			pipelineInputAssemblyStateCreateInfo.flags = t_flags;
+			pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = t_primitiveRestartEnable;
+			return pipelineInputAssemblyStateCreateInfo;
+		}
+
+		VkPipelineRasterizationStateCreateInfo PipelineRasterizationStateCreateInfo(
+			VkPolygonMode t_polygonMode, 
+			VkCullModeFlags t_cullMode, 
+			VkFrontFace t_frontFace, 
+			VkPipelineRasterizationStateCreateFlags t_flags)
+		{
+			VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo{};
+			pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+			pipelineRasterizationStateCreateInfo.polygonMode = t_polygonMode;
+			pipelineRasterizationStateCreateInfo.cullMode = t_cullMode;
+			pipelineRasterizationStateCreateInfo.frontFace = t_frontFace;
+			pipelineRasterizationStateCreateInfo.flags = t_flags;
+			pipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
+			pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
+			return pipelineRasterizationStateCreateInfo;
+		}
+
+		VkPipelineColorBlendStateCreateInfo PipelineColorBlendStateCreateInfo(
+			UINT32 t_attachmentCount, 
+			const VkPipelineColorBlendAttachmentState * t_pAttachments)
+		{
+			VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
+			pipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+			pipelineColorBlendStateCreateInfo.attachmentCount = t_attachmentCount;
+			pipelineColorBlendStateCreateInfo.pAttachments = t_pAttachments;
+			return pipelineColorBlendStateCreateInfo;
+		}
+
+		VkPipelineDepthStencilStateCreateInfo DepthStencilState(
+			VkBool32 t_depthTestEnable, 
+			VkBool32 t_depthWriteEnable, 
+			VkCompareOp t_depthCompareOp)
+		{
+			VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
+			pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			pipelineDepthStencilStateCreateInfo.depthTestEnable = t_depthTestEnable;
+			pipelineDepthStencilStateCreateInfo.depthWriteEnable = t_depthWriteEnable;
+			pipelineDepthStencilStateCreateInfo.depthCompareOp = t_depthCompareOp;
+			pipelineDepthStencilStateCreateInfo.front = pipelineDepthStencilStateCreateInfo.back;
+			pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+			return pipelineDepthStencilStateCreateInfo;
+		}
+
+		VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(
+			UINT32 t_viewportCount, 
+			UINT32 t_scissorCount, 
+			VkPipelineViewportStateCreateFlags t_flags)
+		{
+			VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
+			pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+			pipelineViewportStateCreateInfo.viewportCount = t_viewportCount;
+			pipelineViewportStateCreateInfo.scissorCount = t_scissorCount;
+			pipelineViewportStateCreateInfo.flags = t_flags;
+			return pipelineViewportStateCreateInfo;
+		}
+
+		VkPipelineMultisampleStateCreateInfo PipelineMultiSampleStateCreateInfo(
+			VkSampleCountFlagBits t_rasterizationSamples, 
+			VkPipelineMultisampleStateCreateFlags t_flags)
+		{
+			VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo = {};
+			pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+			pipelineMultisampleStateCreateInfo.rasterizationSamples = t_rasterizationSamples;
+			pipelineMultisampleStateCreateInfo.flags = t_flags;
+			return pipelineMultisampleStateCreateInfo;
+		}
+
+		VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
+			const std::vector<VkDynamicState>& t_pDynamicStates, 
+			VkPipelineDynamicStateCreateFlags t_flags)
+		{
+			VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = {};
+			pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			pipelineDynamicStateCreateInfo.pDynamicStates = t_pDynamicStates.data();
+			pipelineDynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(t_pDynamicStates.size());
+			pipelineDynamicStateCreateInfo.flags = t_flags;
+			return pipelineDynamicStateCreateInfo;
+		}
+
+		VkGraphicsPipelineCreateInfo PipelineCreateInfo(
+			VkPipelineLayout t_layout, 
+			VkRenderPass t_renderPass, 
+			VkPipelineCreateFlags t_flags)
+		{
+			VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
+			pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+			pipelineCreateInfo.layout = t_layout;
+			pipelineCreateInfo.renderPass = t_renderPass;
+			pipelineCreateInfo.flags = t_flags;
+			pipelineCreateInfo.basePipelineIndex = -1;
+			pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+			return pipelineCreateInfo;
+		}
+
+		VkVertexInputBindingDescription VertexInputBindingDescription(
+			UINT32 t_binding, 
+			UINT32 t_stride, 
+			VkVertexInputRate t_inputRate)
+		{
+			VkVertexInputBindingDescription vInputBindDescription = {};
+			vInputBindDescription.binding = t_binding;
+			vInputBindDescription.stride = t_stride;
+			vInputBindDescription.inputRate = t_inputRate;
+			return vInputBindDescription;
+		}
+
+		VkVertexInputAttributeDescription VertexInputAttributeDescription(
+			UINT32 t_binding, 
+			UINT32 t_location, 
+			VkFormat t_format, 
+			UINT32 t_offset)
+		{
+			VkVertexInputAttributeDescription vInputAttribDescription = {};
+			vInputAttribDescription.location = t_location;
+			vInputAttribDescription.binding = t_binding;
+			vInputAttribDescription.format = t_format;
+			vInputAttribDescription.offset = t_offset;
+			return vInputAttribDescription;
+		}
+
+		VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo()
+		{
+			VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
+			pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+			return pipelineVertexInputStateCreateInfo;
 		}
 
 		VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)

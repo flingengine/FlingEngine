@@ -34,7 +34,6 @@ namespace Fling
 			VkDeviceMemory& t_Memory
 		);
 
-
 		void CreateVkSampler(
 			VkFilter t_magFilter,
 			VkFilter t_minFilter,
@@ -56,8 +55,8 @@ namespace Fling
 		VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
 			VkDescriptorType t_type,
 			VkShaderStageFlags t_stageFlags,
-			uint32_t t_binding,
-			uint32_t t_descriptorCount = 1
+			UINT32 t_binding,
+			UINT32 t_descriptorCount = 1
 		);
 
 		VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(
@@ -69,7 +68,6 @@ namespace Fling
 			const VkDescriptorSetLayout* t_pSetLayouts,
 			UINT32 t_descriptorSetCount
 		);
-
 
 		VkDescriptorImageInfo DescriptorImageInfo(
 			VkSampler t_sampler,
@@ -85,7 +83,6 @@ namespace Fling
 			UINT32 descriptorCount = 1
 		);
 
-
 		VkPushConstantRange PushConstantRange(
 			VkShaderStageFlags t_stageFlags,
 			UINT32 t_size,
@@ -96,6 +93,68 @@ namespace Fling
 			const VkDescriptorSetLayout* t_pSetLayouts,
 			UINT32 t_setLayoutCount = 1
 		);
+
+		VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo(
+			VkPrimitiveTopology t_topology,
+			VkPipelineInputAssemblyStateCreateFlags t_flags,
+			VkBool32 t_primitiveRestartEnable
+		);
+
+		VkPipelineRasterizationStateCreateInfo PipelineRasterizationStateCreateInfo(
+			VkPolygonMode t_polygonMode,
+			VkCullModeFlags t_cullMode,
+			VkFrontFace t_frontFace,
+			VkPipelineRasterizationStateCreateFlags t_flags = 0
+		);
+
+		VkPipelineColorBlendStateCreateInfo PipelineColorBlendStateCreateInfo(
+			UINT32 t_attachmentCount,
+			const VkPipelineColorBlendAttachmentState* t_pAttachments
+		);
+
+		VkPipelineDepthStencilStateCreateInfo DepthStencilState(
+			VkBool32 t_depthTestEnable,
+			VkBool32 t_depthWriteEnable,
+			VkCompareOp t_depthCompareOp
+		);
+
+		VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(
+			UINT32 t_viewportCount,
+			UINT32 t_scissorCount,
+			VkPipelineViewportStateCreateFlags t_flags = 0
+		);
+
+		VkPipelineMultisampleStateCreateInfo PipelineMultiSampleStateCreateInfo(
+			VkSampleCountFlagBits t_rasterizationSamples,
+			VkPipelineMultisampleStateCreateFlags t_flags = 0
+		);
+
+		VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
+			const std::vector<VkDynamicState>& t_pDynamicStates,
+			VkPipelineDynamicStateCreateFlags t_flags = 0
+		);
+
+		VkGraphicsPipelineCreateInfo PipelineCreateInfo(
+			VkPipelineLayout t_layout,
+			VkRenderPass t_renderPass,
+			VkPipelineCreateFlags t_flags = 0
+		);
+
+		VkVertexInputBindingDescription VertexInputBindingDescription(
+			UINT32 t_binding, 
+			UINT32 t_stride,
+			VkVertexInputRate t_inputRate
+		);
+
+
+		VkVertexInputAttributeDescription VertexInputAttributeDescription(
+			UINT32 t_binding,
+			UINT32 t_location,
+			VkFormat t_format,
+			UINT32 t_offset
+		);
+
+		VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo();
 
 		/**
 		 * @brief	Create a an image view for vulkan with the given format

@@ -147,7 +147,45 @@ namespace Fling
 		}
 
 		//Setup graphics pipeline for UI rendering 
-		VkPipelineInputAssemblyStateCreateFlags inputAssemblyState = 
+		VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
+			Fling::GraphicsHelpers::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, false);
+
+		VkPipelineRasterizationStateCreateInfo rasterizationState =
+			Fling::GraphicsHelpers::PipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+		//Enable Blending 
+		VkPipelineColorBlendAttachmentState blendAttachmentState = {};
+		blendAttachmentState.blendEnable = VK_TRUE;
+		blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+		blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+
+		VkPipelineColorBlendStateCreateInfo colorBlendState = 
+            Fling::GraphicsHelpers::PipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
+
+        VkPipelineDepthStencilStateCreateInfo depthStencilState = 
+            Fling::GraphicsHelpers::DepthStencilState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
+
+        VkPipelineViewportStateCreateInfo viewportState = 
+            Fling::GraphicsHelpers::PipelineViewportStateCreateInfo(1, 1, 0);
+
+        VkPipelineMultisampleStateCreateInfo multisampleState = 
+            Fling::GraphicsHelpers::PipelineMultiSampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT);
+
+        std::vector<VkDynamicState> dynamicStateEnables = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR
+        };
+
+        
+
+
+
+
 
 
 	}
