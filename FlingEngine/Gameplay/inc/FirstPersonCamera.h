@@ -36,10 +36,12 @@ namespace Fling
 			glm::vec3 m_up;
 			glm::vec3 m_right;
 			glm::vec3 m_worldUp;
+			glm::vec3 m_worldFront = { 0.f, 0.f, -1.0 };
 
 			float m_RotationSpeed = 20.0f;
 			bool m_IsRotating = false;
 
+			const float MAX_PITCH = (glm::pi<float>() / 2.0f) - .017f; //subtract one degrees for gimbal lock
 			MousePos m_PrevMousePos;
 
             void UpdateViewMatrix();

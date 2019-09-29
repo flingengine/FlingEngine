@@ -14,9 +14,11 @@ namespace Fling
 		m_speed = t_MoveSpeed;
 		m_aspectRatio = aspectRatio;
 		m_fieldOfView = glm::radians(45.0f);
-		m_position = glm::vec3(-6.0f, 0.0f, 2.0f);
+		m_position = glm::vec3(0.0f, 0.0f, 5.f);
 		m_rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-		m_worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
+		m_worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+		UpdateProjectionMatrix();
     }
 
 	FirstPersonCamera::FirstPersonCamera(
@@ -35,6 +37,8 @@ namespace Fling
 		m_farPlane     = 1000.0f;
 		m_worldUp      = glm::vec3(0.0f, 0.0f, 1.0f);
 		m_fieldOfView  = glm::radians(45.0f);
+
+		UpdateProjectionMatrix();
 	}
 
 	FirstPersonCamera::FirstPersonCamera(
@@ -54,6 +58,8 @@ namespace Fling
 		m_farPlane    = farPlane;
 		m_fieldOfView = glm::radians(fov);
 		m_aspectRatio = aspectRatio;
+
+		UpdateProjectionMatrix();
 	}
 
 
@@ -107,22 +113,13 @@ namespace Fling
 		{
 			float RotSpeed = dt * m_RotationSpeed;
 
-			float MouseDeltaX = CurMousePos.X - m_PrevMousePos.X;
+			float MouseDeltaX = m_PrevMousePos.X - CurMousePos.X;
 			float MouseDeltaY = CurMousePos.Y - m_PrevMousePos.Y;
 
-			// Invert x rotation because it otherwise it's south paw
 			m_rotation.x += RotSpeed * -MouseDeltaX;	
 			m_rotation.y += RotSpeed * MouseDeltaY;
 
-			// Constrain the rotation
-			if (m_rotation.y > 89.0f)
-			{
-				m_rotation.y = 89.0f;
-			}
-			if (m_rotation.y < -89.0f)
-			{
-				m_rotation.y = -89.0f;
-			}
+			m_rotation.y = glm::clamp(m_rotation.y, -MAX_PITCH, MAX_PITCH);
 		}
 		
 		// Keep track of the mouse position
@@ -130,7 +127,6 @@ namespace Fling
 		
 		UpdateCameraVectors();
 		UpdateViewMatrix();
-		UpdateProjectionMatrix();
     }
 
 	void FirstPersonCamera::UpdateViewMatrix()
@@ -145,15 +141,10 @@ namespace Fling
 
 	void Fling::FirstPersonCamera::UpdateCameraVectors()
 	{
-		// Calculate the new Front vector
-		glm::vec3 front;
-		front.x = cos(glm::radians(m_rotation.x)) * cos(glm::radians(m_rotation.y));
-		front.y = sin(glm::radians(m_rotation.x));
-		front.z = sin(glm::radians(m_rotation.y)) * cos(glm::radians(m_rotation.x));
-		m_front = glm::normalize(front);
-		// Also re-calculate the Right and Up vector
-		m_right = glm::normalize(glm::cross(m_front, m_worldUp));  
-		m_up = glm::normalize(glm::cross(m_right, m_front));
+		glm::mat4x4 rotation = glm::eulerAngleYX(m_rotation.x, m_rotation.y);
+		m_front = rotation * glm::vec4(m_worldFront, 0.f);
+		m_up = rotation * glm::vec4(m_worldUp, 0.f);
+		m_right = glm::cross(m_front, m_up);
 	}
 
 } //namespace Fling 
