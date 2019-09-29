@@ -181,13 +181,52 @@ namespace Fling
             VK_DYNAMIC_STATE_SCISSOR
         };
 
-        
+        VkPipelineDynamicStateCreateInfo dynamicState = 
+            Fling::GraphicsHelpers::PipelineDynamicStateCreateInfo(dynamicStateEnables);
 
+        std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages {};
 
+        VkGraphicsPipelineCreateInfo pipelineCreateInfo = 
+            Fling::GraphicsHelpers::PipelineCreateInfo(m_pipelineLayout, renderPass);
 
+        pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
+		pipelineCreateInfo.pRasterizationState = &rasterizationState;
+		pipelineCreateInfo.pColorBlendState = &colorBlendState;
+		pipelineCreateInfo.pMultisampleState = &multisampleState;
+		pipelineCreateInfo.pViewportState = &viewportState;
+		pipelineCreateInfo.pDepthStencilState = &depthStencilState;
+		pipelineCreateInfo.pDynamicState = &dynamicState;
+		pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+		pipelineCreateInfo.pStages = shaderStages.data();
 
+        // Vertex bindings an attributes based on imgui vertex definitions
+        std::vector<VkVertexInputBindingDescription> vertexInputBindings =
+        {
+            Fling::GraphicsHelpers::VertexInputBindingDescription(0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX),
+        };
 
+        std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = 
+        {
+            Fling::GraphicsHelpers::VertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos)),	// Location 0: Position
+			Fling::GraphicsHelpers::VertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv)),	// Location 1: UV
+			Fling::GraphicsHelpers::VertexInputAttributeDescription(0, 2, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col)),	// Location 0: Color
+        };
 
+		VkPipelineVertexInputStateCreateInfo vertexInputState = Fling::GraphicsHelpers::PiplineVertexInptStateCreateInfo();
+		vertexInputState.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexInputBindings.size());
+		vertexInputState.pVertexBindingDescriptions = vertexInputBindings.data();
+		vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
+		vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes.data();
+
+		pipelineCreateInfo.pVertexInputState = &vertexInputState;
+
+		//TODO: LOAD SHADERS imgui/ui.vert.spv
+		// imgui/ui.frag.spv
+
+		if (vkCreateGraphicsPipelines(logicalDevice, m_pipelineCache, 1, &pipelineCreateInfo, nullptr, &m_pipeLine) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Could not create graphics pipeline for imgui");
+		}
 	}
 
 	void FlingImgui::NewFrame()
