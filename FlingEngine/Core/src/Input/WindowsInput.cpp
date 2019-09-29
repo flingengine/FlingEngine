@@ -148,7 +148,13 @@ namespace Fling
 
 	void WindowsInput::PollImpl()
 	{
-		// #TODO: Poll any input keys I guess
+		for(const auto& InputMapping : m_KeyDownMap)
+		{
+			if(IsKeyDown(InputMapping.first) && InputMapping.second)
+			{
+				InputMapping.second();
+			}
+		}
 	}
 
 	bool WindowsInput::IsKeyDownImpl(const std::string& t_KeyName)

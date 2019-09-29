@@ -56,9 +56,11 @@ namespace Fling
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
 			Renderer.Tick();
+			
+			Input::Poll();
 
 			m_World->Update(DeltaTime);
-		
+			
 			if(m_World->ShouldQuit())
 			{
 				F_LOG_TRACE("World should quit! Exiting engine loop...");

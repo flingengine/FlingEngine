@@ -145,7 +145,13 @@ namespace Fling
 
 	void LinuxInput::PollImpl()
 	{
-		// #TODO: Poll any input keys I guess
+		for(const auto& InputMapping : m_KeyDownMap)
+		{
+			if(IsKeyDown(InputMapping.first) && InputMapping.second)
+			{
+				InputMapping.second();
+			}
+		}
 	}
 	
 	bool LinuxInput::IsKeyDownImpl(const std::string& t_KeyName)

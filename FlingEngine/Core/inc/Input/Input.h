@@ -52,12 +52,17 @@ namespace Fling
 		 */
 		static MousePos GetMousePos() { return m_Instace->GetMousePosImpl(); }
 		
+		/**
+		 * @brief Bind a callback function to when a key is pressed 
+		 * 
+		 * @tparam Candidate The function that you would like to bind
+		 * @param t_KeyName Key name to bind to 
+		 * @param t_Instance The instance of the object you are binding to
+		 * @see https://github.com/skypjack/entt/wiki/Crash-Course:-events,-signals-and-everything-in-between#delegate
+		 * @see Fling::KeyNames
+		 */
 		template<auto Candidate, typename Type>
-		static void BindKeyPress(const std::string& t_KeyName, Type& t_Instance)
-		{
-			entt::delegate<void()> delegate{};
-			delegate.connect<Candidate>(t_Instance);
-		}
+		static void BindKeyPress(const std::string& t_KeyName, Type& t_Instance);
 
 		/** Input Key mappings */
 		typedef std::map<std::string, Fling::Key> KeyMap;
@@ -65,7 +70,7 @@ namespace Fling
 
 		/** Key press delegate mappings */
 		typedef std::map<std::string, entt::delegate<void()>> KeyDownMap;
-		typedef std::pair<std::string, Fling::Key> KeyDownMapPair;
+		typedef std::pair<std::string, entt::delegate<void()>> KeyDownMapPair;
 
 	protected:
 
@@ -105,3 +110,5 @@ namespace Fling
 	};
 
 }	// namespace Fling
+
+#include "Input.inl"
