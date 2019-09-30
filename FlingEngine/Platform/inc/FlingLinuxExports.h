@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef FLING_LINUX
+#if FLING_LINUX
 
 #   if __GNUC__ >= 4
 #       define FLING_API            __attribute__ ((visibility ("default")))

@@ -30,6 +30,4 @@ namespace Fling
 		free(t_Data);
 #endif
 	}
-
-
 }

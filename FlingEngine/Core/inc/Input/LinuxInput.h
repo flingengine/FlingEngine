@@ -2,7 +2,7 @@
 
 #include "Input/Input.h"
 
-#ifdef FLING_LINUX
+#if FLING_LINUX
 
 #include "LinuxKeycodes.h"
 
