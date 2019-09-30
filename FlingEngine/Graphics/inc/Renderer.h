@@ -25,207 +25,207 @@
 
 namespace Fling
 {
-	// File resource
-	class File;
+    // File resource
+    class File;
 
-	/// <summary>
-	/// Core renderer for the application
-	/// </summary>
-	class Renderer : public Singleton<Renderer>
-	{
-	public:
+    /// <summary>
+    /// Core renderer for the application
+    /// </summary>
+    class Renderer : public Singleton<Renderer>
+    {
+    public:
 
-		virtual void Init() override;
+        virtual void Init() override;
 
-		virtual void Shutdown() override;
+        virtual void Shutdown() override;
 
-		/// <summary>
-		/// Init GLFW and create the game window
-		/// </summary>
-		/// <param name="t_width">Width of the window</param>
-		/// <param name="t_height">Height of the window</param>
-		void CreateGameWindow(const UINT32 t_width, const UINT32 t_height);
+        /// <summary>
+        /// Init GLFW and create the game window
+        /// </summary>
+        /// <param name="t_width">Width of the window</param>
+        /// <param name="t_height">Height of the window</param>
+        void CreateGameWindow(const UINT32 t_width, const UINT32 t_height);
 
-		FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
+        FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
 
-		/** Happens before draw frame. Update the window  */
-		void Tick();
+        /** Happens before draw frame. Update the window  */
+        void Tick();
 
-		/**
-		* Draw the frame!
-		*/
-		void DrawFrame();
+        /**
+        * Draw the frame!
+        */
+        void DrawFrame();
 
-		/**
-		* Prepare for shutdown of the rendering pipeline, close any open semaphores
-		*/
-		void PrepShutdown();
+        /**
+        * Prepare for shutdown of the rendering pipeline, close any open semaphores
+        */
+        void PrepShutdown();
 
-		/**
-		 * @brief Get the logical graphics Device object
-		 *
-		 * @return const ref to VkDevice
-		 */
-		const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
+        /**
+         * @brief Get the logical graphics Device object
+         *
+         * @return const ref to VkDevice
+         */
+        const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
 
-		LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
+        LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
-		/**
-		 * @brief Get the Physical Device object used by this renderer
-		 *
-		 * @return const VkPhysicalDevice&
-		 */
-		const VkPhysicalDevice& GetPhysicalVkDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); }
+        /**
+         * @brief Get the Physical Device object used by this renderer
+         *
+         * @return const VkPhysicalDevice&
+         */
+        const VkPhysicalDevice& GetPhysicalVkDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); }
 
-		PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+        PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 
-		const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
+        const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
 
-		const VkQueue& GetGraphicsQueue() const { return m_LogicalDevice->GetGraphicsQueue(); }
+        const VkQueue& GetGraphicsQueue() const { return m_LogicalDevice->GetGraphicsQueue(); }
 
-		void SetFrameBufferHasBeenResized(bool t_Setting) { m_FrameBufferResized = t_Setting; }
+        void SetFrameBufferHasBeenResized(bool t_Setting) { m_FrameBufferResized = t_Setting; }
 
-		const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
+        const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
-		Swapchain* GetSwapChain() const { return m_SwapChain; }
-
-	private:
-
-		/// <summary>
-		/// Init the current graphics API
-		/// </summary>
-		void InitGraphics();
+        Swapchain* GetSwapChain() const { return m_SwapChain; }
 
 		/**
-		 * @brief Create a Descriptor Layout object
-		 * @see UniformBufferObject.h
-		 */
-		void CreateDescriptorLayout();
+        * Create a shader module based on the given shader code
+        * @param     Vector of the shader code
+        *
+        * @return   Shader module from the given code
+        */                                 
+        VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
-		/**
-		* Create the graphics pipeline (IA, VS, FS, etc)
-		*/
-		void CreateGraphicsPipeline();
+    private:
 
-		/**
-		* Create the frame buffer that will be used by the graphics pipeline
-		*/
-		void CreateRenderPass();
+        /// <summary>
+        /// Init the current graphics API
+        /// </summary>
+        void InitGraphics();
 
-		/**
-		* Create the frame buffers for use by the swap chain
-		*/
-		void CreateFrameBuffers();
+        /**
+         * @brief Create a Descriptor Layout object
+         * @see UniformBufferObject.h
+         */
+        void CreateDescriptorLayout();
 
-		/**
-		* Create the command pool to be sent every frame
-		*/
-		void CreateCommandPool();
+        /**
+        * Create the graphics pipeline (IA, VS, FS, etc)
+        */
+        void CreateGraphicsPipeline();
 
-		void CreateCommandBuffers();
+        /**
+        * Create the frame buffer that will be used by the graphics pipeline
+        */
+        void CreateRenderPass();
 
-		/**
-		* Create semaphores and fence objects
-		*/
-		void CreateSyncObjects();
+        /**
+        * Create the frame buffers for use by the swap chain
+        */
+        void CreateFrameBuffers();
 
-		void CleanupFrameResources();
+        /**
+        * Create the command pool to be sent every frame
+        */
+        void CreateCommandPool();
 
-		/**
-		* Re-create the image views, render passes, and command buffers
-		*/
-		void RecreateFrameResources();
+        void CreateCommandBuffers();
 
-		void CreateUniformBuffers();
+        /**
+        * Create semaphores and fence objects
+        */
+        void CreateSyncObjects();
 
-		void CreateDescriptorPool();
+        void CleanupFrameResources();
 
-		void CreateDescriptorSets();
+        /**
+        * Re-create the image views, render passes, and command buffers
+        */
+        void RecreateFrameResources();
 
-		/**
-		* Determine the best match extents based on our window width and height
-		*
-		* @return   Extents with the best matching resolution
-		*/
-		VkExtent2D ChooseSwapExtent();
+        void CreateUniformBuffers();
 
-		/**
-		 * @brief Update the uniform buffer data. Called during DrawFrame
-		 *
-		 * @param t_CurrentImage The current image index that we are using
-		 */
-		void UpdateUniformBuffer(UINT32 t_CurrentImage);
+        void CreateDescriptorPool();
 
-		/**
-		* Create a shader module based on the given shader code
-		* @param 	Vector of the shader code
-		*
-		* @return   Shader module from the given code
-		*/
-		VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
+        void CreateDescriptorSets();
 
-		/** Camera Instance */
-		std::unique_ptr<FirstPersonCamera> m_camera;
+        /**
+        * Determine the best match extents based on our window width and height
+        *
+        * @return   Extents with the best matching resolution
+        */
+        VkExtent2D ChooseSwapExtent();
 
-		FlingWindow* m_CurrentWindow = nullptr;
+        /**
+         * @brief Update the uniform buffer data. Called during DrawFrame
+         *
+         * @param t_CurrentImage The current image index that we are using
+         */
+        void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
-		Instance* m_Instance = nullptr;
+        /** Camera Instance */
+        std::unique_ptr<FirstPersonCamera> m_camera;
 
-		LogicalDevice* m_LogicalDevice = nullptr;
+        FlingWindow* m_CurrentWindow = nullptr;
 
-		PhysicalDevice* m_PhysicalDevice = nullptr;
+        Instance* m_Instance = nullptr;
 
-		/** Handle to the surface extension used to interact with the windows system */
-		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
+        LogicalDevice* m_LogicalDevice = nullptr;
 
-		Swapchain* m_SwapChain = nullptr;
+        PhysicalDevice* m_PhysicalDevice = nullptr;
 
-		VkRenderPass m_RenderPass;
+        /** Handle to the surface extension used to interact with the windows system */
+        VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 
-		/** Pipeline layout stores uniforms (global shader vars) */
-		VkDescriptorSetLayout m_DescriptorSetLayout;
-		VkPipelineLayout m_PipelineLayout;
+        Swapchain* m_SwapChain = nullptr;
 
-		VkPipeline m_GraphicsPipeline;
+        VkRenderPass m_RenderPass;
 
-		/** @see Renderer::CreateCommandPool */
-		VkCommandPool m_CommandPool;
+        /** Pipeline layout stores uniforms (global shader vars) */
+        VkDescriptorSetLayout m_DescriptorSetLayout;
+        VkPipelineLayout m_PipelineLayout;
 
-		/** @see CreateDescriptorPool */
-		VkDescriptorPool m_DescriptorPool;
+        VkPipeline m_GraphicsPipeline;
 
-		DepthBuffer* m_DepthBuffer = nullptr;
+        /** @see Renderer::CreateCommandPool */
+        VkCommandPool m_CommandPool;
 
-		size_t CurrentFrameIndex = 0;
+        /** @see CreateDescriptorPool */
+        VkDescriptorPool m_DescriptorPool;
 
-		/** Used to determine if the frame buffer has been resized or not */
-		bool m_FrameBufferResized = false;
+        DepthBuffer* m_DepthBuffer = nullptr;
 
-		static const int MAX_FRAMES_IN_FLIGHT;
+        size_t CurrentFrameIndex = 0;
 
-		/** Uniform buffers */
-		std::vector<Buffer*> m_UniformBuffers;
+        /** Used to determine if the frame buffer has been resized or not */
+        bool m_FrameBufferResized = false;
 
-		std::vector<VkDescriptorSet> m_DescriptorSets;
+        static const int MAX_FRAMES_IN_FLIGHT;
 
-		/**
-		* The frame buffers for the swap chain
-		* @see Renderer::CreateFrameBuffers
-		*/
-		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+        /** Uniform buffers */
+        std::vector<Buffer*> m_UniformBuffers;
 
-		/**
-		* Command buffers
-		* @see m_CommandPool
-		*/
-		std::vector<VkCommandBuffer> m_CommandBuffers;
+        std::vector<VkDescriptorSet> m_DescriptorSets;
 
-		std::vector<VkSemaphore> m_ImageAvailableSemaphores;
-		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-		std::vector<VkFence> m_InFlightFences;
+        /**
+        * The frame buffers for the swap chain
+        * @see Renderer::CreateFrameBuffers
+        */
+        std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
-		std::shared_ptr<class Image> m_TestImage;
+        /**
+        * Command buffers
+        * @see m_CommandPool
+        */
+        std::vector<VkCommandBuffer> m_CommandBuffers;
 
-		std::vector<std::shared_ptr<Model>> m_TestModels;
-	};
-}	// namespace Fling
+        std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+        std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+        std::vector<VkFence> m_InFlightFences;
+
+        std::shared_ptr<class Image> m_TestImage;
+
+        std::vector<std::shared_ptr<Model>> m_TestModels;
+    };
+}    // namespace Fling

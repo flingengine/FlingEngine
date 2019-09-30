@@ -7,6 +7,8 @@
 #include "PhyscialDevice.h"
 #include "imgui.h"
 #include "GraphicsHelpers.h"
+#include "ResourceManager.h"
+#include "File.h"
 
 namespace Fling 
 {
@@ -19,7 +21,7 @@ namespace Fling
 			glm::vec2 translate;
 		} pushConstBlock;
 
-		FlingImgui();
+		FlingImgui(const LogicalDevice& t_logicalDevice);
 		~FlingImgui();
 		
 		void Init(float width, float height);
@@ -33,8 +35,8 @@ namespace Fling
 		VkSampler m_sampler;
 		Buffer m_vertexBuffer;
 		Buffer m_indexBuffer;
-		INT32 m_vertexCount;
-		INT32 m_indexCount;
+		INT32 m_vertexCount = 0;
+		INT32 m_indexCount = 0;
 		VkDeviceMemory m_fontMemory = VK_NULL_HANDLE;
 		VkImage m_fontImage = VK_NULL_HANDLE;
 		VkImageView m_fontImageView = VK_NULL_HANDLE;
@@ -44,8 +46,7 @@ namespace Fling
 		VkDescriptorPool m_descriptorPool;
 		VkDescriptorSetLayout m_descriptorSetLayout;
 		VkDescriptorSet m_descriptorSet;
-		LogicalDevice* m_LogicalDevice;
-		PhysicalDevice* m_physicalDevice;
-		Renderer& m_renderer;
+
+		const LogicalDevice& m_LogicalDevice;
 	};
 } //namespace fling

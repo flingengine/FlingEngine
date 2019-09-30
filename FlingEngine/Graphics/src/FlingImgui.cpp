@@ -2,7 +2,7 @@
 
 namespace Fling
 {
-    FlingImgui::FlingImgui()
+    FlingImgui::FlingImgui(const LogicalDevice& t_logicalDevice) : m_LogicalDevice(t_logicalDevice)
 	{
         ImGui::CreateContext();
 	}
@@ -12,14 +12,14 @@ namespace Fling
         ImGui::DestroyContext();
         m_vertexBuffer.Release();
         m_indexBuffer.Release();
-		vkDestroyImage(m_LogicalDevice->GetVkDevice(), m_fontImage, nullptr);
-        vkDestroyImageView(m_LogicalDevice->GetVkDevice(), m_fontImageView, nullptr);
-        vkFreeMemory(m_LogicalDevice->GetVkDevice(), m_fontMemory, nullptr);
-        vkDestroySampler(m_LogicalDevice->GetVkDevice(), m_sampler, nullptr);
-        vkDestroyPipelineCache(m_LogicalDevice->GetVkDevice(), m_pipelineCache, nullptr);
-        vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_pipelineLayout, nullptr);
-        vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_descriptorPool, nullptr);
-        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_descriptorSetLayout, nullptr);
+		vkDestroyImage(m_LogicalDevice.GetVkDevice(), m_fontImage, nullptr);
+        vkDestroyImageView(m_LogicalDevice.GetVkDevice(), m_fontImageView, nullptr);
+        vkFreeMemory(m_LogicalDevice.GetVkDevice(), m_fontMemory, nullptr);
+        vkDestroySampler(m_LogicalDevice.GetVkDevice(), m_sampler, nullptr);
+        vkDestroyPipelineCache(m_LogicalDevice.GetVkDevice(), m_pipelineCache, nullptr);
+        vkDestroyPipelineLayout(m_LogicalDevice.GetVkDevice(), m_pipelineLayout, nullptr);
+        vkDestroyDescriptorPool(m_LogicalDevice.GetVkDevice(), m_descriptorPool, nullptr);
+        vkDestroyDescriptorSetLayout(m_LogicalDevice.GetVkDevice(), m_descriptorSetLayout, nullptr);
 	}
 
 	void FlingImgui::Init(float width, float height)
@@ -43,7 +43,7 @@ namespace Fling
         unsigned char* fontData;
         int texWidth;
         int texHeight;
-        VkDevice logicalDevice = m_LogicalDevice->GetVkDevice();
+        VkDevice logicalDevice = m_LogicalDevice.GetVkDevice();
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
         VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
 
@@ -220,9 +220,32 @@ namespace Fling
 
 		pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
-		//TODO: LOAD SHADERS imgui/ui.vert.spv
-		// imgui/ui.frag.spv
+		
+		//Load shader
+		std::shared_ptr<File> vertShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/imgui/ui.vert.spv"); 
+		assert(vertShaderCode);
 
+		std::shared_ptr<File> fragShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/imgui/ui.frag.spv"); 
+		assert(fragShaderCode);
+		
+		VkShaderModule vertModule = Renderer::Get().CreateShaderModule(vertShaderCode);
+		VkShaderModule fragModule = Renderer::Get().CreateShaderModule(fragShaderCode);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertModule;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragModule;
+		fragShaderStageInfo.pName = "main";
+
+		shaderStages[0] = vertShaderStageInfo;
+		shaderStages[1] = fragShaderStageInfo;
+		
 		if (vkCreateGraphicsPipelines(logicalDevice, m_pipelineCache, 1, &pipelineCreateInfo, nullptr, &m_pipeLine) != VK_SUCCESS)
 		{
 			F_LOG_ERROR("Could not create graphics pipeline for imgui");
