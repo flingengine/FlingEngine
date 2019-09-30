@@ -771,11 +771,11 @@ namespace Fling
 
 		UniformBufferObject ubo = {};
 
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//glm::mat4 model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+		//model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		ubo.Model = model;
+		ubo.Model = glm::mat4(1.0f);
 		ubo.View = m_camera->GetViewMatrix();
 		ubo.Proj = m_camera->GetProjectionMatrix();
 		ubo.Proj[1][1] *= -1.0f;

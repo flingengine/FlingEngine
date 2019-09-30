@@ -10,7 +10,10 @@
         "POS_Z": 0.0,
         "SCALE_X": 0.0,
         "SCALE_Y": 0.0,
-        "SCALE_Z": 0.0
+        "SCALE_Z": 0.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
     },
     "value6": 1,
     "value7": {
@@ -19,7 +22,10 @@
         "POS_Z": 0.0,
         "SCALE_X": 0.0,
         "SCALE_Y": 0.0,
-        "SCALE_Z": 0.0
+        "SCALE_Z": 0.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
     },
     "value8": 2,
     "value9": 0,

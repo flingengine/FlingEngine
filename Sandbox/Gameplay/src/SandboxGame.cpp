@@ -2,7 +2,7 @@
 #include "SandboxGame.h"
 #include "World.h"
 #include "Components/Name.hpp"
-#include "Components/Transform.hpp"
+#include "Components/Transform.h"
 
 namespace Sandbox
 {
@@ -43,9 +43,7 @@ namespace Sandbox
 		
 		t_Reg.view<NameComponent, Transform>().each([&](entt::entity t_Ent, NameComponent& t_Name, Transform& t_Trans)
 		{
-			F_LOG_TRACE("Entity has name {}  and pos {},{},{}",
-				t_Name.Name, t_Trans.Pos.x, t_Trans.Pos.y, t_Trans.Pos.z
-			);
+			F_LOG_TRACE("Entity has name {}  and transform {}", t_Name.Name, t_Trans);
 		});
 	}
 
