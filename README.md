@@ -8,9 +8,6 @@ The Fling Engine aims to be a cross platform Vulkan game engine that will experi
 * Multithreaded engine architecture
 * The Vulkan graphics API for real time rendering
 
-I am basing the core of the rendering pipeline off of the 
-[Vulkan Tutorial](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers)
-
 [![Build Status](https://travis-ci.com/flingengine/FlingEngine.svg?branch=master)](https://travis-ci.com/flingengine/FlingEngine)
 [![Gitter](https://badges.gitter.im/fling-engine/community.svg)](https://gitter.im/fling-engine/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
@@ -77,7 +74,6 @@ Notice the `-DDEFINE_SHIPPING` option is set to `ON`. This sets a definiton that
 #endif
 ```
 
-
 ### Wanna contribute?
 
 If you have any contributions or fixes that you want to contribute, then feel free to open 
@@ -85,3 +81,10 @@ an issue or a pull request! I'm happy to talk about the project, so feel free to
 to me on [Twitter](https://twitter.com/BenjaFriend?lang=en) or here on GitHub. Eventually a
 goal is to have some more specific PR templates/coding standards but for now that is not a 
 priority. 
+
+
+### Cool Resources
+
+Some great resources are the 
+[Vulkan Tutorial](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers) and 
+[SaschaWillems](https://github.com/SaschaWillems/Vulkan)'s repo with different Vulkan examples
