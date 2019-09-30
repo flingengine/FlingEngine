@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined FLING_WINDOWS
+#if FLING_WINDOWS
 
 #if defined(_DEBUG)
 

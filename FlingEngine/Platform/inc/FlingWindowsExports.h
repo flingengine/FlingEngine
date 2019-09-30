@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef FLING_WINDOWS
+#if FLING_WINDOWS
 
 #	define FLING_NOT_EXPORTED
 
@@ -12,4 +12,4 @@
 #       define FLING_EXTERN        extern
 #	endif
 
-#endif	// FLING_LINUX
+#endif	// FLING_WINDOWS
