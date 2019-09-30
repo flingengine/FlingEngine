@@ -703,7 +703,7 @@ namespace Fling
 		m_CurrentWindow->Update();
 	}
 
-    void Renderer::DrawFrame()
+    void Renderer::DrawFrame(entt::registry& t_Reg)
     {
         // Wait for the frame to be finished before beginning
         vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());

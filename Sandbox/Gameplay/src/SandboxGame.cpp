@@ -12,10 +12,13 @@ namespace Sandbox
 	{
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
-		Input::BindKeyPress<&Sandbox::Game::OnKeyPress>(KeyNames::FL_KEY_M, *this);
 
+		// Temp saving and load functions
 		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
 		Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
+
+		// notify we want to quit when we press escape
+		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -26,11 +29,6 @@ namespace Sandbox
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
 
-	}
-
-	void Game::OnKeyPress()
-	{
-		F_LOG_TRACE("THE KEY WAS PRESSED FROM A DELEGATE BOI");
 	}
 
 	void Game::OnLoadInitated()
@@ -66,6 +64,12 @@ namespace Sandbox
 
 		// Write out the file
 		World->OutputLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
+	}
+
+	void Game::OnQuitPressed()
+	{
+		F_LOG_TRACE("The Sandbox game wants to quit!");
+		m_WantsToQuit = true;
 	}
 
 }	// namespace Sandbox

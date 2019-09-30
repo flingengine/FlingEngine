@@ -48,7 +48,7 @@ namespace Fling
 		 * 
 		 * @return True if the world has signaled for exit
 		 */
-		FORCEINLINE bool ShouldQuit() const { return m_ShouldQuit; }
+		FORCEINLINE bool ShouldQuit() const { assert(m_Game); return m_ShouldQuit || m_Game->WantsToQuit(); }
 
 		/**
 		 * @brief 	Based on all current entities in the registry serialize that data to a JSON file

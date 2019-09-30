@@ -41,6 +41,13 @@ namespace Fling
 		 */
 		FORCEINLINE class World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
 
+		/**
+		 * @brief If true then this game wants to texit the application entirely.
+		 * 
+		 * @return FORCEINLINE WantsToQuit
+		 */
+		FORCEINLINE bool WantsToQuit() const { return m_WantsToQuit; } 
+
 	protected:
 
 		// You really should not be implementing the game's ctor
@@ -49,5 +56,8 @@ namespace Fling
 		
 		/** The world that updates this game. Set in the Engine::Startup */
 		class World* m_OwningWorld = nullptr;
+
+		/** Change this value to true when the game is ready to exit the application entirely */
+		bool m_WantsToQuit = false;
 	};
 }   // namespace Fling

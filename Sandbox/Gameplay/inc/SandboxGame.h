@@ -23,8 +23,6 @@ namespace Sandbox
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
 
-		void OnKeyPress();
-
 		/**
 		 * @brief Called when player presses the button to initate loading
 		 * 
@@ -36,5 +34,10 @@ namespace Sandbox
 		 * 
 		 */
 		void OnSaveInitated();
+
+		/**
+		 * @brief Callback for when the user has given input that shows they want to exit
+		 */
+		void OnQuitPressed();
 	};
 }	// namespace Sandbox

@@ -67,7 +67,7 @@ namespace Fling
 				break;
 			}
 
-			Renderer.DrawFrame();
+			Renderer.DrawFrame(g_Registry);
 
             // Update timing
 			Timing.Update();

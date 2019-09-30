@@ -22,6 +22,8 @@
 #include "DepthBuffer.h"
 #include "Model.h"
 
+#include <entt/entity/registry.hpp>
+
 namespace Fling
 {
     // File resource
@@ -53,7 +55,7 @@ namespace Fling
         /**
         * Draw the frame!
         */
-        void DrawFrame();
+        void DrawFrame(entt::registry& t_Reg);
 
         /**
         * Prepare for shutdown of the rendering pipeline, close any open semaphores
