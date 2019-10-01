@@ -10,14 +10,14 @@
 
 // The object instance count that is used to create the Dynamic uniform buffer
 // This should be based on how many different mesh objects we have in the scene
-#define OBJECT_INSTANCES 10
+#define OBJECT_INSTANCES 12
 
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
 
 	// Array of transforms that we can use for dynamic UBO
-	Fling::Transform TestTransforms[OBJECT_INSTANCES];
+	glm::vec3 Rotations[OBJECT_INSTANCES];
 	glm::vec3 RotationSpeeds[OBJECT_INSTANCES];
 
 	void Renderer::Init()
@@ -60,7 +60,6 @@ namespace Fling
 		// For testing
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/wood_albedo.png"_hs);
 		m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
-		//m_TestModels.push_back(Model::Create("Models/cone.obj"_hs));
 
 		// Create the dynamic uniform buffers
 		PrepareUniformBuffers();
@@ -449,10 +448,12 @@ namespace Fling
 			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
 
-			for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
+			for (UINT32 j = 0; j < OBJECT_INSTANCES; j++)
 			{
 				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
-				uint32_t dynamicOffset = j * static_cast<uint32_t>(m_DynamicAlignment);
+				// This offset is incorrect for some reason
+				UINT32 dynamicOffset = 0;//j * static_cast<UINT32>(m_DynamicAlignment);
+
 				// Bind the descriptor set for rendering a mesh using the dynamic offset
 				vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &dynamicOffset);
 
@@ -556,6 +557,9 @@ namespace Fling
 			m_DynamicAlignment = (m_DynamicAlignment + MinUboAlignment - 1) & ~(MinUboAlignment - 1);
 		}
 
+		F_LOG_TRACE("MinUboAlignment: {}", MinUboAlignment);
+		F_LOG_TRACE("Dynamic Alignment: {}", m_DynamicAlignment);
+
 		// Initialize the dynamic UBO's
 		for (size_t i = 0; i < ImageCount; ++i)
 		{
@@ -565,7 +569,7 @@ namespace Fling
 
 			// Create the view uniform
 			m_DynamicUniformBuffers[i].View = new Buffer(
-				/* t_Size */ sizeof(UboVS),
+				/* t_Size */ sizeof(m_UboVS),
 				/* t_Usage */ VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				/* t_Properties */ VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			);
@@ -587,7 +591,7 @@ namespace Fling
 		std::normal_distribution<float> rndDist(-1.0f, 1.0f);
 		for (uint32_t i = 0; i < OBJECT_INSTANCES; i++) 
 		{
-			TestTransforms[i].SetRotation(glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine)) * 2.0f * (float)FLING_PI);
+			Rotations[i] = (glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine)) * 2.0f * (float)FLING_PI);
 			RotationSpeeds[i] = glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine));
 		}
 	}
@@ -637,41 +641,37 @@ namespace Fling
         // Configure descriptor sets
         for (size_t i = 0; i < Images.size(); ++i)
         {
-            VkDescriptorBufferInfo BufferInfo = {};
-            BufferInfo.buffer = m_DynamicUniformBuffers[i].View->GetVkBuffer();
-            BufferInfo.offset = 0;
-            BufferInfo.range = sizeof(UboVS);
-
-			VkDescriptorBufferInfo DynamicBufferInfo = {};
-			BufferInfo.buffer = m_DynamicUniformBuffers[i].Dynamic->GetVkBuffer();
+			std::array<VkWriteDescriptorSet, 3> descriptorWrites = {};
+			// Binding 0 : Projection/view matrix uniform buffer
+			VkDescriptorBufferInfo BufferInfo = {};
+			BufferInfo.buffer = m_DynamicUniformBuffers[i].View->GetVkBuffer();
 			BufferInfo.offset = 0;
-			BufferInfo.range = m_DynamicUniformBuffers[i].Dynamic->GetSize();
+			BufferInfo.range = m_DynamicUniformBuffers[i].View->GetSize();
+			descriptorWrites[0] = Initalizers::WriteDescriptorSet(
+				m_DescriptorSets[i], 
+				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				0, 
+				&BufferInfo
+			);
 
+			// Binding 1 : Instance matrix as dynamic uniform buffer
+			VkDescriptorBufferInfo DynamicBufferInfo = {};
+			DynamicBufferInfo.buffer = m_DynamicUniformBuffers[i].Dynamic->GetVkBuffer();
+			DynamicBufferInfo.offset = 0;
+			DynamicBufferInfo.range = m_DynamicUniformBuffers[i].Dynamic->GetSize();
+			descriptorWrites[1] = Initalizers::WriteDescriptorSet(
+				m_DescriptorSets[i], 
+				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+				1,
+				&DynamicBufferInfo
+			);
+
+			// Binding 2 : Image sampler
 			VkDescriptorImageInfo imageInfo = {};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			imageInfo.imageView = m_TestImage->GetVkImageView();
 			imageInfo.sampler = m_TestImage->GetSampler();
-
-			std::array<VkWriteDescriptorSet, 3> descriptorWrites = {};
-			// Binding 0 : Projection/view matrix uniform buffer
-			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[0].dstSet = m_DescriptorSets[i];
-			descriptorWrites[0].dstBinding = 0;
-			descriptorWrites[0].dstArrayElement = 0;
-			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrites[0].descriptorCount = 1;
-			descriptorWrites[0].pBufferInfo = &BufferInfo;
-
-			// Binding 1 : Instance matrix as dynamic uniform buffer
-			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[1].dstSet = m_DescriptorSets[i];
-			descriptorWrites[1].dstBinding = 1;
-			descriptorWrites[1].dstArrayElement = 0;
-			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			descriptorWrites[1].descriptorCount = 1;
-			descriptorWrites[1].pBufferInfo = &BufferInfo;
-
-			// Binding 2 : Image sampler
+			
 			descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[2].dstSet = m_DescriptorSets[i];
 			descriptorWrites[2].dstBinding = 2;
@@ -844,8 +844,38 @@ namespace Fling
 		memcpy(m_DynamicUniformBuffers[t_CurrentImage].View->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
     }
 
+	float animationTimer = 0.0f;
+
 	void Renderer::UpdateDynamicUniformBuffer(UINT32 t_CurrentImage)
 	{
+		glm::vec3 offset(5.0f);
+		uint32_t dim = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+
+		// Do some rotation offset calculation crap for testing
+		// TODO This data should just be grabbed from the appropriate transform component
+		for (uint32_t x = 0; x < dim; x++)
+		{
+			for (uint32_t y = 0; y < dim; y++)
+			{
+				for (uint32_t z = 0; z < dim; z++)
+				{
+					uint32_t index = x * dim * dim + y * dim + z;
+
+					glm::vec3 Pos = offset * static_cast<float>(x);
+					glm::vec3 Scale = glm::vec3(1.0f);
+					glm::vec3 Rot = glm::vec3(0.0f);
+
+					// Algined offset 
+					glm::mat4* modelMat = (glm::mat4*)(((uint64_t)m_DynamicUniformBuffers[t_CurrentImage].Model + (index * m_DynamicAlignment)));
+					
+					*modelMat = glm::translate(glm::mat4(1.0f), Pos);
+					*modelMat = glm::rotate(*modelMat, Rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
+					*modelMat = glm::rotate(*modelMat, Rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
+					*modelMat = glm::rotate(*modelMat, Rotations[index].z, glm::vec3(0.0f, 0.0f, 1.0f));
+			}
+			}
+		}
+
 		// Copy the CPU model matrices to the GPU (dynamic mapped UBO mem)
 		memcpy(
 			m_DynamicUniformBuffers[t_CurrentImage].Dynamic->m_MappedMem,
