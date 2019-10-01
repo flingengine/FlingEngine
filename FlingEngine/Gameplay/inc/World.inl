@@ -2,6 +2,11 @@
 
 #include "World.h"
 #include "Components/Transform.h"
+#include "MeshRenderer.h"
+
+// Definition of what world components we want to serialize to the disk when
+// saving and loading a scene
+#define WORLD_COMPONENTS Fling::Transform, MeshRenderer
 
 namespace Fling
 {
@@ -24,7 +29,7 @@ namespace Fling
 		// Write out a copy of what is in this registry 
 		m_Registry.snapshot()
 			.entities(archive)
-			.component<Fling::Transform, ARGS...>(archive);
+			.component<WORLD_COMPONENTS, ARGS...>(archive);
 		
 		return true;
 	}
@@ -51,10 +56,10 @@ namespace Fling
 		// This type of loader requires the registry to be cleared first
 		m_Registry.reset();
 
-		// Load into thre registry based on the serialization from the stream
+		// Load into the registry based on the serialization from the stream
 		m_Registry.loader()
 			.entities(archive)
-			.component<Fling::Transform, ARGS...>(archive);
+			.component<WORLD_COMPONENTS, ARGS...>(archive);
 		
 		return true;
 	}

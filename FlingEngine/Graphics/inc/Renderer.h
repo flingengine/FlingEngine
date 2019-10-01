@@ -23,6 +23,7 @@
 #include "Model.h"
 
 #include <entt/entity/registry.hpp>
+#include "MeshRenderer.h"
 
 namespace Fling
 {
@@ -34,6 +35,7 @@ namespace Fling
     /// </summary>
     class Renderer : public Singleton<Renderer>
     {
+		friend class Engine;
     public:
 
         virtual void Init() override;
@@ -92,10 +94,13 @@ namespace Fling
 
     private:
 
-        /// <summary>
-        /// Init the current graphics API
-        /// </summary>
+        /** Init the actual Vulkan API and rendering pipeline */
         void InitGraphics();
+
+		/**
+		* @brief Set any component type callbacks needed for the rendering pipeline
+		*/
+		void InitComponentData();
 
         /**
          * @brief Create a Descriptor Layout object
@@ -123,7 +128,11 @@ namespace Fling
         */
         void CreateCommandPool();
 
-        void CreateCommandBuffers();
+		/**
+		* @brief	Create the command buffers using the current mesh renderer components
+		*			in the component registry
+		*/
+        void CreateCommandBuffers(entt::registry& t_Reg);
 
         /**
         * Create semaphores and fence objects
@@ -169,6 +178,22 @@ namespace Fling
         * @return   Shader module from the given code
         */
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
+
+		/**
+		* @brief	Callback for when a mesh renderer component is added to the game
+		*			Initializes and loads any meshes that we may need
+		*/
+		void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+
+		/**
+		* @brief	Get an index that represents a  
+		*/
+		UINT32 GetAvailableModelMatrix();
+
+		UINT32 m_NextAvailableMatrix{};
+
+		/** Entt registry that the renderer will be using. Set by the Engine */
+		entt::registry* m_Registry = nullptr;
 
 		/** Camera Instance */
 		std::unique_ptr<FirstPersonCamera> m_camera;

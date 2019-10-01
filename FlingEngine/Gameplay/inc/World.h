@@ -78,8 +78,6 @@ namespace Fling
 
     private:
 		
-		void WriteLevel();
-
 		/** The registry and represents all active entities in this world */
 		entt::registry& m_Registry;
 

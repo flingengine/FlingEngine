@@ -32,6 +32,7 @@ namespace Fling
             ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
         );
 
+		Renderer::Get().m_Registry = &g_Registry;
 		Renderer::Get().Init();
 
 		m_World = new World(g_Registry, m_GameImpl);
@@ -51,6 +52,7 @@ namespace Fling
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
 
+		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
 		while(!Renderer.GetCurrentWindow()->ShouldClose())

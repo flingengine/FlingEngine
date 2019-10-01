@@ -10,19 +10,20 @@
 
 // The object instance count that is used to create the Dynamic uniform buffer
 // This should be based on how many different mesh objects we have in the scene
-#define OBJECT_INSTANCES 12
+#define MAX_MODEL_MATRIX_BUFFER 125
 
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
 
-	// Array of transforms that we can use for dynamic UBO
-	glm::vec3 Rotations[OBJECT_INSTANCES];
-	glm::vec3 RotationSpeeds[OBJECT_INSTANCES];
-
 	void Renderer::Init()
 	{
+		// You must have the registry set before creating a renderer!
+		assert(m_Registry);
 		InitGraphics();
+
+		// Add entt component callbacks for mesh render etc
+		InitComponentData();
 	}
 
 	void Renderer::InitGraphics()
@@ -49,14 +50,12 @@ namespace Fling
 		m_DepthBuffer = new DepthBuffer();
 		assert(m_DepthBuffer);
 
+		// Create the camera
 		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
 		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
 		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
 		CreateFrameBuffers();
-
-		//m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
-		//m_TestModels.push_back(Model::Create("Models/chalet.obj"_hs));
 
 		// For testing
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/wood_albedo.png"_hs);
@@ -67,8 +66,10 @@ namespace Fling
 
         CreateDescriptorPool();
         CreateDescriptorSets();
+		
+		assert(m_Registry);
+		CreateCommandBuffers(*m_Registry);
 
-        CreateCommandBuffers();
         CreateSyncObjects();
 	}
 
@@ -389,7 +390,7 @@ namespace Fling
         }
     }
 
-    void Renderer::CreateCommandBuffers()
+    void Renderer::CreateCommandBuffers(entt::registry& t_Reg)
     {        
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
@@ -436,12 +437,6 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            // Draw the models (vertex and index buffer)
-			//for(const std::shared_ptr<Model>& Model : m_TestModels)
-			//{
-			//    Model->CmdRender(m_CommandBuffers[i]);
-			//}
-
 			const std::shared_ptr<Model>& Model = m_TestModels[0];
 
 			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
@@ -449,7 +444,9 @@ namespace Fling
 			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
 
-			for (UINT32 j = 0; j < OBJECT_INSTANCES; j++)
+			// #TODO Sort the mesh renderers before drawing them
+
+			for (UINT32 j = 0; j < MAX_MODEL_MATRIX_BUFFER; j++)
 			{
 				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
 				// This offset is incorrect for some reason
@@ -542,8 +539,9 @@ namespace Fling
 		PrepareUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
-        
-        CreateCommandBuffers();
+		
+		assert(m_Registry);
+        CreateCommandBuffers(*m_Registry);
     }
 
 	void Renderer::PrepareUniformBuffers()
@@ -566,7 +564,7 @@ namespace Fling
 		// Initialize the dynamic UBO's
 		for (size_t i = 0; i < ImageCount; ++i)
 		{
-			size_t bufferSize = OBJECT_INSTANCES * m_DynamicAlignment;
+			size_t bufferSize = MAX_MODEL_MATRIX_BUFFER * m_DynamicAlignment;
 			m_DynamicUniformBuffers[i].Model = (glm::mat4*)Fling::AlignedAlloc(bufferSize, m_DynamicAlignment);
 			assert(m_DynamicUniformBuffers[i].Model);
 
@@ -587,15 +585,6 @@ namespace Fling
 
 			assert(m_DynamicUniformBuffers[i].View->MapMemory() == VK_SUCCESS);
 			assert(m_DynamicUniformBuffers[i].Dynamic->MapMemory() == VK_SUCCESS);
-		}
-
-		// Initialize the transforms to have a random rotation and speed
-		std::default_random_engine rndEngine((unsigned)time(nullptr));
-		std::normal_distribution<float> rndDist(-1.0f, 1.0f);
-		for (uint32_t i = 0; i < OBJECT_INSTANCES; i++) 
-		{
-			Rotations[i] = (glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine)) * 2.0f * (float)FLING_PI);
-			RotationSpeeds[i] = glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine));
 		}
 
 		UpdateUniformBuffer(m_SwapChain->GetActiveImageIndex());
@@ -845,19 +834,19 @@ namespace Fling
 
 		m_UboVS.View = m_camera->GetViewMatrix();
 		m_UboVS.Projection = m_camera->GetProjectionMatrix();
-		m_UboVS.Projection[1][1] *= -1.0f;	// BH <--- Do we still need this? Unsure home dawg 
+
+		// The Y coordinate needs to be invertex in vulkan because open GL points up
+		m_UboVS.Projection[1][1] *= -1.0f;
 		
 		// Copy the non-dynamic ubo data to the GPU
 		memcpy(m_DynamicUniformBuffers[t_CurrentImage].View->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
     }
 
-	float animationTimer = 0.0f;
-
 	void Renderer::UpdateDynamicUniformBuffer(UINT32 t_CurrentImage)
 	{
 		glm::vec3 offset(3.0f, 0.0f, 0.0f);
 
-		for (UINT32 j = 0; j < OBJECT_INSTANCES; j++)
+		for (UINT32 j = 0; j < MAX_MODEL_MATRIX_BUFFER; j++)
 		{
 			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
 			// This offset is incorrect for some reason
@@ -952,4 +941,28 @@ namespace Fling
 		}
 	}
 
+	// @see https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#observe-changes
+	void Renderer::InitComponentData()
+	{
+		// Add any component callbacks that we may need
+		m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
+	}
+
+	void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+		F_LOG_TRACE("A mesh renderer was added!");
+		std::shared_ptr<Model> Model = Model::Create( entt::hashed_string{ t_MeshRend.MeshName.c_str() } );
+		
+		assert(Model);
+		
+		t_MeshRend.Initalize(Model.get(), GetAvailableModelMatrix());
+	}
+
+	UINT32 Renderer::GetAvailableModelMatrix()
+	{
+		// #TODO Have a way to return a model matrix to the available pool
+		m_NextAvailableMatrix += m_DynamicAlignment;
+
+		return m_NextAvailableMatrix;
+	}
 }	// namespace Fling

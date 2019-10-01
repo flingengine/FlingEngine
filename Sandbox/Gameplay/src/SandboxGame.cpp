@@ -3,6 +3,7 @@
 #include "World.h"
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
+#include "MeshRenderer.h"
 
 namespace Sandbox
 {
@@ -19,6 +20,15 @@ namespace Sandbox
 
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
+
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+
+		// Add a transform to this entity
+		Transform& t = t_Reg.assign<Fling::Transform>(e0);
+		t.SetPos(glm::vec3(0.0f));
+		t.SetRotation(glm::vec3(45.0f));
+		t.SetScale(glm::vec3(1.0f));
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -39,6 +49,7 @@ namespace Sandbox
 		World->LoadLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
 		entt::registry& t_Reg = World->GetRegistry();
 		
+		// For testing -----
 		t_Reg.view<NameComponent, Transform>().each([&](entt::entity t_Ent, NameComponent& t_Name, Transform& t_Trans)
 		{
 			F_LOG_TRACE("Entity has name {}  and transform {}", t_Name.Name, t_Trans);
@@ -49,18 +60,6 @@ namespace Sandbox
 	{
 		Fling::World* World = GetWorld();
 		assert(World);
-
-		entt::registry& t_Reg = World->GetRegistry();
-
-		// Add some test entities  -------------------
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<Fling::Transform>(e0);
-		t_Reg.assign<Fling::NameComponent>(e0, "Entity 0 Name");
-
-		entt::entity e1 = t_Reg.create();
-		t_Reg.assign<Fling::Transform>(e1);
-		t_Reg.assign<Fling::NameComponent>(e1, "Entity 1 Name");
-		// end For testing -------------------
 
 		// Write out the file
 		World->OutputLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
