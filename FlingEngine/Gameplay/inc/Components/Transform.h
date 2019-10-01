@@ -9,6 +9,8 @@ namespace Fling
     {   
         glm::mat4 GetWorldMatrix() const;
 
+		static void CalculateWorldMatrix(Transform& t_Trans, glm::mat4* t_OutMat);
+
         bool operator==(const Transform &other) const;
 	    bool operator!=(const Transform &other) const;
         friend std::ostream& operator << (std::ostream& t_OutStream, const Fling::Transform& t_Transform); 

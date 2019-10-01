@@ -32,8 +32,15 @@ namespace Fling
         worldMat = glm::scale( worldMat, m_Scale );
 
         return worldMat;
-        //return glm::transpose( worldMat );
     }
+
+	void Transform::CalculateWorldMatrix(Transform& t_Trans, glm::mat4* t_OutMat)
+	{
+		assert(t_OutMat);
+		*t_OutMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);
+		*t_OutMat = *t_OutMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
+		*t_OutMat = glm::scale(*t_OutMat, t_Trans.m_Scale);
+	}
 
     void Transform::SetPos(const glm::vec3& t_Pos)
     {

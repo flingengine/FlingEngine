@@ -238,6 +238,11 @@ namespace Fling
 		std::vector<UboDataDynamic> m_DynamicUniformBuffers;
 		UboVS m_UboVS;
 
+		/** Simple little pool for getting the next available UBO index */
+		const static UINT32 MAX_MODEL_MATRIX_BUFFER = 1024;
+		static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
+		static UINT32 g_AllocatedIndex;
+
 		/** The alignment of the dynamic UBO on this device */
 		size_t m_DynamicAlignment;
 

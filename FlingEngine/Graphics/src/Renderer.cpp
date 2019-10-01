@@ -8,13 +8,12 @@
 #include "Components/Transform.h"
 #include <random>
 
-// The object instance count that is used to create the Dynamic uniform buffer
-// This should be based on how many different mesh objects we have in the scene
-#define MAX_MODEL_MATRIX_BUFFER 125
-
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
+
+	UINT32 Renderer::g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
+	UINT32 Renderer::g_AllocatedIndex = 0u;
 
 	void Renderer::Init()
 	{
@@ -446,20 +445,14 @@ namespace Fling
 
 			// #TODO Sort the mesh renderers before drawing them
 
-			for (UINT32 j = 0; j < MAX_MODEL_MATRIX_BUFFER; j++)
+			// For each active mesh, get it's index
+			t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 			{
-				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
-				// This offset is incorrect for some reason
-				UINT32 dynamicOffset = j * static_cast<UINT32>(m_DynamicAlignment);
-				//UINT32 dynamicOffset = 0;//j * static_cast<UINT32>(m_DynamicAlignment);
-
 				// Bind the descriptor set for rendering a mesh using the dynamic offset
-				vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &dynamicOffset);
+				vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &t_MeshRend.m_ModelMatrixOffset);
 
 				vkCmdDrawIndexed(m_CommandBuffers[i], Model->GetIndexCount(), 1, 0, 0, 0);
-			}
-
-            //vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+			});
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -585,6 +578,12 @@ namespace Fling
 
 			assert(m_DynamicUniformBuffers[i].View->MapMemory() == VK_SUCCESS);
 			assert(m_DynamicUniformBuffers[i].Dynamic->MapMemory() == VK_SUCCESS);
+		}
+
+		// Prep the pool of indecies
+		for (size_t i = 0; i < MAX_MODEL_MATRIX_BUFFER; ++i)
+		{
+			g_UboIndexPool[i] = i * m_DynamicAlignment;
 		}
 
 		UpdateUniformBuffer(m_SwapChain->GetActiveImageIndex());
@@ -844,18 +843,13 @@ namespace Fling
 
 	void Renderer::UpdateDynamicUniformBuffer(UINT32 t_CurrentImage)
 	{
-		glm::vec3 offset(3.0f, 0.0f, 0.0f);
-
-		for (UINT32 j = 0; j < MAX_MODEL_MATRIX_BUFFER; j++)
+		// For each active mesh renderer
+		m_Registry->view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 		{
-			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
-			// This offset is incorrect for some reason
-			UINT32 dynamicOffset = j * static_cast<UINT32>(m_DynamicAlignment);
-			glm::vec3 Pos = offset * static_cast<float>(j);
-
-			glm::mat4* modelMat = (glm::mat4*)(((uint64_t)m_DynamicUniformBuffers[t_CurrentImage].Model + (j * m_DynamicAlignment)));
-			*modelMat = glm::translate(glm::mat4(1.0f), Pos);
-		}
+			// Calculate the world matrix based on the given transform
+			glm::mat4* modelMat = (glm::mat4*)(((uint64_t)m_DynamicUniformBuffers[t_CurrentImage].Model + (t_MeshRend.m_ModelMatrixOffset)));
+			Transform::CalculateWorldMatrix(t_Trans, modelMat);
+		});
 
 		// Copy the CPU model matrices to the GPU (dynamic mapped UBO mem)
 		memcpy(
@@ -950,19 +944,18 @@ namespace Fling
 
 	void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
-		F_LOG_TRACE("A mesh renderer was added!");
 		std::shared_ptr<Model> Model = Model::Create( entt::hashed_string{ t_MeshRend.MeshName.c_str() } );
 		
 		assert(Model);
-		
+
 		t_MeshRend.Initalize(Model.get(), GetAvailableModelMatrix());
+		SetFrameBufferHasBeenResized(true);
 	}
 
 	UINT32 Renderer::GetAvailableModelMatrix()
 	{
-		// #TODO Have a way to return a model matrix to the available pool
-		m_NextAvailableMatrix += m_DynamicAlignment;
-
-		return m_NextAvailableMatrix;
+		const uint32_t index = g_AllocatedIndex++;
+		// Multiply by dynamic alignment
+		return (g_UboIndexPool[index & (MAX_MODEL_MATRIX_BUFFER - 1u)]);
 	}
 }	// namespace Fling

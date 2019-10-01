@@ -21,14 +21,26 @@ namespace Sandbox
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+		// Make a little cube of cubes!
+		int Dimension = 5;
+		float Offset = 2.5f;
 
-		// Add a transform to this entity
-		Transform& t = t_Reg.assign<Fling::Transform>(e0);
-		t.SetPos(glm::vec3(0.0f));
-		t.SetRotation(glm::vec3(45.0f));
-		t.SetScale(glm::vec3(1.0f));
+		for (int x = 0; x < Dimension; ++x)
+		{
+			for (int y = 0; y < Dimension; ++y)
+			{
+				for (int z = 0; z < Dimension; ++z)
+				{
+					entt::entity e0 = t_Reg.create();
+					t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+
+					// Add a transform to this entity
+					Transform& t = t_Reg.assign<Transform>(e0);
+					glm::vec3 pos = glm::vec3(static_cast<float>(x) * Offset, static_cast<float>(y) * Offset, static_cast<float>(z) * Offset);
+					t.SetPos(pos);
+				}
+			}
+		}
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -38,7 +50,13 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-
+		glm::vec3 Offset( 15.0f * DeltaTime );
+		// For each active mesh renderer
+		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+		{
+			glm::vec3 curRot = t_Trans.GetRotation();
+			t_Trans.SetRotation(curRot + Offset);
+		});
 	}
 
 	void Game::OnLoadInitated()
