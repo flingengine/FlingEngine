@@ -23,16 +23,15 @@ namespace Fling
 		template<class Archive>
 		void serialize(Archive& t_Archive);
 
-		std::string MeshName;
-		std::string Material;
+		// We have to use std::strings here until we get some serialization for the GUID class
+		std::string MeshName = "INVALID_MESH";
+		std::string Material = "INVALID_MATERIAL";
 
 		/** Pointer to the actual model  */
 		Model* m_Model = nullptr;
 
 		/** The offset of this mesh renderer to it's model matrix */
 		UINT32 m_ModelMatrixOffset {};
-
-		// #TODO Material settings
     };
 
 	/** Serialization to an archive */

@@ -58,7 +58,6 @@ namespace Fling
 
 		// For testing
 		m_TestImage = ResourceManager::LoadResource<Image>("Textures/wood_albedo.png"_hs);
-		m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
 
 		// Create the dynamic uniform buffers
 		PrepareUniformBuffers();
@@ -436,22 +435,26 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-			const std::shared_ptr<Model>& Model = m_TestModels[0];
-
-			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
-			VkDeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
-
-			// #TODO Sort the mesh renderers before drawing them
-
 			// For each active mesh, get it's index
 			t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 			{
-				// Bind the descriptor set for rendering a mesh using the dynamic offset
-				vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &t_MeshRend.m_ModelMatrixOffset);
+					Fling::Model* Model = t_MeshRend.m_Model;
+					if (Model)
+					{
+						VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
+						VkDeviceSize offsets[1] = { 0 };
+						vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
+						vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+						// Bind the descriptor set for rendering a mesh using the dynamic offset
+						vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &t_MeshRend.m_ModelMatrixOffset);
 
-				vkCmdDrawIndexed(m_CommandBuffers[i], Model->GetIndexCount(), 1, 0, 0, 0);
+						vkCmdDrawIndexed(m_CommandBuffers[i], Model->GetIndexCount(), 1, 0, 0, 0);
+					}
+					else
+					{
+						F_LOG_WARN("Model is invalid on mesh renderer!");
+					}
+
 			});
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
@@ -758,9 +761,11 @@ namespace Fling
 		m_CurrentWindow = FlingWindow::Create(Props);
 	}
 
-	void Renderer::Tick()
+	void Renderer::Tick(float DeltaTime)
 	{
 		m_CurrentWindow->Update();
+
+		m_camera->Update(DeltaTime);
 	}
 
     void Renderer::DrawFrame(entt::registry& t_Reg)
@@ -825,12 +830,6 @@ namespace Fling
 
     void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
     {
-		// #TODO Move the camera ticking to the gameplay loop
-		float TimeSinceStart = Timing::Get().GetTimeSinceStart();
-		float DeltaTime = Timing::Get().GetDeltaTime();
-
-		m_camera->Update(DeltaTime);
-
 		m_UboVS.View = m_camera->GetViewMatrix();
 		m_UboVS.Projection = m_camera->GetProjectionMatrix();
 
@@ -876,13 +875,6 @@ namespace Fling
 		{
 			m_TestImage.reset();
 		}
-
-        for(std::shared_ptr<Model>& Model : m_TestModels)
-        {
-            Model.reset();
-        }
-
-        m_TestModels.clear();
     }
 
 	void Renderer::Shutdown()

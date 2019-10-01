@@ -52,7 +52,7 @@ namespace Fling
 		FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
 
 		/** Happens before draw frame. Update the window  */
-		void Tick();
+		void Tick(float DeltaTime);
 
         /**
         * Draw the frame!
@@ -265,7 +265,5 @@ namespace Fling
         std::vector<VkFence> m_InFlightFences;
 
 		std::shared_ptr<class Image> m_TestImage;
-
-		std::vector<std::shared_ptr<Model>> m_TestModels;
     };
 }	// namespace Fling

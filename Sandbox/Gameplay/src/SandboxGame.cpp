@@ -21,26 +21,7 @@ namespace Sandbox
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
-		// Make a little cube of cubes!
-		int Dimension = 5;
-		float Offset = 2.5f;
-
-		for (int x = 0; x < Dimension; ++x)
-		{
-			for (int y = 0; y < Dimension; ++y)
-			{
-				for (int z = 0; z < Dimension; ++z)
-				{
-					entt::entity e0 = t_Reg.create();
-					t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-
-					// Add a transform to this entity
-					Transform& t = t_Reg.assign<Transform>(e0);
-					glm::vec3 pos = glm::vec3(static_cast<float>(x) * Offset, static_cast<float>(y) * Offset, static_cast<float>(z) * Offset);
-					t.SetPos(pos);
-				}
-			}
-		}
+		GenerateTestMeshes(t_Reg);
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -87,6 +68,37 @@ namespace Sandbox
 	{
 		F_LOG_TRACE("The Sandbox game wants to quit!");
 		m_WantsToQuit = true;
+	}
+
+	void Game::GenerateTestMeshes(entt::registry& t_Reg)
+	{
+		// Make a little cube of cubes!
+		int Dimension = 12;
+		float Offset = 2.5f;
+
+		for (int x = 0; x < Dimension; ++x)
+		{
+			for (int y = 0; y < Dimension; ++y)
+			{
+				for (int z = 0; z < Dimension; ++z)
+				{
+					entt::entity e0 = t_Reg.create();
+					if (x % 2 == 0)
+					{
+						t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+					}
+					else
+					{
+						t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj");
+					}
+
+					// Add a transform to this entity
+					Transform& t = t_Reg.assign<Transform>(e0);
+					glm::vec3 pos = glm::vec3(static_cast<float>(x) * Offset, static_cast<float>(y) * Offset, static_cast<float>(z) * Offset);
+					t.SetPos(pos);
+				}
+			}
+		}
 	}
 
 }	// namespace Sandbox

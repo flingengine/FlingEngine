@@ -57,7 +57,7 @@ namespace Fling
 
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
-			Renderer.Tick();
+			Renderer.Tick(DeltaTime);
 			
 			Input::Poll();
 

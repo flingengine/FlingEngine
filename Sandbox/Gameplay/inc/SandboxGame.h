@@ -39,5 +39,8 @@ namespace Sandbox
 		 * @brief Callback for when the user has given input that shows they want to exit
 		 */
 		void OnQuitPressed();
+
+		/* Creates a 3D array of meshes */
+		void GenerateTestMeshes(entt::registry& t_Reg);
 	};
 }	// namespace Sandbox
