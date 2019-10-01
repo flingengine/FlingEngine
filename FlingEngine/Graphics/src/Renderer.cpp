@@ -539,6 +539,7 @@ namespace Fling
 
 		CreateFrameBuffers();
 
+		PrepareUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
         
@@ -651,7 +652,7 @@ namespace Fling
 			VkDescriptorBufferInfo BufferInfo = {};
 			BufferInfo.buffer = m_DynamicUniformBuffers[i].View->GetVkBuffer();
 			BufferInfo.offset = 0;
-			BufferInfo.range = m_DynamicUniformBuffers[i].View->GetSize();
+			BufferInfo.range = VK_WHOLE_SIZE;
 			descriptorWrites[0] = Initalizers::WriteDescriptorSet(
 				m_DescriptorSets[i], 
 				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -663,7 +664,7 @@ namespace Fling
 			VkDescriptorBufferInfo DynamicBufferInfo = {};
 			DynamicBufferInfo.buffer = m_DynamicUniformBuffers[i].Dynamic->GetVkBuffer();
 			DynamicBufferInfo.offset = 0;
-			DynamicBufferInfo.range = m_DynamicUniformBuffers[i].Dynamic->GetSize();
+			DynamicBufferInfo.range = VK_WHOLE_SIZE;
 			descriptorWrites[1] = Initalizers::WriteDescriptorSet(
 				m_DescriptorSets[i], 
 				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
@@ -854,32 +855,17 @@ namespace Fling
 
 	void Renderer::UpdateDynamicUniformBuffer(UINT32 t_CurrentImage)
 	{
-		glm::vec3 offset(5.0f);
-		uint32_t dim = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+		glm::vec3 offset(3.0f, 0.0f, 0.0f);
 
-		// Do some rotation offset calculation crap for testing
-		// TODO This data should just be grabbed from the appropriate transform component
-		for (uint32_t x = 0; x < dim; x++)
+		for (UINT32 j = 0; j < OBJECT_INSTANCES; j++)
 		{
-			for (uint32_t y = 0; y < dim; y++)
-			{
-				for (uint32_t z = 0; z < dim; z++)
-				{
-					uint32_t index = x * dim * dim + y * dim + z;
+			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
+			// This offset is incorrect for some reason
+			UINT32 dynamicOffset = j * static_cast<UINT32>(m_DynamicAlignment);
+			glm::vec3 Pos = offset * static_cast<float>(j);
 
-					glm::vec3 Pos = offset * static_cast<float>(x);
-					glm::vec3 Scale = glm::vec3(1.0f);
-					glm::vec3 Rot = glm::vec3(0.0f);
-
-					// Algined offset 
-					glm::mat4* modelMat = (glm::mat4*)(((uint64_t)m_DynamicUniformBuffers[t_CurrentImage].Model + (index * m_DynamicAlignment)));
-					
-					*modelMat = glm::translate(glm::mat4(1.0f), Pos);
-					*modelMat = glm::rotate(*modelMat, Rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
-					*modelMat = glm::rotate(*modelMat, Rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
-					*modelMat = glm::rotate(*modelMat, Rotations[index].z, glm::vec3(0.0f, 0.0f, 1.0f));
-			}
-			}
+			glm::mat4* modelMat = (glm::mat4*)(((uint64_t)m_DynamicUniformBuffers[t_CurrentImage].Model + (j * m_DynamicAlignment)));
+			*modelMat = glm::translate(glm::mat4(1.0f), Pos);
 		}
 
 		// Copy the CPU model matrices to the GPU (dynamic mapped UBO mem)
