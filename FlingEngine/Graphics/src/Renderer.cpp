@@ -23,9 +23,6 @@ namespace Fling
 	void Renderer::Init()
 	{
 		InitGraphics();
-		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
-		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
-		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 	}
 
 	void Renderer::InitGraphics()
@@ -51,6 +48,10 @@ namespace Fling
 
 		m_DepthBuffer = new DepthBuffer();
 		assert(m_DepthBuffer);
+
+		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
+		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
+		m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
 		CreateFrameBuffers();
 
@@ -452,7 +453,8 @@ namespace Fling
 			{
 				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
 				// This offset is incorrect for some reason
-				UINT32 dynamicOffset = 0;//j * static_cast<UINT32>(m_DynamicAlignment);
+				UINT32 dynamicOffset = j * static_cast<UINT32>(m_DynamicAlignment);
+				//UINT32 dynamicOffset = 0;//j * static_cast<UINT32>(m_DynamicAlignment);
 
 				// Bind the descriptor set for rendering a mesh using the dynamic offset
 				vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &dynamicOffset);
@@ -594,6 +596,9 @@ namespace Fling
 			Rotations[i] = (glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine)) * 2.0f * (float)FLING_PI);
 			RotationSpeeds[i] = glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine));
 		}
+
+		UpdateUniformBuffer(m_SwapChain->GetActiveImageIndex());
+		UpdateDynamicUniformBuffer(m_SwapChain->GetActiveImageIndex());
 	}
 
     void Renderer::CreateDescriptorPool()
@@ -831,6 +836,7 @@ namespace Fling
 
     void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
     {
+		// #TODO Move the camera ticking to the gameplay loop
 		float TimeSinceStart = Timing::Get().GetTimeSinceStart();
 		float DeltaTime = Timing::Get().GetDeltaTime();
 

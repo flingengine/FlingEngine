@@ -62,7 +62,7 @@ namespace Fling
 
 		VkFormat m_ImageFormat;
 
-		UINT32 m_ActiveImageIndex;
+		UINT32 m_ActiveImageIndex{};
 
 		/** The images inside of the swap chain */
 		std::vector<VkImage> m_Images;

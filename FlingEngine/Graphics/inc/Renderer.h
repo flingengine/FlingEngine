@@ -210,8 +210,6 @@ namespace Fling
         static const int MAX_FRAMES_IN_FLIGHT;
 
         /** Uniform buffers */
-        //std::vector<Buffer*> m_UniformBuffers;
-
 		std::vector<UboDataDynamic> m_DynamicUniformBuffers;
 		UboVS m_UboVS;
 
