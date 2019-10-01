@@ -28,3 +28,6 @@
 [submodule "external/cereal"]
 	path = external/cereal
 	url = https://github.com/flingengine/cereal.git
+[submodule "external/SPIRV-Cross"]
+	path = external/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git

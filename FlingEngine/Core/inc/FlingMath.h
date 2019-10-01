@@ -12,8 +12,3 @@
 #include <glm/gtx/hash.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp> 
-
-
-#define FLING_PI       3.14159265358979323846   // pi
-#define FLING_PI_2     1.57079632679489661923   // pi/2
-#define FLING_PI_4     0.785398163397448309616  // pi/4
