@@ -25,9 +25,9 @@ namespace Fling
         void SetRotation(const glm::vec3& t_Rot);
 
     private:
-        glm::vec3 m_Pos {};
-        glm::vec3 m_Rotation {};
-        glm::vec3 m_Scale {};
+        glm::vec3 m_Pos { 0.0f, 0.0f, 0.0f };
+        glm::vec3 m_Rotation { 0.0f, 0.0f, 0.0f };
+        glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
     };
     
     /** Serilazation to an archive */

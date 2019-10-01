@@ -5,10 +5,20 @@
 #include "File.h"
 #include "Image.h"
 #include "GraphicsHelpers.h"
+#include "Components/Transform.h"
+#include <random>
+
+// The object instance count that is used to create the Dynamic uniform buffer
+// This should be based on how many different mesh objects we have in the scene
+#define OBJECT_INSTANCES 10
 
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
+
+	// Array of transforms that we can use for dynamic UBO
+	Fling::Transform TestTransforms[OBJECT_INSTANCES];
+	glm::vec3 RotationSpeeds[OBJECT_INSTANCES];
 
 	void Renderer::Init()
 	{
@@ -40,17 +50,21 @@ namespace Fling
         CreateCommandPool();
 
 		m_DepthBuffer = new DepthBuffer();
+		assert(m_DepthBuffer);
 
 		CreateFrameBuffers();
 
-		m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
-		m_TestModels.push_back(Model::Create("Models/chalet.obj"_hs));
-		//m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
+		//m_TestImage = ResourceManager::LoadResource<Image>("Textures/chalet.jpg"_hs);
+		//m_TestModels.push_back(Model::Create("Models/chalet.obj"_hs));
+
+		// For testing
+		m_TestImage = ResourceManager::LoadResource<Image>("Textures/wood_albedo.png"_hs);
+		m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
 		//m_TestModels.push_back(Model::Create("Models/cone.obj"_hs));
 
+		// Create the dynamic uniform buffers
+		PrepareUniformBuffers();
 
-
-        CreateUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
 
@@ -128,28 +142,17 @@ namespace Fling
 
     void Renderer::CreateDescriptorLayout()
     {
-        // Create a binding for the UBO
-        VkDescriptorSetLayoutBinding UboLayout = {};
-        UboLayout.binding = 0;
-        UboLayout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        UboLayout.descriptorCount = 1;
-        UboLayout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        UboLayout.pImmutableSamplers = nullptr;
-
-		// Image sampler layout binding
-		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { UboLayout, samplerLayoutBinding };
+		std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =
+		{
+			Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+			Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
+			Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)
+		};
 
         VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
         LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        LayoutInfo.bindingCount = static_cast<UINT32>(bindings.size());
-        LayoutInfo.pBindings = bindings.data();
+        LayoutInfo.bindingCount = static_cast<UINT32>(setLayoutBindings.size());
+        LayoutInfo.pBindings = setLayoutBindings.data();
 
         if(vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
         {
@@ -433,13 +436,30 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            // Load the models
-            for(const std::shared_ptr<Model>& Model : m_TestModels)
-            {
-                Model->CmdRender(m_CommandBuffers[i]);
-            }
+            // Draw the models (vertex and index buffer)
+			//for(const std::shared_ptr<Model>& Model : m_TestModels)
+			//{
+			//    Model->CmdRender(m_CommandBuffers[i]);
+			//}
 
-            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+			const std::shared_ptr<Model>& Model = m_TestModels[0];
+
+			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
+			VkDeviceSize offsets[1] = { 0 };
+			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+
+			for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
+			{
+				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
+				uint32_t dynamicOffset = j * static_cast<uint32_t>(m_DynamicAlignment);
+				// Bind the descriptor set for rendering a mesh using the dynamic offset
+				vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 1, &dynamicOffset);
+
+				vkCmdDrawIndexed(m_CommandBuffers[i], Model->GetIndexCount(), 1, 0, 0, 0);
+			}
+
+            //vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -491,16 +511,11 @@ namespace Fling
 
 		m_SwapChain->Cleanup();
 
-        // Cleanup uniform buffers -------------------------
-		for (size_t i = 0; i < m_UniformBuffers.size(); ++i)
+		// Cleanup uniform buffers -------------------------
+		for (size_t i = 0; i < m_DynamicUniformBuffers.size(); ++i)
 		{
-			if (m_UniformBuffers[i])
-			{
-				delete m_UniformBuffers[i];
-				m_UniformBuffers[i] = nullptr;
-			}
+			m_DynamicUniformBuffers[i].Release();
 		}
-		m_UniformBuffers.clear();
 
         vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
@@ -521,42 +536,78 @@ namespace Fling
 
 		CreateFrameBuffers();
 
-        CreateUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
         
         CreateCommandBuffers();
     }
 
-    void Renderer::CreateUniformBuffers()
-    {
-        VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+	void Renderer::PrepareUniformBuffers()
+	{
+		// Resize the number of dynamic UBO objects
+		size_t ImageCount = m_SwapChain->GetImages().size();
+		m_DynamicUniformBuffers.resize(ImageCount);
 
-		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+		// Calculate required alignment based on minimum device offset alignment
+		size_t MinUboAlignment = m_PhysicalDevice->GetDeviceProps().limits.minUniformBufferOffsetAlignment;
+		m_DynamicAlignment = sizeof(glm::mat4);
+		if (MinUboAlignment > 0)
+		{
+			m_DynamicAlignment = (m_DynamicAlignment + MinUboAlignment - 1) & ~(MinUboAlignment - 1);
+		}
 
-        m_UniformBuffers.resize(Images.size());
+		// Initialize the dynamic UBO's
+		for (size_t i = 0; i < ImageCount; ++i)
+		{
+			size_t bufferSize = OBJECT_INSTANCES * m_DynamicAlignment;
+			m_DynamicUniformBuffers[i].Model = (glm::mat4*)Fling::AlignedAlloc(bufferSize, m_DynamicAlignment);
+			assert(m_DynamicUniformBuffers[i].Model);
 
-        for(size_t i = 0; i < Images.size(); ++i)
-        {
-			m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        }
-    }
+			// Create the view uniform
+			m_DynamicUniformBuffers[i].View = new Buffer(
+				/* t_Size */ sizeof(UboVS),
+				/* t_Usage */ VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				/* t_Properties */ VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			);
+
+			// Note that we do not specify the VK_MEMORY_PROPERTY_HOST_COHERENT_BIT so we have to flush 
+			// the dynamic buffer manually. This is so that we only have to 
+			m_DynamicUniformBuffers[i].Dynamic = new Buffer(
+				/* t_Size */ bufferSize,
+				/* t_Usage */ VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				/* t_Properties */ VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			);
+
+			assert(m_DynamicUniformBuffers[i].View->MapMemory() == VK_SUCCESS);
+			assert(m_DynamicUniformBuffers[i].Dynamic->MapMemory() == VK_SUCCESS);
+		}
+
+		// Initialize the transforms to have a random rotation and speed
+		std::default_random_engine rndEngine((unsigned)time(nullptr));
+		std::normal_distribution<float> rndDist(-1.0f, 1.0f);
+		for (uint32_t i = 0; i < OBJECT_INSTANCES; i++) 
+		{
+			TestTransforms[i].SetRotation(glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine)) * 2.0f * (float)FLING_PI);
+			RotationSpeeds[i] = glm::vec3(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine));
+		}
+	}
 
     void Renderer::CreateDescriptorPool()
     {
-		std::array<VkDescriptorPoolSize, 2> PoolSizes = {};
-		// UBO
-		PoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		PoolSizes[0].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
-		// Image sampler
-		PoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		PoolSizes[1].descriptorCount = static_cast<uint32_t>(m_SwapChain->GetImageCount());
+		UINT32 SwapImageCount = static_cast<UINT32>(m_SwapChain->GetImageCount());
+
+		std::vector<VkDescriptorPoolSize> PoolSizes =
+		{
+			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapImageCount),
+			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, SwapImageCount),
+			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapImageCount),
+		};
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         PoolInfo.poolSizeCount = static_cast<UINT32>(PoolSizes.size());
         PoolInfo.pPoolSizes = PoolSizes.data();
-        PoolInfo.maxSets = static_cast<UINT32>(m_SwapChain->GetImageCount());
+        PoolInfo.maxSets = SwapImageCount;
 
         if(vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
@@ -587,17 +638,22 @@ namespace Fling
         for (size_t i = 0; i < Images.size(); ++i)
         {
             VkDescriptorBufferInfo BufferInfo = {};
-            BufferInfo.buffer = m_UniformBuffers[i]->GetVkBuffer();
+            BufferInfo.buffer = m_DynamicUniformBuffers[i].View->GetVkBuffer();
             BufferInfo.offset = 0;
-            BufferInfo.range = sizeof(UniformBufferObject);
+            BufferInfo.range = sizeof(UboVS);
+
+			VkDescriptorBufferInfo DynamicBufferInfo = {};
+			BufferInfo.buffer = m_DynamicUniformBuffers[i].Dynamic->GetVkBuffer();
+			BufferInfo.offset = 0;
+			BufferInfo.range = m_DynamicUniformBuffers[i].Dynamic->GetSize();
 
 			VkDescriptorImageInfo imageInfo = {};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			imageInfo.imageView = m_TestImage->GetVkImageView();
 			imageInfo.sampler = m_TestImage->GetSampler();
 
-			std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
-
+			std::array<VkWriteDescriptorSet, 3> descriptorWrites = {};
+			// Binding 0 : Projection/view matrix uniform buffer
 			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[0].dstSet = m_DescriptorSets[i];
 			descriptorWrites[0].dstBinding = 0;
@@ -606,13 +662,23 @@ namespace Fling
 			descriptorWrites[0].descriptorCount = 1;
 			descriptorWrites[0].pBufferInfo = &BufferInfo;
 
+			// Binding 1 : Instance matrix as dynamic uniform buffer
 			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			descriptorWrites[1].dstSet = m_DescriptorSets[i];
 			descriptorWrites[1].dstBinding = 1;
 			descriptorWrites[1].dstArrayElement = 0;
-			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			descriptorWrites[1].descriptorCount = 1;
-			descriptorWrites[1].pImageInfo = &imageInfo;
+			descriptorWrites[1].pBufferInfo = &BufferInfo;
+
+			// Binding 2 : Image sampler
+			descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[2].dstSet = m_DescriptorSets[i];
+			descriptorWrites[2].dstBinding = 2;
+			descriptorWrites[2].dstArrayElement = 0;
+			descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[2].descriptorCount = 1;
+			descriptorWrites[2].pImageInfo = &imageInfo;
 
 			vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
@@ -723,6 +789,7 @@ namespace Fling
         }
 
         UpdateUniformBuffer(ImageIndex);
+		UpdateDynamicUniformBuffer(ImageIndex);
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -769,23 +836,29 @@ namespace Fling
 
 		m_camera->Update(DeltaTime);
 
-		UniformBufferObject ubo = {};
-
-		//glm::mat4 model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-		//model = glm::rotate(model, TimeSinceStart * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-		ubo.Model = glm::mat4(1.0f);
-		ubo.View = m_camera->GetViewMatrix();
-		ubo.Proj = m_camera->GetProjectionMatrix();
-		ubo.Proj[1][1] *= -1.0f;
+		m_UboVS.View = m_camera->GetViewMatrix();
+		m_UboVS.Projection = m_camera->GetProjectionMatrix();
+		m_UboVS.Projection[1][1] *= -1.0f;	// BH <--- Do we still need this? Unsure home dawg 
 		
-		// Copy the ubo to the GPU
-		void* data = nullptr;
-		vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
-		memcpy(data, &ubo, sizeof(ubo));
-		vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory());
-    }	
+		// Copy the non-dynamic ubo data to the GPU
+		memcpy(m_DynamicUniformBuffers[t_CurrentImage].View->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
+    }
+
+	void Renderer::UpdateDynamicUniformBuffer(UINT32 t_CurrentImage)
+	{
+		// Copy the CPU model matrices to the GPU (dynamic mapped UBO mem)
+		memcpy(
+			m_DynamicUniformBuffers[t_CurrentImage].Dynamic->m_MappedMem,
+			m_DynamicUniformBuffers[t_CurrentImage].Model,
+			m_DynamicUniformBuffers[t_CurrentImage].Dynamic->GetSize()
+		);
+
+		// Manually flush to only update what has changed
+		VkMappedMemoryRange memoryRange = Initalizers::MappedMemoryRange();
+		memoryRange.memory = m_DynamicUniformBuffers[t_CurrentImage].Dynamic->GetVkDeviceMemory();
+		memoryRange.size = m_DynamicUniformBuffers[t_CurrentImage].Dynamic->GetSize();
+		vkFlushMappedMemoryRanges(m_LogicalDevice->GetVkDevice(), 1, &memoryRange);
+	}
 
 	// Shutdown steps -------------------------------------------
 

@@ -35,7 +35,7 @@ namespace Fling
 		);
 
 		/**
-		 * @brief	Create a an image view for vulkan with the given format
+		 * @brief	Create a an image view for Vulkan with the given format
 		 */
 		VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs);
 
@@ -49,4 +49,41 @@ namespace Fling
 		bool HasStencilComponent(VkFormat t_format);
 
 	}	// namespace GraphicsHelpers
+
+
+	// Some helpers for Vulkan initialization 
+	// Grabbed these from https://github.com/SaschaWillems/Vulkan/tree/master/examples/dynamicuniformbuffer
+	namespace Initalizers
+	{
+		VkMappedMemoryRange MappedMemoryRange();
+
+		VkDescriptorPoolSize DescriptorPoolSize(
+			VkDescriptorType type,
+			uint32_t descriptorCount);
+
+		VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(
+			VkDescriptorType type,
+			VkShaderStageFlags stageFlags,
+			uint32_t binding,
+			uint32_t descriptorCount = 1);
+
+		VkWriteDescriptorSet WriteDescriptorSet(
+			VkDescriptorSet dstSet,
+			VkDescriptorType type,
+			uint32_t binding,
+			VkDescriptorBufferInfo* bufferInfo,
+			uint32_t descriptorCount = 1);
+	}
+
 }   // namespace Fling
+
+
+#define VK_CHECK_RESULT(f)																				\
+{																										\
+	VkResult res = (f);																					\
+	if (res != VK_SUCCESS)																				\
+	{																									\
+		F_LOG_FATAL("VkResult is {} in {} at line {}", res, __FILE__, __LINE__);						\
+		assert(res == VK_SUCCESS);																		\
+	}																									\
+}

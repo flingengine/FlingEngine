@@ -8,6 +8,12 @@ layout(binding=0) uniform UniformBufferObject
     mat4 proj;
 } ubo;
 
+// This comes from the Uniform buffer instance in the renderer 
+layout (binding = 1) uniform UboInstance 
+{
+	mat4 model; 
+} uboInstance;
+
 // @see Vertex.h
 // Inputs ------------------------
 layout(location = 0) in vec3 inPosition;

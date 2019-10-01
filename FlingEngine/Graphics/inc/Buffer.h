@@ -13,13 +13,14 @@ namespace Fling
 	public:
 
 		/**
-		 * @brief Default Ctor for a buffer. Buffer is initalized to 0
-		 * 
+		 * @brief Default Ctor for a buffer. Buffer is initialized to 0
 		 */
 		Buffer()
 			: m_Size(0)
 			, m_Buffer(VK_NULL_HANDLE)
 			, m_BufferMemory(VK_NULL_HANDLE)
+			, m_Descriptor{}
+			, m_MappedMem(nullptr)
 		{
 		}
 
@@ -28,7 +29,7 @@ namespace Fling
 		 * 
 		 * @param t_Size 		Size of this buffer in bytes
 		 * @param t_Usage 		Vk usage flags for this buffer 
-		 * @param t_Properties 	Vk props of this buffer, used to find the memroy type
+		 * @param t_Properties 	Vk props of this buffer, used to find the memory type
 		 * @param t_Data 		Pointer to data that this buffer should map to, e.g. a staging buffer (Default = nullptr) 
 		 */
 		Buffer(
@@ -43,15 +44,14 @@ namespace Fling
 		 */
 		~Buffer();
 
-		const VkBuffer& GetVkBuffer() const { return m_Buffer; }
+		FORCEINLINE const VkBuffer& GetVkBuffer() const { return m_Buffer; }
 
-		const VkDeviceMemory& GetVkDeviceMemory() const { return m_BufferMemory; }
+		FORCEINLINE const VkDeviceMemory& GetVkDeviceMemory() const { return m_BufferMemory; }
 
-		const VkDeviceSize& GetSize() const { return m_Size; }
-
+		FORCEINLINE const VkDeviceSize& GetSize() const { return m_Size; }
 
 		/**
-		 * @brief Copy the contents of the source buffer to the destintation buffer using a single command
+		 * @brief Copy the contents of the source buffer to the destination buffer using a single command
 		 * 
 		 * @param t_SrcBuffer 	Source buffer data
 		 * @param t_DstBuffer 	Destination buffer data
@@ -66,25 +66,27 @@ namespace Fling
 		void Release();
 		
 		/**
-		 * @brief Check if this buffer's vulkan assets are used.
+		 * @brief Check if this buffer's Vulkan assets are used.
 		 * 
 		 * @return true 	memory is not null and the size is greater than 0
 		 */
 		bool IsUsed() const { return m_BufferMemory != VK_NULL_HANDLE && m_Buffer != VK_NULL_HANDLE && m_Size; }
 
-	private:
-
 		/**
 		 * @brief Map the memory of this buffer to the given data
-		 * 
-		 * @param t_Data	Where to map this buffer's data to 
+		 *
+		 * @param t_Data	Where to map this buffer's data to
 		 */
-		void MapMemory(void** t_Data) const;
-
+		VkResult MapMemory(VkDeviceSize t_Size = VK_WHOLE_SIZE, VkDeviceSize t_Offset = 0);
+		
 		/**
-		 * @brief Unmap this bufferes memory from the vulkan device
+		 * @brief Unmap this buffers memory from the Vulkan device
 		 */
 		void UnmapMemory();
+	
+		void* m_MappedMem = nullptr;
+
+	private:
 
 		/** The size of this buffer in bytes */
 		VkDeviceSize m_Size;
@@ -92,7 +94,12 @@ namespace Fling
 		/** Vulkan logical buffer object */
 		VkBuffer m_Buffer;
 
-		/** Pointer to the physcial device memory for this buffer */
+		/** Pointer to the physical device memory for this buffer */
 		VkDeviceMemory m_BufferMemory;
+
+		/** The descriptor stores info about the offset, buffer, and size of this */
+		VkDescriptorBufferInfo m_Descriptor;
+
+		
 	};
 }   // namespace Fling

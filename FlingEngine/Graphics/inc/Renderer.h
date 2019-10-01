@@ -137,7 +137,10 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-        void CreateUniformBuffers();
+		/**
+		 * @brief	Calculate alignment requirements based on the device for the dyanmic uniform buffer
+		 */
+		void PrepareUniformBuffers();
 
         void CreateDescriptorPool();
 
@@ -156,6 +159,8 @@ namespace Fling
          * @param t_CurrentImage The current image index that we are using
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
+
+		void UpdateDynamicUniformBuffer(UINT32 t_CurrentImage);
 
         /**
         * Create a shader module based on the given shader code
@@ -205,8 +210,14 @@ namespace Fling
         static const int MAX_FRAMES_IN_FLIGHT;
 
         /** Uniform buffers */
-        std::vector<Buffer*> m_UniformBuffers;
-        
+        //std::vector<Buffer*> m_UniformBuffers;
+
+		std::vector<UboDataDynamic> m_DynamicUniformBuffers;
+		UboVS m_UboVS;
+
+		/** The alignment of the dynamic UBO on this device */
+		size_t m_DynamicAlignment;
+
         std::vector<VkDescriptorSet> m_DescriptorSets;
 
         /** 
