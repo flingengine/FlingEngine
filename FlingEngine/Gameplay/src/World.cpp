@@ -29,9 +29,9 @@ namespace Fling
 	
     void World::Update(float t_DeltaTime)
     {
-		m_ShouldQuit = (m_ShouldQuit ? m_ShouldQuit : Input::IsKeyDown(KeyNames::FL_KEY_ESCAPE));
 		// TODO: Update any _world_ systems 
-		// The transforms of objects
+
+		// The physics of our objects (position and what not)
 
 		// Once we are done with core updates, then call the game!
 		m_Game->Update(m_Registry, t_DeltaTime);

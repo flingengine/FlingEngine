@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#if defined FLING_WINDOWS
+#if FLING_WINDOWS
 
 #include "Input/WindowsInput.h"
 

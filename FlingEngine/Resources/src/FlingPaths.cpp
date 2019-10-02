@@ -8,7 +8,7 @@ namespace Fling
     {
         int Res = 0;
 
-#ifdef FLING_WINDOWS
+#if FLING_WINDOWS
         Res = _mkdir(t_Dir);
 #else
         Res = mkdir(t_Dir, 0755);
@@ -34,7 +34,7 @@ namespace Fling
 
     void FlingPaths::GetCurrentWorkingDir(char* t_OutBuf, size_t t_BufSize)
     {
-#if defined(FLING_WINDOWS)
+#if FLING_WINDOWS
         {
             // Get the real, full path to this executable, end the string before
             // the filename itself and then set that as the current directory
@@ -46,7 +46,7 @@ namespace Fling
                 SetCurrentDirectory(t_OutBuf);
             }
         }
-#elif defined(FLING_LINUX)
+#elif FLING_LINUX
         {
             if (getcwd(t_OutBuf, t_BufSize) != nullptr) 
             {
@@ -62,6 +62,6 @@ namespace Fling
                 F_LOG_FATAL("chdir() error :");
             }
         }
-#endif
+#endif	// FLING_LINUX
     }
 }   // namespace Fling 

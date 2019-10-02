@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#ifdef FLING_LINUX
+#if FLING_LINUX
 
 #include "Input/LinuxInput.h"
 

@@ -2,7 +2,8 @@
 #include "SandboxGame.h"
 #include "World.h"
 #include "Components/Name.hpp"
-#include "Components/Transform.hpp"
+#include "Components/Transform.h"
+#include "MeshRenderer.h"
 
 namespace Sandbox
 {
@@ -12,10 +13,15 @@ namespace Sandbox
 	{
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
-		Input::BindKeyPress<&Sandbox::Game::OnKeyPress>(KeyNames::FL_KEY_M, *this);
 
+		// Temp saving and load functions
 		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
 		Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
+
+		// notify we want to quit when we press escape
+		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
+
+		GenerateTestMeshes(t_Reg);
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -25,12 +31,13 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-
-	}
-
-	void Game::OnKeyPress()
-	{
-		F_LOG_TRACE("THE KEY WAS PRESSED FROM A DELEGATE BOI");
+		glm::vec3 Offset( 15.0f * DeltaTime );
+		// For each active mesh renderer
+		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+		{
+			glm::vec3 curRot = t_Trans.GetRotation();
+			t_Trans.SetRotation(curRot + Offset);
+		});
 	}
 
 	void Game::OnLoadInitated()
@@ -41,11 +48,10 @@ namespace Sandbox
 		World->LoadLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
 		entt::registry& t_Reg = World->GetRegistry();
 		
+		// For testing -----
 		t_Reg.view<NameComponent, Transform>().each([&](entt::entity t_Ent, NameComponent& t_Name, Transform& t_Trans)
 		{
-			F_LOG_TRACE("Entity has name {}  and pos {},{},{}",
-				t_Name.Name, t_Trans.Pos.x, t_Trans.Pos.y, t_Trans.Pos.z
-			);
+			F_LOG_TRACE("Entity has name {}  and transform {}", t_Name.Name, t_Trans);
 		});
 	}
 
@@ -54,20 +60,45 @@ namespace Sandbox
 		Fling::World* World = GetWorld();
 		assert(World);
 
-		entt::registry& t_Reg = World->GetRegistry();
-
-		// Add some test entities  -------------------
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<Fling::Transform>(e0);
-		t_Reg.assign<Fling::NameComponent>(e0, "Entity 0 Name");
-
-		entt::entity e1 = t_Reg.create();
-		t_Reg.assign<Fling::Transform>(e1);
-		t_Reg.assign<Fling::NameComponent>(e1, "Entity 1 Name");
-		// end For testing -------------------
-
 		// Write out the file
 		World->OutputLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
+	}
+
+	void Game::OnQuitPressed()
+	{
+		F_LOG_TRACE("The Sandbox game wants to quit!");
+		m_WantsToQuit = true;
+	}
+
+	void Game::GenerateTestMeshes(entt::registry& t_Reg)
+	{
+		// Make a little cube of cubes!
+		int Dimension = 12;
+		float Offset = 2.5f;
+
+		for (int x = 0; x < Dimension; ++x)
+		{
+			for (int y = 0; y < Dimension; ++y)
+			{
+				for (int z = 0; z < Dimension; ++z)
+				{
+					entt::entity e0 = t_Reg.create();
+					if (x % 2 == 0)
+					{
+						t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+					}
+					else
+					{
+						t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj");
+					}
+
+					// Add a transform to this entity
+					Transform& t = t_Reg.assign<Transform>(e0);
+					glm::vec3 pos = glm::vec3(static_cast<float>(x) * Offset, static_cast<float>(y) * Offset, static_cast<float>(z) * Offset);
+					t.SetPos(pos);
+				}
+			}
+		}
 	}
 
 }	// namespace Sandbox

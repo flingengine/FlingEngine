@@ -40,6 +40,7 @@
 #include "FlingPaths.h"
 #include "FlingMath.h"
 #include "Timing.h"
+#include "Memory.h"
 
 #define FLING_DEFAULT_WINDOW_WIDTH		800
 #define FLING_DEFAULT_WINDOW_HEIGHT		600

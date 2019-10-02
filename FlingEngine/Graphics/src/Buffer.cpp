@@ -45,11 +45,12 @@ namespace Fling
 		// Map this buffer and copy the data to the given data pointer if one was specified
 		if(t_Data)
 		{
-			void* mappedData;
-			MapMemory(&mappedData);
-			memcpy(mappedData, t_Data, m_Size);
+			MapMemory();
 
-			// 
+			assert(m_MappedMem);
+			memcpy(m_MappedMem, t_Data, m_Size);
+
+			// Manually flush this bit if we have to
 			if((t_Properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 			{
 				VkMappedMemoryRange MappedRange {};
@@ -60,7 +61,7 @@ namespace Fling
 				vkFlushMappedMemoryRanges(Device, 1, &MappedRange);
 			}
 
-			UnmapMemory();
+			//UnmapMemory();
 		}
 
 		if((vkBindBufferMemory(Device, m_Buffer, m_BufferMemory, 0) != VK_SUCCESS))
@@ -69,19 +70,19 @@ namespace Fling
 		}
 	}
 
-	void Buffer::MapMemory(void** t_Data) const
+	VkResult Buffer::MapMemory(VkDeviceSize t_Size, VkDeviceSize t_Offset)
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		if(vkMapMemory(Device, m_BufferMemory,0, m_Size, 0, t_Data) != VK_SUCCESS)
-		{
-			F_LOG_ERROR("Failed to map buffer memory!");
-		}
+		return vkMapMemory(Renderer::Get().GetLogicalVkDevice(), m_BufferMemory, t_Offset, t_Size, 0, &m_MappedMem);
 	}
 
 	void Buffer::UnmapMemory()
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		vkUnmapMemory(Device, m_BufferMemory);
+		if (m_MappedMem)
+		{
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+			vkUnmapMemory(Device, m_BufferMemory);
+			m_MappedMem = nullptr;
+		}
 	}
 	
 	void Buffer::CopyBuffer(Buffer* t_SrcBuffer, Buffer* t_DstBuffer, VkDeviceSize t_Size)
