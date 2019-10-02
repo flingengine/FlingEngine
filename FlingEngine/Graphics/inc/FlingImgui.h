@@ -1,11 +1,11 @@
 #pragma once 
 
-#include "FlingVulkan.h"
+#include <imgui.h>
+
 #include "Renderer.h"
+#include "FlingVulkan.h"
 #include "Buffer.h"
 #include "LogicalDevice.h"
-#include "PhyscialDevice.h"
-#include "imgui.h"
 #include "GraphicsHelpers.h"
 #include "ResourceManager.h"
 #include "File.h"
@@ -21,15 +21,15 @@ namespace Fling
 			glm::vec2 translate;
 		} pushConstBlock;
 
-		FlingImgui(const LogicalDevice& t_logicalDevice);
+		FlingImgui(LogicalDevice* t_logicalDevice);
 		~FlingImgui();
 		
-		void Init(float width, float height);
-		void InitResources(VkRenderPass renderPass, VkQueue copyQueue);
+		void Init(float t_width, float t_height);
+		void InitResources(VkRenderPass t_renderPass, VkQueue t_copyQueue);
 		//To do : look into delegates 
 		void NewFrame();
 		void UpdateBuffers();
-		void DrawFrame();
+		void DrawFrame(VkCommandBuffer t_commandBuffer);
 
 	private:
 		VkSampler m_sampler;
@@ -47,6 +47,9 @@ namespace Fling
 		VkDescriptorSetLayout m_descriptorSetLayout;
 		VkDescriptorSet m_descriptorSet;
 
-		const LogicalDevice& m_LogicalDevice;
+		void* m_vertexMappedMemory;
+		void* m_indexMappedMemory;
+
+		LogicalDevice* m_LogicalDevice;
 	};
 } //namespace fling

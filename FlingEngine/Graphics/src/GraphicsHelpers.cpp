@@ -408,6 +408,33 @@ namespace Fling
 			return vInputAttribDescription;
 		}
 
+		VkViewport Viewport(float t_width, float t_height, float t_minDepth, float t_maxDepth)
+		{
+			VkViewport viewport = {};
+			viewport.width = t_width;
+			viewport.height = t_height;
+			viewport.maxDepth = t_maxDepth;
+			viewport.minDepth = t_minDepth;
+			return viewport;
+		}
+
+
+		VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode)
+		{
+			VkShaderModuleCreateInfo CreateInfo = {};
+			CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			CreateInfo.codeSize = t_ShaderCode->GetFileLength();
+			CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode->GetData());
+
+			VkShaderModule ShaderModule;
+			if (vkCreateShaderModule(Renderer::Get().GetLogicalVkDevice(), &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Failed to create shader module!");
+			}
+
+			return ShaderModule;
+		}
+
 		VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo()
 		{
 			VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};

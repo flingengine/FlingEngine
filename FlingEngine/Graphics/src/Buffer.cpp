@@ -80,8 +80,26 @@ namespace Fling
 
 	void Buffer::UnmapMemory()
 	{
+		if(m_BufferMemory)
+		{
+			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+			vkUnmapMemory(Device, m_BufferMemory);
+		}
+	}
+
+	void Buffer::Flush()
+	{
+		VkMappedMemoryRange mappedRange = {};
+		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		mappedRange.memory = m_BufferMemory;
+		mappedRange.offset = 0;
+		mappedRange.size = m_Size;
+
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		vkUnmapMemory(Device, m_BufferMemory);
+		if (vkFlushMappedMemoryRanges(Device, 1, &mappedRange) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Buffer could not flush mapped memory ranges");
+		}
 	}
 	
 	void Buffer::CopyBuffer(Buffer* t_SrcBuffer, Buffer* t_DstBuffer, VkDeviceSize t_Size)
@@ -104,8 +122,15 @@ namespace Fling
 	{
 		// Free up the VK memory that this buffer uses
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		vkDestroyBuffer(Device, m_Buffer, nullptr);
-		vkFreeMemory(Device, m_BufferMemory, nullptr);
+		if(m_Buffer)
+		{
+			vkDestroyBuffer(Device, m_Buffer, nullptr);
+		}
+
+		if(m_BufferMemory)
+		{
+			vkFreeMemory(Device, m_BufferMemory, nullptr);
+		}
 	}
 
 	Buffer::~Buffer()

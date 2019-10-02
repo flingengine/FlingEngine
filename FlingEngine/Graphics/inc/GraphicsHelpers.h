@@ -2,6 +2,7 @@
 
 #include "FlingVulkan.h"
 #include "FlingTypes.h"
+#include "File.h"
 
 namespace Fling
 {
@@ -146,7 +147,6 @@ namespace Fling
 			VkVertexInputRate t_inputRate
 		);
 
-
 		VkVertexInputAttributeDescription VertexInputAttributeDescription(
 			UINT32 t_binding,
 			UINT32 t_location,
@@ -154,7 +154,16 @@ namespace Fling
 			UINT32 t_offset
 		);
 
+		VkViewport Viewport(
+			float t_width,
+			float t_height,
+			float t_minDepth,
+			float t_maxDepth
+		);
+
 		VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo();
+
+		VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
 		/**
 		 * @brief	Create a an image view for vulkan with the given format

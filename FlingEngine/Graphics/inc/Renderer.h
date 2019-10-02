@@ -7,6 +7,7 @@
 #include "FlingVulkan.h"
 
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 
 #include "Singleton.hpp"
 
@@ -23,10 +24,14 @@
 #include "DepthBuffer.h"
 #include "Model.h"
 
+#include "FlingImgui.h"
+
 namespace Fling
 {
     // File resource
     class File;
+
+	class FlingImgui;
 
     /// <summary>
     /// Core renderer for the application
@@ -95,7 +100,7 @@ namespace Fling
         *
         * @return   Shader module from the given code
         */                                 
-        VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
+        //VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
     private:
 
@@ -103,6 +108,9 @@ namespace Fling
         /// Init the current graphics API
         /// </summary>
         void InitGraphics();
+		
+		/// Init imgui context 
+		void InitImgui();
 
         /**
          * @brief Create a Descriptor Layout object
@@ -168,6 +176,8 @@ namespace Fling
         std::unique_ptr<FirstPersonCamera> m_camera;
 
         FlingWindow* m_CurrentWindow = nullptr;
+
+		FlingImgui* m_flingImgui = nullptr;
 
         Instance* m_Instance = nullptr;
 

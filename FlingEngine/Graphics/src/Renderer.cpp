@@ -13,6 +13,7 @@ namespace Fling
     void Renderer::Init()
     {
         InitGraphics();
+		InitImgui();
         float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
@@ -48,8 +49,6 @@ namespace Fling
         m_TestModels.push_back(Model::Create("Models/cube.obj"_hs));
         //m_TestModels.push_back(Model::Create("Models/cone.obj"_hs));
 
-
-
         CreateUniformBuffers();
         CreateDescriptorPool();
         CreateDescriptorSets();
@@ -57,6 +56,15 @@ namespace Fling
         CreateCommandBuffers();
         CreateSyncObjects();
     }
+
+	void Renderer::InitImgui()
+	{
+		m_flingImgui = new FlingImgui(m_LogicalDevice);
+		m_flingImgui->Init(
+			static_cast<float>(m_CurrentWindow->GetWidth()), 
+			static_cast<float>(m_CurrentWindow->GetHeight()));
+		m_flingImgui->InitResources(m_RenderPass, m_LogicalDevice->GetGraphicsQueue());
+	}
 
     void Renderer::CreateRenderPass()
     {
@@ -167,8 +175,8 @@ namespace Fling
         assert(FragShaderCode);
 
         // Create modules
-        VkShaderModule VertModule = CreateShaderModule(VertShaderCode);
-        VkShaderModule FragModule = CreateShaderModule(FragShaderCode);
+        VkShaderModule VertModule = GraphicsHelpers::CreateShaderModule(VertShaderCode);
+        VkShaderModule FragModule = GraphicsHelpers::CreateShaderModule(FragShaderCode);
 
         VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
         VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -645,21 +653,6 @@ namespace Fling
         }
     }
 
-    VkShaderModule Renderer::CreateShaderModule(std::shared_ptr<File> t_ShaderCode)
-    {
-        VkShaderModuleCreateInfo CreateInfo = {};
-        CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        CreateInfo.codeSize = t_ShaderCode->GetFileLength();
-        CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode->GetData());
-
-        VkShaderModule ShaderModule;
-        if (vkCreateShaderModule(m_LogicalDevice->GetVkDevice(), &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to create shader module!");
-        }
-
-        return ShaderModule;
-    }
 
     void Renderer::CreateGameWindow(const UINT32 t_width, const UINT32 t_height)
     {
@@ -811,6 +804,12 @@ namespace Fling
     {
         // Cleanup Vulkan ------
         CleanupFrameResources();
+
+		if (m_flingImgui)
+		{
+			delete m_flingImgui;
+			m_flingImgui = nullptr;
+		}
 
         if (m_SwapChain)
         {
