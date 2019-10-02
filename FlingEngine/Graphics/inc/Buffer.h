@@ -77,7 +77,9 @@ namespace Fling
          *
          * @param t_Data    Where to map this buffer's data to
          */
-        void MapMemory(void** t_Data) const;
+		void MapMemory(void** t_Data) const;
+
+        void MapMemory(void** t_Data, VkDeviceSize t_size) const;
 
         /**
          * @brief Unmap this bufferes memory from the vulkan device

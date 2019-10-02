@@ -167,6 +167,8 @@ namespace Fling
 			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
 			VkSamplerCreateInfo samplerInfo = {};
+			samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			samplerInfo.maxAnisotropy = 1.0f;
 			samplerInfo.magFilter = t_magFilter;
 			samplerInfo.minFilter = t_minFilter;
 			samplerInfo.mipmapMode = t_mipmapMode;
@@ -174,7 +176,6 @@ namespace Fling
 			samplerInfo.addressModeV = t_addressModeV;
 			samplerInfo.addressModeW = t_addressModeM;
 			samplerInfo.borderColor = t_borderColor;
-			
 
 			if (vkCreateSampler(Device, &samplerInfo, nullptr, &t_sampler) != VK_SUCCESS)
 			{

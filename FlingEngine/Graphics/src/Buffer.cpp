@@ -78,6 +78,15 @@ namespace Fling
 		}
 	}
 
+	void Buffer::MapMemory(void ** t_Data, VkDeviceSize t_size) const
+	{
+		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		if (vkMapMemory(Device, m_BufferMemory, 0, t_size, 0, t_Data) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Failed to map buffer memory!");
+		}
+	}
+
 	void Buffer::UnmapMemory()
 	{
 		if(m_BufferMemory)

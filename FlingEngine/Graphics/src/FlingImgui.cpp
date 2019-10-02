@@ -263,9 +263,12 @@ namespace Fling
 		static float f = 0.0f;
 		ImGui::TextUnformatted("TESTING");
 		ImGui::Text("Camera");
+		
 		ImGui::SetNextWindowSize(ImVec2(200, 200));
 		ImGui::Begin("Example settings");
 		ImGui::SetNextWindowPos(ImVec2(650, 20));
+		ImGui::End();
+
 		ImGui::ShowDemoWindow();
 		// Render to generate draw buffers
 		ImGui::Render();
@@ -291,7 +294,7 @@ namespace Fling
 
 			m_vertexBuffer = Buffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, nullptr);
 			m_vertexCount = imDrawData->TotalVtxCount;
-			m_vertexBuffer.MapMemory(&m_vertexMappedMemory);
+			m_vertexBuffer.MapMemory(&m_vertexMappedMemory, VK_WHOLE_SIZE);
 		}
 
 		VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
@@ -304,7 +307,7 @@ namespace Fling
 
 			m_indexBuffer = Buffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, nullptr);
 			m_indexCount = imDrawData->TotalIdxCount;
-			m_indexBuffer.MapMemory(&m_indexMappedMemory);
+			m_indexBuffer.MapMemory(&m_indexMappedMemory, VK_WHOLE_SIZE);
 		}
 
 		ImDrawVert* vtxDst = (ImDrawVert*)m_vertexMappedMemory;
@@ -326,7 +329,7 @@ namespace Fling
 	{
 		ImGuiIO& io = ImGui::GetIO();
 
-		vkCmdBindDescriptorSets(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1);
+		vkCmdBindDescriptorSets(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
 		vkCmdBindPipeline(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeLine);
 
 		//VkViewport viewport = vks::initializers::viewport(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y, 0.0f, 1.0f);

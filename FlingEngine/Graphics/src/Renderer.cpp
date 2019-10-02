@@ -13,7 +13,6 @@ namespace Fling
     void Renderer::Init()
     {
         InitGraphics();
-		InitImgui();
         float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
@@ -53,6 +52,8 @@ namespace Fling
         CreateDescriptorPool();
         CreateDescriptorSets();
 
+		//Init resource for imgui and creates imgui context 
+		InitImgui();
         CreateCommandBuffers();
         CreateSyncObjects();
     }
@@ -409,6 +410,9 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
 
+		m_flingImgui->NewFrame();
+		m_flingImgui->UpdateBuffers();
+
         // Start command buffer recording
         for (size_t i = 0; i < m_CommandBuffers.size(); i++)
         {
@@ -448,6 +452,9 @@ namespace Fling
             }
 
             vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+
+			//Render imgui
+			//m_flingImgui->DrawFrame(m_CommandBuffers[i]);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 

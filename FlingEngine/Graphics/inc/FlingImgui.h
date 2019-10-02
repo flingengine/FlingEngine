@@ -47,8 +47,8 @@ namespace Fling
 		VkDescriptorSetLayout m_descriptorSetLayout;
 		VkDescriptorSet m_descriptorSet;
 
-		void* m_vertexMappedMemory;
-		void* m_indexMappedMemory;
+		void* m_vertexMappedMemory = nullptr;
+		void* m_indexMappedMemory = nullptr;
 
 		LogicalDevice* m_LogicalDevice;
 	};
