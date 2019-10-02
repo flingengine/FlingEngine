@@ -78,22 +78,24 @@ namespace Fling
 		}
 	}
 
-	void Buffer::MapMemory(void ** t_Data, VkDeviceSize t_size) const
+	/*void Buffer::MapMemory(VkDeviceSize t_size)
 	{
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		if (vkMapMemory(Device, m_BufferMemory, 0, t_size, 0, t_Data) != VK_SUCCESS)
+		if (vkMapMemory(Device, m_BufferMemory, 0, t_size, 0, &mapped) != VK_SUCCESS)
 		{
 			F_LOG_ERROR("Failed to map buffer memory!");
 		}
-	}
+	}*/
 
 	void Buffer::UnmapMemory()
 	{
-		if(m_BufferMemory)
-		{
-			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-			vkUnmapMemory(Device, m_BufferMemory);
-		}
+		
+		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		vkUnmapMemory(Device, m_BufferMemory);
+		//if (mapped)
+		//{
+		//	mapped = nullptr;
+		//}
 	}
 
 	void Buffer::Flush()
@@ -131,7 +133,7 @@ namespace Fling
 	{
 		// Free up the VK memory that this buffer uses
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		if(m_Buffer)
+		if (m_Buffer)
 		{
 			vkDestroyBuffer(Device, m_Buffer, nullptr);
 		}

@@ -410,8 +410,8 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
 
-		m_flingImgui->NewFrame();
-		m_flingImgui->UpdateBuffers();
+		//m_flingImgui->NewFrame();
+		//m_flingImgui->UpdateBuffers();
 
         // Start command buffer recording
         for (size_t i = 0; i < m_CommandBuffers.size(); i++)

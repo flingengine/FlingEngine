@@ -41,15 +41,13 @@ namespace Fling
         /**
          * @brief Destroy the Buffer object, frees Vk memory and destroys buffer
          */
-        ~Buffer();
+        virtual ~Buffer();
 
         const VkBuffer& GetVkBuffer() const { return m_Buffer; }
 
         const VkDeviceMemory& GetVkDeviceMemory() const { return m_BufferMemory; }
 
         const VkDeviceSize& GetSize() const { return m_Size; }
-
-
         /**
          * @brief Copy the contents of the source buffer to the destintation buffer using a single command
          * 
@@ -79,7 +77,7 @@ namespace Fling
          */
 		void MapMemory(void** t_Data) const;
 
-        void MapMemory(void** t_Data, VkDeviceSize t_size) const;
+        //void MapMemory(VkDeviceSize t_size);
 
         /**
          * @brief Unmap this bufferes memory from the vulkan device
@@ -93,7 +91,10 @@ namespace Fling
 		 */
 		void Flush();
 
-    private:
+    protected:
+		//Test
+		//void* mapped;
+
         /** The size of this buffer in bytes */
         VkDeviceSize m_Size;
 

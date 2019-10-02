@@ -288,30 +288,36 @@ namespace Fling
 		if ((m_vertexBuffer.GetVkBuffer() == VK_NULL_HANDLE) ||
 			(m_vertexCount != imDrawData->TotalVtxCount))
 		{
-			m_vertexBuffer.UnmapMemory();
-			m_vertexMappedMemory = nullptr;
+			if (m_vertexMappedMemory)
+			{
+				m_vertexBuffer.UnmapMemory();
+				m_vertexMappedMemory = nullptr;
+			}
 			m_vertexBuffer.Release();
 
 			m_vertexBuffer = Buffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, nullptr);
 			m_vertexCount = imDrawData->TotalVtxCount;
-			m_vertexBuffer.MapMemory(&m_vertexMappedMemory, VK_WHOLE_SIZE);
+			m_vertexBuffer.MapMemory(&m_vertexMappedMemory);
 		}
 
 		VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 		if((m_indexBuffer.GetVkBuffer() == VK_NULL_HANDLE) ||
 			(m_indexCount < imDrawData->TotalIdxCount))
 		{
-			m_indexBuffer.UnmapMemory();
-			m_indexMappedMemory = nullptr;
+			if (m_indexMappedMemory)
+			{
+				m_indexBuffer.UnmapMemory();
+				m_indexMappedMemory = nullptr;
+			}
 			m_indexBuffer.Release();
 
 			m_indexBuffer = Buffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, nullptr);
 			m_indexCount = imDrawData->TotalIdxCount;
-			m_indexBuffer.MapMemory(&m_indexMappedMemory, VK_WHOLE_SIZE);
+			m_indexBuffer.MapMemory(&m_indexMappedMemory);
 		}
 
-		ImDrawVert* vtxDst = (ImDrawVert*)m_vertexMappedMemory;
-		ImDrawIdx* idxDst = (ImDrawIdx*)m_indexMappedMemory;
+		ImDrawVert* vtxDst = (ImDrawVert*)m_indexMappedMemory;
+		ImDrawIdx* idxDst = (ImDrawIdx*)m_vertexMappedMemory;
 
 		for (int n = 0; n < imDrawData->CmdListsCount; ++n) {
 			const ImDrawList* cmd_list = imDrawData->CmdLists[n];
@@ -357,7 +363,7 @@ namespace Fling
 		UINT32 vertexOffset = 0;
 		UINT32 indexOffset = 0;
 
-		if (!imDrawData->CmdListsCount > 0)
+		if (imDrawData->CmdListsCount > 0)
 		{
 			VkDeviceSize offsets[1] = { 0 };
 			vkCmdBindVertexBuffers(
