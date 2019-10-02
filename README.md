@@ -81,6 +81,8 @@ to me on [Twitter](https://twitter.com/BenjaFriend?lang=en) or here on GitHub. E
 goal is to have some more specific PR templates/coding standards but for now that is not a 
 priority. 
 
+The `master` branch is where we keep our stable releases only. For the most up to date development
+see the `staging` branch
 
 ### Cool Resources
 
