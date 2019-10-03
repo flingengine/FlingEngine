@@ -10,8 +10,6 @@ namespace Fling
 	FlingImgui::~FlingImgui()
 	{
         ImGui::DestroyContext();
-        m_vertexBuffer.Release();
-        m_indexBuffer.Release();
 		vkDestroyImage(m_LogicalDevice->GetVkDevice(), m_fontImage, nullptr);
         vkDestroyImageView(m_LogicalDevice->GetVkDevice(), m_fontImageView, nullptr);
         vkFreeMemory(m_LogicalDevice->GetVkDevice(), m_fontMemory, nullptr);
@@ -36,6 +34,9 @@ namespace Fling
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(t_width, t_height);
         io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+
+		m_indexBuffer = std::make_unique<MappedBuffer>();
+		m_vertexBuffer = std::make_unique<MappedBuffer>();
 	}
 
 	void FlingImgui::InitResources(VkRenderPass t_renderPass, VkQueue t_copyQueue)
@@ -285,39 +286,31 @@ namespace Fling
 			return;
 		}
 
-		if ((m_vertexBuffer.GetVkBuffer() == VK_NULL_HANDLE) ||
+		if ((m_vertexBuffer->GetVkBuffer() == VK_NULL_HANDLE) ||
 			(m_vertexCount != imDrawData->TotalVtxCount))
 		{
-			if (m_vertexMappedMemory)
-			{
-				m_vertexBuffer.UnmapMemory();
-				m_vertexMappedMemory = nullptr;
-			}
-			m_vertexBuffer.Release();
+			m_vertexBuffer->UnmapMemory();
+			m_vertexBuffer->Release();
 
-			m_vertexBuffer = Buffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, nullptr);
+			m_vertexBuffer->CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 			m_vertexCount = imDrawData->TotalVtxCount;
-			m_vertexBuffer.MapMemory(&m_vertexMappedMemory);
+			m_vertexBuffer->MapMemory();
 		}
 
 		VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
-		if((m_indexBuffer.GetVkBuffer() == VK_NULL_HANDLE) ||
+		if((m_indexBuffer->GetVkBuffer() == VK_NULL_HANDLE) ||
 			(m_indexCount < imDrawData->TotalIdxCount))
 		{
-			if (m_indexMappedMemory)
-			{
-				m_indexBuffer.UnmapMemory();
-				m_indexMappedMemory = nullptr;
-			}
-			m_indexBuffer.Release();
+			m_indexBuffer->UnmapMemory();
+			m_indexBuffer->Release();
 
-			m_indexBuffer = Buffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, nullptr);
+			m_indexBuffer->CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 			m_indexCount = imDrawData->TotalIdxCount;
-			m_indexBuffer.MapMemory(&m_indexMappedMemory);
+			m_indexBuffer->MapMemory();
 		}
 
-		ImDrawVert* vtxDst = (ImDrawVert*)m_indexMappedMemory;
-		ImDrawIdx* idxDst = (ImDrawIdx*)m_vertexMappedMemory;
+		ImDrawVert* vtxDst = (ImDrawVert*)m_vertexBuffer->m_mapped;
+		ImDrawIdx* idxDst = (ImDrawIdx*)m_indexBuffer->m_mapped;
 
 		for (int n = 0; n < imDrawData->CmdListsCount; ++n) {
 			const ImDrawList* cmd_list = imDrawData->CmdLists[n];
@@ -327,8 +320,8 @@ namespace Fling
 			idxDst += cmd_list->IdxBuffer.Size;
 		}
 
-		m_vertexBuffer.Flush();
-		m_indexBuffer.Flush();
+		m_vertexBuffer->Flush();
+		m_indexBuffer->Flush();
 	}
 
 	void FlingImgui::DrawFrame(VkCommandBuffer t_commandBuffer)
@@ -338,8 +331,6 @@ namespace Fling
 		vkCmdBindDescriptorSets(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
 		vkCmdBindPipeline(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeLine);
 
-		//VkViewport viewport = vks::initializers::viewport(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y, 0.0f, 1.0f);
-		//vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		VkViewport viewport = GraphicsHelpers::Viewport(
 			ImGui::GetIO().DisplaySize.x,
 			ImGui::GetIO().DisplaySize.y,
@@ -349,7 +340,7 @@ namespace Fling
 
 		//UI scale and translate via push constants
 		pushConstBlock.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
-		pushConstBlock.translate = glm::vec2(1.0f);
+		pushConstBlock.translate = glm::vec2(-1.0f);
 		vkCmdPushConstants(
 			t_commandBuffer, 
 			m_pipelineLayout, 
@@ -370,19 +361,19 @@ namespace Fling
 				t_commandBuffer,
 				0,
 				1,
-				&m_vertexBuffer.GetVkBuffer(),
+				&m_vertexBuffer->GetVkBuffer(),
 				offsets);
 
 			vkCmdBindIndexBuffer(
 				t_commandBuffer,
-				m_indexBuffer.GetVkBuffer(),
+				m_indexBuffer->GetVkBuffer(),
 				0,
 				VK_INDEX_TYPE_UINT16);
 
 			for (INT32 i = 0; i < imDrawData->CmdListsCount; ++i)
 			{
 				const ImDrawList* cmd_list = imDrawData->CmdLists[i];
-				for (INT32 j = 0; j < cmd_list->CmdBuffer.size(); ++j)
+				for (INT32 j = 0; j < cmd_list->CmdBuffer.Size; ++j)
 				{
 					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
 					VkRect2D scissorRect;

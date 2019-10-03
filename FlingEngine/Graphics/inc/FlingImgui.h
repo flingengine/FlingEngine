@@ -1,10 +1,11 @@
 #pragma once 
 
 #include <imgui.h>
+#include <algorithm>
 
 #include "Renderer.h"
 #include "FlingVulkan.h"
-#include "Buffer.h"
+#include "MappedBuffer.h"
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
 #include "ResourceManager.h"
@@ -33,8 +34,6 @@ namespace Fling
 
 	private:
 		VkSampler m_sampler;
-		Buffer m_vertexBuffer;
-		Buffer m_indexBuffer;
 		INT32 m_vertexCount = 0;
 		INT32 m_indexCount = 0;
 		VkDeviceMemory m_fontMemory = VK_NULL_HANDLE;
@@ -46,10 +45,9 @@ namespace Fling
 		VkDescriptorPool m_descriptorPool;
 		VkDescriptorSetLayout m_descriptorSetLayout;
 		VkDescriptorSet m_descriptorSet;
-
-		void* m_vertexMappedMemory = nullptr;
-		void* m_indexMappedMemory = nullptr;
-
 		LogicalDevice* m_LogicalDevice;
+
+		std::unique_ptr<class MappedBuffer> m_vertexBuffer;
+		std::unique_ptr<class MappedBuffer> m_indexBuffer;
 	};
 } //namespace fling

@@ -64,7 +64,7 @@ namespace Fling
 		m_flingImgui->Init(
 			static_cast<float>(m_CurrentWindow->GetWidth()), 
 			static_cast<float>(m_CurrentWindow->GetHeight()));
-		m_flingImgui->InitResources(m_RenderPass, m_LogicalDevice->GetGraphicsQueue());
+		//m_flingImgui->InitResources(m_RenderPass, m_LogicalDevice->GetGraphicsQueue());
 	}
 
     void Renderer::CreateRenderPass()
@@ -410,8 +410,8 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
 
-		//m_flingImgui->NewFrame();
-		//m_flingImgui->UpdateBuffers();
+		/*m_flingImgui->NewFrame();
+		m_flingImgui->UpdateBuffers();*/
 
         // Start command buffer recording
         for (size_t i = 0; i < m_CommandBuffers.size(); i++)

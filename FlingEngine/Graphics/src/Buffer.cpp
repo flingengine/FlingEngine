@@ -78,39 +78,10 @@ namespace Fling
 		}
 	}
 
-	/*void Buffer::MapMemory(VkDeviceSize t_size)
-	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		if (vkMapMemory(Device, m_BufferMemory, 0, t_size, 0, &mapped) != VK_SUCCESS)
-		{
-			F_LOG_ERROR("Failed to map buffer memory!");
-		}
-	}*/
-
 	void Buffer::UnmapMemory()
 	{
-		
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 		vkUnmapMemory(Device, m_BufferMemory);
-		//if (mapped)
-		//{
-		//	mapped = nullptr;
-		//}
-	}
-
-	void Buffer::Flush()
-	{
-		VkMappedMemoryRange mappedRange = {};
-		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory = m_BufferMemory;
-		mappedRange.offset = 0;
-		mappedRange.size = m_Size;
-
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		if (vkFlushMappedMemoryRanges(Device, 1, &mappedRange) != VK_SUCCESS)
-		{
-			F_LOG_ERROR("Buffer could not flush mapped memory ranges");
-		}
 	}
 	
 	void Buffer::CopyBuffer(Buffer* t_SrcBuffer, Buffer* t_DstBuffer, VkDeviceSize t_Size)
@@ -127,6 +98,20 @@ namespace Fling
 		vkCmdCopyBuffer(commandBuffer, t_SrcBuffer->GetVkBuffer(), t_DstBuffer->GetVkBuffer(), 1, &copyRegion);
 
 		GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
+	}
+
+	void Buffer::Flush(VkDeviceSize size, VkDeviceSize offset)
+	{
+		VkDevice LogicalDevice = Renderer::Get().GetLogicalVkDevice();
+		VkMappedMemoryRange mappedRange = {};
+		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		mappedRange.memory = m_BufferMemory;
+		mappedRange.offset = offset;
+		mappedRange.size = size;
+		if (vkFlushMappedMemoryRanges(LogicalDevice, 1, &mappedRange) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Mapped buffer could not flush memory");
+		}
 	}
 
 	void Buffer::Release()

@@ -77,24 +77,14 @@ namespace Fling
          */
 		void MapMemory(void** t_Data) const;
 
-        //void MapMemory(VkDeviceSize t_size);
-
         /**
          * @brief Unmap this bufferes memory from the vulkan device
          */
         void UnmapMemory();
 
-		/**
-		 * @brief Flush a memory range of the buffer to make it visible to the device 
-		 * 	
-		 * @note only required for non-coherent memory
-		 */
-		void Flush();
+		void Flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
     protected:
-		//Test
-		//void* mapped;
-
         /** The size of this buffer in bytes */
         VkDeviceSize m_Size;
 
