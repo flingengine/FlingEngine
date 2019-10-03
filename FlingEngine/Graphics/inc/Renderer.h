@@ -239,7 +239,7 @@ namespace Fling
 		UboVS m_UboVS;
 
 		/** Simple little pool for getting the next available UBO index */
-		const static UINT32 MAX_MODEL_MATRIX_BUFFER = 1024;
+		const static UINT32 MAX_MODEL_MATRIX_BUFFER = 256;
 		static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
 		static UINT32 g_AllocatedIndex;
 
