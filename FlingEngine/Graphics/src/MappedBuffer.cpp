@@ -75,7 +75,6 @@ namespace Fling
 			MapMemory();
 			memcpy(m_mapped, t_Data, m_Size);
 
-			// 
 			if ((t_Properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 			{
 				VkMappedMemoryRange MappedRange{};

@@ -27,7 +27,6 @@ namespace Fling
 		
 		void Init(float t_width, float t_height);
 		void InitResources(VkRenderPass t_renderPass, VkQueue t_copyQueue);
-		//To do : look into delegates 
 		void NewFrame();
 		void UpdateBuffers();
 		void DrawFrame(VkCommandBuffer t_commandBuffer);

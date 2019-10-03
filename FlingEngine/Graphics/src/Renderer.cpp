@@ -64,7 +64,7 @@ namespace Fling
 		m_flingImgui->Init(
 			static_cast<float>(m_CurrentWindow->GetWidth()), 
 			static_cast<float>(m_CurrentWindow->GetHeight()));
-		//m_flingImgui->InitResources(m_RenderPass, m_LogicalDevice->GetGraphicsQueue());
+		m_flingImgui->InitResources(m_RenderPass, m_LogicalDevice->GetGraphicsQueue());
 	}
 
     void Renderer::CreateRenderPass()
@@ -410,8 +410,8 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
 
-		/*m_flingImgui->NewFrame();
-		m_flingImgui->UpdateBuffers();*/
+		m_flingImgui->NewFrame();
+		m_flingImgui->UpdateBuffers();
 
         // Start command buffer recording
         for (size_t i = 0; i < m_CommandBuffers.size(); i++)
@@ -442,19 +442,18 @@ namespace Fling
             renderPassInfo.pClearValues = clearValues.data();
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+			
+			vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+
+			//Render imgui
+			m_flingImgui->DrawFrame(m_CommandBuffers[i]);
 
             // Load the models
             for (const std::shared_ptr<Model>& Model : m_TestModels)
             {
                 Model->CmdRender(m_CommandBuffers[i]);
             }
-
-            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-
-			//Render imgui
-			//m_flingImgui->DrawFrame(m_CommandBuffers[i]);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
