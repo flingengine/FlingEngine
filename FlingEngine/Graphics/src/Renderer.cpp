@@ -442,18 +442,18 @@ namespace Fling
             renderPassInfo.pClearValues = clearValues.data();
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			
+
 			vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
-
-			//Render imgui
-			m_flingImgui->DrawFrame(m_CommandBuffers[i]);
 
             // Load the models
             for (const std::shared_ptr<Model>& Model : m_TestModels)
             {
                 Model->CmdRender(m_CommandBuffers[i]);
             }
+
+			//Render imgui
+			m_flingImgui->DrawFrame(m_CommandBuffers[i]);
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 

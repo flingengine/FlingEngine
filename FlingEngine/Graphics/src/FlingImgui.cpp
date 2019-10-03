@@ -47,7 +47,7 @@ namespace Fling
         int texHeight;
         VkDevice logicalDevice = m_LogicalDevice->GetVkDevice();
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
-        VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
+		VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
 
         Fling::GraphicsHelpers::CreateVkImage(
             texWidth, 
@@ -65,11 +65,59 @@ namespace Fling
             VK_IMAGE_ASPECT_COLOR_BIT
         );
 
-		Fling::GraphicsHelpers::TransitionImageLayout(
+		/*Fling::GraphicsHelpers::TransitionImageLayout(
 			m_fontImage,
 			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);*/
+
+		Buffer stagingBuffer = Buffer(
+			uploadSize, 
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+			fontData);
+
+		//Copy buffer data to font image
+		VkCommandBuffer copycmd = GraphicsHelpers::BeginSingleTimeCommands();
+		
+		GraphicsHelpers::SetImageLayout(
+			copycmd,
+			m_fontImage,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_PIPELINE_STAGE_HOST_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		//Copy
+		VkBufferImageCopy bufferCopyRegion = {};
+		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		bufferCopyRegion.imageSubresource.layerCount = 1;
+		bufferCopyRegion.imageExtent.width = texWidth;
+		bufferCopyRegion.imageExtent.height = texHeight;
+		bufferCopyRegion.imageExtent.depth = 1;
+
+		vkCmdCopyBufferToImage(
+			copycmd,
+			stagingBuffer.GetVkBuffer(),
+			m_fontImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&bufferCopyRegion
+		);
+
+		GraphicsHelpers::SetImageLayout(
+			copycmd,
+			m_fontImage,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+		GraphicsHelpers::EndSingleTimeCommands(copycmd);
+
+		stagingBuffer.Release();
 
 		Fling::GraphicsHelpers::CreateVkSampler(
 			VK_FILTER_LINEAR,
@@ -263,11 +311,11 @@ namespace Fling
 		ImVec4 clear_color = ImColor(114, 144, 154);
 		static float f = 0.0f;
 		ImGui::TextUnformatted("TESTING");
-		ImGui::Text("Camera");
 		
 		ImGui::SetNextWindowSize(ImVec2(200, 200));
 		ImGui::Begin("Example settings");
 		ImGui::SetNextWindowPos(ImVec2(650, 20));
+		ImGui::Text("TESTING #)(@*#)(@!*#)(@*#)@");
 		ImGui::End();
 
 		ImGui::ShowDemoWindow();

@@ -161,6 +161,26 @@ namespace Fling
 			float t_maxDepth
 		);
 
+		void SetImageLayout(
+			VkCommandBuffer t_cmdbuffer,
+			VkImage t_image,
+			VkImageAspectFlags t_aspectMask,
+			VkImageLayout t_oldImageLayout,
+			VkImageLayout t_newImageLayout,
+			VkPipelineStageFlags t_srcStageMask,
+			VkPipelineStageFlags t_dstStageMask
+		);
+
+		void SetImageLayout(
+			VkCommandBuffer t_cmdbuffer,
+			VkImage t_image,
+			VkImageLayout t_oldImageLayout,
+			VkImageLayout t_newImageLayout,
+			VkImageSubresourceRange t_subresourceRange,
+			VkPipelineStageFlags t_srcStageMask,
+			VkPipelineStageFlags t_dstStageMask
+		);
+
 		VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo();
 
 		VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);

@@ -121,11 +121,14 @@ namespace Fling
 		if (m_Buffer)
 		{
 			vkDestroyBuffer(Device, m_Buffer, nullptr);
+			m_Buffer = nullptr;
+	
 		}
 
 		if(m_BufferMemory)
 		{
 			vkFreeMemory(Device, m_BufferMemory, nullptr);
+			m_BufferMemory = nullptr;
 		}
 	}
 
