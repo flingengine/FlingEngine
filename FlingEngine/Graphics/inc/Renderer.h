@@ -25,6 +25,8 @@
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
 
+#include "spirv_reflect.hpp"
+
 namespace Fling
 {
     // File resource
