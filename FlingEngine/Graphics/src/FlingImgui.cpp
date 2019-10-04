@@ -316,6 +316,8 @@ namespace Fling
 		ImGui::Begin("Example settings");
 		ImGui::SetNextWindowPos(ImVec2(650, 20));
 		ImGui::Text("TESTING #)(@*#)(@!*#)(@*#)@");
+		ImGui::Checkbox("Mouse click left", &uiSettings.mouseClickLeft);
+		ImGui::Checkbox("Mouse click right", &uiSettings.mouseClickRight);
 		ImGui::End();
 
 		ImGui::ShowDemoWindow();

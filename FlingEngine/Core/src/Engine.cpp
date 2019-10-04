@@ -66,26 +66,6 @@ namespace Fling
 				break;
 			}
 
-			//// Update imGui
-			ImGuiIO& io = ImGui::GetIO();
-
-			io.DisplaySize = ImVec2(
-				static_cast<float>(Renderer.GetCurrentWindow()->GetWidth()), 
-				static_cast<float>(Renderer.GetCurrentWindow()->GetHeight()));
-
-			io.DeltaTime = Timing.GetTimeSinceStart();
-
-			io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
-
-			//F_LOG_TRACE("Cursor Mouse PosX: {}, PosY: {} ", Input::GetMousePos().X, Input::GetMousePos().Y);
-
-			//io.MouseDown[0] = Input::IsMouseButtonPressed(KeyNames::FL_MOUSE_BUTTON_2);
-			//Key::GetState(KeyNames::FL_MOUSE_BUTTON_2)
-			io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
-
-			/*if(Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1)) 
-				F_LOG_TRACE("KeyNames::FL_MOUSE_BUTTON_1: {}", Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1));*/
-
 			Renderer.DrawFrame();
 
             // Update timing

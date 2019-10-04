@@ -67,7 +67,7 @@ namespace Fling
 		float m_deltaTime = 0.0f;
 
 		double m_lastFrameStartTime = 0.0;
-		float m_frameStartTimef = 0.0f;
+		float m_frameStartTimef = 1.0f;
 
 		/** The time that the program started */
 		double m_startTime = 0.0;

@@ -703,7 +703,25 @@ namespace Fling
     }
 
     void Renderer::DrawFrame()
-    {
+	{
+		//// Update imGui
+		ImGuiIO& io = ImGui::GetIO();
+
+		io.DisplaySize = ImVec2(
+			static_cast<float>(m_CurrentWindow->GetWidth()),
+			static_cast<float>(m_CurrentWindow->GetHeight()));
+
+		io.DeltaTime = Timing::Get().GetFrameStartTime();
+		io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
+
+		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
+		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+
+		m_flingImgui->uiSettings.mouseClickLeft = io.MouseDown[0];
+		m_flingImgui->uiSettings.mouseClickRight = io.MouseDown[1];
+
+		CreateCommandBuffers();
+
         // Wait for the frame to be finished before beginning
         vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 

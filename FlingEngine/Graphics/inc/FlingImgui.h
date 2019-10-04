@@ -22,6 +22,13 @@ namespace Fling
 			glm::vec2 translate;
 		} pushConstBlock;
 
+
+		struct UISettings
+		{
+			bool mouseClickLeft = false;
+			bool mouseClickRight = false;
+		} uiSettings;
+
 		FlingImgui(LogicalDevice* t_logicalDevice);
 		~FlingImgui();
 		

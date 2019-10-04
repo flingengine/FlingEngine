@@ -70,12 +70,6 @@ namespace Fling
 		Fling::Game* m_GameImpl = nullptr;
 
 		float mspf;
-
-		struct {
-			bool left = false;
-			bool right = false;
-			bool middle = false;
-		} mouseButtons;
 	};
 
 	template<class T_GameType>
