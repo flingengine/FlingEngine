@@ -55,6 +55,7 @@ namespace Fling
 		//Init resource for imgui and creates imgui context 
 		InitImgui();
         CreateCommandBuffers();
+		BuildCommandBuffers();
         CreateSyncObjects();
     }
 
@@ -65,6 +66,25 @@ namespace Fling
 			static_cast<float>(m_CurrentWindow->GetWidth()), 
 			static_cast<float>(m_CurrentWindow->GetHeight()));
 		m_flingImgui->InitResources(m_RenderPass, m_LogicalDevice->GetGraphicsQueue());
+	}
+
+	void Renderer::UpdateImguiIO()
+	{
+		//// Update imGui
+		ImGuiIO& io = ImGui::GetIO();
+
+		io.DisplaySize = ImVec2(
+			static_cast<float>(m_CurrentWindow->GetWidth()),
+			static_cast<float>(m_CurrentWindow->GetHeight()));
+
+		io.DeltaTime = Timing::Get().GetFrameTime();
+		io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
+
+		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
+		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+
+		m_flingImgui->uiSettings.mouseClickLeft = io.MouseDown[0];
+		m_flingImgui->uiSettings.mouseClickRight = io.MouseDown[1];
 	}
 
     void Renderer::CreateRenderPass()
@@ -396,7 +416,7 @@ namespace Fling
     }
 
     void Renderer::CreateCommandBuffers()
-    {
+	{
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         // Create the command buffer
         VkCommandBufferAllocateInfo allocInfo = {};
@@ -410,59 +430,116 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate command buffers!");
         }
 
+		//m_flingImgui->NewFrame();
+		//m_flingImgui->UpdateBuffers();
+
+  //      // Start command buffer recording
+  //      for (size_t i = 0; i < m_CommandBuffers.size(); i++)
+  //      {
+  //          VkCommandBufferBeginInfo beginInfo = {};
+  //          beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  //          beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+  //          beginInfo.pInheritanceInfo = nullptr;
+
+  //          if (vkBeginCommandBuffer(m_CommandBuffers[i], &beginInfo) != VK_SUCCESS)
+  //          {
+  //              F_LOG_FATAL("Failed to begin recording command buffer!");
+  //          }
+
+  //          VkRenderPassBeginInfo renderPassInfo = {};
+  //          renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  //          renderPassInfo.renderPass = m_RenderPass;
+  //          renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
+
+  //          renderPassInfo.renderArea.offset = { 0, 0 };
+  //          renderPassInfo.renderArea.extent = m_SwapChain->GetExtents();
+
+  //          // Clear values ---------------------
+  //          std::array<VkClearValue, 2> clearValues = {};
+  //          clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  //          clearValues[1].depthStencil = { 1.0f, 0 };
+  //          renderPassInfo.clearValueCount = static_cast<UINT32>(clearValues.size());
+  //          renderPassInfo.pClearValues = clearValues.data();
+
+  //          vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		//	vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+  //          vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+
+  //          // Load the models
+  //          for (const std::shared_ptr<Model>& Model : m_TestModels)
+  //          {
+  //              Model->CmdRender(m_CommandBuffers[i]);
+  //          }
+
+		//	//Render imgui
+		//	m_flingImgui->DrawFrame(m_CommandBuffers[i]);
+
+  //          vkCmdEndRenderPass(m_CommandBuffers[i]);
+
+  //          if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
+  //          {
+  //              F_LOG_FATAL("failed to record command buffer!");
+  //          }
+  //      }
+    }
+
+	void Renderer::BuildCommandBuffers()
+	{
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		beginInfo.pInheritanceInfo = nullptr;
+
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = m_RenderPass;
+
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = m_SwapChain->GetExtents();
+
+		// Clear values ---------------------
+		std::array<VkClearValue, 2> clearValues = {};
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+		renderPassInfo.clearValueCount = static_cast<UINT32>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
+
 		m_flingImgui->NewFrame();
 		m_flingImgui->UpdateBuffers();
 
-        // Start command buffer recording
-        for (size_t i = 0; i < m_CommandBuffers.size(); i++)
-        {
-            VkCommandBufferBeginInfo beginInfo = {};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-            beginInfo.pInheritanceInfo = nullptr;
+		// Start command buffer recording
+		for (size_t i = 0; i < m_CommandBuffers.size(); i++)
+		{
+			renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
 
-            if (vkBeginCommandBuffer(m_CommandBuffers[i], &beginInfo) != VK_SUCCESS)
-            {
-                F_LOG_FATAL("Failed to begin recording command buffer!");
-            }
+			if (vkBeginCommandBuffer(m_CommandBuffers[i], &beginInfo) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Failed to begin recording command buffer!");
+			}
 
-            VkRenderPassBeginInfo renderPassInfo = {};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = m_RenderPass;
-            renderPassInfo.framebuffer = m_SwapChainFramebuffers[i];
-
-            renderPassInfo.renderArea.offset = { 0, 0 };
-            renderPassInfo.renderArea.extent = m_SwapChain->GetExtents();
-
-            // Clear values ---------------------
-            std::array<VkClearValue, 2> clearValues = {};
-            clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-            clearValues[1].depthStencil = { 1.0f, 0 };
-            renderPassInfo.clearValueCount = static_cast<UINT32>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
-
-            vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-            vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-            // Load the models
-            for (const std::shared_ptr<Model>& Model : m_TestModels)
-            {
-                Model->CmdRender(m_CommandBuffers[i]);
-            }
+			// Load the models
+			for (const std::shared_ptr<Model>& Model : m_TestModels)
+			{
+				Model->CmdRender(m_CommandBuffers[i]);
+			}
 
 			//Render imgui
 			m_flingImgui->DrawFrame(m_CommandBuffers[i]);
 
-            vkCmdEndRenderPass(m_CommandBuffers[i]);
+			vkCmdEndRenderPass(m_CommandBuffers[i]);
 
-            if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
-            {
-                F_LOG_FATAL("failed to record command buffer!");
-            }
-        }
-    }
+			if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("failed to record command buffer!");
+			}
+		}
+	}
 
     void Renderer::CreateSyncObjects()
     {
@@ -540,6 +617,7 @@ namespace Fling
         CreateDescriptorSets();
 
         CreateCommandBuffers();
+		BuildCommandBuffers();
     }
 
     void Renderer::CreateUniformBuffers()
@@ -704,29 +782,18 @@ namespace Fling
 
     void Renderer::DrawFrame()
 	{
-		//// Update imGui
-		ImGuiIO& io = ImGui::GetIO();
-
-		io.DisplaySize = ImVec2(
-			static_cast<float>(m_CurrentWindow->GetWidth()),
-			static_cast<float>(m_CurrentWindow->GetHeight()));
-
-		io.DeltaTime = Timing::Get().GetFrameStartTime();
-		io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
-
-		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
-		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
-
-		m_flingImgui->uiSettings.mouseClickLeft = io.MouseDown[0];
-		m_flingImgui->uiSettings.mouseClickRight = io.MouseDown[1];
-
-		CreateCommandBuffers();
+		UpdateImguiIO();
 
         // Wait for the frame to be finished before beginning
         vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
         VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
         UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
+
+		//Update and redraw imgui buffers 
+		vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, 0);
+		BuildCommandBuffers();
 
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
@@ -757,8 +824,7 @@ namespace Fling
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
-
+	
         if (vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to submit draw command buffer!");
@@ -777,6 +843,8 @@ namespace Fling
         }
 
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+
+		m_LogicalDevice->WaitForIdle();
     }
 
     void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)

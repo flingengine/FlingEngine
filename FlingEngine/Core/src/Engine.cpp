@@ -55,7 +55,6 @@ namespace Fling
 
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
-			
 			Renderer.Tick();
 
 			m_World->Update(DeltaTime);
@@ -71,32 +70,17 @@ namespace Fling
             // Update timing
 			Timing.Update();
             DeltaTime = Timing.GetDeltaTime();
-
-			UpdateFps(Timing.GetTimeSinceStart());
+		
             // If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
             if (DeltaTime >= MaxDeltaTime)
             {
 				DeltaTime = FallbackDeltaTime;
-            }
+            }	
 		}
 
 		// Any waiting that we may need to do before the shutdown function should go here
 		Renderer.PrepShutdown();
-	}
-
-	void Engine::UpdateFps(const float& totalTime)
-	{
-		m_fpsFrameCount++;
-
-		float timeDiff =  totalTime - m_fpsTimeElapsed;
-		if(timeDiff < 1.0f)
-			return;
-
-		mspf = 1000.0f / static_cast<float>(m_fpsFrameCount);
-
-		m_fpsFrameCount = 0;
-		m_fpsTimeElapsed += 1.0f;
 	}
 
 	void Engine::Shutdown()

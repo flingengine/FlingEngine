@@ -111,6 +111,7 @@ namespace Fling
 		
 		/// Init imgui context 
 		void InitImgui();
+		void UpdateImguiIO();
 
         /**
          * @brief Create a Descriptor Layout object
@@ -139,6 +140,8 @@ namespace Fling
         void CreateCommandPool();
 
         void CreateCommandBuffers();
+		//TEST
+		void BuildCommandBuffers();
 
         /**
         * Create semaphores and fence objects

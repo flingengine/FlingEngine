@@ -65,12 +65,6 @@ namespace Fling
             VK_IMAGE_ASPECT_COLOR_BIT
         );
 
-		/*Fling::GraphicsHelpers::TransitionImageLayout(
-			m_fontImage,
-			VK_FORMAT_R8G8B8A8_UNORM,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);*/
-
 		Buffer stagingBuffer = Buffer(
 			uploadSize, 
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
@@ -116,8 +110,6 @@ namespace Fling
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 		GraphicsHelpers::EndSingleTimeCommands(copycmd);
-
-		stagingBuffer.Release();
 
 		Fling::GraphicsHelpers::CreateVkSampler(
 			VK_FILTER_LINEAR,
@@ -381,9 +373,13 @@ namespace Fling
 		vkCmdBindDescriptorSets(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
 		vkCmdBindPipeline(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeLine);
 
+		//for minimizing screen 
+		float displayWidth = ImGui::GetIO().DisplaySize.x ? ImGui::GetIO().DisplaySize.x : .0001f;
+		float displayHeight = ImGui::GetIO().DisplaySize.y ? ImGui::GetIO().DisplaySize.y : .0001f;
+
 		VkViewport viewport = GraphicsHelpers::Viewport(
-			ImGui::GetIO().DisplaySize.x,
-			ImGui::GetIO().DisplaySize.y,
+			displayWidth,
+			displayHeight,
 			0.0f,
 			1.0f);
 		vkCmdSetViewport(t_commandBuffer, 0, 1, &viewport);

@@ -17,6 +17,24 @@ namespace Fling
 
 		m_lastFrameStartTime = currentTime;
 		m_frameStartTimef = static_cast<float> ( m_lastFrameStartTime );
+
+		UpdateFps();
+	}
+
+	void Timing::UpdateFps()
+	{
+		m_fpsFrameCount++;
+
+		float timeDiff = GetTimeSinceStart() - m_fpsTimeElapsed;
+		if (timeDiff < 1.0f)
+			return;
+
+		//F_LOG_TRACE("FPS {} FRAMETIME {}", m_fpsFrameCount, mspf);
+
+		mspf = 1000.0f / static_cast<float>(m_fpsFrameCount);
+
+		m_fpsFrameCount = 0;
+		m_fpsTimeElapsed += 1.0f;
 	}
 
 	double Timing::GetTime() const

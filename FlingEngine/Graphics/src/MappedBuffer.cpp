@@ -18,6 +18,7 @@ namespace Fling
 		if (m_mapped)
 		{
 			vkUnmapMemory(LogicalDevice, m_BufferMemory);
+			m_mapped = nullptr;
 		}
 	}
 
