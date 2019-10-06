@@ -23,6 +23,8 @@
 /* Fling Engine Functionality                                           */
 /************************************************************************/
 
+#include <entt/signal/delegate.hpp>
+
 // Enable Fling Logging (even applies in release)
 #define F_ENABLE_LOGGING
 
@@ -38,6 +40,7 @@
 #include "FlingPaths.h"
 #include "FlingMath.h"
 #include "Timing.h"
+#include "Memory.h"
 
 #define FLING_DEFAULT_WINDOW_WIDTH		800
 #define FLING_DEFAULT_WINDOW_HEIGHT		600

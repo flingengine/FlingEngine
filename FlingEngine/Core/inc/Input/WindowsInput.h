@@ -2,7 +2,7 @@
 
 #include "Input/Input.h"
 
-#if defined FLING_WINDOWS
+#if FLING_WINDOWS
 
 namespace Fling
 {

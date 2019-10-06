@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined FLING_WINDOWS
+#if FLING_WINDOWS
 
 #if defined(_DEBUG)
 
@@ -36,6 +36,7 @@
 #	pragma warning(disable:26495)
 #	pragma warning(disable:4267)
 #	pragma warning(disable:26451)
+#	pragma warning(disable:4996)
 
 #   endif   // _MSC_VER
 

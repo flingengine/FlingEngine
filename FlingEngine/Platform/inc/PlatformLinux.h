@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef FLING_LINUX
+#if FLING_LINUX
 
 #ifndef NDEBUG
 #   define FLING_DEBUG 1

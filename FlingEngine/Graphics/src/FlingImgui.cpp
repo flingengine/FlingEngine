@@ -35,8 +35,8 @@ namespace Fling
         io.DisplaySize = ImVec2(t_width, t_height);
         io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
-		m_indexBuffer = std::make_unique<MappedBuffer>();
-		m_vertexBuffer = std::make_unique<MappedBuffer>();
+		m_indexBuffer = std::make_unique<Buffer>();
+		m_vertexBuffer = std::make_unique<Buffer>();
 	}
 
 	void FlingImgui::InitResources(VkRenderPass t_renderPass, VkQueue t_copyQueue)
@@ -351,8 +351,8 @@ namespace Fling
 			m_indexBuffer->MapMemory();
 		}
 
-		ImDrawVert* vtxDst = (ImDrawVert*)m_vertexBuffer->m_mapped;
-		ImDrawIdx* idxDst = (ImDrawIdx*)m_indexBuffer->m_mapped;
+		ImDrawVert* vtxDst = (ImDrawVert*)m_vertexBuffer->m_MappedMem;
+		ImDrawIdx* idxDst = (ImDrawIdx*)m_indexBuffer->m_MappedMem;
 
 		for (int n = 0; n < imDrawData->CmdListsCount; ++n) {
 			const ImDrawList* cmd_list = imDrawData->CmdLists[n];
@@ -362,8 +362,8 @@ namespace Fling
 			idxDst += cmd_list->IdxBuffer.Size;
 		}
 
-		m_vertexBuffer->Flush();
-		m_indexBuffer->Flush();
+		m_vertexBuffer->Flush(VK_WHOLE_SIZE, 0);
+		m_indexBuffer->Flush(VK_WHOLE_SIZE, 0);
 	}
 
 	void FlingImgui::DrawFrame(VkCommandBuffer t_commandBuffer)

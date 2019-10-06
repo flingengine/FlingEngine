@@ -32,3 +32,8 @@
 	path = external/imgui
 	url = https://github.com/flingengine/imgui.git
 
+[submodule "external/SPIRV-Cross"]
+	path = external/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+
+

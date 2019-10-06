@@ -721,5 +721,46 @@ namespace Fling
 			return t_format == VK_FORMAT_D32_SFLOAT_S8_UINT || t_format == VK_FORMAT_D24_UNORM_S8_UINT;
 		}
 
-}	// namespace GraphicsHelpers
+	}	// namespace GraphicsHelpers
+
+	namespace Initalizers
+	{
+		VkMappedMemoryRange MappedMemoryRange()
+		{
+			VkMappedMemoryRange mappedMemoryRange{};
+			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			return mappedMemoryRange;
+		}
+
+		VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType type, uint32_t descriptorCount)
+		{
+			VkDescriptorPoolSize descriptorPoolSize{};
+			descriptorPoolSize.type = type;
+			descriptorPoolSize.descriptorCount = descriptorCount;
+			return descriptorPoolSize;
+		}
+
+		VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags, uint32_t binding, uint32_t descriptorCount)
+		{
+			VkDescriptorSetLayoutBinding setLayoutBinding{};
+			setLayoutBinding.descriptorType = type;
+			setLayoutBinding.stageFlags = stageFlags;
+			setLayoutBinding.binding = binding;
+			setLayoutBinding.descriptorCount = descriptorCount;
+			return setLayoutBinding;
+		}
+
+		VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet dstSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo* bufferInfo, uint32_t descriptorCount)
+		{
+			VkWriteDescriptorSet writeDescriptorSet{};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.dstSet = dstSet;
+			writeDescriptorSet.descriptorType = type;
+			writeDescriptorSet.dstBinding = binding;
+			writeDescriptorSet.pBufferInfo = bufferInfo;
+			writeDescriptorSet.descriptorCount = descriptorCount;
+			return writeDescriptorSet;
+		}
+	}	// namespace Initalizers
+
 }   // namespace Fling

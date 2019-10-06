@@ -22,5 +22,25 @@ namespace Sandbox
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
+
+		/**
+		 * @brief Called when player presses the button to initate loading
+		 * 
+		 */
+		void OnLoadInitated();
+
+		/**
+		 * @brief Called when the user presses the button to initalize saving
+		 * 
+		 */
+		void OnSaveInitated();
+
+		/**
+		 * @brief Callback for when the user has given input that shows they want to exit
+		 */
+		void OnQuitPressed();
+
+		/* Creates a 3D array of meshes */
+		void GenerateTestMeshes(entt::registry& t_Reg);
 	};
 }	// namespace Sandbox

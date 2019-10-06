@@ -53,7 +53,7 @@ namespace Fling
 		VkDescriptorSet m_descriptorSet;
 		LogicalDevice* m_LogicalDevice;
 
-		std::unique_ptr<class MappedBuffer> m_vertexBuffer;
-		std::unique_ptr<class MappedBuffer> m_indexBuffer;
+		std::unique_ptr<class Buffer> m_vertexBuffer;
+		std::unique_ptr<class Buffer> m_indexBuffer;
 	};
 } //namespace fling
