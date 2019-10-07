@@ -23,6 +23,9 @@ namespace Fling
 
 		// Add entt component callbacks for mesh render etc
 		InitComponentData();
+
+		// Initalize imgui display 
+		m_imguiDisplay = ImguiDisplay();
 	}
 
 	void Renderer::InitGraphics()
@@ -96,10 +99,9 @@ namespace Fling
 
 		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
 		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
-
-		m_flingImgui->uiSettings.mouseClickLeft = io.MouseDown[0];
-		m_flingImgui->uiSettings.mouseClickRight = io.MouseDown[1];
 	}
+
+
 
     void Renderer::CreateRenderPass()
     {
@@ -442,7 +444,7 @@ namespace Fling
 		beginInfo.pInheritanceInfo = nullptr;
 
 		//Update Imgui buffers
-		m_flingImgui->NewFrame();
+		m_flingImgui->NewFrame<&ImguiDisplay::NewFrame, ImguiDisplay>(m_imguiDisplay);
 		m_flingImgui->UpdateBuffers();
 
 		// Start command buffer recording
@@ -912,7 +914,13 @@ namespace Fling
 		// Cleanup Vulkan ------
         CleanupFrameResources();
 
-		//Cleanup imgui-----------
+		////Cleanup imgui-----------
+		//if (m_imguiDisplay)
+		//{
+		//	delete m_imguiDisplay;
+		//	m_imguiDisplay = nullptr;
+		//}
+
 		if (m_flingImgui)
 		{
 			delete m_flingImgui;

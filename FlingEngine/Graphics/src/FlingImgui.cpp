@@ -297,26 +297,6 @@ namespace Fling
 		vkDestroyShaderModule(logicalDevice, fragModule, nullptr);
 	}
 
-	void FlingImgui::NewFrame()
-	{
-		ImGui::NewFrame();
-		ImVec4 clear_color = ImColor(114, 144, 154);
-		static float f = 0.0f;
-		ImGui::TextUnformatted("TESTING");
-		
-		ImGui::SetNextWindowSize(ImVec2(200, 200));
-		ImGui::Begin("Example settings");
-		ImGui::SetNextWindowPos(ImVec2(650, 20));
-		ImGui::Text("TESTING #)(@*#)(@!*#)(@*#)@");
-		ImGui::Checkbox("Mouse click left", &uiSettings.mouseClickLeft);
-		ImGui::Checkbox("Mouse click right", &uiSettings.mouseClickRight);
-		ImGui::End();
-
-		ImGui::ShowDemoWindow();
-		// Render to generate draw buffers
-		ImGui::Render();
-	}
-
 	void FlingImgui::UpdateBuffers()
 	{
 		ImDrawData* imDrawData = ImGui::GetDrawData();

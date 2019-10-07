@@ -33,10 +33,20 @@ namespace Fling
 		~FlingImgui();
 		
 		void Init(float t_width, float t_height);
+		
 		void InitResources(VkRenderPass t_renderPass, VkQueue t_copyQueue);
-		void NewFrame();
+		
 		void UpdateBuffers();
+		
 		void DrawFrame(VkCommandBuffer t_commandBuffer);
+
+		template <auto Candidate, typename Type>
+		void NewFrame(Type& t_instance)
+		{
+			entt::delegate<void()> delegate{};
+			delegate.connect<Candidate>(t_instance);
+			delegate();
+		}
 
 	private:
 		VkSampler m_sampler;

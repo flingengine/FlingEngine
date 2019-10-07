@@ -26,7 +26,9 @@
 
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
+
 #include "FlingImgui.h"
+#include "ImguiDisplay.h"
 
 namespace Fling
 {
@@ -96,7 +98,6 @@ namespace Fling
         const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
         Swapchain* GetSwapChain() const { return m_SwapChain; }
-
     private:
 
         /** Init the actual Vulkan API and rendering pipeline */
@@ -206,6 +207,8 @@ namespace Fling
         FlingWindow* m_CurrentWindow = nullptr;
 
 		FlingImgui* m_flingImgui = nullptr;
+		ImguiDisplay m_imguiDisplay;
+
 
         Instance* m_Instance = nullptr;
 
