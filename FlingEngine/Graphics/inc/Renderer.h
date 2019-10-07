@@ -25,7 +25,7 @@
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
 
-#include "spirv_reflect.hpp"
+#include "Shader.h"
 
 namespace Fling
 {
