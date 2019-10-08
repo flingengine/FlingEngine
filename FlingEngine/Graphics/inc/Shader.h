@@ -18,13 +18,24 @@ namespace Fling
     {
     public:
 
+		static std::shared_ptr<Fling::Shader> Create(Guid t_ID);
+
         /**
          * @brief Construct a new Shader object. Loads from disk and compiles the shader
          * 
          * @param t_ID  The GUID that represents the file path to this file.
          */
         explicit Shader(Guid t_ID);
-        
+
+        /**
+         * @brief Create a Shader Module object
+         * 
+         * @return VkShaderModule 
+         */
+        VkShaderModule CreateShaderModule();
+
+        VkPipelineShaderStageCreateInfo GetCreationInfo();
+
         /**
          * @brief Compiles this shader with SPRIV-Cross
          */
@@ -35,6 +46,8 @@ namespace Fling
         /**
          * @brief Load the raw shader code in off-disk
          */
-        std::vector<UINT32> LoadRawBytes();
+        void LoadRawBytes();
+
+        std::vector<UINT32> m_RawShaderCode;
     };
 }   // namespace Fling

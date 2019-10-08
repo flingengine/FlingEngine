@@ -55,8 +55,28 @@ namespace Fling
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
+		int FpsFrameCount = 0;
+		float FpsTimeElapsed = 0.0f;
+
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
+			// Update FPS Counter
+			{
+				FpsTimeElapsed += DeltaTime;
+				if(FpsTimeElapsed >= 1.0f)
+				{
+					float mspf = 1000.0f / (float)(FpsFrameCount);
+					F_LOG_TRACE("FPS: {} Frame Timing: {} ", FpsFrameCount, mspf);
+					FpsTimeElapsed = 0.0f;
+					FpsFrameCount = 0;
+				}
+				else
+				{
+					++FpsFrameCount;
+				}
+			}
+
+			
 			Renderer.Tick(DeltaTime);
 			
 			Input::Poll();
