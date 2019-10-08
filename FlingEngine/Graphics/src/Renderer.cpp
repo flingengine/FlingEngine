@@ -562,7 +562,9 @@ namespace Fling
 		{
 			size_t bufferSize = MAX_MODEL_MATRIX_BUFFER * m_DynamicAlignment;
 			m_DynamicUniformBuffers[i].Model = (glm::mat4*)Fling::AlignedAlloc(bufferSize, m_DynamicAlignment);
-			assert(m_DynamicUniformBuffers[i].Model);
+			// Initalize the model matrix to the identity
+            assert(m_DynamicUniformBuffers[i].Model);
+            *m_DynamicUniformBuffers[i].Model = glm::identity<glm::mat4>();
 
 			// Create the view uniform
 			m_DynamicUniformBuffers[i].View = new Buffer(
@@ -579,8 +581,10 @@ namespace Fling
 				/* t_Properties */ VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 			);
 
-			assert(m_DynamicUniformBuffers[i].View->MapMemory() == VK_SUCCESS);
-			assert(m_DynamicUniformBuffers[i].Dynamic->MapMemory() == VK_SUCCESS);
+            VkResult ViewRes = m_DynamicUniformBuffers[i].View->MapMemory();
+            assert(ViewRes == VK_SUCCESS);
+            VkResult DynamicRes = m_DynamicUniformBuffers[i].Dynamic->MapMemory();
+            assert(DynamicRes == VK_SUCCESS);
 		}
 
 		// Prep the pool of indecies
@@ -589,8 +593,8 @@ namespace Fling
 			g_UboIndexPool[i] = i * m_DynamicAlignment;
 		}
 
-		UpdateUniformBuffer(m_SwapChain->GetActiveImageIndex());
-		UpdateDynamicUniformBuffer(m_SwapChain->GetActiveImageIndex());
+        UpdateUniformBuffer(m_SwapChain->GetActiveImageIndex());
+        UpdateDynamicUniformBuffer(m_SwapChain->GetActiveImageIndex());
 	}
 
     void Renderer::CreateDescriptorPool()
