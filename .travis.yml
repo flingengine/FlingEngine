@@ -65,5 +65,5 @@ matrix:
 script:
 - git submodule update --init --recursive
 - mkdir Build && cd Build
-- cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_SHARED_LIBS=$BUILD_SHARED
+- cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 - ninja
