@@ -161,16 +161,14 @@ namespace Fling
 
     void Renderer::CreateGraphicsPipeline()
     {
-        // Load shaders
-        std::shared_ptr<File> VertShaderCode = ResourceManager::LoadResource<File>("Shaders/vert.spv"_hs);
-        assert(VertShaderCode);
+        std::shared_ptr<Shader> VertShader = Shader::Create("Shaders/vert.spv"_hs);
+        std::shared_ptr<Shader> FragShader = Shader::Create("Shaders/frag.spv"_hs);
 
-        std::shared_ptr<File> FragShaderCode = ResourceManager::LoadResource<File>("Shaders/frag.spv"_hs);
-        assert(FragShaderCode);
+        VertShader->Compile();
 
         // Create modules
-        VkShaderModule VertModule = CreateShaderModule(VertShaderCode);
-        VkShaderModule FragModule = CreateShaderModule(FragShaderCode);
+        VkShaderModule VertModule = VertShader->CreateShaderModule();
+        VkShaderModule FragModule = FragShader->CreateShaderModule();
 
         VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
         VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

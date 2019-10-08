@@ -5,7 +5,7 @@
 
 namespace Fling
 {
-    std::shared_ptr<Fling::Shader> Create(Guid t_ID)
+    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
     {
         return ResourceManager::LoadResource<Shader>(t_ID);
     }
@@ -15,7 +15,7 @@ namespace Fling
     {
         LoadRawBytes();
 
-        Compile();
+        //Compile();
     }
 
     VkShaderModule Shader::CreateShaderModule()
@@ -23,7 +23,7 @@ namespace Fling
         VkShaderModuleCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         CreateInfo.codeSize = m_RawShaderCode.size();
-        CreateInfo.pCode = m_RawShaderCode.data();
+        CreateInfo.pCode = reinterpret_cast<const UINT32*>(m_RawShaderCode.data());
 
         VkShaderModule ShaderModule;
         if (vkCreateShaderModule(Renderer::Get().GetLogicalVkDevice(), &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
@@ -56,7 +56,7 @@ namespace Fling
             m_RawShaderCode.resize(Filesize);
         
             File.seekg(0);
-            File.read((char*)m_RawShaderCode.data(), Filesize);
+            File.read(m_RawShaderCode.data(), Filesize);
             File.close();
         }
     }
@@ -69,8 +69,27 @@ namespace Fling
             return;
         }
 
-        spirv_cross::Compiler comp(m_RawShaderCode.data(), m_RawShaderCode.size());
+        // Get a UINT32 version of the SPV code
+        std::vector<UINT32> spv(m_RawShaderCode.size() / sizeof(UINT32));
+        memcpy(spv.data(), m_RawShaderCode.data(), m_RawShaderCode.size());
 
-        spirv_cross::ShaderResources res = comp.get_shader_resources();
+        try
+        {
+            spirv_cross::Compiler comp(spv.data(), spv.size());
+            spirv_cross::ShaderResources resources = comp.get_shader_resources();
+            
+            // Get all sampled images in the shader.
+            for (auto& resource : resources.stage_inputs)
+            {
+                unsigned location = comp.get_decoration(resource.id, spv::DecorationLocation);
+                unsigned binding = comp.get_decoration(resource.id, spv::DecorationBinding);
+                F_LOG_TRACE("Input {} at location {} bound to {}", resource.name.c_str(), location, binding);
+            }
+
+        }
+        catch (const std::exception& e)
+        {
+        	F_LOG_ERROR("Shader error in {}: {}", GetFilepathReleativeToAssets(), e.what());
+        }
     }
 }   // namespace Fling

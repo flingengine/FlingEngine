@@ -64,6 +64,9 @@ endif()
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
     Vulkan::Vulkan  
+    spirv-cross-core 
+    spirv-cross-cpp
+    spirv-cross-reflect
 )
 
 # link pthread if we need to
@@ -102,7 +105,7 @@ endif()
 add_library ( ${PROJECT_NAME} ${_source_list} )
 
 # Make sure the compiler can find include files for our Engine library
-target_include_directories (${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories (${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SPIRV_CROSS_INCLUDE_DIR})
 
 # link against the libs that the engine needs
 target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )

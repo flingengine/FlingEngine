@@ -66,7 +66,7 @@ namespace Fling
 				if(FpsTimeElapsed >= 1.0f)
 				{
 					float mspf = 1000.0f / (float)(FpsFrameCount);
-					F_LOG_TRACE("FPS: {} Frame Timing: {} ", FpsFrameCount, mspf);
+					//F_LOG_TRACE("FPS: {} Frame Timing: {} ", FpsFrameCount, mspf);
 					FpsTimeElapsed = 0.0f;
 					FpsFrameCount = 0;
 				}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spirv_cross.hpp"
+#include "spirv_glsl.hpp"
 
 #include "Resource.h"
 
@@ -48,6 +49,6 @@ namespace Fling
          */
         void LoadRawBytes();
 
-        std::vector<UINT32> m_RawShaderCode;
+        std::vector<char> m_RawShaderCode;
     };
 }   // namespace Fling

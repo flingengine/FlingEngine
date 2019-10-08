@@ -18,8 +18,7 @@ ENDIF( DEFINE_SHIPPING )
 # C++17 standard
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
-set(CMAKE_CXX_EXTENSIONS OFF)
-
+set( CMAKE_CXX_EXTENSIONS OFF )
 
 # Generated folder used for Cmake generated files
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
@@ -39,18 +38,12 @@ if( MSVC )
 	endif()
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-
-    #add_definitions( -Wno-class-memaccess )
     add_definitions( -Wno-unused-private-field )
     add_definitions( -Wno-exceptions )
-
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
 endif()
-
-
-# -Wclass-memaccess
 
 # This is needed for Clang support of glm::hash
 ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
@@ -58,6 +51,17 @@ ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
 # Include external libraries
 add_subdirectory( external/glfw )
 include_directories( external/glfw/include )
+
+# Just use spriv statically for now we don't need to do any linking
+add_definitions( -DSPIRV_CROSS_SHARED=OFF )
+add_definitions( -DSPIRV_CROSS_STATIC=OFF )
+add_definitions( -DSPIRV_CROSS_CLI=OFF )
+
+set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
+set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
+set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+
+add_subdirectory( external/SPIRV-Cross )
 
 include_directories( external/glm )
 include_directories( external/spdlog/include )
@@ -67,7 +71,6 @@ include_directories( external/json/single_include )
 include_directories( external/stb )
 include_directories( external/tinyobjloader )
 include_directories( external/cereal/include )
-include_directories( external/SPIRV-Cross )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )
