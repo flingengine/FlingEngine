@@ -164,11 +164,11 @@ namespace Fling
         std::shared_ptr<Shader> VertShader = Shader::Create("Shaders/vert.spv"_hs);
         std::shared_ptr<Shader> FragShader = Shader::Create("Shaders/frag.spv"_hs);
 
-        VertShader->Compile();
+        VertShader->ParseReflectionData();
 
         // Create modules
-        VkShaderModule VertModule = VertShader->CreateShaderModule();
-        VkShaderModule FragModule = FragShader->CreateShaderModule();
+        VkShaderModule VertModule = VertShader->GetShaderModule();
+        VkShaderModule FragModule = FragShader->GetShaderModule();
 
         VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
         VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -334,9 +334,6 @@ namespace Fling
         {
             F_LOG_FATAL("failed to create graphics pipeline!");
         }
-
-        vkDestroyShaderModule(m_LogicalDevice->GetVkDevice(), FragModule, nullptr);
-        vkDestroyShaderModule(m_LogicalDevice->GetVkDevice(), VertModule, nullptr);
     }
 
     void Renderer::CreateFrameBuffers()

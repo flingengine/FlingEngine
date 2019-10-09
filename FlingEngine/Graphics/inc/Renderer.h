@@ -71,7 +71,7 @@ namespace Fling
          * 
          * @return const ref to VkDevice
          */
-        const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
+        static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
 
 		LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
