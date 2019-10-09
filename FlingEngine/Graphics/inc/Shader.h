@@ -13,7 +13,7 @@ namespace Fling
     /**
      * @brief   Class that represents what a shader is in the Fling engine.
      *          Performs shader reflection and provides some helper functionality
-     *          for creating the Vk resources needed(descriptor sets, bindings, etc)
+     *          for creating the Vk resources needed(descriptor sets, bindings, and locations)
      */
     class Shader : public Resource
     {
@@ -50,5 +50,10 @@ namespace Fling
         void LoadRawBytes();
 
         std::vector<char> m_RawShaderCode;
+
+        // Stage creation info
+        // Pipeline layout
+        // Locations
+        // Bindings
     };
 }   // namespace Fling
