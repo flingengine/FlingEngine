@@ -40,6 +40,7 @@ namespace Fling
 
         VkExtent2D Extent = ChooseSwapExtent();
         m_SwapChain = new Swapchain(Extent);
+        assert(m_SwapChain);
     }
 
 	void Renderer::InitGraphics()
@@ -151,6 +152,16 @@ namespace Fling
 			Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)
 		};
 
+        // TODO Create descript set bindings based on vertex shader resource layout
+        if (m_ShaderProgram->HasStage(ShaderStage::Vertex))
+        {
+            const ResourceLayout& Resoure = m_ShaderProgram->GetShader(ShaderStage::Vertex)->GetResourceLayout();
+            for (size_t i = 0; i < VULKAN_NUM_DESCRIPTOR_SETS; ++i)
+            {                
+                
+            }
+        }
+
         VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
         LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         LayoutInfo.bindingCount = static_cast<UINT32>(setLayoutBindings.size());
@@ -159,6 +170,27 @@ namespace Fling
         if(vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create descipror set layout!");
+        }
+    }
+
+    VkShaderStageFlagBits StageToVkBit(ShaderStage stage)
+    {
+        switch (stage)
+        {
+        //case ShaderStage::Compute:
+        //   return VK_SHADER_STAGE_COMPUTE_BIT;
+        case ShaderStage::Vertex:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::Fragment:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+            //case ShaderStage::Geometry:
+            //    return "geometry";
+            //case ShaderStage::TessControl:
+            //    return "tess_control";
+            //case ShaderStage::TessEvaluation:
+            //    return "tess_evaluation";
+        default:
+            return VK_SHADER_STAGE_MISS_BIT_NV;
         }
     }
 
@@ -175,8 +207,8 @@ namespace Fling
         unsigned num_stages = 0;
 
         VkSpecializationInfo spec_info[static_cast<unsigned>(ShaderStage::Count)] = {};
-        VkSpecializationMapEntry spec_entries[static_cast<unsigned>(ShaderStage::Count)][VULKAN_NUM_SPEC_CONSTANTS];
 
+        // This is bad because then I can't have multiple vert/frag shaders
         for (unsigned i = 0; i < static_cast<unsigned>(ShaderStage::Count); i++)
         {
             ShaderStage stage = static_cast<ShaderStage>(i);
@@ -189,7 +221,8 @@ namespace Fling
                     VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
                     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
                     createInfo.module = Shader->GetShaderModule();
-                    createInfo.stage = static_cast<VkShaderStageFlagBits>(1u << i);
+                    createInfo.stage = StageToVkBit(stage);
+                    //createInfo.stage = static_cast<VkShaderStageFlagBits>(1u << i);
                     createInfo.pName = "main";
                     createInfo.flags = 0;
                     createInfo.pNext = nullptr;

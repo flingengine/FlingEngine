@@ -46,14 +46,15 @@ namespace Fling
         layout.immutable_sampler_mask |= 1u << binding;
     }
 
-    enum class ShaderStage
+    /** Represents what stage in the pipeline this shader binds to */
+    enum class ShaderStage : UINT8
     {
         Vertex          = 0,
-        TessControl     = 1,
-        TessEvaluation  = 2,
-        Geometry        = 3,
-        Fragment        = 4,
-        Compute         = 5,
+        Fragment        = 1,
+        //TessControl     = 2,
+        //TessEvaluation  = 3,
+        //Geometry        = 4,
+        //Compute         = 5,
         Count
     };
 
@@ -132,22 +133,22 @@ namespace Fling
 
         const ResourceLayout& GetResourceLayout() const { return m_Layout; }
 
-        /**
-         * @brief Compiles this shader with SPRIV-Cross
-         */
-        void ParseReflectionData();
-
         static const char* StageToName(ShaderStage stage);
 
     private:
 
+        /**
+         * @brief Compiles this shader with SPRIV-Cross
+         */
+        void ParseReflectionData(std::vector<char>& t_ShaderCode);
+
         /** Creates the shader modules  */
-        VkResult CreateShaderModule();
+        VkResult CreateShaderModule(std::vector<char>& t_ShaderCode);
 
         /**
          * @brief Load the raw shader code in off-disk
          */
-        void LoadRawBytes();
+        static std::vector<char> LoadRawBytes(const std::string& t_FilePath);
 
         void update_array_info(const spirv_cross::SPIRType& type, unsigned set, unsigned binding);
 
@@ -155,8 +156,6 @@ namespace Fling
         VkShaderModule m_Module = VK_NULL_HANDLE;
 
         /** Resource layout that represents this shader */
-        ResourceLayout m_Layout;
-
-        std::vector<char> m_RawShaderCode;
+        ResourceLayout m_Layout = {};
     };
 }   // namespace Fling

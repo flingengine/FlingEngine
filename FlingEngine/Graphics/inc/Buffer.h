@@ -12,17 +12,12 @@ namespace Fling
 	{
 	public:
 
-		/**
-		 * @brief Default Ctor for a buffer. Buffer is initialized to 0
-		 */
-		Buffer()
-			: m_Size(0)
-			, m_Buffer(VK_NULL_HANDLE)
-			, m_BufferMemory(VK_NULL_HANDLE)
-			, m_Descriptor{}
-			, m_MappedMem(nullptr)
-		{
-		}
+        static Buffer* RequestBuffer(
+            const VkDeviceSize& t_Size,
+            const VkBufferUsageFlags& t_Usage,
+            const VkMemoryPropertyFlags& t_Properties,
+            const void* t_Data = nullptr
+            );
 
 		/**
 		 * @brief Construct a new Buffer object
@@ -32,7 +27,7 @@ namespace Fling
 		 * @param t_Properties 	Vk props of this buffer, used to find the memory type
 		 * @param t_Data 		Pointer to data that this buffer should map to, e.g. a staging buffer (Default = nullptr) 
 		 */
-		Buffer(
+		explicit Buffer(
 			const VkDeviceSize& t_Size,
 			const VkBufferUsageFlags& t_Usage,
 			const VkMemoryPropertyFlags& t_Properties,

@@ -13,9 +13,14 @@ namespace Fling
     Shader::Shader(Guid t_ID)
         : Resource(t_ID)
     {
-        LoadRawBytes();
+        std::vector<char> RawCode = LoadRawBytes(GetFilepathReleativeToAssets());
+        
+        if (CreateShaderModule(RawCode) != VK_SUCCESS)
+        {
+            F_LOG_ERROR("Failed to create shader module for {}", GetFilepathReleativeToAssets());
+        }
 
-        ParseReflectionData();
+        ParseReflectionData(RawCode);
     }
 
     Shader::~Shader()
@@ -26,20 +31,20 @@ namespace Fling
         }
     }
 
-    VkResult Shader::CreateShaderModule()
+    VkResult Shader::CreateShaderModule(std::vector<char>& t_ShaderCode)
     {
         VkShaderModuleCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        CreateInfo.codeSize = m_RawShaderCode.size();
-        CreateInfo.pCode = reinterpret_cast<const UINT32*>(m_RawShaderCode.data());
+        CreateInfo.codeSize = t_ShaderCode.size();
+        CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode.data());
 
         return vkCreateShaderModule(Renderer::GetLogicalVkDevice(), &CreateInfo, nullptr, &m_Module);
     }
 
-    void Shader::LoadRawBytes()
+    std::vector<char> Shader::LoadRawBytes(const std::string& FilePath)
     {
-        const std::string FilePath = GetFilepathReleativeToAssets();
         std::ifstream File(FilePath, std::ios::ate | std::ios::binary);
+        std::vector<char> RawShaderCode;
         
         if (!File.is_open())
         {
@@ -48,12 +53,14 @@ namespace Fling
         else
         {
             size_t Filesize = static_cast<size_t>(File.tellg());
-            m_RawShaderCode.resize(Filesize);
+            RawShaderCode.resize(Filesize);
         
             File.seekg(0);
-            File.read(m_RawShaderCode.data(), Filesize);
+            File.read(RawShaderCode.data(), Filesize);
             File.close();
         }
+
+        return RawShaderCode;
     }
 
     static bool get_stock_sampler(StockSampler& sampler, const std::string& name)
@@ -83,22 +90,11 @@ namespace Fling
     // I got some of this logic from the Granite engine example:
     // https://github.com/Themaister/Granite/blob/master/vulkan/shader.cpp
     // Overall a great example of setting up a graphics pipeline inside of an engine
-    void Shader::ParseReflectionData()
+    void Shader::ParseReflectionData(std::vector<char>& t_ShaderCode)
     {
-        if(!m_RawShaderCode.size())
-        {
-            F_LOG_WARN("Cannot compile shader {} because the raw code is not loaded!", GetFilepathReleativeToAssets());
-            return;
-        }
-
-        if (CreateShaderModule() != VK_SUCCESS)
-        {
-            F_LOG_ERROR("Failed to create shader module for {}", GetFilepathReleativeToAssets());
-        }
-
         // Get a UINT32 version of the SPV code
-        std::vector<UINT32> spv(m_RawShaderCode.size() / sizeof(UINT32));
-        memcpy(spv.data(), m_RawShaderCode.data(), m_RawShaderCode.size());
+        std::vector<UINT32> spv(t_ShaderCode.size() / sizeof(UINT32));
+        memcpy(spv.data(), t_ShaderCode.data(), t_ShaderCode.size());
 
         try
         {
@@ -293,18 +289,18 @@ namespace Fling
     {
         switch (stage)
         {
-        case ShaderStage::Compute:
-            return "compute";
+        //case ShaderStage::Compute:
+        //    return "compute";
         case ShaderStage::Vertex:
             return "vertex";
         case ShaderStage::Fragment:
             return "fragment";
-        case ShaderStage::Geometry:
-            return "geometry";
-        case ShaderStage::TessControl:
-            return "tess_control";
-        case ShaderStage::TessEvaluation:
-            return "tess_evaluation";
+        //case ShaderStage::Geometry:
+        //    return "geometry";
+        //case ShaderStage::TessControl:
+        //    return "tess_control";
+        //case ShaderStage::TessEvaluation:
+        //    return "tess_evaluation";
         default:
             return "unknown";
         }

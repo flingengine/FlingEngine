@@ -5,7 +5,12 @@
 
 namespace Fling
 {
-	Buffer::Buffer(const VkDeviceSize& size, const VkBufferUsageFlags& t_Usage, const VkMemoryPropertyFlags& t_Properties, const void* t_Data)
+    Buffer* Buffer::RequestBuffer(const VkDeviceSize& t_Size, const VkBufferUsageFlags& t_Usage, const VkMemoryPropertyFlags& t_Properties, const void* t_Data)
+    {
+        return nullptr;
+    }
+
+    Buffer::Buffer(const VkDeviceSize& size, const VkBufferUsageFlags& t_Usage, const VkMemoryPropertyFlags& t_Properties, const void* t_Data)
 		: m_Size(size)
 		, m_Buffer(VK_NULL_HANDLE)
 		, m_BufferMemory(VK_NULL_HANDLE)
@@ -105,6 +110,7 @@ namespace Fling
 	{
 		// Free up the VK memory that this buffer uses
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+        UnmapMemory();
 		vkDestroyBuffer(Device, m_Buffer, nullptr);
 		vkFreeMemory(Device, m_BufferMemory, nullptr);
 	}
