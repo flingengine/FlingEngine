@@ -162,25 +162,6 @@ namespace Fling
         }
     }
 
-    static VkShaderStageFlagBits StageToVk(ShaderStage stage)
-    {
-        switch (stage)
-        {
-        case ShaderStage::Compute:
-            return VK_SHADER_STAGE_COMPUTE_BIT;
-        case ShaderStage::Vertex:
-            return VK_SHADER_STAGE_VERTEX_BIT;
-        case ShaderStage::Fragment:
-            return VK_SHADER_STAGE_FRAGMENT_BIT;
-        case ShaderStage::Geometry:
-            return VK_SHADER_STAGE_GEOMETRY_BIT;
-        case ShaderStage::TessControl:
-            return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-        case ShaderStage::TessEvaluation:
-            return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-        }
-    }
-
     void Renderer::CreateGraphicsPipeline()
     {
         if (!m_ShaderProgram)
@@ -208,7 +189,7 @@ namespace Fling
                     VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
                     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
                     createInfo.module = Shader->GetShaderModule();
-                    createInfo.stage = StageToVk(stage);
+                    createInfo.stage = static_cast<VkShaderStageFlagBits>(1u << i);
                     createInfo.pName = "main";
                     createInfo.flags = 0;
                     createInfo.pNext = nullptr;
