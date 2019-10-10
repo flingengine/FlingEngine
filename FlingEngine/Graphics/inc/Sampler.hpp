@@ -50,11 +50,14 @@ namespace Fling
      */
     class Sampler
     {
+
     public:
+
         ~Sampler();
+
         VkSampler GetSampler() const { return m_Sampler; }
 
-        const SamplerCreateInfo &GetCreateInfo() const { return m_CreateInfo; }
+        const SamplerCreateInfo& GetCreateInfo() const { return m_CreateInfo; }
 
     private:
     

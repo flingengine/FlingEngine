@@ -33,9 +33,7 @@ namespace Fling
         CreateInfo.codeSize = m_RawShaderCode.size();
         CreateInfo.pCode = reinterpret_cast<const UINT32*>(m_RawShaderCode.data());
 
-        VkResult iRes = vkCreateShaderModule(Renderer::GetLogicalVkDevice(), &CreateInfo, nullptr, &m_Module);
-
-        return iRes;
+        return vkCreateShaderModule(Renderer::GetLogicalVkDevice(), &CreateInfo, nullptr, &m_Module);
     }
 
     void Shader::LoadRawBytes()
@@ -56,6 +54,30 @@ namespace Fling
             File.read(m_RawShaderCode.data(), Filesize);
             File.close();
         }
+    }
+
+    static bool get_stock_sampler(StockSampler& sampler, const std::string& name)
+    {
+        if (name.find("NearestClamp") != std::string::npos)
+            sampler = StockSampler::NearestClamp;
+        else if (name.find("LinearClamp") != std::string::npos)
+            sampler = StockSampler::LinearClamp;
+        else if (name.find("TrilinearClamp") != std::string::npos)
+            sampler = StockSampler::TrilinearClamp;
+        else if (name.find("NearestWrap") != std::string::npos)
+            sampler = StockSampler::NearestWrap;
+        else if (name.find("LinearWrap") != std::string::npos)
+            sampler = StockSampler::LinearWrap;
+        else if (name.find("TrilinearWrap") != std::string::npos)
+            sampler = StockSampler::TrilinearWrap;
+        else if (name.find("NearestShadow") != std::string::npos)
+            sampler = StockSampler::NearestShadow;
+        else if (name.find("LinearShadow") != std::string::npos)
+            sampler = StockSampler::LinearShadow;
+        else
+            return false;
+
+        return true;
     }
 
     // I got some of this logic from the Granite engine example:
@@ -108,11 +130,27 @@ namespace Fling
 
                 const std::string &name = image.name;
 
+                StockSampler sampler;
+                if (type.image.dim != spv::DimBuffer && get_stock_sampler(sampler, name))
+                {
+                    if (has_immutable_sampler(m_Layout.sets[set], binding))
+                    {
+                        if (sampler != get_immutable_sampler(m_Layout.sets[set], binding))
+                        {
+                            F_LOG_ERROR("Immutable sampler mismatch detected!\n");
+                        }
+                    }
+                    else
+                    {
+                        set_immutable_sampler(m_Layout.sets[set], binding, sampler);
+                    }
+                }
+
                 update_array_info(type, set, binding);
             }
 
             // Get subpass inputs
-            for (auto& image : resources.subpass_inputs)
+            for (spirv_cross::Resource& image : resources.subpass_inputs)
             {
                 auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
                 auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
@@ -127,7 +165,7 @@ namespace Fling
             }
 
             // Get separate images
-            for (auto& image : resources.separate_images)
+            for (spirv_cross::Resource& image : resources.separate_images)
             {
                 auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
                 auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
@@ -151,9 +189,30 @@ namespace Fling
             }
 
             // Samplers
-            for (auto& image : resources.separate_samplers)
+            for (spirv_cross::Resource& image : resources.separate_samplers)
             {
+                auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
+                auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
+                m_Layout.sets[set].sampler_mask |= 1u << binding;
 
+                const std::string& name = image.name;
+                StockSampler sampler;
+                if (get_stock_sampler(sampler, name))
+                {
+                    if (has_immutable_sampler(m_Layout.sets[set], binding))
+                    {
+                        if (sampler != get_immutable_sampler(m_Layout.sets[set], binding))
+                        {
+                            F_LOG_ERROR("Immutable sampler mismatch detected!\n");
+                        }
+                    }
+                    else
+                    {
+                        set_immutable_sampler(m_Layout.sets[set], binding, sampler);
+                    }
+                }
+
+                update_array_info(compiler.get_type(image.type_id), set, binding);
             }
 
             for (auto& image : resources.storage_images)
@@ -213,7 +272,7 @@ namespace Fling
 
             // Specialization constants --------------------
             auto spec_constants = compiler.get_specialization_constants();
-            for (auto& c : spec_constants)
+            for (SpecializationConstant& c : spec_constants)
             {
                 if (c.constant_id >= VULKAN_NUM_SPEC_CONSTANTS)
                 {
@@ -227,6 +286,27 @@ namespace Fling
         catch (const std::exception& e)
         {
         	F_LOG_ERROR("Shader reflection parse error in {}: {}", GetFilepathReleativeToAssets(), e.what());
+        }
+    }
+
+    const char* Shader::StageToName(ShaderStage stage)
+    {
+        switch (stage)
+        {
+        case ShaderStage::Compute:
+            return "compute";
+        case ShaderStage::Vertex:
+            return "vertex";
+        case ShaderStage::Fragment:
+            return "fragment";
+        case ShaderStage::Geometry:
+            return "geometry";
+        case ShaderStage::TessControl:
+            return "tess_control";
+        case ShaderStage::TessEvaluation:
+            return "tess_evaluation";
+        default:
+            return "unknown";
         }
     }
 

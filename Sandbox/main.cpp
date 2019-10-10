@@ -7,10 +7,11 @@
 int main(int argc, char* argv[])
 {
 	Fling::Engine Engine = {};
-
+    Fling::ShaderProgram Shaders("Shaders/vert.spv"_hs, "Shaders/frag.spv"_hs);
+                           
 	try
 	{
-		Engine.Run<Sandbox::Game>();
+		Engine.Run<Sandbox::Game>(&Shaders);
 	}
 	catch (const std::exception& e)
 	{

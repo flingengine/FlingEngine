@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <entt/entity/registry.hpp>
 
+#include "ShaderProgram.h"
 #include "Game.h"
 
 namespace Fling
@@ -33,7 +34,7 @@ namespace Fling
 		 * @return UINT64 0 for success, otherwise an error has occured
 		 */
 		template<class T_GameType>
-		FLING_API UINT64 Run();
+		FLING_API UINT64 Run(ShaderProgram* t_ShaderProgram);
 
 	private:
 
@@ -59,16 +60,21 @@ namespace Fling
 
 		/** Global registry that stores entities and components */
 		entt::registry g_Registry;
+
+        /** The shader program will be specified by the end-user for now to make iteration easier */
+        ShaderProgram* m_ShaderProgram = nullptr;
 	};
 
 	template<class T_GameType>
-	FLING_API UINT64 Engine::Run()
+	FLING_API UINT64 Engine::Run(ShaderProgram* t_ShaderProgram)
 	{
 		static_assert(std::is_default_constructible<T_GameType>::value, "T_GameType requires default-constructible elements");
 		static_assert(std::is_base_of<Fling::Game, T_GameType>::value, "T_GameType must inherit from Fling::Game");
 
 		// #TODO Use a pool allocator for new
 		m_GameImpl = new T_GameType();
+
+        m_ShaderProgram = t_ShaderProgram;
 
 		Startup();
 

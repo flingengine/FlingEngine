@@ -29,6 +29,23 @@ namespace Fling
         uint8_t array_size[VULKAN_NUM_BINDINGS] = {};
     };
 
+    static inline bool has_immutable_sampler(const DescriptorSetLayout& layout, unsigned binding)
+    {
+        return (layout.immutable_sampler_mask & (1u << binding)) != 0;
+    }
+
+    static inline StockSampler get_immutable_sampler(const DescriptorSetLayout& layout, unsigned binding)
+    {
+        assert(has_immutable_sampler(layout, binding));
+        return static_cast<StockSampler>((layout.immutable_samplers >> (4 * binding)) & 0xf);
+    }
+
+    static inline void set_immutable_sampler(DescriptorSetLayout& layout, unsigned binding, StockSampler sampler)
+    {
+        layout.immutable_samplers |= uint64_t(sampler) << (4 * binding);
+        layout.immutable_sampler_mask |= 1u << binding;
+    }
+
     enum class ShaderStage
     {
         Vertex          = 0,
@@ -100,14 +117,18 @@ namespace Fling
          */
         VkShaderModule GetShaderModule() const { return m_Module; }
 
+        const ResourceLayout& GetResourceLayout() const { return m_Layout; }
+
         /**
          * @brief Compiles this shader with SPRIV-Cross
          */
         void ParseReflectionData();
 
+        static const char* StageToName(ShaderStage stage);
+
     private:
 
-        /** Creates the shade rmodules  */
+        /** Creates the shader modules  */
         VkResult CreateShaderModule();
 
         /**
@@ -124,10 +145,5 @@ namespace Fling
         ResourceLayout m_Layout;
 
         std::vector<char> m_RawShaderCode;
-
-        // Stage creation info
-        // Pipeline layout
-        // Locations
-        // Bindings
     };
 }   // namespace Fling

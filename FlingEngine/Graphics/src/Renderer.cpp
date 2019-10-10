@@ -19,14 +19,14 @@ namespace Fling
 	{
 		// You must have the registry set before creating a renderer!
 		assert(m_Registry);
-		InitGraphics();
+        InitDevices();
 
 		// Add entt component callbacks for mesh render etc
 		InitComponentData();
 	}
 
-	void Renderer::InitGraphics()
-	{
+    void Renderer::InitDevices()
+    {
         m_Instance = new Instance();
         assert(m_Instance);
 
@@ -38,9 +38,12 @@ namespace Fling
         m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_Surface);
         assert(m_LogicalDevice);
 
-		VkExtent2D Extent = ChooseSwapExtent();
-		m_SwapChain = new Swapchain(Extent);
+        VkExtent2D Extent = ChooseSwapExtent();
+        m_SwapChain = new Swapchain(Extent);
+    }
 
+	void Renderer::InitGraphics()
+	{
 		CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
@@ -159,30 +162,60 @@ namespace Fling
         }
     }
 
+    static VkShaderStageFlagBits StageToVk(ShaderStage stage)
+    {
+        switch (stage)
+        {
+        case ShaderStage::Compute:
+            return VK_SHADER_STAGE_COMPUTE_BIT;
+        case ShaderStage::Vertex:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::Fragment:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        case ShaderStage::Geometry:
+            return VK_SHADER_STAGE_GEOMETRY_BIT;
+        case ShaderStage::TessControl:
+            return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        case ShaderStage::TessEvaluation:
+            return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        }
+    }
+
     void Renderer::CreateGraphicsPipeline()
     {
-        std::shared_ptr<Shader> VertShader = Shader::Create("Shaders/vert.spv"_hs);
-        std::shared_ptr<Shader> FragShader = Shader::Create("Shaders/frag.spv"_hs);
+        if (!m_ShaderProgram)
+        {
+            F_LOG_FATAL("You must specify the shader program for the Fling Renderer to use!");
+            return;
+        }
 
-        VertShader->ParseReflectionData();
+        // Shader stage creation!
+        VkPipelineShaderStageCreateInfo ShaderStages[static_cast<unsigned>(ShaderStage::Count)];
+        unsigned num_stages = 0;
 
-        // Create modules
-        VkShaderModule VertModule = VertShader->GetShaderModule();
-        VkShaderModule FragModule = FragShader->GetShaderModule();
+        VkSpecializationInfo spec_info[static_cast<unsigned>(ShaderStage::Count)] = {};
+        VkSpecializationMapEntry spec_entries[static_cast<unsigned>(ShaderStage::Count)][VULKAN_NUM_SPEC_CONSTANTS];
 
-        VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
-        VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        VertShaderStageInfo.module = VertModule;
-        VertShaderStageInfo.pName = "main";
-
-        VkPipelineShaderStageCreateInfo FragShaderStageInfo = {};
-        FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        FragShaderStageInfo.module = FragModule;
-        FragShaderStageInfo.pName = "main";
-
-        VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo, FragShaderStageInfo };
+        for (unsigned i = 0; i < static_cast<unsigned>(ShaderStage::Count); i++)
+        {
+            ShaderStage stage = static_cast<ShaderStage>(i);
+            // If we have this shader stage in the graphic program
+            const Guid& ShaderName = m_ShaderProgram->GetStage(stage);
+            if (ShaderName != INVALID_GUID)
+            {
+                if (std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName))
+                {
+                    VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
+                    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                    createInfo.module = Shader->GetShaderModule();
+                    createInfo.stage = StageToVk(stage);
+                    createInfo.pName = "main";
+                    createInfo.flags = 0;
+                    createInfo.pNext = nullptr;
+                    createInfo.pSpecializationInfo = nullptr;
+                }
+            }   
+        }
 
         // Vertex input ----------------------
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
@@ -201,7 +234,7 @@ namespace Fling
         InputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         InputAssembly.primitiveRestartEnable = VK_FALSE;
 
-        // Viewports and scissors ----------------------
+        // View ports and scissors ----------------------
         VkViewport viewport = {};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -223,64 +256,69 @@ namespace Fling
 
         // Rasterizer ----------------------------------
         VkPipelineRasterizationStateCreateInfo Rasterizer = {};
-        Rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        Rasterizer.depthClampEnable = VK_FALSE;
-        Rasterizer.rasterizerDiscardEnable = VK_FALSE;  // Useful for shadow maps, using would require enabling a GPU feature
-        Rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-        Rasterizer.lineWidth = 1.0f;
+        {
+            Rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+            Rasterizer.depthClampEnable = VK_FALSE;
+            Rasterizer.rasterizerDiscardEnable = VK_FALSE;  // Useful for shadow maps, using would require enabling a GPU feature
+            Rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+            Rasterizer.lineWidth = 1.0f;
 
-        Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // Specify the vertex order! 
-        //Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        //Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+            Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // Specify the vertex order! 
 
-        Rasterizer.depthBiasEnable = VK_FALSE;
-        Rasterizer.depthBiasConstantFactor = 0.0f;  // Optional
-        Rasterizer.depthBiasClamp = 0.0f;           // Optional
-        Rasterizer.depthBiasSlopeFactor = 0.0f;     // Optional
+            Rasterizer.depthBiasEnable = VK_FALSE;
+            Rasterizer.depthBiasConstantFactor = 0.0f;  // Optional
+            Rasterizer.depthBiasClamp = 0.0f;           // Optional
+            Rasterizer.depthBiasSlopeFactor = 0.0f;     // Optional
+        }
 
         // Multi-sampling ----------------------------------
         // Can be a cheaper way to perform anti-aliasing
         // Using it requires enabling a GPU feature
         VkPipelineMultisampleStateCreateInfo Multisampling = {};
-        Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        Multisampling.sampleShadingEnable = VK_FALSE;
-        Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-        Multisampling.minSampleShading = 1.0f; // Optional
-        Multisampling.pSampleMask = nullptr; // Optional
-        Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-        Multisampling.alphaToOneEnable = VK_FALSE; // Optional
-
+        {
+            Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+            Multisampling.sampleShadingEnable = VK_FALSE;
+            Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+            Multisampling.minSampleShading = 1.0f; // Optional
+            Multisampling.pSampleMask = nullptr; // Optional
+            Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
+            Multisampling.alphaToOneEnable = VK_FALSE; // Optional
+        }
 
         // Color blending ----------------------------------
         VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-        ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        ColorBlendAttachment.blendEnable = VK_FALSE;
-        ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
-        ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
-        ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;                // Optional
-        ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
-        ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
-        ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;                // Optional
-
-        ColorBlendAttachment.blendEnable = VK_TRUE;
-        ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-        ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
         VkPipelineColorBlendStateCreateInfo ColorBlending = {};
-        ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        ColorBlending.logicOpEnable = VK_FALSE;
-        ColorBlending.logicOp = VK_LOGIC_OP_COPY;   // Optional
-        ColorBlending.attachmentCount = 1;
-        ColorBlending.pAttachments = &ColorBlendAttachment;
-        ColorBlending.blendConstants[0] = 0.0f;     // Optional
-        ColorBlending.blendConstants[1] = 0.0f;     // Optional
-        ColorBlending.blendConstants[2] = 0.0f;     // Optional
-        ColorBlending.blendConstants[3] = 0.0f;     // Optional
+        {
+            // Attatchment
+            ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+            ColorBlendAttachment.blendEnable = VK_FALSE;
+            ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
+            ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
+            ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;                // Optional
+            ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
+            ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
+            ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;                // Optional
+
+            ColorBlendAttachment.blendEnable = VK_TRUE;
+            ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+            ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+            // Blend
+            ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+            ColorBlending.logicOpEnable = VK_FALSE;
+            ColorBlending.logicOp = VK_LOGIC_OP_COPY;   // Optional
+            ColorBlending.attachmentCount = 1;
+            ColorBlending.pAttachments = &ColorBlendAttachment;
+            ColorBlending.blendConstants[0] = 0.0f;     // Optional
+            ColorBlending.blendConstants[1] = 0.0f;     // Optional
+            ColorBlending.blendConstants[2] = 0.0f;     // Optional
+            ColorBlending.blendConstants[3] = 0.0f;     // Optional
+        }
 
         // Pipeline layout ---------------------
         VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
@@ -296,22 +334,24 @@ namespace Fling
         }
 
 		// Depth Stencil
-		VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencil.depthTestEnable = VK_TRUE;
-		depthStencil.depthWriteEnable = VK_TRUE;
-		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-		depthStencil.depthBoundsTestEnable = VK_FALSE;
-		depthStencil.minDepthBounds = 0.0f;
-		depthStencil.maxDepthBounds = 1.0f;
-		depthStencil.stencilTestEnable = VK_FALSE;
-		depthStencil.front = {};
-		depthStencil.back = {};
+        VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+        {
+            depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            depthStencil.depthTestEnable = VK_TRUE;
+            depthStencil.depthWriteEnable = VK_TRUE;
+            depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+            depthStencil.depthBoundsTestEnable = VK_FALSE;
+            depthStencil.minDepthBounds = 0.0f;
+            depthStencil.maxDepthBounds = 1.0f;
+            depthStencil.stencilTestEnable = VK_FALSE;
+            depthStencil.front = {};
+            depthStencil.back = {};
+        }
 
         // Create graphics pipeline ------------------------
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = 2;
+        pipelineInfo.stageCount = num_stages;
         pipelineInfo.pStages = ShaderStages;
 
         pipelineInfo.pVertexInputState = &VertexInputInfo;

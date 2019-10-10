@@ -20,4 +20,5 @@ namespace Fling
     // Use hashed strings as Guid's
     typedef entt::hashed_string                     Guid;
     typedef entt::hashed_string::hash_type          Guid_Handle;
+    static Guid INVALID_GUID = { "INVALID_GUID"_hs };
 }

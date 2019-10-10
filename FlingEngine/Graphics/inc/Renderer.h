@@ -25,6 +25,7 @@
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
 
+#include "ShaderProgram.h"
 #include "Shader.h"
 
 namespace Fling
@@ -95,6 +96,8 @@ namespace Fling
 		Swapchain* GetSwapChain() const { return m_SwapChain; }
 
     private:
+
+        void InitDevices();
 
         /** Init the actual Vulkan API and rendering pipeline */
         void InitGraphics();
@@ -196,6 +199,9 @@ namespace Fling
 
 		/** Entt registry that the renderer will be using. Set by the Engine */
 		entt::registry* m_Registry = nullptr;
+
+        /** The shader program that will allow the users to define their graphics pipeline */
+        ShaderProgram* m_ShaderProgram = nullptr;
 
 		/** Camera Instance */
 		std::unique_ptr<FirstPersonCamera> m_camera;

@@ -35,6 +35,11 @@ namespace Fling
 		Renderer::Get().m_Registry = &g_Registry;
 		Renderer::Get().Init();
 
+        // #TODO specify shader program from the user
+        Renderer::Get().m_ShaderProgram = m_ShaderProgram;
+
+        Renderer::Get().InitGraphics();
+
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
 	}
