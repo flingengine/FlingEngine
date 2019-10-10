@@ -25,4 +25,18 @@ namespace Fling
     {
         return m_ShaderNames[static_cast<unsigned>(t_Stage)];
     }
+
+    bool ShaderProgram::HasStage(ShaderStage t_Stage) const
+    {
+        return m_ShaderNames[static_cast<unsigned>(t_Stage)] != INVALID_GUID;
+    }
+
+    std::shared_ptr<Fling::Shader> ShaderProgram::GetShader(ShaderStage t_Stage) const
+    {
+        if (!HasStage(t_Stage))
+        {
+            return nullptr;
+        }
+        return Shader::Create(m_ShaderNames[static_cast<unsigned>(t_Stage)]);
+    }
 }   // namespace Fling

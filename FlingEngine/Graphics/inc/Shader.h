@@ -66,6 +66,19 @@ namespace Fling
         DescriptorSetLayout sets[VULKAN_NUM_DESCRIPTOR_SETS];
     };
 
+    struct CombinedResourceLayout
+    {
+        uint32_t attribute_mask = 0;
+        uint32_t render_target_mask = 0;
+        DescriptorSetLayout sets[VULKAN_NUM_DESCRIPTOR_SETS] = {};
+        uint32_t stages_for_bindings[VULKAN_NUM_DESCRIPTOR_SETS][VULKAN_NUM_BINDINGS] = {};
+        uint32_t stages_for_sets[VULKAN_NUM_DESCRIPTOR_SETS] = {};
+        VkPushConstantRange push_constant_range = {};
+        uint32_t descriptor_set_mask = 0;
+        uint32_t spec_constant_mask[static_cast<unsigned>(ShaderStage::Count)] = {};
+        uint32_t combined_spec_constant_mask = 0;
+    };
+
     struct ResourceBinding
     {
         union 

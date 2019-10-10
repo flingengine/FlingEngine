@@ -21,6 +21,10 @@ namespace Fling
         /** Returns a shader at a specific stage. Can be nullptr if no shader was specified */
         const Guid& GetStage(ShaderStage t_Stage);
 
+        bool HasStage(ShaderStage t_Stage) const;
+
+        std::shared_ptr<Fling::Shader> GetShader(ShaderStage t_Stage) const;
+
     private:
 
         /** A map of shaders to their accompanying pipeline stages */

@@ -184,7 +184,7 @@ namespace Fling
             const Guid& ShaderName = m_ShaderProgram->GetStage(stage);
             if (ShaderName != INVALID_GUID)
             {
-                if (std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName))
+                if (const std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName))
                 {
                     VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
                     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -633,6 +633,119 @@ namespace Fling
         if(vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create discriptor pool!");
+        }
+
+        // Get the descriptor layout info from shader reflection data!
+        // Again, grabbed form Granite
+        CombinedResourceLayout layout;
+        if (m_ShaderProgram->HasStage(ShaderStage::Vertex))
+        {
+            layout.attribute_mask = m_ShaderProgram->GetShader(ShaderStage::Vertex)->GetResourceLayout().input_mask;
+        }
+        if (m_ShaderProgram->HasStage(ShaderStage::Fragment))
+        {
+            layout.render_target_mask = m_ShaderProgram->GetShader(ShaderStage::Fragment)->GetResourceLayout().output_mask;
+        }
+
+
+        layout.descriptor_set_mask = 0;
+        for (unsigned i = 0; i < static_cast<unsigned>(ShaderStage::Count); i++)
+        {
+            std::shared_ptr<Shader> shader = m_ShaderProgram->GetShader(static_cast<ShaderStage>(i));
+            if (!shader)
+            {
+                continue;
+            }
+
+            uint32_t stage_mask = 1u << i;
+
+            const ResourceLayout& shader_layout = shader->GetResourceLayout();
+            for (unsigned set = 0; set < VULKAN_NUM_DESCRIPTOR_SETS; set++)
+            {
+                layout.sets[set].sampled_image_mask |= shader_layout.sets[set].sampled_image_mask;
+                layout.sets[set].storage_image_mask |= shader_layout.sets[set].storage_image_mask;
+                layout.sets[set].uniform_buffer_mask |= shader_layout.sets[set].uniform_buffer_mask;
+                layout.sets[set].storage_buffer_mask |= shader_layout.sets[set].storage_buffer_mask;
+                layout.sets[set].sampled_buffer_mask |= shader_layout.sets[set].sampled_buffer_mask;
+                layout.sets[set].input_attachment_mask |= shader_layout.sets[set].input_attachment_mask;
+                layout.sets[set].sampler_mask |= shader_layout.sets[set].sampler_mask;
+                layout.sets[set].separate_image_mask |= shader_layout.sets[set].separate_image_mask;
+                layout.sets[set].fp_mask |= shader_layout.sets[set].fp_mask;
+
+                for_each_bit(shader_layout.sets[set].immutable_sampler_mask, [&](UINT32 binding) {
+                    StockSampler sampler = get_immutable_sampler(shader_layout.sets[set], binding);
+
+                    // Do we already have an immutable sampler? Make sure it matches the layout.
+                    if (has_immutable_sampler(layout.sets[set], binding))
+                    {
+                        if (sampler != get_immutable_sampler(layout.sets[set], binding))
+                        {
+                            F_LOG_ERROR("Immutable sampler mismatch detected!\n");
+                        }
+                    }
+
+                    set_immutable_sampler(layout.sets[set], binding, sampler);
+                });
+
+                uint32_t active_binds =
+                    shader_layout.sets[set].sampled_image_mask |
+                    shader_layout.sets[set].storage_image_mask |
+                    shader_layout.sets[set].uniform_buffer_mask |
+                    shader_layout.sets[set].storage_buffer_mask |
+                    shader_layout.sets[set].sampled_buffer_mask |
+                    shader_layout.sets[set].input_attachment_mask |
+                    shader_layout.sets[set].sampler_mask |
+                    shader_layout.sets[set].separate_image_mask;
+
+                if (active_binds)
+                {
+                    layout.stages_for_sets[set] |= stage_mask;
+                }
+
+                for_each_bit(active_binds, [&](UINT32 bit) {
+                    layout.stages_for_bindings[set][bit] |= stage_mask;
+
+                    auto& combined_size = layout.sets[set].array_size[bit];
+                    auto& shader_size = shader_layout.sets[set].array_size[bit];
+                    if (combined_size && combined_size != shader_size)
+                    {
+                        F_LOG_ERROR("Mismatch between array sizes in different shaders.\n");
+                    }
+                    else
+                    {
+                        combined_size = shader_size;
+                    }
+                });
+
+            }
+
+            for (unsigned set = 0; set < VULKAN_NUM_DESCRIPTOR_SETS; set++)
+            {
+                if (layout.stages_for_sets[set] != 0)
+                {
+                    layout.descriptor_set_mask |= 1u << set;
+
+                    for (unsigned binding = 0; binding < VULKAN_NUM_BINDINGS; binding++)
+                    {
+                        auto& array_size = layout.sets[set].array_size[binding];
+                        if (array_size == 0)
+                        {
+                            array_size = 1;
+                        }
+                        else
+                        {
+                            for (unsigned i = 1; i < array_size; i++)
+                            {
+                                if (layout.stages_for_bindings[set][binding + i] != 0)
+                                {
+                                    F_LOG_ERROR("Detected binding aliasing for (%u, %u). Binding array with %u elements starting at (%u, %u) overlaps.\n",
+                                        set, binding + i, array_size, set, binding);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
