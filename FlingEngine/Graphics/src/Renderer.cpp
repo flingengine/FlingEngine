@@ -719,6 +719,17 @@ namespace Fling
 
             }
 
+            // Merge push constant ranges into one range.
+            // Do not try to split into multiple ranges as it just complicates things for no obvious gain.
+            if (shader_layout.push_constant_size != 0)
+            {
+                layout.push_constant_range.stageFlags |= 1u << i;
+                layout.push_constant_range.size = std::max(layout.push_constant_range.size, shader_layout.push_constant_size);
+            }
+
+            layout.spec_constant_mask[i] = shader_layout.spec_constant_mask;
+            layout.combined_spec_constant_mask |= shader_layout.spec_constant_mask;
+
             for (unsigned set = 0; set < VULKAN_NUM_DESCRIPTOR_SETS; set++)
             {
                 if (layout.stages_for_sets[set] != 0)
@@ -747,6 +758,9 @@ namespace Fling
                 }
             }
         }
+
+        // Request a pipeline layout with this combined resource! 
+
     }
 
     void Renderer::CreateDescriptorSets()
