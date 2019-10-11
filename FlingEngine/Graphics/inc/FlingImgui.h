@@ -22,38 +22,67 @@ namespace Fling
 			glm::vec2 translate;
 		} pushConstBlock;
 
-
-		struct UISettings
-		{
-			bool mouseClickLeft = false;
-			bool mouseClickRight = false;
-		} uiSettings;
-
 		FlingImgui(LogicalDevice* t_logicalDevice, Swapchain* t_swapChain);
 		~FlingImgui();
 		
+		/**
+		 * @brief Sets imgui style and intializes imgui related buffers and pools 
+		 * 
+		 * @param t_width 
+		 * @param t_height 
+		 */
 		void Init(float t_width, float t_height);
 
+		/**
+		 * @brief Destroys imgui resources
+		 * 
+		 */
 		void Release();
 		
+		/**
+		 * @brief Creates imgui graphics pipeline 
+		 * 
+		 * @param t_copyQueue 
+		 */
 		void InitResources(VkQueue t_copyQueue);
 		
-		void UpdateBuffers();
-		
-		void DrawFrame(VkCommandBuffer t_commandBuffer);
-
+		/**
+		 * @brief 
+		 * 
+		 * @tparam Candidate: type of the function delegate
+		 * @tparam Type: object type 
+		 * @param t_instance: object instance 
+		 */
 		template <auto Candidate, typename Type>
-		void Display(Type& t_instance)
+		void SetDisplay(Type& t_instance)
 		{
 			m_display.connect<Candidate>(t_instance);
 		}
 
+		/**
+		 * @brief Command buffers start recoding current renderpass with updated index and vertex buffers
+		 *
+		 * @param t_displayOn
+		 */
 		void BuildCommandBuffers(bool t_displayOn);
-
+		
 		const VkCommandBuffer GetCommandBuffer(UINT32 t_index) const { return m_commandBuffers[t_index];  }
 		const VkCommandPool GetCommandPool() const { return m_commandPool; }
 
 	private:
+		/**
+		 * @brief Updates the vertex and index buffers for imgui 
+		 * 
+		 */
+		void UpdateBuffers();
+		/**
+		 * @brief Submits imgui render commands to its command buffer
+		 * 
+		 * @param t_commandBuffer current command buffer
+		 */
+		void DrawFrame(VkCommandBuffer t_commandBuffer);
+
+
 		VkSampler m_sampler;
 		INT32 m_vertexCount = 0;
 		INT32 m_indexCount = 0;

@@ -1,10 +1,12 @@
 #include "ImguiDisplay.h"
+#include "Renderer.h"
+#include "Timing.h"
 
 namespace Fling
 {
 	ImguiDisplay::ImguiDisplay()
 	{
-		frameTimes = { 0 };
+		fpsGraph = { 0 };
 	}
 
 
@@ -13,13 +15,15 @@ namespace Fling
 		Timing& Timing = Timing::Get();
 		ImGuiIO& io = ImGui::GetIO();
 		ImVec4 clear_color = ImColor(114, 144, 154);
-		ImGui::TextUnformatted("Device name");
-
+		
 		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Debug");
-		std::rotate(frameTimes.begin(), frameTimes.begin() + 1, frameTimes.end());
-		float frameTime = Timing.GetFrameCount();
-		frameTimes.back() = frameTime;
+		ImGui::Text("Device: %s", Renderer::Get().GetPhysicalDevice()->GetDeviceProps().deviceName);
+		
+		//Update fps graph
+		std::rotate(fpsGraph.begin(), fpsGraph.begin() + 1, fpsGraph.end());
+		float frameTime = static_cast<float>(Timing.GetFrameCount());
+		fpsGraph.back() = frameTime;
 		if (frameTime < frameTimeMin) {
 			frameTimeMin = frameTime;
 		}
@@ -28,13 +32,10 @@ namespace Fling
 		}
 		
 		ImGui::Text("FPS: %f", frameTime);
-		ImGui::PlotLines("FPS", &frameTimes[0], 50, 0, "", frameTimeMin, frameTimeMax, ImVec2(0, 80));
+		ImGui::PlotLines("FPS", &fpsGraph[0], 50, 0, "", frameTimeMin, frameTimeMax, ImVec2(0, 80));
 
 		ImGui::Checkbox("Mouse click left", &io.MouseDown[0]);
 		ImGui::Checkbox("Mouse click right", &io.MouseDown[1]);
 		ImGui::End();
-
-		//ImGui::SetNextWindowPos(ImVec2(650, -1000), ImGuiCond_FirstUseEver);
-		ImGui::ShowDemoWindow();
 	}
 }

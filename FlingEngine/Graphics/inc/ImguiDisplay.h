@@ -2,7 +2,6 @@
 
 #include <imgui.h>
 #include <array>
-#include "Timing.h"
 
 namespace Fling
 {
@@ -12,10 +11,14 @@ namespace Fling
 		ImguiDisplay();
 		~ImguiDisplay() {};
 
+		/**
+		 * @brief User defined callback to make or change imgui UI
+		 * 
+		 */
 		void NewFrame();
 
 	private:
-		std::array<float, 50> frameTimes{};
+		std::array<float, 50> fpsGraph{};
 		float frameTimeMin = 9999.0f, frameTimeMax = 0.0f;
 	};
 }

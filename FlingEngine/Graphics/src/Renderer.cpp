@@ -92,26 +92,24 @@ namespace Fling
 		);
 
 		m_flingImgui->InitResources(m_LogicalDevice->GetGraphicsQueue());
-		m_flingImgui->Display<&ImguiDisplay::NewFrame, ImguiDisplay>(m_imguiDisplay);
+		m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame, ImguiDisplay>(m_imguiDisplay);
 	}
 
 	void Renderer::UpdateImguiIO()
 	{
-		//// Update imGui
+		//Update imgui mouse events and timings
 		ImGuiIO& io = ImGui::GetIO();
 
 		io.DisplaySize = ImVec2(
 			static_cast<float>(m_CurrentWindow->GetWidth()),
 			static_cast<float>(m_CurrentWindow->GetHeight()));
 
-		io.DeltaTime = Timing::Get().GetFrameTime();
+		io.DeltaTime = Timing::Get().GetDeltaTime();
 		io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
 
 		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
 		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
 	}
-
-
 
 	void Renderer::CreateRenderPass()
 	{

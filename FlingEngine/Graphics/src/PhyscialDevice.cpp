@@ -87,7 +87,7 @@ namespace Fling
 		default:
 			DeviceInfo << " " << m_DeviceProperties.vendorID;
 		}
-
+		
 		// Versions
 		UINT32 supportedVersion[]
 		{ 
