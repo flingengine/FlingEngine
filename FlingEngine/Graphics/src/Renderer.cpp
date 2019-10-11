@@ -189,8 +189,6 @@ namespace Fling
             //    return "tess_control";
             //case ShaderStage::TessEvaluation:
             //    return "tess_evaluation";
-        default:
-            return VK_SHADER_STAGE_MISS_BIT_NV;
         }
     }
 

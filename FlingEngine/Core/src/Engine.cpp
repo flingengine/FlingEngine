@@ -63,24 +63,26 @@ namespace Fling
 		int FpsFrameCount = 0;
 		float FpsTimeElapsed = 0.0f;
 
+        MovingAverage<float, 100> FPSCounter = {};
+
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
+            // Update timing
+            Timing.Update();
+            DeltaTime = Timing.GetDeltaTime();
+
+            // If delta time is greater than 1 second, simulate it as 1/60 FPS 
+            // because we can assume that it is like that because of debugging
+            if (DeltaTime >= MaxDeltaTime)
+            {
+                DeltaTime = FallbackDeltaTime;
+            }
+
 			// Update FPS Counter
 			{
-				FpsTimeElapsed += DeltaTime;
-				if(FpsTimeElapsed >= 1.0f)
-				{
-					float mspf = 1000.0f / (float)(FpsFrameCount);
-					//F_LOG_TRACE("FPS: {} Frame Timing: {} ", FpsFrameCount, mspf);
-					FpsTimeElapsed = 0.0f;
-					FpsFrameCount = 0;
-				}
-				else
-				{
-					++FpsFrameCount;
-				}
+                FPSCounter.Push(DeltaTime);
+                F_LOG_TRACE("FPS {}", 1.0f / FPSCounter.GetAverage());
 			}
-
 			
 			Renderer.Tick(DeltaTime);
 			
@@ -95,17 +97,6 @@ namespace Fling
 			}
 
 			Renderer.DrawFrame(g_Registry);
-
-            // Update timing
-			Timing.Update();
-            DeltaTime = Timing.GetDeltaTime();
-            
-            // If delta time is greater than 1 second, simulate it as 1/60 FPS 
-            // because we can assume that it is like that because of debugging
-            if (DeltaTime >= MaxDeltaTime)
-            {
-				DeltaTime = FallbackDeltaTime;
-            }
 		}
 
 		// Any waiting that we may need to do before the shutdown function should go here

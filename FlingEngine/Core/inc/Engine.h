@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <entt/entity/registry.hpp>
 
+#include "MovingAverage.hpp"
 #include "ShaderProgram.h"
 #include "Game.h"
 
