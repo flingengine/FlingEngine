@@ -566,6 +566,39 @@ namespace Fling
 				1, &imageMemoryBarrier);
 		}
 
+		void CreateCommandPool(VkCommandPool * t_commandPool, VkCommandPoolCreateFlags t_flags)
+		{
+			LogicalDevice* logicalDevice = Renderer::Get().GetLogicalDevice();
+
+			VkCommandPoolCreateInfo commandPoolCreateInfo = {};
+			UINT32 GraphicsFamily = logicalDevice->GetGraphicsFamily();
+			commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			commandPoolCreateInfo.flags = t_flags;
+			commandPoolCreateInfo.queueFamilyIndex = GraphicsFamily;
+
+			if (vkCreateCommandPool(logicalDevice->GetVkDevice(), &commandPoolCreateInfo, nullptr, t_commandPool) != VK_SUCCESS)
+			{
+				F_LOG_ERROR("Failed to create command pool");
+			}
+		}
+
+		void CreateCommandBuffers(VkCommandBuffer * t_commandBuffer, UINT32 t_commandBufferCount, VkCommandPool & t_commandPool)
+		{
+			VkDevice logicalDevice = Renderer::Get().GetLogicalVkDevice();
+
+			VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
+			commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			commandBufferAllocateInfo.commandBufferCount = t_commandBufferCount;
+			commandBufferAllocateInfo.commandPool = t_commandPool;
+			commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+			if (vkAllocateCommandBuffers(logicalDevice, &commandBufferAllocateInfo, t_commandBuffer) != VK_SUCCESS)
+			{
+				F_LOG_ERROR("Failed to create command buffers");
+			}
+
+		}
+
 
 		VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode)
 		{
@@ -715,6 +748,8 @@ namespace Fling
 
 			GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
 		}
+
+
 
 		bool HasStencilComponent(VkFormat t_format)
 		{

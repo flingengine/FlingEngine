@@ -60,8 +60,6 @@ namespace Fling
 				MappedRange.size = m_Size;
 				vkFlushMappedMemoryRanges(Device, 1, &MappedRange);
 			}
-
-			//UnmapMemory();
 		}
 
 		if((vkBindBufferMemory(Device, m_Buffer, m_BufferMemory, 0) != VK_SUCCESS))

@@ -11,7 +11,6 @@ namespace Fling
 	void ImguiDisplay::NewFrame()
 	{
 		Timing& Timing = Timing::Get();
-		ImGui::NewFrame();
 		ImGuiIO& io = ImGui::GetIO();
 		ImVec4 clear_color = ImColor(114, 144, 154);
 		ImGui::TextUnformatted("Device name");
@@ -28,7 +27,8 @@ namespace Fling
 			frameTimeMax = frameTime;
 		}
 		
-		ImGui::PlotLines("Frame Times", &frameTimes[0], 50, 0, "", frameTimeMin, frameTimeMax, ImVec2(0, 80));
+		ImGui::Text("FPS: %f", frameTime);
+		ImGui::PlotLines("FPS", &frameTimes[0], 50, 0, "", frameTimeMin, frameTimeMax, ImVec2(0, 80));
 
 		ImGui::Checkbox("Mouse click left", &io.MouseDown[0]);
 		ImGui::Checkbox("Mouse click right", &io.MouseDown[1]);
@@ -36,6 +36,5 @@ namespace Fling
 
 		//ImGui::SetNextWindowPos(ImVec2(650, -1000), ImGuiCond_FirstUseEver);
 		ImGui::ShowDemoWindow();
-		ImGui::Render();
 	}
 }

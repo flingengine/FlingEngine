@@ -270,10 +270,14 @@ namespace Fling
         */
         std::vector<VkCommandBuffer> m_CommandBuffers;
 
+
         std::vector<VkSemaphore> m_ImageAvailableSemaphores;
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
 
         std::shared_ptr<class Image> m_TestImage;
+
+		//Flag for toggling imgui 
+		bool m_imguiFlag = true;
     };
 }    // namespace Fling

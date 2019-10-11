@@ -79,7 +79,7 @@ namespace Fling
 		 *
 		 * @return float GetFrameTime
 		 */
-		float FLING_API GetFrameTime() const { return mspf; }
+		float FLING_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
 
 	private:
 		float m_deltaTime = 0.0f;
@@ -88,8 +88,8 @@ namespace Fling
 		float m_frameStartTimef = 0.0f;
 
 		float m_fpsTimeElapsed = 0.0f;
-		float mspf = 1.0f;
 		int m_fpsFrameCount = 0;
+		int m_fpsFrameCountTemp = 0;
 
 		/** The time that the program started */
 		double m_startTime = 0.0;

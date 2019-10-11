@@ -2,27 +2,52 @@
 
 namespace Fling
 {
-    FlingImgui::FlingImgui(LogicalDevice* t_logicalDevice) : m_LogicalDevice(t_logicalDevice)
+    FlingImgui::FlingImgui(LogicalDevice* t_logicalDevice, Swapchain* t_swapChain) :
+		m_LogicalDevice(t_logicalDevice),
+		m_swapChain(t_swapChain)
 	{
         ImGui::CreateContext();
 	}
 
 	FlingImgui::~FlingImgui()
 	{
-        ImGui::DestroyContext();
-		vkDestroyImage(m_LogicalDevice->GetVkDevice(), m_fontImage, nullptr);
-        vkDestroyImageView(m_LogicalDevice->GetVkDevice(), m_fontImageView, nullptr);
-        vkFreeMemory(m_LogicalDevice->GetVkDevice(), m_fontMemory, nullptr);
-        vkDestroySampler(m_LogicalDevice->GetVkDevice(), m_sampler, nullptr);
-        vkDestroyPipelineCache(m_LogicalDevice->GetVkDevice(), m_pipelineCache, nullptr);
-		vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_pipeLine, nullptr);
-        vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_pipelineLayout, nullptr);
-        vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_descriptorPool, nullptr);
-        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_descriptorSetLayout, nullptr);
+		ImGui::DestroyContext();
+		Release();
 	}
+
+	void FlingImgui::Release()
+	{
+		VkDevice logicalDevice = m_LogicalDevice->GetVkDevice();
+
+		//Resources to destroy on swapchain recreation
+		for (auto frameBuffer : m_frameBuffers)
+		{
+			vkDestroyFramebuffer(logicalDevice, frameBuffer, nullptr);
+		}
+
+		vkDestroyRenderPass(logicalDevice, m_renderPass, nullptr);
+
+		vkFreeCommandBuffers(logicalDevice, m_commandPool, static_cast<uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
+		vkDestroyCommandPool(logicalDevice, m_commandPool, nullptr);
+
+		//Resources to destroy for imgui context
+		vkDestroyImage(logicalDevice, m_fontImage, nullptr);
+		vkDestroyImageView(logicalDevice, m_fontImageView, nullptr);
+		vkFreeMemory(logicalDevice, m_fontMemory, nullptr);
+		vkDestroySampler(logicalDevice, m_sampler, nullptr);
+		vkDestroyPipelineCache(logicalDevice, m_pipelineCache, nullptr);
+		vkDestroyPipeline(logicalDevice, m_pipeLine, nullptr);
+		vkDestroyPipelineLayout(logicalDevice, m_pipelineLayout, nullptr);
+		vkDestroyDescriptorPool(logicalDevice, m_descriptorPool, nullptr);
+		vkDestroyDescriptorSetLayout(logicalDevice, m_descriptorSetLayout, nullptr);
+	}
+
 
 	void FlingImgui::Init(float t_width, float t_height)
 	{
+		size_t imageViewCount = m_swapChain->GetImageViewCount();
+		VkDevice logicalDevice = m_LogicalDevice->GetVkDevice();
+
         // Color scheme
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
@@ -37,9 +62,83 @@ namespace Fling
 
 		m_indexBuffer = std::make_unique<Buffer>();
 		m_vertexBuffer = std::make_unique<Buffer>();
+
+		//Create command pool and buffer 
+		GraphicsHelpers::CreateCommandPool(&m_commandPool, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+		m_commandBuffers.resize(imageViewCount);
+		GraphicsHelpers::CreateCommandBuffers(
+			m_commandBuffers.data(),
+			static_cast<UINT32>(m_commandBuffers.size()),
+			m_commandPool);
+
+
+		//Create renderpass
+		VkAttachmentDescription colorAttachment = {};
+		colorAttachment.format = m_swapChain->GetImageFormat();
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		
+		VkAttachmentReference color_attachment = {};
+		color_attachment.attachment = 0;
+		color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &color_attachment;
+
+		VkSubpassDependency dependency = {};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstStageMask= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		VkRenderPassCreateInfo renderPassCreateInfo = {};
+		renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassCreateInfo.attachmentCount = 1;
+		renderPassCreateInfo.pAttachments = &colorAttachment;
+		renderPassCreateInfo.subpassCount = 1;
+		renderPassCreateInfo.pSubpasses = &subpass;
+		renderPassCreateInfo.dependencyCount = 1;
+		renderPassCreateInfo.pDependencies = &dependency;
+
+		if (vkCreateRenderPass(logicalDevice, &renderPassCreateInfo, nullptr, &m_renderPass) != VK_SUCCESS)
+		{
+			F_LOG_ERROR("Fling Imgui failed to create renderpass");
+		}
+
+		//Create framebuffers
+		m_frameBuffers.resize(imageViewCount);
+		VkImageView frameBufferAttachment[1];
+		VkFramebufferCreateInfo frameBufferInfo = {};
+		frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		frameBufferInfo.renderPass = m_renderPass;
+		frameBufferInfo.attachmentCount = 1;
+		frameBufferInfo.pAttachments = frameBufferAttachment;
+		frameBufferInfo.width = static_cast<int>(t_width);
+		frameBufferInfo.height = static_cast<int>(t_height);
+		frameBufferInfo.layers = 1;
+
+		const std::vector<VkImageView>& imageViews = m_swapChain->GetImageViews();
+
+		for (size_t i = 0; i < imageViewCount; ++i)
+		{
+			frameBufferAttachment[0] = imageViews[i];
+			if (vkCreateFramebuffer(logicalDevice, &frameBufferInfo, nullptr, &m_frameBuffers[i]) != VK_SUCCESS)
+			{
+				F_LOG_ERROR("Fling Imgui failed to create frame buffers");
+			}
+		}
 	}
 
-	void FlingImgui::InitResources(VkRenderPass t_renderPass, VkQueue t_copyQueue)
+	void FlingImgui::InitResources(VkQueue t_copyQueue)
 	{
         ImGuiIO& io = ImGui::GetIO();
         unsigned char* fontData;
@@ -124,7 +223,16 @@ namespace Fling
 		//Descriptor pool
 		std::vector<VkDescriptorPoolSize> poolSizes = 
 		{
-			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000),
+			Fling::GraphicsHelpers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000),
 		};
 
 		VkDescriptorPoolCreateInfo descriptorPoolInfo = Fling::GraphicsHelpers::DescriptorPoolCreateInfo(poolSizes, 2);
@@ -229,7 +337,7 @@ namespace Fling
         std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages {};
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = 
-            Fling::GraphicsHelpers::PipelineCreateInfo(m_pipelineLayout, t_renderPass);
+            Fling::GraphicsHelpers::PipelineCreateInfo(m_pipelineLayout, m_renderPass);
 
         pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
 		pipelineCreateInfo.pRasterizationState = &rasterizationState;
@@ -262,7 +370,6 @@ namespace Fling
 
 		pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
-		
 		//Load shader
 		std::shared_ptr<File> vertShaderCode = ResourceManager::Get().LoadResource<File>("Shaders/imgui/ui.vert.spv"); 
 		assert(vertShaderCode);
@@ -414,6 +521,54 @@ namespace Fling
 				}
 
 				vertexOffset += cmd_list->VtxBuffer.Size;
+			}
+		}
+
+	}
+	void FlingImgui::BuildCommandBuffers(bool t_displayOn)
+	{
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		ImGui::NewFrame();
+		if (t_displayOn)
+		{
+			m_display();
+		}
+		ImGui::Render();
+
+		UpdateBuffers();
+
+		for (size_t i = 0; i < m_commandBuffers.size(); i++)
+		{
+			if (vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Fling Imgui failed to create command buffers");
+			}
+
+			VkRenderPassBeginInfo renderPassInfo = {};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = m_renderPass;
+			renderPassInfo.framebuffer = m_frameBuffers[i];
+
+			renderPassInfo.renderArea.offset = { 0,0 };
+			renderPassInfo.renderArea.extent = m_swapChain->GetExtents();
+
+			std::array<VkClearValue, 1> clearValues = {};
+			clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+			renderPassInfo.clearValueCount = static_cast<UINT32>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
+
+			vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			DrawFrame(m_commandBuffers[i]);
+
+			vkCmdEndRenderPass(m_commandBuffers[i]);
+
+			if (vkEndCommandBuffer(m_commandBuffers[i]) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Fling Imgui failed to record command buffer!");
 			}
 		}
 

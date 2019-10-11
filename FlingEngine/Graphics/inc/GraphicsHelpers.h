@@ -181,6 +181,17 @@ namespace Fling
 			VkPipelineStageFlags t_dstStageMask
 		);
 
+		void CreateCommandPool(
+			VkCommandPool* t_commandPool, 
+			VkCommandPoolCreateFlags t_flags
+		);
+
+		void CreateCommandBuffers(
+			VkCommandBuffer* t_commandBuffer,
+			UINT32 t_commandBufferCount,
+			VkCommandPool& t_commandPool
+		);
+
 		VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo();
 
 		VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
