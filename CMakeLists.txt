@@ -59,6 +59,9 @@ ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
 add_subdirectory( external/glfw )
 include_directories( external/glfw/include )
 
+add_subdirectory( external/imgui )
+include_directories( external/imgui )
+
 include_directories( external/glm )
 include_directories( external/spdlog/include )
 include_directories( external/inih )
@@ -66,7 +69,6 @@ include_directories( external/entt/src )
 include_directories( external/json/single_include )
 include_directories( external/stb )
 include_directories( external/tinyobjloader )
-include_directories( external/imgui )
 include_directories( external/cereal/include )
 
 # Add the engine and tests
