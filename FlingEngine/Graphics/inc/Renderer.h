@@ -35,6 +35,7 @@ namespace Fling
     // File resource
     class File;
 
+    // Imgui resource
 	class FlingImgui;
 
     /// <summary>
@@ -206,9 +207,10 @@ namespace Fling
 
         FlingWindow* m_CurrentWindow = nullptr;
 
+        /** Imgui Instance **/
 		FlingImgui* m_flingImgui = nullptr;
+        /** Holds imgui ui data **/
 		ImguiDisplay m_imguiDisplay;
-
 
         Instance* m_Instance = nullptr;
 
