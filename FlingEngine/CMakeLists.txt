@@ -79,7 +79,7 @@ message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 if( MSVC )
     set ( MY_COMPILER_FLAGS "/W3" )
 else()
-    set ( MY_COMPILER_FLAGS "-Wall -Wno-reorder -Wno-unknown-pragmas -Wno-multichar -Wno-missing-braces" )
+    set ( MY_COMPILER_FLAGS "-Wall -Wno-reorder -Wno-unknown-pragmas -Wno-multichar -Wno-missing-braces -fPIC" )
 endif()
 
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
