@@ -5,13 +5,14 @@
 
 namespace Fling
 {
-    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
+    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID, ShaderStage t_Stage)
     {
-        return ResourceManager::LoadResource<Shader>(t_ID);
+        return ResourceManager::LoadResource<Shader>(t_ID, t_Stage);
     }
 
-    Shader::Shader(Guid t_ID)
+    Shader::Shader(Guid t_ID, ShaderStage t_Stage)
         : Resource(t_ID)
+        , m_Stage(t_Stage)
     {
         std::vector<char> RawCode = LoadRawBytes(GetFilepathReleativeToAssets());
         
@@ -283,6 +284,27 @@ namespace Fling
         {
         	F_LOG_ERROR("Shader reflection parse error in {}: {}", GetFilepathReleativeToAssets(), e.what());
         }
+    }
+
+    VkShaderStageFlagBits Shader::GetVkBindStage() const
+    {
+        switch (m_Stage)
+        {
+            //case ShaderStage::Compute:
+            //   return VK_SHADER_STAGE_COMPUTE_BIT;
+        case ShaderStage::Vertex:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::Fragment:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+            //case ShaderStage::Geometry:
+            //    return "geometry";
+            //case ShaderStage::TessControl:
+            //    return "tess_control";
+            //case ShaderStage::TessEvaluation:
+            //    return "tess_evaluation";
+        }
+
+        return VK_SHADER_STAGE_VERTEX_BIT;
     }
 
     const char* Shader::StageToName(ShaderStage stage)

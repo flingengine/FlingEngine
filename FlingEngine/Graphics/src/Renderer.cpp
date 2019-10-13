@@ -173,25 +173,6 @@ namespace Fling
         }
     }
 
-    VkShaderStageFlagBits StageToVkBit(ShaderStage stage)
-    {
-        switch (stage)
-        {
-        //case ShaderStage::Compute:
-        //   return VK_SHADER_STAGE_COMPUTE_BIT;
-        case ShaderStage::Vertex:
-            return VK_SHADER_STAGE_VERTEX_BIT;
-        case ShaderStage::Fragment:
-            return VK_SHADER_STAGE_FRAGMENT_BIT;
-            //case ShaderStage::Geometry:
-            //    return "geometry";
-            //case ShaderStage::TessControl:
-            //    return "tess_control";
-            //case ShaderStage::TessEvaluation:
-            //    return "tess_evaluation";
-        }
-    }
-
     void Renderer::CreateGraphicsPipeline()
     {
         if (!m_ShaderProgram)
@@ -199,6 +180,8 @@ namespace Fling
             F_LOG_FATAL("You must specify the shader program for the Fling Renderer to use!");
             return;
         }
+
+        m_ShaderProgram->LoadShaders();
 
         // Shader stage creation!
         VkPipelineShaderStageCreateInfo ShaderStages[static_cast<unsigned>(ShaderStage::Count)];
@@ -214,12 +197,12 @@ namespace Fling
             const Guid& ShaderName = m_ShaderProgram->GetStage(stage);
             if (ShaderName != INVALID_GUID)
             {
-                if (const std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName))
+                if (const std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName, stage))
                 {
                     VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
                     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
                     createInfo.module = Shader->GetShaderModule();
-                    createInfo.stage = StageToVkBit(stage);
+                    createInfo.stage = Shader->GetVkBindStage();
                     //createInfo.stage = static_cast<VkShaderStageFlagBits>(1u << i);
                     createInfo.pName = "main";
                     createInfo.flags = 0;

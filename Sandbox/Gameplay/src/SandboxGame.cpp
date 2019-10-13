@@ -4,6 +4,7 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
+#include "Stats.h"
 
 namespace Sandbox
 {
@@ -16,7 +17,8 @@ namespace Sandbox
 
 		// Temp saving and load functions
 		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
-		Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
+        Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
+        Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
 
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
@@ -100,5 +102,11 @@ namespace Sandbox
 			}
 		}
 	}
+
+    void Game::PrintFPS() const
+    {
+        float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
+        F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f /AvgFrameTime));
+    }
 
 }	// namespace Sandbox

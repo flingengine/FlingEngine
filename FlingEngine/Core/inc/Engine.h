@@ -12,6 +12,7 @@
 #include <entt/entity/registry.hpp>
 
 #include "MovingAverage.hpp"
+#include "Stats.h"
 #include "ShaderProgram.h"
 #include "Game.h"
 
@@ -64,6 +65,7 @@ namespace Fling
 
         /** The shader program will be specified by the end-user for now to make iteration easier */
         ShaderProgram* m_ShaderProgram = nullptr;
+
 	};
 
 	template<class T_GameType>
