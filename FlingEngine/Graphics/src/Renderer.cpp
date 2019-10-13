@@ -79,6 +79,7 @@ namespace Fling
 		//Intialize imgui
 		m_flingImgui = new FlingImgui(m_LogicalDevice, m_SwapChain);
 		m_imguiDisplay = ImguiDisplay();
+		m_imguiFlag = FlingConfig::GetBool("Imgui", "display");
 		InitImgui();
 
 		CreateSyncObjects();
@@ -815,6 +816,7 @@ namespace Fling
 
 		m_camera->Update(DeltaTime);
 
+		//toggle imgui
 		if (Input::IsKeyDown(KeyNames::FL_KEY_I))
 		{
 			m_imguiFlag = !m_imguiFlag;

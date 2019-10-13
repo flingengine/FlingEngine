@@ -420,7 +420,7 @@ namespace Fling
             m_vertexBuffer->UnmapMemory();
             m_vertexBuffer->Release();
 
-            m_vertexBuffer->CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            m_vertexBuffer->CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, true);
             m_vertexCount = imDrawData->TotalVtxCount;
             m_vertexBuffer->MapMemory();
         }
@@ -432,7 +432,7 @@ namespace Fling
             m_indexBuffer->UnmapMemory();
             m_indexBuffer->Release();
 
-            m_indexBuffer->CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            m_indexBuffer->CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, true);
             m_indexCount = imDrawData->TotalIdxCount;
             m_indexBuffer->MapMemory();
         }
