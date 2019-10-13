@@ -36,14 +36,14 @@ namespace Fling
     class File;
 
     // Imgui resource
-	class FlingImgui;
+    class FlingImgui;
 
     /// <summary>
     /// Core renderer for the application
     /// </summary>
     class Renderer : public Singleton<Renderer>
     {
-		friend class Engine;
+        friend class Engine;
     public:
 
         virtual void Init() override;
@@ -60,7 +60,7 @@ namespace Fling
         FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
 
         /** Happens before draw frame. Update the window  */
-	void Tick(float DeltaTime);
+    void Tick(float DeltaTime);
 
         /**
         * Draw the frame!
@@ -103,15 +103,15 @@ namespace Fling
 
         /** Init the actual Vulkan API and rendering pipeline */
         void InitGraphics();
-		
-		/// Init imgui context 
-		void InitImgui();
-		void UpdateImguiIO();
+        
+        /// Init imgui context 
+        void InitImgui();
+        void UpdateImguiIO();
 
-		/**
-		* @brief Set any component type callbacks needed for the rendering pipeline
-		*/
-		void InitComponentData();
+        /**
+        * @brief Set any component type callbacks needed for the rendering pipeline
+        */
+        void InitComponentData();
 
         /**
          * @brief Create a Descriptor Layout object
@@ -133,21 +133,11 @@ namespace Fling
         * Create the frame buffers for use by the swap chain
         */
         void CreateFrameBuffers();
-
-        /**
-        * Create the command pool to be sent every frame
+        
+        /*
+        * Builds command buffer to submit to device
         */
-        void CreateCommandPool();
-
-		/*
-		* Allocates command buffers
-		*/
-		void CreateCommandBuffers();
-		
-		/*
-		* Builds command buffer to submit to device
-		*/
-		void BuildCommandBuffers(entt::registry& t_Reg);
+        void BuildCommandBuffers(entt::registry& t_Reg);
 
         /**
         * Create semaphores and fence objects
@@ -161,10 +151,10 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-		/**
-		 * @brief	Calculate alignment requirements based on the device for the dyanmic uniform buffer
-		 */
-		void PrepareUniformBuffers();
+        /**
+         * @brief    Calculate alignment requirements based on the device for the dyanmic uniform buffer
+         */
+        void PrepareUniformBuffers();
 
         void CreateDescriptorPool();
 
@@ -184,23 +174,23 @@ namespace Fling
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
-		void UpdateDynamicUniformBuffer(UINT32 t_CurrentImage);
+        void UpdateDynamicUniformBuffer(UINT32 t_CurrentImage);
 
-		/**
-		* @brief	Callback for when a mesh renderer component is added to the game
-		*			Initializes and loads any meshes that we may need
-		*/
-		void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+        /**
+        * @brief    Callback for when a mesh renderer component is added to the game
+        *            Initializes and loads any meshes that we may need
+        */
+        void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		/**
-		* @brief	Get an index that represents a  
-		*/
-		UINT32 GetAvailableModelMatrix();
+        /**
+        * @brief    Get an index that represents a  
+        */
+        UINT32 GetAvailableModelMatrix();
 
-		UINT32 m_NextAvailableMatrix{};
+        UINT32 m_NextAvailableMatrix{};
 
-		/** Entt registry that the renderer will be using. Set by the Engine */
-		entt::registry* m_Registry = nullptr;
+        /** Entt registry that the renderer will be using. Set by the Engine */
+        entt::registry* m_Registry = nullptr;
 
         /** Camera Instance */
         std::unique_ptr<FirstPersonCamera> m_camera;
@@ -208,9 +198,9 @@ namespace Fling
         FlingWindow* m_CurrentWindow = nullptr;
 
         /** Imgui Instance **/
-		FlingImgui* m_flingImgui = nullptr;
+        FlingImgui* m_flingImgui = nullptr;
         /** Holds imgui ui data **/
-		ImguiDisplay m_imguiDisplay;
+        ImguiDisplay m_imguiDisplay;
 
         Instance* m_Instance = nullptr;
 
@@ -247,16 +237,16 @@ namespace Fling
         static const int MAX_FRAMES_IN_FLIGHT;
 
         /** Uniform buffers */
-		std::vector<UboDataDynamic> m_DynamicUniformBuffers;
-		UboVS m_UboVS;
+        std::vector<UboDataDynamic> m_DynamicUniformBuffers;
+        UboVS m_UboVS;
 
-		/** Simple little pool for getting the next available UBO index */
-		const static UINT32 MAX_MODEL_MATRIX_BUFFER = 256;
-		static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
-		static UINT32 g_AllocatedIndex;
+        /** Simple little pool for getting the next available UBO index */
+        const static UINT32 MAX_MODEL_MATRIX_BUFFER = 256;
+        static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
+        static UINT32 g_AllocatedIndex;
 
-		/** The alignment of the dynamic UBO on this device */
-		size_t m_DynamicAlignment;
+        /** The alignment of the dynamic UBO on this device */
+        size_t m_DynamicAlignment;
 
         std::vector<VkDescriptorSet> m_DescriptorSets;
 
@@ -279,7 +269,7 @@ namespace Fling
 
         std::shared_ptr<class Image> m_TestImage;
 
-		//Flag for toggling imgui 
-		bool m_imguiFlag;
+        //Flag for toggling imgui 
+        bool m_imguiFlag;
     };
 }    // namespace Fling
