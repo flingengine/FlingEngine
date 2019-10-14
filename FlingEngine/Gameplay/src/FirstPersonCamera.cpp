@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "Renderer.h"
 #include "FirstPersonCamera.h"
 #include "FlingMath.h"
 
@@ -109,6 +110,11 @@ namespace Fling
 		// Check if we should rotate
 		m_IsRotating = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
 		MousePos CurMousePos = Input::GetMousePos();
+
+		//Normalize screen coordinates 
+		CurMousePos.X = static_cast<float>(CurMousePos.X / Renderer::Get().GetCurrentWindow()->GetWidth());
+		CurMousePos.Y = static_cast<float>(CurMousePos.Y / Renderer::Get().GetCurrentWindow()->GetHeight());
+
 		if (m_IsRotating)
 		{
 			float RotSpeed = dt * m_RotationSpeed;

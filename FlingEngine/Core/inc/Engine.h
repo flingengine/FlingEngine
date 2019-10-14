@@ -55,10 +55,10 @@ namespace Fling
 		/** Persistent world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
 
-		Fling::Game* m_GameImpl = nullptr;
-
 		/** Global registry that stores entities and components */
 		entt::registry g_Registry;
+		
+		Fling::Game* m_GameImpl = nullptr;
 	};
 
 	template<class T_GameType>

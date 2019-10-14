@@ -63,6 +63,7 @@ endif()
 
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
+    ImGui ${IMGUI_LIBRARIES}
     Vulkan::Vulkan  
 )
 

@@ -43,10 +43,13 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     #add_definitions( -Wno-class-memaccess )
     add_definitions( -Wno-unused-private-field )
     add_definitions( -Wno-exceptions )
+    add_definitions( -shared ) 
+    add_definitions( -fPIC )
 
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-
+    add_definitions( -shared ) 
+    add_definitions( -fPIC )
 endif()
 
 
@@ -58,6 +61,9 @@ ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
 # Include external libraries
 add_subdirectory( external/glfw )
 include_directories( external/glfw/include )
+
+add_subdirectory( external/imgui )
+include_directories( external/imgui )
 
 include_directories( external/glm )
 include_directories( external/spdlog/include )

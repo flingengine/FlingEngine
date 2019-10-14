@@ -69,18 +69,19 @@ namespace Fling
 				break;
 			}
 
+			Timing.UpdateFps();
 			Renderer.DrawFrame(g_Registry);
 
             // Update timing
 			Timing.Update();
             DeltaTime = Timing.GetDeltaTime();
-            
+		
             // If delta time is greater than 1 second, simulate it as 1/60 FPS 
             // because we can assume that it is like that because of debugging
             if (DeltaTime >= MaxDeltaTime)
             {
 				DeltaTime = FallbackDeltaTime;
-            }
+            }	
 		}
 
 		// Any waiting that we may need to do before the shutdown function should go here

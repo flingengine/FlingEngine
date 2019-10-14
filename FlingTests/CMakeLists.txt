@@ -27,6 +27,7 @@ target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
 
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
+    ImGui ${IMGUI_LIBRARIES}
     Vulkan::Vulkan 
 	Catch
 	"FlingEngine"
