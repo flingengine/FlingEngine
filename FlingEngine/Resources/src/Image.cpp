@@ -31,7 +31,7 @@ namespace Fling
 		// Load the image from STB
 		int Width = 0;
 		int Height = 0;
-		stbi_uc* PixelData = stbi_load(
+		m_PixelData = stbi_load(
 			Filepath.c_str(),
 			&Width,
 			&Height,
@@ -42,7 +42,7 @@ namespace Fling
 		m_Width = static_cast<UINT32>(Width);
 		m_Height = static_cast<UINT32>(Height);
 
-		if (!PixelData)
+		if (!m_PixelData)
 		{
 			F_LOG_ERROR("Failed to load image file: {}", Filepath);
 		}
@@ -64,7 +64,7 @@ namespace Fling
 
 		// Put the image data in a staging buffer for Vulkan
 		VkDeviceSize ImageSize = GetImageSize();
-		Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, PixelData);
+		Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_PixelData);
 		
 		// Transition and copy the image layout to the staging buffer
 		GraphicsHelpers::TransitionImageLayout(m_vVkImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -72,9 +72,6 @@ namespace Fling
 
 		// transition the image memory to be optimal so that we can sample it in the shader
 		GraphicsHelpers::TransitionImageLayout(m_vVkImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-		// We don't need this stbi pixel data any more
-		stbi_image_free(PixelData);
 	}
 
 	void Image::CopyBufferToImage(VkBuffer t_Buffer)
@@ -154,6 +151,9 @@ namespace Fling
 
 	void Image::Release()
 	{
+		// We don't need this stbi pixel data any more
+		stbi_image_free(m_PixelData);
+		
 		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
 		if(Device == VK_NULL_HANDLE)

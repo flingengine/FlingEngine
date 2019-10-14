@@ -60,7 +60,7 @@ namespace Fling
         FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
 
         /** Happens before draw frame. Update the window  */
-    void Tick(float DeltaTime);
+        void Tick(float DeltaTime);
 
         /**
         * Draw the frame!

@@ -44,7 +44,6 @@ namespace Fling
         CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
-        //CreateCommandPool();
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
 
         m_DepthBuffer = new DepthBuffer();
