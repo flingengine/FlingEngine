@@ -50,6 +50,8 @@ namespace Fling
 
 		FORCEINLINE const VkDeviceSize& GetSize() const { return m_Size; }
 
+        FORCEINLINE VkDescriptorBufferInfo& GetDescriptor() { return m_Descriptor; }
+
 		/**
 		 * @brief Copy the contents of the source buffer to the destination buffer using a single command
 		 * 
