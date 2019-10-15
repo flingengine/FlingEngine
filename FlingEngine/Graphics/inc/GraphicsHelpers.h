@@ -171,6 +171,11 @@ namespace Fling
             const VkPipelineColorBlendAttachmentState* t_pAttachments
         );
 
+        VkPipelineColorBlendAttachmentState PipelineColorBlendAttachmentState(
+            VkColorComponentFlags t_colorWriteMask,
+            VkBool32 t_blendEnable
+        );
+
         VkPipelineDepthStencilStateCreateInfo DepthStencilState(
             VkBool32 t_depthTestEnable,
             VkBool32 t_depthWriteEnable,

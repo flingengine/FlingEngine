@@ -7,6 +7,11 @@
 #include "ResourceManager.h"
 #include "Buffer.h"
 #include "FlingTypes.h"
+#include "GraphicsHelpers.h"
+#include "FlingMath.h"
+#include "Vertex.h"
+#include "File.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
@@ -25,6 +30,7 @@ namespace Fling
 
             void PreparePipeline();
             void LoadCubemap();
+            void SetupDescriptors();
 
             /**
              * @brief Get the Uniform Buffer object
@@ -87,6 +93,9 @@ namespace Fling
             VkDescriptorPool m_descriptorPool;
             VkPipelineLayout m_pipelineLayout;
             VkPipeline m_pipeline;
+            VkRenderPass m_renderPass;
+            LogicalDevice* m_logicalDevice;
+            VkPipelineCache m_pipelineCache;
 
             std::shared_ptr<Model> m_cube;
             std::shared_ptr<Buffer> m_uniformBuffer;
