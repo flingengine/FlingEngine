@@ -20,6 +20,18 @@ namespace Fling
             );
 
 		/**
+		 * @brief Default Ctor for a buffer. Buffer is initialized to 0
+		 */
+		Buffer()
+			: m_Size(0)
+			, m_Buffer(VK_NULL_HANDLE)
+			, m_BufferMemory(VK_NULL_HANDLE)
+			, m_Descriptor{}
+			, m_MappedMem(nullptr)
+		{
+		}
+
+		/**
 		 * @brief Construct a new Buffer object
 		 * 
 		 * @param t_Size 		Size of this buffer in bytes
@@ -27,7 +39,7 @@ namespace Fling
 		 * @param t_Properties 	Vk props of this buffer, used to find the memory type
 		 * @param t_Data 		Pointer to data that this buffer should map to, e.g. a staging buffer (Default = nullptr) 
 		 */
-		explicit Buffer(
+		Buffer(
 			const VkDeviceSize& t_Size,
 			const VkBufferUsageFlags& t_Usage,
 			const VkMemoryPropertyFlags& t_Properties,
@@ -78,6 +90,30 @@ namespace Fling
 		 * @brief Unmap this buffers memory from the Vulkan device
 		 */
 		void UnmapMemory();
+		
+		/**
+		 * @brief Create a Buffer object
+		 * 
+		 * @param t_size device size
+		 * @param t_Usage buffer usage flag
+		 * @param t_Properties memory properties
+		 * @param t_unmapBuffer flag to unmap buffer
+		 * @param t_Data data to map to buffer 
+		 */
+		void CreateBuffer(
+			const VkDeviceSize& t_size,
+			const VkBufferUsageFlags& t_Usage,
+			const VkMemoryPropertyFlags& t_Properties,
+			bool t_unmapBuffer,
+			const void* t_Data = nullptr);
+			
+		/**
+		 * @brief Flush memory range to device 
+		 *
+		 * @param t_size Size of the memory range to flush to
+		 * @param t_offset offset from the beginning
+		 */
+		void Flush(VkDeviceSize t_size, VkDeviceSize t_offset);
 	
 		void* m_MappedMem = nullptr;
 

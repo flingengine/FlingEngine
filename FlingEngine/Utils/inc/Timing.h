@@ -22,6 +22,11 @@ namespace Fling
 		/// </summary>
 		void Update();
 
+		/// <summary>
+		/// Updates current frame timer
+		/// </summary>
+		void UpdateFps();
+
 		float FLING_API GetDeltaTime() const { return m_deltaTime; }
 
 		/**
@@ -62,15 +67,31 @@ namespace Fling
 		 */
 		float FLING_API GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
 
-	private:
+		/**
+		 * @brief Get fps count
+		 *
+		 * @return int GetFrameCount
+		 */
+		int FLING_API GetFrameCount() const { return m_fpsFrameCount; }
 
+		/**
+		 * @brief Get current frame time
+		 *
+		 * @return float GetFrameTime
+		 */
+		float FLING_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
+
+	private:
 		float m_deltaTime = 0.0f;
 
 		double m_lastFrameStartTime = 0.0;
 		float m_frameStartTimef = 0.0f;
 
+		float m_fpsTimeElapsed = 0.0f;
+		int m_fpsFrameCount = 0;
+		int m_fpsFrameCountTemp = 0;
+
 		/** The time that the program started */
 		double m_startTime = 0.0;
-
 	};
 }	// namespace Fling

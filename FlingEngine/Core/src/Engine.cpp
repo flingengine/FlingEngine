@@ -91,6 +91,7 @@ namespace Fling
 				break;
 			}
 
+			Timing.UpdateFps();
 			Renderer.DrawFrame(g_Registry);
 		}
 

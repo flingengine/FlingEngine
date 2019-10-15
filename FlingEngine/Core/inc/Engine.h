@@ -58,14 +58,14 @@ namespace Fling
 		/** Persistent world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
 
-		Fling::Game* m_GameImpl = nullptr;
-
 		/** Global registry that stores entities and components */
 		entt::registry g_Registry;
 
         /** The shader program will be specified by the end-user for now to make iteration easier */
         ShaderProgram* m_ShaderProgram = nullptr;
 
+		/** The implementation of the game that this engine is running. @see Fling::Game */
+		Fling::Game* m_GameImpl = nullptr;
 	};
 
 	template<class T_GameType>
