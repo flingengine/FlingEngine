@@ -18,7 +18,8 @@ namespace Fling
 		
 		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Debug");
-		ImGui::Text("Device: %s", Renderer::Get().GetPhysicalDevice()->GetDeviceProps().deviceName);
+		VkPhysicalDeviceProperties props = Renderer::Get().GetPhysicalDevice()->GetDeviceProps();
+		ImGui::Text("Device: %s", props.deviceName);
 		
 		//Update fps graph
 		std::rotate(fpsGraph.begin(), fpsGraph.begin() + 1, fpsGraph.end());
