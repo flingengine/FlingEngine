@@ -1,0 +1,10 @@
+[
+    {
+        "path": "Shaders/vert.spv",
+        "stage" : "vertex"
+    },
+    {
+        "path": "frag.spv",
+        "stage" : "fragment"
+    }
+]

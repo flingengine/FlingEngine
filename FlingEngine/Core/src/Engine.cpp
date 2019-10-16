@@ -5,7 +5,7 @@
 
 namespace Fling
 {
-	void Engine::Startup()
+    void Engine::Startup()
 	{
 		Random::Init();
 		Logger::Get().Init();
@@ -63,8 +63,6 @@ namespace Fling
 		int FpsFrameCount = 0;
 		float FpsTimeElapsed = 0.0f;
 
-        MovingAverage<float, 100> FPSCounter = {};
-
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
             // Update timing
@@ -79,10 +77,7 @@ namespace Fling
             }
 
 			// Update FPS Counter
-			{
-                FPSCounter.Push(DeltaTime);
-                F_LOG_TRACE("FPS {}", 1.0f / FPSCounter.GetAverage());
-			}
+            Stats::Frames::TickStats(DeltaTime);
 			
 			Renderer.Tick(DeltaTime);
 			
@@ -96,6 +91,7 @@ namespace Fling
 				break;
 			}
 
+			Timing.UpdateFps();
 			Renderer.DrawFrame(g_Registry);
 		}
 

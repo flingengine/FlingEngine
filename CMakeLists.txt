@@ -40,9 +40,13 @@ if( MSVC )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_definitions( -Wno-unused-private-field )
     add_definitions( -Wno-exceptions )
+    add_definitions( -shared ) 
+    add_definitions( -fPIC )
+
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-
+    add_definitions( -shared ) 
+    add_definitions( -fPIC )
 endif()
 
 # This is needed for Clang support of glm::hash
@@ -52,7 +56,7 @@ ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
 add_subdirectory( external/glfw )
 include_directories( external/glfw/include )
 
-# Just use spriv statically for now we don't need to do any linking
+# SPIRV-Cross
 add_definitions( -DSPIRV_CROSS_SHARED=OFF )
 add_definitions( -DSPIRV_CROSS_STATIC=OFF )
 add_definitions( -DSPIRV_CROSS_CLI=OFF )
@@ -62,6 +66,10 @@ set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory( external/SPIRV-Cross )
+
+# ImGUI 
+add_subdirectory( external/imgui )
+include_directories( external/imgui )
 
 include_directories( external/glm )
 include_directories( external/spdlog/include )

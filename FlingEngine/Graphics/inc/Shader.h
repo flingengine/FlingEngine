@@ -111,16 +111,17 @@ namespace Fling
      */
     class Shader : public Resource
     {
+		friend class ResourceManager;
     public:
 
-		static std::shared_ptr<Fling::Shader> Create(Guid t_ID);
+		static std::shared_ptr<Fling::Shader> Create(Guid t_ID, ShaderStage t_Stage);
 
         /**
          * @brief Construct a new Shader object. Loads from disk and compiles the shader
          * 
          * @param t_ID  The GUID that represents the file path to this file.
          */
-        explicit Shader(Guid t_ID);
+        explicit Shader(Guid t_ID, ShaderStage t_Stage);
 
         ~Shader();
 
@@ -132,6 +133,12 @@ namespace Fling
         VkShaderModule GetShaderModule() const { return m_Module; }
 
         const ResourceLayout& GetResourceLayout() const { return m_Layout; }
+
+        /** Get the stage in the pipeline that this shader binds to */
+        ShaderStage GetStage() const { return m_Stage; } 
+
+        /** get the vulkan stage bit flags that we should bind to */
+        VkShaderStageFlagBits GetVkBindStage() const;
 
         static const char* StageToName(ShaderStage stage);
 
@@ -157,5 +164,8 @@ namespace Fling
 
         /** Resource layout that represents this shader */
         ResourceLayout m_Layout = {};
+
+        /** The stage in the pipeline that this shader is in */
+        ShaderStage m_Stage = ShaderStage::Count;
     };
 }   // namespace Fling
