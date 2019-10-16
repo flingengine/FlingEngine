@@ -277,7 +277,7 @@ namespace Fling
 
         std::shared_ptr<class Image> m_TestImage;
 
-        //Flag for toggling imgui 
-        bool m_imguiFlag;
+        // Flag for toggling imgui 
+        bool m_DrawImgui;
     };
 }    // namespace Fling

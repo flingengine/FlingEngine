@@ -80,10 +80,10 @@ namespace Fling
 
         BuildCommandBuffers(*m_Registry);
 
-        //Intialize imgui
+        // Initialize imgui
         m_flingImgui = new FlingImgui(m_LogicalDevice, m_SwapChain);
         m_imguiDisplay = ImguiDisplay();
-        m_imguiFlag = FlingConfig::GetBool("Imgui", "display");
+        m_DrawImgui = FlingConfig::GetBool("Imgui", "display");
         InitImgui();
 
         CreateSyncObjects();
@@ -97,7 +97,7 @@ namespace Fling
         );
 
         m_flingImgui->InitResources(m_LogicalDevice->GetGraphicsQueue());
-        m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame, ImguiDisplay>(m_imguiDisplay);
+        m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame>(m_imguiDisplay);
     }
 
     void Renderer::UpdateImguiIO()
@@ -203,6 +203,14 @@ namespace Fling
                 
             }
         }
+
+		// For every vertex shader
+		// Create a Binding for everything in the VERTEX buffer
+		// Initalizers::DescriptorSetLayoutBinding(t_Type, VK_SHADER_STAGE_VERTEX_BIT, t_Binding),
+
+
+		// for every FRAG shader
+		// Initalize a set layout for each image sampler/field
 
         VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
         LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -936,26 +944,20 @@ namespace Fling
 
         m_camera->Update(DeltaTime);
 
-        //toggle imgui
-        if (Input::IsKeyDown(KeyNames::FL_KEY_I))
-        {
-            m_imguiFlag = !m_imguiFlag;
-        }
+		UpdateImguiIO();
     }
 
     void Renderer::DrawFrame(entt::registry& t_Reg)
     {
-        UpdateImguiIO();
-
         VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
         UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
         vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
-        //Update imgui command buffers
+        // Update imgui command buffers
         {
             vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_flingImgui->GetCommandPool(), 0);
-            m_flingImgui->BuildCommandBuffers(m_imguiFlag);
+            m_flingImgui->BuildCommandBuffers(m_DrawImgui);
         }
         
         // Check if the swap chain needs to be recreated

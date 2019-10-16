@@ -111,6 +111,7 @@ namespace Fling
      */
     class Shader : public Resource
     {
+		friend class ResourceManager;
     public:
 
 		static std::shared_ptr<Fling::Shader> Create(Guid t_ID, ShaderStage t_Stage);

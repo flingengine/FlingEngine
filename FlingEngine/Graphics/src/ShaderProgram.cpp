@@ -29,16 +29,20 @@ namespace Fling
         nlohmann::json& shaderData = JsonFile->GetJsonData();
         if (shaderData.is_array())
         {
-            for (auto itr = shaderData.begin(); itr != shaderData.end(); ++itr)
+            for (nlohmann::json::iterator itr = shaderData.begin(); itr != shaderData.end(); ++itr)
             {
                 const nlohmann::json& val = *itr;
 
-                std::string path = val["path"];
-                std::string stage = val["stage"];
+				const std::string& path = val["path"];
+				const std::string& stage = val["stage"];
 
                 F_LOG_TRACE("Load Shader {} as {}", path, stage);
             }
         }
+		else
+		{
+			F_LOG_ERROR("Incorrect shader program file format!");
+		}
     }
 
     void ShaderProgram::SetStage(ShaderStage t_Stage, Guid t_ShaderPath)
@@ -65,6 +69,7 @@ namespace Fling
         }
         return Shader::Create(m_ShaderNames[static_cast<unsigned>(t_Stage)], t_Stage);
     }
+
     ShaderStage ShaderProgram::StringToStage(const std::string& t_Stage)
     {
         ShaderStage Stage = ShaderStage::Count;
