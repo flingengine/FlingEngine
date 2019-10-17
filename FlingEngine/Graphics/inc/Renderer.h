@@ -51,7 +51,7 @@ namespace Fling
 
         virtual void Init() override;
 
-        virtual void Shutdown() override;
+        virtual void Shutdown() override;   
 
         /// <summary>
         /// Init GLFW and create the game window

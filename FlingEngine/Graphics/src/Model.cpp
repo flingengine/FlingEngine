@@ -39,7 +39,7 @@ namespace Fling
 		{
 			F_LOG_ERROR("Failed to load model: {} {}", warn, err);
 			
-			FLING_BREAK();
+			//FLING_BREAK();
 
 			return;
 		}

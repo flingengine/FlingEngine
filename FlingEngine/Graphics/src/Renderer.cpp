@@ -682,7 +682,7 @@ namespace Fling
 
         // Get the descriptor layout info from shader reflection data!
         // Again, grabbed form Granite
-        CombinedResourceLayout layout;
+        /*CombinedResourceLayout layout;
         if (m_ShaderProgram->HasStage(ShaderStage::Vertex))
         {
             layout.attribute_mask = m_ShaderProgram->GetShader(ShaderStage::Vertex)->GetResourceLayout().input_mask;
@@ -802,7 +802,7 @@ namespace Fling
                     }
                 }
             }
-        }
+        }*/
 
         // Request a pipeline layout with this combined resource! 
 
@@ -868,6 +868,8 @@ namespace Fling
             descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptorWrites[2].descriptorCount = 1;
             descriptorWrites[2].pImageInfo = &imageInfo;
+
+            // For each Material get an array of descriptor sets
 
             vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
