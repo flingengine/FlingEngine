@@ -13,7 +13,12 @@
 
 namespace Fling
 {
-    Image::Image(Guid t_ID, void* t_Data)
+	std::shared_ptr<Fling::Image> Image::Create(Guid t_ID, void* t_Data)
+	{
+		return ResourceManager::LoadResource<Fling::Image>(t_ID, t_Data);
+	}
+
+	Image::Image(Guid t_ID, void* t_Data)
         : Resource(t_ID)
     {
 		LoadVulkanImage();

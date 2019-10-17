@@ -23,6 +23,7 @@ namespace Sandbox
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
+		//OnLoadInitated();
 		GenerateTestMeshes(t_Reg);
 	}
 

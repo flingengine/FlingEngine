@@ -1,49 +1,47 @@
 #pragma once
 
 #include <cereal/archives/json.hpp> // For serialization of a material
+#include "Shader.h"
+#include "Image.h"
+#include "JsonFile.h"
 
 namespace Fling
 {
-    /**
-     * @brief   The material description is a defintion of how we want to 
-     *          create material definitions in the Fling Engine. 
-     */
-    struct MaterialDesc
+	/**
+	* @brief the properties of a PBR 
+	*/
+	struct PBRTextures
+	{
+		Image* m_AlbedoTexture		= nullptr;
+		Image* m_NormalTexture		= nullptr;
+		Image* m_RoughnessTexture	= nullptr;
+		Image* m_MetalTexture		= nullptr;
+	};
+
+	/**
+	* @brief	A material represents what properties should be given to a set
+	*			of shaders. This is referenced by the MeshRednerer and Renderer::DrawFrame
+	*/
+    class Material : public JsonFile
     {
-        MaterialDesc() = default;
-        ~MaterialDesc() = default;
+		friend class Renderer;
+	public:
 
-        std::string m_VertShaderPath = "UNDEFINED";
-        std::string m_FragShaderPath = "UNDEFINED";
+		static std::shared_ptr<Fling::Material> Create(Guid t_ID);
 
-        // Strings that 
-        template<class Archive>
-        void serialize(Archive & t_Archive);
-    };
+		explicit Material(Guid t_ID);
 
-    /** Serilazation to an archive */
-    template<class Archive>
-    void MaterialDesc::serialize(Archive & t_Archive)
-    {
-        t_Archive( 
-            cereal::make_nvp("VERT_SHADER_PATH", m_VertShaderPath),
-            cereal::make_nvp("FRAG_SHADER_PATH", m_FragShaderPath)
-        );   
-    }
+	private:
 
-    class Material
-    {
+		void LoadMaterial();
 
-        // pointer to shader
-        // Pointer to textures
-    };
+        // Shaders that this material uses
+		Shader* m_VertShader = nullptr;
+		Shader* m_FragShader = nullptr;
 
-    /**
-     * @brief   A material instance is an instance of a givne material description.
-     *          
-     */
-    class MaterialInstance
-    {
+		// Textures that this material uses
+		PBRTextures m_Textures = {};
 
+		float m_Shininiess = 0.5f;
     };
 }   // namespace Fling

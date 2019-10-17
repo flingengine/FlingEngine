@@ -1,0 +1,11 @@
+{
+    "name" : "Woord Material",
+
+    "vertex" : "Shaders/vert.spv",
+    "frag" : "Shaders/frag.spv",
+
+    "albedo" : "Textures/DefaultTexture.png",
+    "normal" : "Textures/wood_normals.png",
+    "metal" : "Textures/wood_normals.png",
+    "rough" : "Textures/wood_normals.png" 
+}

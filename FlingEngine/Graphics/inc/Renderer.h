@@ -26,6 +26,7 @@
 
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
+#include "Material.h"
 
 #include "ShaderProgram.h"
 #include "Shader.h"
@@ -275,7 +276,7 @@ namespace Fling
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
 
-        std::shared_ptr<class Image> m_TestImage;
+		std::shared_ptr<Material> m_DefaultMat;
 
         // Flag for toggling imgui 
         bool m_DrawImgui;

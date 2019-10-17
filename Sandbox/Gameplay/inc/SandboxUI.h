@@ -1,5 +1,7 @@
 #pragma once
 
+#include <entt/entity/registry.hpp>
+
 namespace Sandbox
 {
     /**
@@ -14,6 +16,6 @@ namespace Sandbox
         /**
          * @brief Draw the sandbox game ImGui UI elements
          */
-        void NewFrame(); 
+        void NewFrame(entt::registry& t_Reg); 
     };
 }   // namespace Sandbox

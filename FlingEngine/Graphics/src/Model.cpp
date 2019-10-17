@@ -37,7 +37,11 @@ namespace Fling
 		// Load the model from tiny obj
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, FilePath.c_str()))
 		{
-			F_LOG_ERROR("Failed to load modle: {} {}", warn, err);
+			F_LOG_ERROR("Failed to load model: {} {}", warn, err);
+			
+			FLING_BREAK();
+
+			return;
 		}
 
 		// Avoid vertex duplication with a simple map

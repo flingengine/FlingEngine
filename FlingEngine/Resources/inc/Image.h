@@ -11,6 +11,9 @@ namespace Fling
     class Image : public Resource
     {
     public:
+
+		static std::shared_ptr<Fling::Image> Create(Guid t_ID, void* t_Data = nullptr);
+
         explicit Image(Guid t_ID, void* t_Data = nullptr);
         virtual ~Image();
 

@@ -16,9 +16,9 @@ namespace Fling
 
             static float GetAverageFPS();
         
-        private:
-            
             static void TickStats(float t_DeltaTime);
+
+		private:
 
             static MovingAverage<float, 100> FPSCounter;
         };

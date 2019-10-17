@@ -48,7 +48,6 @@ namespace Fling
 		CreateRenderPass();
         CreateDescriptorLayout();
         CreateGraphicsPipeline();
-        //CreateCommandPool();
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
 
         m_DepthBuffer = new DepthBuffer();
@@ -61,8 +60,8 @@ namespace Fling
 
         CreateFrameBuffers();
 
-        // For testing
-        m_TestImage = ResourceManager::LoadResource<Image>("Textures/wood_albedo.png"_hs);
+        // Load default material
+		m_DefaultMat = Material::Create("Materials/Default.mat");
 
         // Create the dynamic uniform buffers
         PrepareUniformBuffers();
@@ -859,8 +858,8 @@ namespace Fling
             // Binding 2 : Image sampler
             VkDescriptorImageInfo imageInfo = {};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = m_TestImage->GetVkImageView();
-            imageInfo.sampler = m_TestImage->GetSampler();
+            imageInfo.imageView = m_DefaultMat->m_Textures.m_AlbedoTexture->GetVkImageView();
+            imageInfo.sampler = m_DefaultMat->m_Textures.m_AlbedoTexture->GetSampler();
 
             descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[2].dstSet = m_DescriptorSets[i];
@@ -1060,12 +1059,6 @@ namespace Fling
     void Renderer::PrepShutdown()
     {
         m_LogicalDevice->WaitForIdle();
-        // You have to free images before before the renderer gets shutdown because they need to the 
-        // physical device free their VK resources
-        if (m_TestImage)
-        {
-            m_TestImage.reset();
-        }
     }
 
     void Renderer::Shutdown()
@@ -1125,6 +1118,7 @@ namespace Fling
     }
 
     // @see https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#observe-changes
+	// for more on entt 
     void Renderer::InitComponentData()
     {
         // Add any component callbacks that we may need
@@ -1133,11 +1127,15 @@ namespace Fling
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
     {
-        std::shared_ptr<Model> Model = Model::Create(entt::hashed_string{ t_MeshRend.MeshName.c_str() });
+        t_MeshRend.Initalize(GetAvailableModelMatrix());
 
-        assert(Model);
+		// Sort the mesh renderers in order that their offset indices are in so that we can hopefully get
+		// some better locality when drawing
+		t_Reg.sort<MeshRenderer>([](const auto& lhs, const auto& rhs)
+		{
+			return lhs < rhs;
+		});
 
-        t_MeshRend.Initalize(Model.get(), GetAvailableModelMatrix());
         SetFrameBufferHasBeenResized(true);
     }
 

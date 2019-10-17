@@ -77,7 +77,7 @@ namespace Fling
             }
 
 			// Update FPS Counter
-            //Stats::Frames::TickStats(DeltaTime);
+            Stats::Frames::TickStats(DeltaTime);
 			
 			Renderer.Tick(DeltaTime);
 			
