@@ -52,7 +52,7 @@ namespace Fling
         // Create the camera
         float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
-        m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
+        m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
         CreateFrameBuffers();
 
@@ -73,9 +73,22 @@ namespace Fling
             static_cast<UINT32>(m_CommandBuffers.size()),
             m_CommandPool);
 
+        //// Load Skybox
+        m_Skybox = new Cubemap(
+            "Textures/Skybox/posx.jpg"_hs,
+            "Textures/Skybox/negx.jpg"_hs,
+            "Textures/Skybox/posy.jpg"_hs,
+            "Textures/Skybox/negy.jpg"_hs,
+            "Textures/Skybox/posz.jpg"_hs,
+            "Textures/Skybox/negz.jpg"_hs,
+            m_RenderPass,
+            m_LogicalDevice->GetVkDevice());
+
+        m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount());
+
         BuildCommandBuffers(*m_Registry);
 
-        //Intialize imgui
+        // Intialize imgui
         m_flingImgui = new FlingImgui(m_LogicalDevice, m_SwapChain);
         m_imguiDisplay = ImguiDisplay();
         m_imguiFlag = FlingConfig::GetBool("Imgui", "display");
@@ -446,6 +459,23 @@ namespace Fling
             renderPassInfo.pClearValues = clearValues.data();
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+            
+            VkViewport viewport = Initalizers::Viewport(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0.0f, 1.0f);
+            vkCmdSetViewport(m_CommandBuffers[i], 0, 1, &viewport);
+
+            VkRect2D scissor = Initalizers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
+            vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
+
+            //Skybox
+            VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
+            VkDeviceSize offsets[1] = { 0 };
+            VkDescriptorSet skyboxDescriptorSet[1] = { m_Skybox->GetDescriptorSet() };
+
+            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipelineLayout(), 0, 1, skyboxDescriptorSet, 0, NULL);
+            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, skyboxVertexBuffers, offsets);
+            vkCmdBindIndexBuffer(m_CommandBuffers[i], m_Skybox->GetIndexBuffer()->GetVkBuffer(), 0, m_Skybox->GetIndexType());
+            vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipeLine());
+            vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
@@ -813,6 +843,7 @@ namespace Fling
 
         UpdateUniformBuffer(ImageIndex);
         UpdateDynamicUniformBuffer(ImageIndex);
+        m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetRotation());
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -912,6 +943,18 @@ namespace Fling
     {
         // Cleanup Vulkan ------
         CleanupFrameResources();
+
+        if (m_camera)
+        {
+            delete m_camera;
+            m_camera = nullptr;
+        }
+
+        if (m_Skybox)
+        {
+            delete m_Skybox;
+            m_Skybox = nullptr;
+        }
 
         if (m_flingImgui)
         {

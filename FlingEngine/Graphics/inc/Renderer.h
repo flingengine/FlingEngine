@@ -29,6 +29,7 @@
 
 #include "FlingImgui.h"
 #include "ImguiDisplay.h"
+#include "Cubemap.h"
 
 namespace Fling
 {
@@ -193,7 +194,10 @@ namespace Fling
         entt::registry* m_Registry = nullptr;
 
         /** Camera Instance */
-        std::unique_ptr<FirstPersonCamera> m_camera;
+        FirstPersonCamera* m_camera;
+
+        /** Skybox Instance */
+        Cubemap* m_Skybox = nullptr;
 
         FlingWindow* m_CurrentWindow = nullptr;
 
@@ -261,7 +265,6 @@ namespace Fling
         * @see m_CommandPool
         */
         std::vector<VkCommandBuffer> m_CommandBuffers;
-
 
         std::vector<VkSemaphore> m_ImageAvailableSemaphores;
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;

@@ -1,15 +1,11 @@
 #pragma once
 
-#include "Renderer.h"
 #include "Model.h"
 #include "Image.h"
 #include "FlingVulkan.h"
-#include "ResourceManager.h"
 #include "Buffer.h"
 #include "FlingTypes.h"
-#include "GraphicsHelpers.h"
 #include "FlingMath.h"
-#include "Vertex.h"
 #include "File.h"
 #include "LogicalDevice.h"
 #include "UniformBufferObject.h"
@@ -21,73 +17,111 @@ namespace Fling
     {
         public:
             Cubemap(
-                std::shared_ptr<class Image> t_PosX,
-                std::shared_ptr<class Image> t_NegX,
-                std::shared_ptr<class Image> t_PosY,
-                std::shared_ptr<class Image> t_NegY,
-                std::shared_ptr<class Image> t_PosZ,
-                std::shared_ptr<class Image> t_NegZ,
-                VkRenderPass t_renderPass,
-                VkDevice t_logicalDevice);
+                Guid t_PosX_ID,
+                Guid t_NegX_ID,
+                Guid t_PosY_ID,
+                Guid t_NegY_ID,
+                Guid t_PosZ_ID,
+                Guid t_NegZ_ID,
+                VkRenderPass t_RenderPass,
+                VkDevice t_LogicalDevice);
 
             ~Cubemap();
 
-            void Init(std::shared_ptr<Camera> t_camera);
+            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight);
 
-            void UpdateUniformBuffer(const glm::mat4& t_projectionMatrix, glm::vec3 t_rotation);
+            void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::vec3& t_Rotation);
 
             /**
              * @brief Get the Uniform Buffer object
              * 
              * @return std::unique_ptr<Buffer> 
              */
-            std::shared_ptr<Buffer> GetUniformBuffer() const { return m_UniformBuffer; }
+            //std::shared_ptr<Buffer> GetUniformBuffer() const { return m_UniformBuffer; }
 
             /**
              * @brief Get the Pipeline Layout object
              * 
              * @return const VkPipelineLayout 
              */
-            const VkPipelineLayout& GetPipelineLayout() const { return m_PipelineLayout; }
+            VkPipelineLayout GetPipelineLayout() const { return m_PipelineLayout; }
 
             /**
              * @brief Get the Pipe Line object
              * 
              * @return const VkPipline 
              */
-            const VkPipeline& GetPipeLine() const { return m_Pipeline; }
+            VkPipeline GetPipeLine() const { return m_Pipeline; }
 
             /**
              * @brief Get the Descriptor Sets object
              * 
              * @return const VkDescriptorSet> 
              */
-            const VkDescriptorSet& GetDescriptorSet() const { return m_DescriptorSet; }
+            VkDescriptorSet& GetDescriptorSet() { return m_DescriptorSet; }
 
             /**
              * @brief Get the Vertex Buffer object
              * 
              * @return const Buffer* 
              */
-            const Buffer* GetVertexBuffer() const { return m_Cube->GetVertexBuffer(); }
+            Buffer* GetVertexBuffer() const { return m_Cube->GetVertexBuffer(); }
 
             /**
              * @brief Get the Index Buffer object
              * 
              * @return const Buffer* 
              */
-            const Buffer* GetIndexBuffer() const { return m_Cube->GetIndexBuffer(); }
+            Buffer* GetIndexBuffer() const { return m_Cube->GetIndexBuffer(); }
 
             /**
              * @brief Get the Index Count object
              * 
              * @return const UINT32 
              */
-            const UINT32 GetIndexCount() const { return m_Cube->GetIndexCount(); }
+            UINT32 GetIndexCount() const { return m_Cube->GetIndexCount(); }
+
+            VkIndexType GetIndexType() const { return m_Cube->GetIndexType(); }
 
         private:
+
+            //struct SkyBoxAttrubutes
+            //{
+            //    glm::vec3 pos;
+
+            //    static VkVertexInputBindingDescription GetBindingDescription()
+            //    {
+            //        VkVertexInputBindingDescription bindingDescription = {};
+            //        bindingDescription.binding = 0;
+            //        bindingDescription.stride = sizeof(SkyBoxAttrubutes);
+            //        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            //        return bindingDescription;
+            //    }
+
+            //    static VkVertexInputAttributeDescription GetAttributeDescriptions()
+            //    {
+            //        VkVertexInputAttributeDescription attributeDescriptions = {};
+
+            //        attributeDescriptions.binding = 0;
+            //        attributeDescriptions.location = 0;
+            //        attributeDescriptions.format = VK_FORMAT_R32G32B32_SFLOAT;
+            //        attributeDescriptions.offset = offsetof(SkyBoxAttrubutes, pos);
+
+            //        return attributeDescriptions;
+            //    }
+            //};
+
             void PreparePipeline();
-            void LoadCubemap();
+            
+            void LoadCubemap(
+                Guid t_PosX_ID,
+                Guid t_NegX_ID,
+                Guid t_PosY_ID,
+                Guid t_NegY_ID,
+                Guid t_PosZ_ID,
+                Guid t_NegZ_ID);
+
             void SetupDescriptors();
 
             std::vector<Image> m_cubeMapImages;
@@ -96,6 +130,7 @@ namespace Fling
             VkImageView m_Imageview;
             VkImageLayout m_ImageLayout;
             VkDeviceMemory m_ImageMemory;
+            
             VkSampler m_Sampler;
             VkDescriptorSetLayout m_DescriptorSetLayout;
             VkDescriptorSet m_DescriptorSet;
@@ -105,9 +140,20 @@ namespace Fling
             VkRenderPass m_RenderPass;
             VkDevice m_Device;
             VkPipelineCache m_PipelineCache;
+            VkDescriptorBufferInfo m_UniformBufferDescriptor;
 
             std::shared_ptr<Model> m_Cube;
-            std::shared_ptr<class Buffer> m_UniformBuffer;
+            //std::shared_ptr<class Buffer> m_UniformBuffer;
+
+            std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
+
+
+            VkDeviceSize m_ImageSize;
+            VkDeviceSize m_LayerSize;
+            VkFormat m_Format;
+            UINT32 m_NumChannels;
+            UINT32 m_MipLevels;
+            size_t m_numsFrameInFlight;
 
             UboSkyboxVS m_UboVS;
     };

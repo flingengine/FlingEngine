@@ -35,6 +35,21 @@ namespace Fling
             VkDeviceMemory& t_Memory
         );
 
+        void CreateVkImage(
+            UINT32 t_Width,
+            UINT32 t_Height,
+            UINT32 t_MipLevels,
+            UINT32 t_Depth,
+            UINT32 t_ArrayLayers,
+            VkFormat t_Format,
+            VkImageTiling t_Tiling,
+            VkImageUsageFlags t_Useage,
+            VkMemoryPropertyFlags t_Props,
+            VkImageCreateFlags t_flags,
+            VkImage& t_Image,
+            VkDeviceMemory& t_Memory
+        );
+
         void CreateVkSampler(
             VkFilter t_magFilter,
             VkFilter t_minFilter,
@@ -111,6 +126,8 @@ namespace Fling
             UINT32 t_maxSets
         );
 
+        VkMemoryAllocateInfo MemoryAllocateInfo();
+
         VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
             VkDescriptorType t_type,
             VkShaderStageFlags t_stageFlags,
@@ -121,6 +138,10 @@ namespace Fling
         VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(
             const std::vector<VkDescriptorSetLayoutBinding>& t_bindings
         );
+
+        VkSamplerCreateInfo SamplerCreateInfo();
+
+        VkImageViewCreateInfo ImageViewCreateInfo();
 
         VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(
             VkDescriptorPool t_descriptorPool, 
@@ -228,14 +249,23 @@ namespace Fling
             VkDescriptorType type,
             VkShaderStageFlags stageFlags,
             uint32_t binding,
-            uint32_t descriptorCount = 1);
+            uint32_t descriptorCount = 1
+        );
 
         VkWriteDescriptorSet WriteDescriptorSet(
             VkDescriptorSet dstSet,
             VkDescriptorType type,
             uint32_t binding,
             VkDescriptorBufferInfo* bufferInfo,
-            uint32_t descriptorCount = 1);
+            uint32_t descriptorCount = 1
+        );
+
+        VkRect2D Rect2D(
+            int32_t width,
+            int32_t height,
+            int32_t offsetX,
+            int32_t offsetY
+        );
     }
 
 }   // namespace Fling

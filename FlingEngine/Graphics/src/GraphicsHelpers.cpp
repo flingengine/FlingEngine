@@ -112,6 +112,23 @@ namespace Fling
             VkDeviceMemory& t_Memory
         )
         {
+            CreateVkImage(t_Width, t_Height, 1, 1, 1, t_Format, t_Tiling, t_Useage, t_Props, 0, t_Image, t_Memory);
+        }
+
+        void CreateVkImage(
+            UINT32 t_Width, 
+            UINT32 t_Height, 
+            UINT32 t_MipLevels, 
+            UINT32 t_Depth, 
+            UINT32 t_ArrayLayers, 
+            VkFormat t_Format, 
+            VkImageTiling t_Tiling, 
+            VkImageUsageFlags t_Useage, 
+            VkMemoryPropertyFlags t_Props, 
+            VkImageCreateFlags t_flags,
+            VkImage& t_Image, 
+            VkDeviceMemory& t_Memory)
+        {
             VkDevice Device = Renderer::Get().GetLogicalVkDevice();
             VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
 
@@ -120,9 +137,9 @@ namespace Fling
             imageInfo.imageType = VK_IMAGE_TYPE_2D;
             imageInfo.extent.width = t_Width;
             imageInfo.extent.height = t_Height;
-            imageInfo.extent.depth = 1;
-            imageInfo.mipLevels = 1;
-            imageInfo.arrayLayers = 1;
+            imageInfo.extent.depth = t_Depth;
+            imageInfo.mipLevels = t_MipLevels;
+            imageInfo.arrayLayers = t_ArrayLayers;
 
             imageInfo.format = t_Format;
             imageInfo.tiling = t_Tiling;
@@ -132,6 +149,7 @@ namespace Fling
 
             imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            imageInfo.flags = t_flags;
 
             if (vkCreateImage(Device, &imageInfo, nullptr, &t_Image) != VK_SUCCESS)
             {
@@ -146,7 +164,7 @@ namespace Fling
             allocInfo.allocationSize = memRequirements.size;
             allocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(PhysDevice, memRequirements.memoryTypeBits, t_Props);
 
-            if (vkAllocateMemory(Device, &allocInfo, nullptr, &t_Memory) != VK_SUCCESS) 
+            if (vkAllocateMemory(Device, &allocInfo, nullptr, &t_Memory) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to allocate image memory!");
             }
@@ -543,6 +561,16 @@ namespace Fling
             return writeDescriptorSet;
         }
 
+        VkRect2D Rect2D(int32_t width, int32_t height, int32_t offsetX, int32_t offsetY)
+        {
+            VkRect2D rect2D = {};
+            rect2D.extent.width = width;
+            rect2D.extent.height = height;
+            rect2D.offset.x = offsetX;
+            rect2D.offset.y = offsetY;
+            return rect2D;
+        }
+
         VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo()
         {
             VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
@@ -570,6 +598,13 @@ namespace Fling
             return descriptorPoolInfo;
         }
 
+        VkMemoryAllocateInfo MemoryAllocateInfo()
+        {
+            VkMemoryAllocateInfo memAllocInfo{};
+            memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            return memAllocInfo;
+        }
+
         VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
             VkDescriptorType t_type, 
             VkShaderStageFlags t_stageFlags, 
@@ -590,6 +625,21 @@ namespace Fling
             descriptorSetLayoutCreateInfo.pBindings = t_bindings.data();
             descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(t_bindings.size());
             return descriptorSetLayoutCreateInfo;
+        }
+
+        VkSamplerCreateInfo SamplerCreateInfo()
+        {
+            VkSamplerCreateInfo samplerCreateInfo{};
+            samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            samplerCreateInfo.maxAnisotropy = 1.0f;
+            return samplerCreateInfo;
+        }
+
+        VkImageViewCreateInfo ImageViewCreateInfo()
+        {
+            VkImageViewCreateInfo imageViewCreateInfo{};
+            imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            return imageViewCreateInfo;
         }
 
         VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool t_descriptorPool, const VkDescriptorSetLayout * t_pSetLayouts, UINT32 t_descriptorSetCount)
