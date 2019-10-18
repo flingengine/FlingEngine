@@ -14,7 +14,7 @@ namespace Fling
 		m_Materials.clear();
 	}
 
-	void MaterialRegistry::RegisterMaterial(std::shared_ptr<Material>& t_Mat)
+	void MaterialRegistry::RegisterMaterial(const std::shared_ptr<Material>& t_Mat)
 	{
 		const auto& it = std::find(std::begin(m_Materials), std::end(m_Materials), t_Mat);
 		// If this material isn't loaded already then add it to the registry

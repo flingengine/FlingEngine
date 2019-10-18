@@ -17,7 +17,7 @@ namespace Fling
 
 		void Shutdown() override;
 
-		void RegisterMaterial(std::shared_ptr<Material>& t_Mat);
+		void RegisterMaterial(const std::shared_ptr<Material>& t_Mat);
 
 	private:
 

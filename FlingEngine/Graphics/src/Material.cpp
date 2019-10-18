@@ -8,7 +8,7 @@ namespace Fling
 	std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
 	{
 		// Register this with the renderer so that we can create the descriptor sets for it
-		auto& mat = ResourceManager::LoadResource<Fling::Material>(t_ID);
+		const auto& mat = ResourceManager::LoadResource<Fling::Material>(t_ID);
 		MaterialRegistry::Get().RegisterMaterial(mat);
 		return mat;
 	}
