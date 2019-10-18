@@ -2,35 +2,33 @@
 
 #include "FlingVulkan.h"
 #include "Shader.h"
+#include "Singleton.hpp"
+#include <vector>
 
 namespace Fling
 {
     /**
      * @brief   A shader program represents what 
      */
-    class ShaderProgram
+    class ShaderProgram : public Singleton<ShaderProgram> 
     {
-    public:
+    public:        
         
-        ShaderProgram() = default;
+        /**
+         * @brief Add a given shader to the registry if 
+         * 
+         * @param t_Shader  The shader to add to the registry
+         * @return true     if shader was added
+         * @return false    if the shader was already in the registry
+         */
+        bool AddShader(const std::shared_ptr<Shader>& t_Shader);
 
-        explicit ShaderProgram(Guid t_VertShader, Guid t_FragShader);
-        
-        ~ShaderProgram() = default;
-        
-        /** Load all the shaders that were specified in the shader program file */
-        void LoadShaders();
-
-        void SetStage(ShaderStage t_Stage, Guid t_ShaderPath);
-
-        /** Returns a shader at a specific stage. Can be nullptr if no shader was specified */
-        const Guid& GetStage(ShaderStage t_Stage);
-
-        bool HasStage(ShaderStage t_Stage) const;
-
-        std::shared_ptr<Fling::Shader> GetShader(ShaderStage t_Stage) const;
-
-        static ShaderStage StringToStage(const std::string& t_Stage);
+        /**
+         * @brief get all active shaders in this program
+         * 
+         * @return const std::vector<std::shared_ptr<Shader>>& 
+         */
+        const std::vector<std::shared_ptr<Shader>>& GetAllShaders() const { return m_ShaderPool; }
 
     private:
 
@@ -38,7 +36,7 @@ namespace Fling
         Guid m_ShaderNames [static_cast<unsigned>(ShaderStage::Count)] = {};
 
         // Pool of shaders
-        std::deque<std::shared_ptr<Fling::Shader>> m_ShaderPool;
+        std::vector<std::shared_ptr<Fling::Shader>> m_ShaderPool;
 
         /** The file path that represents where all the shader definitions are */
         std::string m_ShaderFile = "INVALID_PATH";

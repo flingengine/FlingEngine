@@ -2,6 +2,7 @@
 
 #include "spirv_cross.hpp"
 #include "spirv_glsl.hpp"
+#include "spirv.h"
 
 #include "Resource.h"
 #include "FlingVulkan.h"
@@ -28,11 +29,11 @@ namespace Fling
 	// https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.pdf
 	struct Id
 	{
-		uint32_t opcode;
-		uint32_t typeId;
-		uint32_t storageClass;
-		uint32_t binding;
-		uint32_t set;
+		uint32_t opcode {};
+		uint32_t typeId {};
+		uint32_t storageClass {};
+		uint32_t binding {};
+		uint32_t set {};
 	};
 
     /**
@@ -45,14 +46,14 @@ namespace Fling
 		friend class ResourceManager;
     public:
 
-		static std::shared_ptr<Fling::Shader> Create(Guid t_ID, ShaderStage t_Stage);
+		static std::shared_ptr<Fling::Shader> Create(Guid t_ID);
 
         /**
          * @brief Construct a new Shader object. Loads from disk and compiles the shader
          * 
          * @param t_ID  The GUID that represents the file path to this file.
          */
-        explicit Shader(Guid t_ID, ShaderStage t_Stage);
+        explicit Shader(Guid t_ID);
 
         ~Shader();
 

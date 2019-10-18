@@ -217,38 +217,45 @@ namespace Fling
 
     void Renderer::CreateGraphicsPipeline()
     {
-        if (!m_ShaderProgram)
-        {
-            F_LOG_FATAL("You must specify the shader program for the Fling Renderer to use!");
-            return;
-        }
-
-        m_ShaderProgram->LoadShaders();
-
         // Shader stage creation!
-        VkPipelineShaderStageCreateInfo ShaderStages[static_cast<unsigned>(ShaderStage::Count)];
-        unsigned num_stages = 0;
+        const auto& Shaders = ShaderProgram::Get().GetAllShaders();
+        std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
+        ShaderStages.reserve(Shaders.size());
+
+        unsigned num_stages = ShaderStages.size();
 
         // This is bad because then I can't have multiple vert/frag shaders
-        for (unsigned i = 0; i < static_cast<unsigned>(ShaderStage::Count); i++)
+        // for (unsigned i = 0; i < static_cast<unsigned>(ShaderStage::Count); i++)
+        // {
+        //     ShaderStage stage = static_cast<ShaderStage>(i);
+        //     // If we have this shader stage in the graphic program
+        //     const Guid& ShaderName = m_ShaderProgram->GetStage(stage);
+        //     if (ShaderName != INVALID_GUID)
+        //     {
+        //         if (const std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName, stage))
+        //         {
+        //             VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
+        //             createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        //             createInfo.module = Shader->GetShaderModule();
+        //             createInfo.stage = Shader->GetStage();
+        //             createInfo.pName = "main";
+        //             createInfo.flags = 0;
+        //             createInfo.pNext = nullptr;
+        //             createInfo.pSpecializationInfo = nullptr;
+        //         }
+        //     }   
+        // }
+
+        for(const std::shared_ptr<Shader>& Shader : Shaders)
         {
-            ShaderStage stage = static_cast<ShaderStage>(i);
-            // If we have this shader stage in the graphic program
-            const Guid& ShaderName = m_ShaderProgram->GetStage(stage);
-            if (ShaderName != INVALID_GUID)
-            {
-                if (const std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName, stage))
-                {
-                    VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
-                    createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-                    createInfo.module = Shader->GetShaderModule();
-                    createInfo.stage = Shader->GetStage();
-                    createInfo.pName = "main";
-                    createInfo.flags = 0;
-                    createInfo.pNext = nullptr;
-                    createInfo.pSpecializationInfo = nullptr;
-                }
-            }   
+            VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
+            createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            createInfo.module = Shader->GetShaderModule();
+            createInfo.stage = Shader->GetStage();
+            createInfo.pName = "main";
+            createInfo.flags = 0;
+            createInfo.pNext = nullptr;
+            createInfo.pSpecializationInfo = nullptr;
         }
 
         // Vertex input ----------------------
@@ -386,7 +393,7 @@ namespace Fling
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineInfo.stageCount = num_stages;
-        pipelineInfo.pStages = ShaderStages;
+        pipelineInfo.pStages = ShaderStages.data();
 
         pipelineInfo.pVertexInputState = &VertexInputInfo;
         pipelineInfo.pInputAssemblyState = &InputAssembly;

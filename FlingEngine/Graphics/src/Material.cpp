@@ -8,7 +8,7 @@ namespace Fling
 	std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
 	{
 		// Register this with the renderer so that we can create the descriptor sets for it
-		const auto& mat = ResourceManager::LoadResource<Fling::Material>(t_ID);
+		const auto&& mat = ResourceManager::LoadResource<Fling::Material>(t_ID);
 		MaterialRegistry::Get().RegisterMaterial(mat);
 		return mat;
 	}
@@ -25,12 +25,12 @@ namespace Fling
 		{
 			// Load Shaders ------------------------
 			const std::string& VertShaderPath = m_JsonData["vertex"];
-			const std::shared_ptr<Shader>& Vert = Shader::Create(entt::hashed_string{ VertShaderPath.c_str() }, ShaderStage::Vertex);
+			const std::shared_ptr<Shader>& Vert = Shader::Create(entt::hashed_string{ VertShaderPath.c_str() });
 			assert(Vert);
 			m_VertShader = Vert.get();
 
 			const std::string& FragShaderPath = m_JsonData["frag"];
-			const std::shared_ptr<Shader>& Frag = Shader::Create(entt::hashed_string{ FragShaderPath.c_str() }, ShaderStage::Fragment);
+			const std::shared_ptr<Shader>& Frag = Shader::Create(entt::hashed_string{ FragShaderPath.c_str() });
 			assert(Frag);
 			m_FragShader = Frag.get();
 

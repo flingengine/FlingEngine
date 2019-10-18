@@ -2,16 +2,16 @@
 #include "Shader.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
-#include <vulkan/spirv.h>
-
 namespace Fling
 {
-    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID, ShaderStage t_Stage)
+    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
     {
-        return ResourceManager::LoadResource<Shader>(t_ID, t_Stage);
+		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID);
+        ShaderProgram::Get().AddShader(shader);
+		return shader;
     }
 
-    Shader::Shader(Guid t_ID, ShaderStage t_Stage)
+    Shader::Shader(Guid t_ID)
         : Resource(t_ID)
     {
         std::vector<char> RawCode = LoadRawBytes(GetFilepathReleativeToAssets());
@@ -67,54 +67,30 @@ namespace Fling
         return RawShaderCode;
     }
 
-    static bool get_stock_sampler(StockSampler& sampler, const std::string& name)
-    {
-        if (name.find("NearestClamp") != std::string::npos)
-            sampler = StockSampler::NearestClamp;
-        else if (name.find("LinearClamp") != std::string::npos)
-            sampler = StockSampler::LinearClamp;
-        else if (name.find("TrilinearClamp") != std::string::npos)
-            sampler = StockSampler::TrilinearClamp;
-        else if (name.find("NearestWrap") != std::string::npos)
-            sampler = StockSampler::NearestWrap;
-        else if (name.find("LinearWrap") != std::string::npos)
-            sampler = StockSampler::LinearWrap;
-        else if (name.find("TrilinearWrap") != std::string::npos)
-            sampler = StockSampler::TrilinearWrap;
-        else if (name.find("NearestShadow") != std::string::npos)
-            sampler = StockSampler::NearestShadow;
-        else if (name.find("LinearShadow") != std::string::npos)
-            sampler = StockSampler::LinearShadow;
-        else
-            return false;
-
-        return true;
-    }
-
-	static VkShaderStageFlagBits getShaderStage(SpvExecutionModel executionModel)
+	namespace ParseHelpers
 	{
-		switch (executionModel)
+		static VkShaderStageFlagBits GetShaderStage(SpvExecutionModel executionModel)
 		{
-		case SpvExecutionModelVertex:
-			return VK_SHADER_STAGE_VERTEX_BIT;
-		case SpvExecutionModelFragment:
-			return VK_SHADER_STAGE_FRAGMENT_BIT;
-		case SpvExecutionModelGLCompute:
-			return VK_SHADER_STAGE_COMPUTE_BIT;
-		case SpvExecutionModelTaskNV:
-			return VK_SHADER_STAGE_TASK_BIT_NV;
-		case SpvExecutionModelMeshNV:
-			return VK_SHADER_STAGE_MESH_BIT_NV;
+			switch (executionModel)
+			{
+			case SpvExecutionModelVertex:
+				return VK_SHADER_STAGE_VERTEX_BIT;
+			case SpvExecutionModelFragment:
+				return VK_SHADER_STAGE_FRAGMENT_BIT;
+			case SpvExecutionModelGLCompute:
+				return VK_SHADER_STAGE_COMPUTE_BIT;
+			case SpvExecutionModelTaskNV:
+				return VK_SHADER_STAGE_TASK_BIT_NV;
+			case SpvExecutionModelMeshNV:
+				return VK_SHADER_STAGE_MESH_BIT_NV;
 
-		default:
-			assert(!"Unsupported execution model");
-			return VkShaderStageFlagBits(0);
+			default:
+				assert(!"Unsupported execution model");
+				return VkShaderStageFlagBits(0);
+			}
 		}
-	}
+	}	// namespace ParseHelpers
 
-    // I got some of this logic from the Granite engine example:
-    // https://github.com/Themaister/Granite/blob/master/vulkan/shader.cpp
-    // Overall a great example of setting up a graphics pipeline inside of an engine
     void Shader::ParseReflectionData(const UINT32* t_Code, UINT32 t_Size)
     {
 		assert(t_Code && t_Size > 0);
@@ -135,7 +111,7 @@ namespace Fling
 			case SpvOpEntryPoint:
 			{
 				assert(wordCount >= 2);
-				m_Stage = getShaderStage(SpvExecutionModel(insn[1]));
+				m_Stage = ParseHelpers::GetShaderStage(SpvExecutionModel(insn[1]));
 			} break;
 			case SpvOpExecutionMode:
 			{
