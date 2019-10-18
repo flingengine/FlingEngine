@@ -1,12 +1,16 @@
 #include "pch.h"
 #include "Material.h"
 #include "ResourceManager.h"
+#include "MaterialRegistry.hpp"
 
 namespace Fling
 {	
 	std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
 	{
-		return ResourceManager::LoadResource<Fling::Material>(t_ID);
+		// Register this with the renderer so that we can create the descriptor sets for it
+		auto& mat = ResourceManager::LoadResource<Fling::Material>(t_ID);
+		MaterialRegistry::Get().RegisterMaterial(mat);
+		return mat;
 	}
 
 	Material::Material(Guid t_ID)

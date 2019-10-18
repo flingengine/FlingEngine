@@ -2,6 +2,7 @@
 #include "Shader.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
+#include <vulkan/spirv.h>
 
 namespace Fling
 {
@@ -12,7 +13,6 @@ namespace Fling
 
     Shader::Shader(Guid t_ID, ShaderStage t_Stage)
         : Resource(t_ID)
-        , m_Stage(t_Stage)
     {
         std::vector<char> RawCode = LoadRawBytes(GetFilepathReleativeToAssets());
         
@@ -21,7 +21,10 @@ namespace Fling
             F_LOG_ERROR("Failed to create shader module for {}", GetFilepathReleativeToAssets());
         }
 
-        ParseReflectionData(RawCode);
+		assert(RawCode.size() % 4 == 0);
+
+		UINT32 size = static_cast<UINT32>(RawCode.size() / 4);
+		ParseReflectionData(reinterpret_cast<const UINT32*>(RawCode.data()), size);
     }
 
     Shader::~Shader()
@@ -88,283 +91,171 @@ namespace Fling
         return true;
     }
 
+	static VkShaderStageFlagBits getShaderStage(SpvExecutionModel executionModel)
+	{
+		switch (executionModel)
+		{
+		case SpvExecutionModelVertex:
+			return VK_SHADER_STAGE_VERTEX_BIT;
+		case SpvExecutionModelFragment:
+			return VK_SHADER_STAGE_FRAGMENT_BIT;
+		case SpvExecutionModelGLCompute:
+			return VK_SHADER_STAGE_COMPUTE_BIT;
+		case SpvExecutionModelTaskNV:
+			return VK_SHADER_STAGE_TASK_BIT_NV;
+		case SpvExecutionModelMeshNV:
+			return VK_SHADER_STAGE_MESH_BIT_NV;
+
+		default:
+			assert(!"Unsupported execution model");
+			return VkShaderStageFlagBits(0);
+		}
+	}
+
     // I got some of this logic from the Granite engine example:
     // https://github.com/Themaister/Granite/blob/master/vulkan/shader.cpp
     // Overall a great example of setting up a graphics pipeline inside of an engine
-    void Shader::ParseReflectionData(std::vector<char>& t_ShaderCode)
+    void Shader::ParseReflectionData(const UINT32* t_Code, UINT32 t_Size)
     {
-        // Get a UINT32 version of the SPV code
-        std::vector<UINT32> spv(t_ShaderCode.size() / sizeof(UINT32));
-        memcpy(spv.data(), t_ShaderCode.data(), t_ShaderCode.size());
+		assert(t_Code && t_Size > 0);
+		assert(t_Code[0] == SpvMagicNumber);
 
-        try
-        {
-            using namespace spirv_cross;
+		UINT32 idBound = t_Code[3];
+		std::vector<Id> ids(idBound);
+		const UINT32* insn = t_Code + 5;
 
-            Compiler compiler(spv.data(), spv.size());
-            ShaderResources resources = compiler.get_shader_resources();
-            
-            // Get all image samplers
-            for (auto& image : resources.sampled_images)
-            {
-                auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
-                auto& type = compiler.get_type(image.type_id);
+		// Find out what types of bindings this shader has
+		while (insn != t_Code + t_Size)
+		{
+			UINT16 opcode = UINT16(insn[0]);
+			UINT16 wordCount = UINT16(insn[0] >> 16);
 
-                if (type.image.dim == spv::DimBuffer)
-                {
-                    m_Layout.sets[set].sampled_buffer_mask |= 1u << binding;
-                }
-                else
-                {
-                    m_Layout.sets[set].sampled_image_mask |= 1u << binding;
-                }
+			switch (opcode)
+			{
+			case SpvOpEntryPoint:
+			{
+				assert(wordCount >= 2);
+				m_Stage = getShaderStage(SpvExecutionModel(insn[1]));
+			} break;
+			case SpvOpExecutionMode:
+			{
+				assert(wordCount >= 3);
+				UINT32 mode = insn[2];
 
-                if (compiler.get_type(type.image.type).basetype == SPIRType::BaseType::Float)
-                {
-                    m_Layout.sets[set].fp_mask |= 1u << binding;
-                }
+				switch (mode)
+				{
+				case SpvExecutionModeLocalSize:
+					assert(wordCount == 6);
+					localSizeX = insn[3];
+					localSizeY = insn[4];
+					localSizeZ = insn[5];
+					break;
+				}
+			} break;
+			case SpvOpDecorate:
+			{
+				assert(wordCount >= 3);
 
-                const std::string &name = image.name;
+				UINT32 id = insn[1];
+				assert(id < idBound);
 
-                StockSampler sampler;
-                if (type.image.dim != spv::DimBuffer && get_stock_sampler(sampler, name))
-                {
-                    if (has_immutable_sampler(m_Layout.sets[set], binding))
-                    {
-                        if (sampler != get_immutable_sampler(m_Layout.sets[set], binding))
-                        {
-                            F_LOG_ERROR("Immutable sampler mismatch detected!\n");
-                        }
-                    }
-                    else
-                    {
-                        set_immutable_sampler(m_Layout.sets[set], binding, sampler);
-                    }
-                }
+				switch (insn[2])
+				{
+				case SpvDecorationDescriptorSet:
+					assert(wordCount == 4);
+					ids[id].set = insn[3];
+					break;
+				case SpvDecorationBinding:
+					assert(wordCount == 4);
+					ids[id].binding = insn[3];
+					break;
+				}
+			} break;
+			case SpvOpTypeStruct:
+			case SpvOpTypeImage:
+			case SpvOpTypeSampler:
+			case SpvOpTypeSampledImage:
+			{
+				assert(wordCount >= 2);
 
-                update_array_info(type, set, binding);
-            }
+				UINT32 id = insn[1];
+				assert(id < idBound);
 
-            // Get subpass inputs
-            for (spirv_cross::Resource& image : resources.subpass_inputs)
-            {
-                auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
-                m_Layout.sets[set].input_attachment_mask |= 1u << binding;
+				assert(ids[id].opcode == 0);
+				ids[id].opcode = opcode;
+			} break;
+			case SpvOpTypePointer:
+			{
+				assert(wordCount == 4);
 
-                auto& type = compiler.get_type(image.type_id);
-                if (compiler.get_type(type.image.type).basetype == SPIRType::BaseType::Float)
-                {
-                    m_Layout.sets[set].fp_mask |= 1u << binding;
-                }
-                update_array_info(type, set, binding);
-            }
+				UINT32 id = insn[1];
+				assert(id < idBound);
 
-            // Get separate images
-            for (spirv_cross::Resource& image : resources.separate_images)
-            {
-                auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
+				assert(ids[id].opcode == 0);
+				ids[id].opcode = opcode;
+				ids[id].typeId = insn[3];
+				ids[id].storageClass = insn[2];
+			} break;
+			case SpvOpVariable:
+			{
+				assert(wordCount >= 4);
 
-                auto& type = compiler.get_type(image.type_id);
-                if (compiler.get_type(type.image.type).basetype == SPIRType::BaseType::Float)
-                {
-                    m_Layout.sets[set].fp_mask |= 1u << binding;
-                }
+				UINT32 id = insn[2];
+				assert(id < idBound);
 
-                if (type.image.dim == spv::DimBuffer)
-                {
-                    m_Layout.sets[set].sampled_buffer_mask |= 1u << binding;
-                }
-                else
-                {
-                    m_Layout.sets[set].separate_image_mask |= 1u << binding;
-                }
+				assert(ids[id].opcode == 0);
+				ids[id].opcode = opcode;
+				ids[id].typeId = insn[1];
+				ids[id].storageClass = insn[3];
+			} break;
+			}
 
-                update_array_info(type, set, binding);
-            }
+			assert(insn + wordCount <= t_Code + t_Size);
+			insn += wordCount;
 
-            // Samplers
-            for (spirv_cross::Resource& image : resources.separate_samplers)
-            {
-                auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
-                m_Layout.sets[set].sampler_mask |= 1u << binding;
+		}
 
-                const std::string& name = image.name;
-                StockSampler sampler;
-                if (get_stock_sampler(sampler, name))
-                {
-                    if (has_immutable_sampler(m_Layout.sets[set], binding))
-                    {
-                        if (sampler != get_immutable_sampler(m_Layout.sets[set], binding))
-                        {
-                            F_LOG_ERROR("Immutable sampler mismatch detected!\n");
-                        }
-                    }
-                    else
-                    {
-                        set_immutable_sampler(m_Layout.sets[set], binding, sampler);
-                    }
-                }
+		// Find what resources we need for this shader (samplers, buffers, etc)
+		for (const auto& id : ids)
+		{
+			if (id.opcode == SpvOpVariable && (id.storageClass == SpvStorageClassUniform || id.storageClass == SpvStorageClassUniformConstant || id.storageClass == SpvStorageClassStorageBuffer))
+			{
+				assert(id.set == 0);
+				assert(id.binding < 32);
+				assert(ids[id.typeId].opcode == SpvOpTypePointer);
 
-                update_array_info(compiler.get_type(image.type_id), set, binding);
-            }
+				assert((m_ResourceMask & (1 << id.binding)) == 0);
 
-            for (auto& image : resources.storage_images)
-            {
-                auto set = compiler.get_decoration(image.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(image.id, spv::DecorationBinding);
-                m_Layout.sets[set].storage_image_mask |= 1u << binding;
+				uint32_t typeKind = ids[ids[id.typeId].typeId].opcode;
 
-                auto& type = compiler.get_type(image.type_id);
-                if (compiler.get_type(type.image.type).basetype == SPIRType::BaseType::Float)
-                {
-                    m_Layout.sets[set].fp_mask |= 1u << binding;
-                }
+				switch (typeKind)
+				{
+				case SpvOpTypeStruct:
+					m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					m_ResourceMask |= 1 << id.binding;
+					break;
+				case SpvOpTypeImage:
+					m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+					m_ResourceMask |= 1 << id.binding;
+					break;
+				case SpvOpTypeSampler:
+					m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_SAMPLER;
+					m_ResourceMask |= 1 << id.binding;
+					break;
+				case SpvOpTypeSampledImage:
+					m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					m_ResourceMask |= 1 << id.binding;
+					break;
+				default:
+					assert(!"Unknown resource type");
+				}
+			}
 
-                update_array_info(type, set, binding);
-            }
-
-            // Uniform buffers
-            for (auto& buffer : resources.uniform_buffers)
-            {
-                auto set = compiler.get_decoration(buffer.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(buffer.id, spv::DecorationBinding);
-                m_Layout.sets[set].uniform_buffer_mask |= 1u << binding;
-                update_array_info(compiler.get_type(buffer.type_id), set, binding);
-            }
-
-            for (auto& buffer : resources.storage_buffers)
-            {
-                auto set = compiler.get_decoration(buffer.id, spv::DecorationDescriptorSet);
-                auto binding = compiler.get_decoration(buffer.id, spv::DecorationBinding);
-                m_Layout.sets[set].storage_buffer_mask |= 1u << binding;
-                update_array_info(compiler.get_type(buffer.type_id), set, binding);
-            }
-
-            // Get all sampled images in the shader.
-            for (auto& attrib : resources.stage_inputs)
-            {
-                auto location = compiler.get_decoration(attrib.id, spv::DecorationLocation);
-                m_Layout.input_mask |= 1u << location;
-            }
-
-            for (auto& attrib : resources.stage_outputs)
-            {
-                auto location = compiler.get_decoration(attrib.id, spv::DecorationLocation);
-                m_Layout.output_mask |= 1u << location;
-            }
-
-            if (!resources.push_constant_buffers.empty())
-            {
-                // Don't bother trying to extract which part of a push constant block we're using.
-                // Just assume we're accessing everything. At least on older validation layers,
-                // it did not do a static analysis to determine similar information, so we got a lot
-                // of false positives.
-                m_Layout.push_constant_size =
-                    compiler.get_declared_struct_size(compiler.get_type(resources.push_constant_buffers.front().base_type_id));
-            }
-
-            // Specialization constants --------------------
-            auto spec_constants = compiler.get_specialization_constants();
-            for (SpecializationConstant& c : spec_constants)
-            {
-                if (c.constant_id >= VULKAN_NUM_SPEC_CONSTANTS)
-                {
-                    F_LOG_ERROR("Spec constant ID: %u is out of range, will be ignored.\n", c.constant_id);
-                    continue;
-                }
-
-                m_Layout.spec_constant_mask |= 1u << c.constant_id;
-            }
-        }
-        catch (const std::exception& e)
-        {
-        	F_LOG_ERROR("Shader reflection parse error in {}: {}", GetFilepathReleativeToAssets(), e.what());
-        }
-    }
-
-    VkShaderStageFlagBits Shader::GetVkBindStage() const
-    {
-        switch (m_Stage)
-        {
-            //case ShaderStage::Compute:
-            //   return VK_SHADER_STAGE_COMPUTE_BIT;
-        case ShaderStage::Vertex:
-            return VK_SHADER_STAGE_VERTEX_BIT;
-        case ShaderStage::Fragment:
-            return VK_SHADER_STAGE_FRAGMENT_BIT;
-            //case ShaderStage::Geometry:
-            //    return "geometry";
-            //case ShaderStage::TessControl:
-            //    return "tess_control";
-            //case ShaderStage::TessEvaluation:
-            //    return "tess_evaluation";
-        }
-
-        return VK_SHADER_STAGE_VERTEX_BIT;
-    }
-
-    const char* Shader::StageToName(ShaderStage stage)
-    {
-        switch (stage)
-        {
-        //case ShaderStage::Compute:
-        //    return "compute";
-        case ShaderStage::Vertex:
-            return "vertex";
-        case ShaderStage::Fragment:
-            return "fragment";
-        //case ShaderStage::Geometry:
-        //    return "geometry";
-        //case ShaderStage::TessControl:
-        //    return "tess_control";
-        //case ShaderStage::TessEvaluation:
-        //    return "tess_evaluation";
-        default:
-            return "unknown";
-        }
-    }
-
-    void Shader::update_array_info(const spirv_cross::SPIRType& type, unsigned set, unsigned binding)
-    {
-        auto& size = m_Layout.sets[set].array_size[binding];
-        if (!type.array.empty())
-        {
-            if (type.array.size() != 1)
-            {
-                F_LOG_ERROR("Array dimension must be 1.\n");
-            }
-            else if (!type.array_size_literal.front())
-            {
-                F_LOG_ERROR("Array dimension must be a literal.\n");
-            }
-            else
-            {
-                if (size && size != type.array.front())
-                {
-                    F_LOG_ERROR("Array dimension for (%u, %u) is inconsistent.\n", set, binding);
-                }
-                else if (type.array.front() + binding > VULKAN_NUM_BINDINGS)
-                {
-                    F_LOG_ERROR("Binding array will go out of bounds.\n");
-                }
-                else
-                {
-                    size = uint8_t(type.array.front());
-                }
-            }
-        }
-        else
-        {
-            if (size && size != 1)
-            {
-                F_LOG_ERROR("Array dimension for ({}, {}) is inconsistent.\n", set, binding);
-            }
-            size = 1;
-        }
+			if (id.opcode == SpvOpVariable && id.storageClass == SpvStorageClassPushConstant)
+			{
+				m_UsesPushConstants = true;
+			}
+		}
     }
 
 }   // namespace Fling
