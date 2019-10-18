@@ -23,6 +23,8 @@ namespace Fling
                 Guid t_NegY_ID,
                 Guid t_PosZ_ID,
                 Guid t_NegZ_ID,
+                Guid t_VertexShader,
+                Guid t_FragShader,
                 VkRenderPass t_RenderPass,
                 VkDevice t_LogicalDevice);
 
@@ -30,14 +32,7 @@ namespace Fling
 
             void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight);
 
-            void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::vec3& t_Rotation);
-
-            /**
-             * @brief Get the Uniform Buffer object
-             * 
-             * @return std::unique_ptr<Buffer> 
-             */
-            //std::shared_ptr<Buffer> GetUniformBuffer() const { return m_UniformBuffer; }
+            void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
 
             /**
              * @brief Get the Pipeline Layout object
@@ -85,33 +80,6 @@ namespace Fling
 
         private:
 
-            //struct SkyBoxAttrubutes
-            //{
-            //    glm::vec3 pos;
-
-            //    static VkVertexInputBindingDescription GetBindingDescription()
-            //    {
-            //        VkVertexInputBindingDescription bindingDescription = {};
-            //        bindingDescription.binding = 0;
-            //        bindingDescription.stride = sizeof(SkyBoxAttrubutes);
-            //        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-            //        return bindingDescription;
-            //    }
-
-            //    static VkVertexInputAttributeDescription GetAttributeDescriptions()
-            //    {
-            //        VkVertexInputAttributeDescription attributeDescriptions = {};
-
-            //        attributeDescriptions.binding = 0;
-            //        attributeDescriptions.location = 0;
-            //        attributeDescriptions.format = VK_FORMAT_R32G32B32_SFLOAT;
-            //        attributeDescriptions.offset = offsetof(SkyBoxAttrubutes, pos);
-
-            //        return attributeDescriptions;
-            //    }
-            //};
-
             void PreparePipeline();
             
             void LoadCubemap(
@@ -125,13 +93,14 @@ namespace Fling
             void SetupDescriptors();
 
             std::vector<Image> m_cubeMapImages;
+            std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
 
             VkImage m_Image;
             VkImageView m_Imageview;
             VkImageLayout m_ImageLayout;
             VkDeviceMemory m_ImageMemory;
-            
             VkSampler m_Sampler;
+            
             VkDescriptorSetLayout m_DescriptorSetLayout;
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
@@ -142,12 +111,6 @@ namespace Fling
             VkPipelineCache m_PipelineCache;
             VkDescriptorBufferInfo m_UniformBufferDescriptor;
 
-            std::shared_ptr<Model> m_Cube;
-            //std::shared_ptr<class Buffer> m_UniformBuffer;
-
-            std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
-
-
             VkDeviceSize m_ImageSize;
             VkDeviceSize m_LayerSize;
             VkFormat m_Format;
@@ -156,5 +119,9 @@ namespace Fling
             size_t m_numsFrameInFlight;
 
             UboSkyboxVS m_UboVS;
+            std::shared_ptr<Model> m_Cube;
+
+            Guid m_FragShader;
+            Guid m_VertexShader;
     };
 }

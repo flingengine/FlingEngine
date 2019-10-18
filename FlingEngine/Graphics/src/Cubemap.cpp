@@ -11,21 +11,19 @@ namespace Fling
         Guid t_NegY_ID,
         Guid t_PosZ_ID,
         Guid t_NegZ_ID,
+        Guid t_VertexShader,
+        Guid t_FragShader,
         VkRenderPass t_RenderPass,
         VkDevice t_LogicalDevice) : 
-        m_Device(t_LogicalDevice), m_RenderPass(t_RenderPass)
+        m_VertexShader(t_VertexShader), 
+        m_FragShader(t_FragShader), 
+        m_Device(t_LogicalDevice), 
+        m_RenderPass(t_RenderPass)
     {
         //Default format
         m_Format = VK_FORMAT_R8G8B8A8_UNORM;
         m_Cube = Model::Create("Models/cube.obj"_hs);   
 
-      /*  m_UniformBuffer = std::make_unique<Buffer>(
-            sizeof(UboVS),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-        m_UniformBuffer->MapMemory();*/
-  
         LoadCubemap(
             t_PosX_ID,
             t_NegX_ID,
@@ -69,7 +67,7 @@ namespace Fling
         }
 
 
-        UpdateUniformBuffer(t_CurrentImage, t_Camera->GetProjectionMatrix(), t_Camera->GetRotation());
+        UpdateUniformBuffer(t_CurrentImage, t_Camera->GetProjectionMatrix(), t_Camera->GetViewMatrix());
         SetupDescriptors();
         PreparePipeline();
     }
@@ -85,7 +83,7 @@ namespace Fling
         VkPipelineRasterizationStateCreateInfo rasterizationState =
             Initalizers::PipelineRasterizationStateCreateInfo(
                 VK_POLYGON_MODE_FILL,
-                VK_CULL_MODE_BACK_BIT,
+                VK_CULL_MODE_FRONT_BIT,
                 VK_FRONT_FACE_COUNTER_CLOCKWISE,
                 0);
 
@@ -157,12 +155,10 @@ namespace Fling
         pipelineCreateInfo.pStages = shaderStages.data();
         pipelineCreateInfo.pVertexInputState = &VertexInputState;
 
-        //TODO: Load in different shaders for different cubemaps
-        //Load Shader 
-        std::shared_ptr<File> vertShaderCode = ResourceManager::LoadResource<File>("Shaders/skybox/skybox.vert.spv");
+        std::shared_ptr<File> vertShaderCode = ResourceManager::LoadResource<File>(m_VertexShader);
         assert(vertShaderCode);
 
-        std::shared_ptr<File> fragShaderCode = ResourceManager::LoadResource<File>("Shaders/skybox/skybox.frag.spv");
+        std::shared_ptr<File> fragShaderCode = ResourceManager::LoadResource<File>(m_FragShader);
         assert(fragShaderCode);
         
         VkShaderModule vertModule = GraphicsHelpers::CreateShaderModule(vertShaderCode);
@@ -200,7 +196,6 @@ namespace Fling
         Guid t_PosZ_ID, 
         Guid t_NegZ_ID)
     {
-        //TODO: check if all images have the same size and channels
         std::array<std::shared_ptr<Image>, 6> images =
         {
             ResourceManager::LoadResource<Image>(t_PosX_ID),
@@ -216,12 +211,6 @@ namespace Fling
         m_LayerSize = m_ImageSize / 6;
         //TODO: add mip levels to image
         m_MipLevels = 1;
-
-        //Staging buffer
-       /* std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>(
-            m_ImageSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_SHARING_MODE_EXCLUSIVE)*/;
 
         std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
         stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_SHARING_MODE_EXCLUSIVE, true);
@@ -338,16 +327,12 @@ namespace Fling
             F_LOG_ERROR("Cube failed to create sampler");
         }
 
-        // Create image view
         VkImageViewCreateInfo view = Initalizers::ImageViewCreateInfo();
-        // Cube map view type
         view.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
         view.format = m_Format;
         view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
         view.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-        // 6 array layers (faces)
         view.subresourceRange.layerCount = 6;
-        // Set number of mip levels
         view.subresourceRange.levelCount = m_MipLevels;
         view.image = m_Image;
         if (vkCreateImageView(m_Device, &view, nullptr, &m_Imageview) != VK_SUCCESS)
@@ -453,17 +438,17 @@ namespace Fling
         }
     }
 
-    void Cubemap::UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::vec3& t_Rotation)
+    void Cubemap::UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix)
     {
         m_UboVS.Projection = t_ProjectionMatrix;
+        m_UboVS.Projection[1][1] *= -1.0f;
 
-        glm::mat4 viewMatrix = glm::mat4(1.0f);
-        m_UboVS.ModelView = glm::mat4(1.0f);
-        m_UboVS.ModelView = viewMatrix * glm::translate(m_UboVS.ModelView, glm::vec3(0, 0, 0));
-        m_UboVS.ModelView = glm::rotate(m_UboVS.ModelView, glm::radians(t_Rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        m_UboVS.ModelView = glm::rotate(m_UboVS.ModelView, glm::radians(t_Rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        m_UboVS.ModelView = glm::rotate(m_UboVS.ModelView, glm::radians(t_Rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        m_UboVS.ModelView = t_ViewMatrix;
+        m_UboVS.ModelView[3][0] = 0.0f;
+        m_UboVS.ModelView[3][1] = 0.0f;
+        m_UboVS.ModelView[3][2] = 0.0f;
 
         memcpy(m_UniformBuffers[t_CurrentImage]->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
+
     }
 }

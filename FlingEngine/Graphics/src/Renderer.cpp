@@ -73,7 +73,7 @@ namespace Fling
             static_cast<UINT32>(m_CommandBuffers.size()),
             m_CommandPool);
 
-        //// Load Skybox
+        // Load Skybox
         m_Skybox = new Cubemap(
             "Textures/Skybox/posx.jpg"_hs,
             "Textures/Skybox/negx.jpg"_hs,
@@ -81,6 +81,8 @@ namespace Fling
             "Textures/Skybox/negy.jpg"_hs,
             "Textures/Skybox/posz.jpg"_hs,
             "Textures/Skybox/negz.jpg"_hs,
+            "Shaders/Skybox/skybox.vert.spv",
+            "Shaders/Skybox/skybox.frag.spv",
             m_RenderPass,
             m_LogicalDevice->GetVkDevice());
 
@@ -843,7 +845,8 @@ namespace Fling
 
         UpdateUniformBuffer(ImageIndex);
         UpdateDynamicUniformBuffer(ImageIndex);
-        m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetRotation());
+        //m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetRotation());
+        m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetViewMatrix());
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
