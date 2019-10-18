@@ -845,7 +845,6 @@ namespace Fling
 
         UpdateUniformBuffer(ImageIndex);
         UpdateDynamicUniformBuffer(ImageIndex);
-        //m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetRotation());
         m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetViewMatrix());
 
         VkSubmitInfo submitInfo = {};
