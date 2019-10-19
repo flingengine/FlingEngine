@@ -29,6 +29,13 @@ namespace Fling
          */
         UINT64 GetImageSize() const { return m_Width * m_Height * 4; } 
 
+        /**
+         * @brief Get the Pixel Data object
+         * 
+         * @return stbi_uc* 
+         */
+        stbi_uc* GetPixelData() const { return m_PixelData; }
+
 		/**
 		* @brief	Release the Vulkan resources of this image 
 		*/
@@ -69,5 +76,8 @@ namespace Fling
 
 		/** The Vulkan memory resource for this image */
 		VkDeviceMemory m_VkMemory;
+
+        /** Pixel data of image **/
+        stbi_uc* m_PixelData;
     };
 }   // namespace Fling
