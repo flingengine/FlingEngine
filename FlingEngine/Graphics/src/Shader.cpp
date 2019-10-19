@@ -2,12 +2,19 @@
 #include "Shader.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
+
 namespace Fling
 {
     std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
     {
 		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID);
-        ShaderProgram::Get().AddShader(shader);
+        bool IsNew = ShaderProgram::Get().AddShader(shader);
+		
+		//if (IsNew)
+		//{
+		//	Renderer::Get().SetFrameBufferHasBeenResized(true);
+		//}
+
 		return shader;
     }
 
@@ -29,10 +36,7 @@ namespace Fling
 
     Shader::~Shader()
     {
-        if (m_Module)
-        {
-            vkDestroyShaderModule(Renderer::GetLogicalVkDevice(), m_Module, nullptr);
-        }
+		Release();
     }
 
     VkResult Shader::CreateShaderModule(std::vector<char>& t_ShaderCode)
@@ -233,5 +237,117 @@ namespace Fling
 			}
 		}
     }
+
+	UINT32 Shader::GatherResources(Shader* t_Shaders, UINT32 t_ShaderCount, VkDescriptorType(&t_ResourceTypes)[32])
+	{
+		UINT32 resourceMask = 0;
+		for (UINT32 i = 0; i < t_ShaderCount; i++)
+		{
+			Shader* shader = t_Shaders + i;
+			if (!shader)
+			{
+				F_LOG_ERROR("Invalid shader! Cannot gather resources");
+				continue;
+			}
+
+			for (uint32_t i = 0; i < 32; ++i)
+			{
+				if (shader->m_ResourceMask & (1 << i))
+				{
+					if (resourceMask & (1 << i))
+					{
+						assert(t_ResourceTypes[i] == shader->m_ResourceTypes[i]);
+					}
+					else
+					{
+						t_ResourceTypes[i] = shader->m_ResourceTypes[i];
+						resourceMask |= 1 << i;
+					}
+				}
+			}
+		}
+
+		return resourceMask;
+	}
+
+	void Shader::Release()
+	{
+		if (m_Module)
+		{
+			vkDestroyShaderModule(Renderer::GetLogicalVkDevice(), m_Module, nullptr);
+		}
+	}
+
+	VkDescriptorSetLayout Shader::CreateSetLayout(VkDevice t_Dev, Shader* t_Shaders, UINT32 t_ShaderCount, bool t_SupportPushDescriptor)
+	{
+		std::vector<VkDescriptorSetLayoutBinding> setBindings;
+
+		VkDescriptorType resourceTypes[32] = {};
+		UINT32 resourceMask = GatherResources(t_Shaders, t_ShaderCount, resourceTypes);
+
+		for (UINT32 i = 0; i < 32; ++i)
+		{
+			if (resourceMask & (1 << i))
+			{
+				VkDescriptorSetLayoutBinding binding = {};
+				binding.binding = i;
+				binding.descriptorType = resourceTypes[i];
+				binding.descriptorCount = 1;
+
+				binding.stageFlags = 0;
+				for (UINT32 j = 0; j < t_ShaderCount; j++)
+				{
+					Shader* shader = (t_Shaders + j);
+					assert(shader);
+
+					if (shader->m_ResourceMask & (1 << i))
+					{
+						binding.stageFlags |= shader->m_Stage;
+					}
+				}			
+
+				setBindings.push_back(binding);
+			}
+		}
+
+		VkDescriptorSetLayoutCreateInfo setCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+		setCreateInfo.flags = t_SupportPushDescriptor ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR : 0;
+		setCreateInfo.bindingCount = uint32_t(setBindings.size());
+		setCreateInfo.pBindings = setBindings.data();
+
+		VkDescriptorSetLayout setLayout = 0;
+
+		if(vkCreateDescriptorSetLayout(t_Dev, &setCreateInfo, 0, &setLayout) != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to create descriptor set layout!");
+		}
+		return setLayout;
+	}
+
+	VkPipelineLayout Shader::CreatePipelineLayout(VkDevice t_Dev, VkDescriptorSetLayout t_SetLayout, VkShaderStageFlags t_PushConstantStages, size_t t_PushConstantSize)
+	{
+		VkPipelineLayoutCreateInfo createInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+		createInfo.setLayoutCount = 1;
+		createInfo.pSetLayouts = &t_SetLayout;
+
+		VkPushConstantRange pushConstantRange = {};
+
+		if (t_PushConstantSize)
+		{
+			pushConstantRange.stageFlags = t_PushConstantStages;
+			pushConstantRange.size = UINT32(t_PushConstantSize);
+
+			createInfo.pushConstantRangeCount = 1;
+			createInfo.pPushConstantRanges = &pushConstantRange;
+		}
+
+		VkPipelineLayout layout = 0;
+		if (vkCreatePipelineLayout(t_Dev, &createInfo, 0, &layout) != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to create pipeline layout!");
+		}
+
+		return layout;
+	}
 
 }   // namespace Fling

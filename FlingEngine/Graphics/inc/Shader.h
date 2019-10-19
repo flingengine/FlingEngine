@@ -67,7 +67,19 @@ namespace Fling
         /** get the Vulkan stage bit flags that we should bind to */
 		VkShaderStageFlagBits GetStage() const { return m_Stage; }
 
+		/**
+		* @breif	Release any resrources created by this shader (the module)
+		*/
+		void Release();
+
+		static VkDescriptorSetLayout CreateSetLayout(VkDevice t_Dev, Shader* t_Shaders, UINT32 t_ShaderCount, bool t_SupportPushDescriptor = false);
+
+		static VkPipelineLayout CreatePipelineLayout(VkDevice t_Dev, VkDescriptorSetLayout t_SetLayout, VkShaderStageFlags t_PushConstantStages, size_t t_PushConstantSize);
+
     private:
+
+		static UINT32 GatherResources(Shader* t_Shaders, UINT32 t_ShaderCount, VkDescriptorType(&t_ResourceTypes)[32]);
+
 
         /**
          * @brief Compiles this shader with SPRIV-Cross

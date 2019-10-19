@@ -13,6 +13,8 @@ namespace Fling
     class ShaderProgram : public Singleton<ShaderProgram> 
     {
     public:        
+
+		void Shutdown() override;
         
         /**
          * @brief Add a given shader to the registry if 
@@ -28,7 +30,7 @@ namespace Fling
          * 
          * @return const std::vector<std::shared_ptr<Shader>>& 
          */
-        const std::vector<std::shared_ptr<Shader>>& GetAllShaders() const { return m_ShaderPool; }
+        std::vector<Shader*>& GetAllShaders() { return m_ShaderPool; }
 
     private:
 
@@ -36,7 +38,7 @@ namespace Fling
         Guid m_ShaderNames [static_cast<unsigned>(ShaderStage::Count)] = {};
 
         // Pool of shaders
-        std::vector<std::shared_ptr<Fling::Shader>> m_ShaderPool;
+        std::vector<Shader*> m_ShaderPool;
 
         /** The file path that represents where all the shader definitions are */
         std::string m_ShaderFile = "INVALID_PATH";

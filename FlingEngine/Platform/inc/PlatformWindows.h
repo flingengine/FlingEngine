@@ -10,18 +10,16 @@
 #include <stdlib.h>
 #include <crtdbg.h> 
 
-//#	define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-//#	define new DEBUG_NEW
-
 #ifdef _MSC_VER
-#	define FLING_BREAK	__debugbreak
+#	define FLING_BREAK(str)	__debugbreak
 #else
-#	define FLING_BREAK	asm("int $3")
+#	define FLING_BREAK(str)	asm("int $3")
 #endif	// _MSC_VER
 
 #else   // Not debug
 
 #   define FLING_DEBUG 0
+#	define FLING_BREAK(str) 
 
 #endif	// _DEBUG
 

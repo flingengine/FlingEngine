@@ -49,9 +49,14 @@ namespace Fling
 	void Renderer::InitGraphics()
 	{
 		CreateRenderPass();
-        CreateDescriptorLayout();
-        CreateGraphicsPipeline();
+
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
+
+		// Load default material
+		m_DefaultMat = Material::Create("Materials/Default.mat");
+		CreateDescriptorLayout();
+
+		CreateGraphicsPipeline();
 
         m_DepthBuffer = new DepthBuffer();
         assert(m_DepthBuffer);
@@ -62,9 +67,6 @@ namespace Fling
         m_camera = std::make_unique<FirstPersonCamera>(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
         CreateFrameBuffers();
-
-        // Load default material
-		m_DefaultMat = Material::Create("Materials/Default.mat");
 
         // Create the dynamic uniform buffers
         PrepareUniformBuffers();
@@ -189,30 +191,33 @@ namespace Fling
 
     void Renderer::CreateDescriptorLayout()
     {
-        std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =
-        {
-            Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-            Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
-            Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)
-        };
+		auto& Shaders = ShaderProgram::Get().GetAllShaders();
+		m_DescriptorSetLayout = Shader::CreateSetLayout(m_LogicalDevice->GetVkDevice(), *Shaders.data(), Shaders.size());
 
-		// For every vertex shader
-		// Create a Binding for everything in the VERTEX buffer
-		// Initalizers::DescriptorSetLayoutBinding(t_Type, VK_SHADER_STAGE_VERTEX_BIT, t_Binding),
-
-
-		// for every FRAG shader
-		// Initalize a set layout for each image sampler/field
-
-        VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
-        LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        LayoutInfo.bindingCount = static_cast<UINT32>(setLayoutBindings.size());
-        LayoutInfo.pBindings = setLayoutBindings.data();
-
-        if (vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to create descipror set layout!");
-        }
+		//std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =
+		//{
+		//    Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+		//    Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
+		//    Initalizers::DescriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)
+		//};
+		//
+		//// For every vertex shader
+		//// Create a Binding for everything in the VERTEX buffer
+		//// Initalizers::DescriptorSetLayoutBinding(t_Type, VK_SHADER_STAGE_VERTEX_BIT, t_Binding),
+		//
+		//// for every FRAG shader
+		//// Initalize a set layout for each image sampler/field
+		//
+		//VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
+		//LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		//LayoutInfo.bindingCount = static_cast<UINT32>(setLayoutBindings.size());
+		//LayoutInfo.pBindings = setLayoutBindings.data();
+		//
+		//
+		//if (vkCreateDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), &LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+		//{
+		//    F_LOG_FATAL("Failed to create descipror set layout!");
+		//}
     }
 
     void Renderer::CreateGraphicsPipeline()
@@ -220,35 +225,10 @@ namespace Fling
         // Shader stage creation!
         const auto& Shaders = ShaderProgram::Get().GetAllShaders();
         std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
-        ShaderStages.reserve(Shaders.size());
 
-        unsigned num_stages = ShaderStages.size();
-
-        // This is bad because then I can't have multiple vert/frag shaders
-        // for (unsigned i = 0; i < static_cast<unsigned>(ShaderStage::Count); i++)
-        // {
-        //     ShaderStage stage = static_cast<ShaderStage>(i);
-        //     // If we have this shader stage in the graphic program
-        //     const Guid& ShaderName = m_ShaderProgram->GetStage(stage);
-        //     if (ShaderName != INVALID_GUID)
-        //     {
-        //         if (const std::shared_ptr<Fling::Shader>& Shader = Shader::Create(ShaderName, stage))
-        //         {
-        //             VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
-        //             createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        //             createInfo.module = Shader->GetShaderModule();
-        //             createInfo.stage = Shader->GetStage();
-        //             createInfo.pName = "main";
-        //             createInfo.flags = 0;
-        //             createInfo.pNext = nullptr;
-        //             createInfo.pSpecializationInfo = nullptr;
-        //         }
-        //     }   
-        // }
-
-        for(const std::shared_ptr<Shader>& Shader : Shaders)
+        for(const auto& Shader : Shaders)
         {
-            VkPipelineShaderStageCreateInfo& createInfo = ShaderStages[num_stages++];
+			VkPipelineShaderStageCreateInfo createInfo = {};
             createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             createInfo.module = Shader->GetShaderModule();
             createInfo.stage = Shader->GetStage();
@@ -256,6 +236,7 @@ namespace Fling
             createInfo.flags = 0;
             createInfo.pNext = nullptr;
             createInfo.pSpecializationInfo = nullptr;
+			ShaderStages.emplace_back(createInfo);
         }
 
         // Vertex input ----------------------
@@ -392,7 +373,7 @@ namespace Fling
         // Create graphics pipeline ------------------------
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = num_stages;
+		pipelineInfo.stageCount = (UINT32)ShaderStages.size();
         pipelineInfo.pStages = ShaderStages.data();
 
         pipelineInfo.pVertexInputState = &VertexInputInfo;
@@ -940,6 +921,8 @@ namespace Fling
     {
         // Cleanup Vulkan ------
         CleanupFrameResources();
+
+		ShaderProgram::Get().Shutdown();
 
         if (m_flingImgui)
         {
