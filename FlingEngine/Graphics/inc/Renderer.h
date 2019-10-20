@@ -188,6 +188,8 @@ namespace Fling
 
 		void CreateUniformBuffers();
 
+		void PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf);
+
         UINT32 m_NextAvailableMatrix{};
 
         /** Entt registry that the renderer will be using. Set by the Engine */
@@ -224,7 +226,7 @@ namespace Fling
         VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineLayout m_PipelineLayout;
 
-		VkDescriptorUpdateTemplate m_UpdateTemplate = VK_NULL_HANDLE;
+		VkDescriptorUpdateTemplateKHR m_UpdateTemplate = VK_NULL_HANDLE;
 
         VkPipeline m_GraphicsPipeline;
 
@@ -243,16 +245,10 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-		/** Uniform buffers */
-		std::vector<Buffer*> m_UniformBuffers;
-
         /** Simple little pool for getting the next available UBO index */
         const static UINT32 UNIFORM_BUFFER_POOL_SIZE = 256;
         static UINT32 g_UboIndexPool[UNIFORM_BUFFER_POOL_SIZE];
         static UINT32 g_AllocatedUBOPoolIndex;
-
-		//Buffer* m_UniformBufferPool = nullptr;
-
 
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;

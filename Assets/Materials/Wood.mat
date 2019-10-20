@@ -4,7 +4,7 @@
     "vertex" : "Shaders/vert.spv",
     "frag" : "Shaders/frag.spv",
 
-    "albedo" : "Textures/DefaultTexture.png",
+    "albedo" : "Textures/wood_albedo.png",
     "normal" : "Textures/wood_normals.png",
     "metal" : "Textures/wood_normals.png",
     "rough" : "Textures/wood_normals.png" 

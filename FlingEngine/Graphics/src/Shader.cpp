@@ -387,10 +387,17 @@ namespace Fling
 		createInfo.pipelineLayout = t_Layout;
 
 		VkDescriptorUpdateTemplate updateTemplate = 0;
+#if FLING_LINUX
+		if (vkCreateDescriptorUpdateTemplateKHR(t_Dev, &createInfo, 0, &updateTemplate) != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to create desciprot update template!");
+		}
+#else
 		if (vkCreateDescriptorUpdateTemplate(t_Dev, &createInfo, 0, &updateTemplate) != VK_SUCCESS)
 		{
 			F_LOG_FATAL("Failed to create desciprot update template!");
 		}
+#endif
 
 		return updateTemplate;
 	}

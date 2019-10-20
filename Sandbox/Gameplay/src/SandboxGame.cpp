@@ -34,12 +34,13 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		glm::vec3 Offset( 15.0f * DeltaTime );
+		glm::vec3 RotOffset( 15.0f * DeltaTime );
+
 		// For each active mesh renderer
 		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 		{
 			const glm::vec3& curRot = t_Trans.GetRotation();
-			t_Trans.SetRotation(curRot + Offset);
+			t_Trans.SetRotation(curRot + RotOffset);
 		});
 	}
 
@@ -80,8 +81,14 @@ namespace Sandbox
 		float Offset = 2.5f;
 
 		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-		Transform& t = t_Reg.assign<Transform>(e0);
+		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Wood.mat");
+		Transform& t0 = t_Reg.assign<Transform>(e0);
+
+		//entt::entity e1 = t_Reg.create();
+		//t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj", "Materials/Wood.mat");
+		//Transform& t1 = t_Reg.assign<Transform>(e1);
+		//glm::vec3 pos = glm::vec3(5.f, 5.f, 5.f);
+		//t1.SetPos(pos);
 
 		/*for (int x = 0; x < Dimension; ++x)
 		{

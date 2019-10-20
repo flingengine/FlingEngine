@@ -3,6 +3,7 @@
 #include <cereal/archives/json.hpp>
 #include "Material.h"
 #include "Model.h"
+#include "Buffer.h"
 
 namespace Fling
 {
@@ -21,11 +22,18 @@ namespace Fling
 
 		MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
+		~MeshRenderer();
+
 		/** Pointer to the actual model  */
 		Model* m_Model = nullptr;
 
 		/** Pointer to the material that this mesh renderer uses */
 		Material* m_Material = nullptr;
+
+		/** We need a uniform buffer per-swap chain image */
+		std::vector<Buffer> m_UniformBuffers {};
+
+		void ReleaseBuffers();
 
 		bool operator==(const MeshRenderer& other) const;
 		bool operator!=(const MeshRenderer& other) const;

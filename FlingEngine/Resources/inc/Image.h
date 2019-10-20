@@ -24,6 +24,7 @@ namespace Fling
 		FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
 		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
 		FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
+		FORCEINLINE VkDescriptorImageInfo* GetDescriptorInfo() { return &m_ImageInfo; }
 
         /**
          * @brief   Get the Image Size object (width * height * 4)
@@ -72,5 +73,7 @@ namespace Fling
 
 		/** The Vulkan memory resource for this image */
 		VkDeviceMemory m_VkMemory;
+
+		VkDescriptorImageInfo m_ImageInfo{};
     };
 }   // namespace Fling

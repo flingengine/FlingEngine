@@ -46,10 +46,16 @@ namespace Fling
 			const void* t_Data = nullptr
 		);
 
+		/*! @brief copy constructor. */
+		Buffer(const Buffer& t_Other);
+
 		/**
 		 * @brief Destroy the Buffer object, frees Vk memory and destroys buffer
 		 */
 		~Buffer();
+
+		bool operator==(const Buffer& other) const;
+		bool operator!=(const Buffer& other) const;
 
 		FORCEINLINE const VkBuffer& GetVkBuffer() const { return m_Buffer; }
 

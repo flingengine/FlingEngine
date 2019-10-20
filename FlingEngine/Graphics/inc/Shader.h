@@ -1,18 +1,23 @@
 #pragma once
 
+#include "FlingVulkan.h"
+
 #include "spirv_cross.hpp"
 #include "spirv_glsl.hpp"
 #include "spirv.h"
 
 #include "Resource.h"
-#include "FlingVulkan.h"
 #include "Sampler.hpp"
-
+#include "FlingExports.h"
 #include <fstream>
 #include <vector>
 
 namespace Fling
 {
+#if FLING_LINUX
+	typedef VkDescriptorUpdateTemplateKHR VkDescriptorUpdateTemplate;
+#endif
+
 	// Grabbed this and some shader reflection things from https://github.com/zeux/niagara
 	struct DescriptorInfo
 	{

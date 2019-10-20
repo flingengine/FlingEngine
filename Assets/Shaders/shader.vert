@@ -9,11 +9,6 @@ layout (binding = 0) uniform UboView
 	mat4 view;
 } uboView;
 
-//layout (binding = 1) uniform UboInstance 
-//{
-//	mat4 model; 
-//} uboInstance;
-
 // Inputs --------------
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inColor;

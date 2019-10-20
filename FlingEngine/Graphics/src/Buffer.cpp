@@ -18,6 +18,28 @@ namespace Fling
 		CreateBuffer(m_Size, t_Usage, t_Properties, false, t_Data);
 	}
 
+	Buffer::Buffer(const Buffer& t_Other)
+	{
+		if (*this != t_Other)
+		{
+			m_MappedMem = t_Other.m_MappedMem;
+			m_Size = t_Other.m_Size;
+			m_Buffer = t_Other.m_Buffer;
+			m_BufferMemory = t_Other.m_BufferMemory;
+			m_Descriptor = t_Other.m_Descriptor;
+		}
+	}
+
+	bool Buffer::operator==(const Buffer& other) const
+	{
+		return m_Size == other.m_Size && m_Buffer == other.m_Buffer && m_MappedMem == other.m_MappedMem;
+	}
+
+	bool Buffer::operator!=(const Buffer& other) const
+	{
+		return !(*this == other);
+	}
+
 	VkResult Buffer::MapMemory(VkDeviceSize t_Size, VkDeviceSize t_Offset)
 	{
 		return vkMapMemory(Renderer::Get().GetLogicalVkDevice(), m_BufferMemory, t_Offset, t_Size, 0, &m_MappedMem);
@@ -53,7 +75,7 @@ namespace Fling
 		{
 			F_LOG_FATAL("Failed to create buffer!");
 		}
-
+		m_Size = t_size;
 		//Get the memory requirements
 		VkMemoryRequirements MemRequirments = {};
 		vkGetBufferMemoryRequirements(Device, m_Buffer, &MemRequirments);
