@@ -34,12 +34,15 @@ namespace Fling
         return worldMat;
     }
 
-	void Transform::CalculateWorldMatrix(Transform& t_Trans, glm::mat4* t_OutMat)
+	void Transform::CalculateWorldMatrix(Transform& t_Trans)
 	{
-		assert(t_OutMat);
-		*t_OutMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);
-		*t_OutMat = *t_OutMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
-		*t_OutMat = glm::scale(*t_OutMat, t_Trans.m_Scale);
+		//assert(t_OutMat);
+		//*t_OutMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);
+		//*t_OutMat = *t_OutMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
+		//*t_OutMat = glm::scale(*t_OutMat, t_Trans.m_Scale);
+		t_Trans.m_worldMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);;
+		t_Trans.m_worldMat= t_Trans.m_worldMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
+		t_Trans.m_worldMat = glm::scale(t_Trans.m_worldMat, t_Trans.m_Scale);
 	}
 
     void Transform::SetPos(const glm::vec3& t_Pos)

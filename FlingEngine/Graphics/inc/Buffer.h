@@ -104,7 +104,7 @@ namespace Fling
 			const VkDeviceSize& t_size,
 			const VkBufferUsageFlags& t_Usage,
 			const VkMemoryPropertyFlags& t_Properties,
-			bool t_unmapBuffer,
+			bool t_unmapBuffer = false,
 			const void* t_Data = nullptr);
 			
 		/**
@@ -120,17 +120,16 @@ namespace Fling
 	private:
 
 		/** The size of this buffer in bytes */
-		VkDeviceSize m_Size;
+		VkDeviceSize m_Size {};
 
 		/** Vulkan logical buffer object */
-		VkBuffer m_Buffer;
+		VkBuffer m_Buffer = VK_NULL_HANDLE;
 
 		/** Pointer to the physical device memory for this buffer */
-		VkDeviceMemory m_BufferMemory;
+		VkDeviceMemory m_BufferMemory = VK_NULL_HANDLE;
 
 		/** The descriptor stores info about the offset, buffer, and size of this */
-		VkDescriptorBufferInfo m_Descriptor;
-
+		VkDescriptorBufferInfo m_Descriptor {};
 		
 	};
 }   // namespace Fling

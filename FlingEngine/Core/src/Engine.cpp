@@ -35,19 +35,13 @@ namespace Fling
 		Renderer::Get().m_Registry = &g_Registry;
 		Renderer::Get().Init();
 
-        Renderer::Get().InitGraphics();
-
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
 	}
 
 	void Engine::Tick()
 	{
-        // Calculate a fall back delta time in case the engine ever gets out of sync
-        const static float FallbackDeltaTime = 1.0f / 60.0f;
-        const static float MaxDeltaTime = 1.0f;
-
-        float DeltaTime = FallbackDeltaTime;
+        float DeltaTime = 1.0f / 60.0f;
 		
 		assert(m_World && m_GameImpl);		// We HAVE to have a world
 		
@@ -65,13 +59,6 @@ namespace Fling
             // Update timing
             Timing.Update();
             DeltaTime = Timing.GetDeltaTime();
-
-            // If delta time is greater than 1 second, simulate it as 1/60 FPS 
-            // because we can assume that it is like that because of debugging
-            if (DeltaTime >= MaxDeltaTime)
-            {
-                DeltaTime = FallbackDeltaTime;
-            }
 
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);

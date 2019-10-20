@@ -4,14 +4,15 @@
 // Bindings -------------------
 layout (binding = 0) uniform UboView 
 {
+	mat4 model;
 	mat4 projection;
 	mat4 view;
 } uboView;
 
-layout (binding = 1) uniform UboInstance 
-{
-	mat4 model; 
-} uboInstance;
+//layout (binding = 1) uniform UboInstance 
+//{
+//	mat4 model; 
+//} uboInstance;
 
 // Inputs --------------
 layout(location = 0) in vec3 inPosition;
@@ -29,7 +30,7 @@ out gl_PerVertex
 
 void main() 
 {
-	mat4 modelView = uboView.view * uboInstance.model;
+	mat4 modelView = uboView.view * uboView.model;
 	vec3 worldPos = vec3(modelView * vec4(inPosition, 1.0));
 	gl_Position = uboView.projection * modelView * vec4(inPosition, 1.0);
 

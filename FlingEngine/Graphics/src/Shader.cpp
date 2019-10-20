@@ -5,6 +5,16 @@
 
 namespace Fling
 {
+	// https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.pdf
+	struct Id
+	{
+		uint32_t opcode{};
+		uint32_t typeId{};
+		uint32_t storageClass{};
+		uint32_t binding{};
+		uint32_t set{};
+	};
+
     std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
     {
 		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID);
@@ -83,10 +93,10 @@ namespace Fling
 				return VK_SHADER_STAGE_FRAGMENT_BIT;
 			case SpvExecutionModelGLCompute:
 				return VK_SHADER_STAGE_COMPUTE_BIT;
-			case SpvExecutionModelTaskNV:
-				return VK_SHADER_STAGE_TASK_BIT_NV;
-			case SpvExecutionModelMeshNV:
-				return VK_SHADER_STAGE_MESH_BIT_NV;
+				//case SpvExecutionModelTaskNV:
+				//	return VK_SHADER_STAGE_MESH_BIT_NV;
+				//case SpvExecutionModelMeshNV:
+				//	return VK_SHADER_STAGE_MESH_BIT_NV;
 
 			default:
 				assert(!"Unsupported execution model");
@@ -192,7 +202,6 @@ namespace Fling
 
 			assert(insn + wordCount <= t_Code + t_Size);
 			insn += wordCount;
-
 		}
 
 		// Find what resources we need for this shader (samplers, buffers, etc)
@@ -211,7 +220,9 @@ namespace Fling
 				switch (typeKind)
 				{
 				case SpvOpTypeStruct:
-					m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					//m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+					m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
 					m_ResourceMask |= 1 << id.binding;
 					break;
 				case SpvOpTypeImage:
@@ -238,52 +249,47 @@ namespace Fling
 		}
     }
 
-	UINT32 Shader::GatherResources(Shader* t_Shaders, UINT32 t_ShaderCount, VkDescriptorType(&t_ResourceTypes)[32])
+	UINT32 Shader::GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32])
 	{
-		UINT32 resourceMask = 0;
-		for (UINT32 i = 0; i < t_ShaderCount; i++)
-		{
-			Shader* shader = t_Shaders + i;
-			if (!shader)
-			{
-				F_LOG_ERROR("Invalid shader! Cannot gather resources");
-				continue;
-			}
+		UINT32 ResourceMask = 0;
 
-			for (uint32_t i = 0; i < 32; ++i)
+		for (const Shader* shader : t_Shaders)
+		{
+			for (UINT32 i = 0; i < 32; ++i)
 			{
 				if (shader->m_ResourceMask & (1 << i))
 				{
-					if (resourceMask & (1 << i))
+					if (ResourceMask & (1 << i))
 					{
 						assert(t_ResourceTypes[i] == shader->m_ResourceTypes[i]);
 					}
 					else
 					{
 						t_ResourceTypes[i] = shader->m_ResourceTypes[i];
-						resourceMask |= 1 << i;
+						ResourceMask |= 1 << i;
 					}
 				}
 			}
-		}
+		}			
 
-		return resourceMask;
+		return ResourceMask;
 	}
 
 	void Shader::Release()
 	{
-		if (m_Module)
+		if (m_Module != VK_NULL_HANDLE)
 		{
 			vkDestroyShaderModule(Renderer::GetLogicalVkDevice(), m_Module, nullptr);
+			m_Module = VK_NULL_HANDLE;
 		}
 	}
 
-	VkDescriptorSetLayout Shader::CreateSetLayout(VkDevice t_Dev, Shader* t_Shaders, UINT32 t_ShaderCount, bool t_SupportPushDescriptor)
+	VkDescriptorSetLayout Shader::CreateSetLayout(VkDevice t_Dev, std::vector<Shader*>& t_Shaders, bool t_SupportPushDescriptor)
 	{
 		std::vector<VkDescriptorSetLayoutBinding> setBindings;
 
 		VkDescriptorType resourceTypes[32] = {};
-		UINT32 resourceMask = GatherResources(t_Shaders, t_ShaderCount, resourceTypes);
+		UINT32 resourceMask = GatherResources(t_Shaders, resourceTypes);
 
 		for (UINT32 i = 0; i < 32; ++i)
 		{
@@ -295,22 +301,20 @@ namespace Fling
 				binding.descriptorCount = 1;
 
 				binding.stageFlags = 0;
-				for (UINT32 j = 0; j < t_ShaderCount; j++)
+				for (const Shader* shader : t_Shaders)
 				{
-					Shader* shader = (t_Shaders + j);
-					assert(shader);
-
-					if (shader->m_ResourceMask & (1 << i))
+					if (shader && shader->m_ResourceMask & (1 << i))
 					{
 						binding.stageFlags |= shader->m_Stage;
 					}
-				}			
+				}
 
 				setBindings.push_back(binding);
 			}
 		}
 
-		VkDescriptorSetLayoutCreateInfo setCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+		VkDescriptorSetLayoutCreateInfo setCreateInfo = {};
+		setCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		setCreateInfo.flags = t_SupportPushDescriptor ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR : 0;
 		setCreateInfo.bindingCount = uint32_t(setBindings.size());
 		setCreateInfo.pBindings = setBindings.data();
@@ -348,6 +352,47 @@ namespace Fling
 		}
 
 		return layout;
+	}
+
+	VkDescriptorUpdateTemplate Shader::CreateUpdateTemplate(VkDevice t_Dev, VkPipelineBindPoint t_BindPoint, VkPipelineLayout t_Layout, VkDescriptorSetLayout t_SetLayout, std::vector<Shader*>& t_Shaders, bool t_PushDescriptorsSupported)
+	{
+		std::vector<VkDescriptorUpdateTemplateEntry> entries;
+
+		VkDescriptorType resourceTypes[32] = {};
+		UINT32 resourceMask = GatherResources(t_Shaders, resourceTypes);
+
+		for (UINT32 i = 0; i < 32; ++i)
+		{
+			if (resourceMask & (1 << i))
+			{
+				VkDescriptorUpdateTemplateEntry entry = {};
+				entry.dstBinding = i;
+				entry.dstArrayElement = 0;
+				entry.descriptorCount = 1;
+				entry.descriptorType = resourceTypes[i];
+				entry.offset = sizeof(DescriptorInfo) * i;
+				entry.stride = sizeof(DescriptorInfo);
+
+				entries.push_back(entry);
+			}
+		}
+			
+		VkDescriptorUpdateTemplateCreateInfo createInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO };
+		createInfo.descriptorUpdateEntryCount = UINT32(entries.size());
+		createInfo.pDescriptorUpdateEntries = entries.data();
+
+		createInfo.templateType = t_PushDescriptorsSupported ? VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_PUSH_DESCRIPTORS_KHR : VK_DESCRIPTOR_UPDATE_TEMPLATE_TYPE_DESCRIPTOR_SET;
+		createInfo.descriptorSetLayout = t_PushDescriptorsSupported ? 0 : t_SetLayout;
+		createInfo.pipelineBindPoint = t_BindPoint;
+		createInfo.pipelineLayout = t_Layout;
+
+		VkDescriptorUpdateTemplate updateTemplate = 0;
+		if (vkCreateDescriptorUpdateTemplate(t_Dev, &createInfo, 0, &updateTemplate) != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to create desciprot update template!");
+		}
+
+		return updateTemplate;
 	}
 
 }   // namespace Fling

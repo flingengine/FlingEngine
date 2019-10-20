@@ -9,7 +9,7 @@
 	VkResult res = (f);																\
 	if (res != VK_SUCCESS)															\
 	{																				\
-		F_LOG_FATAL("VkResult is {} in {} at line {}", res, __FILE__, __LINE__);	\
+		F_LOG_ERROR("VkResult is {} in {} at line {}", res, __FILE__, __LINE__);	\
 		assert(res == VK_SUCCESS);													\
 	}																				\
 }
@@ -44,6 +44,8 @@ namespace Fling
             VkImage& t_Image,
             VkDeviceMemory& t_Memory
         );
+
+		VkSemaphore CreateSemaphore(VkDevice t_Dev);
 
         void CreateVkSampler(
             VkFilter t_magFilter,

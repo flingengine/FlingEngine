@@ -38,7 +38,7 @@ namespace Sandbox
 		// For each active mesh renderer
 		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 		{
-			glm::vec3 curRot = t_Trans.GetRotation();
+			const glm::vec3& curRot = t_Trans.GetRotation();
 			t_Trans.SetRotation(curRot + Offset);
 		});
 	}
@@ -79,7 +79,11 @@ namespace Sandbox
 		int Dimension = 5;
 		float Offset = 2.5f;
 
-		for (int x = 0; x < Dimension; ++x)
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+		Transform& t = t_Reg.assign<Transform>(e0);
+
+		/*for (int x = 0; x < Dimension; ++x)
 		{
 			for (int y = 0; y < Dimension; ++y)
 			{
@@ -101,7 +105,7 @@ namespace Sandbox
 					t.SetPos(pos);
 				}
 			}
-		}
+		}*/
 	}
 
     void Game::PrintFPS() const

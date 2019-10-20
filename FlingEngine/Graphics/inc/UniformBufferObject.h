@@ -22,6 +22,7 @@ namespace Fling
 	/** Representation of what vertex data of the dynamic UBO that there is only one of  */
 	struct UboVS
 	{
+		glm::mat4 Model;
 		glm::mat4 Projection;
 		glm::mat4 View;
 	};

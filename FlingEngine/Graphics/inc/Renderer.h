@@ -156,10 +156,6 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-        /**
-         * @brief    Calculate alignment requirements based on the device for the dyanmic uniform buffer
-         */
-        void PrepareUniformBuffers();
 
         void CreateDescriptorPool();
 
@@ -179,8 +175,6 @@ namespace Fling
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
-        void UpdateDynamicUniformBuffer(UINT32 t_CurrentImage);
-
         /**
         * @brief    Callback for when a mesh renderer component is added to the game
         *            Initializes and loads any meshes that we may need
@@ -190,7 +184,9 @@ namespace Fling
         /**
         * @brief    Get an index that represents a  
         */
-        UINT32 GetAvailableModelMatrix();
+        UINT32 GetUniformBufferIndex();
+
+		void CreateUniformBuffers();
 
         UINT32 m_NextAvailableMatrix{};
 
@@ -228,6 +224,8 @@ namespace Fling
         VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineLayout m_PipelineLayout;
 
+		VkDescriptorUpdateTemplate m_UpdateTemplate = VK_NULL_HANDLE;
+
         VkPipeline m_GraphicsPipeline;
 
         /** @see Renderer::CreateCommandPool */
@@ -245,14 +243,16 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-        /** Uniform buffers */
-        std::vector<UboDataDynamic> m_DynamicUniformBuffers;
-        UboVS m_UboVS;
+		/** Uniform buffers */
+		std::vector<Buffer*> m_UniformBuffers;
 
         /** Simple little pool for getting the next available UBO index */
-        const static UINT32 MAX_MODEL_MATRIX_BUFFER = 256;
-        static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
-        static UINT32 g_AllocatedIndex;
+        const static UINT32 UNIFORM_BUFFER_POOL_SIZE = 256;
+        static UINT32 g_UboIndexPool[UNIFORM_BUFFER_POOL_SIZE];
+        static UINT32 g_AllocatedUBOPoolIndex;
+
+		//Buffer* m_UniformBufferPool = nullptr;
+
 
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;

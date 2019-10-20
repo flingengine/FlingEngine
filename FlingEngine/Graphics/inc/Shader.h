@@ -13,27 +13,46 @@
 
 namespace Fling
 {
-
-    /** Represents what stage in the pipeline this shader binds to */
-    enum class ShaderStage : UINT8
-    {
-        Vertex          = 0,
-        Fragment        = 1,
-        //TessControl     = 2,
-        //TessEvaluation  = 3,
-        //Geometry        = 4,
-        //Compute         = 5,
-        Count
-    };
-
-	// https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.pdf
-	struct Id
+	// Grabbed this and some shader reflection things from https://github.com/zeux/niagara
+	struct DescriptorInfo
 	{
-		uint32_t opcode {};
-		uint32_t typeId {};
-		uint32_t storageClass {};
-		uint32_t binding {};
-		uint32_t set {};
+		union
+		{
+			VkDescriptorImageInfo image;
+			VkDescriptorBufferInfo buffer;
+		};
+
+		DescriptorInfo()
+		{
+		}
+
+		DescriptorInfo(VkImageView imageView, VkImageLayout imageLayout)
+		{
+			image.sampler = VK_NULL_HANDLE;
+			image.imageView = imageView;
+			image.imageLayout = imageLayout;
+		}
+
+		DescriptorInfo(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
+		{
+			image.sampler = sampler;
+			image.imageView = imageView;
+			image.imageLayout = imageLayout;
+		}
+
+		DescriptorInfo(VkBuffer buffer_, VkDeviceSize offset, VkDeviceSize range)
+		{
+			buffer.buffer = buffer_;
+			buffer.offset = offset;
+			buffer.range = range;
+		}
+
+		DescriptorInfo(VkBuffer buffer_)
+		{
+			buffer.buffer = buffer_;
+			buffer.offset = 0;
+			buffer.range = VK_WHOLE_SIZE;
+		}
 	};
 
     /**
@@ -72,14 +91,15 @@ namespace Fling
 		*/
 		void Release();
 
-		static VkDescriptorSetLayout CreateSetLayout(VkDevice t_Dev, Shader* t_Shaders, UINT32 t_ShaderCount, bool t_SupportPushDescriptor = false);
+		static VkDescriptorSetLayout CreateSetLayout(VkDevice t_Dev, std::vector<Shader*>& t_Shaders, bool t_SupportPushDescriptor = false);
 
 		static VkPipelineLayout CreatePipelineLayout(VkDevice t_Dev, VkDescriptorSetLayout t_SetLayout, VkShaderStageFlags t_PushConstantStages, size_t t_PushConstantSize);
 
+		static VkDescriptorUpdateTemplate CreateUpdateTemplate(VkDevice t_Dev, VkPipelineBindPoint t_BindPoint, VkPipelineLayout t_Layout, VkDescriptorSetLayout t_SetLayout, std::vector<Shader*>& t_Shaders, bool t_PushDescriptorsSupported );
+
     private:
 
-		static UINT32 GatherResources(Shader* t_Shaders, UINT32 t_ShaderCount, VkDescriptorType(&t_ResourceTypes)[32]);
-
+		static UINT32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32]);
 
         /**
          * @brief Compiles this shader with SPRIV-Cross
@@ -101,7 +121,7 @@ namespace Fling
 		UINT32 m_ResourceMask {};
 
 		/** The types of descriptors that are used by this shader */
-		VkDescriptorType m_ResourceTypes[32];
+		VkDescriptorType m_ResourceTypes[32] {};
 
         /** The stage in the pipeline that this shader is in */
         VkShaderStageFlagBits m_Stage = VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT;

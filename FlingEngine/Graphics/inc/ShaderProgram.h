@@ -34,9 +34,6 @@ namespace Fling
 
     private:
 
-        /** A map of shaders to their accompanying pipeline stages */
-        Guid m_ShaderNames [static_cast<unsigned>(ShaderStage::Count)] = {};
-
         // Pool of shaders
         std::vector<Shader*> m_ShaderPool;
 
