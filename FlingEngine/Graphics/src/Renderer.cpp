@@ -470,9 +470,6 @@ namespace Fling
         m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
-        VkSemaphoreCreateInfo semaphoreInfo = {};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -585,7 +582,11 @@ namespace Fling
 		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocateInfo, &set));
 
 		m_DescriptorSets.resize(Images.size());
+#if FLING_WINDOWS
 		vkUpdateDescriptorSetWithTemplate(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
+#else FLING_LINUX
+		vkUpdateDescriptorSetWithTemplateKHR(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
+#endif
 
 		vkCmdBindDescriptorSets(t_CmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &set, 0, 0);
 	}
@@ -829,30 +830,7 @@ namespace Fling
 
 	void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
 	{
-		// For each active mesh renderer
-		auto view = m_Registry->view<MeshRenderer, Transform>();
-		for (auto entity : view)
-		{
-			MeshRenderer& Mesh = view.get<MeshRenderer>(entity);
-			Transform& Trans = view.get<Transform>(entity);
-
-			Transform::CalculateWorldMatrix(Trans);
-
-			// Calculate the world matrix based on the given transform
-			UboVS ubo = {};
-			ubo.Model = Trans.GetWorldMat();
-			ubo.View = m_camera->GetViewMatrix();
-			ubo.Projection = m_camera->GetProjectionMatrix();
-			ubo.Projection[1][1] *= -1.0f;
-
-			// Copy the ubo to the GPU
-			void* data = nullptr;
-			vkMapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
-			memcpy(data, &ubo, sizeof(ubo));
-			vkUnmapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
-		}
-
-		/*m_Registry->view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+		m_Registry->view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 		{
 			Transform::CalculateWorldMatrix(t_Trans);
 			
@@ -870,7 +848,7 @@ namespace Fling
 			memcpy(data, &ubo, sizeof(UboVS));
 			vkUnmapMemory(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
 			//t_MeshRend.m_UniformBuffers[t_CurrentImage]->UnmapMemory();
-		});	*/
+		});
 
 		// Copy the ubo to the GPU
 		//void* data = nullptr;
@@ -909,10 +887,13 @@ namespace Fling
             delete m_SwapChain;
             m_SwapChain = nullptr;
         }
-		
-		vkDestroyDescriptorUpdateTemplate(m_LogicalDevice->GetVkDevice(), m_UpdateTemplate, nullptr);	
 
-        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
+#if FLING_WINDOWS
+		vkDestroyDescriptorUpdateTemplate(m_LogicalDevice->GetVkDevice(), m_UpdateTemplate, nullptr);	
+#else FLING_LINUX
+		vkDestroyDescriptorUpdateTemplateKHR(m_LogicalDevice->GetVkDevice(), m_UpdateTemplate, nullptr);
+#endif
+		vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
