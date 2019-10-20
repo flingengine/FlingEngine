@@ -510,7 +510,7 @@ namespace Fling
 			for (Buffer& b : mesh.m_UniformBuffers)
 			{
 				//b.UnmapMemory();
-				b.Release();
+				//b.Release();
 			}
 		}
 
@@ -563,7 +563,7 @@ namespace Fling
 			for (Buffer& b : t_MeshRend.m_UniformBuffers)
 			{
 				b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
-				//b.MapMemory(bufferSize);
+				b.MapMemory(bufferSize);
 			}
 		});
 	}
@@ -797,7 +797,6 @@ namespace Fling
             m_CommandBuffers[ImageIndex], m_flingImgui->GetCommandBuffer(ImageIndex)
         };
 
-
         submitInfo.commandBufferCount = static_cast<UINT32>(submitCommandBuffers.size());
         submitInfo.pCommandBuffers = submitCommandBuffers.data();
 
@@ -824,7 +823,6 @@ namespace Fling
             F_LOG_FATAL("Failed to present swap chain image!");
         }
 
-
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -842,22 +840,10 @@ namespace Fling
 			ubo.Projection[1][1] *= -1.0f;
 
 			// Copy the ubo to the GPU
-			//t_MeshRend.m_UniformBuffers[t_CurrentImage]->MapMemory();
-			void* data = nullptr;
-			vkMapMemory(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(UboVS), 0, &data);
-			memcpy(data, &ubo, sizeof(UboVS));
-			vkUnmapMemory(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
-			//t_MeshRend.m_UniformBuffers[t_CurrentImage]->UnmapMemory();
+			Buffer& buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
+
+			memcpy(buf.m_MappedMem, &ubo, sizeof(UboVS));			
 		});
-
-		// Copy the ubo to the GPU
-		//void* data = nullptr;
-		//vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
-		//memcpy(data, &ubo, sizeof(ubo));
-		//vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory());
-
-        // Copy the non-dynamic ubo data to the GPU
-        //memcpy(m_DynamicUniformBuffers[t_CurrentImage].View->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
     }
 
     // Shutdown steps -------------------------------------------
@@ -951,7 +937,7 @@ namespace Fling
 		for (size_t i = 0; i < Images.size(); i++)
 		{
 			t_MeshRend.m_UniformBuffers[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			//t_MeshRend.m_UniformBuffers[i].MapMemory(bufferSize);
+			t_MeshRend.m_UniformBuffers[i].MapMemory(bufferSize);
 		}
 
 		// Sort the mesh renderers in order that their offset indices are in so that we can hopefully get

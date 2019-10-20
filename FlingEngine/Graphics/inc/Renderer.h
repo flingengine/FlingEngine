@@ -32,6 +32,7 @@
 #include "Shader.h"
 #include "FlingImgui.h"
 #include "ImguiDisplay.h"
+#include <atomic>
 
 namespace Fling
 {
@@ -241,7 +242,7 @@ namespace Fling
         size_t CurrentFrameIndex = 0;
 
         /** Used to determine if the frame buffer has been resized or not */
-        bool m_FrameBufferResized = false;
+        std::atomic<bool> m_FrameBufferResized = false;
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
