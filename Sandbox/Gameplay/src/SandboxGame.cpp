@@ -84,11 +84,11 @@ namespace Sandbox
 		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Wood.mat");
 		Transform& t0 = t_Reg.assign<Transform>(e0);
 
-		//entt::entity e1 = t_Reg.create();
-		//t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj", "Materials/Wood.mat");
-		//Transform& t1 = t_Reg.assign<Transform>(e1);
-		//glm::vec3 pos = glm::vec3(5.f, 5.f, 5.f);
-		//t1.SetPos(pos);
+		entt::entity e1 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj", "Materials/Wood.mat");
+		Transform& t1 = t_Reg.assign<Transform>(e1);
+		glm::vec3 pos = glm::vec3(5.f, 5.f, 5.f);
+		t1.SetPos(pos);
 
 		/*for (int x = 0; x < Dimension; ++x)
 		{

@@ -13,16 +13,13 @@ namespace Fling
 	public:
 		/*! Default constructor. */
 		MeshRenderer() = default;
-
-		/*! @brief copy constructor. */
-		MeshRenderer(const MeshRenderer& t_Other);
 		
 		/** Load a mesh renderer with the default material */
 		MeshRenderer(const std::string& t_MeshPath);
 
 		MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
-		~MeshRenderer();
+		~MeshRenderer() = default;
 
 		/** Pointer to the actual model  */
 		Model* m_Model = nullptr;

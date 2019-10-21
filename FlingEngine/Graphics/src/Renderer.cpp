@@ -506,17 +506,19 @@ namespace Fling
         m_SwapChain->Cleanup();
 
 		// Reset uniform buffers
-		auto view = m_Registry->view<MeshRenderer>();
-		for (const auto entity : view)
+		if (m_IsQuitting)
 		{
-			MeshRenderer& mesh = view.get(entity);
-			for (Buffer& b : mesh.m_UniformBuffers)
+			auto view = m_Registry->view<MeshRenderer>();
+			for (const auto entity : view)
 			{
-				//b.UnmapMemory();
-				b.Release();
+				MeshRenderer& mesh = view.get(entity);
+				for (Buffer& b : mesh.m_UniformBuffers)
+				{
+					b.Release();
+				}
 			}
 		}
-
+		
         vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
 
@@ -559,16 +561,18 @@ namespace Fling
 		VkDeviceSize bufferSize = sizeof(UboVS);
 
 		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-
-		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		if (!m_IsQuitting)
 		{
-			t_MeshRend.m_UniformBuffers.resize(Images.size());
-			for (Buffer& b : t_MeshRend.m_UniformBuffers)
+			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 			{
-				b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
-				//b.MapMemory(bufferSize);
-			}
-		});
+				t_MeshRend.m_UniformBuffers.resize(Images.size());
+				for (Buffer& b : t_MeshRend.m_UniformBuffers)
+				{
+					//b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
+					//b.MapMemory(bufferSize);
+				}
+			});
+		}
 	}
 
 	void Renderer::PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf)
@@ -636,14 +640,16 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate descriptor sets!");
         }
 
+		// TODO Make this not the way it is :S
+		static VkDescriptorImageInfo ImageInfoBuf[512] = {};
+		VkDescriptorImageInfo* NextAvailableImage = ImageInfoBuf;
+
         // Create material description sets for each swap chain image that we have
         for (size_t i = 0; i < Images.size(); ++i)
         {
-			std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-			// TODO Make this not the way it is :S
-			static VkDescriptorImageInfo ImageInfoBuf[512] = {};
-			VkDescriptorImageInfo* NextAvailableImage = ImageInfoBuf;
+
+			std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 			{
@@ -846,46 +852,21 @@ namespace Fling
 			ubo.Projection[1][1] *= -1.0f;
 
 			// Copy the ubo to the GPU
+			//Buffer& buf = Mesh.m_UniformBuffers[t_CurrentImage];
+			//memcpy(buf.m_MappedMem, &ubo, sizeof(UboVS));
 			void* data = nullptr;
-			vkMapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
-			memcpy(data, &ubo, sizeof(ubo));
-			vkUnmapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
+			//vkMapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
+			memcpy(Mesh.m_UniformBuffers[t_CurrentImage].m_MappedMem, &ubo, sizeof(ubo));
+			//vkUnmapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
 		}
-
-		/*m_Registry->view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
-		{
-			Transform::CalculateWorldMatrix(t_Trans);
-			
-			// Calculate the world matrix based on the given transform
-			UboVS ubo = {};
-			ubo.Model = t_Trans.GetWorldMat();
-			ubo.View = m_camera->GetViewMatrix();
-			ubo.Projection = m_camera->GetProjectionMatrix();
-			ubo.Projection[1][1] *= -1.0f;
-
-			// Copy the ubo to the GPU
-			//t_MeshRend.m_UniformBuffers[t_CurrentImage]->MapMemory();
-			void* data = nullptr;
-			vkMapMemory(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(UboVS), 0, &data);
-			memcpy(data, &ubo, sizeof(UboVS));
-			vkUnmapMemory(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
-			//t_MeshRend.m_UniformBuffers[t_CurrentImage]->UnmapMemory();
-		});	*/
-
-		// Copy the ubo to the GPU
-		//void* data = nullptr;
-		//vkMapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
-		//memcpy(data, &ubo, sizeof(ubo));
-		//vkUnmapMemory(m_LogicalDevice->GetVkDevice(), m_UniformBuffers[t_CurrentImage]->GetVkDeviceMemory());
-
-        // Copy the non-dynamic ubo data to the GPU
-        //memcpy(m_DynamicUniformBuffers[t_CurrentImage].View->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
     }
 
     // Shutdown steps -------------------------------------------
 
     void Renderer::PrepShutdown()
     {
+		m_IsQuitting = true;
+
         m_LogicalDevice->WaitForIdle();
 		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 		{
@@ -970,7 +951,7 @@ namespace Fling
 		for (size_t i = 0; i < Images.size(); i++)
 		{
 			t_MeshRend.m_UniformBuffers[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			//t_MeshRend.m_UniformBuffers[i].MapMemory(bufferSize);
+			t_MeshRend.m_UniformBuffers[i].MapMemory();
 		}
 
 		// Sort the mesh renderers in order that their offset indices are in so that we can hopefully get

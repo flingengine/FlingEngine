@@ -276,5 +276,6 @@ namespace Fling
 
         // Flag for toggling imgui 
         bool m_DrawImgui;
+		bool m_IsQuitting = false;
     };
 }    // namespace Fling
