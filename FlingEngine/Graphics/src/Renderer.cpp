@@ -556,26 +556,7 @@ namespace Fling
         BuildCommandBuffers(*m_Registry);
         InitImgui();
     }
-
-	void Renderer::CreateUniformBuffers()
-	{
-		VkDeviceSize bufferSize = sizeof(UboVS);
-
-		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-		if (!m_IsQuitting)
-		{
-			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-			{
-				//t_MeshRend.m_UniformBuffers.resize(Images.size());
-				for (Buffer* b : t_MeshRend.m_UniformBuffers)
-				{
-					//b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
-					//b.MapMemory(bufferSize);
-				}
-			});
-		}
-	}
-
+	
 	void Renderer::PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf)
 	{	
 		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
@@ -629,7 +610,6 @@ namespace Fling
     {
         const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 
-        //m_DescriptorSets.resize(Images.size());
         m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
         {
             // Specify what descriptor pool to allocate from and how many
@@ -656,12 +636,9 @@ namespace Fling
 		static VkDescriptorBufferInfo UBOBuf[512] = {};
 		VkDescriptorBufferInfo* NewAvilableUBOInfo = UBOBuf;
 
-
         // Create material description sets for each swap chain image that we have
         for (size_t i = 0; i < Images.size(); ++i)
         {
-
-
 			std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
@@ -866,12 +843,7 @@ namespace Fling
 
 			// Copy the ubo to the GPU
 			Buffer* buf = Mesh.m_UniformBuffers[t_CurrentImage];
-			auto dev = m_LogicalDevice->GetVkDevice();
-			
-			//void* data = nullptr;
-			//vkMapMemory(dev, buf->GetVkDeviceMemory(), 0, buf->GetSize(), 0, &data);
 			memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
-			//vkUnmapMemory(dev, buf->GetVkDeviceMemory());
 		}
     }
 
@@ -968,18 +940,10 @@ namespace Fling
 		for (size_t i = 0; i < Images.size(); i++)
 		{
 			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			//t_MeshRend.m_UniformBuffers[i]->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			t_MeshRend.m_UniformBuffers[i]->MapMemory();
 		}
 
-		// Sort the mesh renderers in order that their offset indices are in so that we can hopefully get
-		// some better locality when drawing
-		//t_Reg.sort<MeshRenderer>([](const auto& lhs, const auto& rhs)
-		//{
-		//	return lhs < rhs;
-		//});
-
-        SetFrameBufferHasBeenResized(true);
+		SetFrameBufferHasBeenResized(true);
     }
 
     UINT32 Renderer::GetUniformBufferIndex()

@@ -80,16 +80,6 @@ namespace Sandbox
 		int Dimension = 5;
 		float Offset = 2.5f;
 
-	/*	entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Wood.mat");
-		Transform& t0 = t_Reg.assign<Transform>(e0);
-
-		entt::entity e1 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj");
-		Transform& t1 = t_Reg.assign<Transform>(e1);
-		glm::vec3 pos = glm::vec3(10.f, 10.f, 10.f);
-		t1.SetPos(pos);*/
-
 		for (int x = 0; x < Dimension; ++x)
 		{
 			for (int y = 0; y < Dimension; ++y)

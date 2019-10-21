@@ -187,8 +187,6 @@ namespace Fling
         */
         UINT32 GetUniformBufferIndex();
 
-		void CreateUniformBuffers();
-
 		void PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf);
 
         UINT32 m_NextAvailableMatrix{};
