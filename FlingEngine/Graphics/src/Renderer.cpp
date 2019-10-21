@@ -470,6 +470,9 @@ namespace Fling
         m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
+        VkSemaphoreCreateInfo semaphoreInfo = {};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -503,17 +506,19 @@ namespace Fling
         m_SwapChain->Cleanup();
 
 		// Reset uniform buffers
-		auto view = m_Registry->view<MeshRenderer>();
-		for (const auto entity : view)
+		if (m_IsQuitting)
 		{
-			MeshRenderer& mesh = view.get(entity);
-			for (Buffer& b : mesh.m_UniformBuffers)
+			auto view = m_Registry->view<MeshRenderer>();
+			for (const auto entity : view)
 			{
-				//b.UnmapMemory();
-				//b.Release();
+				MeshRenderer& mesh = view.get(entity);
+				for (Buffer& b : mesh.m_UniformBuffers)
+				{
+					b.Release();
+				}
 			}
 		}
-
+		
         vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
 
@@ -556,16 +561,18 @@ namespace Fling
 		VkDeviceSize bufferSize = sizeof(UboVS);
 
 		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-
-		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		if (!m_IsQuitting)
 		{
-			t_MeshRend.m_UniformBuffers.resize(Images.size());
-			for (Buffer& b : t_MeshRend.m_UniformBuffers)
+			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 			{
-				b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
-				b.MapMemory(bufferSize);
-			}
-		});
+				t_MeshRend.m_UniformBuffers.resize(Images.size());
+				for (Buffer& b : t_MeshRend.m_UniformBuffers)
+				{
+					//b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
+					//b.MapMemory(bufferSize);
+				}
+			});
+		}
 	}
 
 	void Renderer::PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf)
@@ -582,11 +589,7 @@ namespace Fling
 		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocateInfo, &set));
 
 		m_DescriptorSets.resize(Images.size());
-#if FLING_WINDOWS
 		vkUpdateDescriptorSetWithTemplate(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
-#else FLING_LINUX
-		vkUpdateDescriptorSetWithTemplateKHR(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
-#endif
 
 		vkCmdBindDescriptorSets(t_CmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &set, 0, 0);
 	}
@@ -637,14 +640,16 @@ namespace Fling
             F_LOG_FATAL("Failed to allocate descriptor sets!");
         }
 
+		// TODO Make this not the way it is :S
+		static VkDescriptorImageInfo ImageInfoBuf[512] = {};
+		VkDescriptorImageInfo* NextAvailableImage = ImageInfoBuf;
+
         // Create material description sets for each swap chain image that we have
         for (size_t i = 0; i < Images.size(); ++i)
         {
-			std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-			// TODO Make this not the way it is :S
-			static VkDescriptorImageInfo ImageInfoBuf[512] = {};
-			VkDescriptorImageInfo* NextAvailableImage = ImageInfoBuf;
+
+			std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 			{
@@ -797,6 +802,7 @@ namespace Fling
             m_CommandBuffers[ImageIndex], m_flingImgui->GetCommandBuffer(ImageIndex)
         };
 
+
         submitInfo.commandBufferCount = static_cast<UINT32>(submitCommandBuffers.size());
         submitInfo.pCommandBuffers = submitCommandBuffers.data();
 
@@ -823,33 +829,44 @@ namespace Fling
             F_LOG_FATAL("Failed to present swap chain image!");
         }
 
+
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
 	void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
 	{
-		m_Registry->view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+		// For each active mesh renderer
+		auto view = m_Registry->view<MeshRenderer, Transform>();
+		for (auto entity : view)
 		{
-			Transform::CalculateWorldMatrix(t_Trans);
-			
+			MeshRenderer& Mesh = view.get<MeshRenderer>(entity);
+			Transform& Trans = view.get<Transform>(entity);
+
+			Transform::CalculateWorldMatrix(Trans);
+
 			// Calculate the world matrix based on the given transform
 			UboVS ubo = {};
-			ubo.Model = t_Trans.GetWorldMat();
+			ubo.Model = Trans.GetWorldMat();
 			ubo.View = m_camera->GetViewMatrix();
 			ubo.Projection = m_camera->GetProjectionMatrix();
 			ubo.Projection[1][1] *= -1.0f;
 
 			// Copy the ubo to the GPU
-			Buffer& buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
-
-			memcpy(buf.m_MappedMem, &ubo, sizeof(UboVS));			
-		});
+			//Buffer& buf = Mesh.m_UniformBuffers[t_CurrentImage];
+			//memcpy(buf.m_MappedMem, &ubo, sizeof(UboVS));
+			void* data = nullptr;
+			//vkMapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
+			memcpy(Mesh.m_UniformBuffers[t_CurrentImage].m_MappedMem, &ubo, sizeof(ubo));
+			//vkUnmapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
+		}
     }
 
     // Shutdown steps -------------------------------------------
 
     void Renderer::PrepShutdown()
     {
+		m_IsQuitting = true;
+
         m_LogicalDevice->WaitForIdle();
 		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 		{
@@ -873,13 +890,10 @@ namespace Fling
             delete m_SwapChain;
             m_SwapChain = nullptr;
         }
-
-#if FLING_WINDOWS
+		
 		vkDestroyDescriptorUpdateTemplate(m_LogicalDevice->GetVkDevice(), m_UpdateTemplate, nullptr);	
-#else FLING_LINUX
-		vkDestroyDescriptorUpdateTemplateKHR(m_LogicalDevice->GetVkDevice(), m_UpdateTemplate, nullptr);
-#endif
-		vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
+
+        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -937,7 +951,7 @@ namespace Fling
 		for (size_t i = 0; i < Images.size(); i++)
 		{
 			t_MeshRend.m_UniformBuffers[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffers[i].MapMemory(bufferSize);
+			t_MeshRend.m_UniformBuffers[i].MapMemory();
 		}
 
 		// Sort the mesh renderers in order that their offset indices are in so that we can hopefully get

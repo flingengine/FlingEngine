@@ -3,17 +3,6 @@
 
 namespace Fling
 {
-	MeshRenderer::MeshRenderer(const MeshRenderer& t_Other)
-	{
-		if (*this != t_Other)
-		{
-			m_Model = t_Other.m_Model;
-			m_Material = t_Other.m_Material;
-			m_ModelMatrixOffset = t_Other.m_ModelMatrixOffset;
-			m_UniformBuffers = t_Other.m_UniformBuffers;
-		}
-	}
-
 	MeshRenderer::MeshRenderer(const std::string& t_MeshPath)
 	{
 		LoadModelFromPath(t_MeshPath);
@@ -26,13 +15,12 @@ namespace Fling
 		LoadMaterialFromPath(t_MaterialPath);
 	}
 
-	MeshRenderer::~MeshRenderer()
-	{
-
-	}
-
 	void MeshRenderer::ReleaseBuffers()
 	{
+		for (Buffer& b : m_UniformBuffers)
+		{
+			b.Release();
+		}
 		m_UniformBuffers.clear();
 	}
 
