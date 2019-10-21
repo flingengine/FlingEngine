@@ -17,9 +17,13 @@ namespace Fling
 
 	void MeshRenderer::ReleaseBuffers()
 	{
-		for (Buffer& b : m_UniformBuffers)
+		for (Buffer* b : m_UniformBuffers)
 		{
-			b.Release();
+			if (b)
+			{
+				delete b;
+				b = nullptr;
+			}
 		}
 		m_UniformBuffers.clear();
 	}

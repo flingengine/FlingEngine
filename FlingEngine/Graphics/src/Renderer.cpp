@@ -512,9 +512,9 @@ namespace Fling
 			for (const auto entity : view)
 			{
 				MeshRenderer& mesh = view.get(entity);
-				for (Buffer& b : mesh.m_UniformBuffers)
+				for (Buffer* b : mesh.m_UniformBuffers)
 				{
-					b.Release();
+					//b.Release();
 				}
 			}
 		}
@@ -565,8 +565,8 @@ namespace Fling
 		{
 			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 			{
-				t_MeshRend.m_UniformBuffers.resize(Images.size());
-				for (Buffer& b : t_MeshRend.m_UniformBuffers)
+				//t_MeshRend.m_UniformBuffers.resize(Images.size());
+				for (Buffer* b : t_MeshRend.m_UniformBuffers)
 				{
 					//b.CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true);
 					//b.MapMemory(bufferSize);
@@ -655,7 +655,7 @@ namespace Fling
 			{
 				// Binding 0 : Projection/view matrix uniform buffer
 				VkDescriptorBufferInfo BufferInfo = {};
-				BufferInfo.buffer = t_MeshRend.m_UniformBuffers[i].GetVkBuffer();
+				BufferInfo.buffer = t_MeshRend.m_UniformBuffers[i]->GetVkBuffer();
 				BufferInfo.offset = 0;
 				BufferInfo.range = sizeof(UboVS);
 				VkWriteDescriptorSet UniformSet = Initalizers::WriteDescriptorSet(
@@ -854,9 +854,9 @@ namespace Fling
 			// Copy the ubo to the GPU
 			//Buffer& buf = Mesh.m_UniformBuffers[t_CurrentImage];
 			//memcpy(buf.m_MappedMem, &ubo, sizeof(UboVS));
-			void* data = nullptr;
 			//vkMapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory(), 0, sizeof(ubo), 0, &data);
-			memcpy(Mesh.m_UniformBuffers[t_CurrentImage].m_MappedMem, &ubo, sizeof(ubo));
+			memcpy(Mesh.m_UniformBuffers[t_CurrentImage]->m_MappedMem, &ubo, sizeof(ubo));
+			Mesh.m_UniformBuffers[t_CurrentImage]->Flush(VK_WHOLE_SIZE, 0);
 			//vkUnmapMemory(m_LogicalDevice->GetVkDevice(), Mesh.m_UniformBuffers[t_CurrentImage].GetVkDeviceMemory());
 		}
     }
@@ -950,8 +950,9 @@ namespace Fling
 		t_MeshRend.m_UniformBuffers.resize(Images.size());
 		for (size_t i = 0; i < Images.size(); i++)
 		{
-			t_MeshRend.m_UniformBuffers[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffers[i].MapMemory();
+			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+			//t_MeshRend.m_UniformBuffers[i]->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			t_MeshRend.m_UniformBuffers[i]->MapMemory();
 		}
 
 		// Sort the mesh renderers in order that their offset indices are in so that we can hopefully get

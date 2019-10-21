@@ -28,7 +28,7 @@ namespace Fling
 		Material* m_Material = nullptr;
 
 		/** We need a uniform buffer per-swap chain image */
-		std::vector<Buffer> m_UniformBuffers {};
+		std::vector<Buffer*> m_UniformBuffers {};
 
 		void ReleaseBuffers();
 
