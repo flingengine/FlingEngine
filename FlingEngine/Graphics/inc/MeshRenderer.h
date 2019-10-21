@@ -30,6 +30,9 @@ namespace Fling
 		/** We need a uniform buffer per-swap chain image */
 		std::vector<Buffer*> m_UniformBuffers {};
 
+        std::vector<VkDescriptorSet> m_DescriptorSets;
+        VkDescriptorPool m_DescriptorPool;
+
 		void ReleaseBuffers();
 
 		bool operator==(const MeshRenderer& other) const;

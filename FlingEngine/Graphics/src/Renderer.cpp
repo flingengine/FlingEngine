@@ -432,8 +432,6 @@ namespace Fling
 
             vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-			// Bind the descriptor set for rendering a mesh using the dynamic offset
-			vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 
             // For each active mesh renderer, bind it's vertex and index buffer
             t_Reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
@@ -443,6 +441,9 @@ namespace Fling
                 {
                     VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
                     VkDeviceSize offsets[1] = { 0 };
+                    // Bind the descriptor set for rendering a mesh using the dynamic offset
+                    vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &t_MeshRend.m_DescriptorSets[i], 0, nullptr);
+
                     vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
                     vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
 
@@ -615,30 +616,38 @@ namespace Fling
         PoolInfo.pPoolSizes = PoolSizes.data();
         PoolInfo.maxSets = SwapImageCount;
 
-        if (vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
         {
-            F_LOG_FATAL("Failed to create discriptor pool!");
-        }
+            if (vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to create discriptor pool!");
+            }
+        });
     }
 
     void Renderer::CreateDescriptorSets()
     {
         const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 
-        // Specify what descriptor pool to allocate from and how many
-        std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorSetLayout);
-        VkDescriptorSetAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = m_DescriptorPool;
-        allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
-        allocInfo.pSetLayouts = layouts.data();
-
-        m_DescriptorSets.resize(Images.size());
-        // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
-        if (vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, m_DescriptorSets.data()) != VK_SUCCESS)
+        //m_DescriptorSets.resize(Images.size());
+        m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
         {
-            F_LOG_FATAL("Failed to allocate descriptor sets!");
-        }
+            // Specify what descriptor pool to allocate from and how many
+            std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorSetLayout);
+            VkDescriptorSetAllocateInfo allocInfo = {};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
+            allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
+            allocInfo.pSetLayouts = layouts.data();
+
+            t_MeshRend.m_DescriptorSets.resize(Images.size());
+
+            // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
+            if (vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, t_MeshRend.m_DescriptorSets.data()) != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to allocate descriptor sets!");
+            }
+        });
 
 		// TODO Make this not the way it is :S
 		static VkDescriptorImageInfo ImageInfoBuf[512] = {};
@@ -663,7 +672,7 @@ namespace Fling
 				BufferInfo->offset = 0;
 				BufferInfo->range = t_MeshRend.m_UniformBuffers[i]->GetSize();
 				VkWriteDescriptorSet UniformSet = Initalizers::WriteDescriptorSet(
-					m_DescriptorSets[i],
+                    t_MeshRend.m_DescriptorSets[i],
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 					0,
 					BufferInfo
@@ -679,7 +688,7 @@ namespace Fling
 
 				VkWriteDescriptorSet ImageSamplerSet = {};
 				ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				ImageSamplerSet.dstSet = m_DescriptorSets[i];
+				ImageSamplerSet.dstSet = t_MeshRend.m_DescriptorSets[i];
 				ImageSamplerSet.dstBinding = 2;
 				ImageSamplerSet.dstArrayElement = 0;
 				ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -687,9 +696,9 @@ namespace Fling
 				ImageSamplerSet.pImageInfo = imageInfo;
 
 				descriptorWrites.push_back(ImageSamplerSet);
-			});
 
-			vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+                vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			});
         }
     }
 
@@ -875,8 +884,9 @@ namespace Fling
         m_LogicalDevice->WaitForIdle();
 		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 		{
-			t_MeshRend.ReleaseBuffers();		
-		});
+			t_MeshRend.ReleaseBuffers();	
+            vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+        });
     }
 
     void Renderer::Shutdown()
@@ -906,6 +916,8 @@ namespace Fling
             vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
             vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
         }
+
+
 
         vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
