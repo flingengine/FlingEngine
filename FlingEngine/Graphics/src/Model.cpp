@@ -53,7 +53,6 @@ namespace Fling
 			for (const tinyobj::index_t& index : shape.mesh.indices) 
 			{
 				Vertex vertex = {};
-
 				vertex.Pos = 
 				{
 					attrib.vertices[3 * index.vertex_index + 0],

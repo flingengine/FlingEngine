@@ -16,6 +16,7 @@ namespace Fling
 {
 #if FLING_LINUX
 	typedef VkDescriptorUpdateTemplateKHR VkDescriptorUpdateTemplate;
+	typedef VkDescriptorUpdateTemplateEntryKHR VkDescriptorUpdateTemplateEntry;
 #endif
 
 	// Grabbed this and some shader reflection things from https://github.com/zeux/niagara

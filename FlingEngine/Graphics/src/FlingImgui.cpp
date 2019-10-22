@@ -235,7 +235,7 @@ namespace Fling
             Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000),
         };
 
-        VkDescriptorPoolCreateInfo descriptorPoolInfo = Initalizers::DescriptorPoolCreateInfo(poolSizes, 2);
+        VkDescriptorPoolCreateInfo descriptorPoolInfo = Initalizers::DescriptorPoolCreateInfo(poolSizes, 10);
 
         if (vkCreateDescriptorPool(logicalDevice, &descriptorPoolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
         {

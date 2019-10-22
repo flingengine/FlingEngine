@@ -11,7 +11,7 @@
 
 namespace Fling
 {
-	Input* Input::m_Instace = new LinuxInput();
+	Input* Input::m_Instance = new LinuxInput();
 	Input::KeyMap Input::m_KeyMap;
 	Input::KeyDownMap Input::m_KeyDownMap;
 	

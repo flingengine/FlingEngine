@@ -5,11 +5,6 @@
 
 namespace Fling
 {
-    Buffer* Buffer::RequestBuffer(const VkDeviceSize& t_Size, const VkBufferUsageFlags& t_Usage, const VkMemoryPropertyFlags& t_Properties, const void* t_Data)
-    {
-        return nullptr;
-    }
-
     Buffer::Buffer(const VkDeviceSize& size, const VkBufferUsageFlags& t_Usage, const VkMemoryPropertyFlags& t_Properties, const void* t_Data)
 		: m_Size(size)
 		, m_Buffer(VK_NULL_HANDLE)
