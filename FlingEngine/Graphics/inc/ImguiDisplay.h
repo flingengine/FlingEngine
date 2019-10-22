@@ -18,7 +18,7 @@ namespace Fling
 		void NewFrame();
 
 	private:
-		std::array<float, 50> fpsGraph{};
+		std::array<float, 400> fpsGraph{};
 		float frameTimeMin = 9999.0f, frameTimeMax = 0.0f;
 	};
 }

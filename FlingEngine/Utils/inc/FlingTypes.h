@@ -15,9 +15,12 @@ typedef signed short            INT16;
 typedef int32_t                 INT32;
 typedef int64_t                 INT64;
 
+#define HS(str) entt::hashed_string { (str) }
+
 namespace Fling
 {
     // Use hashed strings as Guid's
     typedef entt::hashed_string                     Guid;
     typedef entt::hashed_string::hash_type          Guid_Handle;
+    static Guid INVALID_GUID = { "INVALID_GUID"_hs };
 }

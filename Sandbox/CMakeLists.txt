@@ -21,6 +21,7 @@ else()
     message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
 endif()
 
+# Link Spirv
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
     Vulkan::Vulkan  

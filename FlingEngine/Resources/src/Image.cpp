@@ -13,7 +13,12 @@
 
 namespace Fling
 {
-    Image::Image(Guid t_ID, void* t_Data)
+	std::shared_ptr<Fling::Image> Image::Create(Guid t_ID, void* t_Data)
+	{
+		return ResourceManager::LoadResource<Fling::Image>(t_ID, t_Data);
+	}
+
+	Image::Image(Guid t_ID, void* t_Data)
         : Resource(t_ID)
     {
         LoadVulkanImage();
@@ -21,8 +26,12 @@ namespace Fling
         // Create the image views for sampling
         CreateImageView();
 
-        CreateTextureSampler();
-    }
+		CreateTextureSampler();
+
+		m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		m_ImageInfo.imageView = m_ImageView;
+		m_ImageInfo.sampler = m_TextureSampler;
+	}
 
     void Image::LoadVulkanImage()
     {

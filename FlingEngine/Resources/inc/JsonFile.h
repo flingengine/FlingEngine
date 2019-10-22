@@ -25,19 +25,21 @@ namespace Fling
          * @param t_ID              The GUID that represents the file path to this JsonFile.
          */
         explicit JsonFile(Guid t_ID);
+
+		virtual ~JsonFile() = default;
         
         /**
          * Get a reference to the current JSON data that is loaded from this file. 
          * @return  Reference to the current json data
          */
-		nlohmann::json& GetJsonData() { return m_JsonData; }
+		FORCEINLINE nlohmann::json& GetJsonData() { return m_JsonData; }
 
 		/**
 		* @brief	Write the contents of this JSON file out to given name
 		*/
 		void Write();
 
-    private:
+	protected:
 
 		nlohmann::json m_JsonData;
 

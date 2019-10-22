@@ -1,0 +1,11 @@
+{
+    "name" : "Wood Material",
+
+    "vertex" : "Shaders/vert.spv",
+    "frag" : "Shaders/frag.spv",
+
+    "albedo" : "Textures/DefaultTexture.png",
+    "normal" : "Textures/DefaultTexture.png",
+    "metal" : "Textures/DefaultTexture.png",
+    "rough" : "Textures/DefaultTexture.png" 
+}

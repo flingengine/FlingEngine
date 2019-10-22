@@ -11,6 +11,9 @@
 #include <nlohmann/json.hpp>
 #include <entt/entity/registry.hpp>
 
+#include "MovingAverage.hpp"
+#include "Stats.h"
+#include "ShaderProgram.h"
 #include "Game.h"
 
 namespace Fling
@@ -57,7 +60,8 @@ namespace Fling
 
 		/** Global registry that stores entities and components */
 		entt::registry g_Registry;
-		
+
+		/** The implementation of the game that this engine is running. @see Fling::Game */
 		Fling::Game* m_GameImpl = nullptr;
 	};
 
@@ -69,6 +73,7 @@ namespace Fling
 
 		// #TODO Use a pool allocator for new
 		m_GameImpl = new T_GameType();
+
 
 		Startup();
 

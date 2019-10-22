@@ -27,7 +27,7 @@ namespace Fling
 		/// </summary>
 		void UpdateFps();
 
-		float FLING_API GetDeltaTime() const { return m_deltaTime; }
+		float FLING_API GetDeltaTime();
 
 		/**
 		 * @brief Get the current time of the application (double)

@@ -4,6 +4,16 @@
 #include "FlingTypes.h"
 #include "File.h"
 
+#define VK_CHECK_RESULT(f)															\
+{																					\
+	VkResult res = (f);																\
+	if (res != VK_SUCCESS)															\
+	{																				\
+		F_LOG_ERROR("VkResult is {} in {} at line {}", res, __FILE__, __LINE__);	\
+		assert(res == VK_SUCCESS);													\
+	}																				\
+}
+
 namespace Fling
 {
     namespace GraphicsHelpers
@@ -35,6 +45,8 @@ namespace Fling
             VkDeviceMemory& t_Memory
         );
 
+		VkSemaphore CreateSemaphore(VkDevice t_Dev);
+        
         void CreateVkImage(
             UINT32 t_Width,
             UINT32 t_Height,
@@ -269,14 +281,3 @@ namespace Fling
     }
 
 }   // namespace Fling
-
-
-#define VK_CHECK_RESULT(f)                                                                                \
-{                                                                                                        \
-    VkResult res = (f);                                                                                    \
-    if (res != VK_SUCCESS)                                                                                \
-    {                                                                                                    \
-        F_LOG_FATAL("VkResult is {} in {} at line {}", res, __FILE__, __LINE__);                        \
-        assert(res == VK_SUCCESS);                                                                        \
-    }                                                                                                    \
-}

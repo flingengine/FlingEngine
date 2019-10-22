@@ -26,9 +26,13 @@
 
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
+#include "Material.h"
 
+#include "ShaderProgram.h"
+#include "Shader.h"
 #include "FlingImgui.h"
 #include "ImguiDisplay.h"
+#include <atomic>
 #include "Cubemap.h"
 
 namespace Fling
@@ -49,7 +53,7 @@ namespace Fling
 
         virtual void Init() override;
 
-        virtual void Shutdown() override;
+        virtual void Shutdown() override;   
 
         /// <summary>
         /// Init GLFW and create the game window
@@ -78,7 +82,7 @@ namespace Fling
          *
          * @return const ref to VkDevice
          */
-        const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
+        static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
 
         LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
@@ -100,7 +104,10 @@ namespace Fling
         const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
         Swapchain* GetSwapChain() const { return m_SwapChain; }
+
     private:
+
+        void InitDevices();
 
         /** Init the actual Vulkan API and rendering pipeline */
         void InitGraphics();
@@ -152,11 +159,6 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-        /**
-         * @brief    Calculate alignment requirements based on the device for the dyanmic uniform buffer
-         */
-        void PrepareUniformBuffers();
-
         void CreateDescriptorPool();
 
         void CreateDescriptorSets();
@@ -175,8 +177,6 @@ namespace Fling
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
-        void UpdateDynamicUniformBuffer(UINT32 t_CurrentImage);
-
         /**
         * @brief    Callback for when a mesh renderer component is added to the game
         *            Initializes and loads any meshes that we may need
@@ -186,7 +186,7 @@ namespace Fling
         /**
         * @brief    Get an index that represents a  
         */
-        UINT32 GetAvailableModelMatrix();
+        UINT32 GetUniformBufferIndex();
 
         UINT32 m_NextAvailableMatrix{};
 
@@ -199,10 +199,14 @@ namespace Fling
         /** Skybox Instance */
         Cubemap* m_Skybox = nullptr;
 
+        /** The shader program that will allow the users to define their graphics pipeline */
+        ShaderProgram* m_ShaderProgram = nullptr;
+
         FlingWindow* m_CurrentWindow = nullptr;
 
         /** Imgui Instance **/
         FlingImgui* m_flingImgui = nullptr;
+        
         /** Holds imgui ui data **/
         ImguiDisplay m_imguiDisplay;
 
@@ -240,14 +244,10 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-        /** Uniform buffers */
-        std::vector<UboDataDynamic> m_DynamicUniformBuffers;
-        UboVS m_UboVS;
-
         /** Simple little pool for getting the next available UBO index */
-        const static UINT32 MAX_MODEL_MATRIX_BUFFER = 256;
-        static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
-        static UINT32 g_AllocatedIndex;
+        const static UINT32 UNIFORM_BUFFER_POOL_SIZE = 256;
+        static UINT32 g_UboIndexPool[UNIFORM_BUFFER_POOL_SIZE];
+        static UINT32 g_AllocatedUBOPoolIndex;
 
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;
@@ -270,9 +270,10 @@ namespace Fling
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
 
-        std::shared_ptr<class Image> m_TestImage;
+		std::shared_ptr<Material> m_DefaultMat;
 
-        //Flag for toggling imgui 
-        bool m_imguiFlag;
+        // Flag for toggling imgui 
+        bool m_DrawImgui;
+		bool m_IsQuitting = false;
     };
 }    // namespace Fling
