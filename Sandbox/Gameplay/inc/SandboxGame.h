@@ -44,5 +44,7 @@ namespace Sandbox
 		void GenerateTestMeshes(entt::registry& t_Reg);
 
         void PrintFPS() const;
+
+		void LightingTest(entt::registry& t_Reg);
 	};
 }	// namespace Sandbox

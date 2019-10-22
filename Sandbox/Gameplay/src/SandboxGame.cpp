@@ -23,7 +23,8 @@ namespace Sandbox
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
-		OnLoadInitated();
+		LightingTest(t_Reg);
+		//OnLoadInitated();
 		//GenerateTestMeshes(t_Reg);
 	}
 
@@ -34,14 +35,14 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		glm::vec3 RotOffset( 15.0f * DeltaTime );
+		//glm::vec3 RotOffset( 15.0f * DeltaTime );
 
 		// For each active mesh renderer
-		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
-		{
-			const glm::vec3& curRot = t_Trans.GetRotation();
-			t_Trans.SetRotation(curRot + RotOffset);
-		});
+		//t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+		//{
+		//	const glm::vec3& curRot = t_Trans.GetRotation();
+		//	t_Trans.SetRotation(curRot + RotOffset);
+		//});
 	}
 
 	void Game::OnLoadInitated()
@@ -72,6 +73,15 @@ namespace Sandbox
 	{
 		F_LOG_TRACE("The Sandbox game wants to quit!");
 		m_WantsToQuit = true;
+	}
+
+	void Game::LightingTest(entt::registry& t_Reg)
+	{
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
+
+		// Add a transform to this entity
+		Transform& t = t_Reg.assign<Transform>(e0);
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)
