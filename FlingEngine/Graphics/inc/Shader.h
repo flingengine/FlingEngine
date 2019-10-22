@@ -101,8 +101,6 @@ namespace Fling
 
 		static VkPipelineLayout CreatePipelineLayout(VkDevice t_Dev, VkDescriptorSetLayout t_SetLayout, VkShaderStageFlags t_PushConstantStages, size_t t_PushConstantSize);
 
-		static VkDescriptorUpdateTemplate CreateUpdateTemplate(VkDevice t_Dev, VkPipelineBindPoint t_BindPoint, VkPipelineLayout t_Layout, VkDescriptorSetLayout t_SetLayout, std::vector<Shader*>& t_Shaders, bool t_PushDescriptorsSupported );
-
     private:
 
 		static UINT32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32]);

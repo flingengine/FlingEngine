@@ -73,8 +73,6 @@ namespace Fling
 
         CreateDescriptorPool();
         CreateDescriptorSets();
-		// This causes an exception on some machines, not really sure why? 
-		//m_UpdateTemplate = Shader::CreateUpdateTemplate(m_LogicalDevice->GetVkDevice(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, m_DescriptorSetLayout, ShaderProgram::Get().GetAllShaders(), false);
 
         assert(m_Registry);
     
@@ -571,30 +569,6 @@ namespace Fling
         BuildCommandBuffers(*m_Registry);
         InitImgui();
     }
-	
-	void Renderer::PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf)
-	{	
-		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-	
-		VkDescriptorSetAllocateInfo allocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-
-		allocateInfo.descriptorPool = m_DescriptorPool;
-		allocateInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
-		allocateInfo.pSetLayouts = &m_DescriptorSetLayout;
-
-		VkDescriptorSet set = 0;
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocateInfo, &set));
-
-		m_DescriptorSets.resize(Images.size());
-
-#if FLING_WINDOWS
-		vkUpdateDescriptorSetWithTemplate(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
-#elif FLING_LINUX
-		vkUpdateDescriptorSetWithTemplateKHR(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
-#endif
-
-		vkCmdBindDescriptorSets(t_CmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &set, 0, 0);
-	}
 
     void Renderer::CreateDescriptorPool()
     {
@@ -911,8 +885,6 @@ namespace Fling
             m_SwapChain = nullptr;
         }
 		
-		//vkDestroyDescriptorUpdateTemplate(m_LogicalDevice->GetVkDevice(), m_UpdateTemplate, nullptr);	
-
         vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)

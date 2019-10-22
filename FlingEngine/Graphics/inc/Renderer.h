@@ -188,8 +188,6 @@ namespace Fling
         */
         UINT32 GetUniformBufferIndex();
 
-		void PushDescriptors(const DescriptorInfo* t_Descriptrs, VkCommandBuffer t_CmdBuf);
-
         UINT32 m_NextAvailableMatrix{};
 
         /** Entt registry that the renderer will be using. Set by the Engine */
@@ -228,8 +226,6 @@ namespace Fling
         /** Pipeline layout stores uniforms (global shader vars) */
         VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineLayout m_PipelineLayout;
-
-		VkDescriptorUpdateTemplateKHR m_UpdateTemplate = VK_NULL_HANDLE;
 
         VkPipeline m_GraphicsPipeline;
 
