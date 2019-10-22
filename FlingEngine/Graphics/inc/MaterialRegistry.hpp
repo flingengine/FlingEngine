@@ -22,6 +22,6 @@ namespace Fling
 	private:
 
 		/** Array of currently active materials */
-		std::vector<std::shared_ptr<Material>> m_Materials;
+		//std::vector<std::shared_ptr<Material>> m_Materials;
 	};
 }	// namespace Fling

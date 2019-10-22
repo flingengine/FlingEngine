@@ -15,7 +15,7 @@ namespace Fling
 		LoadMaterialFromPath(t_MaterialPath);
 	}
 
-	void MeshRenderer::ReleaseBuffers()
+	void MeshRenderer::Release()
 	{
 		for (Buffer* b : m_UniformBuffers)
 		{

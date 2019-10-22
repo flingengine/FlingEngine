@@ -8,10 +8,6 @@ namespace Fling
 {
 	void ShaderProgram::Shutdown()
 	{
-		for (auto& shader : m_ShaderPool)
-		{
-			shader->Release();
-		}
 		m_ShaderPool.clear();
 	}
 

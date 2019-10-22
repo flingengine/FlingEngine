@@ -71,10 +71,9 @@ namespace Fling
 
         CreateFrameBuffers();
 
-		CreateUniformBuffers();
-
         CreateDescriptorPool();
         CreateDescriptorSets();
+		// This causes an exception on some machines, not really sure why? 
 		//m_UpdateTemplate = Shader::CreateUpdateTemplate(m_LogicalDevice->GetVkDevice(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, m_DescriptorSetLayout, ShaderProgram::Get().GetAllShaders(), false);
 
         assert(m_Registry);
@@ -505,20 +504,6 @@ namespace Fling
         vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
         m_SwapChain->Cleanup();
-
-		// Reset uniform buffers
-		if (m_IsQuitting)
-		{
-			auto view = m_Registry->view<MeshRenderer>();
-			for (const auto entity : view)
-			{
-				MeshRenderer& mesh = view.get(entity);
-				for (Buffer* b : mesh.m_UniformBuffers)
-				{
-					//b.Release();
-				}
-			}
-		}
 		
         vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
@@ -539,8 +524,6 @@ namespace Fling
         m_DepthBuffer->Create();
 
         CreateFrameBuffers();
-
-		CreateUniformBuffers();
 
         CreateDescriptorPool();
         CreateDescriptorSets();
@@ -571,7 +554,12 @@ namespace Fling
 		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocateInfo, &set));
 
 		m_DescriptorSets.resize(Images.size());
+
+#if FLING_WINDOWS
 		vkUpdateDescriptorSetWithTemplate(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
+#elif FLING_LINUX
+		vkUpdateDescriptorSetWithTemplateKHR(m_LogicalDevice->GetVkDevice(), set, m_UpdateTemplate, m_DescriptorSets.data());
+#endif
 
 		vkCmdBindDescriptorSets(t_CmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &set, 0, 0);
 	}
@@ -856,8 +844,8 @@ namespace Fling
         m_LogicalDevice->WaitForIdle();
 		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 		{
-			t_MeshRend.ReleaseBuffers();	
-            vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+			t_MeshRend.Release();
+			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
         });
     }
 
@@ -940,7 +928,7 @@ namespace Fling
 		for (size_t i = 0; i < Images.size(); i++)
 		{
 			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffers[i]->MapMemory();
+			t_MeshRend.m_UniformBuffers[i]->MapMemory(bufferSize);
 		}
 
 		SetFrameBufferHasBeenResized(true);

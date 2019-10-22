@@ -33,7 +33,7 @@ namespace Fling
         std::vector<VkDescriptorSet> m_DescriptorSets;
         VkDescriptorPool m_DescriptorPool;
 
-		void ReleaseBuffers();
+		void Release();
 
 		bool operator==(const MeshRenderer& other) const;
 		bool operator!=(const MeshRenderer& other) const;

@@ -103,6 +103,7 @@ namespace Fling
         const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
         Swapchain* GetSwapChain() const { return m_SwapChain; }
+
     private:
 
         void InitDevices();
@@ -156,7 +157,6 @@ namespace Fling
         * Re-create the image views, render passes, and command buffers
         */
         void RecreateFrameResources();
-
 
         void CreateDescriptorPool();
 
