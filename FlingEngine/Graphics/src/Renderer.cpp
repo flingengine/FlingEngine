@@ -7,7 +7,6 @@
 #include "GraphicsHelpers.h"
 #include "Components/Transform.h"
 #include <random>
-#include "MaterialRegistry.hpp"
 
 namespace Fling
 {
@@ -21,8 +20,6 @@ namespace Fling
 		// You must have the registry set before creating a renderer!
 		assert(m_Registry);
         InitDevices();
-
-		MaterialRegistry::Get().Init();
 
         // Add entt component callbacks for mesh render etc
         InitComponentData();

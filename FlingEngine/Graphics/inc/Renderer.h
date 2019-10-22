@@ -240,7 +240,7 @@ namespace Fling
         size_t CurrentFrameIndex = 0;
 
         /** Used to determine if the frame buffer has been resized or not */
-        std::atomic<bool> m_FrameBufferResized = false;
+        bool m_FrameBufferResized = false;
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
