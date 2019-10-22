@@ -90,10 +90,11 @@ namespace Fling
             "Textures/Skybox/negy.jpg"_hs,
             "Textures/Skybox/posz.jpg"_hs,
             "Textures/Skybox/negz.jpg"_hs,
-            "Shaders/Skybox/skybox.vert.spv",
-            "Shaders/Skybox/skybox.frag.spv",
+            HS("Shaders/skybox/skybox.vert.spv"),
+            HS("Shaders/skybox/skybox.frag.spv"),
             m_RenderPass,
-            m_LogicalDevice->GetVkDevice());
+            m_LogicalDevice->GetVkDevice()
+        );
 
         m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount());
 
