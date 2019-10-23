@@ -4,6 +4,7 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
+#include "Renderer.h"
 
 namespace Sandbox
 {
@@ -20,6 +21,9 @@ namespace Sandbox
 
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
+
+		// Toggle cursor/mouse visibility with M
+		Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
 
 		GenerateTestMeshes(t_Reg);
 	}
@@ -99,6 +103,12 @@ namespace Sandbox
 				}
 			}
 		}
+	}
+
+	void Game::ToggleCursorVisibility()
+	{
+		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+		CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
 	}
 
 }	// namespace Sandbox
