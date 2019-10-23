@@ -6,8 +6,11 @@ namespace Fling
 {
    
 	/**
-	 * @brief	A simple circular buffer that will allow you get the next element in a buffer
+	 * @brief 	A simple circular buffer that will allow you get the next element in a buffer
 	 *			It does not ensure that the item is not in use, but simply loops around.
+	 * 
+	 * @tparam T 		the type inside this circular buffer. Stack allocated
+	 * @tparam t_Size 	The max size of this buffer, must be a power of 2!
 	 */
     template<typename T, size_t t_Size>
     class CircularBuffer
@@ -35,13 +38,16 @@ namespace Fling
 		, m_AllocatedIndex(0)
 		, m_Buffer{}
 	{
+		static_assert((t_Size != 0 && (t_Size & (t_Size-1)) == 0), "CircularBuffer::t_Size must be a power of 2!");
 	}
 
 	template<typename T, size_t t_Size>
 	inline T* CircularBuffer<T, t_Size>::GetItem()
 	{
 		const uint32_t index = m_AllocatedIndex++;
-
-		return &(m_Buffer[index & (m_BufferSize - 1u)]);
+		// This bit shifting is the same as the % operator
+		// @see https://blog.molecular-matters.com/2015/09/08/job-system-2-0-lock-free-work-stealing-part-2-a-specialized-allocator/
+		// for more about that
+		return &(m_Buffer[(index - 1u) & (m_BufferSize - 1u)]);
 	}
 }   // namespace Fling
