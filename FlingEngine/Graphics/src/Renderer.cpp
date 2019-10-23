@@ -7,6 +7,7 @@
 #include "GraphicsHelpers.h"
 #include "Components/Transform.h"
 #include <random>
+#include "CircularBuffer.hpp"
 
 namespace Fling
 {
@@ -621,12 +622,8 @@ namespace Fling
             }
         });
 
-		// TODO Make this not the way it is :S
-		static VkDescriptorImageInfo ImageInfoBuf[512] = {};
-		VkDescriptorImageInfo* NextAvailableImage = ImageInfoBuf;
-
-		static VkDescriptorBufferInfo UBOBuf[512] = {};
-		VkDescriptorBufferInfo* NewAvilableUBOInfo = UBOBuf;
+		static CircularBuffer<VkDescriptorImageInfo, 4096> ImageInfoBuf = {};
+		static CircularBuffer<VkDescriptorBufferInfo, 4096> UBOBuf = {};
 
         // Create material description sets for each swap chain image that we have
         for (size_t i = 0; i < Images.size(); ++i)
@@ -636,7 +633,7 @@ namespace Fling
 			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
 			{
 				// Binding 0 : Projection/view matrix uniform buffer
-				VkDescriptorBufferInfo* BufferInfo = (NewAvilableUBOInfo++);
+				VkDescriptorBufferInfo* BufferInfo = UBOBuf.GetItem();
 				BufferInfo->buffer = t_MeshRend.m_UniformBuffers[i]->GetVkBuffer();
 				BufferInfo->offset = 0;
 				BufferInfo->range = t_MeshRend.m_UniformBuffers[i]->GetSize();
@@ -650,7 +647,7 @@ namespace Fling
 				descriptorWrites.push_back(UniformSet);
 
 				// Binding 2 : Image sampler
-				VkDescriptorImageInfo* imageInfo = (NextAvailableImage++);
+				VkDescriptorImageInfo* imageInfo = ImageInfoBuf.GetItem();
 				imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				imageInfo->imageView = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetVkImageView();
 				imageInfo->sampler = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetSampler();
