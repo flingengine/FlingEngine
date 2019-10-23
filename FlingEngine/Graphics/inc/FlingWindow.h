@@ -46,11 +46,21 @@ namespace Fling
 
 		/** Int representing if this window should close or not */
 		virtual int ShouldClose() = 0;
+
+		/** Set whether the window hides the mouse cursor **/
+		virtual void SetMouseVisible(bool t_IsVisible) = 0;
+
+		/** Gets current visibility of mouse cursor **/
+		virtual bool GetMouseVisible() = 0;
 		
 		/**
 		* Check if this window is currently minimized
 		* @return	True if the window is currently minimized
 		*/
 		virtual bool IsMinimized() const = 0;
+
+	protected:
+		/** Tracks mouse visibility in window **/
+		bool m_IsMouseVisible = true;
 	};
 }   // namespace Fling
