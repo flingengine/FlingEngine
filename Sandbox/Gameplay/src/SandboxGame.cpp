@@ -77,11 +77,16 @@ namespace Sandbox
 
 	void Game::LightingTest(entt::registry& t_Reg)
 	{
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
+		//t_Reg.assign<MeshRenderer>(e0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
 
-		// Add a transform to this entity
-		Transform& t = t_Reg.assign<Transform>(e0);
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj");
+		Transform& t0 = t_Reg.assign<Transform>(e0);
+
+		entt::entity e1 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj");
+		Transform& t1 = t_Reg.assign<Transform>(e1);
+		t1.SetPos(glm::vec3(1.5f, 0.0f, 0.0f));
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)

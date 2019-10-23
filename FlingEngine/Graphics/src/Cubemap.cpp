@@ -132,7 +132,7 @@ namespace Fling
 
         //Vertex input
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions = Vertex::GetAttributeDescriptions();
+        auto AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo VertexInputState = {};
         VertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

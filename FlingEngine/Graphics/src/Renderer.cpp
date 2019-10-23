@@ -228,7 +228,7 @@ namespace Fling
 
         // Vertex input ----------------------
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions = Vertex::GetAttributeDescriptions();
+        auto AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
         VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -650,10 +650,10 @@ namespace Fling
 				descriptorWrites.push_back(UniformSet);
 
 				// Binding 2 : Image sampler
-				VkDescriptorImageInfo* imageInfo = (NextAvailableImage++);
-				imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo->imageView = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetVkImageView();
-				imageInfo->sampler = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetSampler();
+				VkDescriptorImageInfo* albedoImageInfo = (NextAvailableImage++);
+				albedoImageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				albedoImageInfo->imageView = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetVkImageView();
+				albedoImageInfo->sampler = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetSampler();
 
 				VkWriteDescriptorSet ImageSamplerSet = {};
 				ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -662,9 +662,26 @@ namespace Fling
 				ImageSamplerSet.dstArrayElement = 0;
 				ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				ImageSamplerSet.descriptorCount = 1;
-				ImageSamplerSet.pImageInfo = imageInfo;
+				ImageSamplerSet.pImageInfo = albedoImageInfo;
 
 				descriptorWrites.push_back(ImageSamplerSet);
+
+                // Binding 3 : Normal map
+                VkDescriptorImageInfo* NormImageInfo = (NextAvailableImage++);
+				NormImageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				NormImageInfo->imageView = t_MeshRend.m_Material->m_Textures.m_NormalTexture->GetVkImageView();
+				NormImageInfo->sampler = t_MeshRend.m_Material->m_Textures.m_NormalTexture->GetSampler();
+
+				VkWriteDescriptorSet NormImageSamplerSet = {};
+				NormImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				NormImageSamplerSet.dstSet = t_MeshRend.m_DescriptorSets[i];
+				NormImageSamplerSet.dstBinding = 3;
+				NormImageSamplerSet.dstArrayElement = 0;
+				NormImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				NormImageSamplerSet.descriptorCount = 1;
+				NormImageSamplerSet.pImageInfo = NormImageInfo;
+
+				descriptorWrites.push_back(NormImageSamplerSet);
 
                 vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			});

@@ -42,6 +42,8 @@ namespace Fling
 
 	private:
 
+		static void CalculateVertexTangents(Vertex* verts, UINT32 numVerts, UINT32* indices, UINT32 numIndices);
+
 		std::vector<Vertex> m_Verts;
 		std::vector<UINT32> m_Indices;
 

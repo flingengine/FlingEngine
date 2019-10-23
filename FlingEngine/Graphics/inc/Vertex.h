@@ -9,13 +9,15 @@ namespace Fling
     */
     struct Vertex
     {
-        glm::vec3 Pos;
-        glm::vec3 Color;
-		glm::vec2 TexCoord;
+        glm::vec3 Pos {};
+        glm::vec3 Color {};
+        glm::vec3 Tangent {};
+        glm::vec3 Normal {};
+		glm::vec2 TexCoord {};
 
 		bool operator==(const Vertex& other) const 
 		{
-			return Pos == other.Pos && Color == other.Color && TexCoord == other.TexCoord;
+			return Pos == other.Pos && Color == other.Color && TexCoord == other.TexCoord && Tangent == other.Tangent;
 		}
 
 		/**
@@ -32,9 +34,9 @@ namespace Fling
         }
 
 		//#TODO Use shader reflection to get our bindings for this vertex instead
-        static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
+        static std::array<VkVertexInputAttributeDescription, 5> GetAttributeDescriptions()
         {
-            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
+            std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions = {};
 
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
@@ -46,10 +48,20 @@ namespace Fling
             attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
             attributeDescriptions[1].offset = offsetof(Vertex, Color);
 
-			attributeDescriptions[2].binding = 0;
-			attributeDescriptions[2].location = 2;
-			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[2].offset = offsetof(Vertex, TexCoord);
+            attributeDescriptions[2].binding = 0;
+            attributeDescriptions[2].location = 2;
+            attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[2].offset = offsetof(Vertex, Tangent);
+
+			attributeDescriptions[3].binding = 0;
+			attributeDescriptions[3].location = 3;
+			attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[3].offset = offsetof(Vertex, TexCoord);
+
+            attributeDescriptions[4].binding = 0;
+            attributeDescriptions[4].location = 4;
+            attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[4].offset = offsetof(Vertex, Normal);
 
             return attributeDescriptions;
         }
