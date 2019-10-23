@@ -19,7 +19,7 @@ layout(location = 4) in vec3 inNormal;
 // Outputs ------------
 layout (location = 0) out vec3 outColor;
 layout (location = 1) out vec2 fragTexCoord;
-layout (location = 2) out vec3 outTanget;
+layout (location = 2) out vec3 outTangent;
 layout (location = 3) out vec3 outNormal;
 
 out gl_PerVertex 
@@ -35,7 +35,11 @@ void main()
 
     // Setup fragment shader outputs
 	outColor = inColor;
-	outTanget = inTangent;
+	
+	// Calculate tanget
+	outTangent = normalize( inTangent * mat3(uboView.model) );
+	
 	outNormal = inNormal;
+
     fragTexCoord = inTexCoord;
 }

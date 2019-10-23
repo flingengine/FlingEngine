@@ -78,9 +78,10 @@ namespace Fling
 				if (uniqueVertices.count(vertex) == 0)
 				{
 					uniqueVertices[vertex] = static_cast<UINT32>(m_Verts.size());
-					m_Verts.push_back(vertex);
+					//m_Verts.push_back(vertex);
 				}
-
+				
+				m_Verts.push_back(vertex);
 				m_Indices.push_back(uniqueVertices[vertex]);
 			}
 		}

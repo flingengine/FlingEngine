@@ -23,5 +23,5 @@ void main()
     vec3 normalMap = texture(normalSampler, fragTexCoord).xyz * 2 - 1;
 
     // Output the vertex normal for testing
-    outFragColor = vec4(inNormal, 1);
+    outFragColor = vec4(inTangent, 1);
 }
