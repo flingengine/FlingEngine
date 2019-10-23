@@ -4,7 +4,7 @@
 // Bindings -------------------
 layout (binding = 0) uniform UboView 
 {
-	mat4 model;
+	mat4 model;			// AKA world matrix to DX people
 	mat4 projection;
 	mat4 view;
 } uboView;
@@ -17,8 +17,8 @@ layout(location = 3) in vec2 inTexCoord;
 layout(location = 4) in vec3 inNormal;
 
 // Outputs ------------
-layout (location = 0) out vec3 outColor;
-layout (location = 1) out vec2 fragTexCoord;
+layout (location = 0) out vec3 outWorldPos;
+layout (location = 1) out vec2 fragTexCoord;	// AKA UV coordinate
 layout (location = 2) out vec3 outTangent;
 layout (location = 3) out vec3 outNormal;
 
@@ -33,13 +33,12 @@ void main()
 	vec3 worldPos = vec3(modelView * vec4(inPosition, 1.0));
 	gl_Position = uboView.projection * modelView * vec4(inPosition, 1.0);
 
-    // Setup fragment shader outputs
-	outColor = inColor;
-	
-	// Calculate tanget
+    // World Pos ------
+	outWorldPos = worldPos;
+	// Tangent -----
 	outTangent = normalize( inTangent * mat3(uboView.model) );
-	
-	outNormal = inNormal;
-
+	// Normal -----
+	outNormal = normalize( inNormal * mat3(uboView.model) );
+	// Texture Coord -----
     fragTexCoord = inTexCoord;
 }

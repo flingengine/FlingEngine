@@ -80,11 +80,11 @@ namespace Sandbox
 		//t_Reg.assign<MeshRenderer>(e0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
 
 		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj");
+		t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/Cobblestone.mat");
 		Transform& t0 = t_Reg.assign<Transform>(e0);
 
 		entt::entity e1 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj");
+		t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj", "Materials/Cobblestone.mat");
 		Transform& t1 = t_Reg.assign<Transform>(e1);
 		t1.SetPos(glm::vec3(1.5f, 0.0f, 0.0f));
 	}

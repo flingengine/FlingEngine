@@ -1,0 +1,11 @@
+{
+    "name" : "Default Material",
+
+    "vertex" : "Shaders/vert.spv",
+    "frag" : "Shaders/frag.spv",
+
+    "albedo" : "Textures/cobblestone/cobblestone_A.png",
+    "normal" : "Textures/cobblestone/cobblestone_N.png",
+    "metal" : "Textures/cobblestone/cobblestone_M.png",
+    "rough" : "Textures/cobblestone/cobblestone_R.png" 
+}
