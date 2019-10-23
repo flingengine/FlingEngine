@@ -35,6 +35,8 @@
 #include <atomic>
 #include "Cubemap.h"
 
+#include "Lighting/DirectionalLight.hpp"
+
 namespace Fling
 {
     // File resource

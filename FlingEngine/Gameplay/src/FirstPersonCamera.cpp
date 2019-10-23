@@ -66,7 +66,9 @@ namespace Fling
 
 	void FirstPersonCamera::Update(float dt)
 	{
-		float moveSpeed = m_speed * dt;
+		bool SlowModifier = Input::IsKeyHeld(KeyNames::FL_KEY_LEFT_CONTROL);
+
+		float moveSpeed = m_speed * dt * (SlowModifier ? 0.4f : 1.0f);
 
 		//translation
 		//forward

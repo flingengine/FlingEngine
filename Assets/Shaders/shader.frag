@@ -137,8 +137,8 @@ void main()
     mat3 TBN = mat3( T, B, N );
     vec3 normal = normalize( normalMap * TBN );
 
-    DirLight.AmbientColor = vec4(1.0f);
-    DirLight.DiffuseColor = vec4(1.0f);
+    DirLight.AmbientColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    DirLight.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight.Direction = vec3(1.0f, 1.0f, 0.0f);
     DirLight.Intensity = 10.0f;
 
