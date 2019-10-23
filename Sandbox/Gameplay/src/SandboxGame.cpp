@@ -5,6 +5,8 @@
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
 #include "Renderer.h"
+#include "Stats.h"
+
 
 namespace Sandbox
 {
@@ -17,14 +19,17 @@ namespace Sandbox
 
 		// Temp saving and load functions
 		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
-		Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
+        Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
+        Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
 
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
+
 		// Toggle cursor/mouse visibility with M
 		Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
 
+		//OnLoadInitated();
 		GenerateTestMeshes(t_Reg);
 	}
 
@@ -35,12 +40,13 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		glm::vec3 Offset( 15.0f * DeltaTime );
+		glm::vec3 RotOffset( 15.0f * DeltaTime );
+
 		// For each active mesh renderer
 		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 		{
-			glm::vec3 curRot = t_Trans.GetRotation();
-			t_Trans.SetRotation(curRot + Offset);
+			const glm::vec3& curRot = t_Trans.GetRotation();
+			t_Trans.SetRotation(curRot + RotOffset);
 		});
 	}
 
@@ -93,7 +99,7 @@ namespace Sandbox
 					}
 					else
 					{
-						t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj");
+						t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj", "Materials/Wood.mat");
 					}
 
 					// Add a transform to this entity
@@ -108,7 +114,15 @@ namespace Sandbox
 	void Game::ToggleCursorVisibility()
 	{
 		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
-		CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+    if(CurrentWindow)
+    {
+      CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+    }		
 	}
 
+  void Game::PrintFPS() const
+  {
+      float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
+      F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f /AvgFrameTime));
+  }
 }	// namespace Sandbox

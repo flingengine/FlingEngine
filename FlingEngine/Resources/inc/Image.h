@@ -11,6 +11,9 @@ namespace Fling
     class Image : public Resource
     {
     public:
+
+		static std::shared_ptr<Fling::Image> Create(Guid t_ID, void* t_Data = nullptr);
+
         explicit Image(Guid t_ID, void* t_Data = nullptr);
         virtual ~Image();
 
@@ -21,6 +24,7 @@ namespace Fling
 		FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
 		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
 		FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
+		FORCEINLINE VkDescriptorImageInfo* GetDescriptorInfo() { return &m_ImageInfo; }
 
         /**
          * @brief   Get the Image Size object (width * height * 4)
@@ -77,6 +81,8 @@ namespace Fling
 		/** The Vulkan memory resource for this image */
 		VkDeviceMemory m_VkMemory;
 
+		VkDescriptorImageInfo m_ImageInfo{};
+        
         /** Pixel data of image **/
         stbi_uc* m_PixelData;
     };

@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 // Break point, see https://stackoverflow.com/questions/17516855/portable-equivalent-of-debugbreak
-#	define FLING_BREAK	asm("int $3")
+#	define FLING_BREAK(str)	{ asm("int $3"); }
 
 
 #	define INLINE			inline

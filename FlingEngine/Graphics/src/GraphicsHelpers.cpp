@@ -172,6 +172,17 @@ namespace Fling
             vkBindImageMemory(Device, t_Image, t_Memory, 0);
         }
 
+		VkSemaphore CreateSemaphore(VkDevice t_Dev)
+		{
+			VkSemaphoreCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			VkSemaphore semaphore = 0;
+
+			VK_CHECK_RESULT(vkCreateSemaphore(t_Dev, &createInfo, 0, &semaphore));
+
+			return semaphore;
+		}
+
         void CreateVkSampler(
             VkFilter t_magFilter, 
             VkFilter t_minFilter, 

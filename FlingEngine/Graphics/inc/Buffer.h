@@ -24,6 +24,9 @@ namespace Fling
         {
         }
 
+		/*! @brief copy constructor. */
+		Buffer(const Buffer& t_Other);
+
         /**
          * @brief Construct a new Buffer object
          * 
@@ -43,6 +46,9 @@ namespace Fling
          * @brief Destroy the Buffer object, frees Vk memory and destroys buffer
          */
         ~Buffer();
+
+		bool operator==(const Buffer& other) const;
+		bool operator!=(const Buffer& other) const;
 
         FORCEINLINE const VkBuffer& GetVkBuffer() const { return m_Buffer; }
 
@@ -123,7 +129,7 @@ namespace Fling
         /** Pointer to the physical device memory for this buffer */
         VkDeviceMemory m_BufferMemory;
 
-        /** The descriptor stores info about the offset, buffer, and size of this */
+        /** The descriptor stores info about the offset, buffer, and; size of this */
         VkDescriptorBufferInfo m_Descriptor;
     };
 }   // namespace Fling

@@ -45,5 +45,7 @@ namespace Sandbox
 
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
+    
+    void PrintFPS() const;
 	};
 }	// namespace Sandbox
