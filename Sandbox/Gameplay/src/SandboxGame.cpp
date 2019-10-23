@@ -83,7 +83,7 @@ namespace Sandbox
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)
 	{
 		// Make a little cube of cubes!
-		int Dimension = 5;
+		int Dimension = 10;
 		float Offset = 2.5f;
 
 		for (int x = 0; x < Dimension; ++x)
