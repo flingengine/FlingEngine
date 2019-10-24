@@ -288,9 +288,9 @@ namespace Fling
         VkPipelineMultisampleStateCreateInfo Multisampling = {};
         {
             Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-            Multisampling.sampleShadingEnable = VK_FALSE;
+            Multisampling.sampleShadingEnable = VK_TRUE;
             Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-            Multisampling.minSampleShading = 1.0f; // Optional
+            Multisampling.minSampleShading = 0.2f; 
             Multisampling.pSampleMask = nullptr; // Optional
             Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
             Multisampling.alphaToOneEnable = VK_FALSE; // Optional

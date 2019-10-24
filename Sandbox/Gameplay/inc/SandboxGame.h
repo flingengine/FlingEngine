@@ -46,7 +46,14 @@ namespace Sandbox
         void PrintFPS() const;
 
 		void LightingTest(entt::registry& t_Reg);
+
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
+
+	private:
+
+		bool m_DoRotations = true;
+
+		void ToggleRotation();
 	};
 }	// namespace Sandbox

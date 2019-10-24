@@ -28,6 +28,9 @@ namespace Sandbox
 		// Toggle cursor/mouse visibility with M
 		Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
 
+		// Toggle model rotation in Update
+		Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
+
 		LightingTest(t_Reg);
 		//OnLoadInitated();
 		//GenerateTestMeshes(t_Reg);
@@ -40,14 +43,17 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		//glm::vec3 RotOffset( 15.0f * DeltaTime );
+		if (m_DoRotations)
+		{
+			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
-		// For each active mesh renderer
-		//t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
-		//{
-		//	const glm::vec3& curRot = t_Trans.GetRotation();
-		//	t_Trans.SetRotation(curRot + RotOffset);
-		//});
+			// For each active mesh renderer
+			t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+			{
+				const glm::vec3& curRot = t_Trans.GetRotation();
+				t_Trans.SetRotation(curRot + RotOffset);
+			});
+		}		
 	}
 
 	void Game::OnLoadInitated()
@@ -136,6 +142,11 @@ namespace Sandbox
     {
       CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
     }		
+	}
+
+	void Game::ToggleRotation()
+	{
+		m_DoRotations = !m_DoRotations;
 	}
 
   void Game::PrintFPS() const

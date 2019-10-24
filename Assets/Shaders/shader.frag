@@ -110,6 +110,8 @@ layout (binding = 5) uniform sampler2D roughSampler;
 layout (binding = 6) uniform LightingInfo 
 {
 	vec3 camPos;
+    // Directional light info
+    // Point light info
 } lightingInfo;
 
 // Inputs --------------
@@ -147,12 +149,12 @@ void main()
     DirLight_0.AmbientColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight_0.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight_0.Direction = vec3(1.0f, -2.0f, 0.0f);
-    DirLight_0.Intensity = 6.0f;
+    DirLight_0.Intensity = 8.0f;
 
     DirLight_1.AmbientColor = vec4(0.5f);
     DirLight_1.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    DirLight_1.Direction = vec3(1.0f, 2.0f, 0.0f);
-    DirLight_1.Intensity = 6.0f;
+    DirLight_1.Direction = vec3(-1.0f, 2.0f, 0.0f);
+    DirLight_1.Intensity = 8.0f;
 
     vec3 LightColor = DirLightPBR( DirLight_0, normal, inWorldPos, /*camPos*/ vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
     LightColor += DirLightPBR( DirLight_1, normal, inWorldPos, /*camPos*/vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
