@@ -4,7 +4,9 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
+#include "Renderer.h"
 #include "Stats.h"
+
 
 namespace Sandbox
 {
@@ -22,6 +24,9 @@ namespace Sandbox
 
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
+
+		// Toggle cursor/mouse visibility with M
+		Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
 
 		LightingTest(t_Reg);
 		//OnLoadInitated();
@@ -97,7 +102,7 @@ namespace Sandbox
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)
 	{
 		// Make a little cube of cubes!
-		int Dimension = 5;
+		int Dimension = 10;
 		float Offset = 2.5f;
 
 		for (int x = 0; x < Dimension; ++x)
@@ -125,10 +130,18 @@ namespace Sandbox
 		}
 	}
 
-    void Game::PrintFPS() const
+	void Game::ToggleCursorVisibility()
+	{
+		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+    if(CurrentWindow)
     {
-        float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
-        F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f /AvgFrameTime));
-    }
+      CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+    }		
+	}
 
+  void Game::PrintFPS() const
+  {
+      float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
+      F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f /AvgFrameTime));
+  }
 }	// namespace Sandbox

@@ -70,7 +70,7 @@ namespace Fling
 				vertex.TexCoord = 
 				{
 					attrib.texcoords[2 * index.texcoord_index + 0],
-					1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+					attrib.texcoords[2 * index.texcoord_index + 1]
 				};
 
 				vertex.Color = { 1.0f, 1.0f, 1.0f };
@@ -124,12 +124,12 @@ namespace Fling
 	void Model::CalculateVertexTangents(Vertex* verts, UINT32 numVerts, UINT32* indices, UINT32 numIndices)
 	{
 		// Calculate tangents one whole triangle at a time
-		for ( int i = 0; i < numVerts;)
+		for ( size_t i = 0; i < numVerts;)
 		{
 			// Grab indices and vertices of first triangle
-			unsigned int i1 = indices [ i++ ];
-			unsigned int i2 = indices [ i++ ];
-			unsigned int i3 = indices [ i++ ];
+			UINT32 i1 = indices [ i++ ];
+			UINT32 i2 = indices [ i++ ];
+			UINT32 i3 = indices [ i++ ];
 			Vertex* v1 = &verts [ i1 ];
 			Vertex* v2 = &verts [ i2 ];
 			Vertex* v3 = &verts [ i3 ];
@@ -172,7 +172,7 @@ namespace Fling
 		}
 
 		// Ensure all of the tangents are orthogonal to the normals
-		for ( int i = 0; i < numVerts; i++ )
+		for ( size_t i = 0; i < numVerts; i++ )
 		{
 			// Tangent = Normal ( T - N * Dot( N, T ) )
 			glm::vec3 norm = verts [ i ].Normal;
