@@ -44,9 +44,6 @@ namespace Fling
 			return;
 		}
 
-		// Avoid vertex duplication with a simple map
-		std::unordered_map<Vertex, UINT32> uniqueVertices = {};
-
 		// Parse all shapes to get the verts and indecies of this object
 		for (const tinyobj::shape_t& shape : shapes)
 		{
@@ -75,14 +72,8 @@ namespace Fling
 
 				vertex.Color = { 1.0f, 1.0f, 1.0f };
 
-				if (uniqueVertices.count(vertex) == 0)
-				{
-					uniqueVertices[vertex] = static_cast<UINT32>(m_Verts.size());
-					//m_Verts.push_back(vertex);
-				}
-				
 				m_Verts.push_back(vertex);
-				m_Indices.push_back(uniqueVertices[vertex]);
+				m_Indices.push_back(m_Indices.size());
 			}
 		}
 

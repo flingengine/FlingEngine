@@ -107,6 +107,10 @@ layout (binding = 3) uniform sampler2D normalSampler;
 layout (binding = 4) uniform sampler2D metalSampler;
 layout (binding = 5) uniform sampler2D roughSampler;
 
+layout (binding = 6) uniform LightingInfo 
+{
+	vec3 camPos;
+} lightingInfo;
 
 // Inputs --------------
 layout (location = 0) in vec3 inWorldPos;
@@ -114,12 +118,15 @@ layout (location = 1) in vec2 fragTexCoord;
 layout (location = 2) in vec3 inTangent;
 layout (location = 3) in vec3 inNormal;
 
+// TODO: Array of incoming lights with a UBO or maybe a push constant? 
+
 // #TODO Use a push constant or something else to send camera position to frag shader
 
 // Outputs ------------
 layout (location = 0) out vec4 outFragColor;
 
-DirectionalLightData DirLight;
+DirectionalLightData DirLight_0;
+DirectionalLightData DirLight_1;
 
 void main() 
 {
@@ -137,12 +144,18 @@ void main()
     mat3 TBN = mat3( T, B, N );
     vec3 normal = normalize( normalMap * TBN );
 
-    DirLight.AmbientColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    DirLight.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    DirLight.Direction = vec3(1.0f, 1.0f, 0.0f);
-    DirLight.Intensity = 10.0f;
+    DirLight_0.AmbientColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    DirLight_0.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    DirLight_0.Direction = vec3(1.0f, -2.0f, 0.0f);
+    DirLight_0.Intensity = 6.0f;
 
-    vec3 LightColor = DirLightPBR( DirLight, normal, inWorldPos, vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
+    DirLight_1.AmbientColor = vec4(0.5f);
+    DirLight_1.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    DirLight_1.Direction = vec3(1.0f, 2.0f, 0.0f);
+    DirLight_1.Intensity = 6.0f;
+
+    vec3 LightColor = DirLightPBR( DirLight_0, normal, inWorldPos, /*camPos*/ vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
+    LightColor += DirLightPBR( DirLight_1, normal, inWorldPos, /*camPos*/vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
 
     //vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor ), (1.0 / 2.2) ) );
 

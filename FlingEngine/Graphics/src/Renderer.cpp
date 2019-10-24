@@ -668,7 +668,7 @@ namespace Fling
                 AddImageSampler(t_MeshRend.m_Material->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
                 AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
                 AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                //AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
 
                 vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			});

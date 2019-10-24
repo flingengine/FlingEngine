@@ -18,7 +18,7 @@ layout(location = 4) in vec3 inNormal;
 
 // Outputs ------------
 layout (location = 0) out vec3 outWorldPos;
-layout (location = 1) out vec2 fragTexCoord;	// AKA UV coordinate
+layout (location = 1) out vec2 outTextCoord;	// AKA UV coordinate
 layout (location = 2) out vec3 outTangent;
 layout (location = 3) out vec3 outNormal;
 
@@ -40,5 +40,7 @@ void main()
 	// Normal -----
 	outNormal = normalize( inNormal * mat3(uboView.model) );
 	// Texture Coord -----
-    fragTexCoord = inTexCoord;
+    outTextCoord = inTexCoord;
+	// Subtract 1 from the texture coordinate if we need to for each texture
+	outTextCoord.y = 1 - outTextCoord.y;
 }
