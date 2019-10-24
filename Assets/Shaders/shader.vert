@@ -7,6 +7,7 @@ layout (binding = 0) uniform UboView
 	mat4 model;			// AKA world matrix to DX people
 	mat4 projection;
 	mat4 view;
+	vec3 camPos;
 } uboView;
 
 // Inputs --------------
@@ -21,6 +22,7 @@ layout (location = 0) out vec3 outWorldPos;
 layout (location = 1) out vec2 outTextCoord;	// AKA UV coordinate
 layout (location = 2) out vec3 outTangent;
 layout (location = 3) out vec3 outNormal;
+layout (location = 4) out vec3 outCamPos;
 
 out gl_PerVertex 
 {
@@ -43,4 +45,5 @@ void main()
     outTextCoord = inTexCoord;
 	// Subtract 1 from the texture coordinate if we need to for each texture
 	outTextCoord.y = 1 - outTextCoord.y;
+	outCamPos = uboView.camPos;
 }

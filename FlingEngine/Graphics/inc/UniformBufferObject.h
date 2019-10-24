@@ -25,6 +25,7 @@ namespace Fling
 		glm::mat4 Model;
 		glm::mat4 Projection;
 		glm::mat4 View;
+		glm::vec3 CamPos;
 	};
 
     struct UboSkyboxVS

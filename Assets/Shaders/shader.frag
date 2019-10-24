@@ -107,18 +107,19 @@ layout (binding = 3) uniform sampler2D normalSampler;
 layout (binding = 4) uniform sampler2D metalSampler;
 layout (binding = 5) uniform sampler2D roughSampler;
 
-layout (binding = 6) uniform LightingInfo 
+// Bindings -------------------
+layout (binding = 6) uniform LightingData 
 {
-	vec3 camPos;
-    // Directional light info
-    // Point light info
-} lightingInfo;
+	DirectionalLightData  DirLights[64];
+    int DirLightCount;
+} lights;
 
 // Inputs --------------
 layout (location = 0) in vec3 inWorldPos;
 layout (location = 1) in vec2 fragTexCoord;
 layout (location = 2) in vec3 inTangent;
 layout (location = 3) in vec3 inNormal;
+layout (location = 4) in vec3 inCamPos;
 
 // TODO: Array of incoming lights with a UBO or maybe a push constant? 
 
@@ -148,19 +149,19 @@ void main()
 
     DirLight_0.AmbientColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight_0.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    DirLight_0.Direction = vec3(1.0f, -2.0f, 0.0f);
-    DirLight_0.Intensity = 8.0f;
+    DirLight_0.Direction = vec3(1.0f, 2.0f, 0.0f);
+    DirLight_0.Intensity = 6.0f;
 
     DirLight_1.AmbientColor = vec4(0.5f);
     DirLight_1.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight_1.Direction = vec3(-1.0f, 2.0f, 0.0f);
     DirLight_1.Intensity = 8.0f;
 
-    vec3 LightColor = DirLightPBR( DirLight_0, normal, inWorldPos, /*camPos*/ vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
-    LightColor += DirLightPBR( DirLight_1, normal, inWorldPos, /*camPos*/vec3(1.0f, 0.0f, 0.0f), roughness, metal, abledoColor, specColor );
+    vec3 LightColor = DirLightPBR( DirLight_0, normal, inWorldPos, inCamPos, roughness, metal, abledoColor, specColor );
+    LightColor += DirLightPBR( DirLight_1, normal, inWorldPos, inCamPos, roughness, metal, abledoColor, specColor );
 
-    //vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor ), (1.0 / 2.2) ) );
+    vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor ), vec3(1.0 / 2.2) ) );
 
     // Output the vertex normal for testing
-    outFragColor = vec4(LightColor * abledoColor, 1);
+    outFragColor = vec4(gammaCorrect, 1);
 }

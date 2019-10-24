@@ -837,6 +837,7 @@ namespace Fling
 			ubo.View = m_camera->GetViewMatrix();
 			ubo.Projection = m_camera->GetProjectionMatrix();
 			ubo.Projection[1][1] *= -1.0f;
+			ubo.CamPos = m_camera->GetPosition();
 
 			// Copy the ubo to the GPU
 			Buffer* buf = Mesh.m_UniformBuffers[t_CurrentImage];
