@@ -37,9 +37,6 @@ namespace Fling
 
 		bool operator==(const MeshRenderer& other) const;
 		bool operator!=(const MeshRenderer& other) const;
-		bool operator<(const MeshRenderer& other) const;
-
-		void Initalize(UINT32 t_ModelMatrixOffset);
 
 		template<class Archive>
 		void save(Archive& t_Archive) const;
@@ -48,9 +45,6 @@ namespace Fling
 		void load(Archive& t_Archive);
 
 	private:
-
-		/** The offset of this mesh renderer to it's model matrix */
-		UINT32 m_ModelMatrixOffset{};
 
 		void LoadModelFromPath(const std::string t_MeshPath);
 

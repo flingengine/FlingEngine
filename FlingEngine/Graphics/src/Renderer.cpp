@@ -938,8 +938,6 @@ namespace Fling
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
     {
-        t_MeshRend.Initalize(GetUniformBufferIndex());
-
 		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 		VkDeviceSize bufferSize = sizeof(UboVS);
 
@@ -953,10 +951,4 @@ namespace Fling
 		SetFrameBufferHasBeenResized(true);
     }
 
-    UINT32 Renderer::GetUniformBufferIndex()
-    {
-        const uint32_t index = g_AllocatedUBOPoolIndex++;
-        // Multiply by dynamic alignment
-        return (g_UboIndexPool[index & (UNIFORM_BUFFER_POOL_SIZE - 1u)]);
-    }
 }    // namespace FlingR

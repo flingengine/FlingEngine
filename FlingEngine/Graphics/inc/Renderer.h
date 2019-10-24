@@ -185,13 +185,6 @@ namespace Fling
         */
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-        /**
-        * @brief    Get an index that represents a  
-        */
-        UINT32 GetUniformBufferIndex();
-
-        UINT32 m_NextAvailableMatrix{};
-
         /** Entt registry that the renderer will be using. Set by the Engine */
         entt::registry* m_Registry = nullptr;
 
