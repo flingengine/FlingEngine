@@ -9,6 +9,13 @@ struct DirectionalLightData
     float Intensity; 
 };
 
+struct PointLightData
+{
+    vec3 DiffuseColor;
+    float Intensity; 
+    float Range; 
+};
+
 // PBR Constants -----------------------------------------------
 
 // The fresnel value for non-metals (dielectrics)
@@ -107,7 +114,6 @@ layout (binding = 3) uniform sampler2D normalSampler;
 layout (binding = 4) uniform sampler2D metalSampler;
 layout (binding = 5) uniform sampler2D roughSampler;
 
-// Bindings -------------------
 layout (binding = 6) uniform LightingData 
 {
 	DirectionalLightData  DirLights[32];
@@ -119,17 +125,10 @@ layout (location = 0) in vec3 inWorldPos;
 layout (location = 1) in vec2 fragTexCoord;
 layout (location = 2) in vec3 inTangent;
 layout (location = 3) in vec3 inNormal;
-layout (location = 4) in vec3 inCamPos;
-
-// TODO: Array of incoming lights with a UBO or maybe a push constant? 
-
-// #TODO Use a push constant or something else to send camera position to frag shader
+layout (location = 4) in vec4 inCamPos;
 
 // Outputs ------------
 layout (location = 0) out vec4 outFragColor;
-
-DirectionalLightData DirLight_0;
-DirectionalLightData DirLight_1;
 
 void main() 
 {
@@ -141,24 +140,27 @@ void main()
     vec3 specColor = mix( F0_NON_METAL.rrr, abledoColor.rgb, metal );
 
     // Create my TBN matrix to convert from tangent-space to world-space
-    vec3 N = inNormal;
+    vec3 N = normalize(inNormal);
     vec3 T = normalize( inTangent - N * dot( inTangent, N ) ); // Ensure tangent is 90 degrees from normal
     vec3 B = cross( T, N );
     mat3 TBN = mat3( T, B, N );
-    vec3 normal = normalize( normalMap * TBN );
+    vec3 finalCalcNormal = normalize( normalMap * TBN );
 
-    DirLight_0.AmbientColor = vec4(0.0f);
-    DirLight_0.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    DirLight_0.Direction = vec3(1.0f, 2.0f, 0.0f);
-    DirLight_0.Intensity = 6.0f;
+    vec3 LightColor = vec3(0.0);
 
-    DirLight_1.AmbientColor = vec4(0.0f);
-    DirLight_1.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    DirLight_1.Direction = vec3(-1.0f, 2.0f, 0.0f);
-    DirLight_1.Intensity = 8.0f;
-
-    vec3 LightColor = DirLightPBR( DirLight_0, normal, inWorldPos, inCamPos, roughness, metal, abledoColor, specColor );
-    LightColor += DirLightPBR( DirLight_1, normal, inWorldPos, inCamPos, roughness, metal, abledoColor, specColor );
+    for(int i = 0; i < lights.DirLightCount; i++)
+    {
+        LightColor += DirLightPBR( 
+            lights.DirLights[i],
+            finalCalcNormal, 
+            inWorldPos, 
+            inCamPos.xyz, 
+            roughness, 
+            metal, 
+            abledoColor, 
+            specColor 
+        );
+    }
 
     vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor ), vec3(1.0 / 2.2) ) );
 

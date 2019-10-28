@@ -23,6 +23,8 @@ namespace Sandbox
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
 
+		void OnAddDirLight();
+
 		/**
 		 * @brief Called when player presses the button to initate loading
 		 * 
@@ -52,7 +54,7 @@ namespace Sandbox
 
 	private:
 
-		bool m_DoRotations = true;
+		bool m_DoRotations = false;
 
 		void ToggleRotation();
 	};

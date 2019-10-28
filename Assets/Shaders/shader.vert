@@ -7,11 +7,12 @@ layout (binding = 0) uniform UboView
 	mat4 model;			// AKA world matrix to DX people
 	mat4 projection;
 	mat4 view;
-	vec3 camPos;
+	vec4 camPos;
+	vec3 objPos;
 } uboView;
 
 // Inputs --------------
-layout(location = 0) in vec3 inPosition;
+layout(location = 0) in vec3 inPosition;	// The position of this vertex in the world ? 
 layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec3 inTangent;
 layout(location = 3) in vec2 inTexCoord;
@@ -22,7 +23,7 @@ layout (location = 0) out vec3 outWorldPos;
 layout (location = 1) out vec2 outTextCoord;	// AKA UV coordinate
 layout (location = 2) out vec3 outTangent;
 layout (location = 3) out vec3 outNormal;
-layout (location = 4) out vec3 outCamPos;
+layout (location = 4) out vec4 outCamPos;
 
 out gl_PerVertex 
 {
@@ -31,9 +32,11 @@ out gl_PerVertex
 
 void main() 
 {
-	mat4 modelView = uboView.view * uboView.model;
+	mat4 modelView = (uboView.view * uboView.model) * uboView.projection;
+	gl_Position = uboView.projection * modelView;
+
 	vec3 worldPos = vec3(modelView * vec4(inPosition, 1.0));
-	gl_Position = uboView.projection * modelView * vec4(inPosition, 1.0);
+
 
     // World Pos ------
 	outWorldPos = worldPos;

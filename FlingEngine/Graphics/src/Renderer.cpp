@@ -684,6 +684,19 @@ namespace Fling
 
                 // Binding 6 : Fragment shader directional lights
                 // A uniform buffer of lights! 
+				VkDescriptorBufferInfo* LightBufferInfo = UBOBuf.GetItem();
+				LightBufferInfo->buffer = m_Lighting.m_LightingUBOs[i]->GetVkBuffer();
+				LightBufferInfo->offset = 0;
+				LightBufferInfo->range = m_Lighting.m_LightingUBOs[i]->GetSize();
+
+				VkWriteDescriptorSet LightUniformSet = Initalizers::WriteDescriptorSet(
+                    t_MeshRend.m_DescriptorSets[i],
+					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					6,
+					LightBufferInfo
+				);
+
+				descriptorWrites.push_back(LightUniformSet);
 
                 vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			});
@@ -853,7 +866,8 @@ namespace Fling
                 ubo.View = m_camera->GetViewMatrix();
                 ubo.Projection = m_camera->GetProjectionMatrix();
                 ubo.Projection[1][1] *= -1.0f;
-                ubo.CamPos = m_camera->GetPosition();
+                ubo.CamPos = glm::vec4(m_camera->GetPosition(), 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
+                ubo.ObjPos = Trans.GetPos();
 
                 // Copy the ubo to the GPU
                 Buffer* buf = Mesh.m_UniformBuffers[t_CurrentImage];
@@ -863,14 +877,17 @@ namespace Fling
 
         // Copy directional lights to the fragment shader
         {
-
             auto lightView = m_Registry->view<DirectionalLight>();
             UINT32 CurLightCount = 0;
+
             for(auto entity : lightView)
             {
-                DirectionalLight& Light = lightView.get(entity);
-                // Copy the dir light info to the buffer
-                memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
+                if(CurLightCount < Lighting::MaxDirectionalLights)
+                {
+                    DirectionalLight& Light = lightView.get(entity);
+                    // Copy the dir light info to the buffer
+                    memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
+                }
             }
             
             m_LightingUBO.DirLightCount = CurLightCount;

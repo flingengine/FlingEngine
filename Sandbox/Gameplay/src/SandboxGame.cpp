@@ -6,7 +6,7 @@
 #include "MeshRenderer.h"
 #include "Renderer.h"
 #include "Stats.h"
-
+#include "Lighting/DirectionalLight.hpp"
 
 namespace Sandbox
 {
@@ -43,17 +43,22 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
+		static float PosSpeed = 0.5f;
 		if (m_DoRotations)
 		{
 			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
+			glm::vec3 PosOffset(0.0f, PosSpeed * DeltaTime, 0.0f);
 
 			// For each active mesh renderer
 			t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 			{
 				const glm::vec3& curRot = t_Trans.GetRotation();
 				t_Trans.SetRotation(curRot + RotOffset);
+
+				//const glm::vec3& curPos = t_Trans.GetPos();
+				//t_Trans.SetPos(curPos + PosOffset);
 			});
-		}		
+		}
 	}
 
 	void Game::OnLoadInitated()
@@ -88,20 +93,28 @@ namespace Sandbox
 
 	void Game::LightingTest(entt::registry& t_Reg)
 	{
-		entt::entity e0 = t_Reg.create();
-		//t_Reg.assign<MeshRenderer>(e0, "Models/Cerberus.obj");
-		t_Reg.assign<MeshRenderer>(e0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
-		Transform& t0 = t_Reg.assign<Transform>(e0);
+		auto AddSphere = [&](UINT32 t_Itr, const std::string& t_Mat) 
+		{
+			entt::entity e0 = t_Reg.create();
+			t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", t_Mat);
+			Transform& t0 = t_Reg.assign<Transform>(e0);
+			t0.SetPos(glm::vec3(1.5f * (float)t_Itr, 0.0f, 0.0f));
+		};
 
-		//entt::entity e1 = t_Reg.create();
-		//t_Reg.assign<MeshRenderer>(e1, "Models/cube.obj", "Materials/Cobblestone.mat");
-		//Transform& t1 = t_Reg.assign<Transform>(e1);
-		//t1.SetPos(glm::vec3(1.5f, 0.0f, 0.0f));
-		//
-		//entt::entity e2 = t_Reg.create();
-		//t_Reg.assign<MeshRenderer>(e2, "Models/cone.obj", "Materials/Cobblestone.mat");
-		//Transform& t2 = t_Reg.assign<Transform>(e2);
-		//t2.SetPos(glm::vec3(-1.5f, 0.0f, 0.0f));
+		AddSphere(0, "Materials/Cobblestone.mat");
+		AddSphere(1, "Materials/Cobblestone.mat");
+		AddSphere(2, "Materials/Cobblestone.mat");
+		AddSphere(3, "Materials/Cobblestone.mat");
+
+		// Add some lights
+		{
+			entt::entity e0 = t_Reg.create();
+			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
+			Light.DiffuseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			Light.Intensity = 10.0f;
+			Light.AmbientColor = glm::vec4(0.0f);
+		}
+
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)
@@ -138,10 +151,10 @@ namespace Sandbox
 	void Game::ToggleCursorVisibility()
 	{
 		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
-    if(CurrentWindow)
-    {
-      CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
-    }		
+		if(CurrentWindow)
+		{
+		CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+		}		
 	}
 
 	void Game::ToggleRotation()

@@ -6,7 +6,7 @@
 namespace Fling
 {
     /**
-     * @brief Simple representation of 
+     * @brief Simple representation of a directional light for Fling
      * 
      */
     struct DirectionalLight
