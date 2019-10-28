@@ -110,7 +110,7 @@ layout (binding = 5) uniform sampler2D roughSampler;
 // Bindings -------------------
 layout (binding = 6) uniform LightingData 
 {
-	DirectionalLightData  DirLights[64];
+	DirectionalLightData  DirLights[32];
     int DirLightCount;
 } lights;
 
@@ -147,12 +147,12 @@ void main()
     mat3 TBN = mat3( T, B, N );
     vec3 normal = normalize( normalMap * TBN );
 
-    DirLight_0.AmbientColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    DirLight_0.AmbientColor = vec4(0.0f);
     DirLight_0.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight_0.Direction = vec3(1.0f, 2.0f, 0.0f);
     DirLight_0.Intensity = 6.0f;
 
-    DirLight_1.AmbientColor = vec4(0.5f);
+    DirLight_1.AmbientColor = vec4(0.0f);
     DirLight_1.DiffuseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     DirLight_1.Direction = vec3(-1.0f, 2.0f, 0.0f);
     DirLight_1.Intensity = 8.0f;

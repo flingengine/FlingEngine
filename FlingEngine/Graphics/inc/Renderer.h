@@ -45,6 +45,13 @@ namespace Fling
     // Imgui resource
     class FlingImgui;
 
+    struct Lighting
+    {
+        static const UINT32 MaxDirectionalLights = 32;
+        UINT32 m_CurrentDirLights = 0;
+        std::vector<Buffer*> m_LightingUBOs;
+    };
+
     /// <summary>
     /// Core renderer for the application
     /// </summary>
@@ -185,6 +192,12 @@ namespace Fling
         */
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
+        /**
+         * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many
+         *          we need
+         */
+        void DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light);
+
         /** Entt registry that the renderer will be using. Set by the Engine */
         entt::registry* m_Registry = nullptr;
 
@@ -239,11 +252,6 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-        /** Simple little pool for getting the next available UBO index */
-        const static UINT32 UNIFORM_BUFFER_POOL_SIZE = 256;
-        static UINT32 g_UboIndexPool[UNIFORM_BUFFER_POOL_SIZE];
-        static UINT32 g_AllocatedUBOPoolIndex;
-
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;
 
@@ -266,6 +274,19 @@ namespace Fling
         std::vector<VkFence> m_InFlightFences;
 
 		std::shared_ptr<Material> m_DefaultMat;
+
+        // Lighting -----------------------
+        Lighting m_Lighting = {};
+
+        struct LightingUbo
+        {
+            DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+            UINT32 DirLightCount = 0;
+        };
+
+        LightingUbo m_LightingUBO = {}; 
+
+        void CreateLightBuffers();
 
         // Flag for toggling imgui 
         bool m_DrawImgui;
