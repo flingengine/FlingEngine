@@ -205,6 +205,9 @@ namespace Fling
          */
         void DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light);
 
+		void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
+
+
         /** Entt registry that the renderer will be using. Set by the Engine */
         entt::registry* m_Registry = nullptr;
 
@@ -284,11 +287,14 @@ namespace Fling
 
         // Lighting -----------------------
         Lighting m_Lighting = {};
-
+		std::shared_ptr<Image> m_BRDFLookupTexture;
         struct LightingUbo
         {
+			UINT32 DirLightCount = 0;
             DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
-            UINT32 DirLightCount = 0;
+
+			//UINT32 PointLightCount = 0;
+			//PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
         };
 
         LightingUbo m_LightingUBO = {}; 

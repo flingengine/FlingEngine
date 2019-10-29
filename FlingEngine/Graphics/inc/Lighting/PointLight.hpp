@@ -10,24 +10,27 @@ namespace Fling
      */
     struct PointLight
     {
+		friend class Renderer;
     public:
         /**
          * @brief Diffuse color of this point light, RBA on a scale of 0.0 to 1.0
          * 
          */
-        glm::vec3 DiffuseColor { 1.0f };
+        glm::vec4 DiffuseColor { 1.0f };
 
     private:
         /** The position of this point light will be set from it's Transform component. 
          * set per frame
          */
-        glm::vec3 Pos {};
+        glm::vec4 Pos {};
     public:
         float Intensity = 10.0f;
         float Range = 5.0f;
 
         template<class Archive>
         void serialize(Archive & t_Archive);
+
+		FORCEINLINE void SetPos(const glm::vec4& t_Pos) { Pos = t_Pos; }
     };
 
      /** Serilazation to an archive */

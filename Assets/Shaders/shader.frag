@@ -3,19 +3,54 @@
 
 struct DirectionalLightData
 {
-    vec4 AmbientColor;
     vec4 DiffuseColor;
-    vec3 Direction;
+    vec4 Direction;
     float Intensity; 
 };
 
 struct PointLightData
 {
     vec3 DiffuseColor;
+    vec3 Pos;
     float Intensity; 
     float Range; 
 };
 
+// Bindings -------------------
+layout (binding = 0) uniform UboView 
+{
+	mat4 model;			// AKA world matrix to DX people
+	mat4 projection;
+	mat4 view;
+	vec3 camPos;
+	vec3 objPos;
+} ubo;
+
+layout (binding = 2) uniform sampler2D albedoSampler;
+layout (binding = 3) uniform sampler2D normalMap;
+layout (binding = 4) uniform sampler2D metallicMap;
+layout (binding = 5) uniform sampler2D roughnessMap;
+
+layout (binding = 6) uniform LightingData 
+{
+    int DirLightCount;
+	DirectionalLightData DirLights[32];
+
+    // int PointLightCount;
+    // PointLightData PointLights[32];
+} lights;
+
+layout (binding = 7) uniform sampler2D samplerBRDFLUT;
+
+// Inputs --------------
+layout (location = 0) in vec3 inWorldPos;
+layout (location = 1) in vec2 inTexCoord;
+layout (location = 2) in vec3 inTangent;
+layout (location = 3) in vec3 inNormal;
+layout (location = 4) in vec3 inCamPos;
+
+// Outputs ------------
+layout (location = 0) out vec4 outFragColor;
 // PBR Constants -----------------------------------------------
 
 // The fresnel value for non-metals (dielectrics)
@@ -27,7 +62,7 @@ const float F0_NON_METAL = 0.04f;
 // Need a minimum roughness for when spec distribution function denominator goes to zero
 const float MIN_ROUGHNESS = 0.0000001f; // 6 zeros after decimal
 
-const float PI = 3.14159265359f;
+#define PI 3.1415926535897932384626433832795
 
 // Fresnel term - Schlick approx.
 // 
@@ -91,7 +126,7 @@ vec3 MicrofacetBRDF( vec3 n, vec3 l, vec3 v, float roughness, float metalness, v
 vec3 DirLightPBR( DirectionalLightData light, vec3 normal, vec3 worldPos, vec3 camPos, float roughness, float metalness, vec3 surfaceColor, vec3 specularColor )
 {
     // Get normalize direction to the light
-    vec3 toLight = normalize( -light.Direction );
+    vec3 toLight = normalize( -light.Direction.rgb );
     vec3 toCam = normalize( camPos - worldPos );
 
     // Calculate the light amounts
@@ -100,51 +135,37 @@ vec3 DirLightPBR( DirectionalLightData light, vec3 normal, vec3 worldPos, vec3 c
 
     // Calculate diffuse with energy conservation
     // (Reflected light doesn't get diffused)
-    vec3 balancedDiff = diff * ( ( 1 - clamp( spec, 0.0, 1.0 ) ) * ( 1 - metalness ) );
+    vec3 balancedDiff = diff * ( ( 1 - clamp( spec, 0.0, 1.0 ) ) * ( 1.0 - metalness ) );
 
-
-    // Combine amount with 
+    // Combine amount with light color/intensity
     return vec3( balancedDiff.rgb * surfaceColor.rgb + spec.rgb ) * light.Intensity * light.DiffuseColor.rgb;
 }
 
-
-// Bindings -------------------
-layout (binding = 2) uniform sampler2D albedoSampler;
-layout (binding = 3) uniform sampler2D normalSampler;
-layout (binding = 4) uniform sampler2D metalSampler;
-layout (binding = 5) uniform sampler2D roughSampler;
-
-layout (binding = 6) uniform LightingData 
+// Perturb normal, see http://www.thetenthplanet.de/archives/1180
+vec3 perturbNormal()
 {
-	DirectionalLightData  DirLights[32];
-    int DirLightCount;
-} lights;
+	vec3 tangentNormal = texture(normalMap, inTexCoord).xyz * 2.0 - 1.0;
 
-// Inputs --------------
-layout (location = 0) in vec3 inWorldPos;
-layout (location = 1) in vec2 fragTexCoord;
-layout (location = 2) in vec3 inTangent;
-layout (location = 3) in vec3 inNormal;
-layout (location = 4) in vec4 inCamPos;
+	vec3 q1 = dFdx(inWorldPos);
+	vec3 q2 = dFdy(inWorldPos);
+	vec2 st1 = dFdx(inTexCoord);
+	vec2 st2 = dFdy(inTexCoord);
 
-// Outputs ------------
-layout (location = 0) out vec4 outFragColor;
+	vec3 N = normalize(inNormal);
+	vec3 T = normalize(q1 * st2.t - q2 * st1.t);
+	vec3 B = -normalize(cross(N, T));
+	mat3 TBN = mat3(T, B, N);
+
+	return normalize(TBN * tangentNormal);
+}
 
 void main() 
 {
     // Sample all the textures
-    vec3 abledoColor = texture(albedoSampler, fragTexCoord).xyz;
-    vec3 normalMap = texture(normalSampler, fragTexCoord).xyz * 2 - 1;
-    float roughness = texture(roughSampler, fragTexCoord).x;
-    float metal = texture(metalSampler, fragTexCoord).x;
+    vec4 abledoColor = texture(albedoSampler, inTexCoord);
+    float roughness = texture(roughnessMap, inTexCoord).x;
+    float metal = texture(metallicMap, inTexCoord).x;
     vec3 specColor = mix( F0_NON_METAL.rrr, abledoColor.rgb, metal );
-
-    // Create my TBN matrix to convert from tangent-space to world-space
-    vec3 N = normalize(inNormal);
-    vec3 T = normalize( inTangent - N * dot( inTangent, N ) ); // Ensure tangent is 90 degrees from normal
-    vec3 B = cross( T, N );
-    mat3 TBN = mat3( T, B, N );
-    vec3 finalCalcNormal = normalize( normalMap * TBN );
 
     vec3 LightColor = vec3(0.0);
 
@@ -152,17 +173,17 @@ void main()
     {
         LightColor += DirLightPBR( 
             lights.DirLights[i],
-            finalCalcNormal, 
+            perturbNormal(), 
             inWorldPos, 
             inCamPos.xyz, 
             roughness, 
             metal, 
-            abledoColor, 
+            abledoColor.rgb, 
             specColor 
         );
     }
 
-    vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor ), vec3(1.0 / 2.2) ) );
+    vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor.rgb ), vec3(1.0 / 2.2) ) );
 
     // Output the vertex normal for testing
     outFragColor = vec4(gammaCorrect, 1);

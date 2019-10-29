@@ -47,16 +47,12 @@ namespace Sandbox
 		if (m_DoRotations)
 		{
 			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
-			glm::vec3 PosOffset(0.0f, PosSpeed * DeltaTime, 0.0f);
 
 			// For each active mesh renderer
 			t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
 			{
 				const glm::vec3& curRot = t_Trans.GetRotation();
 				t_Trans.SetRotation(curRot + RotOffset);
-
-				//const glm::vec3& curPos = t_Trans.GetPos();
-				//t_Trans.SetPos(curPos + PosOffset);
 			});
 		}
 	}
@@ -93,28 +89,38 @@ namespace Sandbox
 
 	void Game::LightingTest(entt::registry& t_Reg)
 	{
-		auto AddSphere = [&](UINT32 t_Itr, const std::string& t_Mat) 
+		auto AddSphere = [&](UINT32 t_Itr,  const std::string& t_Model, const std::string& t_Mat) 
 		{
 			entt::entity e0 = t_Reg.create();
-			t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", t_Mat);
+			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
 			Transform& t0 = t_Reg.assign<Transform>(e0);
 			t0.SetPos(glm::vec3(1.5f * (float)t_Itr, 0.0f, 0.0f));
 		};
 
-		AddSphere(0, "Materials/Cobblestone.mat");
-		AddSphere(1, "Materials/Cobblestone.mat");
-		AddSphere(2, "Materials/Cobblestone.mat");
-		AddSphere(3, "Materials/Cobblestone.mat");
+		//AddSphere(0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
+
+		AddSphere(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		AddSphere(1, "Models/sphere.obj", "Materials/Paint.mat");
+		AddSphere(2, "Models/sphere.obj", "Materials/Bronze.mat");
+		AddSphere(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
 		// Add some lights
 		{
 			entt::entity e0 = t_Reg.create();
 			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
-			Light.DiffuseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-			Light.Intensity = 10.0f;
-			Light.AmbientColor = glm::vec4(0.0f);
+			Light.DiffuseColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+			Light.Intensity = 0.5f;
+			Light.Direction = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 		}
 
+		// Add some lights
+		{
+			entt::entity e0 = t_Reg.create();
+			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
+			Light.DiffuseColor = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+			Light.Intensity = 0.5f;
+			Light.Direction = glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f);
+		}
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)

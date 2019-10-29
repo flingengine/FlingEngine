@@ -64,6 +64,9 @@ namespace Fling
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
+		m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
+		assert(m_BRDFLookupTexture);
+
         CreateFrameBuffers();
 
         CreateDescriptorPool();
@@ -681,6 +684,8 @@ namespace Fling
                 AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
                 AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
                 AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+				AddImageSampler(m_BRDFLookupTexture.get(), 7, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+				// TODO: Ambient Occlusion Map
 
                 // Binding 6 : Fragment shader directional lights
                 // A uniform buffer of lights! 
@@ -866,7 +871,7 @@ namespace Fling
                 ubo.View = m_camera->GetViewMatrix();
                 ubo.Projection = m_camera->GetProjectionMatrix();
                 ubo.Projection[1][1] *= -1.0f;
-                ubo.CamPos = glm::vec4(m_camera->GetPosition(), 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
+				ubo.CamPos = m_camera->GetPosition();
                 ubo.ObjPos = Trans.GetPos();
 
                 // Copy the ubo to the GPU
@@ -886,15 +891,41 @@ namespace Fling
                 {
                     DirectionalLight& Light = lightView.get(entity);
                     // Copy the dir light info to the buffer
-                    memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
+					size_t size = sizeof(DirectionalLight);
+                    memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount)), &Light, size);
+					CurLightCount++;
                 }
             }
             
             m_LightingUBO.DirLightCount = CurLightCount;
-
-            // Memcpy the dir light UBO
-            memcpy(m_Lighting.m_LightingUBOs[t_CurrentImage]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
         }
+
+		// Copy the point light data to the UBO
+		//{
+		//	auto lightView = m_Registry->view<PointLight, Transform>();
+		//	UINT32 CurLightCount = 0;
+
+		//	for (auto entity : lightView)
+		//	{
+		//		if (CurLightCount < Lighting::MaxPointLights)
+		//		{
+		//			PointLight& Light = lightView.get<PointLight>(entity);
+		//			Transform& Trans = lightView.get<Transform>(entity);
+		//			
+		//			Light.SetPos(Trans.GetPos());
+
+		//			// Copy the dir light info to the buffer
+		//			size_t size = sizeof(PointLight);
+		//			memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount)), &Light, size);
+		//			CurLightCount++;
+		//		}
+		//	}
+
+		//	m_LightingUBO.PointLightCount = CurLightCount;
+		//}
+
+		// Memcpy the dir light UBO
+		memcpy(m_Lighting.m_LightingUBOs[t_CurrentImage]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
     }
 
     // Shutdown steps -------------------------------------------
@@ -920,6 +951,9 @@ namespace Fling
             }
 		}
         m_Lighting.m_LightingUBOs.clear();
+
+		// release refs to textures
+		m_BRDFLookupTexture = nullptr;
     }
 
     void Renderer::Shutdown()
@@ -999,6 +1033,7 @@ namespace Fling
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
+		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
     }
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
@@ -1025,4 +1060,14 @@ namespace Fling
             F_LOG_WARN("You have enterer more then the max support directional lights of Fling!");
         }
     }
+
+	void Renderer::PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
+	{
+		F_LOG_TRACE("Point Light added!");
+		++m_Lighting.m_CurrentPointLights;
+		if (m_Lighting.m_CurrentPointLights> Lighting::MaxPointLights)
+		{
+			F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
+		}
+	}
 }    // namespace FlingR

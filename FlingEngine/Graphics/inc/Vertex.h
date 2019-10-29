@@ -55,13 +55,13 @@ namespace Fling
 
 			attributeDescriptions[3].binding = 0;
 			attributeDescriptions[3].location = 3;
-			attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[3].offset = offsetof(Vertex, TexCoord);
+			attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+			attributeDescriptions[3].offset = offsetof(Vertex, Normal);
 
-            attributeDescriptions[4].binding = 0;
-            attributeDescriptions[4].location = 4;
-            attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[4].offset = offsetof(Vertex, Normal);
+			attributeDescriptions[4].binding = 0;
+			attributeDescriptions[4].location = 4;
+			attributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[4].offset = offsetof(Vertex, TexCoord);
 
             return attributeDescriptions;
         }

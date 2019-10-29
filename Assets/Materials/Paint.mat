@@ -1,0 +1,11 @@
+{
+    "name" : "Default Material",
+
+    "vertex" : "Shaders/vert.spv",
+    "frag" : "Shaders/frag.spv",
+
+    "albedo" : "Textures/Paint/paint_A.png",
+    "normal" : "Textures/Paint/paint_N.png",
+    "metal" : "Textures/Paint/paint_M.png",
+    "rough" : "Textures/Paint/paint_R.png" 
+}
