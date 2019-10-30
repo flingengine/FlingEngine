@@ -1,8 +1,8 @@
 {
     "name" : "Default Material",
 
-    "vertex" : "Shaders/vert.spv",
-    "frag" : "Shaders/frag.spv",
+    "vertex" : "Shaders/PBRDefault_vert.spv",
+    "frag" : "Shaders/PBRDefault_frag.spv",
 
     "albedo" : "Textures/cobblestone/cobblestone_A.png",
     "normal" : "Textures/cobblestone/cobblestone_N.png",
