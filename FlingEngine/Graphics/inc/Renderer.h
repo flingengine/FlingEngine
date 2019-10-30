@@ -35,6 +35,9 @@
 #include <atomic>
 #include "Cubemap.h"
 
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
+
 namespace Fling
 {
     // File resource
@@ -42,6 +45,19 @@ namespace Fling
 
     // Imgui resource
     class FlingImgui;
+
+    struct Lighting
+    {
+        /** Dir Lights */
+        static const UINT32 MaxDirectionalLights = 32;
+        UINT32 m_CurrentDirLights = 0;
+
+        /** Point Lights */
+        static const UINT32 MaxPointLights = 32;
+        UINT32 m_CurrentPointLights = 0;
+
+        std::vector<Buffer*> m_LightingUBOs;
+    };
 
     /// <summary>
     /// Core renderer for the application
@@ -184,11 +200,13 @@ namespace Fling
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
         /**
-        * @brief    Get an index that represents a  
-        */
-        UINT32 GetUniformBufferIndex();
+         * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many
+         *          we need
+         */
+        void DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light);
 
-        UINT32 m_NextAvailableMatrix{};
+		void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
+
 
         /** Entt registry that the renderer will be using. Set by the Engine */
         entt::registry* m_Registry = nullptr;
@@ -244,11 +262,6 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-        /** Simple little pool for getting the next available UBO index */
-        const static UINT32 UNIFORM_BUFFER_POOL_SIZE = 256;
-        static UINT32 g_UboIndexPool[UNIFORM_BUFFER_POOL_SIZE];
-        static UINT32 g_AllocatedUBOPoolIndex;
-
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;
 
@@ -271,6 +284,22 @@ namespace Fling
         std::vector<VkFence> m_InFlightFences;
 
 		std::shared_ptr<Material> m_DefaultMat;
+
+        // Lighting -----------------------
+        Lighting m_Lighting = {};
+		std::shared_ptr<Image> m_BRDFLookupTexture;
+        struct LightingUbo
+        {
+			UINT32 DirLightCount = 0;
+            DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+
+			UINT32 PointLightCount = 0;
+			PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+        };
+
+        LightingUbo m_LightingUBO = {}; 
+
+        void CreateLightBuffers();
 
         // Flag for toggling imgui 
         bool m_DrawImgui;

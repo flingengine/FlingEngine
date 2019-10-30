@@ -30,22 +30,12 @@ namespace Fling
 
 	bool MeshRenderer::operator==(const MeshRenderer& other) const
 	{
-		return m_ModelMatrixOffset == other.m_ModelMatrixOffset && m_Model == other.m_Model;
+		return m_Model == other.m_Model && m_Material == other.m_Material;
 	}
 
 	bool MeshRenderer::operator!=(const MeshRenderer& other) const
 	{
 		return !(*this == other);
-	}
-
-	bool MeshRenderer::operator<(const MeshRenderer& other) const
-	{
-		return m_ModelMatrixOffset < other.m_ModelMatrixOffset;
-	}
-
-	void MeshRenderer::Initalize(UINT32 t_ModelMatrixOffset)
-	{	
-		m_ModelMatrixOffset = t_ModelMatrixOffset;
 	}
 
 	void MeshRenderer::LoadModelFromPath(const std::string t_MeshPath)

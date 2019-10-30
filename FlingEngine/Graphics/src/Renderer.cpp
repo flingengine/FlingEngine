@@ -12,11 +12,8 @@
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
-
-    UINT32 Renderer::g_UboIndexPool[UNIFORM_BUFFER_POOL_SIZE];
-    UINT32 Renderer::g_AllocatedUBOPoolIndex = 0u;
-
-	void Renderer::Init()
+	
+    void Renderer::Init()
 	{
 		// You must have the registry set before creating a renderer!
 		assert(m_Registry);
@@ -67,6 +64,9 @@ namespace Fling
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
+		m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
+		assert(m_BRDFLookupTexture);
+
         CreateFrameBuffers();
 
         CreateDescriptorPool();
@@ -96,6 +96,8 @@ namespace Fling
 
         m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount());
 
+        CreateLightBuffers();
+
         BuildCommandBuffers(*m_Registry);
 
         // Initialize imgui
@@ -116,6 +118,19 @@ namespace Fling
 
         m_flingImgui->InitResources(m_LogicalDevice->GetGraphicsQueue());
         m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame>(m_imguiDisplay);
+    }
+
+    void Renderer::CreateLightBuffers()
+    {
+        const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
+
+		m_Lighting.m_LightingUBOs.resize(Images.size());
+		for (size_t i = 0; i < Images.size(); i++)
+		{
+			m_Lighting.m_LightingUBOs[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			m_Lighting.m_LightingUBOs[i]->MapMemory(bufferSize);
+		}
     }
 
     void Renderer::UpdateImguiIO()
@@ -229,7 +244,7 @@ namespace Fling
 
         // Vertex input ----------------------
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions = Vertex::GetAttributeDescriptions();
+        auto AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
         VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -288,9 +303,9 @@ namespace Fling
         VkPipelineMultisampleStateCreateInfo Multisampling = {};
         {
             Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-            Multisampling.sampleShadingEnable = VK_FALSE;
+            Multisampling.sampleShadingEnable = VK_TRUE;
             Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-            Multisampling.minSampleShading = 1.0f; // Optional
+            Multisampling.minSampleShading = 0.2f; 
             Multisampling.pSampleMask = nullptr; // Optional
             Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
             Multisampling.alphaToOneEnable = VK_FALSE; // Optional
@@ -499,9 +514,6 @@ namespace Fling
         m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
-        VkSemaphoreCreateInfo semaphoreInfo = {};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -625,6 +637,28 @@ namespace Fling
 		static CircularBuffer<VkDescriptorImageInfo, 4096> ImageInfoBuf = {};
 		static CircularBuffer<VkDescriptorBufferInfo, 4096> UBOBuf = {};
 
+        auto AddImageSampler = [&](Image* t_Image, UINT32 t_Binding, VkDescriptorSet t_DstSet, std::vector<VkWriteDescriptorSet>& t_SetArray)
+        {
+            // Create an image binding
+            VkDescriptorImageInfo* ImageInfo = ImageInfoBuf.GetItem();
+            ImageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            ImageInfo->imageView = t_Image->GetVkImageView();
+            ImageInfo->sampler = t_Image->GetSampler();
+
+            // Create sampler information
+            VkWriteDescriptorSet ImageSamplerSet = {};
+            ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            ImageSamplerSet.dstSet = t_DstSet;
+            ImageSamplerSet.dstBinding = t_Binding;
+            ImageSamplerSet.dstArrayElement = 0;
+            ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            ImageSamplerSet.descriptorCount = 1;
+            ImageSamplerSet.pImageInfo = ImageInfo;
+
+            // Add to the set array
+            t_SetArray.push_back(ImageSamplerSet);
+        };
+
         // Create material description sets for each swap chain image that we have
         for (size_t i = 0; i < Images.size(); ++i)
         {
@@ -646,22 +680,28 @@ namespace Fling
 
 				descriptorWrites.push_back(UniformSet);
 
-				// Binding 2 : Image sampler
-				VkDescriptorImageInfo* imageInfo = ImageInfoBuf.GetItem();
-				imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo->imageView = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetVkImageView();
-				imageInfo->sampler = t_MeshRend.m_Material->m_Textures.m_AlbedoTexture->GetSampler();
+                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+				AddImageSampler(m_BRDFLookupTexture.get(), 7, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+				// TODO: Ambient Occlusion Map
 
-				VkWriteDescriptorSet ImageSamplerSet = {};
-				ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				ImageSamplerSet.dstSet = t_MeshRend.m_DescriptorSets[i];
-				ImageSamplerSet.dstBinding = 2;
-				ImageSamplerSet.dstArrayElement = 0;
-				ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				ImageSamplerSet.descriptorCount = 1;
-				ImageSamplerSet.pImageInfo = imageInfo;
+                // Binding 6 : Fragment shader directional lights
+                // A uniform buffer of lights! 
+				VkDescriptorBufferInfo* LightBufferInfo = UBOBuf.GetItem();
+				LightBufferInfo->buffer = m_Lighting.m_LightingUBOs[i]->GetVkBuffer();
+				LightBufferInfo->offset = 0;
+				LightBufferInfo->range = m_Lighting.m_LightingUBOs[i]->GetSize();
 
-				descriptorWrites.push_back(ImageSamplerSet);
+				VkWriteDescriptorSet LightUniformSet = Initalizers::WriteDescriptorSet(
+                    t_MeshRend.m_DescriptorSets[i],
+					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					6,
+					LightBufferInfo
+				);
+
+				descriptorWrites.push_back(LightUniformSet);
 
                 vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			});
@@ -815,26 +855,74 @@ namespace Fling
 
 	void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
 	{
-		// For each active mesh renderer
-		auto view = m_Registry->view<MeshRenderer, Transform>();
-		for (auto entity : view)
+		// For each active mesh renderer update it's UBO
 		{
-			MeshRenderer& Mesh = view.get<MeshRenderer>(entity);
-			Transform& Trans = view.get<Transform>(entity);
+            auto view = m_Registry->view<MeshRenderer, Transform>();
+            for (auto entity : view)
+            {
+                MeshRenderer& Mesh = view.get<MeshRenderer>(entity);
+                Transform& Trans = view.get<Transform>(entity);
 
-			Transform::CalculateWorldMatrix(Trans);
+                Transform::CalculateWorldMatrix(Trans);
 
-			// Calculate the world matrix based on the given transform
-			UboVS ubo = {};
-			ubo.Model = Trans.GetWorldMat();
-			ubo.View = m_camera->GetViewMatrix();
-			ubo.Projection = m_camera->GetProjectionMatrix();
-			ubo.Projection[1][1] *= -1.0f;
+                // Calculate the world matrix based on the given transform
+                UboVS ubo = {};
+                ubo.Model = Trans.GetWorldMat();
+                ubo.View = m_camera->GetViewMatrix();
+                ubo.Projection = m_camera->GetProjectionMatrix();
+                ubo.Projection[1][1] *= -1.0f;
+				ubo.CamPos = m_camera->GetPosition();
+                ubo.ObjPos = Trans.GetPos();
 
-			// Copy the ubo to the GPU
-			Buffer* buf = Mesh.m_UniformBuffers[t_CurrentImage];
-			memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
+                // Copy the ubo to the GPU
+                Buffer* buf = Mesh.m_UniformBuffers[t_CurrentImage];
+                memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
+            }
+        }
+
+        // Copy directional lights to the fragment shader
+        {
+            auto lightView = m_Registry->view<DirectionalLight>();
+            UINT32 CurLightCount = 0;
+
+            for(auto entity : lightView)
+            {
+                if(CurLightCount < Lighting::MaxDirectionalLights)
+                {
+                    DirectionalLight& Light = lightView.get(entity);
+                    // Copy the dir light info to the buffer
+					size_t size = sizeof(DirectionalLight);
+                    memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
+                }
+            }
+            
+            m_LightingUBO.DirLightCount = CurLightCount;
+        }
+
+		// Copy the point light data to the UBO
+		{
+			auto lightView = m_Registry->view<PointLight, Transform>();
+			UINT32 CurLightCount = 0;
+
+			for (auto entity : lightView)
+			{
+				if (CurLightCount < Lighting::MaxPointLights)
+				{
+					PointLight& Light = lightView.get<PointLight>(entity);
+					Transform& Trans = lightView.get<Transform>(entity);
+					
+					Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
+
+					// Copy the dir light info to the buffer
+					memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light,  sizeof(PointLight));
+				}
+			}
+
+			m_LightingUBO.PointLightCount = CurLightCount;
 		}
+
+		// Memcpy the dir light UBO
+		memcpy(m_Lighting.m_LightingUBOs[t_CurrentImage]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
     }
 
     // Shutdown steps -------------------------------------------
@@ -849,6 +937,20 @@ namespace Fling
 			t_MeshRend.Release();
 			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
         });
+
+        // Delete light buffers
+        for (size_t i = 0; i < m_Lighting.m_LightingUBOs.size(); i++)
+		{
+			if(m_Lighting.m_LightingUBOs[i])
+            {
+                delete m_Lighting.m_LightingUBOs[i];
+                m_Lighting.m_LightingUBOs[i] = nullptr;
+            }
+		}
+        m_Lighting.m_LightingUBOs.clear();
+
+		// release refs to textures
+		m_BRDFLookupTexture = nullptr;
     }
 
     void Renderer::Shutdown()
@@ -927,12 +1029,12 @@ namespace Fling
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
+        m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
+		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
     }
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
     {
-        t_MeshRend.Initalize(GetUniformBufferIndex());
-
 		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 		VkDeviceSize bufferSize = sizeof(UboVS);
 
@@ -946,10 +1048,32 @@ namespace Fling
 		SetFrameBufferHasBeenResized(true);
     }
 
-    UINT32 Renderer::GetUniformBufferIndex()
+    void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {
-        const uint32_t index = g_AllocatedUBOPoolIndex++;
-        // Multiply by dynamic alignment
-        return (g_UboIndexPool[index & (UNIFORM_BUFFER_POOL_SIZE - 1u)]);
+        F_LOG_TRACE("Directional Light added!");
+        ++m_Lighting.m_CurrentDirLights;
+        if(m_Lighting.m_CurrentDirLights > Lighting::MaxDirectionalLights)
+        {
+            F_LOG_WARN("You have enterer more then the max support directional lights of Fling!");
+        }
     }
+
+	void Renderer::PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
+	{
+		F_LOG_TRACE("Point Light added!");
+		++m_Lighting.m_CurrentPointLights;
+
+		Transform& t = t_Reg.assign<Transform>(t_Ent);
+
+#if FLING_DEBUG
+		// Make a cute little debug mesh on a point light	
+		t.SetScale(glm::vec3{ 0.1f });
+		t_Reg.assign<MeshRenderer>(t_Ent, "Models/sphere.obj");
+#endif	// FLING_DEBUG
+
+		if (m_Lighting.m_CurrentPointLights> Lighting::MaxPointLights)
+		{
+			F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
+		}
+	}
 }    // namespace FlingR

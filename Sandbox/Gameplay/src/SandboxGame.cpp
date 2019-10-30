@@ -6,7 +6,9 @@
 #include "MeshRenderer.h"
 #include "Renderer.h"
 #include "Stats.h"
-
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
+#include "Random.h"
 
 namespace Sandbox
 {
@@ -25,12 +27,15 @@ namespace Sandbox
 		// notify we want to quit when we press escape
 		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
-
 		// Toggle cursor/mouse visibility with M
 		Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
 
+		// Toggle model rotation in Update
+		Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
+
+		LightingTest(t_Reg);
 		//OnLoadInitated();
-		GenerateTestMeshes(t_Reg);
+		//GenerateTestMeshes(t_Reg);
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -40,14 +45,18 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		glm::vec3 RotOffset( 15.0f * DeltaTime );
-
-		// For each active mesh renderer
-		t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+		static float PosSpeed = 0.5f;
+		if (m_DoRotations)
 		{
-			const glm::vec3& curRot = t_Trans.GetRotation();
-			t_Trans.SetRotation(curRot + RotOffset);
-		});
+			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
+
+			// For each active mesh renderer
+			t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+			{
+				const glm::vec3& curRot = t_Trans.GetRotation();
+				t_Trans.SetRotation(curRot + RotOffset);
+			});
+		}
 	}
 
 	void Game::OnLoadInitated()
@@ -78,6 +87,49 @@ namespace Sandbox
 	{
 		F_LOG_TRACE("The Sandbox game wants to quit!");
 		m_WantsToQuit = true;
+	}
+
+	void Game::LightingTest(entt::registry& t_Reg)
+	{
+		auto AddSphere = [&](UINT32 t_Itr,  const std::string& t_Model, const std::string& t_Mat) 
+		{
+			entt::entity e0 = t_Reg.create();
+			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
+			Transform& t0 = t_Reg.assign<Transform>(e0);
+			t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
+		};
+
+		auto AddRandomPointLight = [&]()
+		{
+			entt::entity e0 = t_Reg.create();
+			PointLight& Light = t_Reg.assign<PointLight>(e0);
+			Transform& t0 = t_Reg.get<Transform>(e0);
+
+			Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
+			Light.Intensity = 10.0f;
+			Light.Range = 30.0f;
+
+			t0.SetPos(Fling::Random::GetRandomVec3(glm::vec3(-5.0f), glm::vec3(5.0f)));
+		};
+
+		//AddSphere(0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
+
+		AddSphere(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		AddSphere(1, "Models/sphere.obj", "Materials/Paint.mat");
+		AddSphere(2, "Models/sphere.obj", "Materials/Bronze.mat");
+		AddSphere(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
+
+		// Add a point light
+		AddRandomPointLight();
+		AddRandomPointLight();
+		AddRandomPointLight();
+		AddRandomPointLight();
+
+		// Directional Lights
+		{
+			entt::entity e0 = t_Reg.create();
+			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
+		}
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)
@@ -114,10 +166,15 @@ namespace Sandbox
 	void Game::ToggleCursorVisibility()
 	{
 		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
-    if(CurrentWindow)
-    {
-      CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
-    }		
+		if(CurrentWindow)
+		{
+		CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+		}		
+	}
+
+	void Game::ToggleRotation()
+	{
+		m_DoRotations = !m_DoRotations;
 	}
 
   void Game::PrintFPS() const

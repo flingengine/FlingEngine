@@ -45,7 +45,7 @@ namespace Fling
 
 			// Rough
 			const std::string& RoughPath = m_JsonData["rough"];
-			m_Textures.m_MetalTexture = Image::Create(HS(RoughPath.c_str())).get();
+			m_Textures.m_RoughnessTexture = Image::Create(HS(RoughPath.c_str())).get();
 		}
 		catch (std::exception& e)
 		{
