@@ -2,6 +2,7 @@
 
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include "FlingMath.h"
 
 namespace Fling
 {
@@ -33,5 +34,8 @@ namespace Fling
 		/** Flag to determine if random has been initialized */
 		static bool bIsInitalized;
 
+		static glm::vec3 GetRandomVec3(const glm::vec3 t_Min, const glm::vec3 t_Max);
+
+		static float GetRandomFloat(float t_Min, float t_Max);
 	};
 }	// namespace Fling

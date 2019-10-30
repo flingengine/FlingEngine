@@ -27,4 +27,18 @@ namespace Fling
 		// Range from minx to max
 		return rand() % t_max + t_min;
 	}
+
+	glm::vec3 Random::GetRandomVec3(const glm::vec3 t_Min, const glm::vec3 t_Max)
+	{
+		glm::vec3 rand = {};
+		rand.x = GetRandomFloat(t_Min.x, t_Max.x);
+		rand.y = GetRandomFloat(t_Min.y, t_Max.y);
+		rand.z = GetRandomFloat(t_Min.z, t_Max.z);
+		return rand;
+	}
+
+	float Random::GetRandomFloat(float t_Min, float t_Max)
+	{
+		return (static_cast<float>(rand()) / static_cast<float>(RAND_MAX / (t_Max - t_Min))) + t_Min;
+	}
 }	// namespace Fling

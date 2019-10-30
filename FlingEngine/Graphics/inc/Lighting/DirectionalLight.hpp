@@ -12,7 +12,7 @@ namespace Fling
     struct DirectionalLight
     {
         glm::vec4 DiffuseColor { 1.0f };
-        glm::vec4 Direction { 1.0f };
+        glm::vec4 Direction { 1.0f, -1.0f, -0.5f, 1.0f  };
 		float Intensity = 1.0f;
 
         template<class Archive>

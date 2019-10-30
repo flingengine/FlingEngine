@@ -293,8 +293,8 @@ namespace Fling
 			UINT32 DirLightCount = 0;
             DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
 
-			//UINT32 PointLightCount = 0;
-			//PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+			UINT32 PointLightCount = 0;
+			PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
         };
 
         LightingUbo m_LightingUBO = {}; 

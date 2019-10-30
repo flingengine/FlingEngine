@@ -10,8 +10,8 @@ struct DirectionalLightData
 
 struct PointLightData
 {
-    vec3 DiffuseColor;
-    vec3 Pos;
+    vec4 Color;
+    vec4 Pos;
     float Intensity; 
     float Range; 
 };
@@ -36,8 +36,8 @@ layout (binding = 6) uniform LightingData
     int DirLightCount;
 	DirectionalLightData DirLights[32];
 
-    // int PointLightCount;
-    // PointLightData PointLights[32];
+    int PointLightCount;
+    PointLightData PointLights[32];
 } lights;
 
 layout (binding = 7) uniform sampler2D samplerBRDFLUT;
@@ -122,7 +122,7 @@ vec3 MicrofacetBRDF( vec3 n, vec3 l, vec3 v, float roughness, float metalness, v
     return ( D * F * G ) / ( 4 * max( dot( n, v ), dot( n, l ) ) );
 }
 
-// From chris
+// From chris ---------------------------------
 vec3 DirLightPBR( DirectionalLightData light, vec3 normal, vec3 worldPos, vec3 camPos, float roughness, float metalness, vec3 surfaceColor, vec3 specularColor )
 {
     // Get normalize direction to the light
@@ -139,6 +139,38 @@ vec3 DirLightPBR( DirectionalLightData light, vec3 normal, vec3 worldPos, vec3 c
 
     // Combine amount with light color/intensity
     return vec3( balancedDiff.rgb * surfaceColor.rgb + spec.rgb ) * light.Intensity * light.DiffuseColor.rgb;
+}
+
+
+// Range-based attenuation function From Chris Cascioli
+float Attenuate( PointLightData light, vec3 worldPos )
+{
+    float dist = distance( light.Pos.rgb, worldPos );
+
+    // Ranged-based attenuation
+    float att = clamp( 1.0f - ( dist * dist / ( light.Range * light.Range ) ) , 0.0, 1.0 );
+
+    // Soft falloff
+    return att * att;
+}
+
+vec3 CalculatePointLight( PointLightData light, vec3 normal, vec3 worldPos, vec3 camPos, float roughness, float metalness, vec3 surfaceColor, vec3 specularColor )
+{
+    // Calc light direction
+    vec3 toLight = normalize( light.Pos.rgb - worldPos );
+    vec3 toCam = normalize( camPos - worldPos );
+
+    // Calculate the light amounts
+    float atten = Attenuate( light, worldPos );
+    float diff = clamp( dot( normal, toLight ), 0.0, 1.0 );
+    vec3 spec = MicrofacetBRDF( normal, toLight, toCam, roughness, metalness, specularColor );
+
+    // Calculate diffuse with energy conservation
+    // (Reflected light doesn't diffuse)
+    vec3 balancedDiff = diff * ( ( 1 - clamp( spec, 0.0, 1.0 ) ) * ( 1 - metalness ) );
+
+    // Combine
+    return ( balancedDiff * surfaceColor + spec ) * atten * light.Intensity * light.Color.rgb;
 }
 
 // Perturb normal, see http://www.thetenthplanet.de/archives/1180
@@ -169,16 +201,33 @@ void main()
 
     vec3 LightColor = vec3(0.0);
 
+    vec3 normal = perturbNormal();
+
     for(int i = 0; i < lights.DirLightCount; i++)
     {
         LightColor += DirLightPBR( 
             lights.DirLights[i],
-            perturbNormal(), 
+            normal, 
             inWorldPos, 
             inCamPos.xyz, 
             roughness, 
             metal, 
             abledoColor.rgb, 
+            specColor 
+        );
+    }
+
+
+    for(int i = 0; i < lights.PointLightCount; i++)
+    {
+        LightColor += CalculatePointLight( 
+            lights.PointLights[ i ], 
+            normal, 
+            inWorldPos,
+            inCamPos.xyz, 
+            roughness,
+            metal, 
+            abledoColor.rgb,
             specColor 
         );
     }

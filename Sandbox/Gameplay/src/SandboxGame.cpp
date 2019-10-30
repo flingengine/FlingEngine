@@ -7,6 +7,8 @@
 #include "Renderer.h"
 #include "Stats.h"
 #include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
+#include "Random.h"
 
 namespace Sandbox
 {
@@ -94,7 +96,20 @@ namespace Sandbox
 			entt::entity e0 = t_Reg.create();
 			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
 			Transform& t0 = t_Reg.assign<Transform>(e0);
-			t0.SetPos(glm::vec3(1.5f * (float)t_Itr, 0.0f, 0.0f));
+			t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
+		};
+
+		auto AddRandomPointLight = [&]()
+		{
+			entt::entity e0 = t_Reg.create();
+			PointLight& Light = t_Reg.assign<PointLight>(e0);
+			Transform& t0 = t_Reg.get<Transform>(e0);
+
+			Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
+			Light.Intensity = 10.0f;
+			Light.Range = 30.0f;
+
+			t0.SetPos(Fling::Random::GetRandomVec3(glm::vec3(-5.0f), glm::vec3(5.0f)));
 		};
 
 		//AddSphere(0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
@@ -104,22 +119,16 @@ namespace Sandbox
 		AddSphere(2, "Models/sphere.obj", "Materials/Bronze.mat");
 		AddSphere(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
-		// Add some lights
-		{
-			entt::entity e0 = t_Reg.create();
-			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
-			Light.DiffuseColor = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-			Light.Intensity = 0.5f;
-			Light.Direction = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-		}
+		// Add a point light
+		AddRandomPointLight();
+		AddRandomPointLight();
+		AddRandomPointLight();
+		AddRandomPointLight();
 
-		// Add some lights
+		// Directional Lights
 		{
 			entt::entity e0 = t_Reg.create();
 			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
-			Light.DiffuseColor = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-			Light.Intensity = 0.5f;
-			Light.Direction = glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f);
 		}
 	}
 

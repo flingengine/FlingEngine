@@ -892,8 +892,7 @@ namespace Fling
                     DirectionalLight& Light = lightView.get(entity);
                     // Copy the dir light info to the buffer
 					size_t size = sizeof(DirectionalLight);
-                    memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount)), &Light, size);
-					CurLightCount++;
+                    memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
                 }
             }
             
@@ -901,28 +900,26 @@ namespace Fling
         }
 
 		// Copy the point light data to the UBO
-		//{
-		//	auto lightView = m_Registry->view<PointLight, Transform>();
-		//	UINT32 CurLightCount = 0;
+		{
+			auto lightView = m_Registry->view<PointLight, Transform>();
+			UINT32 CurLightCount = 0;
 
-		//	for (auto entity : lightView)
-		//	{
-		//		if (CurLightCount < Lighting::MaxPointLights)
-		//		{
-		//			PointLight& Light = lightView.get<PointLight>(entity);
-		//			Transform& Trans = lightView.get<Transform>(entity);
-		//			
-		//			Light.SetPos(Trans.GetPos());
+			for (auto entity : lightView)
+			{
+				if (CurLightCount < Lighting::MaxPointLights)
+				{
+					PointLight& Light = lightView.get<PointLight>(entity);
+					Transform& Trans = lightView.get<Transform>(entity);
+					
+					Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
 
-		//			// Copy the dir light info to the buffer
-		//			size_t size = sizeof(PointLight);
-		//			memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount)), &Light, size);
-		//			CurLightCount++;
-		//		}
-		//	}
+					// Copy the dir light info to the buffer
+					memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light,  sizeof(PointLight));
+				}
+			}
 
-		//	m_LightingUBO.PointLightCount = CurLightCount;
-		//}
+			m_LightingUBO.PointLightCount = CurLightCount;
+		}
 
 		// Memcpy the dir light UBO
 		memcpy(m_Lighting.m_LightingUBOs[t_CurrentImage]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
@@ -1065,6 +1062,15 @@ namespace Fling
 	{
 		F_LOG_TRACE("Point Light added!");
 		++m_Lighting.m_CurrentPointLights;
+
+		Transform& t = t_Reg.assign<Transform>(t_Ent);
+
+#if FLING_DEBUG
+		// Make a cute little debug mesh on a point light	
+		t.SetScale(glm::vec3{ 0.1f });
+		t_Reg.assign<MeshRenderer>(t_Ent, "Models/sphere.obj");
+#endif	// FLING_DEBUG
+
 		if (m_Lighting.m_CurrentPointLights> Lighting::MaxPointLights)
 		{
 			F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
