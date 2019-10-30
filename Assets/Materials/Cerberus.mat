@@ -1,0 +1,11 @@
+{
+    "name" : "Cerberus Material",
+
+    "vertex" : "Shaders/PBRDefault_vert.spv",
+    "frag" : "Shaders/PBRDefault_frag.spv",
+
+    "albedo" : "Textures/Cerberus/Cerberus_A.png",
+    "normal" : "Textures/Cerberus/Cerberus_N.png",
+    "metal" : "Textures/Cerberus/Cerberus_M.png",
+    "rough" : "Textures/Cerberus/Cerberus_R.png" 
+}

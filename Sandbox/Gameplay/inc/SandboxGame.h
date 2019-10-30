@@ -10,8 +10,8 @@ namespace Sandbox
 	class Game : public Fling::Game
 	{
 		/**
-		 * @brief 	Called before the first gameplay loop tick. 
-		 * 			Do any initalization for custom gameplay systems here. 
+		 * @brief 	Called before the first gameplay loop tick.
+		 * 			Do any initalization for custom gameplay systems here.
 		 */
 		void Init(entt::registry& t_Reg) override;
 
@@ -25,13 +25,13 @@ namespace Sandbox
 
 		/**
 		 * @brief Called when player presses the button to initate loading
-		 * 
+		 *
 		 */
 		void OnLoadInitated();
 
 		/**
 		 * @brief Called when the user presses the button to initalize saving
-		 * 
+		 *
 		 */
 		void OnSaveInitated();
 
@@ -43,9 +43,25 @@ namespace Sandbox
 		/* Creates a 3D array of meshes */
 		void GenerateTestMeshes(entt::registry& t_Reg);
 
+		void PrintFPS() const;
+
+		void LightingTest(entt::registry& t_Reg);
+
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
-    
-    void PrintFPS() const;
+
+	private:
+
+		bool m_DoRotations = false;
+
+		void ToggleRotation();
+
+		void OnLeftArrowPressed();
+
+		void OnRightArrowPressed();
+
+		/** Temp vector for keeping track of the movement of things */
+		glm::vec3 MoveDelta = {};
+
 	};
 }	// namespace Sandbox

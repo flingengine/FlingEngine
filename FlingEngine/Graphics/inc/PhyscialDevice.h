@@ -36,6 +36,8 @@ namespace Fling
 		/** Logs info about this physical device (vendor, model, ID, etc) to the console/Log file */
 		void LogPhysicalDeviceInfo();
 
+		VkSampleCountFlagBits GetMaxUsableSampleCount();
+
     private:
 
 		/**
@@ -54,5 +56,8 @@ namespace Fling
         VkPhysicalDeviceProperties m_DeviceProperties{};
         VkPhysicalDeviceFeatures m_DeviceFeatures{};
 		VkPhysicalDeviceMemoryProperties m_MemoryProperties{};
+
+		/** The max supported MSSA level on this device */
+		VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     };
 }   // namespace Fling

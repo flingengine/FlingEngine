@@ -40,6 +40,12 @@ namespace Fling
 
 		ImGui::Checkbox("Mouse click left", &io.MouseDown[0]);
 		ImGui::Checkbox("Mouse click right", &io.MouseDown[1]);
+
+		ImGui::Text("Press 'M' to hide the mouse cursor");
+		ImGui::Text("Press 'T' to toggle object rotation");
+		ImGui::Text("Press 'WASD' Move");
+		ImGui::Text("Right Click and drag to rotate camera");
+
 		ImGui::End();
 	}
 }

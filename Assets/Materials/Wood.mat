@@ -1,8 +1,8 @@
 {
-    "name" : "Default Material",
+    "name" : "Wood Material",
 
-    "vertex" : "Shaders/vert.spv",
-    "frag" : "Shaders/frag.spv",
+    "vertex" : "Shaders/PBRDefault_vert.spv",
+    "frag" : "Shaders/PBRDefault_frag.spv",
 
     "albedo" : "Textures/wood_albedo.png",
     "normal" : "Textures/wood_normals.png",
