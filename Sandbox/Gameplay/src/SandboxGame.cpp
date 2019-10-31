@@ -10,6 +10,8 @@
 #include "Lighting/PointLight.hpp"
 #include "Random.h"
 
+#include "Mover.h"
+
 namespace Sandbox
 {
 	using namespace Fling;
@@ -32,6 +34,7 @@ namespace Sandbox
 
 		// Toggle model rotation in Update
 		Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
+		Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 
 		LightingTest(t_Reg);
 		//OnLoadInitated();
@@ -45,7 +48,6 @@ namespace Sandbox
 
 	void Game::Update(entt::registry& t_Reg, float DeltaTime)
 	{
-		static float PosSpeed = 0.5f;
 		if (m_DoRotations)
 		{
 			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
@@ -57,6 +59,21 @@ namespace Sandbox
 				t_Trans.SetRotation(curRot + RotOffset);
 			});
 		}
+
+		if(m_MovePointLights)
+		{
+			t_Reg.view<Mover, Transform>().each([&](Mover& t_Mover, Transform& t_Trans)
+			{
+				glm::vec3 newPos = t_Trans.GetPos();
+				if(newPos.x <= t_Mover.MinPos || newPos.x >= t_Mover.MaxPos)
+				{
+					t_Mover.Speed *= -1.0f;
+				}
+
+				newPos.x += t_Mover.Speed * DeltaTime;
+				t_Trans.SetPos(newPos);
+			});
+		}	
 	}
 
 	void Game::OnLoadInitated()
@@ -112,6 +129,20 @@ namespace Sandbox
 			t0.SetPos(Fling::Random::GetRandomVec3(glm::vec3(-5.0f), glm::vec3(5.0f)));
 		};
 
+		auto AddPointLight = [&](glm::vec3 t_Pos, glm::vec3 t_Color)
+		{
+			entt::entity e0 = t_Reg.create();
+			PointLight& Light = t_Reg.assign<PointLight>(e0);
+			Transform& t0 = t_Reg.get<Transform>(e0);
+			Mover& m0 = t_Reg.assign<Mover>(e0);
+
+			Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
+			Light.Intensity = 5.0f;
+			Light.Range = 3.0f;
+
+			t0.SetPos(t_Pos);
+		};
+
 		//AddSphere(0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
 
 		AddSphere(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
@@ -119,17 +150,23 @@ namespace Sandbox
 		AddSphere(2, "Models/sphere.obj", "Materials/Bronze.mat");
 		AddSphere(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
-		// Add a point light
-		AddRandomPointLight();
-		AddRandomPointLight();
-		AddRandomPointLight();
-		AddRandomPointLight();
+		AddPointLight(glm::vec3(+0.0f, +0.0f, +1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		AddPointLight(glm::vec3(+0.0f, +0.0f, -1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 
-		// Directional Lights
+		AddPointLight(glm::vec3(+0.0f, +1.0f, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+		AddPointLight(glm::vec3(+0.0f, -1.0f, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+
+
+		auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
 		{
 			entt::entity e0 = t_Reg.create();
 			DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
-		}
+			Light.Direction = glm::vec4(t_Dir, 1.0f);
+			Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
+		};
+
+		// Directional Lights
+		//AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)
@@ -168,8 +205,13 @@ namespace Sandbox
 		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
 		if(CurrentWindow)
 		{
-		CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+			CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
 		}		
+	}
+
+	void Game::OnToggleMoveLights()
+	{
+		m_MovePointLights = !m_MovePointLights;
 	}
 
 	void Game::ToggleRotation()

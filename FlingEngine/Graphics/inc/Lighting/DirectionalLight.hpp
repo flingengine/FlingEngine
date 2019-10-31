@@ -6,10 +6,10 @@
 namespace Fling
 {
     /**
-     * @brief Simple representation of a directional light for Fling
-     * 
+     * @brief   Simple representation of a directional light for Fling. Needs to be 16 bytes aligned
+     *          for Vulkan 
      */
-    struct DirectionalLight
+    struct alignas(16) DirectionalLight
     {
         glm::vec4 DiffuseColor { 1.0f };
         glm::vec4 Direction { 1.0f, -1.0f, -0.5f, 1.0f  };
@@ -24,15 +24,10 @@ namespace Fling
     void DirectionalLight::serialize(Archive & t_Archive)
     {
         t_Archive( 
-            //cereal::make_nvp("AMBIENT_X", AmbientColor.x),
-            //cereal::make_nvp("AMBIENT_Y", AmbientColor.y),
-            //cereal::make_nvp("AMBIENT_Z", AmbientColor.z),
-            //cereal::make_nvp("AMBIENT_W", AmbientColor.w),
-
             cereal::make_nvp("DIFFUSE_X", DiffuseColor.x),
             cereal::make_nvp("DIFFUSE_Y", DiffuseColor.y),
             cereal::make_nvp("DIFFUSE_Z", DiffuseColor.z),
-            //cereal::make_nvp("DIFFUSE_W", DiffuseColor.w),
+            cereal::make_nvp("DIFFUSE_W", DiffuseColor.w),
 
             cereal::make_nvp("DIRECTION_X", Direction.x),
             cereal::make_nvp("DIRECTION_Y", Direction.y),

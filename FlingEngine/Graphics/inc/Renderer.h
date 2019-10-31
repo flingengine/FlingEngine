@@ -290,11 +290,12 @@ namespace Fling
 		std::shared_ptr<Image> m_BRDFLookupTexture;
         struct LightingUbo
         {
-			UINT32 DirLightCount = 0;
-            DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+			alignas(4) UINT32 DirLightCount = 0;
+			alignas(4) UINT32 PointLightCount = 0;
 
-			UINT32 PointLightCount = 0;
-			PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+            alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+
+			alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
         };
 
         LightingUbo m_LightingUBO = {}; 
