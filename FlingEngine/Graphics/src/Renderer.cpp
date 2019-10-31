@@ -560,6 +560,11 @@ namespace Fling
 			m_MsaaSampler->Release();
 		}
 
+       /* m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		{
+			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+        });*/
+
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
             vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
@@ -567,13 +572,19 @@ namespace Fling
 
         vkFreeCommandBuffers(m_LogicalDevice->GetVkDevice(), m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
 
+<<<<<<< HEAD
         vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_GraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
+=======
+        //if (m_GraphicsPipeline)
+        //{
+        //    delete m_GraphicsPipeline;
+        //    m_GraphicsPipeline = nullptr;
+        //}
+>>>>>>> 3dc0036... removed unused member functions in renderer
         vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
-        m_SwapChain->Cleanup();
-		
-        vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
+        m_SwapChain->Cleanup();	
     }
 
     void Renderer::RecreateFrameResources()
@@ -587,7 +598,7 @@ namespace Fling
         m_SwapChain->Recreate(ChooseSwapExtent());
 
         CreateRenderPass();
-        CreateGraphicsPipeline();
+        //CreateGraphicsPipeline();
 
         m_DepthBuffer->Create();
 		if (m_MsaaSampler)
@@ -1011,6 +1022,12 @@ namespace Fling
         {
             delete m_SwapChain;
             m_SwapChain = nullptr;
+        }
+
+        if (m_GraphicsPipeline)
+        {
+            delete m_GraphicsPipeline;
+            m_GraphicsPipeline = nullptr;
         }
 		
 		if (m_DepthBuffer)

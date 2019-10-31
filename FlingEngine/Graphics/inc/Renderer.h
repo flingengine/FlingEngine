@@ -244,15 +244,16 @@ namespace Fling
 
         /** Pipeline layout stores uniforms (global shader vars) */
         VkDescriptorSetLayout m_DescriptorSetLayout;
-        VkPipelineLayout m_PipelineLayout;
 
+<<<<<<< HEAD
         VkPipeline m_GraphicsPipeline;
+=======
+        GraphicsPipeline* m_GraphicsPipeline;
+>>>>>>> 3dc0036... removed unused member functions in renderer
 
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
-        /** @see CreateDescriptorPool */
-        VkDescriptorPool m_DescriptorPool;
 
         DepthBuffer* m_DepthBuffer = nullptr;
 
