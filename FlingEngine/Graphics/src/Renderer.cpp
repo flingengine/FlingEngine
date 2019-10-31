@@ -570,6 +570,11 @@ namespace Fling
 			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
         });*/
 
+       /* m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		{
+			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+        });*/
+
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
             vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
@@ -579,9 +584,12 @@ namespace Fling
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_GraphicsPipeline, nullptr);
         vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
 =======
+=======
+>>>>>>> 3dc0036... removed unused member functions in renderer
 =======
 >>>>>>> 3dc0036... removed unused member functions in renderer
         //if (m_GraphicsPipeline)
@@ -590,6 +598,9 @@ namespace Fling
         //    m_GraphicsPipeline = nullptr;
         //}
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 3dc0036... removed unused member functions in renderer
+=======
 >>>>>>> 3dc0036... removed unused member functions in renderer
 =======
 >>>>>>> 3dc0036... removed unused member functions in renderer
