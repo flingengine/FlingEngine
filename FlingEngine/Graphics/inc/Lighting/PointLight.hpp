@@ -6,9 +6,10 @@
 namespace Fling
 {
     /**
-     * @brief Simple representation of 
+     * @brief   Simple representation of a point light in Light Vox. The colors and position have
+     *          to be glm::vec4's because of shader alignment things
      */
-    struct PointLight
+    struct alignas(16) PointLight
     {
 		friend class Renderer;
     public:
@@ -22,10 +23,10 @@ namespace Fling
         /** The position of this point light will be set from it's Transform component. 
          * set per frame
          */
-        glm::vec4 Pos {};
+        glm::vec4 Pos { 0.0f };
     public:
-        float Intensity = 10.0f;
-        float Range = 5.0f;
+        alignas(4) float Intensity = 10.0f;
+        alignas(4) float Range = 5.0f;
 
         template<class Archive>
         void serialize(Archive & t_Archive);

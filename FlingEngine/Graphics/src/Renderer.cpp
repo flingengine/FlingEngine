@@ -125,6 +125,11 @@ namespace Fling
         const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
+        F_LOG_TRACE("Sizeof DirLight   : {} , alignof {}", sizeof(DirectionalLight), alignof(DirectionalLight));
+        F_LOG_TRACE("Sizeof PointLight : {} , alignof {}", sizeof(PointLight), alignof(PointLight));
+        F_LOG_TRACE("m_LightingUBO     : {} , alignof {}", sizeof(m_LightingUBO), alignof(m_LightingUBO));
+        F_LOG_TRACE("Light UBO         : {} , alignof {}", sizeof(LightingUbo), alignof(LightingUbo));
+
 		m_Lighting.m_LightingUBOs.resize(Images.size());
 		for (size_t i = 0; i < Images.size(); i++)
 		{

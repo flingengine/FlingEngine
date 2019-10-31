@@ -23,7 +23,6 @@ layout (location = 0) out vec3 outWorldPos;
 layout (location = 1) out vec2 outTextCoord;	// AKA UV coordinate
 layout (location = 2) out vec3 outTangent;
 layout (location = 3) out vec3 outNormal;
-layout (location = 4) out vec3 outCamPos;
 
 out gl_PerVertex 
 {
@@ -39,22 +38,6 @@ void main()
 	outTextCoord.t = 1.0 - inTexCoord.t;
 	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
 
-
-	// How I was doing it before
-	// mat4 modelView = ubo.view * ubo.model;
-	// vec3 worldPos = vec3(modelView * vec4(inPosition, 1.0));
-	// gl_Position = ubo.projection * modelView * vec4(inPosition, 1.0);
-
-    // // World Pos ------
-	// outWorldPos = worldPos;
-	// // Tangent -----
+	// Tangent -----
 	outTangent = normalize( inTangent * mat3(ubo.model) );
-	// // Normal -----
-	// //outNormal = normalize( inNormal * mat3(ubo.model) );
-	// outNormal = inNormal;
-	// // Texture Coord -----
-    // outTextCoord = inTexCoord;
-	// // Subtract 1 from the texture coordinate if we need to for each texture
-	// outTextCoord.y = 1 - outTextCoord.y;
-	// outCamPos = ubo.camPos;
 }

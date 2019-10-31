@@ -33,10 +33,10 @@ layout (binding = 5) uniform sampler2D roughnessMap;
 
 layout (binding = 6) uniform LightingData 
 {
-    int DirLightCount;
-	DirectionalLightData DirLights[32];
+    uint DirLightCount;    
+    uint PointLightCount;
 
-    int PointLightCount;
+	DirectionalLightData DirLights[32];
     PointLightData PointLights[32];
 } lights;
 
@@ -47,7 +47,6 @@ layout (location = 0) in vec3 inWorldPos;
 layout (location = 1) in vec2 inTexCoord;
 layout (location = 2) in vec3 inTangent;
 layout (location = 3) in vec3 inNormal;
-layout (location = 4) in vec3 inCamPos;
 
 // Outputs ------------
 layout (location = 0) out vec4 outFragColor;
@@ -209,7 +208,7 @@ void main()
             lights.DirLights[i],
             normal, 
             inWorldPos, 
-            inCamPos.xyz, 
+            ubo.camPos.xyz, 
             roughness, 
             metal, 
             abledoColor.rgb, 
@@ -218,13 +217,14 @@ void main()
     }
 
 
+
     for(int i = 0; i < lights.PointLightCount; i++)
     {
         LightColor += CalculatePointLight( 
             lights.PointLights[ i ], 
             normal, 
             inWorldPos,
-            inCamPos.xyz, 
+            ubo.camPos.xyz, 
             roughness,
             metal, 
             abledoColor.rgb,
