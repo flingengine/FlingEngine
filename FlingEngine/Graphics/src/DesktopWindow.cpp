@@ -96,4 +96,23 @@ namespace Fling
 
 		return static_cast<float>(width) / static_cast<float>(height);
 	}
+
+	void DesktopWindow::SetMouseVisible(bool t_IsVisible)
+	{
+		m_IsMouseVisible = t_IsVisible;
+		if (t_IsVisible)
+		{
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+		else
+		{
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+	}
+
+	bool DesktopWindow::GetMouseVisible()
+	{
+		return m_IsMouseVisible;
+	}
+
 }   // namespace Fling

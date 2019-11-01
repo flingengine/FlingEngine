@@ -1,3 +1,4 @@
+
 #pragma once
 
 // Resolve warnings
@@ -6,6 +7,7 @@
 #include "FlingVulkan.h"
 
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 
 #include "Singleton.hpp"
 
@@ -24,35 +26,62 @@
 
 #include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
+#include "Material.h"
+
+#include "ShaderProgram.h"
+#include "Shader.h"
+#include "FlingImgui.h"
+#include "ImguiDisplay.h"
+#include <atomic>
+#include "Cubemap.h"
+
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
 
 namespace Fling
 {
     // File resource
     class File;
 
+    // Imgui resource
+    class FlingImgui;
+
+    struct Lighting
+    {
+        /** Dir Lights */
+        static const UINT32 MaxDirectionalLights = 32;
+        UINT32 m_CurrentDirLights = 0;
+
+        /** Point Lights */
+        static const UINT32 MaxPointLights = 32;
+        UINT32 m_CurrentPointLights = 0;
+
+        std::vector<Buffer*> m_LightingUBOs;
+    };
+
     /// <summary>
     /// Core renderer for the application
     /// </summary>
     class Renderer : public Singleton<Renderer>
     {
-		friend class Engine;
+        friend class Engine;
     public:
 
         virtual void Init() override;
 
-        virtual void Shutdown() override;
+        virtual void Shutdown() override;   
 
         /// <summary>
         /// Init GLFW and create the game window
         /// </summary>
         /// <param name="t_width">Width of the window</param>
         /// <param name="t_height">Height of the window</param>
-        void CreateGameWindow( const UINT32 t_width, const UINT32 t_height );
+        void CreateGameWindow(const UINT32 t_width, const UINT32 t_height);
 
-		FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
+        FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
 
-		/** Happens before draw frame. Update the window  */
-		void Tick(float DeltaTime);
+        /** Happens before draw frame. Update the window  */
+        void Tick(float DeltaTime);
 
         /**
         * Draw the frame!
@@ -66,41 +95,47 @@ namespace Fling
 
         /**
          * @brief Get the logical graphics Device object
-         * 
+         *
          * @return const ref to VkDevice
          */
-        const VkDevice& GetLogicalVkDevice() const { return m_LogicalDevice->GetVkDevice(); }
+        static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
 
-		LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
+        LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
         /**
          * @brief Get the Physical Device object used by this renderer
-         * 
-         * @return const VkPhysicalDevice& 
+         *
+         * @return const VkPhysicalDevice&
          */
         const VkPhysicalDevice& GetPhysicalVkDevice() const { return m_PhysicalDevice->GetVkPhysicalDevice(); }
 
-		PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+        PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 
-		const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
+        const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
 
         const VkQueue& GetGraphicsQueue() const { return m_LogicalDevice->GetGraphicsQueue(); }
 
-        void SetFrameBufferHasBeenResized(bool t_Setting){ m_FrameBufferResized = t_Setting; }
+        void SetFrameBufferHasBeenResized(bool t_Setting) { m_FrameBufferResized = t_Setting; }
 
-		const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
+        const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
-		Swapchain* GetSwapChain() const { return m_SwapChain; }
+        Swapchain* GetSwapChain() const { return m_SwapChain; }
 
     private:
 
+        void InitDevices();
+
         /** Init the actual Vulkan API and rendering pipeline */
         void InitGraphics();
+        
+        /// Init imgui context 
+        void InitImgui();
+        void UpdateImguiIO();
 
-		/**
-		* @brief Set any component type callbacks needed for the rendering pipeline
-		*/
-		void InitComponentData();
+        /**
+        * @brief Set any component type callbacks needed for the rendering pipeline
+        */
+        void InitComponentData();
 
         /**
          * @brief Create a Descriptor Layout object
@@ -122,17 +157,11 @@ namespace Fling
         * Create the frame buffers for use by the swap chain
         */
         void CreateFrameBuffers();
-
-        /**
-        * Create the command pool to be sent every frame
+        
+        /*
+        * Builds command buffer to submit to device
         */
-        void CreateCommandPool();
-
-		/**
-		* @brief	Create the command buffers using the current mesh renderer components
-		*			in the component registry
-		*/
-        void CreateCommandBuffers(entt::registry& t_Reg);
+        void BuildCommandBuffers(entt::registry& t_Reg);
 
         /**
         * Create semaphores and fence objects
@@ -146,59 +175,58 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-		/**
-		 * @brief	Calculate alignment requirements based on the device for the dyanmic uniform buffer
-		 */
-		void PrepareUniformBuffers();
-
         void CreateDescriptorPool();
 
         void CreateDescriptorSets();
 
         /**
         * Determine the best match extents based on our window width and height
-		*
+        *
         * @return   Extents with the best matching resolution
         */
         VkExtent2D ChooseSwapExtent();
 
         /**
          * @brief Update the uniform buffer data. Called during DrawFrame
-         * 
+         *
          * @param t_CurrentImage The current image index that we are using
          */
         void UpdateUniformBuffer(UINT32 t_CurrentImage);
 
-		void UpdateDynamicUniformBuffer(UINT32 t_CurrentImage);
+        /**
+        * @brief    Callback for when a mesh renderer component is added to the game
+        *            Initializes and loads any meshes that we may need
+        */
+        void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
         /**
-        * Create a shader module based on the given shader code
-        * @param 	Vector of the shader code
-        *
-        * @return   Shader module from the given code
-        */
-        VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
+         * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many
+         *          we need
+         */
+        void DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light);
 
-		/**
-		* @brief	Callback for when a mesh renderer component is added to the game
-		*			Initializes and loads any meshes that we may need
-		*/
-		void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+		void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
 
-		/**
-		* @brief	Get an index that represents a  
-		*/
-		UINT32 GetAvailableModelMatrix();
 
-		UINT32 m_NextAvailableMatrix{};
+        /** Entt registry that the renderer will be using. Set by the Engine */
+        entt::registry* m_Registry = nullptr;
 
-		/** Entt registry that the renderer will be using. Set by the Engine */
-		entt::registry* m_Registry = nullptr;
+        /** Camera Instance */
+        FirstPersonCamera* m_camera;
 
-		/** Camera Instance */
-		std::unique_ptr<FirstPersonCamera> m_camera;
+        /** Skybox Instance */
+        Cubemap* m_Skybox = nullptr;
 
-		FlingWindow* m_CurrentWindow = nullptr;
+        /** The shader program that will allow the users to define their graphics pipeline */
+        ShaderProgram* m_ShaderProgram = nullptr;
+
+        FlingWindow* m_CurrentWindow = nullptr;
+
+        /** Imgui Instance **/
+        FlingImgui* m_flingImgui = nullptr;
+        
+        /** Holds imgui ui data **/
+        ImguiDisplay m_imguiDisplay;
 
         Instance* m_Instance = nullptr;
 
@@ -209,7 +237,7 @@ namespace Fling
         /** Handle to the surface extension used to interact with the windows system */
         VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 
-		Swapchain* m_SwapChain = nullptr;
+        Swapchain* m_SwapChain = nullptr;
 
         VkRenderPass m_RenderPass;
 
@@ -225,7 +253,7 @@ namespace Fling
         /** @see CreateDescriptorPool */
         VkDescriptorPool m_DescriptorPool;
 
-		DepthBuffer* m_DepthBuffer = nullptr;
+        DepthBuffer* m_DepthBuffer = nullptr;
 
         size_t CurrentFrameIndex = 0;
 
@@ -234,28 +262,19 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-        /** Uniform buffers */
-		std::vector<UboDataDynamic> m_DynamicUniformBuffers;
-		UboVS m_UboVS;
-
-		/** Simple little pool for getting the next available UBO index */
-		const static UINT32 MAX_MODEL_MATRIX_BUFFER = 256;
-		static UINT32 g_UboIndexPool[MAX_MODEL_MATRIX_BUFFER];
-		static UINT32 g_AllocatedIndex;
-
-		/** The alignment of the dynamic UBO on this device */
-		size_t m_DynamicAlignment;
+        /** The alignment of the dynamic UBO on this device */
+        size_t m_DynamicAlignment;
 
         std::vector<VkDescriptorSet> m_DescriptorSets;
 
-        /** 
-        * The frame buffers for the swap chain 
-        * @see Renderer::CreateFrameBuffers 
+        /**
+        * The frame buffers for the swap chain
+        * @see Renderer::CreateFrameBuffers
         */
         std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
         /**
-        * Command buffers 
+        * Command buffers
         * @see m_CommandPool
         */
         std::vector<VkCommandBuffer> m_CommandBuffers;
@@ -264,6 +283,27 @@ namespace Fling
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
 
-		std::shared_ptr<class Image> m_TestImage;
+		std::shared_ptr<Material> m_DefaultMat;
+
+        // Lighting -----------------------
+        Lighting m_Lighting = {};
+		std::shared_ptr<Image> m_BRDFLookupTexture;
+        struct LightingUbo
+        {
+			alignas(4) UINT32 DirLightCount = 0;
+			alignas(4) UINT32 PointLightCount = 0;
+
+            alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+
+			alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+        };
+
+        LightingUbo m_LightingUBO = {}; 
+
+        void CreateLightBuffers();
+
+        // Flag for toggling imgui 
+        bool m_DrawImgui;
+		bool m_IsQuitting = false;
     };
-}	// namespace Fling
+}    // namespace Fling

@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "Renderer.h"
 #include "FirstPersonCamera.h"
 #include "FlingMath.h"
 
@@ -65,7 +66,9 @@ namespace Fling
 
 	void FirstPersonCamera::Update(float dt)
 	{
-		float moveSpeed = m_speed * dt;
+		bool SlowModifier = Input::IsKeyHeld(KeyNames::FL_KEY_LEFT_CONTROL);
+
+		float moveSpeed = m_speed * dt * (SlowModifier ? 0.4f : 1.0f);
 
 		//translation
 		//forward
@@ -109,6 +112,11 @@ namespace Fling
 		// Check if we should rotate
 		m_IsRotating = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
 		MousePos CurMousePos = Input::GetMousePos();
+
+		//Normalize screen coordinates 
+		CurMousePos.X = static_cast<float>(CurMousePos.X / Renderer::Get().GetCurrentWindow()->GetWidth());
+		CurMousePos.Y = static_cast<float>(CurMousePos.Y / Renderer::Get().GetCurrentWindow()->GetHeight());
+
 		if (m_IsRotating)
 		{
 			float RotSpeed = dt * m_RotationSpeed;

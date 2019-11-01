@@ -42,6 +42,11 @@ namespace Fling
 
 		virtual float GetAspectRatio() const override;
 
+		virtual void SetMouseVisible(bool t_IsVisible) override;
+
+		virtual bool GetMouseVisible() override;
+
+
 		/** get the current GLFW window */
 		GLFWwindow* GetGlfwWindow() const { return m_Window; }
 

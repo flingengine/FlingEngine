@@ -5,7 +5,7 @@
 
 namespace Fling
 {
-	void Engine::Startup()
+    void Engine::Startup()
 	{
 		Random::Init();
 		Logger::Get().Init();
@@ -41,11 +41,7 @@ namespace Fling
 
 	void Engine::Tick()
 	{
-        // Calculate a fall back delta time in case the engine ever gets out of sync
-        const static float FallbackDeltaTime = 1.0f / 60.0f;
-        const static float MaxDeltaTime = 1.0f;
-
-        float DeltaTime = FallbackDeltaTime;
+        float DeltaTime = 1.0f / 60.0f;
 		
 		assert(m_World && m_GameImpl);		// We HAVE to have a world
 		
@@ -55,8 +51,18 @@ namespace Fling
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
+		int FpsFrameCount = 0;
+		float FpsTimeElapsed = 0.0f;
+
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
+            // Update timing
+            Timing.Update();
+            DeltaTime = Timing.GetDeltaTime();
+
+			// Update FPS Counter
+            Stats::Frames::TickStats(DeltaTime);
+			
 			Renderer.Tick(DeltaTime);
 			
 			Input::Poll();
@@ -69,18 +75,8 @@ namespace Fling
 				break;
 			}
 
+			Timing.UpdateFps();
 			Renderer.DrawFrame(g_Registry);
-
-            // Update timing
-			Timing.Update();
-            DeltaTime = Timing.GetDeltaTime();
-            
-            // If delta time is greater than 1 second, simulate it as 1/60 FPS 
-            // because we can assume that it is like that because of debugging
-            if (DeltaTime >= MaxDeltaTime)
-            {
-				DeltaTime = FallbackDeltaTime;
-            }
 		}
 
 		// Any waiting that we may need to do before the shutdown function should go here

@@ -23,8 +23,20 @@ namespace Fling
 		const VkPhysicalDeviceProperties& GetDeviceProps() const { return m_DeviceProperties; }
         const VkPhysicalDeviceFeatures& GetDeivceFeatures() const { return m_DeviceFeatures; } 
 
+        /**
+         * @brief Get a string representing the device vendor
+         * 
+         * @param t_Props 
+         * @return const char* 
+         */
+        static const char* GetDeviceType(VkPhysicalDeviceProperties t_Props);
+
+        static const char* GetDeviceVendor(VkPhysicalDeviceProperties t_Props);
+
 		/** Logs info about this physical device (vendor, model, ID, etc) to the console/Log file */
 		void LogPhysicalDeviceInfo();
+
+		VkSampleCountFlagBits GetMaxUsableSampleCount();
 
     private:
 
@@ -44,5 +56,8 @@ namespace Fling
         VkPhysicalDeviceProperties m_DeviceProperties{};
         VkPhysicalDeviceFeatures m_DeviceFeatures{};
 		VkPhysicalDeviceMemoryProperties m_MemoryProperties{};
+
+		/** The max supported MSSA level on this device */
+		VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     };
 }   // namespace Fling

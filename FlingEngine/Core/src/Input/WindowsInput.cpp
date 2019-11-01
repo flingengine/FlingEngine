@@ -13,7 +13,7 @@
 
 namespace Fling
 {
-	Input* Input::m_Instace = new WindowsInput();
+	Input* Input::m_Instance = new WindowsInput();
 	Input::KeyMap Input::m_KeyMap;
 	Input::KeyDownMap Input::m_KeyDownMap;
 
@@ -253,8 +253,8 @@ namespace Fling
 			double xPos = 0.0;
 			double yPos = 0.0;
 			glfwGetCursorPos(Window->GetGlfwWindow(), &xPos, &yPos);
-			CurPos.X = static_cast<float>(xPos / Window->GetWidth());
-			CurPos.Y = static_cast<float>(yPos / Window->GetHeight());
+			CurPos.X = static_cast<float>(xPos);
+			CurPos.Y = static_cast<float>(yPos);
 		}
 
 		return CurPos;

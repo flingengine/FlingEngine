@@ -3,10 +3,12 @@
 #include "World.h"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
 
 // Definition of what world components we want to serialize to the disk when
 // saving and loading a scene
-#define WORLD_COMPONENTS Fling::Transform, MeshRenderer
+#define WORLD_COMPONENTS Fling::Transform, MeshRenderer, DirectionalLight, PointLight
 
 namespace Fling
 {

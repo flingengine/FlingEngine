@@ -24,7 +24,7 @@ namespace Fling
 	public:
 
 		/** Initialize the input instance on this platform. Handle and input mapping on this platform */
-		static void Init() { m_Instace->InitImpl(); }
+		static void Init() { m_Instance->InitImpl(); }
 		
 		/**
 		* Shuts down input manager.
@@ -32,25 +32,25 @@ namespace Fling
 		*/
 		static void Shutdown() 
 		{ 
-			m_Instace->ShutdownImpl();
-			delete m_Instace; 
+			m_Instance->ShutdownImpl();
+			delete m_Instance; 
 		}
 
 		/**
 		 * @brief Update any input polling that needs to happen on this platform.
 		 */
-		static void Poll() { m_Instace->PollImpl();  }
+		static void Poll() { m_Instance->PollImpl();  }
 		
-		static bool IsKeyDown(const std::string& t_KeyName) { return m_Instace->IsKeyDownImpl(t_KeyName); }
-		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instace->IsKeyHelpImpl(t_KeyName); }
+		static bool IsKeyDown(const std::string& t_KeyName) { return m_Instance->IsKeyDownImpl(t_KeyName); }
+		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instance->IsKeyHelpImpl(t_KeyName); }
 		
-		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instace->IsMouseButtonPressedImpl(t_KeyName); }
-		static bool IsMouseDown(const std::string& t_KeyName) { return m_Instace->IsMouseDownImpl(t_KeyName); }
+		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instance->IsMouseButtonPressedImpl(t_KeyName); }
+		static bool IsMouseDown(const std::string& t_KeyName) { return m_Instance->IsMouseDownImpl(t_KeyName); }
 
 		/**
 		 * Get the current mouse position in screen space
 		 */
-		static MousePos GetMousePos() { return m_Instace->GetMousePosImpl(); }
+		static MousePos GetMousePos() { return m_Instance->GetMousePosImpl(); }
 		
 		/**
 		 * @brief Bind a callback function to when a key is pressed 
@@ -80,7 +80,7 @@ namespace Fling
 		static KeyDownMap m_KeyDownMap;
 
 		/** Created by the implementation class @see WindowInput */
-		static Input* m_Instace;
+		static Input* m_Instance;
 		
 		/**
 		 * @brief Add a key mapping to this platform. 

@@ -24,6 +24,7 @@ namespace Fling
 		vkEnumeratePhysicalDevices(m_Instance->GetRawVkInstance(), &DeviceCount, Devices.data());
 
 		m_PhysicalDevice = ChooseBestPhyscialDevice(Devices);
+		m_MSAASamples = GetMaxUsableSampleCount();
 
 		if (m_PhysicalDevice == VK_NULL_HANDLE)
 		{
@@ -38,6 +39,45 @@ namespace Fling
 		LogPhysicalDeviceInfo();
     }
 
+	const char* PhysicalDevice::GetDeviceType(VkPhysicalDeviceProperties t_Props)
+	{
+		switch (static_cast<UINT32>(t_Props.deviceType))
+		{
+		case 1:
+			return "Integrated";
+			break;
+		case 2:
+			return "Discrete";
+			break;
+		case 3:
+			return "Virtual";
+			break;
+		case 4:
+			return "CPU";
+			break;
+		default:
+			return "Other";
+		}
+	}
+
+	const char* PhysicalDevice::GetDeviceVendor(VkPhysicalDeviceProperties t_Props)
+	{
+		switch (t_Props.vendorID)
+		{
+		case 0x8086:
+			return " 'Intel'";
+			break;
+		case 0x10DE:
+			return " 'Nvidia'";
+			break;
+		case 0x1002:
+			return " 'AMD'";
+			break;
+		default:
+			return "Unknown";
+		}
+	}
+
 	void PhysicalDevice::LogPhysicalDeviceInfo()
 	{
 		// Checks if the requested extensions are supported.
@@ -47,47 +87,14 @@ namespace Fling
 		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, extensionProperties.data());
   		std::stringstream DeviceInfo;
 
-		DeviceInfo << "\nPhysical Device Info: \n\tType: ";
-
-		// Type 
-		switch (static_cast<UINT32>(m_DeviceProperties.deviceType))
-		{
-		case 1:
-			DeviceInfo << "Integrated";
-			break;
-		case 2:
-			DeviceInfo << "Discrete";
-			break;
-		case 3:
-			DeviceInfo << "Virtual";
-			break;
-		case 4:
-			DeviceInfo << "CPU";
-			break;
-		default:
-			DeviceInfo << "Other";
-		}
+		DeviceInfo << "\nPhysical Device Info: \n\tType: " << GetDeviceType(m_DeviceProperties);
 
 		// ID
 		DeviceInfo << "\n\tID: " << m_DeviceProperties.deviceID;
 
 		// Vendor
-		DeviceInfo << "\n\tVendor:";
-		switch (m_DeviceProperties.vendorID)
-		{
-		case 0x8086:
-			DeviceInfo << " 'Intel'";
-			break;
-		case 0x10DE:
-			DeviceInfo << " 'Nvidia'";
-			break;
-		case 0x1002:
-			DeviceInfo << " 'AMD'";
-			break;
-		default:
-			DeviceInfo << " " << m_DeviceProperties.vendorID;
-		}
-
+		DeviceInfo << "\n\tVendor:" << GetDeviceVendor(m_DeviceProperties);
+		
 		// Versions
 		UINT32 supportedVersion[]
 		{ 
@@ -101,6 +108,22 @@ namespace Fling
 		DeviceInfo << "." << supportedVersion[2];
 		
 		F_LOG_TRACE("{}\n", DeviceInfo.str());
+	}
+
+	VkSampleCountFlagBits PhysicalDevice::GetMaxUsableSampleCount()
+	{
+		VkPhysicalDeviceProperties physicalDeviceProperties;
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &physicalDeviceProperties);
+
+		VkSampleCountFlags counts = std::min(physicalDeviceProperties.limits.framebufferColorSampleCounts, physicalDeviceProperties.limits.framebufferDepthSampleCounts);
+		if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+		if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+		if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+		if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+		if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+		if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+		return VK_SAMPLE_COUNT_1_BIT;
 	}
 
 	VkPhysicalDevice PhysicalDevice::ChooseBestPhyscialDevice(std::vector<VkPhysicalDevice>& t_AvailableDevices)

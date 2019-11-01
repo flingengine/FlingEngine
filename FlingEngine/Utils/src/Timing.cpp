@@ -17,6 +17,34 @@ namespace Fling
 
 		m_lastFrameStartTime = currentTime;
 		m_frameStartTimef = static_cast<float> ( m_lastFrameStartTime );
+
+	}
+
+	float Timing::GetDeltaTime()
+	{
+		// Calculate a fall back delta time in case the engine ever gets out of sync
+		const static float FallbackDeltaTime = 1.0f / 60.0f;
+		const static float MaxDeltaTime = 1.0f;
+
+		// If delta time is greater than 1 second, simulate it as 1/60 FPS 
+		// because we can assume that it is like that because of debugging
+		if (m_deltaTime >= MaxDeltaTime)
+		{
+			m_deltaTime = FallbackDeltaTime;
+		} 
+		return m_deltaTime;	
+	}
+
+	void Timing::UpdateFps()
+	{
+		m_fpsFrameCountTemp++;
+		if (std::floor(GetTimeSinceStart()) > std::floor(m_fpsTimeElapsed))
+		{
+			m_fpsFrameCount = m_fpsFrameCountTemp;
+			m_fpsFrameCountTemp = 0;
+
+		}
+		m_fpsTimeElapsed = GetTimeSinceStart();
 	}
 
 	double Timing::GetTime() const
