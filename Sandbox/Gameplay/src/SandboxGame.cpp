@@ -143,12 +143,12 @@ namespace Sandbox
 			t0.SetPos(t_Pos);
 		};
 
-		//AddSphere(0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
+		AddSphere(0, "Models/Cerberus.obj", "Materials/Cerberus.mat");
 
-		AddSphere(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
-		AddSphere(1, "Models/sphere.obj", "Materials/Paint.mat");
-		AddSphere(2, "Models/sphere.obj", "Materials/Bronze.mat");
-		AddSphere(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		//AddSphere(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		//AddSphere(1, "Models/sphere.obj", "Materials/Paint.mat");
+		//AddSphere(2, "Models/sphere.obj", "Materials/Bronze.mat");
+		//AddSphere(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
 		AddPointLight(glm::vec3(+0.0f, +0.0f, +1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		AddPointLight(glm::vec3(+0.0f, +0.0f, -1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
@@ -166,7 +166,7 @@ namespace Sandbox
 		};
 
 		// Directional Lights
-		//AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+		AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 
 	void Game::GenerateTestMeshes(entt::registry& t_Reg)

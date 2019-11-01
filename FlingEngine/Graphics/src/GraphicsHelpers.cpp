@@ -392,7 +392,13 @@ namespace Fling
 
         }
 
-        void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
+        void TransitionImageLayout(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageLayout t_oldLayout, 
+            VkImageLayout t_NewLayout,
+            UINT32 t_MipLevels /* = 1 */
+        )
         {
             VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
@@ -420,7 +426,7 @@ namespace Fling
             }
 
             barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = 1;
+            barrier.subresourceRange.levelCount = t_MipLevels;        // TODO: Set this as the mip levels passed in
             barrier.subresourceRange.baseArrayLayer = 0;
             barrier.subresourceRange.layerCount = 1;
 
@@ -469,7 +475,12 @@ namespace Fling
             GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
         }
 
-        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)
+        VkImageView CreateVkImageView(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageAspectFlags t_AspectFalgs, 
+            UINT32 t_MipLevels
+        )
         {
             VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
@@ -487,6 +498,7 @@ namespace Fling
             createInfo.subresourceRange.levelCount = 1;
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
+            createInfo.subresourceRange.levelCount = t_MipLevels;
 
             VkImageView imageView = VK_NULL_HANDLE;
             if (vkCreateImageView(Device, &createInfo, nullptr, &imageView) != VK_SUCCESS)

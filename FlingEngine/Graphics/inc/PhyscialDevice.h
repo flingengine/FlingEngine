@@ -36,6 +36,11 @@ namespace Fling
 		/** Logs info about this physical device (vendor, model, ID, etc) to the console/Log file */
 		void LogPhysicalDeviceInfo();
 
+        /**
+         * @brief Checks hte given format properties that are supported on this physical device
+         */
+        VkFormatProperties GetFormatProperties(VkFormat t_Form) const;
+
 		VkSampleCountFlagBits GetMaxUsableSampleCount();
 
     private:
