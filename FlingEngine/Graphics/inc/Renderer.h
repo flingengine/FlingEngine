@@ -34,6 +34,7 @@
 #include "ImguiDisplay.h"
 #include <atomic>
 #include "Cubemap.h"
+#include "MultiSampler.h"
 
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
@@ -254,6 +255,9 @@ namespace Fling
         VkDescriptorPool m_DescriptorPool;
 
         DepthBuffer* m_DepthBuffer = nullptr;
+
+        /** MSAA for the graphics pipeline */
+        Multisampler* m_MsaaSampler = nullptr;
 
         size_t CurrentFrameIndex = 0;
 

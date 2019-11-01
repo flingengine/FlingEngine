@@ -59,7 +59,8 @@ namespace Fling
             VkMemoryPropertyFlags t_Props,
             VkImageCreateFlags t_flags,
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+            VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
         void CreateVkSampler(

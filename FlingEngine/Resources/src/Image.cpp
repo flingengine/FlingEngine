@@ -230,7 +230,8 @@ namespace Fling
         m_ImageView = GraphicsHelpers::CreateVkImageView(
             m_vVkImage,
             VK_FORMAT_R8G8B8A8_UNORM, 
-            VK_IMAGE_ASPECT_COLOR_BIT
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            m_MipLevels
         );
         assert(m_ImageView != VK_NULL_HANDLE);
     }

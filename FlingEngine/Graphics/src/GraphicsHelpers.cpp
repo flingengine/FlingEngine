@@ -127,7 +127,9 @@ namespace Fling
             VkMemoryPropertyFlags t_Props, 
             VkImageCreateFlags t_flags,
             VkImage& t_Image, 
-            VkDeviceMemory& t_Memory)
+            VkDeviceMemory& t_Memory, 
+            VkSampleCountFlagBits t_NumSamples
+            )
         {
             VkDevice Device = Renderer::Get().GetLogicalVkDevice();
             VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
@@ -147,7 +149,7 @@ namespace Fling
             imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             imageInfo.usage = t_Useage;
 
-            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.samples = t_NumSamples;
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = t_flags;
 
