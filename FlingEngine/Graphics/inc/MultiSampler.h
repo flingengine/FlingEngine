@@ -13,11 +13,14 @@ namespace Fling
     {
     public:
 
+		Multisampler(VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
+
         Multisampler(VkExtent2D t_Extents, VkFormat t_Format, VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
 
         ~Multisampler();
 
-        FORCEINLINE const VkSampleCountFlagBits& GetSampleCountFlagBits() const { return m_SampleCountBits; }
+        FORCEINLINE VkSampleCountFlagBits GetSampleCountFlagBits() const { return m_SampleCountBits; }
+		FORCEINLINE const VkImageView& GetImageView() const { return m_ColorImageView; }
 
         void Release();
 

@@ -536,6 +536,10 @@ namespace Fling
     void Renderer::CleanupFrameResources()
     {
         m_DepthBuffer->Cleanup();
+		if (m_MsaaSampler)
+		{
+			m_MsaaSampler->Release();
+		}
 
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
@@ -567,6 +571,10 @@ namespace Fling
         CreateGraphicsPipeline();
 
         m_DepthBuffer->Create();
+		if (m_MsaaSampler)
+		{
+			m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+		}
 
         CreateFrameBuffers();
 
