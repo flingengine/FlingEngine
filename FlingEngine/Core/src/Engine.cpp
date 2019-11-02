@@ -51,9 +51,6 @@ namespace Fling
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
-		int FpsFrameCount = 0;
-		float FpsTimeElapsed = 0.0f;
-
 		while(!Renderer.GetCurrentWindow()->ShouldClose())
 		{
             // Update timing
