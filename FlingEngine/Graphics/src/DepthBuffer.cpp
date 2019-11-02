@@ -5,7 +5,7 @@
 
 namespace Fling
 {
-	DepthBuffer::DepthBuffer(VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT)
+	DepthBuffer::DepthBuffer(VkSampleCountFlagBits t_SampleCount)
 		: m_SampleCount(t_SampleCount)
 	{
 		Create();
