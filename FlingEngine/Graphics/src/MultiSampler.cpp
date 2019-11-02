@@ -18,15 +18,15 @@ namespace Fling
 
     void Multisampler::Create(VkExtent2D t_Extents, VkFormat t_Format)
     {
-        VkFormat colorFormat = t_Format;
+		// t_Format should the same format as the swap chain
 
 		GraphicsHelpers::CreateVkImage(
 			t_Extents.width,
 			t_Extents.height,
-			/** Mip levels */ 1,
+			/* Mip levels */ 1,
 			/* Depth */ 1,
 			/* Array Layers */ 1,
-			/* Format */ colorFormat,
+			/* Format */ t_Format,
 			/* Tiling */ VK_IMAGE_TILING_OPTIMAL,
 			/* Usage */ VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 			/* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -38,14 +38,14 @@ namespace Fling
 
 		m_ColorImageView = GraphicsHelpers::CreateVkImageView(
 			m_ColorImage,
-			colorFormat,
+			t_Format,
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			1
 		);
 
 		GraphicsHelpers::TransitionImageLayout(
 			m_ColorImage,
-			colorFormat,
+			t_Format,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			/* mip levels */ 1

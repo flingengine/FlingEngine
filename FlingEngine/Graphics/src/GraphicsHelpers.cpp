@@ -109,10 +109,25 @@ namespace Fling
             VkImageUsageFlags t_Useage, 
             VkMemoryPropertyFlags t_Props, 
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+			VkSampleCountFlagBits t_NumSamples
         )
         {
-            CreateVkImage(t_Width, t_Height, 1, 1, 1, t_Format, t_Tiling, t_Useage, t_Props, 0, t_Image, t_Memory);
+            CreateVkImage(
+				t_Width, 
+				t_Height, 
+				/* t_MipLevels */ 1, 
+				/* t_Depth */ 1, 
+				/* t_ArrayLayers */ 1, 
+				t_Format, 
+				t_Tiling, 
+				t_Useage, 
+				t_Props, 
+				/* t_flags */ 0, 
+				t_Image, 
+				t_Memory,
+				t_NumSamples
+			);
         }
 
         void CreateVkImage(
@@ -460,9 +475,16 @@ namespace Fling
                 SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 DestinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
             }
-            else 
+			else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			{
+				barrier.srcAccessMask = 0;
+				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				DestinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			}
+            else
             {
-                F_LOG_ERROR("Unsupported layout transition!");
+                F_LOG_FATAL("Unsupported layout transition!");
             }
 
             vkCmdPipelineBarrier(

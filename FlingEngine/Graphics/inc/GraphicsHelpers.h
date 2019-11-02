@@ -42,7 +42,8 @@ namespace Fling
             VkImageUsageFlags t_Useage,
             VkMemoryPropertyFlags t_Props,
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+			VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
 		VkSemaphore CreateSemaphore(VkDevice t_Dev);

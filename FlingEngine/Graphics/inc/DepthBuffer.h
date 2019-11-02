@@ -8,7 +8,7 @@ namespace Fling
 	class DepthBuffer
 	{
 	public:
-		DepthBuffer();
+		explicit DepthBuffer(VkSampleCountFlagBits t_SampleCount);
 
 		~DepthBuffer();
 
@@ -42,6 +42,8 @@ namespace Fling
 		VkImage m_Image = VK_NULL_HANDLE;
 		VkDeviceMemory m_Memory = VK_NULL_HANDLE;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
-		VkFormat m_Format;
+		VkFormat m_Format{};
+
+		VkSampleCountFlagBits m_SampleCount = VK_SAMPLE_COUNT_1_BIT;
 	};
 }   // namespace Fling

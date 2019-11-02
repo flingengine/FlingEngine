@@ -101,6 +101,18 @@ namespace Fling
          */
         static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
 
+		static VkSampleCountFlagBits GetMsaaSampleCount() 
+		{ 
+			if (Renderer::Get().m_MsaaSampler)
+			{
+				return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
+			}
+			else
+			{
+				return VK_SAMPLE_COUNT_1_BIT;
+			}
+		}
+
         LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
         /**
