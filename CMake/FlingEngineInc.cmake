@@ -34,6 +34,7 @@ MACRO(FLING_ENGINE_INC EngineDir )
 		${EngineDir}Utils/inc
 		${EngineDir}Platform/inc
 		${EngineDir}Gameplay/inc
+		${EngineDir}Scripting/inc
 		${GENERATED_INC_FOLDER}		# Generated include files that cmake will handle (i.e. GitVersion)
 	)
 
