@@ -21,6 +21,10 @@ namespace Sandbox
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
 
+#if WITH_EDITOR
+		F_LOG_TRACE("Enable Editor!");
+#endif
+
 		// Temp saving and load functions
 		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
         Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
