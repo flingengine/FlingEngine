@@ -57,11 +57,9 @@ namespace Sandbox
 
 		void ToggleRotation();
 
-		void OnLeftArrowPressed();
-
 		void OnToggleMoveLights();
 
-		void OnRightArrowPressed();
+		void SetWindowIcon();
 
 		/** Temp vector for keeping track of the movement of things */
 		glm::vec3 MoveDelta = {};

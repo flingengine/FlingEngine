@@ -46,6 +46,11 @@ namespace Fling
 
 		virtual bool GetMouseVisible() override;
 
+		/** 
+		* @brief		Set this window's icon.
+		* @param t_ID	the GUID of the window icon
+		*/
+		void SetWindowIcon(Guid t_ID) override;
 
 		/** get the current GLFW window */
 		GLFWwindow* GetGlfwWindow() const { return m_Window; }
