@@ -39,6 +39,14 @@ namespace Fling
 		LogPhysicalDeviceInfo();
     }
 
+	VkFormatProperties PhysicalDevice::GetFormatProperties(VkFormat t_Form) const
+	{
+		assert(m_PhysicalDevice != VK_NULL_HANDLE);
+		VkFormatProperties formatProperties = {};
+    	vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, t_Form, &formatProperties);
+		return formatProperties;
+	}
+
 	const char* PhysicalDevice::GetDeviceType(VkPhysicalDeviceProperties t_Props)
 	{
 		switch (static_cast<UINT32>(t_Props.deviceType))

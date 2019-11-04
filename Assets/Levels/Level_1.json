@@ -9,7 +9,7 @@
     "value7": 2,
     "value8": 1,
     "value9": 0,
-    "value10": 12,
+    "value10": 8,
     "value11": 0,
     "value12": {
         "POS_X": -2.0,
@@ -62,10 +62,10 @@
     "value20": {
         "POS_X": 0.0,
         "POS_Y": 0.0,
-        "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
+        "POS_Z": 1.0,
+        "SCALE_X": 0.10000000149011612,
+        "SCALE_Y": 0.10000000149011612,
+        "SCALE_Z": 0.10000000149011612,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
@@ -74,10 +74,10 @@
     "value22": {
         "POS_X": 0.0,
         "POS_Y": 0.0,
-        "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
+        "POS_Z": -1.0,
+        "SCALE_X": 0.10000000149011612,
+        "SCALE_Y": 0.10000000149011612,
+        "SCALE_Z": 0.10000000149011612,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
@@ -85,11 +85,11 @@
     "value23": 6,
     "value24": {
         "POS_X": 0.0,
-        "POS_Y": 0.0,
+        "POS_Y": 1.0,
         "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
+        "SCALE_X": 0.10000000149011612,
+        "SCALE_Y": 0.10000000149011612,
+        "SCALE_Z": 0.10000000149011612,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
@@ -97,83 +97,55 @@
     "value25": 7,
     "value26": {
         "POS_X": 0.0,
-        "POS_Y": 0.0,
+        "POS_Y": -1.0,
         "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
+        "SCALE_X": 0.10000000149011612,
+        "SCALE_Y": 0.10000000149011612,
+        "SCALE_Z": 0.10000000149011612,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
     },
-    "value27": 4,
-    "value28": {
-        "POS_X": 0.0,
-        "POS_Y": 0.0,
-        "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
-        "ROT_X": 0.0,
-        "ROT_Y": 0.0,
-        "ROT_Z": 0.0
-    },
-    "value29": 5,
-    "value30": {
-        "POS_X": 0.0,
-        "POS_Y": 0.0,
-        "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
-        "ROT_X": 0.0,
-        "ROT_Y": 0.0,
-        "ROT_Z": 0.0
-    },
-    "value31": 6,
-    "value32": {
-        "POS_X": 0.0,
-        "POS_Y": 0.0,
-        "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
-        "ROT_X": 0.0,
-        "ROT_Y": 0.0,
-        "ROT_Z": 0.0
-    },
-    "value33": 7,
-    "value34": {
-        "POS_X": 0.0,
-        "POS_Y": 0.0,
-        "POS_Z": 0.0,
-        "SCALE_X": 1.0,
-        "SCALE_Y": 1.0,
-        "SCALE_Z": 1.0,
-        "ROT_X": 0.0,
-        "ROT_Y": 0.0,
-        "ROT_Z": 0.0
-    },
-    "value35": 4,
-    "value36": 0,
-    "value37": {
+    "value27": 8,
+    "value28": 0,
+    "value29": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Cobblestone.mat"
     },
-    "value38": 1,
-    "value39": {
+    "value30": 1,
+    "value31": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Paint.mat"
     },
-    "value40": 2,
-    "value41": {
+    "value32": 2,
+    "value33": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Bronze.mat"
     },
-    "value42": 3,
-    "value43": {
+    "value34": 3,
+    "value35": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Cobblestone.mat"
+    },
+    "value36": 4,
+    "value37": {
+        "MESH_NAME": "Models/sphere.obj",
+        "MATERIAL_NAME": "Materials/Default.mat"
+    },
+    "value38": 5,
+    "value39": {
+        "MESH_NAME": "Models/sphere.obj",
+        "MATERIAL_NAME": "Materials/Default.mat"
+    },
+    "value40": 6,
+    "value41": {
+        "MESH_NAME": "Models/sphere.obj",
+        "MATERIAL_NAME": "Materials/Default.mat"
+    },
+    "value42": 7,
+    "value43": {
+        "MESH_NAME": "Models/sphere.obj",
+        "MATERIAL_NAME": "Materials/Default.mat"
     },
     "value44": 1,
     "value45": 8,
@@ -181,6 +153,7 @@
         "DIFFUSE_X": 1.0,
         "DIFFUSE_Y": 1.0,
         "DIFFUSE_Z": 1.0,
+        "DIFFUSE_W": 1.0,
         "DIRECTION_X": 1.0,
         "DIRECTION_Y": -1.0,
         "DIRECTION_Z": -0.5,
@@ -189,35 +162,35 @@
     "value47": 4,
     "value48": 4,
     "value49": {
-        "DIFFUSE_X": 0.6554765701293945,
-        "DIFFUSE_Y": 0.25879696011543276,
-        "DIFFUSE_Z": 0.0029908139258623125,
-        "RANGE": 30.0,
-        "INTENSITY": 10.0
+        "DIFFUSE_X": 1.0,
+        "DIFFUSE_Y": 0.0,
+        "DIFFUSE_Z": 0.0,
+        "RANGE": 20.0,
+        "INTENSITY": 5.0
     },
     "value50": 5,
     "value51": {
-        "DIFFUSE_X": 0.6264839768409729,
-        "DIFFUSE_Y": 0.5919064879417419,
-        "DIFFUSE_Z": 0.40885648131370547,
-        "RANGE": 30.0,
-        "INTENSITY": 10.0
+        "DIFFUSE_X": 1.0,
+        "DIFFUSE_Y": 1.0,
+        "DIFFUSE_Z": 0.0,
+        "RANGE": 20.0,
+        "INTENSITY": 5.0
     },
     "value52": 6,
     "value53": {
-        "DIFFUSE_X": 0.05688650161027908,
-        "DIFFUSE_Y": 0.42460402846336367,
-        "DIFFUSE_Z": 0.1903134286403656,
-        "RANGE": 30.0,
-        "INTENSITY": 10.0
+        "DIFFUSE_X": 0.0,
+        "DIFFUSE_Y": 1.0,
+        "DIFFUSE_Z": 1.0,
+        "RANGE": 20.0,
+        "INTENSITY": 5.0
     },
     "value54": 7,
     "value55": {
-        "DIFFUSE_X": 0.5340433716773987,
-        "DIFFUSE_Y": 0.6538285613059998,
-        "DIFFUSE_Z": 0.3674733638763428,
-        "RANGE": 30.0,
-        "INTENSITY": 10.0
+        "DIFFUSE_X": 1.0,
+        "DIFFUSE_Y": 0.0,
+        "DIFFUSE_Z": 1.0,
+        "RANGE": 20.0,
+        "INTENSITY": 5.0
     },
     "value56": 0
 }

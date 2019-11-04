@@ -53,10 +53,13 @@ namespace Sandbox
 	private:
 
 		bool m_DoRotations = false;
+		bool m_MovePointLights = false;
 
 		void ToggleRotation();
 
 		void OnLeftArrowPressed();
+
+		void OnToggleMoveLights();
 
 		void OnRightArrowPressed();
 

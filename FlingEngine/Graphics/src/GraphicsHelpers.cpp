@@ -109,10 +109,25 @@ namespace Fling
             VkImageUsageFlags t_Useage, 
             VkMemoryPropertyFlags t_Props, 
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+			VkSampleCountFlagBits t_NumSamples
         )
         {
-            CreateVkImage(t_Width, t_Height, 1, 1, 1, t_Format, t_Tiling, t_Useage, t_Props, 0, t_Image, t_Memory);
+            CreateVkImage(
+				t_Width, 
+				t_Height, 
+				/* t_MipLevels */ 1, 
+				/* t_Depth */ 1, 
+				/* t_ArrayLayers */ 1, 
+				t_Format, 
+				t_Tiling, 
+				t_Useage, 
+				t_Props, 
+				/* t_flags */ 0, 
+				t_Image, 
+				t_Memory,
+				t_NumSamples
+			);
         }
 
         void CreateVkImage(
@@ -127,7 +142,9 @@ namespace Fling
             VkMemoryPropertyFlags t_Props, 
             VkImageCreateFlags t_flags,
             VkImage& t_Image, 
-            VkDeviceMemory& t_Memory)
+            VkDeviceMemory& t_Memory, 
+            VkSampleCountFlagBits t_NumSamples
+            )
         {
             VkDevice Device = Renderer::Get().GetLogicalVkDevice();
             VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
@@ -147,7 +164,7 @@ namespace Fling
             imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             imageInfo.usage = t_Useage;
 
-            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.samples = t_NumSamples;
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = t_flags;
 
@@ -392,7 +409,13 @@ namespace Fling
 
         }
 
-        void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
+        void TransitionImageLayout(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageLayout t_oldLayout, 
+            VkImageLayout t_NewLayout,
+            UINT32 t_MipLevels /* = 1 */
+        )
         {
             VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
@@ -420,7 +443,7 @@ namespace Fling
             }
 
             barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = 1;
+            barrier.subresourceRange.levelCount = t_MipLevels;        // TODO: Set this as the mip levels passed in
             barrier.subresourceRange.baseArrayLayer = 0;
             barrier.subresourceRange.layerCount = 1;
 
@@ -452,9 +475,16 @@ namespace Fling
                 SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 DestinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
             }
-            else 
+			else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			{
+				barrier.srcAccessMask = 0;
+				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				DestinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			}
+            else
             {
-                F_LOG_ERROR("Unsupported layout transition!");
+                F_LOG_FATAL("Unsupported layout transition!");
             }
 
             vkCmdPipelineBarrier(
@@ -469,7 +499,12 @@ namespace Fling
             GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
         }
 
-        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)
+        VkImageView CreateVkImageView(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageAspectFlags t_AspectFalgs, 
+            UINT32 t_MipLevels
+        )
         {
             VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
@@ -487,6 +522,7 @@ namespace Fling
             createInfo.subresourceRange.levelCount = 1;
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
+            createInfo.subresourceRange.levelCount = t_MipLevels;
 
             VkImageView imageView = VK_NULL_HANDLE;
             if (vkCreateImageView(Device, &createInfo, nullptr, &imageView) != VK_SUCCESS)

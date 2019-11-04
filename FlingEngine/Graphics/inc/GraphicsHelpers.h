@@ -42,7 +42,8 @@ namespace Fling
             VkImageUsageFlags t_Useage,
             VkMemoryPropertyFlags t_Props,
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+			VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
 		VkSemaphore CreateSemaphore(VkDevice t_Dev);
@@ -59,7 +60,8 @@ namespace Fling
             VkMemoryPropertyFlags t_Props,
             VkImageCreateFlags t_flags,
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+            VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
         void CreateVkSampler(
@@ -109,11 +111,17 @@ namespace Fling
         /**
          * @brief    Create a an image view for Vulkan with the given format
          */
-        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs);
+        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, UINT32 t_MipLevels = 1);
 
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
 
-        void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
+        void TransitionImageLayout(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageLayout t_oldLayout, 
+            VkImageLayout t_NewLayout,
+            UINT32 t_MipLevels = 1
+        );
 
         /**
          * @brief    Returns true if the given format has a stencil component 

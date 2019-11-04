@@ -34,6 +34,7 @@
 #include "ImguiDisplay.h"
 #include <atomic>
 #include "Cubemap.h"
+#include "MultiSampler.h"
 
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
@@ -99,6 +100,18 @@ namespace Fling
          * @return const ref to VkDevice
          */
         static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
+
+		static VkSampleCountFlagBits GetMsaaSampleCount() 
+		{ 
+			if (Renderer::Get().m_MsaaSampler)
+			{
+				return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
+			}
+			else
+			{
+				return VK_SAMPLE_COUNT_1_BIT;
+			}
+		}
 
         LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
@@ -255,6 +268,9 @@ namespace Fling
 
         DepthBuffer* m_DepthBuffer = nullptr;
 
+        /** MSAA for the graphics pipeline */
+        Multisampler* m_MsaaSampler = nullptr;
+
         size_t CurrentFrameIndex = 0;
 
         /** Used to determine if the frame buffer has been resized or not */
@@ -290,11 +306,12 @@ namespace Fling
 		std::shared_ptr<Image> m_BRDFLookupTexture;
         struct LightingUbo
         {
-			UINT32 DirLightCount = 0;
-            DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+			alignas(4) UINT32 DirLightCount = 0;
+			alignas(4) UINT32 PointLightCount = 0;
 
-			UINT32 PointLightCount = 0;
-			PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+            alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+
+			alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
         };
 
         LightingUbo m_LightingUBO = {}; 
