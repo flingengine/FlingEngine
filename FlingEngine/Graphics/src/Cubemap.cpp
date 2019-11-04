@@ -51,7 +51,7 @@ namespace Fling
         vkDestroySampler(m_Device, m_Sampler, nullptr);   
     }
 
-    void Cubemap::Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumFramesInFlight)
+    void Cubemap::Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumFramesInFlight, VkSampleCountFlagBits t_SampleCount)
     {
         // Initialize uniform buffers
         m_numsFrameInFlight = t_NumFramesInFlight;
@@ -69,10 +69,10 @@ namespace Fling
 
         UpdateUniformBuffer(t_CurrentImage, t_Camera->GetProjectionMatrix(), t_Camera->GetViewMatrix());
         SetupDescriptors();
-        PreparePipeline();
+        PreparePipeline(t_SampleCount);
     }
 
-    void Cubemap::PreparePipeline()
+    void Cubemap::PreparePipeline(VkSampleCountFlagBits t_SampleCount)
     {
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
             Initalizers::PipelineInputAssemblyStateCreateInfo(
@@ -109,7 +109,7 @@ namespace Fling
 
         VkPipelineMultisampleStateCreateInfo multisampleState =
             Initalizers::PipelineMultiSampleStateCreateInfo(
-                VK_SAMPLE_COUNT_1_BIT,
+                t_SampleCount,
                 0);
 
 

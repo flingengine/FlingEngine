@@ -5,7 +5,8 @@
 
 namespace Fling
 {
-	DepthBuffer::DepthBuffer()
+	DepthBuffer::DepthBuffer(VkSampleCountFlagBits t_SampleCount)
+		: m_SampleCount(t_SampleCount)
 	{
 		Create();
 	}
@@ -78,7 +79,8 @@ namespace Fling
 			/* Usage */ VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			/* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			m_Image,
-			m_Memory
+			m_Memory,
+			m_SampleCount
 		);
 	}
 

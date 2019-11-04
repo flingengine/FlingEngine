@@ -50,6 +50,7 @@ namespace Fling
 
         m_Width = static_cast<UINT32>(Width);
         m_Height = static_cast<UINT32>(Height);
+        m_MipLevels = static_cast<UINT32>(std::floor(std::log2(std::max(m_Width, m_Height)))) + 1;
 
         if (!m_PixelData)
         {
@@ -63,10 +64,14 @@ namespace Fling
         GraphicsHelpers::CreateVkImage(
             m_Width,
             m_Height,
+            m_MipLevels, 
+            /* Depth */ 1,
+            /* Array Layers */ 1,
             /* Format */ VK_FORMAT_R8G8B8A8_UNORM,
             /* Tiling */ VK_IMAGE_TILING_OPTIMAL,
-            /* Usage */ VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            /* Usage */ VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
             /* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            /* Flags */ 0, 
             m_vVkImage,
             m_VkMemory
         );
@@ -76,11 +81,115 @@ namespace Fling
         Buffer StagingBuffer(ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_PixelData);
         
         // Transition and copy the image layout to the staging buffer
-        GraphicsHelpers::TransitionImageLayout(m_vVkImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        GraphicsHelpers::TransitionImageLayout(
+            m_vVkImage, 
+            VK_FORMAT_R8G8B8A8_UNORM, 
+            VK_IMAGE_LAYOUT_UNDEFINED, 
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            m_MipLevels
+        );
         CopyBufferToImage(StagingBuffer.GetVkBuffer());
 
-        // transition the image memory to be optimal so that we can sample it in the shader
-        GraphicsHelpers::TransitionImageLayout(m_vVkImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        // Transition to image layout happens while generating mip maps
+        GenerateMipMaps(VK_FORMAT_R8G8B8A8_UNORM);
+    }
+
+    void Image::GenerateMipMaps(VkFormat imageFormat)
+    {
+        // Check that we have linear filtering support on this device
+        VkFormatProperties formatProperties = Renderer::Get().GetPhysicalDevice()->GetFormatProperties(imageFormat);
+
+        if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) 
+        {
+            F_LOG_FATAL("Texture image format does not support linear blitting!");
+        }
+
+        VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
+
+        VkImageMemoryBarrier barrier = {};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.image = m_vVkImage;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
+        barrier.subresourceRange.levelCount = 1;
+
+        INT32 mipWidth = m_Width;
+        INT32 mipHeight = m_Height;
+
+        for(UINT32 i = 1; i < m_MipLevels; i++)
+        {
+            barrier.subresourceRange.baseMipLevel = i - 1;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+            vkCmdPipelineBarrier(commandBuffer,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+                0, nullptr,
+                0, nullptr,
+                1, &barrier
+            );
+
+            VkImageBlit blit = {};
+            blit.srcOffsets[0] = { 0, 0, 0 };
+            blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+            blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            blit.srcSubresource.mipLevel = i - 1;
+            blit.srcSubresource.baseArrayLayer = 0;
+            blit.srcSubresource.layerCount = 1;
+            blit.dstOffsets[0] = { 0, 0, 0 };
+            blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+            blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            blit.dstSubresource.mipLevel = i;
+            blit.dstSubresource.baseArrayLayer = 0;
+            blit.dstSubresource.layerCount = 1;
+
+            vkCmdBlitImage(commandBuffer,
+                m_vVkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                m_vVkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1, &blit,
+                VK_FILTER_LINEAR
+            );
+
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+            vkCmdPipelineBarrier(commandBuffer,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+                0, nullptr,
+                0, nullptr,
+                1, &barrier
+            );
+
+            if (mipWidth > 1) 
+            {
+                mipWidth /= 2;
+            }
+            if (mipHeight > 1)
+            {
+                mipHeight /= 2;
+            } 
+        }
+
+        barrier.subresourceRange.baseMipLevel = m_MipLevels - 1;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        vkCmdPipelineBarrier(commandBuffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+            0, nullptr,
+            0, nullptr,
+            1, &barrier);
+
+        GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
     }
 
     void Image::CopyBufferToImage(VkBuffer t_Buffer)
@@ -121,7 +230,8 @@ namespace Fling
         m_ImageView = GraphicsHelpers::CreateVkImageView(
             m_vVkImage,
             VK_FORMAT_R8G8B8A8_UNORM, 
-            VK_IMAGE_ASPECT_COLOR_BIT
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            m_MipLevels
         );
         assert(m_ImageView != VK_NULL_HANDLE);
     }
@@ -148,7 +258,7 @@ namespace Fling
         SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         SamplerInfo.mipLodBias = 0.0f;
         SamplerInfo.minLod = 0.0f;
-        SamplerInfo.maxLod = 0.0f;
+        SamplerInfo.maxLod = static_cast<float>(m_MipLevels);
 
         VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 

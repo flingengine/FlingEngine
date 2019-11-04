@@ -20,7 +20,8 @@ namespace Fling
 		FORCEINLINE UINT32 GetWidth() const { return m_Width; }
 		FORCEINLINE UINT32 GetHeight() const { return m_Height; }
 		FORCEINLINE INT32 GetChannels() const { return m_Channels; }
-        
+        FORCEINLINE UINT32 GetMipLevels() const { return m_MipLevels; }
+
 		FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
 		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
 		FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
@@ -61,11 +62,15 @@ namespace Fling
 
 		void CopyBufferToImage(VkBuffer t_Buffer);
 
+        void GenerateMipMaps(VkFormat imageFormat);
+
         /** Width of this image */
 		UINT32 m_Width = 0;
 
         /** Height of this image */
 		UINT32 m_Height = 0;
+
+        UINT32 m_MipLevels = 0;
 
         /** The color channels of this image */
         INT32 m_Channels = 0;

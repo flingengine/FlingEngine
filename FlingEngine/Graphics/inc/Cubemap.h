@@ -30,7 +30,7 @@ namespace Fling
 
             ~Cubemap();
 
-            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight);
+            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, VkSampleCountFlagBits t_SampleCount);
 
             void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
 
@@ -80,7 +80,7 @@ namespace Fling
 
         private:
 
-            void PreparePipeline();
+            void PreparePipeline(VkSampleCountFlagBits t_SampleCount);
             
             void LoadCubemap(
                 Guid t_PosX_ID,
