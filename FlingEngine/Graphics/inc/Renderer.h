@@ -34,6 +34,7 @@
 #include "ImguiDisplay.h"
 #include <atomic>
 #include "Cubemap.h"
+#include "MultiSampler.h"
 
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
@@ -99,6 +100,18 @@ namespace Fling
          * @return const ref to VkDevice
          */
         static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
+
+		static VkSampleCountFlagBits GetMsaaSampleCount() 
+		{ 
+			if (Renderer::Get().m_MsaaSampler)
+			{
+				return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
+			}
+			else
+			{
+				return VK_SAMPLE_COUNT_1_BIT;
+			}
+		}
 
         LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
@@ -254,6 +267,9 @@ namespace Fling
         VkDescriptorPool m_DescriptorPool;
 
         DepthBuffer* m_DepthBuffer = nullptr;
+
+        /** MSAA for the graphics pipeline */
+        Multisampler* m_MsaaSampler = nullptr;
 
         size_t CurrentFrameIndex = 0;
 

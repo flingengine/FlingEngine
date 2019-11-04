@@ -46,6 +46,7 @@ namespace Fling
 
 	void Renderer::InitGraphics()
 	{
+		m_MsaaSampler = new Multisampler(m_PhysicalDevice->GetMaxUsableSampleCount());
 		CreateRenderPass();
 
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
@@ -56,7 +57,9 @@ namespace Fling
 
 		CreateGraphicsPipeline();
 
-        m_DepthBuffer = new DepthBuffer();
+		m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+
+        m_DepthBuffer = new DepthBuffer(m_PhysicalDevice->GetMaxUsableSampleCount());
         assert(m_DepthBuffer);
 
         // Create the camera
@@ -81,20 +84,20 @@ namespace Fling
             m_CommandPool);
 
         // Load Skybox
-        m_Skybox = new Cubemap(
-            "Textures/Skybox/posx.jpg"_hs,
-            "Textures/Skybox/negx.jpg"_hs,
-            "Textures/Skybox/posy.jpg"_hs,
-            "Textures/Skybox/negy.jpg"_hs,
-            "Textures/Skybox/posz.jpg"_hs,
-            "Textures/Skybox/negz.jpg"_hs,
-            HS("Shaders/skybox/skybox.vert.spv"),
-            HS("Shaders/skybox/skybox.frag.spv"),
-            m_RenderPass,
-            m_LogicalDevice->GetVkDevice()
-        );
+		m_Skybox = new Cubemap(
+			"Textures/Skybox/posx.jpg"_hs,
+			"Textures/Skybox/negx.jpg"_hs,
+			"Textures/Skybox/posy.jpg"_hs,
+			"Textures/Skybox/negy.jpg"_hs,
+			"Textures/Skybox/posz.jpg"_hs,
+			"Textures/Skybox/negz.jpg"_hs,
+			HS("Shaders/skybox/skybox.vert.spv"),
+			HS("Shaders/skybox/skybox.frag.spv"),
+			m_RenderPass,
+			m_LogicalDevice->GetVkDevice()
+		);
 
-        m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount());
+		m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount(), m_PhysicalDevice->GetMaxUsableSampleCount());
 
         CreateLightBuffers();
 
@@ -125,10 +128,6 @@ namespace Fling
         const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
-        F_LOG_TRACE("Sizeof DirLight   : {} , alignof {}", sizeof(DirectionalLight), alignof(DirectionalLight));
-        F_LOG_TRACE("Sizeof PointLight : {} , alignof {}", sizeof(PointLight), alignof(PointLight));
-        F_LOG_TRACE("Light UBO         : {} , alignof {}", sizeof(LightingUbo), alignof(LightingUbo));
-
 		m_Lighting.m_LightingUBOs.resize(Images.size());
 		for (size_t i = 0; i < Images.size(); i++)
 		{
@@ -155,10 +154,12 @@ namespace Fling
 
     void Renderer::CreateRenderPass()
     {
+		assert(m_MsaaSampler && m_SwapChain);
+
         // We have a single color buffer for the images in the swap chain
         VkAttachmentDescription ColorAttachment = {};
         ColorAttachment.format = m_SwapChain->GetImageFormat();
-        ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        ColorAttachment.samples = m_MsaaSampler->GetSampleCountFlagBits();
         ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;       // Clear the frame buffer to black
         ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
@@ -166,18 +167,29 @@ namespace Fling
         ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
         ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        //Change to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL  for imgui
+        // Change to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL  for imgui
+		// and because multisampled images cannot be presented directly
         ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription DepthAttatchment = {};
         DepthAttatchment.format = DepthBuffer::GetDepthBufferFormat();
-        DepthAttatchment.samples = VK_SAMPLE_COUNT_1_BIT;
+        DepthAttatchment.samples = m_MsaaSampler->GetSampleCountFlagBits();
         DepthAttatchment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         DepthAttatchment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         DepthAttatchment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         DepthAttatchment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         DepthAttatchment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         DepthAttatchment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentDescription colorAttachmentResolve = {};
+		colorAttachmentResolve.format = m_SwapChain->GetImageFormat();
+		colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         // Subpass -------------------
         VkAttachmentReference ColorAttachmentRef = {};
@@ -188,12 +200,17 @@ namespace Fling
         DepthAttatchmentRef.attachment = 1;
         DepthAttatchmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+		VkAttachmentReference colorAttachmentResolveRef = {};
+		colorAttachmentResolveRef.attachment = 2;
+		colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
         VkSubpassDescription Subpass = {};
         Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;    // You need to be explicit that this is
                                                                         // a graphics subpass because we may support compute passes in the future
         Subpass.colorAttachmentCount = 1;
         Subpass.pColorAttachments = &ColorAttachmentRef;
         Subpass.pDepthStencilAttachment = &DepthAttatchmentRef;
+		Subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
         // Add a subpass dependency
         VkSubpassDependency dependency = {};
@@ -205,7 +222,7 @@ namespace Fling
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
         // Create the render pass
-        std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttatchment };
+        std::array<VkAttachmentDescription, 3> Attachments = { ColorAttachment, DepthAttatchment, colorAttachmentResolve };
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = static_cast<UINT32>(Attachments.size());
@@ -304,11 +321,12 @@ namespace Fling
         // Multi-sampling ----------------------------------
         // Can be a cheaper way to perform anti-aliasing
         // Using it requires enabling a GPU feature
+		assert(m_MsaaSampler);
         VkPipelineMultisampleStateCreateInfo Multisampling = {};
         {
             Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
             Multisampling.sampleShadingEnable = VK_TRUE;
-            Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+            Multisampling.rasterizationSamples = m_MsaaSampler->GetSampleCountFlagBits();
             Multisampling.minSampleShading = 0.2f; 
             Multisampling.pSampleMask = nullptr; // Optional
             Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
@@ -397,7 +415,7 @@ namespace Fling
 
     void Renderer::CreateFrameBuffers()
     {
-        assert(m_SwapChain && m_DepthBuffer);
+        assert(m_SwapChain && m_DepthBuffer && m_MsaaSampler);
 
         m_SwapChainFramebuffers.resize(m_SwapChain->GetImageViewCount());
 
@@ -406,10 +424,11 @@ namespace Fling
         // Create the frame buffers based on the image views
         for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); i++)
         {
-            std::array<VkImageView, 2> attachments =
+            std::array<VkImageView, 3> attachments =
             {
-                ImageViews[i],
-                m_DepthBuffer->GetVkImageView()
+				m_MsaaSampler->GetImageView(),
+                m_DepthBuffer->GetVkImageView(),
+				ImageViews[i]
             };
 
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -467,17 +486,17 @@ namespace Fling
             vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
 
             // Skybox -----------------------------
-            VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
-            VkDeviceSize offsets[1] = { 0 };
-            VkDescriptorSet skyboxDescriptorSet[1] = { m_Skybox->GetDescriptorSet() };
+			VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
+			VkDeviceSize offsets[1] = { 0 };
+			VkDescriptorSet skyboxDescriptorSet[1] = { m_Skybox->GetDescriptorSet() };
 
-            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipelineLayout(), 0, 1, skyboxDescriptorSet, 0, NULL);
-            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, skyboxVertexBuffers, offsets);
-            vkCmdBindIndexBuffer(m_CommandBuffers[i], m_Skybox->GetIndexBuffer()->GetVkBuffer(), 0, m_Skybox->GetIndexType());
-            vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipeLine());
-            vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);
-
-            vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+			vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipelineLayout(), 0, 1, skyboxDescriptorSet, 0, NULL);
+			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, skyboxVertexBuffers, offsets);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_Skybox->GetIndexBuffer()->GetVkBuffer(), 0, m_Skybox->GetIndexType());
+			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipeLine());
+			vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);
+			
+			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
 
             // For each active mesh renderer, bind it's vertex and index buffer
@@ -536,6 +555,10 @@ namespace Fling
     void Renderer::CleanupFrameResources()
     {
         m_DepthBuffer->Cleanup();
+		if (m_MsaaSampler)
+		{
+			m_MsaaSampler->Release();
+		}
 
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
@@ -567,6 +590,10 @@ namespace Fling
         CreateGraphicsPipeline();
 
         m_DepthBuffer->Create();
+		if (m_MsaaSampler)
+		{
+			m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+		}
 
         CreateFrameBuffers();
 
@@ -986,6 +1013,18 @@ namespace Fling
             m_SwapChain = nullptr;
         }
 		
+		if (m_DepthBuffer)
+		{
+			delete m_DepthBuffer;
+			m_DepthBuffer = nullptr;
+		}
+
+		if (m_MsaaSampler)
+		{
+			delete m_MsaaSampler;
+			m_MsaaSampler = nullptr;
+		}
+
         vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -994,8 +1033,6 @@ namespace Fling
             vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
             vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
         }
-
-
 
         vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
