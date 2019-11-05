@@ -1,6 +1,8 @@
 #pragma once
 
+#if WITH_IMGUI
 #include <imgui.h>
+#endif
 #include <array>
 
 namespace Fling

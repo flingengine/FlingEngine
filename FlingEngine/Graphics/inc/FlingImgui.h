@@ -1,6 +1,9 @@
 #pragma once 
 
+#if WITH_IMGUI
 #include <imgui.h>
+
+
 #include <algorithm>
 
 #include "Renderer.h"
@@ -110,3 +113,5 @@ namespace Fling
         entt::delegate<void()> m_display{};
     };
 } //namespace fling
+
+#endif // WITH_IMGUI

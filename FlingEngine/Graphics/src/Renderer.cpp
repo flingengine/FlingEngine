@@ -103,17 +103,21 @@ namespace Fling
 
         BuildCommandBuffers(*m_Registry);
 
+#if WITH_IMGUI
         // Initialize imgui
         m_flingImgui = new FlingImgui(m_LogicalDevice, m_SwapChain);
         m_imguiDisplay = ImguiDisplay();
+        
         m_DrawImgui = FlingConfig::GetBool("Imgui", "display");
         InitImgui();
+#endif  // WITH_IMGUI
 
         CreateSyncObjects();
     }
 
     void Renderer::InitImgui()
     {
+#if WITH_IMGUI
         m_flingImgui->Init(
             static_cast<float>(m_CurrentWindow->GetWidth()),
             static_cast<float>(m_CurrentWindow->GetHeight())
@@ -121,6 +125,7 @@ namespace Fling
 
         m_flingImgui->InitResources(m_LogicalDevice->GetGraphicsQueue());
         m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame>(m_imguiDisplay);
+#endif  // WITH_IMGUI
     }
 
     void Renderer::CreateLightBuffers()
@@ -138,7 +143,8 @@ namespace Fling
 
     void Renderer::UpdateImguiIO()
     {
-        //Update imgui mouse events and timings
+#if WITH_IMGUI
+        // Update imgui mouse events and timings
         ImGuiIO& io = ImGui::GetIO();
 
         io.DisplaySize = ImVec2(
@@ -150,6 +156,7 @@ namespace Fling
 
         io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
         io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+#endif
     }
 
     void Renderer::CreateRenderPass()
@@ -582,8 +589,9 @@ namespace Fling
         m_LogicalDevice->WaitForIdle();
 
         CleanupFrameResources();
+#if WITH_IMGUI
         m_flingImgui->Release();
-
+#endif
         m_SwapChain->Recreate(ChooseSwapExtent());
 
         CreateRenderPass();
@@ -808,8 +816,9 @@ namespace Fling
         m_CurrentWindow->Update();
 
         m_camera->Update(DeltaTime);
-
+#if WITH_IMGUI
 		UpdateImguiIO();
+#endif
     }
 
     void Renderer::DrawFrame(entt::registry& t_Reg)
@@ -819,12 +828,13 @@ namespace Fling
 
         vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
+#if WITH_IMGUI
         // Update imgui command buffers
         {
             vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_flingImgui->GetCommandPool(), 0);
             m_flingImgui->BuildCommandBuffers(m_DrawImgui);
-        }
-        
+        }  
+#endif
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -848,11 +858,13 @@ namespace Fling
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
 
-        std::array<VkCommandBuffer, 2> submitCommandBuffers =
-        {
-            m_CommandBuffers[ImageIndex], m_flingImgui->GetCommandBuffer(ImageIndex)
-        };
+        std::vector<VkCommandBuffer> submitCommandBuffers = {};
 
+        submitCommandBuffers.emplace_back(m_CommandBuffers[ImageIndex]);
+
+#if WITH_IMGUI
+        submitCommandBuffers.emplace_back(m_flingImgui->GetCommandBuffer(ImageIndex));
+#endif
 
         submitInfo.commandBufferCount = static_cast<UINT32>(submitCommandBuffers.size());
         submitInfo.pCommandBuffers = submitCommandBuffers.data();
@@ -1000,13 +1012,13 @@ namespace Fling
             delete m_Skybox;
             m_Skybox = nullptr;
         }
-
+#if WITH_IMGUI
         if (m_flingImgui)
         {
             delete m_flingImgui;
             m_flingImgui = nullptr;
         }
-
+#endif
         if (m_SwapChain)
         {
             delete m_SwapChain;

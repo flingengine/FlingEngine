@@ -9,9 +9,9 @@ namespace Fling
 		fpsGraph = { 0 };
 	}
 
-
 	void ImguiDisplay::NewFrame()
 	{
+#if WITH_IMGUI
 		Timing& Timing = Timing::Get();
 		ImGuiIO& io = ImGui::GetIO();
 		
@@ -46,5 +46,6 @@ namespace Fling
 		ImGui::Text("Right Click and drag to rotate camera");
 
 		ImGui::End();
+#endif
 	}
 }

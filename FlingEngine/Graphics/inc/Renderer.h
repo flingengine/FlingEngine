@@ -7,7 +7,14 @@
 #include "FlingVulkan.h"
 
 #include <GLFW/glfw3.h>
+
+#if WITH_IMGUI
+
 #include <imgui.h>
+#include "FlingImgui.h"
+#include "ImguiDisplay.h"
+
+#endif  // WITH_IMGUI
 
 #include "Singleton.hpp"
 
@@ -30,8 +37,6 @@
 
 #include "ShaderProgram.h"
 #include "Shader.h"
-#include "FlingImgui.h"
-#include "ImguiDisplay.h"
 #include <atomic>
 #include "Cubemap.h"
 #include "MultiSampler.h"
@@ -44,8 +49,9 @@ namespace Fling
     // File resource
     class File;
 
-    // Imgui resource
+#if WITH_IMGUI
     class FlingImgui;
+#endif
 
     struct Lighting
     {
@@ -235,11 +241,13 @@ namespace Fling
 
         FlingWindow* m_CurrentWindow = nullptr;
 
+#if WITH_IMGUI
         /** Imgui Instance **/
         FlingImgui* m_flingImgui = nullptr;
         
         /** Holds imgui ui data **/
         ImguiDisplay m_imguiDisplay;
+#endif
 
         Instance* m_Instance = nullptr;
 

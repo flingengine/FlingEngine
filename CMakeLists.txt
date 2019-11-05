@@ -13,7 +13,7 @@ OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of 
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
 
 # We can't have the editor without ImGUI!
-IF( NOT WITH_IMGUI_FLAG )
+IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     SET( WITH_EDITOR_FLAG OFF )
     message( FATAL_ERROR    "WITH_EDITOR_FLAG cannot be enabled because WITH_IMGUI_FLAG is OFF!" )
 endif()
@@ -96,8 +96,10 @@ set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 add_subdirectory( external/SPIRV-Cross )
 
 # ImGUI 
-add_subdirectory( external/imgui )
-include_directories( external/imgui )
+if( WITH_IMGUI_FLAG )
+    add_subdirectory( external/imgui )
+    include_directories( external/imgui )
+endif()
 
 include_directories( external/glm )
 include_directories( external/spdlog/include )

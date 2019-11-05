@@ -1,5 +1,7 @@
 #include "FlingImgui.h"
 
+#if WITH_IMGUI
+
 namespace Fling
 {
     FlingImgui::FlingImgui(LogicalDevice* t_logicalDevice, Swapchain* t_swapChain) :
@@ -573,3 +575,5 @@ namespace Fling
 
     }
 }
+
+#endif  // WITH_IMGUI
