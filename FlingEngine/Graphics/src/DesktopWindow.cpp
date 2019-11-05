@@ -115,4 +115,20 @@ namespace Fling
 		return m_IsMouseVisible;
 	}
 
+	void DesktopWindow::SetWindowIcon(Guid t_ID)
+	{
+		// Load an image 
+		std::shared_ptr<Image> Icon = Image::Create(t_ID);
+		assert(Icon);
+
+		// Set the Pixel data for this image
+		GLFWimage GLFW_Image;
+		GLFW_Image.height = Icon->GetHeight();
+		GLFW_Image.width = Icon->GetWidth();
+		GLFW_Image.pixels = Icon->GetPixelData();
+
+		// Set it via GLFW
+		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
+	}
+
 }   // namespace Fling
