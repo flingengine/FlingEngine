@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cereal/archives/json.hpp>
+#include "Serilization.h"
 #include "Material.h"
 #include "Model.h"
 #include "Buffer.h"

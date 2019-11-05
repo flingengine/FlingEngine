@@ -425,7 +425,6 @@ namespace Fling
             m_vertexBuffer->MapMemory();
         }
 
-        VkDeviceSize indexSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
         if((m_indexBuffer->GetVkBuffer() == VK_NULL_HANDLE) ||
             (m_indexCount < imDrawData->TotalIdxCount))
         {

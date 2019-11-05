@@ -43,6 +43,8 @@ namespace Sandbox
 		LightingTest(t_Reg);
 		//OnLoadInitated();
 		//GenerateTestMeshes(t_Reg);
+
+		SetWindowIcon();
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -218,6 +220,15 @@ namespace Sandbox
 	void Game::OnToggleMoveLights()
 	{
 		m_MovePointLights = !m_MovePointLights;
+	}
+
+	void Game::SetWindowIcon()
+	{
+		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetWindowIcon("Icons/Fling_Logo.png"_hs);
+		}
 	}
 
 	void Game::ToggleRotation()

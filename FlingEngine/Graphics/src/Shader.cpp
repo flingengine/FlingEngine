@@ -18,13 +18,7 @@ namespace Fling
     std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
     {
 		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID);
-        bool IsNew = ShaderProgram::Get().AddShader(shader);
-		
-		//if (IsNew)
-		//{
-		//	Renderer::Get().SetFrameBufferHasBeenResized(true);
-		//}
-
+        ShaderProgram::Get().AddShader(shader);
 		return shader;
     }
 
