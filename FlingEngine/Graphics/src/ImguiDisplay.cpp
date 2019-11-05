@@ -14,7 +14,6 @@ namespace Fling
 	{
 		Timing& Timing = Timing::Get();
 		ImGuiIO& io = ImGui::GetIO();
-		ImVec4 clear_color = ImColor(114, 144, 154);
 		
 		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Debug");
