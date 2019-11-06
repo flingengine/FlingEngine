@@ -5,9 +5,19 @@
 
 namespace Sandbox
 {
-    void SandboxEditor::Draw(const entt::registry& t_Reg, float DeltaTime)
+    void SandboxEditor::Draw(entt::registry& t_Reg, float DeltaTime)
     {
         // #TODO: Draw some bois
+		Fling::BaseEditor::Draw(t_Reg, DeltaTime);
+
+		ImGui::Begin("Demo Info");
+		ImGui::Text("Press 'M' to hide the mouse cursor");
+		ImGui::Text("Press 'T' to toggle object rotation");
+		ImGui::Text("Press 'WASD' Move");
+		ImGui::Text("Right Click and drag to rotate camera");
+
+		ImGui::End();
+
     }
 }   // namespace Sandbox
 

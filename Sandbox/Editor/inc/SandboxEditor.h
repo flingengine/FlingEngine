@@ -10,7 +10,7 @@ namespace Sandbox
         SandboxEditor() = default;
         ~SandboxEditor() = default;
     
-        virtual void Draw(const entt::registry& t_Reg, float DeltaTime) override;
+        virtual void Draw(entt::registry& t_Reg, float DeltaTime) override;
 
     protected:
 

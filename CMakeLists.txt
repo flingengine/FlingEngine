@@ -99,6 +99,7 @@ add_subdirectory( external/SPIRV-Cross )
 if( WITH_IMGUI_FLAG )
     add_subdirectory( external/imgui )
     include_directories( external/imgui )
+    include_directories( external/imgui_entt_entity_editor )
 endif()
 
 include_directories( external/glm )

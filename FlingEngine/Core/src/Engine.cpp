@@ -36,6 +36,7 @@ namespace Fling
 		
 		// Set the editor if we need to
 #if WITH_EDITOR
+		m_Editor->RegisterComponents(g_Registry);
 		Renderer::Get().m_Editor = m_Editor;
 #endif
 
