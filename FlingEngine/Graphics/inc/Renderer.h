@@ -12,9 +12,14 @@
 
 #include <imgui.h>
 #include "FlingImgui.h"
-#include "ImguiDisplay.h"
 
 #endif  // WITH_IMGUI
+
+#if WITH_EDITOR
+
+#include "BaseEditor.h"
+
+#endif  // WITH_EDITOR
 
 #include "Singleton.hpp"
 
@@ -93,7 +98,7 @@ namespace Fling
         /**
         * Draw the frame!
         */
-        void DrawFrame(entt::registry& t_Reg);
+        void DrawFrame(entt::registry& t_Reg, float DeltaTime);
 
         /**
         * Prepare for shutdown of the rendering pipeline, close any open semaphores
@@ -244,9 +249,10 @@ namespace Fling
 #if WITH_IMGUI
         /** Imgui Instance **/
         FlingImgui* m_flingImgui = nullptr;
-        
-        /** Holds imgui ui data **/
-        ImguiDisplay m_imguiDisplay;
+
+    #if WITH_EDITOR
+        std::shared_ptr<Fling::BaseEditor> m_Editor;
+    #endif
 #endif
 
         Instance* m_Instance = nullptr;

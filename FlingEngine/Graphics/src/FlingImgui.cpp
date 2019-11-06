@@ -525,18 +525,23 @@ namespace Fling
         }
 
     }
+
+    void FlingImgui::PrepFrameBuild()
+    {
+        //Render Imgui UI  
+        ImGui::NewFrame();
+    }
+
     void FlingImgui::BuildCommandBuffers(bool t_displayOn)
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        //Render Imgui UI  
-        ImGui::NewFrame();
-        if (t_displayOn)
-        {
-            m_display();
-        }
+        // if (t_displayOn && m_DisplayCallback)
+        // {
+        //     m_DisplayCallback();
+        // }
         ImGui::Render();
 
         UpdateBuffers();

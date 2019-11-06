@@ -9,8 +9,6 @@ MACRO(FLING_ENGINE_INC EngineDir )
 	elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 		add_definitions( -Wno-class-memaccess )
-		#add_definitions( -Wno-unused-private-field )
-		#add_definitions( -Wno-exceptions )
 
 	# Clang
 	elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -27,6 +25,8 @@ MACRO(FLING_ENGINE_INC EngineDir )
 	# Sets the output directory
 	set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin" )
 
+# TODO Only include editor folder if we have enabled the editor!
+
 	include_directories(
 		${EngineDir}Core/inc
 		${EngineDir}Graphics/inc
@@ -36,6 +36,12 @@ MACRO(FLING_ENGINE_INC EngineDir )
 		${EngineDir}Gameplay/inc
 		${GENERATED_INC_FOLDER}		# Generated include files that cmake will handle (i.e. GitVersion)
 	)
+
+	if( WITH_EDITOR_FLAG )
+		include_directories(
+			${EngineDir}Editor/inc
+		)
+	endif()
 
 ENDMACRO(FLING_ENGINE_INC)
 

@@ -1,17 +1,13 @@
-#include "ImguiDisplay.h"
+#if WITH_EDITOR
+
+#include "pch.h"
+#include "BaseEditor.h"
 #include "Renderer.h"
-#include "Timing.h"
 
 namespace Fling
 {
-	ImguiDisplay::ImguiDisplay()
-	{
-		fpsGraph = { 0 };
-	}
-
-	void ImguiDisplay::NewFrame()
-	{
-#if WITH_IMGUI
+    void BaseEditor::Draw(const entt::registry& t_Reg, float DeltaTime)
+    {
 		Timing& Timing = Timing::Get();
 		ImGuiIO& io = ImGui::GetIO();
 		
@@ -25,17 +21,17 @@ namespace Fling
 		float frameTime = static_cast<float>(Timing.GetFrameCount());
 		fpsGraph.back() = frameTime;
 
-		if (frameTime < frameTimeMin) 
+		if (frameTime < m_FrameTimeMin) 
 		{
-			frameTimeMin = frameTime;
+			m_FrameTimeMin = frameTime;
 		}
-		if (frameTime > frameTimeMax) 
+		if (frameTime > m_FrameTimeMax) 
 		{
-			frameTimeMax = frameTime;
+			m_FrameTimeMax = frameTime;
 		}
 		
 		ImGui::Text("FPS: %f", frameTime);
-		ImGui::PlotLines("FPS", &fpsGraph[0], fpsGraph.size(), 0, "", frameTimeMin, frameTimeMax, ImVec2(0, 80));
+		ImGui::PlotLines("FPS", &fpsGraph[0], fpsGraph.size(), 0, "", m_FrameTimeMin, m_FrameTimeMax, ImVec2(0, 80));
 
 		ImGui::Checkbox("Mouse click left", &io.MouseDown[0]);
 		ImGui::Checkbox("Mouse click right", &io.MouseDown[1]);
@@ -46,6 +42,7 @@ namespace Fling
 		ImGui::Text("Right Click and drag to rotate camera");
 
 		ImGui::End();
-#endif
-	}
-}
+    }
+}   // namespace Fling
+
+#endif  // WITH_EDITOR

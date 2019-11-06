@@ -9,6 +9,13 @@ include_directories(
 	Gameplay/inc
 )
 
+# Editor
+if( WITH_EDITOR_FLAG )
+    include_directories(
+        Editor/inc
+    )
+endif()
+
 ##################### Linking #################
 
 set ( LINK_LIBS

@@ -106,7 +106,6 @@ namespace Fling
 #if WITH_IMGUI
         // Initialize imgui
         m_flingImgui = new FlingImgui(m_LogicalDevice, m_SwapChain);
-        m_imguiDisplay = ImguiDisplay();
         
         m_DrawImgui = FlingConfig::GetBool("Imgui", "display");
         InitImgui();
@@ -124,7 +123,6 @@ namespace Fling
         );
 
         m_flingImgui->InitResources(m_LogicalDevice->GetGraphicsQueue());
-        m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame>(m_imguiDisplay);
 #endif  // WITH_IMGUI
     }
 
@@ -821,7 +819,7 @@ namespace Fling
 #endif
     }
 
-    void Renderer::DrawFrame(entt::registry& t_Reg)
+    void Renderer::DrawFrame(entt::registry& t_Reg, float DeltaTime)
     {
         VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
         UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
@@ -831,7 +829,15 @@ namespace Fling
 #if WITH_IMGUI
         // Update imgui command buffers
         {
+            assert(m_Editor);
             vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_flingImgui->GetCommandPool(), 0);
+            // Prepare the ImGUI buffers to be built
+            m_flingImgui->PrepFrameBuild();
+#if WITH_EDITOR
+            // Draw any ImGUI items here
+            m_Editor->Draw(*m_Registry, DeltaTime);
+#endif
+            // Build the actual ImGUI command buffers
             m_flingImgui->BuildCommandBuffers(m_DrawImgui);
         }  
 #endif
