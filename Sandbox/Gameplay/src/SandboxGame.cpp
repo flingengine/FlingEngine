@@ -150,12 +150,12 @@ namespace Sandbox
 			t0.SetPos(t_Pos);
 		};
 
-		AddModel(0, "Models/Cerberus.obj", "Materials/Cerberus.mat", glm::vec3(0.25f));
+		//AddModel(0, "Models/Cerberus.obj", "Materials/Cerberus.mat", glm::vec3(0.25f));
 
-		//AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
-		//AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
-		//AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
-		//AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
+		AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
+		AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
 		float Width = 2.0f;
 		AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));

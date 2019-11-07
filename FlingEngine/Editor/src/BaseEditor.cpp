@@ -4,7 +4,10 @@
 #include "BaseEditor.h"
 #include "Renderer.h"
 
+// We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
 
 namespace Fling
 {
@@ -12,20 +15,55 @@ namespace Fling
 	{
 		void Transform(Fling::Transform& t)
 		{
-			ImGui::LabelText("This the TRANSOFRM!", "");
+			ImGui::DragFloat3( "Position", ( float* ) &t.m_Pos );
+			ImGui::DragFloat3( "Scale", ( float* )  &t.m_Pos );
+			ImGui::DragFloat3( "Rotation", ( float* )  &t.m_Rotation );
+		}
+
+		void PointLight(Fling::PointLight& t_Light)
+		{
+			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
+			ImGui::InputFloat( "Range", &t_Light.Range );
+			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
+		}
+
+		void DirectionalLight(Fling::DirectionalLight& t_Light)
+		{
+			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
+			ImGui::DragFloat3( "Direction", ( float* ) &t_Light.Direction );
+			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 	}
 
 	void BaseEditor::RegisterComponents(entt::registry& t_Reg)
 	{
 		m_ComponentEditor.registerTrivial<Fling::Transform>(t_Reg, "Transform");
-
 		m_ComponentEditor.registerComponentWidgetFn(
 			t_Reg.type<Fling::Transform>(),
 			[](entt::registry& reg, auto e) 
 			{
 				auto& t = reg.get<Fling::Transform>(e);
 				Widgets::Transform(t);
+			}
+		);
+
+		m_ComponentEditor.registerTrivial<Fling::PointLight>(t_Reg, "PointLight");
+		m_ComponentEditor.registerComponentWidgetFn(
+			t_Reg.type<Fling::PointLight>(),
+			[](entt::registry& reg, auto e) 
+			{
+				auto& t = reg.get<Fling::PointLight>(e);
+				Widgets::PointLight(t);
+			}
+		);
+
+		m_ComponentEditor.registerTrivial<Fling::DirectionalLight>(t_Reg, "Directional Light");
+		m_ComponentEditor.registerComponentWidgetFn(
+			t_Reg.type<Fling::DirectionalLight>(),
+			[](entt::registry& reg, auto e) 
+			{
+				auto& t = reg.get<Fling::DirectionalLight>(e);
+				Widgets::DirectionalLight(t);
 			}
 		);
 	}
@@ -108,7 +146,6 @@ namespace Fling
 	void BaseEditor::DrawGpuInfo() 
 	{
 		Timing& Timing = Timing::Get();
-		ImGuiIO& io = ImGui::GetIO();
 		ImGui::Begin("GPU Info");
 
 		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
