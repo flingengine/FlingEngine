@@ -8,6 +8,7 @@
 #include "Components/Transform.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+#include <sstream>
 
 namespace Fling
 {
@@ -16,22 +17,22 @@ namespace Fling
 		void Transform(Fling::Transform& t)
 		{
 			ImGui::DragFloat3( "Position", ( float* ) &t.m_Pos );
-			ImGui::DragFloat3( "Scale", ( float* )  &t.m_Pos );
+			ImGui::DragFloat3( "Scale", ( float* )  &t.m_Scale );
 			ImGui::DragFloat3( "Rotation", ( float* )  &t.m_Rotation );
 		}
 
 		void PointLight(Fling::PointLight& t_Light)
 		{
 			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-			ImGui::InputFloat( "Range", &t_Light.Range );
-			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
+			ImGui::DragFloat( "Range", &t_Light.Range );
+			ImGui::DragFloat( "Intensity", &t_Light.Intensity );
 		}
 
 		void DirectionalLight(Fling::DirectionalLight& t_Light)
 		{
 			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
 			ImGui::DragFloat3( "Direction", ( float* ) &t_Light.Direction );
-			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
+			ImGui::DragFloat( "Intensity", &t_Light.Intensity );
 		}
 	}
 
@@ -77,8 +78,38 @@ namespace Fling
 			DrawGpuInfo();
 		}
 
-		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+		if(m_DisplayWorldOutline)
+		{
+			DrawWorldOutline(t_Reg);
+		}
+
+		if(m_DisplayComponentEditor)
+		{
+			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+		}
     }
+
+	void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
+	{
+		ImGui::Begin("World Outline");
+
+		auto view = t_Reg.view<Transform>();
+		for(auto entity: view) 
+		{
+			std::ostringstream os;
+			os << "Entity " << static_cast<UINT64>(entity);
+			std::string label = os.str();
+
+			// gets only the components that are going to be used ...
+			if(ImGui::Button(label.c_str(), ImVec2( ImGui::GetWindowWidth(), 0.f ) ))
+			{
+				// Select this eneity for the component editor
+				m_CompEditorEntityType = entity;
+			}
+    	}
+
+		ImGui::End();
+	}
 
 	void BaseEditor::DrawFileMenu()
 	{
@@ -124,9 +155,9 @@ namespace Fling
 			if (ImGui::BeginMenu("Windows"))
 			{
 				ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
+				ImGui::Checkbox("Component Editor", &m_DisplayComponentEditor);
+				ImGui::Checkbox("World Outline", &m_DisplayWorldOutline);
 
-				ImGui::MenuItem("Test B", NULL);
-				ImGui::MenuItem("Test C", NULL);
 				ImGui::EndMenu();
 			}
 
@@ -172,6 +203,7 @@ namespace Fling
 			ImGui::Text("FPS: %f", frameTime);
 			ImGui::PlotLines("FPS", &fpsGraph[0], fpsGraph.size(), 0, "", m_FrameTimeMin, m_FrameTimeMax, ImVec2(0, 80));
 		}
+		ImGui::End();
 	}
 }   // namespace Fling
 

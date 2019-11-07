@@ -32,6 +32,8 @@ namespace Fling
         float m_FrameTimeMax = 0.0f;
 
 		bool m_DisplayGPUInfo = false;
+		bool m_DisplayComponentEditor = true;
+		bool m_DisplayWorldOutline = true;
 
 		/** Component editor so that we can draw our component window */
 		entt::entity m_CompEditorEntityType = entt::null;
@@ -40,6 +42,8 @@ namespace Fling
 		virtual void DrawFileMenu();
 
 		void DrawGpuInfo();
+
+        void DrawWorldOutline(entt::registry& t_Reg);
 
         // Draw stats graph
         // Draw File Menu
