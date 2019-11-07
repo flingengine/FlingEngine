@@ -39,4 +39,4 @@
 
 [submodule "external/imgui_entt_entity_editor"]
 	path = external/imgui_entt_entity_editor
-	url = https://github.com/Green-Sky/imgui_entt_entity_editor.git
+	url = https://github.com/flingengine/imgui_entt_entity_editor.git
