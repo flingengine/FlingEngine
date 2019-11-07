@@ -44,6 +44,8 @@ namespace Fling
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
+		
+		Input::PreUpdate();
 	}
 
 	void Engine::Tick()

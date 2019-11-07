@@ -8,7 +8,10 @@ namespace Fling
         m_LogicalDevice(t_logicalDevice),
         m_swapChain(t_swapChain)
     {
-        ImGui::CreateContext();
+		if (!ImGui::GetCurrentContext())
+		{
+			ImGui::CreateContext();
+		}
     }
 
     FlingImgui::~FlingImgui()

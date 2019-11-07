@@ -16,23 +16,23 @@ namespace Fling
 	{
 		void Transform(Fling::Transform& t)
 		{
-			ImGui::DragFloat3( "Position", ( float* ) &t.m_Pos );
-			ImGui::DragFloat3( "Scale", ( float* )  &t.m_Scale );
-			ImGui::DragFloat3( "Rotation", ( float* )  &t.m_Rotation );
+			ImGui::InputFloat3( "Position", ( float* ) &t.m_Pos );
+			ImGui::InputFloat3( "Scale", ( float* )  &t.m_Scale );
+			ImGui::InputFloat3( "Rotation", ( float* )  &t.m_Rotation );
 		}
 
 		void PointLight(Fling::PointLight& t_Light)
 		{
 			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-			ImGui::DragFloat( "Range", &t_Light.Range );
-			ImGui::DragFloat( "Intensity", &t_Light.Intensity );
+			ImGui::InputFloat( "Range", &t_Light.Range );
+			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 
 		void DirectionalLight(Fling::DirectionalLight& t_Light)
 		{
 			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-			ImGui::DragFloat3( "Direction", ( float* ) &t_Light.Direction );
-			ImGui::DragFloat( "Intensity", &t_Light.Intensity );
+			ImGui::InputFloat3( "Direction", ( float* ) &t_Light.Direction );
+			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 	}
 
