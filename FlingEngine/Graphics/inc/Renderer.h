@@ -7,7 +7,19 @@
 #include "FlingVulkan.h"
 
 #include <GLFW/glfw3.h>
+
+#if WITH_IMGUI
+
 #include <imgui.h>
+#include "FlingImgui.h"
+
+#endif  // WITH_IMGUI
+
+#if WITH_EDITOR
+
+#include "BaseEditor.h"
+
+#endif  // WITH_EDITOR
 
 #include "Singleton.hpp"
 
@@ -30,8 +42,6 @@
 
 #include "ShaderProgram.h"
 #include "Shader.h"
-#include "FlingImgui.h"
-#include "ImguiDisplay.h"
 #include <atomic>
 #include "Cubemap.h"
 #include "MultiSampler.h"
@@ -44,8 +54,9 @@ namespace Fling
     // File resource
     class File;
 
-    // Imgui resource
+#if WITH_IMGUI
     class FlingImgui;
+#endif
 
     struct Lighting
     {
@@ -87,7 +98,7 @@ namespace Fling
         /**
         * Draw the frame!
         */
-        void DrawFrame(entt::registry& t_Reg);
+        void DrawFrame(entt::registry& t_Reg, float DeltaTime);
 
         /**
         * Prepare for shutdown of the rendering pipeline, close any open semaphores
@@ -235,11 +246,14 @@ namespace Fling
 
         FlingWindow* m_CurrentWindow = nullptr;
 
+#if WITH_IMGUI
         /** Imgui Instance **/
         FlingImgui* m_flingImgui = nullptr;
-        
-        /** Holds imgui ui data **/
-        ImguiDisplay m_imguiDisplay;
+
+    #if WITH_EDITOR
+        std::shared_ptr<Fling::BaseEditor> m_Editor;
+    #endif
+#endif
 
         Instance* m_Instance = nullptr;
 

@@ -3,13 +3,12 @@
 #if FLING_WINDOWS
 
 #include "Input/WindowsInput.h"
-
-// Oof on this renderer dependency
-// #TODO: Figure something else that's better for this
 #include "Renderer.h"
-#include <GLFW/glfw3.h>
 
+// Glfw -------------------
+#include <GLFW/glfw3.h>
 #include "DesktopWindow.h"
+#include "ImGuiInputBinding.hpp"
 
 namespace Fling
 {
@@ -21,6 +20,13 @@ namespace Fling
 	{
 		// Any specific input binds that may be needed
 		InitKeyMap();
+	}
+
+	void WindowsInput::PreUpdateImpl()
+	{
+#if WITH_IMGUI
+		InternalImGui::SetImGuiCallbacks();
+#endif
 	}
 
 	void WindowsInput::ShutdownImpl()
@@ -259,7 +265,7 @@ namespace Fling
 
 		return CurPos;
 	}
-	
+
 } // namespace Fling
 
 #endif	// FLING_WINDOWS

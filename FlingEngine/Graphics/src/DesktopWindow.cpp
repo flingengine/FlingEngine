@@ -88,7 +88,6 @@ namespace Fling
 		return height;
 	}
 
-
 	float DesktopWindow::GetAspectRatio() const
 	{
 		int width, height;
@@ -130,5 +129,6 @@ namespace Fling
 		// Set it via GLFW
 		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
 	}
+
 
 }   // namespace Fling

@@ -8,6 +8,7 @@
 #include "FlingVulkan.h"
 
 #include "Renderer.h"        // For getting the devices 
+#include "ResourceManager.h"
 #include "GraphicsHelpers.h"
 #include "Buffer.h"
 
