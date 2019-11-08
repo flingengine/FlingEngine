@@ -1094,7 +1094,6 @@ namespace Fling
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
-		m_Registry->on_replace<MeshRenderer>().connect<&Renderer::MeshRendererReplaced>(*this);
 		m_Registry->on_destroy<MeshRenderer>().connect<&Renderer::MeshRendererRemoved>(*this);
 
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
