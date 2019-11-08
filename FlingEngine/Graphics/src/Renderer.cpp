@@ -1116,14 +1116,8 @@ namespace Fling
 		SetFrameBufferHasBeenResized(true);
     }
 
-	void Renderer::MeshRendererReplaced(entt::entity t_Ent, entt::registry& t_Reg)
-	{
-		F_LOG_TRACE("Mesh renderer at ID {} has been replaced!", static_cast<UINT64>(t_Ent));
-	}
-
 	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
 	{
-		F_LOG_TRACE("Mesh renderer at ID {} has been Removed!", static_cast<UINT64>(t_Ent));
 		SetFrameBufferHasBeenResized(true);
 	}
 
