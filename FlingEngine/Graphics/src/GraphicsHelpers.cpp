@@ -577,7 +577,7 @@ namespace Fling
 
     }    // namespace GraphicsHelpers
 
-    namespace Initalizers
+    namespace Initializers
     {
         VkMappedMemoryRange MappedMemoryRange()
         {
