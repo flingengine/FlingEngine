@@ -32,9 +32,9 @@
 #include "Shader.h"
 #include "FlingImgui.h"
 #include "ImguiDisplay.h"
-#include <atomic>
 #include "Cubemap.h"
 #include "MultiSampler.h"
+#include "GraphicsPipeline.h"
 
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
@@ -248,6 +248,7 @@ namespace Fling
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
+        GraphicsPipeline* m_GraphicsPipeline = nullptr;
 
         DepthBuffer* m_DepthBuffer = nullptr;
 

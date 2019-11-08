@@ -409,6 +409,18 @@ namespace Fling
 
         }
 
+        void CreatePipelineCache(VkPipelineCache& t_PipelineCache)
+        {
+            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
+            VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+            pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            if (vkCreatePipelineCache(Device, &pipelineCacheCreateInfo, nullptr, &t_PipelineCache) != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to create pipeline cache");
+            }
+        }
+
         void TransitionImageLayout(
             VkImage t_Image, 
             VkFormat t_Format, 

@@ -12,18 +12,18 @@
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
-	
+
     void Renderer::Init()
-	{
-		// You must have the registry set before creating a renderer!
-		assert(m_Registry);
+    {
+        // You must have the registry set before creating a renderer!
+        assert(m_Registry);
         InitDevices();
 
         // Add entt component callbacks for mesh render etc
         InitComponentData();
 
-		// Initalize all graphics resources
-		InitGraphics();
+        // Initalize all graphics resources
+        InitGraphics();
     }
 
     void Renderer::InitDevices()
@@ -44,20 +44,21 @@ namespace Fling
         assert(m_SwapChain);
     }
 
-	void Renderer::InitGraphics()
-	{
-		m_MsaaSampler = new Multisampler(m_PhysicalDevice->GetMaxUsableSampleCount());
-		CreateRenderPass();
+    void Renderer::InitGraphics()
+    {
+        m_MsaaSampler = new Multisampler(m_PhysicalDevice->GetMaxUsableSampleCount());
+
+        CreateRenderPass();
 
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
 
-		// Load default material
-		m_DefaultMat = Material::Create("Materials/Default.mat");
-		CreateDescriptorLayout();
+        // Load default material
+        m_DefaultMat = Material::Create("Materials/Default.mat");
+        CreateDescriptorLayout();
 
-		CreateGraphicsPipeline();
+        CreateGraphicsPipeline();
 
-		m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+        m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
 
         m_DepthBuffer = new DepthBuffer(m_PhysicalDevice->GetMaxUsableSampleCount());
         assert(m_DepthBuffer);
@@ -67,8 +68,8 @@ namespace Fling
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
-		m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
-		assert(m_BRDFLookupTexture);
+        m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
+        assert(m_BRDFLookupTexture);
 
         CreateFrameBuffers();
 
@@ -76,7 +77,7 @@ namespace Fling
         CreateDescriptorSets();
 
         assert(m_Registry);
-    
+
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         GraphicsHelpers::CreateCommandBuffers(
             m_CommandBuffers.data(),
@@ -84,20 +85,25 @@ namespace Fling
             m_CommandPool);
 
         // Load Skybox
-		m_Skybox = new Cubemap(
-			"Textures/Skybox/posx.jpg"_hs,
-			"Textures/Skybox/negx.jpg"_hs,
-			"Textures/Skybox/posy.jpg"_hs,
-			"Textures/Skybox/negy.jpg"_hs,
-			"Textures/Skybox/posz.jpg"_hs,
-			"Textures/Skybox/negz.jpg"_hs,
-			HS("Shaders/skybox/skybox.vert.spv"),
-			HS("Shaders/skybox/skybox.frag.spv"),
-			m_RenderPass,
-			m_LogicalDevice->GetVkDevice()
-		);
+        m_Skybox = new Cubemap(
+            "Textures/Skybox/posx.jpg"_hs,
+            "Textures/Skybox/negx.jpg"_hs,
+            "Textures/Skybox/posy.jpg"_hs,
+            "Textures/Skybox/negy.jpg"_hs,
+            "Textures/Skybox/posz.jpg"_hs,
+            "Textures/Skybox/negz.jpg"_hs,
+            HS("Shaders/skybox/skybox.vert.spv"),
+            HS("Shaders/skybox/skybox.frag.spv"),
+            m_RenderPass,
+            m_LogicalDevice->GetVkDevice()
+        );
 
-		m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount(), m_PhysicalDevice->GetMaxUsableSampleCount());
+        m_Skybox->Init(
+            m_camera, 
+            m_SwapChain->GetActiveImageIndex(), 
+            m_SwapChain->GetImageViewCount(), 
+            m_PhysicalDevice->GetMaxUsableSampleCount()
+        );
 
         CreateLightBuffers();
 
@@ -126,14 +132,14 @@ namespace Fling
     void Renderer::CreateLightBuffers()
     {
         const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
+        VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
-		m_Lighting.m_LightingUBOs.resize(Images.size());
-		for (size_t i = 0; i < Images.size(); i++)
-		{
-			m_Lighting.m_LightingUBOs[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			m_Lighting.m_LightingUBOs[i]->MapMemory(bufferSize);
-		}
+        m_Lighting.m_LightingUBOs.resize(Images.size());
+        for (size_t i = 0; i < Images.size(); i++)
+        {
+            m_Lighting.m_LightingUBOs[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            m_Lighting.m_LightingUBOs[i]->MapMemory(bufferSize);
+        }
     }
 
     void Renderer::UpdateImguiIO()
@@ -154,7 +160,7 @@ namespace Fling
 
     void Renderer::CreateRenderPass()
     {
-		assert(m_MsaaSampler && m_SwapChain);
+        assert(m_MsaaSampler && m_SwapChain);
 
         // We have a single color buffer for the images in the swap chain
         VkAttachmentDescription ColorAttachment = {};
@@ -168,7 +174,7 @@ namespace Fling
 
         ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         // Change to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL  for imgui
-		// and because multisampled images cannot be presented directly
+        // and because multisampled images cannot be presented directly
         ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription DepthAttatchment = {};
@@ -181,15 +187,15 @@ namespace Fling
         DepthAttatchment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         DepthAttatchment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-		VkAttachmentDescription colorAttachmentResolve = {};
-		colorAttachmentResolve.format = m_SwapChain->GetImageFormat();
-		colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentDescription colorAttachmentResolve = {};
+        colorAttachmentResolve.format = m_SwapChain->GetImageFormat();
+        colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         // Subpass -------------------
         VkAttachmentReference ColorAttachmentRef = {};
@@ -200,9 +206,9 @@ namespace Fling
         DepthAttatchmentRef.attachment = 1;
         DepthAttatchmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-		VkAttachmentReference colorAttachmentResolveRef = {};
-		colorAttachmentResolveRef.attachment = 2;
-		colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentReference colorAttachmentResolveRef = {};
+        colorAttachmentResolveRef.attachment = 2;
+        colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkSubpassDescription Subpass = {};
         Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;    // You need to be explicit that this is
@@ -210,7 +216,7 @@ namespace Fling
         Subpass.colorAttachmentCount = 1;
         Subpass.pColorAttachments = &ColorAttachmentRef;
         Subpass.pDepthStencilAttachment = &DepthAttatchmentRef;
-		Subpass.pResolveAttachments = &colorAttachmentResolveRef;
+        Subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
         // Add a subpass dependency
         VkSubpassDependency dependency = {};
@@ -241,181 +247,20 @@ namespace Fling
 
     void Renderer::CreateDescriptorLayout()
     {
-		m_DescriptorSetLayout = Shader::CreateSetLayout(m_LogicalDevice->GetVkDevice(), ShaderProgram::Get().GetAllShaders());
+        m_DescriptorSetLayout = Shader::CreateSetLayout(m_LogicalDevice->GetVkDevice(), ShaderProgram::Get().GetAllShaders());
     }
 
     void Renderer::CreateGraphicsPipeline()
     {
         // Shader stage creation!
-        const auto& Shaders = ShaderProgram::Get().GetAllShaders();
-        std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
-
-        for(const Shader* shader : Shaders)
-        {		
-			VkPipelineShaderStageCreateInfo createInfo = {};
-			createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			createInfo.module = shader->GetShaderModule();
-			createInfo.stage = shader->GetStage();
-			createInfo.pName = "main";
-			createInfo.flags = 0;
-			createInfo.pNext = nullptr;
-			createInfo.pSpecializationInfo = nullptr;
-			ShaderStages.push_back(createInfo);
-        }
-
-        // Vertex input ----------------------
-        VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        auto AttributeDescriptions = Vertex::GetAttributeDescriptions();
-
-        VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
-        VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        VertexInputInfo.vertexBindingDescriptionCount = 1;
-        VertexInputInfo.pVertexBindingDescriptions = &BindingDescription;
-        VertexInputInfo.vertexAttributeDescriptionCount = static_cast<UINT32>(AttributeDescriptions.size());
-        VertexInputInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
-
-        // Input Assembly ----------------------
-        VkPipelineInputAssemblyStateCreateInfo InputAssembly = {};
-        InputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        InputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        InputAssembly.primitiveRestartEnable = VK_FALSE;
-
-        // View ports and scissors ----------------------
-        VkViewport viewport = {};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float)m_SwapChain->GetExtents().width;       // These values can differ from the width/height of the window!
-        viewport.height = (float)m_SwapChain->GetExtents().height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        VkRect2D scissor = {};
-        scissor.offset = { 0, 0 };
-        scissor.extent = m_SwapChain->GetExtents();
-
-        VkPipelineViewportStateCreateInfo viewportState = {};
-        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        viewportState.viewportCount = 1;
-        viewportState.pViewports = &viewport;
-        viewportState.scissorCount = 1;
-        viewportState.pScissors = &scissor;
-
-        // Rasterizer ----------------------------------
-        VkPipelineRasterizationStateCreateInfo Rasterizer = {};
-        {
-            Rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-            Rasterizer.depthClampEnable = VK_FALSE;
-            Rasterizer.rasterizerDiscardEnable = VK_FALSE;  // Useful for shadow maps, using would require enabling a GPU feature
-            Rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-            Rasterizer.lineWidth = 1.0f;
-
-            Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-            Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // Specify the vertex order! 
-
-            Rasterizer.depthBiasEnable = VK_FALSE;
-            Rasterizer.depthBiasConstantFactor = 0.0f;  // Optional
-            Rasterizer.depthBiasClamp = 0.0f;           // Optional
-            Rasterizer.depthBiasSlopeFactor = 0.0f;     // Optional
-        }
-
-        // Multi-sampling ----------------------------------
-        // Can be a cheaper way to perform anti-aliasing
-        // Using it requires enabling a GPU feature
-		assert(m_MsaaSampler);
-        VkPipelineMultisampleStateCreateInfo Multisampling = {};
-        {
-            Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-            Multisampling.sampleShadingEnable = VK_TRUE;
-            Multisampling.rasterizationSamples = m_MsaaSampler->GetSampleCountFlagBits();
-            Multisampling.minSampleShading = 0.2f; 
-            Multisampling.pSampleMask = nullptr; // Optional
-            Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-            Multisampling.alphaToOneEnable = VK_FALSE; // Optional
-        }
-
-        // Color blending ----------------------------------
-        VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-        VkPipelineColorBlendStateCreateInfo ColorBlending = {};
-        {
-            // Attatchment
-            ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-            ColorBlendAttachment.blendEnable = VK_FALSE;
-            ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
-            ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
-            ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;                // Optional
-            ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
-            ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
-            ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;                // Optional
-
-            ColorBlendAttachment.blendEnable = VK_TRUE;
-            ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-            ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-            ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-            // Blend
-            ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-            ColorBlending.logicOpEnable = VK_FALSE;
-            ColorBlending.logicOp = VK_LOGIC_OP_COPY;   // Optional
-            ColorBlending.attachmentCount = 1;
-            ColorBlending.pAttachments = &ColorBlendAttachment;
-            ColorBlending.blendConstants[0] = 0.0f;     // Optional
-            ColorBlending.blendConstants[1] = 0.0f;     // Optional
-            ColorBlending.blendConstants[2] = 0.0f;     // Optional
-            ColorBlending.blendConstants[3] = 0.0f;     // Optional
-        }
-
-        // Pipeline layout ---------------------
-		m_PipelineLayout = Shader::CreatePipelineLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, 0, 0);
-
-		// Depth Stencil
-        VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-        {
-            depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-            depthStencil.depthTestEnable = VK_TRUE;
-            depthStencil.depthWriteEnable = VK_TRUE;
-            depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-            depthStencil.depthBoundsTestEnable = VK_FALSE;
-            depthStencil.minDepthBounds = 0.0f;
-            depthStencil.maxDepthBounds = 1.0f;
-            depthStencil.stencilTestEnable = VK_FALSE;
-            depthStencil.front = {};
-            depthStencil.back = {};
-        }
-
-        // Create graphics pipeline ------------------------
-        VkGraphicsPipelineCreateInfo pipelineInfo = {};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = (UINT32)ShaderStages.size();
-        pipelineInfo.pStages = ShaderStages.data();
-
-        pipelineInfo.pVertexInputState = &VertexInputInfo;
-        pipelineInfo.pInputAssemblyState = &InputAssembly;
-        pipelineInfo.pViewportState = &viewportState;
-        pipelineInfo.pRasterizationState = &Rasterizer;
-        pipelineInfo.pMultisampleState = &Multisampling;
-        pipelineInfo.pDepthStencilState = &depthStencil;
-        pipelineInfo.pColorBlendState = &ColorBlending;
-        pipelineInfo.pDynamicState = nullptr; // Optional
-
-        pipelineInfo.layout = m_PipelineLayout;
-        pipelineInfo.renderPass = m_RenderPass;
-        pipelineInfo.subpass = 0;
-
-        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;   // Optional
-        pipelineInfo.basePipelineIndex = -1;                // Optional
-
-        if (vkCreateGraphicsPipelines(m_LogicalDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline) != VK_SUCCESS)
-        {
-            F_LOG_FATAL("failed to create graphics pipeline!");
-        }
+        auto& Shaders = ShaderProgram::Get().GetAllShaders();
+        m_GraphicsPipeline = new GraphicsPipeline(Shaders[0], Shaders[1], m_LogicalDevice->GetVkDevice());
+        m_GraphicsPipeline->CreateGraphicsPipeline(m_RenderPass, m_MsaaSampler);
     }
 
     void Renderer::CreateFrameBuffers()
     {
-        assert(m_SwapChain && m_DepthBuffer && m_MsaaSampler);
+      assert(m_SwapChain && m_DepthBuffer && m_MsaaSampler);
 
         m_SwapChainFramebuffers.resize(m_SwapChain->GetImageViewCount());
 
@@ -478,49 +323,52 @@ namespace Fling
             renderPassInfo.pClearValues = clearValues.data();
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-            
+
             VkViewport viewport = Initalizers::Viewport(static_cast<float>(m_CurrentWindow->GetWidth()), static_cast<float>(m_CurrentWindow->GetHeight()), 0.0f, 1.0f);
             vkCmdSetViewport(m_CommandBuffers[i], 0, 1, &viewport);
 
             VkRect2D scissor = Initalizers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
             vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
 
-            // Skybox -----------------------------
-			VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
-			VkDeviceSize offsets[1] = { 0 };
-			VkDescriptorSet skyboxDescriptorSet[1] = { m_Skybox->GetDescriptorSet() };
+            vkCmdSetLineWidth(m_CommandBuffers[i], 1.0f);
 
-			vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipelineLayout(), 0, 1, skyboxDescriptorSet, 0, NULL);
-			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, skyboxVertexBuffers, offsets);
-			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_Skybox->GetIndexBuffer()->GetVkBuffer(), 0, m_Skybox->GetIndexType());
-			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipeLine());
-			vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);
-			
-			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+            // Skybox -----------------------------
+            VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
+            VkDeviceSize offsets[1] = { 0 };
+            VkDescriptorSet skyboxDescriptorSet[1] = { m_Skybox->GetDescriptorSet() };
+
+            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipelineLayout(), 0, 1, skyboxDescriptorSet, 0, NULL);
+            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, skyboxVertexBuffers, offsets);
+            vkCmdBindIndexBuffer(m_CommandBuffers[i], m_Skybox->GetIndexBuffer()->GetVkBuffer(), 0, m_Skybox->GetIndexType());
+            vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipeLine());
+            vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);
+
+            m_GraphicsPipeline->BindGraphicsPipeline(m_CommandBuffers[i]);
+            //vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline.GetPipeline());
 
 
             // For each active mesh renderer, bind it's vertex and index buffer
             t_Reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-            {
-                Fling::Model* Model = t_MeshRend.m_Model;
-                if (Model)
                 {
-                    VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
-                    VkDeviceSize offsets[1] = { 0 };
-                    // Bind the descriptor set for rendering a mesh using the dynamic offset
-                    vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &t_MeshRend.m_DescriptorSets[i], 0, nullptr);
+                    Fling::Model* Model = t_MeshRend.m_Model;
+                    if (Model)
+                    {
+                        VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
+                        VkDeviceSize offsets[1] = { 0 };
+                        // Bind the descriptor set for rendering a mesh using the dynamic offset
+                        vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipelineLayout(), 0, 1, &t_MeshRend.m_DescriptorSets[i], 0, nullptr);
 
-                    vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
-                    vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+                        vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertexBuffers, offsets);
+                        vkCmdBindIndexBuffer(m_CommandBuffers[i], Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
 
-                    vkCmdDrawIndexed(m_CommandBuffers[i], Model->GetIndexCount(), 1, 0, 0, 0);
-                }
-                else
-                {
-                    F_LOG_WARN("Model is invalid on mesh renderer!");
-                }
+                        vkCmdDrawIndexed(m_CommandBuffers[i], Model->GetIndexCount(), 1, 0, 0, 0);
+                    }
+                    else
+                    {
+                        F_LOG_WARN("Model is invalid on mesh renderer!");
+                    }
 
-            });
+                });
 
             vkCmdEndRenderPass(m_CommandBuffers[i]);
 
@@ -543,8 +391,8 @@ namespace Fling
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-			m_ImageAvailableSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
-			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+            m_ImageAvailableSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+            m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
             if (vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to create semaphores or fence!");
@@ -555,25 +403,10 @@ namespace Fling
     void Renderer::CleanupFrameResources()
     {
         m_DepthBuffer->Cleanup();
-		if (m_MsaaSampler)
-		{
-			m_MsaaSampler->Release();
-		}
-
-       /* m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-		{
-			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
-        });*/
-
-       /* m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-		{
-			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
-        });*/
-
-       /* m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-		{
-			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
-        });*/
+        if (m_MsaaSampler)
+        {
+            m_MsaaSampler->Release();
+        }
 
         for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
         {
@@ -582,31 +415,13 @@ namespace Fling
 
         vkFreeCommandBuffers(m_LogicalDevice->GetVkDevice(), m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_GraphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
-=======
-=======
->>>>>>> 3dc0036... removed unused member functions in renderer
-=======
->>>>>>> 3dc0036... removed unused member functions in renderer
-        //if (m_GraphicsPipeline)
-        //{
-        //    delete m_GraphicsPipeline;
-        //    m_GraphicsPipeline = nullptr;
-        //}
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 3dc0036... removed unused member functions in renderer
-=======
->>>>>>> 3dc0036... removed unused member functions in renderer
-=======
->>>>>>> 3dc0036... removed unused member functions in renderer
+        //vkDestroyPipeline(m_LogicalDevice->GetVkDevice(), m_GraphicsPipeline, nullptr);
+        //vkDestroyPipelineLayout(m_LogicalDevice->GetVkDevice(), m_PipelineLayout, nullptr);
         vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
-        m_SwapChain->Cleanup();	
+        m_SwapChain->Cleanup();
+
+        //vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), m_DescriptorPool, nullptr);
     }
 
     void Renderer::RecreateFrameResources()
@@ -623,10 +438,10 @@ namespace Fling
         //CreateGraphicsPipeline();
 
         m_DepthBuffer->Create();
-		if (m_MsaaSampler)
-		{
-			m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
-		}
+        if (m_MsaaSampler)
+        {
+            m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+        }
 
         CreateFrameBuffers();
 
@@ -637,8 +452,8 @@ namespace Fling
 
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
         GraphicsHelpers::CreateCommandBuffers(
-            m_CommandBuffers.data(), 
-            static_cast<UINT32>(m_CommandBuffers.size()), 
+            m_CommandBuffers.data(),
+            static_cast<UINT32>(m_CommandBuffers.size()),
             m_CommandPool);
 
         BuildCommandBuffers(*m_Registry);
@@ -649,15 +464,15 @@ namespace Fling
     {
         UINT32 SwapImageCount = static_cast<UINT32>(m_SwapChain->GetImageCount());
 
-		UINT32 DescriptorCount = 128;
+        UINT32 DescriptorCount = 128;
 
         std::vector<VkDescriptorPoolSize> PoolSizes =
         {
             Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
+            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
+            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
             Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
+            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
         };
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -667,12 +482,12 @@ namespace Fling
         PoolInfo.maxSets = SwapImageCount;
 
         m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-        {
-            if (vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
             {
-                F_LOG_FATAL("Failed to create discriptor pool!");
-            }
-        });
+                if (vkCreateDescriptorPool(m_LogicalDevice->GetVkDevice(), &PoolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
+                {
+                    F_LOG_FATAL("Failed to create discriptor pool!");
+                }
+            });
     }
 
     void Renderer::CreateDescriptorSets()
@@ -680,26 +495,26 @@ namespace Fling
         const std::vector<VkImage>& Images = m_SwapChain->GetImages();
 
         m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-        {
-            // Specify what descriptor pool to allocate from and how many
-            std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorSetLayout);
-            VkDescriptorSetAllocateInfo allocInfo = {};
-            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
-            allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
-            allocInfo.pSetLayouts = layouts.data();
-
-            t_MeshRend.m_DescriptorSets.resize(Images.size());
-
-            // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
-            if (vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, t_MeshRend.m_DescriptorSets.data()) != VK_SUCCESS)
             {
-                F_LOG_FATAL("Failed to allocate descriptor sets!");
-            }
-        });
+                // Specify what descriptor pool to allocate from and how many
+                std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorSetLayout);
+                VkDescriptorSetAllocateInfo allocInfo = {};
+                allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
+                allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
+                allocInfo.pSetLayouts = layouts.data();
 
-		static CircularBuffer<VkDescriptorImageInfo, 4096> ImageInfoBuf = {};
-		static CircularBuffer<VkDescriptorBufferInfo, 4096> UBOBuf = {};
+                t_MeshRend.m_DescriptorSets.resize(Images.size());
+
+                // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
+                if (vkAllocateDescriptorSets(m_LogicalDevice->GetVkDevice(), &allocInfo, t_MeshRend.m_DescriptorSets.data()) != VK_SUCCESS)
+                {
+                    F_LOG_FATAL("Failed to allocate descriptor sets!");
+                }
+            });
+
+        static CircularBuffer<VkDescriptorImageInfo, 4096> ImageInfoBuf = {};
+        static CircularBuffer<VkDescriptorBufferInfo, 4096> UBOBuf = {};
 
         auto AddImageSampler = [&](Image* t_Image, UINT32 t_Binding, VkDescriptorSet t_DstSet, std::vector<VkWriteDescriptorSet>& t_SetArray)
         {
@@ -726,49 +541,49 @@ namespace Fling
         // Create material description sets for each swap chain image that we have
         for (size_t i = 0; i < Images.size(); ++i)
         {
-			std::vector<VkWriteDescriptorSet> descriptorWrites;
+            std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-			m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-			{
-				// Binding 0 : Projection/view matrix uniform buffer
-				VkDescriptorBufferInfo* BufferInfo = UBOBuf.GetItem();
-				BufferInfo->buffer = t_MeshRend.m_UniformBuffers[i]->GetVkBuffer();
-				BufferInfo->offset = 0;
-				BufferInfo->range = t_MeshRend.m_UniformBuffers[i]->GetSize();
-				VkWriteDescriptorSet UniformSet = Initalizers::WriteDescriptorSet(
-                    t_MeshRend.m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-					0,
-					BufferInfo
-				);
+            m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+                {
+                    // Binding 0 : Projection/view matrix uniform buffer
+                    VkDescriptorBufferInfo* BufferInfo = UBOBuf.GetItem();
+                    BufferInfo->buffer = t_MeshRend.m_UniformBuffers[i]->GetVkBuffer();
+                    BufferInfo->offset = 0;
+                    BufferInfo->range = t_MeshRend.m_UniformBuffers[i]->GetSize();
+                    VkWriteDescriptorSet UniformSet = Initalizers::WriteDescriptorSet(
+                        t_MeshRend.m_DescriptorSets[i],
+                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                        0,
+                        BufferInfo
+                    );
 
-				descriptorWrites.push_back(UniformSet);
+                    descriptorWrites.push_back(UniformSet);
 
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-				AddImageSampler(m_BRDFLookupTexture.get(), 7, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-				// TODO: Ambient Occlusion Map
+                    AddImageSampler(t_MeshRend.m_Material->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                    AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                    AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                    AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                    AddImageSampler(m_BRDFLookupTexture.get(), 7, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                    // TODO: Ambient Occlusion Map
 
-                // Binding 6 : Fragment shader directional lights
-                // A uniform buffer of lights! 
-				VkDescriptorBufferInfo* LightBufferInfo = UBOBuf.GetItem();
-				LightBufferInfo->buffer = m_Lighting.m_LightingUBOs[i]->GetVkBuffer();
-				LightBufferInfo->offset = 0;
-				LightBufferInfo->range = m_Lighting.m_LightingUBOs[i]->GetSize();
+                    // Binding 6 : Fragment shader directional lights
+                    // A uniform buffer of lights! 
+                    VkDescriptorBufferInfo* LightBufferInfo = UBOBuf.GetItem();
+                    LightBufferInfo->buffer = m_Lighting.m_LightingUBOs[i]->GetVkBuffer();
+                    LightBufferInfo->offset = 0;
+                    LightBufferInfo->range = m_Lighting.m_LightingUBOs[i]->GetSize();
 
-				VkWriteDescriptorSet LightUniformSet = Initalizers::WriteDescriptorSet(
-                    t_MeshRend.m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-					6,
-					LightBufferInfo
-				);
+                    VkWriteDescriptorSet LightUniformSet = Initalizers::WriteDescriptorSet(
+                        t_MeshRend.m_DescriptorSets[i],
+                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                        6,
+                        LightBufferInfo
+                    );
 
-				descriptorWrites.push_back(LightUniformSet);
+                    descriptorWrites.push_back(LightUniformSet);
 
-                vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-			});
+                    vkUpdateDescriptorSets(m_LogicalDevice->GetVkDevice(), static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+                });
         }
     }
 
@@ -842,7 +657,7 @@ namespace Fling
 
         m_camera->Update(DeltaTime);
 
-		UpdateImguiIO();
+        UpdateImguiIO();
     }
 
     void Renderer::DrawFrame(entt::registry& t_Reg)
@@ -857,7 +672,7 @@ namespace Fling
             vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_flingImgui->GetCommandPool(), 0);
             m_flingImgui->BuildCommandBuffers(m_DrawImgui);
         }
-        
+
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -917,10 +732,10 @@ namespace Fling
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-	void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
-	{
-		// For each active mesh renderer update it's UBO
-		{
+    void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
+    {
+        // For each active mesh renderer update it's UBO
+        {
             auto view = m_Registry->view<MeshRenderer, Transform>();
             for (auto entity : view)
             {
@@ -935,7 +750,7 @@ namespace Fling
                 ubo.View = m_camera->GetViewMatrix();
                 ubo.Projection = m_camera->GetProjectionMatrix();
                 ubo.Projection[1][1] *= -1.0f;
-				ubo.CamPos = m_camera->GetPosition();
+                ubo.CamPos = m_camera->GetPosition();
                 ubo.ObjPos = Trans.GetPos();
 
                 // Copy the ubo to the GPU
@@ -949,72 +764,72 @@ namespace Fling
             auto lightView = m_Registry->view<DirectionalLight>();
             UINT32 CurLightCount = 0;
 
-            for(auto entity : lightView)
+            for (auto entity : lightView)
             {
-                if(CurLightCount < Lighting::MaxDirectionalLights)
+                if (CurLightCount < Lighting::MaxDirectionalLights)
                 {
                     DirectionalLight& Light = lightView.get(entity);
                     // Copy the dir light info to the buffer
-					size_t size = sizeof(DirectionalLight);
+                    size_t size = sizeof(DirectionalLight);
                     memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
                 }
             }
-            
+
             m_LightingUBO.DirLightCount = CurLightCount;
         }
 
-		// Copy the point light data to the UBO
-		{
-			auto lightView = m_Registry->view<PointLight, Transform>();
-			UINT32 CurLightCount = 0;
+        // Copy the point light data to the UBO
+        {
+            auto lightView = m_Registry->view<PointLight, Transform>();
+            UINT32 CurLightCount = 0;
 
-			for (auto entity : lightView)
-			{
-				if (CurLightCount < Lighting::MaxPointLights)
-				{
-					PointLight& Light = lightView.get<PointLight>(entity);
-					Transform& Trans = lightView.get<Transform>(entity);
-					
-					Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
+            for (auto entity : lightView)
+            {
+                if (CurLightCount < Lighting::MaxPointLights)
+                {
+                    PointLight& Light = lightView.get<PointLight>(entity);
+                    Transform& Trans = lightView.get<Transform>(entity);
 
-					// Copy the dir light info to the buffer
-					memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light,  sizeof(PointLight));
-				}
-			}
+                    Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
 
-			m_LightingUBO.PointLightCount = CurLightCount;
-		}
+                    // Copy the dir light info to the buffer
+                    memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light, sizeof(PointLight));
+                }
+            }
 
-		// Memcpy the dir light UBO
-		memcpy(m_Lighting.m_LightingUBOs[t_CurrentImage]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
+            m_LightingUBO.PointLightCount = CurLightCount;
+        }
+
+        // Memcpy the dir light UBO
+        memcpy(m_Lighting.m_LightingUBOs[t_CurrentImage]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
     }
 
     // Shutdown steps -------------------------------------------
 
     void Renderer::PrepShutdown()
     {
-		m_IsQuitting = true;
+        m_IsQuitting = true;
 
         m_LogicalDevice->WaitForIdle();
-		m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-		{
-			t_MeshRend.Release();
-			vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
-        });
+        m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+            {
+                t_MeshRend.Release();
+                vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+            });
 
         // Delete light buffers
         for (size_t i = 0; i < m_Lighting.m_LightingUBOs.size(); i++)
-		{
-			if(m_Lighting.m_LightingUBOs[i])
+        {
+            if (m_Lighting.m_LightingUBOs[i])
             {
                 delete m_Lighting.m_LightingUBOs[i];
                 m_Lighting.m_LightingUBOs[i] = nullptr;
             }
-		}
+        }
         m_Lighting.m_LightingUBOs.clear();
 
-		// release refs to textures
-		m_BRDFLookupTexture = nullptr;
+        // release refs to textures
+        m_BRDFLookupTexture = nullptr;
     }
 
     void Renderer::Shutdown()
@@ -1046,23 +861,23 @@ namespace Fling
             m_SwapChain = nullptr;
         }
 
+        if (m_DepthBuffer)
+        {
+            delete m_DepthBuffer;
+            m_DepthBuffer = nullptr;
+        }
+
+        if (m_MsaaSampler)
+        {
+            delete m_MsaaSampler;
+            m_MsaaSampler = nullptr;
+        }
+
         if (m_GraphicsPipeline)
         {
             delete m_GraphicsPipeline;
             m_GraphicsPipeline = nullptr;
         }
-		
-		if (m_DepthBuffer)
-		{
-			delete m_DepthBuffer;
-			m_DepthBuffer = nullptr;
-		}
-
-		if (m_MsaaSampler)
-		{
-			delete m_MsaaSampler;
-			m_MsaaSampler = nullptr;
-		}
 
         vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
 
@@ -1104,56 +919,56 @@ namespace Fling
     }
 
     // @see https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#observe-changes
-	// for more on entt 
+    // for more on entt 
     void Renderer::InitComponentData()
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
-		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
+        m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
     }
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
     {
-		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-		VkDeviceSize bufferSize = sizeof(UboVS);
+        const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+        VkDeviceSize bufferSize = sizeof(UboVS);
 
-		t_MeshRend.m_UniformBuffers.resize(Images.size());
-		for (size_t i = 0; i < Images.size(); i++)
-		{
-			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffers[i]->MapMemory(bufferSize);
-		}
+        t_MeshRend.m_UniformBuffers.resize(Images.size());
+        for (size_t i = 0; i < Images.size(); i++)
+        {
+            t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            t_MeshRend.m_UniformBuffers[i]->MapMemory(bufferSize);
+        }
 
-		SetFrameBufferHasBeenResized(true);
+        SetFrameBufferHasBeenResized(true);
     }
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {
         F_LOG_TRACE("Directional Light added!");
         ++m_Lighting.m_CurrentDirLights;
-        if(m_Lighting.m_CurrentDirLights > Lighting::MaxDirectionalLights)
+        if (m_Lighting.m_CurrentDirLights > Lighting::MaxDirectionalLights)
         {
             F_LOG_WARN("You have enterer more then the max support directional lights of Fling!");
         }
     }
 
-	void Renderer::PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
-	{
-		F_LOG_TRACE("Point Light added!");
-		++m_Lighting.m_CurrentPointLights;
+    void Renderer::PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
+    {
+        F_LOG_TRACE("Point Light added!");
+        ++m_Lighting.m_CurrentPointLights;
 
-		Transform& t = t_Reg.assign<Transform>(t_Ent);
+        Transform& t = t_Reg.assign<Transform>(t_Ent);
 
 #if FLING_DEBUG
-		// Make a cute little debug mesh on a point light	
-		t.SetScale(glm::vec3{ 0.1f });
-		t_Reg.assign<MeshRenderer>(t_Ent, "Models/sphere.obj");
+        // Make a cute little debug mesh on a point light	
+        t.SetScale(glm::vec3{ 0.1f });
+        t_Reg.assign<MeshRenderer>(t_Ent, "Models/sphere.obj");
 #endif	// FLING_DEBUG
 
-		if (m_Lighting.m_CurrentPointLights> Lighting::MaxPointLights)
-		{
-			F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
-		}
-	}
+        if (m_Lighting.m_CurrentPointLights > Lighting::MaxPointLights)
+        {
+            F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
+        }
+    }
 }    // namespace FlingR

@@ -1,10 +1,8 @@
 #pragma once 
 #include "FlingVulkan.h"
-#include "GraphicsHelpers.h"
 #include "Shader.h"
 #include "Vertex.h"
-#include "Renderer.h"
-
+#include "MultiSampler.h"
 
 namespace Fling
 {
@@ -22,6 +20,7 @@ namespace Fling
         GraphicsPipeline(
             Shader* t_VertexShader,
             Shader* t_FragShader,
+            VkDevice t_LogicalDevice,
             VkPolygonMode t_Mode = VK_POLYGON_MODE_FILL,
             Depth t_Depth = Depth::ReadWrite,
             VkPrimitiveTopology t_Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -29,8 +28,7 @@ namespace Fling
             VkFrontFace t_FrontFace = VK_FRONT_FACE_CLOCKWISE);
 
         void BindGraphicsPipeline(const VkCommandBuffer& t_CommandBuffer);
-        void CreateGraphicsPipeline();
-        void CreateAttributes();
+        void CreateGraphicsPipeline(VkRenderPass& t_RenderPass, Multisampler* t_Sampler);
 
         const Shader* GetVertexShader() const { return m_VertexShader; }
         const Shader* GetFragShader() const { return m_FragShader; }
@@ -48,6 +46,8 @@ namespace Fling
         ~GraphicsPipeline();
 
     private:
+        void CreateAttributes(Multisampler* t_Sampler);
+
         VkDevice m_Device;
 
         Shader* m_VertexShader;

@@ -106,6 +106,8 @@ namespace Fling
             VkCommandPool& t_commandPool
         );
 
+        void CreatePipelineCache(VkPipelineCache& t_PipelineCache);
+
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
         /**

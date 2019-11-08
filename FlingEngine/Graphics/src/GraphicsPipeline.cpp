@@ -1,4 +1,6 @@
 #include "GraphicsPipeline.h"
+#include "GraphicsHelpers.h"
+#include "Renderer.h"
 
 namespace Fling
 {
@@ -7,6 +9,7 @@ namespace Fling
     GraphicsPipeline::GraphicsPipeline(
         Shader* t_VertexShader,
         Shader* t_FragShader,
+        VkDevice t_LogicalDevice,
         VkPolygonMode t_Mode,
         Depth t_Depth,
         VkPrimitiveTopology t_Topology,
@@ -14,12 +17,12 @@ namespace Fling
         VkFrontFace t_FrontFace) :
         m_VertexShader(t_VertexShader),
         m_FragShader(t_FragShader),
+        m_Device(t_LogicalDevice),
         m_PolygonMode(t_Mode),
         m_Depth(t_Depth),
         m_Topology(t_Topology),
         m_CullMode(t_CullMode)
     {
-        m_Device = Renderer::Get().GetLogicalDevice()->GetVkDevice();
     }
 
     void GraphicsPipeline::BindGraphicsPipeline(const VkCommandBuffer& t_CommandBuffer)
@@ -27,61 +30,32 @@ namespace Fling
         vkCmdBindPipeline(t_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
     }
 
-    void GraphicsPipeline::CreateGraphicsPipeline()
+    void GraphicsPipeline::CreateAttributes(Multisampler* t_Sampler)
     {
         // Input Assembly 
-        m_InputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        m_InputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        m_InputAssemblyState.primitiveRestartEnable = VK_FALSE;
+        m_InputAssemblyState = Initalizers::PipelineInputAssemblyStateCreateInfo(m_Topology, 0, VK_FALSE);
 
         // Dynamic States
-        m_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        m_DynamicState.dynamicStateCount = static_cast<UINT32>(DYNAMIC_STATES.size());
-        m_DynamicState.pDynamicStates = DYNAMIC_STATES.data();
+        m_DynamicState = Initalizers::PipelineDynamicStateCreateInfo(DYNAMIC_STATES, 0);
 
-        // Rasterization State
-        m_RasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        m_RasterizationState.depthClampEnable = VK_FALSE;
-        m_RasterizationState.rasterizerDiscardEnable = VK_FALSE;  // Useful for shadow maps, using would require enabling a GPU feature
-        m_RasterizationState.polygonMode = VK_POLYGON_MODE_FILL;
-        m_RasterizationState.lineWidth = 1.0f;
-        m_RasterizationState.cullMode = VK_CULL_MODE_BACK_BIT;
-        m_RasterizationState.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; // Specify the vertex order! 
-        m_RasterizationState.depthBiasEnable = VK_FALSE;
-        m_RasterizationState.depthBiasConstantFactor = 0.0f;  // Optional
-        m_RasterizationState.depthBiasClamp = 0.0f;           // Optional
-        m_RasterizationState.depthBiasSlopeFactor = 0.0f;     // Optional
+        // Rasterization State 
+        m_RasterizationState =
+            Initalizers::PipelineRasterizationStateCreateInfo(
+                m_PolygonMode,
+                m_CullMode,
+                VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         // Multisample State 
         // TODO :: MSAA
-        m_MultisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        m_MultisampleState.sampleShadingEnable = VK_TRUE;
-        m_MultisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-        m_MultisampleState.minSampleShading = 0.2f;
-        m_MultisampleState.pSampleMask = nullptr; // Optional
-        m_MultisampleState.alphaToCoverageEnable = VK_FALSE; // Optional
-        m_MultisampleState.alphaToOneEnable = VK_FALSE; // Optional
+        m_MultisampleState = Initalizers::PipelineMultiSampleStateCreateInfo(t_Sampler->GetSampleCountFlagBits(), 0);
 
         // Color Attatchment
-        m_ColorBlendAttachmentStates[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        m_ColorBlendAttachmentStates[0].blendEnable = VK_FALSE;
-        m_ColorBlendAttachmentStates[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
-        m_ColorBlendAttachmentStates[0].dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
-        m_ColorBlendAttachmentStates[0].colorBlendOp = VK_BLEND_OP_ADD;                // Optional
-        m_ColorBlendAttachmentStates[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;     // Optional
-        m_ColorBlendAttachmentStates[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // Optional
-        m_ColorBlendAttachmentStates[0].alphaBlendOp = VK_BLEND_OP_ADD;                // Optional
+        m_ColorBlendAttachmentStates[0] = Initalizers::PipelineColorBlendAttachmentState(
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+            VK_FALSE);
 
         // Color Blend State
-        m_ColorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        m_ColorBlendState.logicOpEnable = VK_FALSE;
-        m_ColorBlendState.logicOp = VK_LOGIC_OP_COPY;   // Optional
-        m_ColorBlendState.attachmentCount = 1;
-        m_ColorBlendState.pAttachments = m_ColorBlendAttachmentStates.data();
-        m_ColorBlendState.blendConstants[0] = 0.0f;     // Optional
-        m_ColorBlendState.blendConstants[1] = 0.0f;     // Optional
-        m_ColorBlendState.blendConstants[2] = 0.0f;     // Optional
-        m_ColorBlendState.blendConstants[3] = 0.0f;     // Optional
+        m_ColorBlendState = Initalizers::PipelineColorBlendStateCreateInfo(1, m_ColorBlendAttachmentStates.data());
 
         // Depth stencil state
         m_DepthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -112,15 +86,23 @@ namespace Fling
         m_ViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         m_ViewportState.viewportCount = 1;
         m_ViewportState.scissorCount = 1;
-
     }
 
-    void GraphicsPipeline::CreateAttributes()
+    void GraphicsPipeline::CreateGraphicsPipeline(VkRenderPass& t_RenderPass, Multisampler* t_Sampler)
     {
-        std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-        std::vector<Shader*> shaders;
+        CreateAttributes(t_Sampler);
+        // Pipeline Cache
+        GraphicsHelpers::CreatePipelineCache(m_PipelineCache);
 
-        for (const Shader* shader : shaders)
+        // Shader stages 
+        std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+        std::vector<Shader*> shaders =
+        {
+            m_VertexShader,
+            m_FragShader
+        };
+
+        for (Shader* shader : shaders)
         {
             VkPipelineShaderStageCreateInfo createInfo = {};
             createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -133,6 +115,9 @@ namespace Fling
             shaderStages.push_back(createInfo);
         }
 
+        m_DescriptorSetLayout = Shader::CreateSetLayout(m_Device, shaders);
+        m_PipelineLayout = Shader::CreatePipelineLayout(m_Device, m_DescriptorSetLayout, 0, 0);
+
         // Vertex Input 
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
         std::array<VkVertexInputAttributeDescription, 5> AttributeDescriptions = Vertex::GetAttributeDescriptions();
@@ -143,9 +128,35 @@ namespace Fling
         m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<UINT32>(AttributeDescriptions.size());
         m_VertexInputStateCreateInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
 
+
+        // Create graphics pipeline ------------------------
+        VkGraphicsPipelineCreateInfo pipelineInfo = {};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineInfo.stageCount = static_cast<UINT32>(shaderStages.size());
+        pipelineInfo.pStages = shaderStages.data();
+        pipelineInfo.pVertexInputState = &m_VertexInputStateCreateInfo;
+        pipelineInfo.pInputAssemblyState = &m_InputAssemblyState;
+        pipelineInfo.pViewportState = &m_ViewportState;
+        pipelineInfo.pRasterizationState = &m_RasterizationState;
+        pipelineInfo.pMultisampleState = &m_MultisampleState;
+        pipelineInfo.pDepthStencilState = &m_DepthStencilState;
+        pipelineInfo.pDynamicState = &m_DynamicState;
+        pipelineInfo.pColorBlendState = &m_ColorBlendState;
+        pipelineInfo.layout = m_PipelineLayout;
+        pipelineInfo.renderPass = t_RenderPass;
+        pipelineInfo.subpass = 0;
+
+        if (vkCreateGraphicsPipelines(m_Device, m_PipelineCache, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create graphics pipeline");
+        }
     }
 
     GraphicsPipeline::~GraphicsPipeline()
     {
+        vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+        vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
+        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
+        vkDestroyPipelineCache(m_Device, m_PipelineCache, nullptr);
     }
 }
