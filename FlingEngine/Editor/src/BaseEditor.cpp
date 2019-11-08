@@ -6,6 +6,7 @@
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
+#include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include <sstream>
@@ -33,6 +34,29 @@ namespace Fling
 			ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
 			ImGui::InputFloat3( "Direction", ( float* ) &t_Light.Direction );
 			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
+		}
+
+		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
+		{
+			{
+				std::string ModelName = "None";
+				if (t_MeshRend.m_Model)
+				{
+					ModelName = t_MeshRend.m_Model->GetGuidString();
+				}
+
+				ImGui::LabelText("Model", ModelName.c_str());
+			}
+
+			{
+				std::string MaterialName = "None";
+				if (t_MeshRend.m_Material)
+				{
+					MaterialName = t_MeshRend.m_Material->GetGuidString();
+				}
+
+				ImGui::LabelText("Material", MaterialName.c_str());
+			}
 		}
 	}
 
@@ -65,6 +89,16 @@ namespace Fling
 			{
 				auto& t = reg.get<Fling::DirectionalLight>(e);
 				Widgets::DirectionalLight(t);
+			}
+		);
+
+		m_ComponentEditor.registerTrivial<Fling::MeshRenderer>(t_Reg, "Mesh Renderer");
+		m_ComponentEditor.registerComponentWidgetFn(
+			t_Reg.type<Fling::MeshRenderer>(),
+			[](entt::registry& reg, auto e)
+			{
+				auto& t = reg.get<Fling::MeshRenderer>(e);
+				Widgets::MeshRenderer(t);
 			}
 		);
 	}

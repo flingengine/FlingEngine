@@ -5,10 +5,17 @@
 #include <imgui.h>
 
 #if FLING_WINDOWS
+
 #undef APIENTRY
 #define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>   // for glfwGetWin32Window
+
+#elif FLING_LINUX
+
+#define GLFW_EXPOSE_NATIVE_X11
+
 #endif
+
+#include <GLFW/glfw3native.h>   // for glfwGetWin32Window
 
 namespace Fling
 {
