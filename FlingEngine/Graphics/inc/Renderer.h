@@ -38,6 +38,7 @@
 
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+#include "Lighting/Lighting.hpp"
 
 namespace Fling
 {
@@ -46,19 +47,6 @@ namespace Fling
 
     // Imgui resource
     class FlingImgui;
-
-    struct Lighting
-    {
-        /** Dir Lights */
-        static const UINT32 MaxDirectionalLights = 32;
-        UINT32 m_CurrentDirLights = 0;
-
-        /** Point Lights */
-        static const UINT32 MaxPointLights = 32;
-        UINT32 m_CurrentPointLights = 0;
-
-        std::vector<Buffer*> m_LightingUBOs;
-    };
 
     /// <summary>
     /// Core renderer for the application
@@ -304,15 +292,7 @@ namespace Fling
         // Lighting -----------------------
         Lighting m_Lighting = {};
 		std::shared_ptr<Image> m_BRDFLookupTexture;
-        struct LightingUbo
-        {
-			alignas(4) UINT32 DirLightCount = 0;
-			alignas(4) UINT32 PointLightCount = 0;
-
-            alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
-
-			alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
-        };
+   
 
         LightingUbo m_LightingUBO = {}; 
 
