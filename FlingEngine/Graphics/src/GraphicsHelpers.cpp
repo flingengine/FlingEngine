@@ -686,6 +686,45 @@ namespace Fling
             return descriptorSetLayoutCreateInfo;
         }
 
+        VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        {
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = t_Buffer->GetVkBuffer();
+            bufferInfo.offset = t_Offset;
+            bufferInfo.range = t_Buffer->GetSize();
+
+            VkWriteDescriptorSet uniformSet = {};
+            uniformSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            uniformSet.dstSet = t_DstSet;
+            uniformSet.dstBinding = t_Binding;
+            uniformSet.dstArrayElement = 0;
+            uniformSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uniformSet.descriptorCount = 1;
+            uniformSet.pBufferInfo = &bufferInfo;
+
+            return uniformSet;
+        }
+
+        VkWriteDescriptorSet WriteDescriptorSetImage(Image* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        {
+            VkDescriptorImageInfo imageInfo = {};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = t_Image->GetVkImageView();
+            imageInfo.sampler = t_Image->GetSampler();
+
+            // Create sampler information
+            VkWriteDescriptorSet ImageSamplerSet = {};
+            ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            ImageSamplerSet.dstSet = t_DstSet;
+            ImageSamplerSet.dstBinding = t_Binding;
+            ImageSamplerSet.dstArrayElement = 0;
+            ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            ImageSamplerSet.descriptorCount = 1;
+            ImageSamplerSet.pImageInfo = &imageInfo;
+
+            return ImageSamplerSet;
+        }
+
         VkSamplerCreateInfo SamplerCreateInfo()
         {
             VkSamplerCreateInfo samplerCreateInfo{};

@@ -4,8 +4,9 @@
 #include "Shader.h"
 #include "Singleton.hpp"
 #include "MeshRenderer.h"
-#include "ShaderPrograms/ShaderProgram.h"
+#include "ShaderPrograms/ShaderPrograms.h"
 #include "entt/entity/registry.hpp"
+#include "Camera.h"
 
 namespace Fling
 {

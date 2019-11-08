@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Editor\src\SandboxEditor.cpp">
+      <Filter>Sandbox\Editor\src</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Gameplay\src\SandboxGame.cpp">
+      <Filter>Sandbox\Gameplay\src</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Gameplay\src\SandboxUI.cpp">
+      <Filter>Sandbox\Gameplay\src</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\main.cpp">
+      <Filter>Sandbox</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Editor\inc\SandboxEditor.h">
+      <Filter>Sandbox\Editor\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Gameplay\inc\Mover.h">
+      <Filter>Sandbox\Gameplay\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Gameplay\inc\SandboxGame.h">
+      <Filter>Sandbox\Gameplay\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\Sandbox\Gameplay\inc\SandboxUI.h">
+      <Filter>Sandbox\Gameplay\inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Sandbox">
+      <UniqueIdentifier>{30AF71D5-80B8-39F3-A324-C698D04F410E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sandbox\Editor">
+      <UniqueIdentifier>{801B01DE-A40B-3798-95B5-C5720D5647E5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sandbox\Editor\inc">
+      <UniqueIdentifier>{9204CF6B-747D-3E59-8135-93A060A9D72B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sandbox\Editor\src">
+      <UniqueIdentifier>{12E025FF-E3E2-30E4-911F-5D8E188D3B3F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sandbox\Gameplay">
+      <UniqueIdentifier>{03043E2B-CFEA-3DDE-9188-E0B0269F13F6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sandbox\Gameplay\inc">
+      <UniqueIdentifier>{F7523BAB-7742-3B6A-8BD3-66B9AC0DC0E2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sandbox\Gameplay\src">
+      <UniqueIdentifier>{6E65B98D-3AEF-3A70-94C9-0F8677FE5BC2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

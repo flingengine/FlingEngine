@@ -3,6 +3,7 @@
 #include "Shader.h"
 #include "Image.h"
 #include "JsonFile.h"
+#include "ShaderPrograms/ShaderPrograms.h"
 
 namespace Fling
 {
@@ -42,5 +43,7 @@ namespace Fling
 		PBRTextures m_Textures = {};
 
 		float m_Shininiess = 0.5f;
+
+        ShaderPrograms::ShaderProgramType m_ShaderProgram;
     };
 }   // namespace Fling

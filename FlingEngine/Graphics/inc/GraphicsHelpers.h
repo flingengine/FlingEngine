@@ -3,6 +3,8 @@
 #include "FlingVulkan.h"
 #include "FlingTypes.h"
 #include "File.h"
+#include "Image.h"
+#include "Buffer.h"
 
 #define VK_CHECK_RESULT(f)															\
 {																					\
@@ -160,6 +162,20 @@ namespace Fling
         VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(
             const std::vector<VkDescriptorSetLayoutBinding>& t_bindings
         );
+
+        VkWriteDescriptorSet WriteDescriptorSetUniform(
+            Buffer* t_Buffer,
+            VkDescriptorSet t_DstSet,
+            UINT32 t_Binding,
+            UINT32 t_Set = 0,
+            VkDeviceSize t_Offset = 0);
+
+        VkWriteDescriptorSet WriteDescriptorSetImage(
+            Image* t_Image,
+            VkDescriptorSet t_DstSet,
+            UINT32 t_Binding,
+            UINT32 t_Set = 0,
+            VkDeviceSize t_Offset = 0);
 
         VkSamplerCreateInfo SamplerCreateInfo();
 

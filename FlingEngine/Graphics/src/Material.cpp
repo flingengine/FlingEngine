@@ -30,6 +30,21 @@ namespace Fling
 			assert(Frag);
 			m_FragShader = Frag.get();
 
+            const std::string& ShaderProgram = m_JsonData["ShaderProgram"];
+            if (ShaderProgram == "PBR")
+            {
+                m_ShaderProgram = ShaderPrograms::ShaderProgramType::PBR;
+            }
+            else if(ShaderProgram == "Reflection")
+            {
+                m_ShaderProgram = ShaderPrograms::ShaderProgramType::Reflection;
+            }
+            else
+            {
+                F_LOG_FATAL("Shader program not support in material!");
+            }
+
+
 			// Load Textures -------------
 			// Albedo
 			const std::string& AlbedoPath = m_JsonData["albedo"];

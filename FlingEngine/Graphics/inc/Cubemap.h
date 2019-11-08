@@ -10,7 +10,6 @@
 #include "LogicalDevice.h"
 #include "UniformBufferObject.h"
 #include "Camera.h"
-#include "GraphicsPipeline.h"
 
 namespace Fling
 {

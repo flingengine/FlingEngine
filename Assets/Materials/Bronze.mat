@@ -1,6 +1,8 @@
 {
     "name" : "Bronze Material",
 
+    "ShaderProgram" : "PBR",
+    
     "vertex" : "Shaders/PBRDefault_vert.spv",
     "frag" : "Shaders/PBRDefault_frag.spv",
 

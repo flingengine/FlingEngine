@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\artur\OneDrive\Desktop\IS\FlingEngine\CMakeFiles\e486b1e09922357e809daed0492ca32a\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{7F325AFC-94AC-30C6-93A3-0C3CFE9A6FB7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
