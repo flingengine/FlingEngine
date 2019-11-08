@@ -484,10 +484,10 @@ namespace Fling
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
             
-            VkViewport viewport = Initalizers::Viewport(static_cast<float>(m_CurrentWindow->GetWidth()), static_cast<float>(m_CurrentWindow->GetHeight()), 0.0f, 1.0f);
+            VkViewport viewport = Initializers::Viewport(static_cast<float>(m_CurrentWindow->GetWidth()), static_cast<float>(m_CurrentWindow->GetHeight()), 0.0f, 1.0f);
             vkCmdSetViewport(m_CommandBuffers[i], 0, 1, &viewport);
 
-            VkRect2D scissor = Initalizers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
+            VkRect2D scissor = Initializers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
             vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
 
             // Skybox -----------------------------
@@ -626,11 +626,11 @@ namespace Fling
 
         std::vector<VkDescriptorPoolSize> PoolSizes =
         {
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
+			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
+			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
+			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
         };
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -708,7 +708,7 @@ namespace Fling
 				BufferInfo->buffer = t_MeshRend.m_UniformBuffers[i]->GetVkBuffer();
 				BufferInfo->offset = 0;
 				BufferInfo->range = t_MeshRend.m_UniformBuffers[i]->GetSize();
-				VkWriteDescriptorSet UniformSet = Initalizers::WriteDescriptorSet(
+				VkWriteDescriptorSet UniformSet = Initializers::WriteDescriptorSet(
                     t_MeshRend.m_DescriptorSets[i],
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 					0,
@@ -731,7 +731,7 @@ namespace Fling
 				LightBufferInfo->offset = 0;
 				LightBufferInfo->range = m_Lighting.m_LightingUBOs[i]->GetSize();
 
-				VkWriteDescriptorSet LightUniformSet = Initalizers::WriteDescriptorSet(
+				VkWriteDescriptorSet LightUniformSet = Initializers::WriteDescriptorSet(
                     t_MeshRend.m_DescriptorSets[i],
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 					6,
