@@ -135,7 +135,7 @@ namespace Fling
 
     // Some helpers for Vulkan initialization 
     // Grabbed these from https://github.com/SaschaWillems/Vulkan/tree/master/examples/dynamicuniformbuffer
-    namespace Initalizers
+    namespace Initializers
     {
         VkMappedMemoryRange MappedMemoryRange();
 

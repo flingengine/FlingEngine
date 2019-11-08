@@ -1,12 +1,17 @@
 #include "FlingImgui.h"
 
+#if WITH_IMGUI
+
 namespace Fling
 {
     FlingImgui::FlingImgui(LogicalDevice* t_logicalDevice, Swapchain* t_swapChain) :
         m_LogicalDevice(t_logicalDevice),
         m_swapChain(t_swapChain)
     {
-        ImGui::CreateContext();
+		if (!ImGui::GetCurrentContext())
+		{
+			ImGui::CreateContext();
+		}
     }
 
     FlingImgui::~FlingImgui()
@@ -223,19 +228,19 @@ namespace Fling
         //Descriptor pool
         std::vector<VkDescriptorPoolSize> poolSizes = 
         {
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000),
         };
 
-        VkDescriptorPoolCreateInfo descriptorPoolInfo = Initalizers::DescriptorPoolCreateInfo(poolSizes, 10);
+        VkDescriptorPoolCreateInfo descriptorPoolInfo = Initializers::DescriptorPoolCreateInfo(poolSizes, 10);
 
         if (vkCreateDescriptorPool(logicalDevice, &descriptorPoolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
         {
@@ -245,32 +250,32 @@ namespace Fling
         //Descriptor set layout
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings =
         {
-            Initalizers::DescriptorSetLayoutBindings(
+            Initializers::DescriptorSetLayoutBindings(
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 
                 VK_SHADER_STAGE_FRAGMENT_BIT, 0),
         };
 
-        VkDescriptorSetLayoutCreateInfo descriptorLayout = Initalizers::DescriptorSetLayoutCreateInfo(setLayoutBindings);
+        VkDescriptorSetLayoutCreateInfo descriptorLayout = Initializers::DescriptorSetLayoutCreateInfo(setLayoutBindings);
         if (vkCreateDescriptorSetLayout(logicalDevice, &descriptorLayout, nullptr, &m_descriptorSetLayout) != VK_SUCCESS)
         {
             F_LOG_ERROR("Could not create descriptor set layout for imgui");
         }
 
         //Descriptor set 
-        VkDescriptorSetAllocateInfo allocInfo = Initalizers::DescriptorSetAllocateInfo(m_descriptorPool, &m_descriptorSetLayout, 1);
+        VkDescriptorSetAllocateInfo allocInfo = Initializers::DescriptorSetAllocateInfo(m_descriptorPool, &m_descriptorSetLayout, 1);
         if (vkAllocateDescriptorSets(logicalDevice, &allocInfo, &m_descriptorSet) != VK_SUCCESS)
         {
             F_LOG_ERROR("Could not allocate descriptor sets for imgui");
         }
 
-        VkDescriptorImageInfo fontDescriptor = Initalizers::DescriptorImageInfo(
+        VkDescriptorImageInfo fontDescriptor = Initializers::DescriptorImageInfo(
             m_sampler,
             m_fontImageView,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
 
         std::vector<VkWriteDescriptorSet> writeDescriptorSet = {
-            Initalizers::WriteDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &fontDescriptor),
+            Initializers::WriteDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &fontDescriptor),
         };
         
         vkUpdateDescriptorSets(logicalDevice, static_cast<UINT32>(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, nullptr);
@@ -285,8 +290,8 @@ namespace Fling
 
         //Pipeline layout
         //Push constants for UI rendering 
-        VkPushConstantRange pushConstantRange = Initalizers::PushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock), 0);
-        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = Initalizers::PiplineLayoutCreateInfo(&m_descriptorSetLayout, 1);
+        VkPushConstantRange pushConstantRange = Initializers::PushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(PushConstBlock), 0);
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = Initializers::PiplineLayoutCreateInfo(&m_descriptorSetLayout, 1);
         pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
@@ -297,10 +302,10 @@ namespace Fling
 
         //Setup graphics pipeline for UI rendering 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
-            Initalizers::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, false);
+            Initializers::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, false);
 
         VkPipelineRasterizationStateCreateInfo rasterizationState =
-            Initalizers::PipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+            Initializers::PipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         //Enable Blending 
         VkPipelineColorBlendAttachmentState blendAttachmentState = {};
@@ -314,16 +319,16 @@ namespace Fling
         blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 
         VkPipelineColorBlendStateCreateInfo colorBlendState = 
-            Initalizers::PipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
+            Initializers::PipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 
         VkPipelineDepthStencilStateCreateInfo depthStencilState = 
-            Initalizers::DepthStencilState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
+            Initializers::DepthStencilState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
 
         VkPipelineViewportStateCreateInfo viewportState = 
-            Initalizers::PipelineViewportStateCreateInfo(1, 1, 0);
+            Initializers::PipelineViewportStateCreateInfo(1, 1, 0);
 
         VkPipelineMultisampleStateCreateInfo multisampleState = 
-            Initalizers::PipelineMultiSampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT);
+            Initializers::PipelineMultiSampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT);
 
         std::vector<VkDynamicState> dynamicStateEnables = {
             VK_DYNAMIC_STATE_VIEWPORT,
@@ -331,12 +336,12 @@ namespace Fling
         };
 
         VkPipelineDynamicStateCreateInfo dynamicState = 
-            Initalizers::PipelineDynamicStateCreateInfo(dynamicStateEnables);
+            Initializers::PipelineDynamicStateCreateInfo(dynamicStateEnables);
 
         std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages {};
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = 
-            Initalizers::PipelineCreateInfo(m_pipelineLayout, m_renderPass);
+            Initializers::PipelineCreateInfo(m_pipelineLayout, m_renderPass);
 
         pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
         pipelineCreateInfo.pRasterizationState = &rasterizationState;
@@ -351,17 +356,17 @@ namespace Fling
         // Vertex bindings an attributes based on imgui vertex definitions
         std::vector<VkVertexInputBindingDescription> vertexInputBindings =
         {
-            Initalizers::VertexInputBindingDescription(0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX),
+            Initializers::VertexInputBindingDescription(0, sizeof(ImDrawVert), VK_VERTEX_INPUT_RATE_VERTEX),
         };
 
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = 
         {
-            Initalizers::VertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos)),    // Location 0: Position
-            Initalizers::VertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv)),    // Location 1: UV
-            Initalizers::VertexInputAttributeDescription(0, 2, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col)),    // Location 0: Color
+            Initializers::VertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, pos)),    // Location 0: Position
+            Initializers::VertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(ImDrawVert, uv)),    // Location 1: UV
+            Initializers::VertexInputAttributeDescription(0, 2, VK_FORMAT_R8G8B8A8_UNORM, offsetof(ImDrawVert, col)),    // Location 0: Color
         };
 
-        VkPipelineVertexInputStateCreateInfo vertexInputState = Initalizers::PiplineVertexInptStateCreateInfo();
+        VkPipelineVertexInputStateCreateInfo vertexInputState = Initializers::PiplineVertexInptStateCreateInfo();
         vertexInputState.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexInputBindings.size());
         vertexInputState.pVertexBindingDescriptions = vertexInputBindings.data();
         vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
@@ -462,7 +467,7 @@ namespace Fling
         float displayWidth = ImGui::GetIO().DisplaySize.x ? ImGui::GetIO().DisplaySize.x : .0001f;
         float displayHeight = ImGui::GetIO().DisplaySize.y ? ImGui::GetIO().DisplaySize.y : .0001f;
 
-        VkViewport viewport = Initalizers::Viewport(
+        VkViewport viewport = Initializers::Viewport(
             displayWidth,
             displayHeight,
             0.0f,
@@ -523,18 +528,23 @@ namespace Fling
         }
 
     }
+
+    void FlingImgui::PrepFrameBuild()
+    {
+        //Render Imgui UI  
+        ImGui::NewFrame();
+    }
+
     void FlingImgui::BuildCommandBuffers(bool t_displayOn)
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        //Render Imgui UI  
-        ImGui::NewFrame();
-        if (t_displayOn)
-        {
-            m_display();
-        }
+        // if (t_displayOn && m_DisplayCallback)
+        // {
+        //     m_DisplayCallback();
+        // }
         ImGui::Render();
 
         UpdateBuffers();
@@ -573,3 +583,5 @@ namespace Fling
 
     }
 }
+
+#endif  // WITH_IMGUI

@@ -33,10 +33,19 @@ namespace Fling
         );
 
 		Renderer::Get().m_Registry = &g_Registry;
+		
+		// Set the editor if we need to
+#if WITH_EDITOR
+		m_Editor->RegisterComponents(g_Registry);
+		Renderer::Get().m_Editor = m_Editor;
+#endif
+
 		Renderer::Get().Init();
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
+		
+		Input::PreUpdate();
 	}
 
 	void Engine::Tick()
@@ -71,9 +80,10 @@ namespace Fling
 				F_LOG_TRACE("World should quit! Exiting engine loop...");
 				break;
 			}
+			
+			Renderer.DrawFrame(g_Registry, DeltaTime);
 
 			Timing.UpdateFps();
-			Renderer.DrawFrame(g_Registry);
 		}
 
 		// Any waiting that we may need to do before the shutdown function should go here

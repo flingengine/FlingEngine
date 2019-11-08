@@ -33,29 +33,29 @@ namespace Fling
     void GraphicsPipeline::CreateAttributes(Multisampler* t_Sampler)
     {
         // Input Assembly 
-        m_InputAssemblyState = Initalizers::PipelineInputAssemblyStateCreateInfo(m_Topology, 0, VK_FALSE);
+        m_InputAssemblyState = Initializers::PipelineInputAssemblyStateCreateInfo(m_Topology, 0, VK_FALSE);
 
         // Dynamic States
-        m_DynamicState = Initalizers::PipelineDynamicStateCreateInfo(DYNAMIC_STATES, 0);
+        m_DynamicState = Initializers::PipelineDynamicStateCreateInfo(DYNAMIC_STATES, 0);
 
         // Rasterization State 
         m_RasterizationState =
-            Initalizers::PipelineRasterizationStateCreateInfo(
+            Initializers::PipelineRasterizationStateCreateInfo(
                 m_PolygonMode,
                 m_CullMode,
                 VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         // Multisample State 
         // TODO :: MSAA
-        m_MultisampleState = Initalizers::PipelineMultiSampleStateCreateInfo(t_Sampler->GetSampleCountFlagBits(), 0);
+        m_MultisampleState = Initializers::PipelineMultiSampleStateCreateInfo(t_Sampler->GetSampleCountFlagBits(), 0);
 
         // Color Attatchment
-        m_ColorBlendAttachmentStates[0] = Initalizers::PipelineColorBlendAttachmentState(
+        m_ColorBlendAttachmentStates[0] = Initializers::PipelineColorBlendAttachmentState(
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
             VK_FALSE);
 
         // Color Blend State
-        m_ColorBlendState = Initalizers::PipelineColorBlendStateCreateInfo(1, m_ColorBlendAttachmentStates.data());
+        m_ColorBlendState = Initializers::PipelineColorBlendStateCreateInfo(1, m_ColorBlendAttachmentStates.data());
 
         // Depth stencil state
         m_DepthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

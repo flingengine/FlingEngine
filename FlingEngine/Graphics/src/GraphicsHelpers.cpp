@@ -589,7 +589,7 @@ namespace Fling
 
     }    // namespace GraphicsHelpers
 
-    namespace Initalizers
+    namespace Initializers
     {
         VkMappedMemoryRange MappedMemoryRange()
         {
@@ -902,6 +902,6 @@ namespace Fling
             viewport.minDepth = t_minDepth;
             return viewport;
         }
-    }    // namespace Initalizers
+    }    // namespace Initializers
 
 }   // namespace Fling        

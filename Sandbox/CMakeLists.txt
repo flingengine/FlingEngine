@@ -9,22 +9,16 @@ include_directories(
 	Gameplay/inc
 )
 
-##################### Linking #################
-
-### Find Vulkan
-find_package(Vulkan REQUIRED)
-
-## Ensure we have Vulkan
-if(Vulkan_FOUND)
-    message(STATUS "Vulkan found!" )
-else()
-    message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
+# Editor
+if( WITH_EDITOR_FLAG )
+    include_directories(
+        Editor/inc
+    )
 endif()
 
-# Link Spirv
+##################### Linking #################
+
 set ( LINK_LIBS
-    glfw ${GLFW_LIBRARIES}
-    Vulkan::Vulkan  
 	"FlingEngine"
 )
 

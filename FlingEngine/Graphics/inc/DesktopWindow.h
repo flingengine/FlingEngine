@@ -62,6 +62,5 @@ namespace Fling
 		GLFWwindow* m_Window = nullptr;
 
 		static void FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height);
-
 	};
 }   // namespace Fling
