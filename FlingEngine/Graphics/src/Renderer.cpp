@@ -717,10 +717,16 @@ namespace Fling
 
 				descriptorWrites.push_back(UniformSet);
 
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+				Material* Mat = m_DefaultMat.get();
+				if (t_MeshRend.m_Material)
+				{
+					Mat = t_MeshRend.m_Material;
+				}
+
+                AddImageSampler(Mat->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(Mat->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(Mat->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(Mat->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
 				AddImageSampler(m_BRDFLookupTexture.get(), 7, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
 				// TODO: Ambient Occlusion Map
 
@@ -1088,6 +1094,8 @@ namespace Fling
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
+		m_Registry->on_destroy<MeshRenderer>().connect<&Renderer::MeshRendererRemoved>(*this);
+
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
 		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
     }
@@ -1106,6 +1114,11 @@ namespace Fling
 
 		SetFrameBufferHasBeenResized(true);
     }
+
+	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
+	{
+		SetFrameBufferHasBeenResized(true);
+	}
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {

@@ -223,6 +223,8 @@ namespace Fling
         */
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
+		void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
+
         /**
          * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many
          *          we need
