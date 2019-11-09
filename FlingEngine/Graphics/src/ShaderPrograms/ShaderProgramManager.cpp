@@ -1,37 +1,49 @@
-#pragma once
-
-#include "FlingVulkan.h"
-#include "Shader.h"
-#include "Singleton.hpp"
-#include "MeshRenderer.h"
-#include "ShaderPrograms/ShaderPrograms.h"
-#include "entt/entity/registry.hpp"
-#include "Camera.h"
+#include "ShaderPrograms\ShaderProgramManager.h"
+#include "Renderer.h"
 
 namespace Fling
 {
-    class ShaderProgramManager : Singleton<ShaderProgramManager>
+    void ShaderProgramManager::Init()
     {
-    public:
-        ShaderProgramManager();
-        ~ShaderProgramManager();
+        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
-        void Shutdown() override;
+        //Initialize Shader Programs
+        m_PBRShaderProgram = new ShaderPrograms(
+            Device,
+            HS("Shaders/PBRDefault_vert.spv"),
+            HS("Shaders/PBRDefault_frag.spv"));
+    }
 
-        void SortMeshRender();
+    void ShaderProgramManager::Shutdown()
+    {
+    }
 
-        void InitGraphicsPipeline(VkRenderPass t_RenderPass);
+    void ShaderProgramManager::SortMeshRender()
+    {
+    }
 
-        void CreateDescriptors();
+    void ShaderProgramManager::InitGraphicsPipeline(VkRenderPass t_RenderPass, Multisampler* t_Sampler)
+    {
+         
+    }
 
-        void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer);
+    void ShaderProgramManager::CreateDescriptors()
+    {
+    }
 
-        void UpdateUniformBuffers(UINT32 t_CurrentImage, Camera* t_Camera);
+    void ShaderProgramManager::BindCmdBuffer(VkCommandBuffer& t_CommandBuffer)
+    {
+    }
 
-        void CreateLightBuffers();
+    void ShaderProgramManager::UpdateUniformBuffers(UINT32 t_CurrentImage, Camera* t_Camera)
+    {
+    }
 
-        entt::registry* m_Registry;
+    void ShaderProgramManager::CreateLightBuffers()
+    {
+    }
 
-    private:
-    };
+    void ShaderProgramManager::UpdateLightBuffers()
+    {
+    }
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "FlingTypes.h"
 #include "Buffer.h"
 #include "DirectionalLight.hpp"

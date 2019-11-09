@@ -7,6 +7,8 @@
 #include "entt/entity/registry.hpp"
 #include "ShaderPrograms/ShaderPrograms.h"
 #include "Lighting/Lighting.hpp"
+#include "Camera.h"
+#include "Sampler.hpp"
 
 namespace Fling
 {
@@ -16,16 +18,13 @@ namespace Fling
     class ShaderProgramManager : public Singleton<ShaderProgramManager>
     {
     public:
+        void Init() override;
 
         void Shutdown() override;
 
         void SortMeshRender();
 
-        void AddMeshRender(MeshRenderer& t_MeshRender);
-
-        void RemoveMeshRender(MeshRenderer& t_MeshRender);
-
-        void InitGraphicsPipeline(VkRenderPass t_RenderPass);
+        void InitGraphicsPipeline(VkRenderPass t_RenderPass, Multisampler* t_Sampler);
 
         void CreateDescriptors();
 
@@ -35,10 +34,14 @@ namespace Fling
 
         void CreateLightBuffers();
 
+        void UpdateLightBuffers();
+
         entt::registry* m_Registry;
 
     private:
+        ShaderPrograms* m_PBRShaderProgram;
         Lighting m_Lighting = {};
+        LightingUbo m_LightingUbo = {};
     };
 
 }   // namespace Fling

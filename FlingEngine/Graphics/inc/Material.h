@@ -31,6 +31,8 @@ namespace Fling
 
 		explicit Material(Guid t_ID);
 
+        const PBRTextures& GetTexture() const { return m_Textures; }
+
 	private:
 
 		void LoadMaterial();
