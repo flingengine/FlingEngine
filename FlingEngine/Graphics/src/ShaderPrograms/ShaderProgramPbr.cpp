@@ -10,7 +10,7 @@ namespace Fling
         Buffer* m_Lighting,
         VkDescriptorSetLayout m_DescriptorLayout)
     {
-        std::vector<VkImage> Images = Renderer::Get().GetSwapChain->GetImages();
+        const std::vector<VkImage>& Images = Renderer::Get().GetSwapChain()->GetImages();
         VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
         // Specify what descriptor pool to allocate from and how many
