@@ -25,7 +25,7 @@ namespace Fling
             Depth t_Depth = Depth::ReadWrite,
             VkPrimitiveTopology t_Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VkCullModeFlags t_CullMode = VK_CULL_MODE_BACK_BIT,
-            VkFrontFace t_FrontFace = VK_FRONT_FACE_CLOCKWISE);
+            VkFrontFace t_FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         void BindGraphicsPipeline(const VkCommandBuffer& t_CommandBuffer);
         void CreateGraphicsPipeline(VkRenderPass& t_RenderPass, Multisampler* t_Sampler);

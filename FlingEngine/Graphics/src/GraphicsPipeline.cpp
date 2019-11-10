@@ -21,7 +21,8 @@ namespace Fling
         m_PolygonMode(t_Mode),
         m_Depth(t_Depth),
         m_Topology(t_Topology),
-        m_CullMode(t_CullMode)
+        m_CullMode(t_CullMode),
+        m_FrontFace(t_FrontFace)
     {
     }
 
@@ -43,10 +44,9 @@ namespace Fling
             Initializers::PipelineRasterizationStateCreateInfo(
                 m_PolygonMode,
                 m_CullMode,
-                VK_FRONT_FACE_COUNTER_CLOCKWISE);
+                m_FrontFace);
 
         // Multisample State 
-        // TODO :: MSAA
         m_MultisampleState = Initializers::PipelineMultiSampleStateCreateInfo(t_Sampler->GetSampleCountFlagBits(), 0);
 
         // Color Attatchment

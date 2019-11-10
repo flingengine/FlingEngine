@@ -97,7 +97,11 @@ namespace Fling
 			m_LogicalDevice->GetVkDevice()
 		);
 
-		m_Skybox->Init(m_camera, m_SwapChain->GetActiveImageIndex(), m_SwapChain->GetImageViewCount(), m_PhysicalDevice->GetMaxUsableSampleCount());
+		m_Skybox->Init(
+            m_camera, 
+            m_SwapChain->GetActiveImageIndex(), 
+            m_SwapChain->GetImageViewCount(), 
+            m_MsaaSampler);
 
         CreateLightBuffers();
 
@@ -329,7 +333,7 @@ namespace Fling
             vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
 
             // Skybox -----------------------------
-			VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
+			/*VkBuffer skyboxVertexBuffers[1] = { m_Skybox->GetVertexBuffer()->GetVkBuffer() };
 			VkDeviceSize offsets[1] = { 0 };
 			VkDescriptorSet skyboxDescriptorSet[1] = { m_Skybox->GetDescriptorSet() };
 
@@ -337,7 +341,9 @@ namespace Fling
 			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, skyboxVertexBuffers, offsets);
 			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_Skybox->GetIndexBuffer()->GetVkBuffer(), 0, m_Skybox->GetIndexType());
 			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Skybox->GetPipeLine());
-			vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);
+			vkCmdDrawIndexed(m_CommandBuffers[i], m_Skybox->GetIndexCount(), 1, 0, 0, 0);*/
+
+            m_Skybox->BindCmdBuffer(m_CommandBuffers[i]);
 			
 			//vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
             m_GraphicsPipeline->BindGraphicsPipeline(m_CommandBuffers[i]);
