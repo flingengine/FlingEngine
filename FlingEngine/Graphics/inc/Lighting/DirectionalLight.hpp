@@ -17,6 +17,8 @@ namespace Fling
 
         template<class Archive>
         void serialize(Archive & t_Archive);
+
+		static void DrawWidget(DirectionalLight& t_Light);
     };
 
      /** Serilazation to an archive */

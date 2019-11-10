@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cereal/archives/json.hpp> // For serialization of a material
 #include "Shader.h"
 #include "Image.h"
 #include "JsonFile.h"

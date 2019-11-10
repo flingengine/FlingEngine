@@ -9,11 +9,39 @@ set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 # Option for seperate "shipping" config
 OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF ) # disabled by default
 
+OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
+OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
+
+# We can't have the editor without ImGUI!
+IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
+    SET( WITH_EDITOR_FLAG OFF )
+    message( FATAL_ERROR    "WITH_EDITOR_FLAG cannot be enabled because WITH_IMGUI_FLAG is OFF!" )
+endif()
+
+message( STATUS "----- Build Config ----" )
+message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
+message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
+message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
+
+# set the flags to 0 or 1 respectively for ImGUI and the Editor
+IF( WITH_IMGUI_FLAG )
+    ADD_DEFINITIONS ( -DWITH_IMGUI=1 )
+else()
+    ADD_DEFINITIONS ( -DWITH_IMGUI=0 )
+endif()
+
+IF( WITH_EDITOR_FLAG )
+    ADD_DEFINITIONS ( -DWITH_EDITOR=1 )
+else()
+    ADD_DEFINITIONS ( -DWITH_EDITOR=0 )
+endif()
+
 IF( DEFINE_SHIPPING )
     message( STATUS "Build set to SHIPPING configuration!" )
     ADD_DEFINITIONS ( -DFLING_SHIPPING )
     SET( CMAKE_BUILD_TYPE Release )
 ENDIF( DEFINE_SHIPPING )
+message( STATUS "-----------------------" )
 
 # C++17 standard
 set( CMAKE_CXX_STANDARD 17 )
@@ -68,8 +96,11 @@ set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 add_subdirectory( external/SPIRV-Cross )
 
 # ImGUI 
-add_subdirectory( external/imgui )
-include_directories( external/imgui )
+if( WITH_IMGUI_FLAG )
+    add_subdirectory( external/imgui )
+    include_directories( external/imgui )
+    include_directories( external/imgui_entt_entity_editor )
+endif()
 
 include_directories( external/glm )
 include_directories( external/spdlog/include )

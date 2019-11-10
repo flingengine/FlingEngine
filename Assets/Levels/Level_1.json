@@ -9,7 +9,7 @@
     "value7": 2,
     "value8": 1,
     "value9": 0,
-    "value10": 8,
+    "value10": 12,
     "value11": 0,
     "value12": {
         "POS_X": -2.0,
@@ -62,10 +62,10 @@
     "value20": {
         "POS_X": 0.0,
         "POS_Y": 0.0,
-        "POS_Z": 1.0,
-        "SCALE_X": 0.10000000149011612,
-        "SCALE_Y": 0.10000000149011612,
-        "SCALE_Z": 0.10000000149011612,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
@@ -74,10 +74,10 @@
     "value22": {
         "POS_X": 0.0,
         "POS_Y": 0.0,
-        "POS_Z": -1.0,
-        "SCALE_X": 0.10000000149011612,
-        "SCALE_Y": 0.10000000149011612,
-        "SCALE_Z": 0.10000000149011612,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
@@ -85,11 +85,11 @@
     "value23": 6,
     "value24": {
         "POS_X": 0.0,
-        "POS_Y": 1.0,
+        "POS_Y": 0.0,
         "POS_Z": 0.0,
-        "SCALE_X": 0.10000000149011612,
-        "SCALE_Y": 0.10000000149011612,
-        "SCALE_Z": 0.10000000149011612,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
@@ -97,59 +97,107 @@
     "value25": 7,
     "value26": {
         "POS_X": 0.0,
-        "POS_Y": -1.0,
+        "POS_Y": 0.0,
         "POS_Z": 0.0,
-        "SCALE_X": 0.10000000149011612,
-        "SCALE_Y": 0.10000000149011612,
-        "SCALE_Z": 0.10000000149011612,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
         "ROT_X": 0.0,
         "ROT_Y": 0.0,
         "ROT_Z": 0.0
     },
-    "value27": 8,
-    "value28": 0,
-    "value29": {
+    "value27": 4,
+    "value28": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
+    },
+    "value29": 5,
+    "value30": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
+    },
+    "value31": 6,
+    "value32": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
+    },
+    "value33": 7,
+    "value34": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
+    },
+    "value35": 8,
+    "value36": 0,
+    "value37": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Cobblestone.mat"
     },
-    "value30": 1,
-    "value31": {
+    "value38": 1,
+    "value39": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Paint.mat"
     },
-    "value32": 2,
-    "value33": {
+    "value40": 2,
+    "value41": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Bronze.mat"
     },
-    "value34": 3,
-    "value35": {
+    "value42": 3,
+    "value43": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Cobblestone.mat"
     },
-    "value36": 4,
-    "value37": {
+    "value44": 4,
+    "value45": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Default.mat"
     },
-    "value38": 5,
-    "value39": {
+    "value46": 5,
+    "value47": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Default.mat"
     },
-    "value40": 6,
-    "value41": {
+    "value48": 6,
+    "value49": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Default.mat"
     },
-    "value42": 7,
-    "value43": {
+    "value50": 7,
+    "value51": {
         "MESH_NAME": "Models/sphere.obj",
         "MATERIAL_NAME": "Materials/Default.mat"
     },
-    "value44": 1,
-    "value45": 8,
-    "value46": {
+    "value52": 1,
+    "value53": 8,
+    "value54": {
         "DIFFUSE_X": 1.0,
         "DIFFUSE_Y": 1.0,
         "DIFFUSE_Z": 1.0,
@@ -159,38 +207,38 @@
         "DIRECTION_Z": -0.5,
         "INTENSITY": 1.0
     },
-    "value47": 4,
-    "value48": 4,
-    "value49": {
+    "value55": 4,
+    "value56": 4,
+    "value57": {
         "DIFFUSE_X": 1.0,
         "DIFFUSE_Y": 0.0,
         "DIFFUSE_Z": 0.0,
         "RANGE": 20.0,
         "INTENSITY": 5.0
     },
-    "value50": 5,
-    "value51": {
+    "value58": 5,
+    "value59": {
         "DIFFUSE_X": 1.0,
         "DIFFUSE_Y": 1.0,
         "DIFFUSE_Z": 0.0,
         "RANGE": 20.0,
         "INTENSITY": 5.0
     },
-    "value52": 6,
-    "value53": {
+    "value60": 6,
+    "value61": {
         "DIFFUSE_X": 0.0,
         "DIFFUSE_Y": 1.0,
         "DIFFUSE_Z": 1.0,
         "RANGE": 20.0,
         "INTENSITY": 5.0
     },
-    "value54": 7,
-    "value55": {
+    "value62": 7,
+    "value63": {
         "DIFFUSE_X": 1.0,
         "DIFFUSE_Y": 0.0,
         "DIFFUSE_Z": 1.0,
         "RANGE": 20.0,
         "INTENSITY": 5.0
     },
-    "value56": 0
+    "value64": 0
 }

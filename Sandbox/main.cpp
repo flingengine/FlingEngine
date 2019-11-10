@@ -1,16 +1,27 @@
 #include "FlingEngine.h"
 #include "SandboxGame.h"
 
+#if WITH_EDITOR
+
+#include "SandboxEditor.h"
+
+#endif
 /**
 * Entry point for using the Fling Engine!
 */
 int main(int argc, char* argv[])
 {
 	Fling::Engine Engine = {};
-                           
+    
 	try
 	{
+		// Run with editor and IMGUI
+#if WITH_EDITOR
+		Engine.Run<Sandbox::Game, Sandbox::SandboxEditor>();
+#else
+		// Just run with the game and No editor features.
 		Engine.Run<Sandbox::Game>();
+#endif
 	}
 	catch (const std::exception& e)
 	{

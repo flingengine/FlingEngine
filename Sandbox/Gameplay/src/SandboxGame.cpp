@@ -21,6 +21,10 @@ namespace Sandbox
 		// Lets create an entity! 
 		F_LOG_TRACE("Sandbox Game Init!");
 
+#if WITH_EDITOR
+		F_LOG_TRACE("Enable Editor!");
+#endif
+
 		// Temp saving and load functions
 		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
         Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
@@ -39,6 +43,8 @@ namespace Sandbox
 		LightingTest(t_Reg);
 		//OnLoadInitated();
 		//GenerateTestMeshes(t_Reg);
+
+		SetWindowIcon();
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)
@@ -144,19 +150,19 @@ namespace Sandbox
 			t0.SetPos(t_Pos);
 		};
 
-		AddModel(0, "Models/Cerberus.obj", "Materials/Cerberus.mat", glm::vec3(0.25f));
+		//AddModel(0, "Models/Cerberus.obj", "Materials/Cerberus.mat", glm::vec3(0.25f));
 
-		//AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
 		//AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
 		//AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
 		//AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
 		float Width = 2.0f;
-		AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
-		AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
-
-		AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
-		AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+		//AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
+		//AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
+		//
+		//AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+		//AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 
 
 		auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
@@ -214,6 +220,15 @@ namespace Sandbox
 	void Game::OnToggleMoveLights()
 	{
 		m_MovePointLights = !m_MovePointLights;
+	}
+
+	void Game::SetWindowIcon()
+	{
+		FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetWindowIcon("Icons/Fling_Logo.png"_hs);
+		}
 	}
 
 	void Game::ToggleRotation()

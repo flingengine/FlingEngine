@@ -63,12 +63,17 @@ endif()
 
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
-    ImGui ${IMGUI_LIBRARIES}
     Vulkan::Vulkan  
     spirv-cross-core 
     spirv-cross-cpp
     spirv-cross-reflect
 )
+
+IF( WITH_IMGUI_FLAG )
+set ( LINK_LIBS ${LINK_LIBS}
+    ImGui ${IMGUI_LIBRARIES}
+)
+endif()
 
 # link pthread if we need to
 if ( NOT WIN32 )

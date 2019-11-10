@@ -75,40 +75,40 @@ namespace Fling
     void Cubemap::PreparePipeline(VkSampleCountFlagBits t_SampleCount)
     {
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
-            Initalizers::PipelineInputAssemblyStateCreateInfo(
+            Initializers::PipelineInputAssemblyStateCreateInfo(
                 VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
                 0,
                 VK_FALSE);
 
         VkPipelineRasterizationStateCreateInfo rasterizationState =
-            Initalizers::PipelineRasterizationStateCreateInfo(
+            Initializers::PipelineRasterizationStateCreateInfo(
                 VK_POLYGON_MODE_FILL,
                 VK_CULL_MODE_FRONT_BIT,
                 VK_FRONT_FACE_COUNTER_CLOCKWISE,
                 0);
 
         VkPipelineColorBlendAttachmentState blendAttachmentState =
-            Initalizers::PipelineColorBlendAttachmentState(
+            Initializers::PipelineColorBlendAttachmentState(
                 0xf,
                 VK_FALSE);
 
         VkPipelineColorBlendStateCreateInfo colorBlendState =
-            Initalizers::PipelineColorBlendStateCreateInfo(
+            Initializers::PipelineColorBlendStateCreateInfo(
                 1,
                 &blendAttachmentState);
 
         VkPipelineDepthStencilStateCreateInfo depthStencilState =
-            Initalizers::DepthStencilState(
+            Initializers::DepthStencilState(
                 VK_FALSE,
                 VK_FALSE,
                 VK_COMPARE_OP_LESS_OR_EQUAL);
 
         VkPipelineViewportStateCreateInfo viewportState =
-            Initalizers::PipelineViewportStateCreateInfo(
+            Initializers::PipelineViewportStateCreateInfo(
                 1, 1, 0);
 
         VkPipelineMultisampleStateCreateInfo multisampleState =
-            Initalizers::PipelineMultiSampleStateCreateInfo(
+            Initializers::PipelineMultiSampleStateCreateInfo(
                 t_SampleCount,
                 0);
 
@@ -119,7 +119,7 @@ namespace Fling
         };
 
         VkPipelineDynamicStateCreateInfo dynamicState =
-            Initalizers::PipelineDynamicStateCreateInfo(
+            Initializers::PipelineDynamicStateCreateInfo(
                 dynamicStateEnables, 0);
 
         //Pipeline cache 
@@ -143,7 +143,7 @@ namespace Fling
 
         std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages;
 
-        VkGraphicsPipelineCreateInfo pipelineCreateInfo = Initalizers::PipelineCreateInfo(m_PipelineLayout, m_RenderPass, 0);
+        VkGraphicsPipelineCreateInfo pipelineCreateInfo = Initializers::PipelineCreateInfo(m_PipelineLayout, m_RenderPass, 0);
         pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
         pipelineCreateInfo.pRasterizationState = &rasterizationState;
         pipelineCreateInfo.pColorBlendState = &colorBlendState;
@@ -304,7 +304,7 @@ namespace Fling
         GraphicsHelpers::EndSingleTimeCommands(copyCmd);
 
         // Create sampler
-        VkSamplerCreateInfo sampler = Initalizers::SamplerCreateInfo();
+        VkSamplerCreateInfo sampler = Initializers::SamplerCreateInfo();
         sampler.magFilter = VK_FILTER_LINEAR;
         sampler.minFilter = VK_FILTER_LINEAR;
         sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -327,7 +327,7 @@ namespace Fling
             F_LOG_ERROR("Cube failed to create sampler");
         }
 
-        VkImageViewCreateInfo view = Initalizers::ImageViewCreateInfo();
+        VkImageViewCreateInfo view = Initializers::ImageViewCreateInfo();
         view.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
         view.format = m_Format;
         view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
@@ -346,12 +346,12 @@ namespace Fling
         //Descriptor pools
         std::vector<VkDescriptorPoolSize> poolSizes =
         {
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)
         };
 
         VkDescriptorPoolCreateInfo descriptorPoolInfo =
-            Initalizers::DescriptorPoolCreateInfo(poolSizes, 2);
+            Initializers::DescriptorPoolCreateInfo(poolSizes, 2);
 
         if (vkCreateDescriptorPool(m_Device, &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
@@ -362,19 +362,19 @@ namespace Fling
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBinding =
         {
             //Binding 0 : vertex shader uniform buffer
-            Initalizers::DescriptorSetLayoutBinding(
+            Initializers::DescriptorSetLayoutBinding(
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 VK_SHADER_STAGE_VERTEX_BIT,
                 0),
 
-            Initalizers::DescriptorSetLayoutBinding(
+            Initializers::DescriptorSetLayoutBinding(
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 VK_SHADER_STAGE_FRAGMENT_BIT,
                 1),
         };
 
         VkDescriptorSetLayoutCreateInfo descriptorLayout =
-            Initalizers::DescriptorSetLayoutCreateInfo(
+            Initializers::DescriptorSetLayoutCreateInfo(
                 setLayoutBinding);
 
         if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayout, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
@@ -383,7 +383,7 @@ namespace Fling
         }
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo =
-            Initalizers::PiplineLayoutCreateInfo(
+            Initializers::PiplineLayoutCreateInfo(
                 &m_DescriptorSetLayout,
                 1);
 
@@ -394,13 +394,13 @@ namespace Fling
 
         //Descriptor Sets
         VkDescriptorImageInfo textureDescriptor =
-            Initalizers::DescriptorImageInfo(
+            Initializers::DescriptorImageInfo(
                 m_Sampler,
                 m_Imageview,
                 m_ImageLayout);
 
         VkDescriptorSetAllocateInfo allocInfo =
-            Initalizers::DescriptorSetAllocateInfo(
+            Initializers::DescriptorSetAllocateInfo(
                 m_DescriptorPool,
                 &m_DescriptorSetLayout,
                 1);
@@ -420,14 +420,14 @@ namespace Fling
             std::vector<VkWriteDescriptorSet> writeDescriptorSets =
             {
                 // Binding 0 : Vertex shader uniform buffer
-                Initalizers::WriteDescriptorSet(
+                Initializers::WriteDescriptorSet(
                     m_DescriptorSet,
                     VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                     0,
                     &m_UniformBufferDescriptor),
 
                 // Binding 1 : Fragment shader cubemap sampler
-                Initalizers::WriteDescriptorSet(
+                Initializers::WriteDescriptorSet(
                     m_DescriptorSet,
                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                     1,

@@ -8,6 +8,7 @@
 // #TODO: Figure something else that's better for this
 #include "Renderer.h"
 #include <GLFW/glfw3.h>
+#include "ImGuiInputBinding.hpp"
 
 namespace Fling
 {
@@ -19,6 +20,13 @@ namespace Fling
 	{
 		// Any setup for GLFW inputs
 		InitKeyMap();
+	}
+
+	void LinuxInput::PreUpdateImpl()
+	{
+#if WITH_IMGUI
+		InternalImGui::SetImGuiCallbacks();
+#endif
 	}
 
 	void LinuxInput::ShutdownImpl()

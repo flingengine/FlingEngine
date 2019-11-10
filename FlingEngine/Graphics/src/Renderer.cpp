@@ -103,24 +103,27 @@ namespace Fling
 
         BuildCommandBuffers(*m_Registry);
 
+#if WITH_IMGUI
         // Initialize imgui
         m_flingImgui = new FlingImgui(m_LogicalDevice, m_SwapChain);
-        m_imguiDisplay = ImguiDisplay();
+        
         m_DrawImgui = FlingConfig::GetBool("Imgui", "display");
         InitImgui();
+#endif  // WITH_IMGUI
 
         CreateSyncObjects();
     }
 
     void Renderer::InitImgui()
     {
+#if WITH_IMGUI
         m_flingImgui->Init(
             static_cast<float>(m_CurrentWindow->GetWidth()),
             static_cast<float>(m_CurrentWindow->GetHeight())
         );
 
         m_flingImgui->InitResources(m_LogicalDevice->GetGraphicsQueue());
-        m_flingImgui->SetDisplay<&ImguiDisplay::NewFrame>(m_imguiDisplay);
+#endif  // WITH_IMGUI
     }
 
     void Renderer::CreateLightBuffers()
@@ -138,7 +141,8 @@ namespace Fling
 
     void Renderer::UpdateImguiIO()
     {
-        //Update imgui mouse events and timings
+#if WITH_IMGUI
+        // Update imgui mouse events and timings
         ImGuiIO& io = ImGui::GetIO();
 
         io.DisplaySize = ImVec2(
@@ -150,6 +154,7 @@ namespace Fling
 
         io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
         io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+#endif
     }
 
     void Renderer::CreateRenderPass()
@@ -479,10 +484,10 @@ namespace Fling
 
             vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
             
-            VkViewport viewport = Initalizers::Viewport(static_cast<float>(m_CurrentWindow->GetWidth()), static_cast<float>(m_CurrentWindow->GetHeight()), 0.0f, 1.0f);
+            VkViewport viewport = Initializers::Viewport(static_cast<float>(m_CurrentWindow->GetWidth()), static_cast<float>(m_CurrentWindow->GetHeight()), 0.0f, 1.0f);
             vkCmdSetViewport(m_CommandBuffers[i], 0, 1, &viewport);
 
-            VkRect2D scissor = Initalizers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
+            VkRect2D scissor = Initializers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
             vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
 
             // Skybox -----------------------------
@@ -582,8 +587,9 @@ namespace Fling
         m_LogicalDevice->WaitForIdle();
 
         CleanupFrameResources();
+#if WITH_IMGUI
         m_flingImgui->Release();
-
+#endif
         m_SwapChain->Recreate(ChooseSwapExtent());
 
         CreateRenderPass();
@@ -620,11 +626,11 @@ namespace Fling
 
         std::vector<VkDescriptorPoolSize> PoolSizes =
         {
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
-            Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
-			Initalizers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
+			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
+			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
+			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
         };
 
         VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -702,7 +708,7 @@ namespace Fling
 				BufferInfo->buffer = t_MeshRend.m_UniformBuffers[i]->GetVkBuffer();
 				BufferInfo->offset = 0;
 				BufferInfo->range = t_MeshRend.m_UniformBuffers[i]->GetSize();
-				VkWriteDescriptorSet UniformSet = Initalizers::WriteDescriptorSet(
+				VkWriteDescriptorSet UniformSet = Initializers::WriteDescriptorSet(
                     t_MeshRend.m_DescriptorSets[i],
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 					0,
@@ -711,10 +717,16 @@ namespace Fling
 
 				descriptorWrites.push_back(UniformSet);
 
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
-                AddImageSampler(t_MeshRend.m_Material->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+				Material* Mat = m_DefaultMat.get();
+				if (t_MeshRend.m_Material)
+				{
+					Mat = t_MeshRend.m_Material;
+				}
+
+                AddImageSampler(Mat->m_Textures.m_AlbedoTexture, 2, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(Mat->m_Textures.m_NormalTexture, 3, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(Mat->m_Textures.m_MetalTexture, 4, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
+                AddImageSampler(Mat->m_Textures.m_RoughnessTexture, 5, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
 				AddImageSampler(m_BRDFLookupTexture.get(), 7, t_MeshRend.m_DescriptorSets[i], descriptorWrites);
 				// TODO: Ambient Occlusion Map
 
@@ -725,7 +737,7 @@ namespace Fling
 				LightBufferInfo->offset = 0;
 				LightBufferInfo->range = m_Lighting.m_LightingUBOs[i]->GetSize();
 
-				VkWriteDescriptorSet LightUniformSet = Initalizers::WriteDescriptorSet(
+				VkWriteDescriptorSet LightUniformSet = Initializers::WriteDescriptorSet(
                     t_MeshRend.m_DescriptorSets[i],
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 					6,
@@ -808,23 +820,33 @@ namespace Fling
         m_CurrentWindow->Update();
 
         m_camera->Update(DeltaTime);
-
+#if WITH_IMGUI
 		UpdateImguiIO();
+#endif
     }
 
-    void Renderer::DrawFrame(entt::registry& t_Reg)
+    void Renderer::DrawFrame(entt::registry& t_Reg, float DeltaTime)
     {
         VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
         UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
         vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
+#if WITH_IMGUI
         // Update imgui command buffers
         {
+            assert(m_Editor);
             vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_flingImgui->GetCommandPool(), 0);
+            // Prepare the ImGUI buffers to be built
+            m_flingImgui->PrepFrameBuild();
+#if WITH_EDITOR
+            // Draw any ImGUI items here
+            m_Editor->Draw(*m_Registry, DeltaTime);
+#endif
+            // Build the actual ImGUI command buffers
             m_flingImgui->BuildCommandBuffers(m_DrawImgui);
-        }
-        
+        }  
+#endif
         // Check if the swap chain needs to be recreated
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -848,11 +870,13 @@ namespace Fling
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
 
-        std::array<VkCommandBuffer, 2> submitCommandBuffers =
-        {
-            m_CommandBuffers[ImageIndex], m_flingImgui->GetCommandBuffer(ImageIndex)
-        };
+        std::vector<VkCommandBuffer> submitCommandBuffers = {};
 
+        submitCommandBuffers.emplace_back(m_CommandBuffers[ImageIndex]);
+
+#if WITH_IMGUI
+        submitCommandBuffers.emplace_back(m_flingImgui->GetCommandBuffer(ImageIndex));
+#endif
 
         submitInfo.commandBufferCount = static_cast<UINT32>(submitCommandBuffers.size());
         submitInfo.pCommandBuffers = submitCommandBuffers.data();
@@ -1000,13 +1024,13 @@ namespace Fling
             delete m_Skybox;
             m_Skybox = nullptr;
         }
-
+#if WITH_IMGUI
         if (m_flingImgui)
         {
             delete m_flingImgui;
             m_flingImgui = nullptr;
         }
-
+#endif
         if (m_SwapChain)
         {
             delete m_SwapChain;
@@ -1070,6 +1094,8 @@ namespace Fling
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
+		m_Registry->on_destroy<MeshRenderer>().connect<&Renderer::MeshRendererRemoved>(*this);
+
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
 		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
     }
@@ -1088,6 +1114,11 @@ namespace Fling
 
 		SetFrameBufferHasBeenResized(true);
     }
+
+	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
+	{
+		SetFrameBufferHasBeenResized(true);
+	}
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {

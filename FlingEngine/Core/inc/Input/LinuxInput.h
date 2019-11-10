@@ -13,6 +13,7 @@ namespace Fling
 	protected:
 
 		virtual void InitImpl() override;
+		virtual void PreUpdateImpl() override;
 		virtual void ShutdownImpl() override;
 
 		virtual void InitKeyMap() override;

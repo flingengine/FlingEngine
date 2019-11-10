@@ -1,6 +1,9 @@
 #pragma once 
 
+#if WITH_IMGUI
 #include <imgui.h>
+
+
 #include <algorithm>
 
 #include "Renderer.h"
@@ -56,8 +59,14 @@ namespace Fling
         template <auto Candidate, typename Type>
         void SetDisplay(Type& t_instance)
         {
-            m_display.connect<Candidate>(t_instance);
+            m_DisplayCallback.connect<Candidate>(t_instance);
         }
+
+        /**
+         * @brief Start a new ImGUI Frame and prepare for command buffers to be built. 
+         * 
+         */
+        void PrepFrameBuild();
 
         /**
          * @brief Command buffers start recoding current renderpass with updated index and vertex buffers
@@ -107,6 +116,8 @@ namespace Fling
 
         Swapchain* m_swapChain;
 
-        entt::delegate<void()> m_display{};
+        entt::delegate<void()> m_DisplayCallback{};
     };
 } //namespace fling
+
+#endif // WITH_IMGUI
