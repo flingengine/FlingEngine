@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Singleton.hpp"
-#include "LuaScript.h"
+#include "ScriptComponent.h"
 
 namespace Fling
 {
