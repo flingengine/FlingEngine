@@ -2,7 +2,7 @@
 
 namespace Fling
 {
-    FreeList::FreeList(void* t_Start, void* t_End, size_t elmSize, size_t t_NumElms, size_t alignment, size_t offset)
+    FreeList::FreeList(void* t_Start, void* t_End, size_t t_ElmSize, size_t alignment, size_t offset)
     {
         union
         {
@@ -15,36 +15,23 @@ namespace Fling
 
         // assume as_self points to the first entry in the free list
         m_Next = as_self;
-        as_char += elmSize;
+        as_char += t_ElmSize;
 
         // initialize the free list - make every m_next of each element point to the next element in the list
         FreeList* runner = m_Next;
-        for (size_t i = 1; i < t_NumElms; ++i)
+
+		// Calculate the number of elements will fit in this buffer
+		ptrdiff_t bufferSize = ((const char*)t_End - (const char*)t_Start);
+		assert(bufferSize > 0);
+		size_t NumElements = bufferSize / t_ElmSize;
+
+        for (size_t i = 1; i < NumElements; ++i)
         {
             runner->m_Next = as_self;
             runner = as_self;
-            as_char += elmSize;
+            as_char += t_ElmSize;
         }
         
         runner->m_Next = nullptr;
-    }
-
-    void* FreeList::Obtain()
-    {
-        if(m_Next == nullptr)
-        {
-            return nullptr;
-        }
-
-        FreeList* head = m_Next;
-        m_Next = head->m_Next;
-        return head;
-    }
-
-    void FreeList::Return(void* t_Ptr)
-    {
-        FreeList* head = static_cast<FreeList*>(t_Ptr);
-        head->m_Next = m_Next;
-        m_Next = head;
     }
 }
