@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>     // size_t
+#include <cstddef>		//std::ptrdiff_t
 #include <assert.h>
 
 #include "FlingExports.h"
@@ -34,7 +35,7 @@ namespace Fling
          * 
          * @return void*    nullptr if no memory available
          */
-        inline void* Obtain();
+        inline void* Obtain() noexcept;
 
         /**
          * @brief   Return a block of memory to the free list. Memory can be returned in any order
@@ -47,7 +48,7 @@ namespace Fling
         FreeList* m_Next = nullptr;
     };
 
-	inline void* FreeList::Obtain()
+	inline void* FreeList::Obtain() noexcept
 	{
 		if (m_Next == nullptr)
 		{

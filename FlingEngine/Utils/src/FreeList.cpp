@@ -21,7 +21,7 @@ namespace Fling
         FreeList* runner = m_Next;
 
 		// Calculate the number of elements will fit in this buffer
-		ptrdiff_t bufferSize = ((const char*)t_End - (const char*)t_Start);
+		std::ptrdiff_t bufferSize = ((const char*)t_End - (const char*)t_Start);
 		assert(bufferSize > 0);
 		size_t NumElements = bufferSize / t_ElmSize;
 
