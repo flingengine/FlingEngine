@@ -13,6 +13,8 @@
 
 namespace Fling
 {
+	//ImGui::FileBrowser BaseEditor::m_FileDialog = {};
+
 	namespace Widgets
 	{
 		void Transform(Fling::Transform& t)
@@ -36,6 +38,11 @@ namespace Fling
 			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 
+		void MeshRendModelChange(void* t_MeshRend, bool t_WasSelected, std::string t_FileName)
+		{
+
+		}
+
 		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
 		{
 			// Model -----------------------
@@ -49,15 +56,22 @@ namespace Fling
 				ImGui::LabelText("Model", ModelName.c_str());
 				if (ImGui::Button("Select Model"))
 				{
-					std::string SelectedModel = "Models/cone.obj";
-					F_LOG_TRACE("Change the model to {}", SelectedModel.c_str());
-					// Open a new file dialog window that takes precedence
-
 					// If a file was selected, then set the mesh renderer's model to that
+					//if(t_FileBrowser.HasSelected())
+					static FileBrowser FileWindow("Select Model...");
+					
+					bool HasSelected = false;
+					FileWindow.Display(&HasSelected);
+
+
+					if(HasSelected)
 					{
-						t_MeshRend.LoadModelFromPath(SelectedModel);
+						std::string Selection = "Models/cone.obj";
+						F_LOG_WARN("Change the model to {}", Selection.c_str());
+						//t_FileBrowser.ClearSelected();
+						//t_MeshRend.LoadModelFromPath(Selection);
 						// Command buffers must be rebuilt after doing this
-						Renderer::Get().SetFrameBufferHasBeenResized(true);
+						//Renderer::Get().SetFrameBufferHasBeenResized(true);
 					}
 				}
 			}
@@ -128,6 +142,7 @@ namespace Fling
 				Widgets::MeshRenderer(t);
 			}
 		);
+
 	}
 
 	void BaseEditor::Draw(entt::registry& t_Reg, float DeltaTime)
@@ -148,6 +163,8 @@ namespace Fling
 		{
 			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
 		}
+
+		BaseEditor::FileBrowser().Display();
     }
 
 	void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
