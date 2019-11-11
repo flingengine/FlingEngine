@@ -38,6 +38,7 @@ namespace Fling
 
 		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
 		{
+			// Model -----------------------
 			{
 				std::string ModelName = "None";
 				if (t_MeshRend.m_Model)
@@ -46,8 +47,22 @@ namespace Fling
 				}
 
 				ImGui::LabelText("Model", ModelName.c_str());
+				if (ImGui::Button("Select Model"))
+				{
+					std::string SelectedModel = "Models/cone.obj";
+					F_LOG_TRACE("Change the model to {}", SelectedModel.c_str());
+					// Open a new file dialog window that takes precedence
+
+					// If a file was selected, then set the mesh renderer's model to that
+					{
+						t_MeshRend.LoadModelFromPath(SelectedModel);
+						// Command buffers must be rebuilt after doing this
+						Renderer::Get().SetFrameBufferHasBeenResized(true);
+					}
+				}
 			}
 
+			// Material ----------------------
 			{
 				std::string MaterialName = "None";
 				if (t_MeshRend.m_Material)
@@ -56,6 +71,18 @@ namespace Fling
 				}
 
 				ImGui::LabelText("Material", MaterialName.c_str());
+
+				if (ImGui::Button("Select Material"))
+				{
+					std::string SelectedMat = "Materials/Bronze.mat";
+					F_LOG_TRACE("Change the material to {}", SelectedMat.c_str());
+					// If a file was selected, then set the mesh renderer's model to that
+					{
+						t_MeshRend.LoadMaterialFromPath(SelectedMat);
+						// Command buffers must be rebuilt after doing this
+						Renderer::Get().SetFrameBufferHasBeenResized(true);
+					}
+				}
 			}
 		}
 	}
