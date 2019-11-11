@@ -4,11 +4,13 @@
 #include "Shader.h"
 #include "Singleton.hpp"
 #include "MeshRenderer.h"
-#include "entt/entity/registry.hpp"
 #include "ShaderPrograms/ShaderPrograms.h"
 #include "Lighting/Lighting.hpp"
 #include "Camera.h"
 #include "Sampler.hpp"
+
+#include "entt/entity/registry.hpp"
+#include "entt/entity/group.hpp"
 
 namespace Fling
 {
@@ -28,13 +30,13 @@ namespace Fling
 
         void CreateDescriptors();
 
-        void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer);
+        void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer, UINT32 t_CommandBufferIndex);
 
         void UpdateUniformBuffers(UINT32 t_CurrentImage, Camera* t_Camera);
 
         void CreateLightBuffers();
 
-        void UpdateLightBuffers();
+        void UpdateLightBuffers(UINT32 t_CurrentImage);
 
         entt::registry* m_Registry;
 

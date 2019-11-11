@@ -50,6 +50,8 @@
 #include "Lighting/PointLight.hpp"
 #include "Lighting/Lighting.hpp"
 
+#include "ShaderPrograms/ShaderProgramManager.h"
+
 namespace Fling
 {
     // File resource

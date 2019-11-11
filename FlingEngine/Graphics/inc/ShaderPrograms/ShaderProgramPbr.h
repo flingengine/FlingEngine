@@ -9,20 +9,20 @@ namespace Fling
 {
     namespace ShaderProgramPBR
     {
-        void CreateDescriptorSets(
+        FORCEINLINE void CreateDescriptorSets(
             MeshRenderer& t_MeshRend, 
-            Buffer* m_Lighting,
+            Lighting& m_Lighting,
             VkDescriptorSetLayout m_DescriptorLayout);
 
-        void CreateDescriptorPool(MeshRenderer& t_MeshRend);
+        FORCEINLINE void CreateDescriptorPool(MeshRenderer& t_MeshRend);
 
-        void BindCommandBuffer(
+        FORCEINLINE void BindCmdBuffer(
             MeshRenderer& t_MeshRend,
             VkCommandBuffer t_CommandBuffer,
             GraphicsPipeline* t_GraphicsPipeline,
             UINT32 t_CommandBufferIndex);
 
-        void UpdateUniformBuffer(
+        FORCEINLINE void UpdateUniformBuffer(
             MeshRenderer& t_MeshRend, 
             Transform& transform,
             UINT32 t_CurrentImage,
