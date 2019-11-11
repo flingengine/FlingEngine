@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Singleton.hpp"
+#include "pch.h"
 #include "ScriptComponent.h"
 
 namespace Fling
