@@ -5,6 +5,8 @@
 #include "Image.h"
 #include "MultiSampler.h"
 
+#include <vector>
+
 namespace Fling
 {
     class ShaderPrograms
@@ -31,6 +33,7 @@ namespace Fling
         std::shared_ptr<GraphicsPipeline> m_Pipeline;
         Shader* m_VertexShader;
         Shader* m_FragShader;
+        std::vector<Shader*> m_Shaders;
         VkDevice m_Device;
     };
 } //namespace fling

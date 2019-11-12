@@ -38,10 +38,6 @@ namespace Fling
 
 		void LoadMaterial();
 
-        // Shaders that this material uses
-		Shader* m_VertShader = nullptr;
-		Shader* m_FragShader = nullptr;
-
 		// Textures that this material uses
 		PBRTextures m_Textures = {};
         

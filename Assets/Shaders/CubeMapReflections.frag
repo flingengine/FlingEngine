@@ -14,7 +14,7 @@ layout (binding = 0) uniform UboView
 	vec3 objPos;
 } ubo;
 
-layout (binding = 1) uniform LightingData 
+layout (binding = 2) uniform LightingData 
 {
     uint DirLightCount;    
     uint PointLightCount;
@@ -32,8 +32,8 @@ layout (location = 3) in vec3 inNormal;
 // Outputs ------------
 layout (location = 0) out vec4 outFragColor;
 
-void main()
+void main() 
 {
-    outFragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    // Output the vertex normal for testing
+    outFragColor = vec4(1.0, 0.0, 0.0, 1);
 }
-

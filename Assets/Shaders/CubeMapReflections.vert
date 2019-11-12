@@ -29,9 +29,9 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-void main()
+void main() 
 {
-    vec3 locPos = vec3(ubo.model * vec4(inPos, 1.0));
+	vec3 locPos = vec3(ubo.model * vec4(inPos, 1.0));
 	outWorldPos = locPos;
 	outNormal = mat3(ubo.model) * inNormal;
 	outTextCoord = inTexCoord;
@@ -41,4 +41,3 @@ void main()
 	// Tangent -----
 	outTangent = normalize( inTangent * mat3(ubo.model) );
 }
-

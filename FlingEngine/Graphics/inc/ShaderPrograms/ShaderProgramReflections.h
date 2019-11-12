@@ -7,10 +7,10 @@
 
 namespace Fling
 {
-    namespace ShaderProgramPBR
+    namespace ShaderProgramReflections
     {
         void CreateDescriptorSets(
-            MeshRenderer& t_MeshRend, 
+            MeshRenderer& t_MeshRend,
             Lighting& m_Lighting,
             VkDescriptorSetLayout m_DescriptorLayout);
 
@@ -23,7 +23,7 @@ namespace Fling
             UINT32 t_CommandBufferIndex);
 
         void UpdateUniformBuffer(
-            MeshRenderer& t_MeshRend, 
+            MeshRenderer& t_MeshRend,
             Transform& transform,
             UINT32 t_CurrentImage,
             Camera* t_Camera);

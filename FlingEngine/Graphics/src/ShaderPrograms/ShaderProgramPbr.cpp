@@ -34,7 +34,6 @@ namespace Fling
             {
                 std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-
                 VkWriteDescriptorSet uniformSet = Initializers::WriteDescriptorSetUniform(
                     t_MeshRend.m_UniformBuffers[i],
                     t_MeshRend.m_DescriptorSets[i],
@@ -86,7 +85,6 @@ namespace Fling
 
         void CreateDescriptorPool(MeshRenderer& t_MeshRend)
         {
-
             const UINT32 SwapImageCount = static_cast<UINT32>(Renderer::Get().GetSwapChain()->GetImageCount());
             VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
@@ -161,6 +159,14 @@ namespace Fling
             // Copy the ubo to the GPU
             Buffer* buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
             memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
+        }
+
+        void Release(MeshRenderer& t_MeshRend)
+        {
+            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+            
+            t_MeshRend.Release();
+            vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
         }
 
     }

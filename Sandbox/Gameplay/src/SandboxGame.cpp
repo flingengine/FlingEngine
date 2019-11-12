@@ -129,7 +129,7 @@ namespace Sandbox
                 t_Reg.assign<entt::tag<HS("PBR")>>(e0);
                 break;
             case ShaderPrograms::Reflection:
-                t_Reg.assign < entt::tag<HS("Reflections")>>(e0);
+                t_Reg.assign < entt::tag<HS("Reflection")>>(e0);
                 break;
             default:
                 F_LOG_ERROR("Shader program not supported");
@@ -170,6 +170,8 @@ namespace Sandbox
         AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
         AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
         AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
+        AddModel(4, "Models/sphere.obj", "Materials/Reflections.mat");
+
 
         float Width = 2.0f;
         AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));

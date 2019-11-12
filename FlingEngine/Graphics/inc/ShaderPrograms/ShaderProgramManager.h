@@ -11,6 +11,8 @@
 #include "entt/entity/group.hpp"
 
 #include "ShaderPrograms/ShaderProgramPbr.h"
+#include "ShaderPrograms/ShaderProgramReflections.h"
+
 
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
@@ -27,6 +29,8 @@ namespace Fling
         virtual void Init() override;
 
         virtual void Shutdown() override;
+
+        void PrepShutdown();
 
         void SortMeshRender();
 
@@ -46,6 +50,8 @@ namespace Fling
         void UpdateLightBuffers(UINT32 t_CurrentImage);
 
         ShaderPrograms* m_PBRShaderProgram;
+        ShaderPrograms* m_ReflectionProgram;
+
         Lighting m_Lighting = {};
         LightingUbo m_LightingUbo = {};
     };

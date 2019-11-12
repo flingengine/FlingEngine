@@ -3,9 +3,6 @@
     
     "ShaderProgram" : "PBR",
 
-    "vertex" : "Shaders/PBRDefault_vert.spv",
-    "frag" : "Shaders/PBRDefault_frag.spv",
-
     "albedo" : "Textures/Paint/paint_A.png",
     "normal" : "Textures/Paint/paint_N.png",
     "metal" : "Textures/Paint/paint_M.png",

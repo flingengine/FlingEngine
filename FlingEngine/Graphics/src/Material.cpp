@@ -19,31 +19,20 @@ namespace Fling
 	{
 		try
 		{
-			// Load Shaders ------------------------
-			const std::string& VertShaderPath = m_JsonData["vertex"];
-			const std::shared_ptr<Shader>& Vert = Shader::Create(entt::hashed_string{ VertShaderPath.c_str() });
-			assert(Vert);
-			m_VertShader = Vert.get();
-
-			const std::string& FragShaderPath = m_JsonData["frag"];
-			const std::shared_ptr<Shader>& Frag = Shader::Create(entt::hashed_string{ FragShaderPath.c_str() });
-			assert(Frag);
-			m_FragShader = Frag.get();
-
+            // Load Shaders -------------
             const std::string& ShaderProgram = m_JsonData["ShaderProgram"];
-            if (ShaderProgram == "PBR")
+            if (ShaderProgram == "PBR" || ShaderProgram == "pbr")
             {
                 m_ShaderProgram = ShaderPrograms::ShaderProgramType::PBR;
             }
-            else if(ShaderProgram == "Reflection")
+            else if(ShaderProgram == "Reflection" || ShaderProgram == "reflections")
             {
                 m_ShaderProgram = ShaderPrograms::ShaderProgramType::Reflection;
             }
             else
             {
-                F_LOG_FATAL("Shader program not support in material!");
+                assert("Shader type not supported! ");
             }
-
 
 			// Load Textures -------------
 			// Albedo
