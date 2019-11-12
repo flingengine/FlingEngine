@@ -130,5 +130,35 @@ namespace Fling
 		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
 	}
 
+	void DesktopWindow::SetWindowMode(WindowMode t_WindowMode)
+	{
+		//early return if nothing would change
+		if (t_WindowMode == m_WindowMode) return;
+
+		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+		switch (t_WindowMode)
+		{
+		case WindowMode::Fullscreen:
+			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+			glfwSetWindowMonitor(m_Window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, 0);
+			break;
+		case WindowMode::Windowed:
+			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+			glfwSetWindowMonitor(m_Window, nullptr, 100, 100, 800, 600, 0);
+			break;
+		case WindowMode::BorderlessWindowed:
+			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_FALSE);
+			glfwSetWindowMonitor(m_Window, nullptr, 100, 100, 800, 600, 0);
+			break;
+		}
+		m_WindowMode = t_WindowMode;
+
+	}
+
+	WindowMode DesktopWindow::GetWindowMode()
+	{
+		return m_WindowMode;
+	}
 
 }   // namespace Fling
