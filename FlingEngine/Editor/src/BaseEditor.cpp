@@ -38,12 +38,22 @@ namespace Fling
 			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 
-		void MeshRendModelChange(void* t_MeshRend, bool t_WasSelected, std::string t_FileName)
+		void OnMeshRendererModelChanged(void* t_MeshRend, std::string t_FileName)
 		{
-
+			if(t_MeshRend != nullptr)
+			{
+				if(MeshRenderer* MeshRend = static_cast<MeshRenderer*>(t_MeshRend))
+				{
+					F_LOG_WARN("Change the model to {}", t_FileName.c_str());
+					//t_FileBrowser.ClearSelected();
+					MeshRend->LoadModelFromPath(t_FileName);
+					// Command buffers must be rebuilt after doing this
+					Renderer::Get().SetFrameBufferHasBeenResized(true);
+				}
+			}
 		}
 
-		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
+		void MeshRenderer(Fling::MeshRenderer& t_MeshRend, ImGui::FileBrowser& t_FileBrowser)
 		{
 			// Model -----------------------
 			{
@@ -54,25 +64,11 @@ namespace Fling
 				}
 
 				ImGui::LabelText("Model", ModelName.c_str());
+
+				// File selection for the model OBJ
 				if (ImGui::Button("Select Model"))
-				{
-					// If a file was selected, then set the mesh renderer's model to that
-					//if(t_FileBrowser.HasSelected())
-					static FileBrowser FileWindow("Select Model...");
-					
-					bool HasSelected = false;
-					FileWindow.Display(&HasSelected);
-
-
-					if(HasSelected)
-					{
-						std::string Selection = "Models/cone.obj";
-						F_LOG_WARN("Change the model to {}", Selection.c_str());
-						//t_FileBrowser.ClearSelected();
-						//t_MeshRend.LoadModelFromPath(Selection);
-						// Command buffers must be rebuilt after doing this
-						//Renderer::Get().SetFrameBufferHasBeenResized(true);
-					}
+				{					
+					t_FileBrowser.Open();
 				}
 			}
 
@@ -83,8 +79,9 @@ namespace Fling
 				{
 					MaterialName = t_MeshRend.m_Material->GetGuidString();
 				}
-
-				ImGui::LabelText("Material", MaterialName.c_str());
+				
+				const char* m = MaterialName.c_str();
+				ImGui::LabelText("Material", m);
 
 				if (ImGui::Button("Select Material"))
 				{
@@ -139,7 +136,7 @@ namespace Fling
 			[](entt::registry& reg, auto e)
 			{
 				auto& t = reg.get<Fling::MeshRenderer>(e);
-				Widgets::MeshRenderer(t);
+				Widgets::MeshRenderer(t, BaseEditor::FileBrowser());
 			}
 		);
 
@@ -164,7 +161,13 @@ namespace Fling
 			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
 		}
 
-		BaseEditor::FileBrowser().Display();
+		//BaseEditor::FileBrowser().Display();
+		
+		//if(BaseEditor::FileBrowser().HasSelected())
+		//{
+		//	// Proc the calback
+		//	BaseEditor::FileBrowser().ClearSelected();
+		//}
     }
 
 	void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)

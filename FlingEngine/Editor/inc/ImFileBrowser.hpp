@@ -345,7 +345,7 @@ inline void ImGui::FileBrowser::Display()
         for(auto &rsc : fileRecords_)
         {
             if (!rsc.isDir && typeFilters_.size() > 0 &&
-                typeFilterIndex_ < typeFilters_.size() &&
+                static_cast<size_t>(typeFilterIndex_) < typeFilters_.size() &&
                 !(rsc.extension == typeFilters_[typeFilterIndex_]))
                 continue;
 
