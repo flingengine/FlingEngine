@@ -100,14 +100,16 @@ namespace Fling
     void ShaderProgramManager::UpdateLightBuffers(UINT32 t_CurrentImage)
     {
         //copy directional lights to the fragment shader
-        auto LightView = m_Registry->group<DirectionalLight, PointLight>();
+        auto LightGroup = m_Registry->group<DirectionalLight, PointLight>();
+        auto LightView = m_Registry->view<DirectionalLight>();
+
         UINT32 CurLightCount = 0;
 
         for (auto entity : LightView)
         {
             if (CurLightCount < Lighting::MaxDirectionalLights)
             {
-                DirectionalLight& Light = LightView.get<DirectionalLight>(entity);
+                DirectionalLight& Light = LightView.get(entity);
                 // Copy the dir light info to the buffer
                 size_t size = sizeof(DirectionalLight);
                 memcpy((m_LightingUbo.DirLightBuffer + (CurLightCount++)), &Light, size);
@@ -119,11 +121,11 @@ namespace Fling
         CurLightCount = 0;
 
         //Copy the point light data to the UBO
-        for (auto entity : LightView)
+        for (auto entity : LightGroup)
         {
             if (CurLightCount < Lighting::MaxPointLights)
             {
-                PointLight& Light = LightView.get<PointLight>(entity);
+                PointLight& Light = LightGroup.get<PointLight>(entity);
                 // Copy the point light info to the buffer
                 size_t size = sizeof(DirectionalLight);
                 memcpy((m_LightingUbo.DirLightBuffer + (CurLightCount++)), &Light, size);

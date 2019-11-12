@@ -233,7 +233,11 @@ void main()
     }
 
     vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor.rgb ), vec3(1.0 / 2.2) ) );
-
     // Output the vertex normal for testing
-    outFragColor = vec4(gammaCorrect, 1);
+    //outFragColor = vec4(gammaCorrect, 1);
+    //outFragColor = abledoColor;
+    //outFragColor = vec4(roughness, roughness, roughness, 1);
+    //outFragColor = vec4(metal, metal, metal, 1);
+    //outFragColor = vec4(specColor, 1);
+    outFragColor = vec4(LightColor, 1);
 }
