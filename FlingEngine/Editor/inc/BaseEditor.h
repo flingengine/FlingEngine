@@ -4,7 +4,6 @@
 #include <entt/entity/registry.hpp>
 #include "imgui_entt_entity_editor.hpp"
 #include "FileBrowser.h"
-#include "ImFileBrowser.hpp"
 
 namespace Fling
 {
@@ -41,11 +40,7 @@ namespace Fling
 		entt::entity m_CompEditorEntityType = entt::null;
 		MM::ImGuiEntityEditor<entt::registry> m_ComponentEditor;
 
-		static ImGui::FileBrowser& FileBrowser()
-		{
-			static ImGui::FileBrowser Instance;
-			return Instance;
-		}
+        Fling::FileBrowser m_FileBrowser;
 
 		virtual void DrawFileMenu();
 

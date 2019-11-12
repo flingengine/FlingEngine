@@ -12,21 +12,34 @@ namespace Fling
 		m_Title = t_Title;
 	}
 
-	void FileBrowser::Display(bool* t_OutHasSelectedFile)
+	void FileBrowser::Open()
 	{
-		ImGui::BeginChild(m_Title.c_str());
+		m_IsOpen = true;
+	}
+
+	void FileBrowser::ClearSelected()
+	{
+		m_HasSelected = false;
+		m_SelectedFile = "NONE";
+	}
+
+	void FileBrowser::Display()
+	{
+		if(!m_IsOpen)
+		{
+			return;
+		}
+		
+		ImGui::OpenPopup(m_Title.c_str());
 		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
 		ImGui::LabelText("Test", "Hey");
 
-		if (ImGui::Button("Test"))
+		if (ImGui::Button("Close"))
 		{
-			if (t_OutHasSelectedFile)
-			{
-				*t_OutHasSelectedFile = true;
-			}
+			m_IsOpen = false;
 		}
 
-		ImGui::EndChild();
+		ImGui::EndPopup();
 	}
 }

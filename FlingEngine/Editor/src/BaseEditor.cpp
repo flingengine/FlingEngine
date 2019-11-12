@@ -53,7 +53,7 @@ namespace Fling
 			}
 		}
 
-		void MeshRenderer(Fling::MeshRenderer& t_MeshRend, ImGui::FileBrowser& t_FileBrowser)
+		void MeshRenderer(Fling::MeshRenderer& t_MeshRend/*, FileBrowser& t_FileBrowser*/)
 		{
 			// Model -----------------------
 			{
@@ -63,12 +63,12 @@ namespace Fling
 					ModelName = t_MeshRend.m_Model->GetGuidString();
 				}
 
-				ImGui::LabelText("Model", ModelName.c_str());
+				ImGui::LabelText("Model", ModelName.c_str(), "%s");
 
 				// File selection for the model OBJ
 				if (ImGui::Button("Select Model"))
 				{					
-					t_FileBrowser.Open();
+					//t_FileBrowser.Open();
 				}
 			}
 
@@ -81,7 +81,7 @@ namespace Fling
 				}
 				
 				const char* m = MaterialName.c_str();
-				ImGui::LabelText("Material", m);
+				ImGui::LabelText("Material", m, "%s");
 
 				if (ImGui::Button("Select Material"))
 				{
@@ -136,9 +136,10 @@ namespace Fling
 			[](entt::registry& reg, auto e)
 			{
 				auto& t = reg.get<Fling::MeshRenderer>(e);
-				Widgets::MeshRenderer(t, BaseEditor::FileBrowser());
+				Widgets::MeshRenderer(t);
 			}
 		);
+		m_FileBrowser.Open();
 
 	}
 
@@ -161,13 +162,13 @@ namespace Fling
 			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
 		}
 
-		//BaseEditor::FileBrowser().Display();
+		m_FileBrowser.Display();
 		
-		//if(BaseEditor::FileBrowser().HasSelected())
-		//{
-		//	// Proc the calback
-		//	BaseEditor::FileBrowser().ClearSelected();
-		//}
+		if(m_FileBrowser.HasSelected())
+		{
+			// Proc the calback
+			m_FileBrowser.ClearSelected();
+		}
     }
 
 	void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
