@@ -1,4 +1,4 @@
-#include "ShaderPrograms\ShaderProgramManager.h"
+#include "../inc/ShaderPrograms/ShaderProgramManager.h"
 #include "Renderer.h"
 
 namespace Fling
