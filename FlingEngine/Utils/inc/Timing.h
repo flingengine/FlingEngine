@@ -82,7 +82,9 @@ namespace Fling
 		float FLING_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
 
 	private:
-		float m_deltaTime = 0.0f;
+
+		// Initialize delta time at 60 FPS to avoid an ImGUI assertion
+		float m_deltaTime = 1.0f / 60.0f;
 
 		double m_lastFrameStartTime = 0.0;
 		float m_frameStartTimef = 0.0f;

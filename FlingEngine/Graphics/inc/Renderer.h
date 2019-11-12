@@ -154,7 +154,6 @@ namespace Fling
         
         /// Init imgui context 
         void InitImgui();
-        void UpdateImguiIO();
 
         /**
         * @brief Set any component type callbacks needed for the rendering pipeline
