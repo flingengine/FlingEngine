@@ -1,20 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive: require
 
-struct DirectionalLightData
-{
-    vec4 DiffuseColor;
-    vec4 Direction;
-    float Intensity; 
-};
-
-struct PointLightData
-{
-    vec4 Color;
-    vec4 Pos;
-    float Intensity; 
-    float Range; 
-};
+#include "utils/Lights.h"
 
 // Bindings -------------------
 layout (binding = 0) uniform UboView 
@@ -233,11 +221,7 @@ void main()
     }
 
     vec3 gammaCorrect = vec3( pow( abs( LightColor * abledoColor.rgb ), vec3(1.0 / 2.2) ) );
+
     // Output the vertex normal for testing
-    //outFragColor = vec4(gammaCorrect, 1);
-    //outFragColor = abledoColor;
-    //outFragColor = vec4(roughness, roughness, roughness, 1);
-    //outFragColor = vec4(metal, metal, metal, 1);
-    //outFragColor = vec4(specColor, 1);
-    outFragColor = vec4(LightColor, 1);
+    outFragColor = vec4(gammaCorrect, 1);
 }
