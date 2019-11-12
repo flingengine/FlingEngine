@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
+
 #include <imgui.h>
 
 namespace Fling
@@ -21,7 +23,7 @@ namespace Fling
         void Open();
 
         bool HasSelected() const { return m_HasSelected; }
-        std::string GetSelected() const { m_SelectedFile; }
+        std::string GetSelected() const { return m_SelectedFile; }
         void ClearSelected();
 
         bool IsOpen() const { return m_IsOpen; }
@@ -30,7 +32,9 @@ namespace Fling
 		std::string m_Title = "Select File...";
 
         /** The selected file in this dialog */
-        std::string m_SelectedFile = "NONE";
+        std::string m_SelectedFile = std::string();
+
+		std::string m_CurrentWorkingDir = std::string();
 
         bool m_IsOpen = false;
 

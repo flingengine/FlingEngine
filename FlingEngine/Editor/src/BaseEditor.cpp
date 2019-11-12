@@ -42,7 +42,7 @@ namespace Fling
 		{
 			if(t_MeshRend != nullptr)
 			{
-				if(MeshRenderer* MeshRend = static_cast<MeshRenderer*>(t_MeshRend))
+				if(Fling::MeshRenderer* MeshRend = static_cast<Fling::MeshRenderer*>(t_MeshRend))
 				{
 					F_LOG_WARN("Change the model to {}", t_FileName.c_str());
 					//t_FileBrowser.ClearSelected();
@@ -63,12 +63,22 @@ namespace Fling
 					ModelName = t_MeshRend.m_Model->GetGuidString();
 				}
 
-				ImGui::LabelText("Model", ModelName.c_str(), "%s");
+				ImGui::LabelText("Model", ModelName.c_str(), "%s");	
 
-				// File selection for the model OBJ
-				if (ImGui::Button("Select Model"))
-				{					
-					//t_FileBrowser.Open();
+				// Show file browser
+				static FileBrowser SelectModel("Select Model...");
+				if (ImGui::Button("Select Model..."))
+				{
+					SelectModel.Open();
+				}
+
+				SelectModel.Display();
+
+				if (SelectModel.HasSelected())
+				{
+					std::string model = SelectModel.GetSelected();
+					F_LOG_TRACE("Selected model file {}", model.c_str());
+					SelectModel.ClearSelected();
 				}
 			}
 
@@ -139,8 +149,6 @@ namespace Fling
 				Widgets::MeshRenderer(t);
 			}
 		);
-		m_FileBrowser.Open();
-
 	}
 
 	void BaseEditor::Draw(entt::registry& t_Reg, float DeltaTime)
@@ -160,14 +168,6 @@ namespace Fling
 		if(m_DisplayComponentEditor)
 		{
 			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
-		}
-
-		m_FileBrowser.Display();
-		
-		if(m_FileBrowser.HasSelected())
-		{
-			// Proc the calback
-			m_FileBrowser.ClearSelected();
 		}
     }
 

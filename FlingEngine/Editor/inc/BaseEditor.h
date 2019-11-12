@@ -40,8 +40,6 @@ namespace Fling
 		entt::entity m_CompEditorEntityType = entt::null;
 		MM::ImGuiEntityEditor<entt::registry> m_ComponentEditor;
 
-        Fling::FileBrowser m_FileBrowser;
-
 		virtual void DrawFileMenu();
 
 		void DrawGpuInfo();
