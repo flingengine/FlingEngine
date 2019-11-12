@@ -2,15 +2,19 @@
 
 #include "FlingVulkan.h"
 #include "Shader.h"
-#include "Singleton.hpp"
-#include "MeshRenderer.h"
 #include "ShaderPrograms/ShaderPrograms.h"
-#include "Lighting/Lighting.hpp"
+#include "Singleton.hpp"
 #include "Camera.h"
 #include "Sampler.hpp"
 
 #include "entt/entity/registry.hpp"
 #include "entt/entity/group.hpp"
+
+#include "ShaderPrograms/ShaderProgramPbr.h"
+
+#include "Components/Transform.h"
+#include "MeshRenderer.h"
+#include "Lighting/Lighting.hpp"
 
 namespace Fling
 {
@@ -20,9 +24,9 @@ namespace Fling
     class ShaderProgramManager : public Singleton<ShaderProgramManager>
     {
     public:
-        void Init() override;
+        virtual void Init() override;
 
-        void Shutdown() override;
+        virtual void Shutdown() override;
 
         void SortMeshRender();
 
@@ -36,11 +40,11 @@ namespace Fling
 
         void CreateLightBuffers();
 
-        void UpdateLightBuffers(UINT32 t_CurrentImage);
-
         entt::registry* m_Registry;
 
     private:
+        void UpdateLightBuffers(UINT32 t_CurrentImage);
+
         ShaderPrograms* m_PBRShaderProgram;
         Lighting m_Lighting = {};
         LightingUbo m_LightingUbo = {};

@@ -1,7 +1,5 @@
 #include "ShaderPrograms\ShaderProgramManager.h"
 #include "Renderer.h"
-#include "Components/Transform.h"
-#include "ShaderPrograms/ShaderProgramPbr.h"
 
 namespace Fling
 {
@@ -34,12 +32,6 @@ namespace Fling
                 return lhs.m_Material->GetShaderProgramType() < rhs.m_Material->GetShaderProgramType();
             });
 
-        //auto group = m_Registry->group<MeshRenderer, Transform>();
-
-        //for (auto entity : group) {
-        //    auto& mesh = group.get<MeshRenderer>(entity);
-        //    //F_LOG_TRACE(mesh.m_Material->GetShaderProgramType());
-        //}
     }
 
     void ShaderProgramManager::InitGraphicsPipeline(VkRenderPass t_RenderPass, Multisampler* t_Sampler)
@@ -74,7 +66,8 @@ namespace Fling
 
     void ShaderProgramManager::UpdateUniformBuffers(UINT32 t_CurrentImage, Camera* t_Camera)
     {
-        auto PBRGroup = m_Registry->group<MeshRenderer, Transform, entt::tag<HS("PBR")>>();
+        //auto PBRGroup = m_Registry->group<Transform, MeshRenderer, entt::tag<HS("PBR")>>(); //Investigate why this doesn't work
+        auto PBRGroup = m_Registry->view<MeshRenderer, Transform, entt::tag<HS("PBR")>>();
 
         for (auto entity : PBRGroup)
         {

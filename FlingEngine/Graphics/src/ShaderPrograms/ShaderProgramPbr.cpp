@@ -30,7 +30,6 @@ namespace Fling
                 F_LOG_FATAL("Failed to allocate descriptor sets!");
             }
 
-
             for (size_t i = 0; i < Images.size(); ++i)
             {
                 std::vector<VkWriteDescriptorSet> descriptorWrites;

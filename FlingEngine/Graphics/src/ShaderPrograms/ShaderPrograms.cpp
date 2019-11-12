@@ -10,7 +10,13 @@ namespace Fling
         m_VertexShader = Shader::Create(t_VertexShader).get();
         m_FragShader = Shader::Create(t_FragShader).get();
 
-        m_Pipeline = new GraphicsPipeline(m_VertexShader, m_FragShader, m_Device);
+        m_Pipeline = std::make_shared<GraphicsPipeline>(m_VertexShader, m_FragShader, m_Device);
+    }
+
+    ShaderPrograms::~ShaderPrograms()
+    {
+        vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorLayout, nullptr);
     }
 
     void ShaderPrograms::InitGraphicPipeline(VkRenderPass t_Renderpass, Multisampler* t_Sampler)
