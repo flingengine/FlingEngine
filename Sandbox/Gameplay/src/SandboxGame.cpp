@@ -121,20 +121,6 @@ namespace Sandbox
             Transform& t0 = t_Reg.assign<Transform>(e0);
             t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
             t0.SetScale(t_Scale);
-
-            const auto& meshRender = t_Reg.get<MeshRenderer>(e0);
-            switch (meshRender.m_Material->GetShaderProgramType())
-            {
-            case ShaderPrograms::PBR:
-                t_Reg.assign<entt::tag<HS("PBR")>>(e0);
-                break;
-            case ShaderPrograms::Reflection:
-                t_Reg.assign < entt::tag<HS("Reflection")>>(e0);
-                break;
-            default:
-                F_LOG_ERROR("Shader program not supported");
-                assert("Shader not supported");
-            }
         };
 
         auto AddRandomPointLight = [&]()

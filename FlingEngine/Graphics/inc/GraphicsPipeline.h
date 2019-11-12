@@ -18,8 +18,7 @@ namespace Fling
         };
 
         GraphicsPipeline(
-            Shader* t_VertexShader,
-            Shader* t_FragShader,
+            std::vector<Shader*> t_Shaders,
             VkDevice t_LogicalDevice,
             VkPolygonMode t_Mode = VK_POLYGON_MODE_FILL,
             Depth t_Depth = Depth::ReadWrite,
@@ -30,8 +29,7 @@ namespace Fling
         void BindGraphicsPipeline(const VkCommandBuffer& t_CommandBuffer);
         void CreateGraphicsPipeline(VkRenderPass& t_RenderPass, Multisampler* t_Sampler);
 
-        const Shader* GetVertexShader() const { return m_VertexShader; }
-        const Shader* GetFragShader() const { return m_FragShader; }
+        const std::vector<Shader*> GetShaders() const { return m_Shaders; }
 
         Depth GetDepth() const { return m_Depth; }
         VkPrimitiveTopology GetTopology() const { return m_Topology; }
@@ -47,20 +45,18 @@ namespace Fling
 
     private:
         void CreateAttributes(Multisampler* t_Sampler);
+        
+        std::vector<VkShaderModule> m_Modules;
+        std::vector<VkPipelineShaderStageCreateInfo> m_Stages;
+        std::vector<Shader*> m_Shaders;
 
         VkDevice m_Device;
-
-        Shader* m_VertexShader;
-        Shader* m_FragShader;
 
         Depth m_Depth;
         VkPrimitiveTopology m_Topology;
         VkPolygonMode m_PolygonMode;
         VkCullModeFlags m_CullMode;
         VkFrontFace m_FrontFace;
-
-        std::vector<VkShaderModule> m_Modules;
-        std::vector<VkPipelineShaderStageCreateInfo> m_Stages;
 
         VkPipeline m_Pipeline = VK_NULL_HANDLE;
         VkPipelineCache m_PipelineCache = VK_NULL_HANDLE;

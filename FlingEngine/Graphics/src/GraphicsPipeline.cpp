@@ -7,16 +7,14 @@ namespace Fling
     const std::vector<VkDynamicState> DYNAMIC_STATES = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH };
 
     GraphicsPipeline::GraphicsPipeline(
-        Shader* t_VertexShader,
-        Shader* t_FragShader,
+        std::vector<Shader*> t_Shaders,
         VkDevice t_LogicalDevice,
         VkPolygonMode t_Mode,
         Depth t_Depth,
         VkPrimitiveTopology t_Topology,
         VkCullModeFlags t_CullMode,
         VkFrontFace t_FrontFace) :
-        m_VertexShader(t_VertexShader),
-        m_FragShader(t_FragShader),
+        m_Shaders(t_Shaders),
         m_Device(t_LogicalDevice),
         m_PolygonMode(t_Mode),
         m_Depth(t_Depth),
@@ -96,13 +94,8 @@ namespace Fling
 
         // Shader stages 
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-        std::vector<Shader*> shaders =
-        {
-            m_VertexShader,
-            m_FragShader
-        };
 
-        for (Shader* shader : shaders)
+        for (Shader* shader : m_Shaders)
         {
             VkPipelineShaderStageCreateInfo createInfo = {};
             createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -115,7 +108,7 @@ namespace Fling
             shaderStages.push_back(createInfo);
         }
 
-        m_DescriptorSetLayout = Shader::CreateSetLayout(m_Device, shaders);
+        m_DescriptorSetLayout = Shader::CreateSetLayout(m_Device, m_Shaders);
         m_PipelineLayout = Shader::CreatePipelineLayout(m_Device, m_DescriptorSetLayout, 0, 0);
 
         // Vertex Input 

@@ -18,7 +18,7 @@ namespace Fling
             Reflection = 1,
         };
     public:
-        ShaderPrograms(VkDevice t_Device, Guid t_VertexShader, Guid t_FragShader);
+        ShaderPrograms(VkDevice t_Device, const std::vector<Shader*>& t_Shaders);
         ~ShaderPrograms();
 
         void InitGraphicPipeline(VkRenderPass t_Renderpass, Multisampler* t_Sampler);
@@ -31,8 +31,6 @@ namespace Fling
         VkDescriptorSetLayout m_DescriptorLayout;
         VkPipelineLayout m_PipelineLayout;
         std::shared_ptr<GraphicsPipeline> m_Pipeline;
-        Shader* m_VertexShader;
-        Shader* m_FragShader;
         std::vector<Shader*> m_Shaders;
         VkDevice m_Device;
     };

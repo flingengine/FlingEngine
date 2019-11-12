@@ -151,12 +151,6 @@ namespace Fling
         void InitComponentData();
 
         /**
-         * @brief Create a Descriptor Layout object
-         * @see UniformBufferObject.h
-         */
-        void CreateDescriptorLayout();
-
-        /**
         * Create the graphics pipeline (IA, VS, FS, etc)
         */
         void CreateGraphicsPipeline();
@@ -188,9 +182,7 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-        void CreateDescriptorPool();
-
-        void CreateDescriptorSets();
+        void CreateDescriptors();
 
         /**
         * Determine the best match extents based on our window width and height
@@ -259,9 +251,6 @@ namespace Fling
 
         VkRenderPass m_RenderPass;
 
-        /** Pipeline layout stores uniforms (global shader vars) */
-        VkDescriptorSetLayout m_DescriptorSetLayout;
-
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
@@ -281,8 +270,6 @@ namespace Fling
 
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;
-
-        std::vector<VkDescriptorSet> m_DescriptorSets;
 
         /**
         * The frame buffers for the swap chain

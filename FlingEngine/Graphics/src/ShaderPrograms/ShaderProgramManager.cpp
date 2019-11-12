@@ -9,16 +9,26 @@ namespace Fling
 
         VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
+        const std::vector<Shader*> PBRShaders =
+        {
+            Shader::Create(HS("Shaders/PBRDefault_vert.spv")).get(),
+            Shader::Create(HS("Shaders/PBRDefault_frag.spv")).get(),
+        };
+
+        const std::vector<Shader*> ReflectionShaders =
+        {
+            Shader::Create(HS("Shaders/CubeMapReflections_vert.spv")).get(),
+            Shader::Create(HS("Shaders/CubeMapReflections_frag.spv")).get(),
+        };
+
         //Initialize Shader Programs
         m_PBRShaderProgram = new ShaderPrograms(
             Device,
-            HS("Shaders/PBRDefault_vert.spv"),
-            HS("Shaders/PBRDefault_frag.spv"));
+            PBRShaders);
 
         m_ReflectionProgram = new ShaderPrograms(
             Device,
-            HS("Shaders/CubeMapReflections_vert.spv"),
-            HS("Shaders/CubeMapReflections_frag.spv")
+            ReflectionShaders
         );
     }
 

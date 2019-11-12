@@ -56,9 +56,8 @@ namespace Fling
 
 		// Load default material
 		m_DefaultMat = Material::Create("Materials/Default.mat");
-		CreateDescriptorLayout();
-
-		CreateGraphicsPipeline();
+		
+        CreateGraphicsPipeline();
 
 		m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
 
@@ -75,8 +74,7 @@ namespace Fling
 
         CreateFrameBuffers();
 
-        CreateDescriptorPool();
-        CreateDescriptorSets();
+        CreateDescriptors();
 
         assert(m_Registry);
     
@@ -225,10 +223,6 @@ namespace Fling
         }
     }
 
-    void Renderer::CreateDescriptorLayout()
-    {
-    }
-
     void Renderer::CreateGraphicsPipeline()
     {
         ShaderProgramManager::Get().InitGraphicsPipeline(m_RenderPass, m_MsaaSampler);
@@ -340,26 +334,6 @@ namespace Fling
         }
     }
 
-    void Renderer::CleanupFrameResources()
-    {
-        m_DepthBuffer->Cleanup();
-		if (m_MsaaSampler)
-		{
-			m_MsaaSampler->Release();
-		}
-
-        for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
-        {
-            vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
-        }
-
-        vkFreeCommandBuffers(m_LogicalDevice->GetVkDevice(), m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
-
-        vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
-
-        m_SwapChain->Cleanup();
-    }
-
     void Renderer::RecreateFrameResources()
     {
         m_CurrentWindow->RecreateSwapChain();
@@ -382,8 +356,7 @@ namespace Fling
 
         CreateFrameBuffers();
 
-        CreateDescriptorPool();
-        CreateDescriptorSets();
+        CreateDescriptors();
 
         assert(m_Registry);
 
@@ -397,12 +370,7 @@ namespace Fling
         InitImgui();
     }
 
-    void Renderer::CreateDescriptorPool()
-    {
-
-    }
-
-    void Renderer::CreateDescriptorSets()
+    void Renderer::CreateDescriptors()
     {
         ShaderProgramManager::Get().CreateDescriptors();
     }
@@ -476,7 +444,6 @@ namespace Fling
         m_CurrentWindow->Update();
 
         m_camera->Update(DeltaTime);
-
     }
 
     void Renderer::DrawFrame(entt::registry& t_Reg, float DeltaTime)
@@ -568,6 +535,25 @@ namespace Fling
     }
 
     // Shutdown steps -------------------------------------------
+    void Renderer::CleanupFrameResources()
+    {
+        m_DepthBuffer->Cleanup();
+        if (m_MsaaSampler)
+        {
+            m_MsaaSampler->Release();
+        }
+
+        for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
+        {
+            vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFramebuffers[i], nullptr);
+        }
+
+        vkFreeCommandBuffers(m_LogicalDevice->GetVkDevice(), m_CommandPool, static_cast<UINT32>(m_CommandBuffers.size()), m_CommandBuffers.data());
+
+        vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
+
+        m_SwapChain->Cleanup();
+    }
 
     void Renderer::PrepShutdown()
     {
@@ -575,15 +561,9 @@ namespace Fling
 
         m_LogicalDevice->WaitForIdle();
 
-		//m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-		//{
-		//	t_MeshRend.Release();
-		//	//vkDestroyDescriptorPool(m_LogicalDevice->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
-  //      });
-
         ShaderProgramManager::Get().PrepShutdown();
 
-        // Delete light buffers
+         // Delete light buffers
         for (size_t i = 0; i < m_Lighting.m_LightingUBOs.size(); i++)
 		{
 			if(m_Lighting.m_LightingUBOs[i])
@@ -647,8 +627,6 @@ namespace Fling
 			m_MsaaSampler = nullptr;
 		}
 
-        vkDestroyDescriptorSetLayout(m_LogicalDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
-
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_RenderFinishedSemaphores[i], nullptr);
@@ -711,6 +689,20 @@ namespace Fling
 		}
 
 		SetFrameBufferHasBeenResized(true);
+
+        // Assign shader program type
+        switch (t_MeshRend.m_Material->GetShaderProgramType())
+        {
+        case ShaderPrograms::PBR:
+            t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
+            break;
+        case ShaderPrograms::Reflection:
+            t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
+            break;
+        default:
+            F_LOG_ERROR("Shader program not supported");
+            assert("Shader not supported");
+        }
 
         ShaderProgramManager::Get().SortMeshRender();
     }

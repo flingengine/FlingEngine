@@ -4,13 +4,10 @@
 
 namespace Fling
 {
-    ShaderPrograms::ShaderPrograms(VkDevice t_Device, Guid t_VertexShader, Guid t_FragShader) 
-        : m_Device(t_Device)
+    ShaderPrograms::ShaderPrograms(VkDevice t_Device, const std::vector<Shader*>& t_Shaders) 
+        : m_Device(t_Device), m_Shaders(t_Shaders)
     {
-        m_VertexShader = Shader::Create(t_VertexShader).get();
-        m_FragShader = Shader::Create(t_FragShader).get();
-
-        m_Pipeline = std::make_shared<GraphicsPipeline>(m_VertexShader, m_FragShader, m_Device);
+        m_Pipeline = std::make_shared<GraphicsPipeline>(t_Shaders, m_Device);
     }
 
     ShaderPrograms::~ShaderPrograms()
@@ -21,14 +18,8 @@ namespace Fling
 
     void ShaderPrograms::InitGraphicPipeline(VkRenderPass t_Renderpass, Multisampler* t_Sampler)
     {
-        std::vector<Shader*> Shaders =
-        {
-            m_VertexShader,
-            m_FragShader
-        };
-
         m_Pipeline->CreateGraphicsPipeline(t_Renderpass, t_Sampler);
-        m_DescriptorLayout = Shader::CreateSetLayout(m_Device, Shaders);
+        m_DescriptorLayout = Shader::CreateSetLayout(m_Device, m_Shaders);
         m_PipelineLayout = Shader::CreatePipelineLayout(m_Device, m_DescriptorLayout, 0, 0);
     }
 }

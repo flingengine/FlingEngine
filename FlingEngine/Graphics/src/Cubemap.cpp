@@ -79,9 +79,14 @@ namespace Fling
         Shader* vertShader = new Shader(m_VertexShader);
         Shader* fragShader = new Shader(m_FragShader);
 
+        std::vector<Shader*> shaders =
+        {
+            vertShader,
+            fragShader
+        };
+
         m_GraphicsPipeline = new GraphicsPipeline(
-            vertShader, 
-            fragShader, 
+            shaders,
             m_Device, 
             VK_POLYGON_MODE_FILL, 
             GraphicsPipeline::Depth::ReadWrite,
@@ -224,11 +229,7 @@ namespace Fling
         sampler.maxLod = static_cast<float>(m_MipLevels);
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
         sampler.maxAnisotropy = 1.0f;
-        /*if (m_Device->features.samplerAnisotropy)
-        {
-            sampler.maxAnisotropy = vulkanDevice->properties.limits.maxSamplerAnisotropy;
-            sampler.anisotropyEnable = VK_TRUE;
-        }*/
+
         if (vkCreateSampler(m_Device, &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube failed to create sampler");
