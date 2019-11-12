@@ -28,8 +28,5 @@ namespace Fling
             UINT32 t_CurrentImage,
             Camera* t_Camera);
 
-        void Release(
-            MeshRenderer& t_MeshRend
-        );
     }
 }

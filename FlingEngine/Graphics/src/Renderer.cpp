@@ -138,24 +138,6 @@ namespace Fling
         ShaderProgramManager::Get().CreateLightBuffers();
     }
 
-    void Renderer::UpdateImguiIO()
-    {
-#if WITH_IMGUI
-        // Update imgui mouse events and timings
-        ImGuiIO& io = ImGui::GetIO();
-
-        io.DisplaySize = ImVec2(
-            static_cast<float>(m_CurrentWindow->GetWidth()),
-            static_cast<float>(m_CurrentWindow->GetHeight()));
-
-        io.DeltaTime = Timing::Get().GetDeltaTime();
-        io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
-
-        io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
-        io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
-#endif
-    }
-
     void Renderer::CreateRenderPass()
     {
 		assert(m_MsaaSampler && m_SwapChain);
@@ -494,9 +476,7 @@ namespace Fling
         m_CurrentWindow->Update();
 
         m_camera->Update(DeltaTime);
-#if WITH_IMGUI
-		UpdateImguiIO();
-#endif
+
     }
 
     void Renderer::DrawFrame(entt::registry& t_Reg, float DeltaTime)
@@ -712,6 +692,8 @@ namespace Fling
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
+		m_Registry->on_destroy<MeshRenderer>().connect<&Renderer::MeshRendererRemoved>(*this);
+
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
 		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
     }
@@ -733,6 +715,11 @@ namespace Fling
         ShaderProgramManager::Get().SortMeshRender();
     }
 
+	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
+	{
+		SetFrameBufferHasBeenResized(true);
+	}
+
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {
         F_LOG_TRACE("Directional Light added!");
@@ -748,15 +735,31 @@ namespace Fling
 		F_LOG_TRACE("Point Light added!");
 		++m_Lighting.m_CurrentPointLights;
 
-		Transform& t = t_Reg.assign<Transform>(t_Ent);
+		// Ensure that we have a transform component before adding a light
+		if (!t_Reg.has<Transform>(t_Ent))
+		{
+			t_Reg.assign<Transform>(t_Ent);
+		}
+
+		Transform& t = t_Reg.get<Transform>(t_Ent);
 
 #if FLING_DEBUG
 		// Make a cute little debug mesh on a point light	
 		t.SetScale(glm::vec3{ 0.1f });
-		t_Reg.assign<MeshRenderer>(t_Ent, "Models/sphere.obj");
+		static std::string PointLightMesh = "Models/sphere.obj";
+		if (!t_Reg.has<MeshRenderer>(t_Ent))
+		{
+			t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh);
+		}
+
+		// Ensure that we have the proper point light mesh on for a nice little gizmo
+		MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
+		m.LoadModelFromPath(PointLightMesh);
+		m.LoadMaterialFromPath("Materials/Default.mat");
+
 #endif	// FLING_DEBUG
 
-		if (m_Lighting.m_CurrentPointLights> Lighting::MaxPointLights)
+		if (m_Lighting.m_CurrentPointLights > Lighting::MaxPointLights)
 		{
 			F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
 		}

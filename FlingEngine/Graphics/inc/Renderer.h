@@ -144,7 +144,6 @@ namespace Fling
         
         /// Init imgui context 
         void InitImgui();
-        void UpdateImguiIO();
 
         /**
         * @brief Set any component type callbacks needed for the rendering pipeline
@@ -212,6 +211,8 @@ namespace Fling
         *            Initializes and loads any meshes that we may need
         */
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+
+		void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
 
         /**
          * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many

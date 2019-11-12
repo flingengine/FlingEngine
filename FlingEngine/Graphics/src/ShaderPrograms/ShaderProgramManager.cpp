@@ -29,14 +29,22 @@ namespace Fling
             delete m_PBRShaderProgram;
             m_PBRShaderProgram = nullptr;
         }
+
+        if (m_ReflectionProgram)
+        {
+            delete m_ReflectionProgram;
+            m_ReflectionProgram = nullptr;
+        }
     }
 
     void ShaderProgramManager::PrepShutdown()
     {
+        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
         m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
             {
-                //TODO
-                //ShaderProgramPBR::Release(t_MeshRend);
+                t_MeshRend.Release();
+                vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
             });
 
         // Delete light buffers

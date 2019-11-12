@@ -176,7 +176,7 @@ namespace Sandbox
         float Width = 2.0f;
         AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
         AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
-
+		
         AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
         AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 

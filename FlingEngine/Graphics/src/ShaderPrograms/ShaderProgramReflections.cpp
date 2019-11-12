@@ -123,10 +123,3 @@ void Fling::ShaderProgramReflections::UpdateUniformBuffer(
     memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
 }
 
-void Fling::ShaderProgramReflections::Release(MeshRenderer& t_MeshRend)
-{
-    VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-
-    t_MeshRend.Release();
-    vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
-}
