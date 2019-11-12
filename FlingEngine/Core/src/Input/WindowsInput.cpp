@@ -161,6 +161,23 @@ namespace Fling
 				InputMapping.second();
 			}
 		}
+
+#if WITH_IMGUI
+		// Update imgui mouse events and timings
+		ImGuiIO& io = ImGui::GetIO();
+
+		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+
+		io.DisplaySize = ImVec2(
+			static_cast<float>(Window->GetWidth()),
+			static_cast<float>(Window->GetHeight())
+		);
+
+		io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
+
+		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
+		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+#endif
 	}
 
 	bool WindowsInput::IsKeyDownImpl(const std::string& t_KeyName)

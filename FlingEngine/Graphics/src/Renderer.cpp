@@ -139,24 +139,6 @@ namespace Fling
 		}
     }
 
-    void Renderer::UpdateImguiIO()
-    {
-#if WITH_IMGUI
-        // Update imgui mouse events and timings
-        ImGuiIO& io = ImGui::GetIO();
-
-        io.DisplaySize = ImVec2(
-            static_cast<float>(m_CurrentWindow->GetWidth()),
-            static_cast<float>(m_CurrentWindow->GetHeight()));
-
-        io.DeltaTime = Timing::Get().GetDeltaTime();
-        io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
-
-        io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
-        io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
-#endif
-    }
-
     void Renderer::CreateRenderPass()
     {
 		assert(m_MsaaSampler && m_SwapChain);
@@ -820,9 +802,7 @@ namespace Fling
         m_CurrentWindow->Update();
 
         m_camera->Update(DeltaTime);
-#if WITH_IMGUI
-		UpdateImguiIO();
-#endif
+
     }
 
     void Renderer::DrawFrame(entt::registry& t_Reg, float DeltaTime)
