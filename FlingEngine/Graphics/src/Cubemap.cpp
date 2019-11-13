@@ -76,13 +76,10 @@ namespace Fling
 
     void Cubemap::PreparePipeline(Multisampler* t_Sampler)
     {
-        Shader* vertShader = new Shader(m_VertexShader);
-        Shader* fragShader = new Shader(m_FragShader);
-
         std::vector<Shader*> shaders =
         {
-            vertShader,
-            fragShader
+            Shader::Create(m_VertexShader).get(),
+            Shader::Create(m_FragShader).get(),
         };
 
         m_GraphicsPipeline = new GraphicsPipeline(
@@ -95,9 +92,6 @@ namespace Fling
             VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         m_GraphicsPipeline->CreateGraphicsPipeline(m_RenderPass, t_Sampler);
-        
-        delete vertShader;
-        delete fragShader;
     }
 
     void Cubemap::LoadCubemap(
