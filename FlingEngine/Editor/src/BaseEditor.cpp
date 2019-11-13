@@ -58,7 +58,7 @@ namespace Fling
 				if(ImGui::Button("Select Model"))
 				{
 					fileDialog.SetTitle("Select Model...");
-					std::filesystem::path p { FlingPaths::EngineAssetsDir() };
+					std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Models" };
 					fileDialog.SetPwd(p);
 
 					fileDialog.SetTypeFilters({ ".obj" });
@@ -94,7 +94,7 @@ namespace Fling
 				if(ImGui::Button("Select Material"))
 				{
 					fileDialog.SetTitle("Select Material...");
-					std::filesystem::path p { FlingPaths::EngineAssetsDir() };
+					std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Materials" };
 					fileDialog.SetPwd(p);
 
 					fileDialog.SetTypeFilters({ ".mat" });

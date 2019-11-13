@@ -24,7 +24,7 @@ namespace Fling
 		if (m_deltaTime >= MaxDeltaTime)
 		{
 			m_deltaTime = FallbackDeltaTime;
-		} 
+		}
 
 		m_lastFrameStartTime = currentTime;
 		m_frameStartTimef = static_cast<float> ( m_lastFrameStartTime );
