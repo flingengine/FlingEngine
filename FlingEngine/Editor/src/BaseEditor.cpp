@@ -177,6 +177,11 @@ namespace Fling
 		{
 			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
 		}
+
+		if (m_DisplayWindowOptions)
+		{
+			DrawWindowOptions();
+		}
     }
 
 	void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
@@ -197,6 +202,18 @@ namespace Fling
 				m_CompEditorEntityType = entity;
 			}
     	}
+
+		ImGui::End();
+	}
+
+	void BaseEditor::DrawWindowOptions()
+	{
+		
+		ImGui::Begin("Window Options");
+		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
+
+		// Dropdown for windowed ,borderless, etc
+
 
 		ImGui::End();
 	}
@@ -282,21 +299,17 @@ namespace Fling
 			if (ImGui::BeginMenu("Windows"))
 			{
 				ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
-				ImGui::Checkbox("Component Editor", &m_DisplayComponentEditor);
-				ImGui::Checkbox("World Outline", &m_DisplayWorldOutline);
-
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Help"))
+			if (ImGui::BeginMenu("Preferences"))
 			{
-				ImGui::MenuItem("Test A", NULL);
-				ImGui::MenuItem("Test B", NULL);
-				ImGui::MenuItem("Test C", NULL);
+				if (ImGui::Selectable("Window Options"))
+				{
+					m_DisplayWindowOptions = true;
+				}
 				ImGui::EndMenu();
 			}
-
-			ImGui::LabelText("Current Level:", "NULL");
 
 			ImGui::EndMenuBar();
 		}

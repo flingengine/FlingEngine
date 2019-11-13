@@ -41,6 +41,7 @@ namespace Fling
 		bool m_DisplayGPUInfo = false;
 		bool m_DisplayComponentEditor = true;
 		bool m_DisplayWorldOutline = true;
+		bool m_DisplayWindowOptions = false;
 
 		/** Component editor so that we can draw our component window */
 		entt::entity m_CompEditorEntityType = entt::null;
@@ -51,6 +52,8 @@ namespace Fling
 		void DrawGpuInfo();
 
         void DrawWorldOutline(entt::registry& t_Reg);
+
+		void DrawWindowOptions();
 
         class World* m_OwningWorld = nullptr;
 
