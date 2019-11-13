@@ -88,13 +88,6 @@ namespace Sandbox
 		assert(World);
 
 		World->LoadLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
-		entt::registry& t_Reg = World->GetRegistry();
-		
-		// For testing -----
-		t_Reg.view<NameComponent, Transform>().each([&](entt::entity t_Ent, NameComponent& t_Name, Transform& t_Trans)
-		{
-			F_LOG_TRACE("Entity has name {}  and transform {}", t_Name.Name, t_Trans);
-		});
 	}
 
 	void Game::OnSaveInitated()

@@ -12,6 +12,8 @@ namespace Fling
      */
     class BaseEditor
     {
+        friend class Engine;
+
     public:
         BaseEditor() = default;
         virtual ~BaseEditor() = default;
@@ -27,6 +29,10 @@ namespace Fling
         // #TODO: Init and shutdown functions 
 
     protected: 
+
+        virtual void OnLoadLevel(std::string t_FileName);
+
+        virtual void OnSaveLevel(std::string t_FileName);
 
 		std::array<float, 400> fpsGraph {};
 		float m_FrameTimeMin = 9999.0f;
@@ -45,6 +51,11 @@ namespace Fling
 		void DrawGpuInfo();
 
         void DrawWorldOutline(entt::registry& t_Reg);
+
+        class World* m_OwningWorld = nullptr;
+
+        class Game* m_Game = nullptr;
+
 
         // Draw stats graph
         // Draw File Menu

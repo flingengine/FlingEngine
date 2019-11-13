@@ -11,6 +11,7 @@
 #include "Lighting/PointLight.hpp"
 #include <sstream>
 #include "ImFileBrowser.hpp"
+#include "World.h"
 
 #include <stdio.h> 
 #include <string.h> 
@@ -223,20 +224,19 @@ namespace Fling
 				if (ImGui::MenuItem("Open Level...", "Ctrl+O"))
 				{
 					// If there are unsaved changes prompt for a save
-
-					// #TODO Open a level 
+					OnLoadLevel(FlingConfig::GetString("Game", "StartLevel"));
 				}
 
 				if (ImGui::MenuItem("Save Level...", "Ctrl+S"))
 				{
 					// #TODO Save the current level to it's file path
+					OnSaveLevel(FlingConfig::GetString("Game", "StartLevel"));
 				}
 
 				if (ImGui::MenuItem("New Level", "Ctrl+N"))
 				{
-					// If there are unsaved changes prompt for a save
-
-					// #TODO Open a new level 
+					assert(m_OwningWorld);
+					m_OwningWorld->LoadLevelFile("Levels/EmptyLevel.json");
 				}
 				ImGui::EndMenu();
 			}
@@ -261,6 +261,27 @@ namespace Fling
 		}
 
 		ImGui::End();
+	}
+
+	void BaseEditor::OnLoadLevel(std::string t_FileName)
+	{
+		assert(m_OwningWorld);
+
+		// File pop up
+		F_LOG_TRACE("Load file {}", t_FileName);
+
+		m_OwningWorld->LoadLevelFile(t_FileName);
+	}
+
+	void BaseEditor::OnSaveLevel(std::string t_FileName)
+	{
+		assert(m_OwningWorld);
+
+		// File pop up to load the level file 
+		F_LOG_TRACE("Save to file {}", t_FileName);
+
+		// Overload this to add custom componented
+		m_OwningWorld->OutputLevelFile(t_FileName);
 	}
 
 	void BaseEditor::DrawGpuInfo() 
