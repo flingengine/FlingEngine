@@ -688,11 +688,6 @@ namespace Fling
 
         VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
         {
-           /* VkDescriptorBufferInfo bufferInfo = {};
-            bufferInfo.buffer = t_Buffer->GetVkBuffer();
-            bufferInfo.offset = t_Offset;
-            bufferInfo.range = t_Buffer->GetSize();*/
-
             VkWriteDescriptorSet uniformSet = {};
             uniformSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             uniformSet.dstSet = t_DstSet;
@@ -707,11 +702,6 @@ namespace Fling
 
         VkWriteDescriptorSet WriteDescriptorSetImage(Image* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
         {
-            //VkDescriptorImageInfo imageInfo = {};
-            //imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            //imageInfo.imageView = t_Image->GetVkImageView();
-            //imageInfo.sampler = t_Image->GetSampler();
-
             VkDescriptorImageInfo* imageInfo = t_Image->GetDescriptorInfo();
             // Create sampler information
             VkWriteDescriptorSet ImageSamplerSet = {};
