@@ -131,5 +131,8 @@ namespace Fling
 
         /** The descriptor stores info about the offset, buffer, and; size of this */
         VkDescriptorBufferInfo m_Descriptor;
+
+        /** Offset offset of buffer */
+        VkDeviceSize m_Offset = 0;
     };
 }   // namespace Fling

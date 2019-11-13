@@ -1,20 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive: require
 
-struct DirectionalLightData
-{
-    vec4 DiffuseColor;
-    vec4 Direction;
-    float Intensity; 
-};
-
-struct PointLightData
-{
-    vec4 Color;
-    vec4 Pos;
-    float Intensity; 
-    float Range; 
-};
+#include "utils/Lights.h"
 
 // Bindings -------------------
 layout (binding = 0) uniform UboView 

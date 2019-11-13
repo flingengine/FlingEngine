@@ -41,17 +41,20 @@ namespace Fling
             m_ImageMemory = nullptr;
         }
 
+        if (m_GraphicsPipeline)
+        {
+            delete m_GraphicsPipeline;
+            m_GraphicsPipeline = nullptr;
+        }
+
         vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
-        vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
-        vkDestroyPipelineCache(m_Device, m_PipelineCache, nullptr);
-        vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
         vkDestroyImage(m_Device, m_Image, nullptr);
         vkDestroyImageView(m_Device, m_Imageview, nullptr);
         vkDestroySampler(m_Device, m_Sampler, nullptr);   
     }
 
-    void Cubemap::Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumFramesInFlight, VkSampleCountFlagBits t_SampleCount)
+    void Cubemap::Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumFramesInFlight, Multisampler* t_Sampler)
     {
         // Initialize uniform buffers
         m_numsFrameInFlight = t_NumFramesInFlight;
@@ -66,126 +69,29 @@ namespace Fling
             m_UniformBuffers[i]->MapMemory();
         }
 
-
         UpdateUniformBuffer(t_CurrentImage, t_Camera->GetProjectionMatrix(), t_Camera->GetViewMatrix());
         SetupDescriptors();
-        PreparePipeline(t_SampleCount);
+        PreparePipeline(t_Sampler);
     }
 
-    void Cubemap::PreparePipeline(VkSampleCountFlagBits t_SampleCount)
+    void Cubemap::PreparePipeline(Multisampler* t_Sampler)
     {
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyState =
-            Initializers::PipelineInputAssemblyStateCreateInfo(
-                VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                0,
-                VK_FALSE);
-
-        VkPipelineRasterizationStateCreateInfo rasterizationState =
-            Initializers::PipelineRasterizationStateCreateInfo(
-                VK_POLYGON_MODE_FILL,
-                VK_CULL_MODE_FRONT_BIT,
-                VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                0);
-
-        VkPipelineColorBlendAttachmentState blendAttachmentState =
-            Initializers::PipelineColorBlendAttachmentState(
-                0xf,
-                VK_FALSE);
-
-        VkPipelineColorBlendStateCreateInfo colorBlendState =
-            Initializers::PipelineColorBlendStateCreateInfo(
-                1,
-                &blendAttachmentState);
-
-        VkPipelineDepthStencilStateCreateInfo depthStencilState =
-            Initializers::DepthStencilState(
-                VK_FALSE,
-                VK_FALSE,
-                VK_COMPARE_OP_LESS_OR_EQUAL);
-
-        VkPipelineViewportStateCreateInfo viewportState =
-            Initializers::PipelineViewportStateCreateInfo(
-                1, 1, 0);
-
-        VkPipelineMultisampleStateCreateInfo multisampleState =
-            Initializers::PipelineMultiSampleStateCreateInfo(
-                t_SampleCount,
-                0);
-
-
-        std::vector<VkDynamicState> dynamicStateEnables = {
-                 VK_DYNAMIC_STATE_VIEWPORT,
-                 VK_DYNAMIC_STATE_SCISSOR
+        std::vector<Shader*> shaders =
+        {
+            Shader::Create(m_VertexShader).get(),
+            Shader::Create(m_FragShader).get(),
         };
 
-        VkPipelineDynamicStateCreateInfo dynamicState =
-            Initializers::PipelineDynamicStateCreateInfo(
-                dynamicStateEnables, 0);
+        m_GraphicsPipeline = new GraphicsPipeline(
+            shaders,
+            m_Device, 
+            VK_POLYGON_MODE_FILL, 
+            GraphicsPipeline::Depth::ReadWrite,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            VK_CULL_MODE_FRONT_BIT,
+            VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-        //Pipeline cache 
-        VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
-        pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-        if (vkCreatePipelineCache(m_Device, &pipelineCacheCreateInfo, nullptr, &m_PipelineCache) != VK_SUCCESS)
-        {
-            F_LOG_ERROR("Could not create pipeline cache for imgui");
-        }
-
-        //Vertex input
-        VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
-        auto AttributeDescriptions = Vertex::GetAttributeDescriptions();
-
-        VkPipelineVertexInputStateCreateInfo VertexInputState = {};
-        VertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        VertexInputState.vertexBindingDescriptionCount = 1;
-        VertexInputState.pVertexBindingDescriptions = &BindingDescription;
-        VertexInputState.vertexAttributeDescriptionCount = static_cast<UINT32>(AttributeDescriptions.size());;
-        VertexInputState.pVertexAttributeDescriptions = AttributeDescriptions.data();
-
-        std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages;
-
-        VkGraphicsPipelineCreateInfo pipelineCreateInfo = Initializers::PipelineCreateInfo(m_PipelineLayout, m_RenderPass, 0);
-        pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-        pipelineCreateInfo.pRasterizationState = &rasterizationState;
-        pipelineCreateInfo.pColorBlendState = &colorBlendState;
-        pipelineCreateInfo.pMultisampleState = &multisampleState;
-        pipelineCreateInfo.pViewportState = &viewportState;
-        pipelineCreateInfo.pDepthStencilState = &depthStencilState;
-        pipelineCreateInfo.pDynamicState = &dynamicState;
-        pipelineCreateInfo.stageCount = shaderStages.size();
-        pipelineCreateInfo.pStages = shaderStages.data();
-        pipelineCreateInfo.pVertexInputState = &VertexInputState;
-
-        std::shared_ptr<File> vertShaderCode = ResourceManager::LoadResource<File>(m_VertexShader);
-        assert(vertShaderCode);
-
-        std::shared_ptr<File> fragShaderCode = ResourceManager::LoadResource<File>(m_FragShader);
-        assert(fragShaderCode);
-        
-        VkShaderModule vertModule = GraphicsHelpers::CreateShaderModule(vertShaderCode);
-        VkShaderModule fragModule = GraphicsHelpers::CreateShaderModule(fragShaderCode);
-
-        VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vertShaderStageInfo.module = vertModule;
-        vertShaderStageInfo.pName = "main";
-
-        VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        fragShaderStageInfo.module = fragModule;
-        fragShaderStageInfo.pName = "main";
-
-        shaderStages[0] = vertShaderStageInfo;
-        shaderStages[1] = fragShaderStageInfo;
-
-        if (vkCreateGraphicsPipelines(m_Device, m_PipelineCache, 1, &pipelineCreateInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
-        {
-            F_LOG_ERROR("Failed to create graphics pipeline for cube map");
-        }
-
-        vkDestroyShaderModule(m_Device, vertModule, nullptr);
-        vkDestroyShaderModule(m_Device, fragModule, nullptr);
+        m_GraphicsPipeline->CreateGraphicsPipeline(m_RenderPass, t_Sampler);
     }
 
     void Cubemap::LoadCubemap(
@@ -317,11 +223,7 @@ namespace Fling
         sampler.maxLod = static_cast<float>(m_MipLevels);
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
         sampler.maxAnisotropy = 1.0f;
-        /*if (m_Device->features.samplerAnisotropy)
-        {
-            sampler.maxAnisotropy = vulkanDevice->properties.limits.maxSamplerAnisotropy;
-            sampler.anisotropyEnable = VK_TRUE;
-        }*/
+
         if (vkCreateSampler(m_Device, &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube failed to create sampler");
@@ -382,16 +284,6 @@ namespace Fling
             F_LOG_ERROR("Cube map failed to create descriptor set layout");
         }
 
-        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo =
-            Initializers::PiplineLayoutCreateInfo(
-                &m_DescriptorSetLayout,
-                1);
-
-        if (vkCreatePipelineLayout(m_Device, &pipelineLayoutCreateInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
-        {
-            F_LOG_ERROR("Cube map failed to create pipeline layout");
-        }
-
         //Descriptor Sets
         VkDescriptorImageInfo textureDescriptor =
             Initializers::DescriptorImageInfo(
@@ -449,6 +341,25 @@ namespace Fling
         m_UboVS.ModelView[3][2] = 0.0f;
 
         memcpy(m_UniformBuffers[t_CurrentImage]->m_MappedMem, &m_UboVS, sizeof(m_UboVS));
+    }
 
+    void Cubemap::BindCmdBuffer(VkCommandBuffer& t_CommandBuffer)
+    {
+        vkCmdBindDescriptorSets(
+            t_CommandBuffer, 
+            VK_PIPELINE_BIND_POINT_GRAPHICS, 
+            m_GraphicsPipeline->GetPipelineLayout(), 
+            0, 
+            1, 
+            &m_DescriptorSet, 
+            0, 
+            NULL);
+
+        VkDeviceSize offsets[1] = { 0 };
+
+        vkCmdBindVertexBuffers(t_CommandBuffer, 0, 1, &GetVertexBuffer()->GetVkBuffer(), offsets);
+        vkCmdBindIndexBuffer(t_CommandBuffer, GetIndexBuffer()->GetVkBuffer(), 0, GetIndexType());
+        vkCmdBindPipeline(t_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+        vkCmdDrawIndexed(t_CommandBuffer, GetIndexCount(), 1, 0, 0, 0);
     }
 }
