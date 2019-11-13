@@ -40,7 +40,6 @@
 #include "MeshRenderer.h"
 #include "Material.h"
 
-#include "ShaderProgram.h"
 #include "Shader.h"
 #include "Cubemap.h"
 #include "MultiSampler.h"
@@ -223,9 +222,6 @@ namespace Fling
 
         /** Skybox Instance */
         Cubemap* m_Skybox = nullptr;
-
-        /** The shader program that will allow the users to define their graphics pipeline */
-        ShaderProgram* m_ShaderProgram = nullptr;
 
         FlingWindow* m_CurrentWindow = nullptr;
 
