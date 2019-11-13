@@ -1,5 +1,8 @@
 #pragma once
 
+// From https://github.com/AirGuanZ/imgui-filebrowser
+// MIT liscence
+
 #include <array>
 #include <filesystem>
 #include <functional>

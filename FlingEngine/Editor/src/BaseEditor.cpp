@@ -10,11 +10,13 @@
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include <sstream>
+#include "ImFileBrowser.hpp"
+
+#include <stdio.h> 
+#include <string.h> 
 
 namespace Fling
 {
-	//ImGui::FileBrowser BaseEditor::m_FileDialog = {};
-
 	namespace Widgets
 	{
 		void Transform(Fling::Transform& t)
@@ -38,22 +40,7 @@ namespace Fling
 			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 
-		void OnMeshRendererModelChanged(void* t_MeshRend, std::string t_FileName)
-		{
-			if(t_MeshRend != nullptr)
-			{
-				if(Fling::MeshRenderer* MeshRend = static_cast<Fling::MeshRenderer*>(t_MeshRend))
-				{
-					F_LOG_WARN("Change the model to {}", t_FileName.c_str());
-					//t_FileBrowser.ClearSelected();
-					MeshRend->LoadModelFromPath(t_FileName);
-					// Command buffers must be rebuilt after doing this
-					Renderer::Get().SetFrameBufferHasBeenResized(true);
-				}
-			}
-		}
-
-		void MeshRenderer(Fling::MeshRenderer& t_MeshRend/*, FileBrowser& t_FileBrowser*/)
+		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
 		{
 			// Model -----------------------
 			{
@@ -63,22 +50,30 @@ namespace Fling
 					ModelName = t_MeshRend.m_Model->GetGuidString();
 				}
 
-				ImGui::LabelText("Model", ModelName.c_str(), "%s");	
+				ImGui::LabelText("Model", ModelName.c_str(), "%s");
 
 				// Show file browser
-				static FileBrowser SelectModel("Select Model...");
-				if (ImGui::Button("Select Model..."))
+				static ImGui::FileBrowser fileDialog;
+				if(ImGui::Button("Select Model"))
 				{
-					SelectModel.Open();
+					fileDialog.SetTitle("Select Model...");
+					std::filesystem::path p { FlingPaths::EngineAssetsDir() };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".obj" });
+					fileDialog.Open();
 				}
 
-				SelectModel.Display();
-
-				if (SelectModel.HasSelected())
+				fileDialog.Display();
+				if(fileDialog.HasSelected())
 				{
-					std::string model = SelectModel.GetSelected();
-					F_LOG_TRACE("Selected model file {}", model.c_str());
-					SelectModel.ClearSelected();
+					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+
+					t_MeshRend.LoadModelFromPath(SelectedAsset);
+					// Command buffers must be rebuilt after doing this
+					Renderer::Get().SetFrameBufferHasBeenResized(true);
+
+					fileDialog.ClearSelected();
 				}
 			}
 
@@ -93,16 +88,28 @@ namespace Fling
 				const char* m = MaterialName.c_str();
 				ImGui::LabelText("Material", m, "%s");
 
-				if (ImGui::Button("Select Material"))
+				// Show file browser
+				static ImGui::FileBrowser fileDialog;
+				if(ImGui::Button("Select Material"))
 				{
-					std::string SelectedMat = "Materials/Bronze.mat";
-					F_LOG_TRACE("Change the material to {}", SelectedMat.c_str());
-					// If a file was selected, then set the mesh renderer's model to that
-					{
-						t_MeshRend.LoadMaterialFromPath(SelectedMat);
-						// Command buffers must be rebuilt after doing this
-						Renderer::Get().SetFrameBufferHasBeenResized(true);
-					}
+					fileDialog.SetTitle("Select Material...");
+					std::filesystem::path p { FlingPaths::EngineAssetsDir() };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".mat" });
+					fileDialog.Open();
+				}
+
+				fileDialog.Display();
+				if(fileDialog.HasSelected())
+				{
+					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+
+					t_MeshRend.LoadMaterialFromPath(SelectedAsset);
+					// Command buffers must be rebuilt after doing this
+					Renderer::Get().SetFrameBufferHasBeenResized(true);
+
+					fileDialog.ClearSelected();
 				}
 			}
 		}
