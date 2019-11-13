@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include "File.h"
 
 namespace Fling
 {
@@ -7,6 +8,9 @@ namespace Fling
 	{
 	public:
 		ScriptComponent();
+		ScriptComponent(const std::string filePath);
 		~ScriptComponent();
+	private:
+		Guid m_ScriptGUID;
 	};
 }

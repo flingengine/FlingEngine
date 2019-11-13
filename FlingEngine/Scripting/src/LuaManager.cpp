@@ -10,4 +10,8 @@ namespace Fling
 	void LuaManager::Shutdown()
 	{
 	}
+
+	void LuaManager::RegisterScript(const std::string& t_File)
+	{
+	}
 }
