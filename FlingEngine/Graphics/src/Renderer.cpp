@@ -1104,6 +1104,13 @@ namespace Fling
     {
         F_LOG_TRACE("Directional Light added!");
         ++m_Lighting.m_CurrentDirLights;
+
+		// Ensure that we have a transform component before adding a light
+		if (!t_Reg.has<Transform>(t_Ent))
+		{
+			t_Reg.assign<Transform>(t_Ent);
+		}
+
         if(m_Lighting.m_CurrentDirLights > Lighting::MaxDirectionalLights)
         {
             F_LOG_WARN("You have enterer more then the max support directional lights of Fling!");

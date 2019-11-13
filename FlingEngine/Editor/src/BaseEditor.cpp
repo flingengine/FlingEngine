@@ -221,16 +221,53 @@ namespace Fling
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open Level...", "Ctrl+O"))
+				static ImGui::FileBrowser fileDialog;
+				static bool ShouldLoadLevel = false;
+				static bool ShouldSaveLevel = false;
+
+				if (ImGui::Button("Open Level..."))
 				{
-					// If there are unsaved changes prompt for a save
-					OnLoadLevel(FlingConfig::GetString("Game", "StartLevel"));
+					ShouldLoadLevel = true;
+					ShouldSaveLevel = false;
+
+					fileDialog.SetTitle("Select Level to Load...");
+					static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".json" });
+					fileDialog.Open();
 				}
 
-				if (ImGui::MenuItem("Save Level...", "Ctrl+S"))
+				if (ImGui::Button("Save Level..."))
 				{
-					// #TODO Save the current level to it's file path
-					OnSaveLevel(FlingConfig::GetString("Game", "StartLevel"));
+					ShouldSaveLevel = true;
+					ShouldLoadLevel = false;
+
+					fileDialog.SetTitle("Select Save Destination...");
+					static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".json" });
+					fileDialog.Open();
+				}
+
+				fileDialog.Display();
+				if (fileDialog.HasSelected())
+				{
+					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+
+					if (ShouldLoadLevel)
+					{
+						OnLoadLevel(SelectedAsset);
+						ShouldLoadLevel = false;
+					}
+					else if (ShouldSaveLevel)
+					{
+						OnSaveLevel(SelectedAsset);
+						ShouldSaveLevel = false;
+					}
+
+					fileDialog.ClearSelected();
 				}
 
 				if (ImGui::MenuItem("New Level", "Ctrl+N"))
@@ -238,6 +275,7 @@ namespace Fling
 					assert(m_OwningWorld);
 					m_OwningWorld->LoadLevelFile("Levels/EmptyLevel.json");
 				}
+
 				ImGui::EndMenu();
 			}
 
@@ -257,6 +295,9 @@ namespace Fling
 				ImGui::MenuItem("Test C", NULL);
 				ImGui::EndMenu();
 			}
+
+			ImGui::LabelText("Current Level:", "NULL");
+
 			ImGui::EndMenuBar();
 		}
 

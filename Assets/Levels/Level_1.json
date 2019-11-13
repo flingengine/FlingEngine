@@ -1,29 +1,59 @@
 {
-    "value0": 2,
-    "value1": 1,
-    "value2": 0,
-    "value3": 1,
-    "value4": 0,
-    "value5": {
-        "POS_X": -2.0,
+    "value0": 3,
+    "value1": 2,
+    "value2": 1,
+    "value3": 0,
+    "value4": 3,
+    "value5": 0,
+    "value6": {
+        "POS_X": 0.0,
         "POS_Y": 0.0,
         "POS_Z": 0.0,
         "SCALE_X": 1.0,
         "SCALE_Y": 1.0,
         "SCALE_Z": 1.0,
         "ROT_X": 0.0,
-        "ROT_Y": 70.40853881835938,
+        "ROT_Y": 0.0,
         "ROT_Z": 0.0
     },
-    "value6": 1,
-    "value7": 0,
+    "value7": 1,
     "value8": {
-        "MESH_NAME": "Models/cube.obj",
-        "MATERIAL_NAME": "Materials/Cobblestone.mat"
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 1.0,
+        "SCALE_Y": 1.0,
+        "SCALE_Z": 1.0,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
     },
-    "value9": 1,
-    "value10": 1,
-    "value11": {
+    "value9": 2,
+    "value10": {
+        "POS_X": 0.0,
+        "POS_Y": 0.0,
+        "POS_Z": 0.0,
+        "SCALE_X": 0.10000000149011612,
+        "SCALE_Y": 0.10000000149011612,
+        "SCALE_Z": 0.10000000149011612,
+        "ROT_X": 0.0,
+        "ROT_Y": 0.0,
+        "ROT_Z": 0.0
+    },
+    "value11": 2,
+    "value12": 1,
+    "value13": {
+        "MESH_NAME": "Models\\helix.obj",
+        "MATERIAL_NAME": "Materials\\Bronze.mat"
+    },
+    "value14": 2,
+    "value15": {
+        "MESH_NAME": "Models/sphere.obj",
+        "MATERIAL_NAME": "Materials/Default.mat"
+    },
+    "value16": 1,
+    "value17": 0,
+    "value18": {
         "DIFFUSE_X": 1.0,
         "DIFFUSE_Y": 1.0,
         "DIFFUSE_Z": 1.0,
@@ -33,5 +63,13 @@
         "DIRECTION_Z": -0.5,
         "INTENSITY": 1.0
     },
-    "value12": 0
+    "value19": 1,
+    "value20": 2,
+    "value21": {
+        "DIFFUSE_X": 1.0,
+        "DIFFUSE_Y": 1.0,
+        "DIFFUSE_Z": 1.0,
+        "RANGE": 5.0,
+        "INTENSITY": 10.0
+    }
 }

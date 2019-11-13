@@ -26,8 +26,6 @@ namespace Sandbox
 #endif
 
 		// Temp saving and load functions
-		Input::BindKeyPress<&Sandbox::Game::OnLoadInitated>(KeyNames::FL_KEY_O, *this);
-        Input::BindKeyPress<&Sandbox::Game::OnSaveInitated>(KeyNames::FL_KEY_P, *this);
         Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
 
 		// notify we want to quit when we press escape
@@ -41,8 +39,6 @@ namespace Sandbox
 		Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 
 		LightingTest(t_Reg);
-		//OnLoadInitated();
-		//GenerateTestMeshes(t_Reg);
 
 		SetWindowIcon();
 	}
@@ -80,23 +76,6 @@ namespace Sandbox
 				t_Trans.SetPos(newPos);
 			});
 		}	
-	}
-
-	void Game::OnLoadInitated()
-	{
-		Fling::World* World = GetWorld();
-		assert(World);
-
-		World->LoadLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
-	}
-
-	void Game::OnSaveInitated()
-	{
-		Fling::World* World = GetWorld();
-		assert(World);
-
-		// Write out the file
-		World->OutputLevelFile<Fling::NameComponent>(FlingConfig::GetString("Game", "StartLevel"));
 	}
 
 	void Game::OnQuitPressed()
@@ -145,7 +124,7 @@ namespace Sandbox
 
 		//AddModel(0, "Models/Cerberus.obj", "Materials/Cerberus.mat", glm::vec3(0.25f));
 
-		AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		//AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
 		//AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
 		//AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
 		//AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");

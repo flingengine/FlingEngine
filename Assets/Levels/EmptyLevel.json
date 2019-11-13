@@ -1,3 +1,31 @@
 {
-
+  "value0": 1,
+  "value1": 0,
+  "value2": 1,
+  "value3": 0,
+  "value4": {
+    "POS_X": 0.0,
+    "POS_Y": 0.0,
+    "POS_Z": 0.0,
+    "SCALE_X": 1.0,
+    "SCALE_Y": 1.0,
+    "SCALE_Z": 1.0,
+    "ROT_X": 0.0,
+    "ROT_Y": 0.0,
+    "ROT_Z": 0.0
+  },
+  "value5": 0,
+  "value6": 1,
+  "value7": 0,
+  "value8": {
+    "DIFFUSE_X": 1.0,
+    "DIFFUSE_Y": 1.0,
+    "DIFFUSE_Z": 1.0,
+    "DIFFUSE_W": 1.0,
+    "DIRECTION_X": 1.0,
+    "DIRECTION_Y": -1.0,
+    "DIRECTION_Z": -0.5,
+    "INTENSITY": 1.0
+  },
+  "value9": 0
 }
