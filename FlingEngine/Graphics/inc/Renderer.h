@@ -40,14 +40,16 @@
 #include "MeshRenderer.h"
 #include "Material.h"
 
-#include "ShaderProgram.h"
 #include "Shader.h"
-#include <atomic>
 #include "Cubemap.h"
 #include "MultiSampler.h"
+#include "GraphicsPipeline.h"
 
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+#include "Lighting/Lighting.hpp"
+
+#include "ShaderPrograms/ShaderProgramManager.h"
 
 namespace Fling
 {
@@ -57,19 +59,6 @@ namespace Fling
 #if WITH_IMGUI
     class FlingImgui;
 #endif
-
-    struct Lighting
-    {
-        /** Dir Lights */
-        static const UINT32 MaxDirectionalLights = 32;
-        UINT32 m_CurrentDirLights = 0;
-
-        /** Point Lights */
-        static const UINT32 MaxPointLights = 32;
-        UINT32 m_CurrentPointLights = 0;
-
-        std::vector<Buffer*> m_LightingUBOs;
-    };
 
     /// <summary>
     /// Core renderer for the application
@@ -154,18 +143,11 @@ namespace Fling
         
         /// Init imgui context 
         void InitImgui();
-        void UpdateImguiIO();
 
         /**
         * @brief Set any component type callbacks needed for the rendering pipeline
         */
         void InitComponentData();
-
-        /**
-         * @brief Create a Descriptor Layout object
-         * @see UniformBufferObject.h
-         */
-        void CreateDescriptorLayout();
 
         /**
         * Create the graphics pipeline (IA, VS, FS, etc)
@@ -199,9 +181,7 @@ namespace Fling
         */
         void RecreateFrameResources();
 
-        void CreateDescriptorPool();
-
-        void CreateDescriptorSets();
+        void CreateDescriptors();
 
         /**
         * Determine the best match extents based on our window width and height
@@ -243,9 +223,6 @@ namespace Fling
         /** Skybox Instance */
         Cubemap* m_Skybox = nullptr;
 
-        /** The shader program that will allow the users to define their graphics pipeline */
-        ShaderProgram* m_ShaderProgram = nullptr;
-
         FlingWindow* m_CurrentWindow = nullptr;
 
 #if WITH_IMGUI
@@ -270,17 +247,10 @@ namespace Fling
 
         VkRenderPass m_RenderPass;
 
-        /** Pipeline layout stores uniforms (global shader vars) */
-        VkDescriptorSetLayout m_DescriptorSetLayout;
-        VkPipelineLayout m_PipelineLayout;
-
-        VkPipeline m_GraphicsPipeline;
-
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
-        /** @see CreateDescriptorPool */
-        VkDescriptorPool m_DescriptorPool;
+        GraphicsPipeline* m_GraphicsPipeline = nullptr;
 
         DepthBuffer* m_DepthBuffer = nullptr;
 
@@ -296,8 +266,6 @@ namespace Fling
 
         /** The alignment of the dynamic UBO on this device */
         size_t m_DynamicAlignment;
-
-        std::vector<VkDescriptorSet> m_DescriptorSets;
 
         /**
         * The frame buffers for the swap chain
@@ -320,15 +288,7 @@ namespace Fling
         // Lighting -----------------------
         Lighting m_Lighting = {};
 		std::shared_ptr<Image> m_BRDFLookupTexture;
-        struct LightingUbo
-        {
-			alignas(4) UINT32 DirLightCount = 0;
-			alignas(4) UINT32 PointLightCount = 0;
-
-            alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
-
-			alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
-        };
+   
 
         LightingUbo m_LightingUBO = {}; 
 
