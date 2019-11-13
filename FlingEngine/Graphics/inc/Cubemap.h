@@ -10,6 +10,8 @@
 #include "LogicalDevice.h"
 #include "UniformBufferObject.h"
 #include "Camera.h"
+#include "GraphicsPipeline.h"
+#include "MultiSampler.h"
 
 namespace Fling
 {
@@ -30,23 +32,13 @@ namespace Fling
 
             ~Cubemap();
 
-            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, VkSampleCountFlagBits t_SampleCount);
+            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);
 
             void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
 
-            /**
-             * @brief Get the Pipeline Layout object
-             * 
-             * @return const VkPipelineLayout 
-             */
-            VkPipelineLayout GetPipelineLayout() const { return m_PipelineLayout; }
+            void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer);
 
-            /**
-             * @brief Get the Pipe Line object
-             * 
-             * @return const VkPipline 
-             */
-            VkPipeline GetPipeLine() const { return m_Pipeline; }
+            std::unique_ptr<GraphicsPipeline> GetGraphicsPipeline() const { return std::unique_ptr<GraphicsPipeline>(m_GraphicsPipeline); }
 
             /**
              * @brief Get the Descriptor Sets object
@@ -80,7 +72,7 @@ namespace Fling
 
         private:
 
-            void PreparePipeline(VkSampleCountFlagBits t_SampleCount);
+            void PreparePipeline(Multisampler* t_Sampler);
             
             void LoadCubemap(
                 Guid t_PosX_ID,
@@ -104,11 +96,8 @@ namespace Fling
             VkDescriptorSetLayout m_DescriptorSetLayout;
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
-            VkPipelineLayout m_PipelineLayout;
-            VkPipeline m_Pipeline;
             VkRenderPass m_RenderPass;
             VkDevice m_Device;
-            VkPipelineCache m_PipelineCache;
             VkDescriptorBufferInfo m_UniformBufferDescriptor;
 
             VkDeviceSize m_ImageSize;
@@ -120,6 +109,7 @@ namespace Fling
 
             UboSkyboxVS m_UboVS;
             std::shared_ptr<Model> m_Cube;
+            GraphicsPipeline* m_GraphicsPipeline;
 
             Guid m_FragShader;
             Guid m_VertexShader;

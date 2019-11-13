@@ -1,7 +1,7 @@
 {
-    "name" : "Default Material",
+    "name" : "Reflection Material",
     
-    "ShaderProgram" : "PBR",
+    "ShaderProgram" : "Reflection",
 
     "albedo" : "Textures/DefaultTexture.png",
     "normal" : "Textures/DefaultTexture.png",

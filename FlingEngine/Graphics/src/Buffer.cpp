@@ -11,6 +11,11 @@ namespace Fling
 		, m_BufferMemory(VK_NULL_HANDLE)
 	{
 		CreateBuffer(m_Size, t_Usage, t_Properties, false, t_Data);
+
+        m_Descriptor = {};
+        m_Descriptor.buffer = m_Buffer;
+        m_Descriptor.offset = m_Offset;
+        m_Descriptor.range = m_Size;
 	}
 
 	Buffer::Buffer(const Buffer& t_Other)

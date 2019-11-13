@@ -25,6 +25,7 @@ namespace Fling
 				b = nullptr;
 			}
 		}
+
 		m_UniformBuffers.clear();
 	}
 
