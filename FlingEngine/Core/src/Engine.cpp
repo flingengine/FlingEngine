@@ -45,6 +45,11 @@ namespace Fling
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
 		
+#if WITH_EDITOR
+		m_Editor->m_OwningWorld = m_World;
+		m_Editor->m_Game = m_GameImpl;
+#endif
+
 		Input::PreUpdate();
 	}
 

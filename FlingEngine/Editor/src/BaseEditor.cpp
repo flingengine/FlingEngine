@@ -10,6 +10,11 @@
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include <sstream>
+#include "ImFileBrowser.hpp"
+#include "World.h"
+
+#include <stdio.h> 
+#include <string.h> 
 
 namespace Fling
 {
@@ -38,6 +43,7 @@ namespace Fling
 
 		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
 		{
+			// Model -----------------------
 			{
 				std::string ModelName = "None";
 				if (t_MeshRend.m_Model)
@@ -45,17 +51,67 @@ namespace Fling
 					ModelName = t_MeshRend.m_Model->GetGuidString();
 				}
 
-				ImGui::LabelText("Model", ModelName.c_str());
+				ImGui::LabelText("Model", ModelName.c_str(), "%s");
+
+				// Show file browser
+				static ImGui::FileBrowser fileDialog;
+				if(ImGui::Button("Select Model"))
+				{
+					fileDialog.SetTitle("Select Model...");
+					std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Models" };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".obj" });
+					fileDialog.Open();
+				}
+
+				fileDialog.Display();
+				if(fileDialog.HasSelected())
+				{
+					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+
+					t_MeshRend.LoadModelFromPath(SelectedAsset);
+					// Command buffers must be rebuilt after doing this
+					Renderer::Get().SetFrameBufferHasBeenResized(true);
+
+					fileDialog.ClearSelected();
+				}
 			}
 
+			// Material ----------------------
 			{
 				std::string MaterialName = "None";
 				if (t_MeshRend.m_Material)
 				{
 					MaterialName = t_MeshRend.m_Material->GetGuidString();
 				}
+				
+				const char* m = MaterialName.c_str();
+				ImGui::LabelText("Material", m, "%s");
 
-				ImGui::LabelText("Material", MaterialName.c_str());
+				// Show file browser
+				static ImGui::FileBrowser fileDialog;
+				if(ImGui::Button("Select Material"))
+				{
+					fileDialog.SetTitle("Select Material...");
+					std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Materials" };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".mat" });
+					fileDialog.Open();
+				}
+
+				fileDialog.Display();
+				if(fileDialog.HasSelected())
+				{
+					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+
+					t_MeshRend.LoadMaterialFromPath(SelectedAsset);
+					// Command buffers must be rebuilt after doing this
+					Renderer::Get().SetFrameBufferHasBeenResized(true);
+
+					fileDialog.ClearSelected();
+				}
 			}
 		}
 	}
@@ -121,6 +177,11 @@ namespace Fling
 		{
 			m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
 		}
+
+		if (m_DisplayWindowOptions)
+		{
+			DrawWindowOptions();
+		}
     }
 
 	void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
@@ -145,6 +206,18 @@ namespace Fling
 		ImGui::End();
 	}
 
+	void BaseEditor::DrawWindowOptions()
+	{
+		
+		ImGui::Begin("Window Options");
+		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
+
+		// Dropdown for windowed ,borderless, etc
+
+
+		ImGui::End();
+	}
+
 	void BaseEditor::DrawFileMenu()
 	{
 		ImGuiWindowFlags corner =
@@ -165,47 +238,104 @@ namespace Fling
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open Level...", "Ctrl+O"))
-				{
-					// If there are unsaved changes prompt for a save
+				static ImGui::FileBrowser fileDialog;
+				static bool ShouldLoadLevel = false;
+				static bool ShouldSaveLevel = false;
 
-					// #TODO Open a level 
+				if (ImGui::Button("Open Level..."))
+				{
+					ShouldLoadLevel = true;
+					ShouldSaveLevel = false;
+
+					fileDialog.SetTitle("Select Level to Load...");
+					static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".json" });
+					fileDialog.Open();
 				}
 
-				if (ImGui::MenuItem("Save Level...", "Ctrl+S"))
+				if (ImGui::Button("Save Level..."))
 				{
-					// #TODO Save the current level to it's file path
+					ShouldSaveLevel = true;
+					ShouldLoadLevel = false;
+
+					fileDialog.SetTitle("Select Save Destination...");
+					static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+					fileDialog.SetPwd(p);
+
+					fileDialog.SetTypeFilters({ ".json" });
+					fileDialog.Open();
+				}
+
+				fileDialog.Display();
+				if (fileDialog.HasSelected())
+				{
+					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+
+					if (ShouldLoadLevel)
+					{
+						OnLoadLevel(SelectedAsset);
+						ShouldLoadLevel = false;
+					}
+					else if (ShouldSaveLevel)
+					{
+						OnSaveLevel(SelectedAsset);
+						ShouldSaveLevel = false;
+					}
+
+					fileDialog.ClearSelected();
 				}
 
 				if (ImGui::MenuItem("New Level", "Ctrl+N"))
 				{
-					// If there are unsaved changes prompt for a save
-
-					// #TODO Open a new level 
+					assert(m_OwningWorld);
+					m_OwningWorld->LoadLevelFile("Levels/EmptyLevel.json");
 				}
+
 				ImGui::EndMenu();
 			}
 
 			if (ImGui::BeginMenu("Windows"))
 			{
 				ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
-				ImGui::Checkbox("Component Editor", &m_DisplayComponentEditor);
-				ImGui::Checkbox("World Outline", &m_DisplayWorldOutline);
-
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Help"))
+			if (ImGui::BeginMenu("Preferences"))
 			{
-				ImGui::MenuItem("Test A", NULL);
-				ImGui::MenuItem("Test B", NULL);
-				ImGui::MenuItem("Test C", NULL);
+				if (ImGui::Selectable("Window Options"))
+				{
+					m_DisplayWindowOptions = true;
+				}
 				ImGui::EndMenu();
 			}
+
 			ImGui::EndMenuBar();
 		}
 
 		ImGui::End();
+	}
+
+	void BaseEditor::OnLoadLevel(std::string t_FileName)
+	{
+		assert(m_OwningWorld);
+
+		// File pop up
+		F_LOG_TRACE("Load file {}", t_FileName);
+
+		m_OwningWorld->LoadLevelFile(t_FileName);
+	}
+
+	void BaseEditor::OnSaveLevel(std::string t_FileName)
+	{
+		assert(m_OwningWorld);
+
+		// File pop up to load the level file 
+		F_LOG_TRACE("Save to file {}", t_FileName);
+
+		// Overload this to add custom componented
+		m_OwningWorld->OutputLevelFile(t_FileName);
 	}
 
 	void BaseEditor::DrawGpuInfo() 

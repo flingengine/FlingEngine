@@ -5,8 +5,20 @@
 // Disable the cereal warnings
 #if FLING_LINUX
 
-#pragma GCC diagnostic ignored "-Wunused-private-field"
-#pragma GCC diagnostic ignored "-Wexceptions"
+// Clang -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#if defined(__clang__)
+
+//#pragma clang diagnostic ignored "-Wold-style-cast"
+#pragma clang diagnostic ignored "-Wexceptions"
+
+// GCC -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#elif defined(__GNUC__)
+
+//#pragma GCC diagnostic ignored "-Wunused-private-field"
+//#pragma GCC diagnostic ignored "-Wexceptions"
+
+#endif
+
 
 #elif FLING_WINDOWS
 
@@ -20,8 +32,22 @@
 // Enable the warnings again
 #if FLING_LINUX
 
-#pragma GCC diagnostic ignored "-Wunused-private-field"
-#pragma GCC diagnostic ignored "-Wexceptions"
+// Clang -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#if defined(__clang__)
+
+//#pragma clang diagnostic ignored "-Wold-style-cast"
+#pragma clang diagnostic ignored "-Wexceptions"
+
+// GCC -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#elif defined(__GNUC__)
+
+//#pragma GCC diagnostic ignored "-Wunused-private-field"
+//#pragma GCC diagnostic ignored "-Wexceptions"
+
+#endif
+
+//#pragma GCC diagnostic ignored "-Wunused-private-field"
+//#pragma GCC diagnostic ignored "-Wexceptions"
 
 #elif FLING_WINDOWS
 
