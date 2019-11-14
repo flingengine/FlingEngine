@@ -106,7 +106,7 @@ namespace Fling
 
         CreateLightBuffers();
 
-        BuildCommandBuffers(*m_Registry);
+        BindCommadBuffers(*m_Registry);
 
 #if WITH_IMGUI
         // Initialize imgui
@@ -262,7 +262,7 @@ namespace Fling
         }
     }
 
-    void Renderer::BuildCommandBuffers(entt::registry& t_Reg)
+    void Renderer::BindCommadBuffers(entt::registry& t_Reg)
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -346,7 +346,6 @@ namespace Fling
         m_SwapChain->Recreate(ChooseSwapExtent());
 
         CreateRenderPass();
-        //CreateGraphicsPipeline();
 
         m_DepthBuffer->Create();
 		if (m_MsaaSampler)
@@ -366,7 +365,7 @@ namespace Fling
             static_cast<UINT32>(m_CommandBuffers.size()), 
             m_CommandPool);
 
-        BuildCommandBuffers(*m_Registry);
+        BindCommadBuffers(*m_Registry);
         InitImgui();
     }
 

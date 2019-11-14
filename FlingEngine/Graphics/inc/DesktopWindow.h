@@ -55,8 +55,6 @@ namespace Fling
 		/** get the current GLFW window */
 		GLFWwindow* GetGlfwWindow() const { return m_Window; }
 
-
-
 	private:
 
 		GLFWwindow* m_Window = nullptr;

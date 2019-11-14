@@ -167,7 +167,7 @@ namespace Fling
         /*
         * Builds command buffer to submit to device
         */
-        void BuildCommandBuffers(entt::registry& t_Reg);
+        void BindCommadBuffers(entt::registry& t_Reg);
 
         /**
         * Create semaphores and fence objects
