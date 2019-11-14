@@ -85,24 +85,27 @@ namespace Fling
             m_CommandPool);
 
         // Load Skybox
-		m_Skybox = new Cubemap(
-			"Textures/Skybox/posx.jpg"_hs,
-			"Textures/Skybox/negx.jpg"_hs,
-			"Textures/Skybox/posy.jpg"_hs,
-			"Textures/Skybox/negy.jpg"_hs,
-			"Textures/Skybox/posz.jpg"_hs,
-			"Textures/Skybox/negz.jpg"_hs,
-			HS("Shaders/skybox/skybox.vert.spv"),
-			HS("Shaders/skybox/skybox.frag.spv"),
-			m_RenderPass,
-			m_LogicalDevice->GetVkDevice()
-		);
+		//m_Skybox = new Cubemap(
+		//	"Textures/Skybox/posx.jpg"_hs,
+		//	"Textures/Skybox/negx.jpg"_hs,
+		//	"Textures/Skybox/posy.jpg"_hs,
+		//	"Textures/Skybox/negy.jpg"_hs,
+		//	"Textures/Skybox/posz.jpg"_hs,
+		//	"Textures/Skybox/negz.jpg"_hs,
+		//	HS("Shaders/skybox/skybox.vert.spv"),
+		//	HS("Shaders/skybox/skybox.frag.spv"),
+		//	m_RenderPass,
+		//	m_LogicalDevice->GetVkDevice()
+		//);
 
-		m_Skybox->Init(
-            m_camera, 
-            m_SwapChain->GetActiveImageIndex(), 
-            m_SwapChain->GetImageViewCount(), 
-            m_MsaaSampler);
+		if (m_Skybox)
+		{
+			m_Skybox->Init(
+				m_camera,
+				m_SwapChain->GetActiveImageIndex(),
+				m_SwapChain->GetImageViewCount(),
+				m_MsaaSampler);
+		}
 
         CreateLightBuffers();
 
@@ -300,7 +303,10 @@ namespace Fling
             VkRect2D scissor = Initializers::Rect2D(m_CurrentWindow->GetWidth(), m_CurrentWindow->GetHeight(), 0, 0);
             vkCmdSetScissor(m_CommandBuffers[i], 0, 1, &scissor);
 
-            m_Skybox->BindCmdBuffer(m_CommandBuffers[i]);
+			if (m_Skybox)
+			{
+				m_Skybox->BindCmdBuffer(m_CommandBuffers[i]);
+			}
 
             ShaderProgramManager::Get().BindCmdBuffer(m_CommandBuffers[i], i);
 
@@ -480,7 +486,10 @@ namespace Fling
         }
 
         UpdateUniformBuffer(ImageIndex);
-        m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetViewMatrix());
+		if (m_Skybox)
+		{
+			m_Skybox->UpdateUniformBuffer(ImageIndex, m_camera->GetProjectionMatrix(), m_camera->GetViewMatrix());
+		}
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
