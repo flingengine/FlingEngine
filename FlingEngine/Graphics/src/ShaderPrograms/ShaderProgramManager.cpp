@@ -1,4 +1,4 @@
-#include "../inc/ShaderPrograms/ShaderProgramManager.h"
+#include "ShaderPrograms/ShaderProgramManager.h"
 #include "Renderer.h"
 
 namespace Fling
@@ -21,6 +21,12 @@ namespace Fling
             Shader::Create(HS("Shaders/CubeMapReflections_frag.spv")).get(),
         };
 
+		const std::vector<Shader*> DeferredShaders =
+		{
+			Shader::Create(HS("Shaders/Deferred_vert.spv")).get(),
+			Shader::Create(HS("Shaders/Deferred_frag.spv")).get(),
+		};
+
         //Initialize Shader Programs
         m_PBRShaderProgram = new ShaderPrograms(
             Device,
@@ -30,6 +36,8 @@ namespace Fling
             Device,
             ReflectionShaders
         );
+
+		m_DefferedProgram = new ShaderPrograms(Device, DeferredShaders);
     }
 
     void ShaderProgramManager::Shutdown()
@@ -45,6 +53,12 @@ namespace Fling
             delete m_ReflectionProgram;
             m_ReflectionProgram = nullptr;
         }
+
+		if (m_DefferedProgram)
+		{
+			delete m_DefferedProgram;
+			m_DefferedProgram = nullptr;
+		}
     }
 
     void ShaderProgramManager::PrepShutdown()
@@ -82,12 +96,22 @@ namespace Fling
     {
         m_PBRShaderProgram->InitGraphicPipeline(t_RenderPass, t_Sampler);
         m_ReflectionProgram->InitGraphicPipeline(t_RenderPass, t_Sampler);
+		m_DefferedProgram->InitGraphicPipeline(t_RenderPass, t_Sampler);
     }
 
     void ShaderProgramManager::CreateDescriptors()
     {
         auto PBRGroup = m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
         auto ReflectionGroup = m_Registry->view<MeshRenderer, entt::tag<HS("Reflection")>>();
+		auto DeferredGroup = m_Registry->view<MeshRenderer, entt::tag<HS(DeferredStr)>>();
+
+		for (auto entity : DeferredGroup)
+		{
+			auto& meshRender = DeferredGroup.get<MeshRenderer>(entity);
+			// #TODO BH Replace this with Deferred creation
+			ShaderProgramDeferred::CreateDescriptorPool(meshRender);
+			ShaderProgramDeferred::CreateDescriptorSets(meshRender, m_Lighting, m_DefferedProgram->GetDescriptorLayout());
+		}
 
         for (auto entity : PBRGroup)
         {
@@ -108,7 +132,21 @@ namespace Fling
     {
         auto PBRGroup = m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
         auto ReflectionGroup = m_Registry->view<MeshRenderer, entt::tag<HS("Reflection")>>();
-        GraphicsPipeline* pipeline;
+		auto DeferredGroup = m_Registry->view<MeshRenderer, entt::tag<HS(DeferredStr)>>();
+
+        GraphicsPipeline* pipeline = nullptr;
+
+		// Deferred ---- 
+		{
+			pipeline = m_DefferedProgram->GetPipeline().get();
+			pipeline->BindGraphicsPipeline(t_CommandBuffer);
+			for (auto entity : DeferredGroup)
+			{
+				auto& meshRender = DeferredGroup.get<MeshRenderer>(entity);
+				// #TODO BH Replace this with Deferred CmdBinding
+				ShaderProgramDeferred::BindCmdBuffer(meshRender, t_CommandBuffer, pipeline, t_CommandBufferIndex);
+			}
+		}
 
         //PBR
         {
@@ -138,6 +176,15 @@ namespace Fling
         //auto PBRGroup = m_Registry->view<Transform, MeshRenderer, entt::tag<HS("PBR")>>(); //Investigate why this doesn't work
         auto PBRview = m_Registry->view<MeshRenderer, Transform, entt::tag<HS("PBR")>>();
         auto ReflectionView = m_Registry->view<MeshRenderer, Transform, entt::tag<HS("Reflection")>>();
+		auto DeferredGroup = m_Registry->view<MeshRenderer, Transform, entt::tag<HS(DeferredStr)>>();
+
+		for (auto entity : DeferredGroup)
+		{
+			auto& meshRender = DeferredGroup.get<MeshRenderer>(entity);
+			auto& transform = DeferredGroup.get<Transform>(entity);
+
+			ShaderProgramDeferred::UpdateUniformBuffer(meshRender, transform, t_CurrentImage, t_Camera);
+		}
 
         for (auto entity : PBRview)
         {

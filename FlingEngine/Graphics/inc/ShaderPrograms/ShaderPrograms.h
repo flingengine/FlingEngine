@@ -7,16 +7,22 @@
 
 #include <vector>
 
+#define DeferredStr			"Deferred"
+#define DeferredStr_CAP		"DEFERRED"
+
+
 namespace Fling
 {
+	enum class ShaderProgramType
+	{
+		PBR = 0,
+		Reflection = 1,
+		Deferred = 2,
+		MAX_COUNT			// Max count here so that we can iterate over the programs a bit easier in the editor later
+	};
+
     class ShaderPrograms
     {
-    public:
-        enum ShaderProgramType
-        {
-            PBR = 0,
-            Reflection = 1,
-        };
     public:
         ShaderPrograms(VkDevice t_Device, const std::vector<Shader*>& t_Shaders);
         ~ShaderPrograms();
@@ -26,6 +32,8 @@ namespace Fling
         const std::shared_ptr<GraphicsPipeline> GetPipeline() const { return m_Pipeline; };
         VkDescriptorSetLayout& GetDescriptorLayout() { return m_DescriptorLayout; }
         VkPipelineLayout& GetPipelineLayout() { return m_PipelineLayout; }
+
+		static ShaderProgramType ShaderProgramFromStr(std::string& t_Str);
 
     private:
         VkDescriptorSetLayout m_DescriptorLayout;

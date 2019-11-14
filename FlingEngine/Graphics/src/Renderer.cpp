@@ -693,15 +693,14 @@ namespace Fling
         // Assign shader program type
         switch (t_MeshRend.m_Material->GetShaderProgramType())
         {
-        case ShaderPrograms::PBR:
+        case ShaderProgramType::PBR:
             t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
             break;
-        case ShaderPrograms::Reflection:
-            t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
+        case ShaderProgramType::Reflection:
+            t_Reg.assign<entt::tag<HS("Reflection")>>(t_Ent);
             break;
-        default:
-            F_LOG_ERROR("Shader program not supported");
-            assert("Shader not supported");
+		case ShaderProgramType::Deferred:
+			t_Reg.assign<entt::tag<HS(DeferredStr)>>(t_Ent);
         }
 
         ShaderProgramManager::Get().SortMeshRender();

@@ -20,19 +20,8 @@ namespace Fling
         try
         {
             // Load Shaders -------------
-            const std::string& ShaderProgram = m_JsonData["ShaderProgram"];
-            if (ShaderProgram == "PBR" || ShaderProgram == "pbr")
-            {
-                m_ShaderProgram = ShaderPrograms::ShaderProgramType::PBR;
-            }
-            else if(ShaderProgram == "Reflection" || ShaderProgram == "reflections")
-            {
-                m_ShaderProgram = ShaderPrograms::ShaderProgramType::Reflection;
-            }
-            else
-            {
-                assert("Shader type not supported! ");
-            }
+            std::string ShaderProgram = m_JsonData["ShaderProgram"];		
+			m_ShaderProgramType = ShaderPrograms::ShaderProgramFromStr(ShaderProgram);				
 
             // Load Textures -------------
             // Albedo

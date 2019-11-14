@@ -33,7 +33,7 @@ namespace Fling
 
         const PBRTextures& GetTexture() const { return m_Textures; }
 
-        const ShaderPrograms::ShaderProgramType GetShaderProgramType() { return m_ShaderProgram; }
+        ShaderProgramType GetShaderProgramType() const { return m_ShaderProgramType; }
     private:
 
         void LoadMaterial();
@@ -41,7 +41,7 @@ namespace Fling
         // Textures that this material uses
         PBRTextures m_Textures = {};
         
-        ShaderPrograms::ShaderProgramType m_ShaderProgram;
+        ShaderProgramType m_ShaderProgramType;
 
         float m_Shininiess = 0.5f;        
     };

@@ -12,7 +12,7 @@
 
 #include "ShaderPrograms/ShaderProgramPbr.h"
 #include "ShaderPrograms/ShaderProgramReflections.h"
-
+#include "ShaderPrograms/ShaderProgramDeferred.h"
 
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
@@ -49,8 +49,9 @@ namespace Fling
     private:
         void UpdateLightBuffers(UINT32 t_CurrentImage);
 
-        ShaderPrograms* m_PBRShaderProgram;
-        ShaderPrograms* m_ReflectionProgram;
+        ShaderPrograms* m_PBRShaderProgram = nullptr;
+        ShaderPrograms* m_ReflectionProgram = nullptr;
+		ShaderPrograms* m_DefferedProgram = nullptr;
 
         Lighting m_Lighting = {};
         LightingUbo m_LightingUbo = {};

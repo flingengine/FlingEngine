@@ -150,21 +150,20 @@ namespace Sandbox
             t0.SetPos(t_Pos);
         };
 
-        //AddModel(0, "Models/Cerberus.obj", "Materials/Cerberus.mat", glm::vec3(0.25f));
-
-        AddModel(0, "Models/sphere.obj", "Materials/Cobblestone.mat");
-        AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
-        AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
+        AddModel(0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+        AddModel(1, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+        AddModel(2, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+		// Ensure PBR still works
         AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
-        AddModel(4, "Models/sphere.obj", "Materials/Reflections.mat");
-
+		// Ensure reflection spheres still work
+		AddModel(4, "Models/sphere.obj", "Materials/Reflections.mat");
 
         float Width = 2.0f;
-        AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
-        AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
+		//AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
+		//AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
 		
-        AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
-        AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+		//AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+		//AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 
 
         auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
