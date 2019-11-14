@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <entt/entity/registry.hpp>
 #include "imgui_entt_entity_editor.hpp"
+#include "FileBrowser.h"
 
 namespace Fling
 {
@@ -11,6 +12,8 @@ namespace Fling
      */
     class BaseEditor
     {
+        friend class Engine;
+
     public:
         BaseEditor() = default;
         virtual ~BaseEditor() = default;
@@ -27,6 +30,10 @@ namespace Fling
 
     protected: 
 
+        virtual void OnLoadLevel(std::string t_FileName);
+
+        virtual void OnSaveLevel(std::string t_FileName);
+
 		std::array<float, 400> fpsGraph {};
 		float m_FrameTimeMin = 9999.0f;
         float m_FrameTimeMax = 0.0f;
@@ -34,6 +41,7 @@ namespace Fling
 		bool m_DisplayGPUInfo = false;
 		bool m_DisplayComponentEditor = true;
 		bool m_DisplayWorldOutline = true;
+		bool m_DisplayWindowOptions = false;
 
 		/** Component editor so that we can draw our component window */
 		entt::entity m_CompEditorEntityType = entt::null;
@@ -44,6 +52,13 @@ namespace Fling
 		void DrawGpuInfo();
 
         void DrawWorldOutline(entt::registry& t_Reg);
+
+		void DrawWindowOptions();
+
+        class World* m_OwningWorld = nullptr;
+
+        class Game* m_Game = nullptr;
+
 
         // Draw stats graph
         // Draw File Menu

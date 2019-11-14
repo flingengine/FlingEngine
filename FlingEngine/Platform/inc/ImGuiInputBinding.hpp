@@ -30,9 +30,7 @@ namespace Fling
 		};
 
 		static GlfwClientApi        g_ClientApi = GlfwClientApi_Unknown;
-		static double               g_Time = 0.0;
 		static bool                 g_MouseJustPressed[5] = { false, false, false, false, false };
-		static GLFWcursor* g_MouseCursors[ImGuiMouseCursor_COUNT] = {};
 		static bool                 g_InstalledCallbacks = false;
 
 		// Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.

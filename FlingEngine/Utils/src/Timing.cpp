@@ -28,7 +28,6 @@ namespace Fling
 
 		m_lastFrameStartTime = currentTime;
 		m_frameStartTimef = static_cast<float> ( m_lastFrameStartTime );
-
 	}
 
 	float Timing::GetDeltaTime()

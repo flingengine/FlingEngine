@@ -26,6 +26,11 @@ namespace Fling
         static const std::string& EngineSourceDir();
 
         /**
+         * @brief Convert a full absolute path to one relative to the engine assets directory. 
+         */
+        static std::string ConvertAbsolutePathToRelative(const std::string& t_FullPath);
+
+        /**
          * Makes a directory given the specified path. 
          * 
          * @param t_Dir     The directory to make
