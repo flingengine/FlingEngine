@@ -74,7 +74,7 @@ namespace Fling
          *
          * @param t_displayOn
          */
-        void BuildCommandBuffers(bool t_displayOn);
+        void BindCmdBuffers(bool t_displayOn);
         
         const VkCommandBuffer GetCommandBuffer(UINT32 t_index) const { return m_commandBuffers[t_index];  }
         const VkCommandPool GetCommandPool() const { return m_commandPool; }

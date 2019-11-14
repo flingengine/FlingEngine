@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshRenderer.h"
 
+#include <entt/entity/helper.hpp>
+
 namespace Fling
 {
 	MeshRenderer::MeshRenderer(const std::string& t_MeshPath)
@@ -51,4 +53,23 @@ namespace Fling
 		m_Material = Material::Create(entt::hashed_string{ t_MatPath.c_str() }).get();
 		assert(m_Material);
 	}
+
+    void MeshRenderer::AssignShaderProgram(
+        MeshRenderer& t_MeshRender, 
+        entt::registry& t_Registry,
+        entt::entity& t_Entity)
+    {
+        switch (t_MeshRender.m_Material->GetShaderProgramType())
+        {
+        case ShaderPrograms::PBR:
+            t_Registry.assign_or_replace<entt::tag<HS("PBR")>>(t_Entity);
+            break;
+        case ShaderPrograms::Reflection:
+            t_Registry.assign_or_replace<entt::tag<HS("Reflection")>>(t_Entity);
+            break;
+        default:
+            F_LOG_ERROR("Shader program not supported");
+            assert("Shader program not supported");
+        }
+    }
 }   // namespace Fling

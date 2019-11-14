@@ -41,7 +41,7 @@ namespace Fling
 			ImGui::InputFloat( "Intensity", &t_Light.Intensity );
 		}
 
-		void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
+		void MeshRenderer(Fling::MeshRenderer& t_MeshRend, entt::registry& t_Reg, entt::entity t_Entity)
 		{
 			// Model -----------------------
 			{
@@ -97,6 +97,7 @@ namespace Fling
 					std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Materials" };
 					fileDialog.SetPwd(p);
 
+
 					fileDialog.SetTypeFilters({ ".mat" });
 					fileDialog.Open();
 				}
@@ -107,6 +108,8 @@ namespace Fling
 					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
 					t_MeshRend.LoadMaterialFromPath(SelectedAsset);
+                    MeshRenderer::AssignShaderProgram(t_MeshRend, t_Reg, t_Entity);
+
 					// Command buffers must be rebuilt after doing this
 					Renderer::Get().SetFrameBufferHasBeenResized(true);
 
@@ -154,7 +157,7 @@ namespace Fling
 			[](entt::registry& reg, auto e)
 			{
 				auto& t = reg.get<Fling::MeshRenderer>(e);
-				Widgets::MeshRenderer(t);
+				Widgets::MeshRenderer(t, reg, e);
 			}
 		);
 	}

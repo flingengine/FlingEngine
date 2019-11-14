@@ -104,6 +104,24 @@ namespace Fling
         }
     }
 
+    void ShaderProgramManager::CreateDescriptors(MeshRenderer& t_MeshRend)
+    {
+        switch (t_MeshRend.m_Material->GetShaderProgramType())
+        {
+        case ShaderPrograms::ShaderProgramType::PBR:
+            ShaderProgramPBR::CreateDescriptorPool(t_MeshRend);
+            ShaderProgramPBR::CreateDescriptorSets(t_MeshRend, m_Lighting, m_PBRShaderProgram->GetDescriptorLayout());
+            break;
+        case ShaderPrograms::ShaderProgramType::Reflection:
+            ShaderProgramReflections::CreateDescriptorPool(t_MeshRend);
+            ShaderProgramReflections::CreateDescriptorSets(t_MeshRend, m_Lighting, m_ReflectionProgram->GetDescriptorLayout());
+            break;
+        default:
+            assert("Shader program not supported");
+            break;
+        };
+    }
+
     void ShaderProgramManager::BindCmdBuffer(VkCommandBuffer& t_CommandBuffer, UINT32 t_CommandBufferIndex)
     {
         auto PBRView= m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
@@ -173,6 +191,18 @@ namespace Fling
 
             m_Lighting.m_LightingUBOs[i]->MapMemory(bufferSize);
         }
+    }
+
+    void ShaderProgramManager::RebuildDescriptors()
+    {
+        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
+        m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+            {
+                vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
+            });
+
+        CreateDescriptors();
     }
 
     void ShaderProgramManager::UpdateLightBuffers(UINT32 t_CurrentImage)

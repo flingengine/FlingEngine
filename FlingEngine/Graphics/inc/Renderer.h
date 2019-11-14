@@ -262,6 +262,9 @@ namespace Fling
         /** Used to determine if the frame buffer has been resized or not */
         bool m_FrameBufferResized = false;
 
+        /** Used to determin if the primary command buffer should be rebuilt */
+        bool m_RebuildCommanfBuffer = false;
+
         static const int MAX_FRAMES_IN_FLIGHT;
 
         /** The alignment of the dynamic UBO on this device */

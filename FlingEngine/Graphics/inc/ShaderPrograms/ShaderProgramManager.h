@@ -38,13 +38,19 @@ namespace Fling
 
         void CreateDescriptors();
 
+        void CreateDescriptors(MeshRenderer& t_MeshRend);
+
         void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer, UINT32 t_CommandBufferIndex);
 
         void UpdateUniformBuffers(UINT32 t_CurrentImage, Camera* t_Camera);
 
         void CreateLightBuffers();
 
+        void RebuildDescriptors();
+
         entt::registry* m_Registry;
+        
+        bool m_RebuildDescriptors = false;
 
     private:
         void UpdateLightBuffers(UINT32 t_CurrentImage);

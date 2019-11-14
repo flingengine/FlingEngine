@@ -5,6 +5,8 @@
 #include "Model.h"
 #include "Buffer.h"
 
+#include <entt/entity/registry.hpp>
+
 namespace Fling
 {
     class MeshRenderer
@@ -47,6 +49,11 @@ namespace Fling
 		void LoadModelFromPath(const std::string t_MeshPath);
 
 		void LoadMaterialFromPath(const std::string t_MatPath);
+
+        static void AssignShaderProgram(
+            MeshRenderer& t_MeshRender, 
+            entt::registry& t_registry, 
+            entt::entity& t_Entity);
     };
 
 	/** Serialization to an Archive */

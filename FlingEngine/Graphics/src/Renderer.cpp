@@ -371,7 +371,7 @@ namespace Fling
 
     void Renderer::CreateDescriptors()
     {
-        ShaderProgramManager::Get().CreateDescriptors();
+        //ShaderProgramManager::Get().CreateDescriptors();
     }
 
     // Swapchain support --------------------------------------
@@ -464,7 +464,7 @@ namespace Fling
             m_Editor->Draw(*m_Registry, DeltaTime);
 #endif
             // Build the actual ImGUI command buffers
-            m_flingImgui->BuildCommandBuffers(m_DrawImgui);
+            m_flingImgui->BindCmdBuffers(m_DrawImgui);
         }  
 #endif
         // Check if the swap chain needs to be recreated
@@ -524,6 +524,12 @@ namespace Fling
             F_LOG_FATAL("Failed to present swap chain image!");
         }
 
+        if (m_RebuildCommanfBuffer)
+        {
+            vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, 0);
+            BindCommadBuffers(t_Reg);
+            m_RebuildCommanfBuffer = false;
+        }
 
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
@@ -696,27 +702,18 @@ namespace Fling
 			t_MeshRend.m_Material = m_DefaultMat.get();
 		}
 
-		switch (t_MeshRend.m_Material->GetShaderProgramType())
-		{
-		case ShaderPrograms::PBR:
-			t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
-			break;
-		case ShaderPrograms::Reflection:
-			t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
-			break;
-		default:
-			F_LOG_ERROR("Shader program not supported");
-			assert("Shader not supported");
-		}
-		
+        MeshRenderer::AssignShaderProgram(t_MeshRend, t_Reg, t_Ent);
+        ShaderProgramManager::Get().CreateDescriptors(t_MeshRend);
+
+        m_RebuildCommanfBuffer = true;
         
         ShaderProgramManager::Get().SortMeshRender();
-
     }
 
 	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
 	{
 		SetFrameBufferHasBeenResized(true);
+        ShaderProgramManager::Get().SortMeshRender();
 	}
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
