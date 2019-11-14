@@ -691,19 +691,26 @@ namespace Fling
 		SetFrameBufferHasBeenResized(true);
 
         // Assign shader program type
-        switch (t_MeshRend.m_Material->GetShaderProgramType())
-        {
-        case ShaderPrograms::PBR:
-            t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
-            break;
-        case ShaderPrograms::Reflection:
-            t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
-            break;
-        default:
-            F_LOG_ERROR("Shader program not supported");
-            assert("Shader not supported");
-        }
+		if (!t_MeshRend.m_Material)
+		{
+			F_LOG_WARN("Mesh renderer has no material! Default being assigned.");
+			t_MeshRend.m_Material = m_DefaultMat.get();
+		}
 
+		switch (t_MeshRend.m_Material->GetShaderProgramType())
+		{
+		case ShaderPrograms::PBR:
+			t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
+			break;
+		case ShaderPrograms::Reflection:
+			t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
+			break;
+		default:
+			F_LOG_ERROR("Shader program not supported");
+			assert("Shader not supported");
+		}
+		
+        
         ShaderProgramManager::Get().SortMeshRender();
     }
 
@@ -716,6 +723,13 @@ namespace Fling
     {
         F_LOG_TRACE("Directional Light added!");
         ++m_Lighting.m_CurrentDirLights;
+
+		// Ensure that we have a transform component before adding a light
+		if (!t_Reg.has<Transform>(t_Ent))
+		{
+			t_Reg.assign<Transform>(t_Ent);
+		}
+
         if(m_Lighting.m_CurrentDirLights > Lighting::MaxDirectionalLights)
         {
             F_LOG_WARN("You have enterer more then the max support directional lights of Fling!");

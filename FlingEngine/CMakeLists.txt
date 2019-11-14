@@ -81,6 +81,20 @@ if ( NOT WIN32 )
     message( STATUS "Added pthread!" )
 endif()
 
+# we need to link filesystem on GCC 8+
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+    set( LINK_LIBS ${LINK_LIBS} stdc++fs )
+    message( STATUS "Added filesytem link!" )
+endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set( LINK_LIBS ${LINK_LIBS} stdc++fs )
+    message( STATUS "Added filesytem link (Clang)!" )
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set( LINK_LIBS ${LINK_LIBS} stdc++fs )
+    message( STATUS "Added filesytem link (GNU)!" )
+endif()
+
 message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
 ################# Complier Options ############

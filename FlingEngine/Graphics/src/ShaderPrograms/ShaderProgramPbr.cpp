@@ -119,6 +119,11 @@ namespace Fling
             UINT32 t_CommandBufferIndex)
         {
             Fling::Model* Model = t_MeshRend.m_Model;
+			if (!Model)
+			{
+				return;
+			}
+
             VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
             VkDeviceSize offsets[1] = { 0 };
 
