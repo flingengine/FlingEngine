@@ -74,8 +74,6 @@ namespace Fling
 
         CreateFrameBuffers();
 
-        CreateDescriptors();
-
         assert(m_Registry);
     
         m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
@@ -354,8 +352,6 @@ namespace Fling
 		}
 
         CreateFrameBuffers();
-
-        CreateDescriptors();
 
         assert(m_Registry);
 
@@ -705,15 +701,14 @@ namespace Fling
         MeshRenderer::AssignShaderProgram(t_MeshRend, t_Reg, t_Ent);
         ShaderProgramManager::Get().CreateDescriptors(t_MeshRend);
 
-        m_RebuildCommanfBuffer = true;
-        
         ShaderProgramManager::Get().SortMeshRender();
+        m_RebuildCommanfBuffer = true;        
     }
 
 	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
 	{
-		SetFrameBufferHasBeenResized(true);
         ShaderProgramManager::Get().SortMeshRender();
+        m_RebuildCommanfBuffer = true;
 	}
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
