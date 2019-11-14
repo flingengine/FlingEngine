@@ -691,19 +691,26 @@ namespace Fling
 		SetFrameBufferHasBeenResized(true);
 
         // Assign shader program type
-        switch (t_MeshRend.m_Material->GetShaderProgramType())
-        {
-        case ShaderPrograms::PBR:
-            t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
-            break;
-        case ShaderPrograms::Reflection:
-            t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
-            break;
-        default:
-            F_LOG_ERROR("Shader program not supported");
-            assert("Shader not supported");
-        }
+		if (!t_MeshRend.m_Material)
+		{
+			F_LOG_WARN("Mesh renderer has no material! Default being assigned.");
+			t_MeshRend.m_Material = m_DefaultMat.get();
+		}
 
+		switch (t_MeshRend.m_Material->GetShaderProgramType())
+		{
+		case ShaderPrograms::PBR:
+			t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
+			break;
+		case ShaderPrograms::Reflection:
+			t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
+			break;
+		default:
+			F_LOG_ERROR("Shader program not supported");
+			assert("Shader not supported");
+		}
+		
+        
         ShaderProgramManager::Get().SortMeshRender();
     }
 
