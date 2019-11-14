@@ -35,6 +35,8 @@ namespace Sandbox
 
 		void LightingTest(entt::registry& t_Reg);
 
+		void ScriptingTest(entt::registry& t_Reg);
+
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
 

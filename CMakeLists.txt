@@ -56,6 +56,7 @@ message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
 include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
 include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
+include(FindLua53)
 
 message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 
@@ -112,7 +113,8 @@ include_directories( external/stb )
 include_directories( external/tinyobjloader )
 include_directories( external/cereal/include )
 include_directories( external/sol2/include )
-include_directories( external/lua/include )
+include_directories( external/lua53/include )
+include_directories( external/lua53/lib )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

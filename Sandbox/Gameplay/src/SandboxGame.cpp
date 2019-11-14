@@ -6,6 +6,7 @@
 #include "MeshRenderer.h"
 #include "Renderer.h"
 #include "Stats.h"
+#include "ScriptComponent.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "Random.h"
@@ -41,6 +42,7 @@ namespace Sandbox
         LightingTest(t_Reg);
         //OnLoadInitated();
         //GenerateTestMeshes(t_Reg);
+		ScriptingTest(t_Reg);
 
         SetWindowIcon();
     }
@@ -152,6 +154,14 @@ namespace Sandbox
         // Directional Lights
         AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
     }
+
+	void Game::ScriptingTest(entt::registry& t_Reg)
+	{
+		entt::entity e0 = t_Reg.create();
+		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
+
+		LuaManager::Get().Start();
+	}
 
     void Game::GenerateTestMeshes(entt::registry& t_Reg)
     {

@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "File.h"
+#include "LuaManager.h"
 
 namespace Fling
 {
@@ -12,5 +13,7 @@ namespace Fling
 		~ScriptComponent();
 	private:
 		Guid m_ScriptGUID;
+
+		LuaManager* m_luaManager = nullptr;
 	};
 }

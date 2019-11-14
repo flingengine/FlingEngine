@@ -2,20 +2,33 @@
 
 #include "Platform.h"
 #include "Singleton.hpp"
-#include "ScriptComponent.h"
+#include "File.h"
 #include <sol/sol.hpp>
 
 namespace Fling
 {
+	struct LuaBehaviors
+	{
+		sol::state LuaState;
+		sol::function Tick = sol::nil;
+		sol::function Start = sol::nil;
+	};
+
 	class LuaManager : public Singleton<LuaManager>
 	{
 	public:
-		virtual void Init() override;
+		void Init() override;
 
-		virtual void Shutdown() override;
+		void Shutdown() override;
 
-		void RegisterScript(const std::string& t_File);
+		void RegisterScript(entt::hashed_string t_FileGUID);
+
+		void Start();
 	private:
-		std::unordered_map<std::string, ScriptComponent> m_LuaComponents;
+
+		void LoadScript(File* t_File, LuaBehaviors* t_Behavior);
+		void AddCallback(const sol::state& t_LuaState, const char* t_FunctionName, sol::function* t_Callbacks);
+		void TestCallback();
+		std::unordered_map<File*, LuaBehaviors> m_LuaComponents;
 	};
 }
