@@ -704,6 +704,7 @@ namespace Fling
         }
 
         ShaderProgramManager::Get().SortMeshRender();
+
     }
 
 	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)

@@ -86,19 +86,19 @@ namespace Fling
 
     void ShaderProgramManager::CreateDescriptors()
     {
-        auto PBRGroup = m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
-        auto ReflectionGroup = m_Registry->view<MeshRenderer, entt::tag<HS("Reflection")>>();
+        auto PBRView = m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
+        auto ReflectionView = m_Registry->view<MeshRenderer, entt::tag<HS("Reflection")>>();
 
-        for (auto entity : PBRGroup)
+        for (auto entity : PBRView)
         {
-            auto& meshRender = PBRGroup.get<MeshRenderer>(entity);
+            auto& meshRender = PBRView.get<MeshRenderer>(entity);
             ShaderProgramPBR::CreateDescriptorPool(meshRender);
             ShaderProgramPBR::CreateDescriptorSets(meshRender, m_Lighting, m_PBRShaderProgram->GetDescriptorLayout());
         }
 
-        for (auto entity : ReflectionGroup)
+        for (auto entity : ReflectionView)
         {
-            auto& meshRender = ReflectionGroup.get<MeshRenderer>(entity);
+            auto& meshRender = ReflectionView.get<MeshRenderer>(entity);
             ShaderProgramReflections::CreateDescriptorPool(meshRender);
             ShaderProgramReflections::CreateDescriptorSets(meshRender, m_Lighting, m_ReflectionProgram->GetDescriptorLayout());
         }
@@ -106,17 +106,17 @@ namespace Fling
 
     void ShaderProgramManager::BindCmdBuffer(VkCommandBuffer& t_CommandBuffer, UINT32 t_CommandBufferIndex)
     {
-        auto PBRGroup = m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
-        auto ReflectionGroup = m_Registry->view<MeshRenderer, entt::tag<HS("Reflection")>>();
+        auto PBRView= m_Registry->view<MeshRenderer, entt::tag<HS("PBR")>>();
+        auto ReflectionView= m_Registry->view<MeshRenderer, entt::tag<HS("Reflection")>>();
         GraphicsPipeline* pipeline;
 
         //PBR
         {
             pipeline = m_PBRShaderProgram->GetPipeline().get();
             pipeline->BindGraphicsPipeline(t_CommandBuffer);
-            for (auto entity : PBRGroup)
+            for (auto entity : PBRView)
             {
-                auto& meshRender = PBRGroup.get<MeshRenderer>(entity);
+                auto& meshRender = PBRView.get<MeshRenderer>(entity);
                 ShaderProgramPBR::BindCmdBuffer(meshRender, t_CommandBuffer, pipeline, t_CommandBufferIndex);
             }
         }
@@ -125,9 +125,9 @@ namespace Fling
         {
             pipeline = m_ReflectionProgram->GetPipeline().get();
             pipeline->BindGraphicsPipeline(t_CommandBuffer);
-            for (auto entity : ReflectionGroup)
+            for (auto entity : ReflectionView)
             {
-                auto& meshRender = ReflectionGroup.get<MeshRenderer>(entity);
+                auto& meshRender = ReflectionView.get<MeshRenderer>(entity);
                 ShaderProgramReflections::BindCmdBuffer(meshRender, t_CommandBuffer, pipeline, t_CommandBufferIndex);
             }
         }
