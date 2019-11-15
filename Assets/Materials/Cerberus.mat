@@ -1,7 +1,7 @@
 {
     "name" : "Cerberus Material",
 
-    "ShaderProgram: PBR",
+    "ShaderProgram": "PBR",
     
     "albedo" : "Textures/Cerberus/Cerberus_A.png",
     "normal" : "Textures/Cerberus/Cerberus_N.png",
