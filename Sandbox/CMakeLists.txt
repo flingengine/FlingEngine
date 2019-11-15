@@ -71,7 +71,9 @@ add_executable( ${PROJECT_NAME} ${_source_list} )
 # Link libs
 target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		"${FLING_ROOT_DIR}/external/lua53/lib/lua53.dll"
-		$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+if( MSVC )
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${FLING_ROOT_DIR}/external/lua53/lib/lua53.dll"
+			$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+endif()
