@@ -63,7 +63,7 @@ namespace Sandbox
             glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
             // For each active mesh renderer
-            t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
+            t_Reg.view<Rotator, Transform>().each([&](Rotator& t_MeshRend, Transform& t_Trans)
                 {
                     const glm::vec3& curRot = t_Trans.GetRotation();
                     t_Trans.SetRotation(curRot + RotOffset);
@@ -88,12 +88,18 @@ namespace Sandbox
 
     void Game::LightingTest(entt::registry& t_Reg)
     {
-        auto AddModel = [&](UINT32 t_Itr, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f))
+        auto AddModel = [&](INT32 t_Itr, 
+			const std::string& t_Model,
+			const std::string& t_Mat, 
+			const glm::vec3 t_Scale = glm::vec3(1.0f), 
+			const glm::vec3 t_Rot = glm::vec3(0.0f))
         {
             entt::entity e0 = t_Reg.create();
             t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
+			t_Reg.assign<Rotator>(e0);
             Transform& t0 = t_Reg.assign<Transform>(e0);
             t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
+			t0.SetRotation(t_Rot);
             t0.SetScale(t_Scale);
         };
 
@@ -127,6 +133,21 @@ namespace Sandbox
         AddModel(0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
         AddModel(1, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
         AddModel(2, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+
+		auto AddFloor = [&](
+			const std::string& t_Model,
+			const std::string& t_Mat,
+			const glm::vec3 t_Scale = glm::vec3(1.0f)
+			)
+		{
+			entt::entity e0 = t_Reg.create();
+			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
+			Transform& t0 = t_Reg.assign<Transform>(e0);
+			t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
+			t0.SetScale(t_Scale);
+		};
+
+		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(30.0f, 0.1f, 30.0f));
 
 		// Ensure PBR still works
         AddModel(3, "Models/sphere.obj", "Materials/Bronze.mat");

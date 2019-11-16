@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-precision highp float;
-
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
 layout (input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;
 layout (input_attachment_index = 2, binding = 2) uniform subpassInput i_normal;
@@ -37,8 +35,8 @@ void main()
 {
 	// Retrieve position from depth
 	vec4 clip = vec4(gl_FragCoord.xy * global_uniform.inv_resolution * 2.0 - 1.0, subpassLoad(i_depth).x, 1.0);
-	highp vec4 world_w = global_uniform.inv_view_proj * clip;
-	highp vec3 pos = world_w.xyz / world_w.w;
+	vec4 world_w = global_uniform.inv_view_proj * clip;
+	vec3 pos = world_w.xyz / world_w.w;
 
 	vec4 albedo = subpassLoad(i_albedo);
 	// Transform from [0,1] to [-1,1]
