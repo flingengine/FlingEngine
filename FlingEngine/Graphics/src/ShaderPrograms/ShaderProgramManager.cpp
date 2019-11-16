@@ -28,16 +28,16 @@ namespace Fling
 		};
 
         //Initialize Shader Programs
-        m_PBRShaderProgram = new ShaderPrograms(
+        m_PBRShaderProgram = new ShaderProgram(
             Device,
             PBRShaders);
 
-        m_ReflectionProgram = new ShaderPrograms(
+        m_ReflectionProgram = new ShaderProgram(
             Device,
             ReflectionShaders
         );
 
-		m_DefferedProgram = new ShaderPrograms(Device, DeferredShaders);
+		m_DefferedProgram = new ShaderProgram(Device, DeferredShaders);
     }
 
     void ShaderProgramManager::Shutdown()
@@ -94,6 +94,7 @@ namespace Fling
 
     void ShaderProgramManager::InitGraphicsPipeline(VkRenderPass t_RenderPass, Multisampler* t_Sampler)
     {
+		// #TODO  Break graphics pipeline out into each type of shader program
         m_PBRShaderProgram->InitGraphicPipeline(t_RenderPass, t_Sampler);
         m_ReflectionProgram->InitGraphicPipeline(t_RenderPass, t_Sampler);
 		m_DefferedProgram->InitGraphicPipeline(t_RenderPass, t_Sampler);

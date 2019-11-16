@@ -21,11 +21,11 @@ namespace Fling
 		MAX_COUNT			// Max count here so that we can iterate over the programs a bit easier in the editor later
 	};
 
-    class ShaderPrograms
+    class ShaderProgram
     {
     public:
-        ShaderPrograms(VkDevice t_Device, const std::vector<Shader*>& t_Shaders);
-        ~ShaderPrograms();
+        ShaderProgram(VkDevice t_Device, const std::vector<Shader*>& t_Shaders);
+        ~ShaderProgram();
 
         void InitGraphicPipeline(VkRenderPass t_Renderpass, Multisampler* t_Sampler);
 

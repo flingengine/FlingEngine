@@ -21,7 +21,7 @@ namespace Fling
         {
             // Load Shaders -------------
             std::string ShaderProgram = m_JsonData["ShaderProgram"];		
-			m_ShaderProgramType = ShaderPrograms::ShaderProgramFromStr(ShaderProgram);				
+			m_ShaderProgramType = ShaderProgram::ShaderProgramFromStr(ShaderProgram);				
 
             // Load Textures -------------
             // Albedo

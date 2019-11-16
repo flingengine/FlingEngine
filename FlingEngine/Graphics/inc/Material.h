@@ -3,7 +3,7 @@
 #include "Shader.h"
 #include "Image.h"
 #include "JsonFile.h"
-#include "ShaderPrograms/ShaderPrograms.h"
+#include "ShaderPrograms/ShaderProgram.h"
 
 namespace Fling
 {

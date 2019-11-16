@@ -1,6 +1,8 @@
 #pragma once
 
 #include "FlingVulkan.h"
+#include "FlingTypes.h"
+#include <vector>
 
 namespace Fling
 {
@@ -12,11 +14,11 @@ namespace Fling
         VkImageView View;
         VkFormat Format;
 
-        void Release()
+        void Release(VkDevice device)
         {
-            vkDestroyImage(device, image, nullptr);
-			vkDestroyImageView(device, view, nullptr);
-			vkFreeMemory(device, mem, nullptr);  
+            vkDestroyImage(device, Image, nullptr);
+			vkDestroyImageView(device, View, nullptr);
+			vkFreeMemory(device, Mem, nullptr);  
         }
     };
 
@@ -48,6 +50,5 @@ namespace Fling
 		std::vector<FrameBufferAttachment> m_Attachments;
 		
         VkRenderPass renderPass;
-	
     };
 }   // namespace Fling

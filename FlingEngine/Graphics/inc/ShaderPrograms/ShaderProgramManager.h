@@ -2,7 +2,7 @@
 
 #include "FlingVulkan.h"
 #include "Shader.h"
-#include "ShaderPrograms/ShaderPrograms.h"
+#include "ShaderPrograms/ShaderProgram.h"
 #include "Singleton.hpp"
 #include "Camera.h"
 #include "Sampler.hpp"
@@ -49,9 +49,9 @@ namespace Fling
     private:
         void UpdateLightBuffers(UINT32 t_CurrentImage);
 
-        ShaderPrograms* m_PBRShaderProgram = nullptr;
-        ShaderPrograms* m_ReflectionProgram = nullptr;
-		ShaderPrograms* m_DefferedProgram = nullptr;
+        ShaderProgram* m_PBRShaderProgram = nullptr;
+        ShaderProgram* m_ReflectionProgram = nullptr;
+		ShaderProgram* m_DefferedProgram = nullptr;
 
         Lighting m_Lighting = {};
         LightingUbo m_LightingUbo = {};
