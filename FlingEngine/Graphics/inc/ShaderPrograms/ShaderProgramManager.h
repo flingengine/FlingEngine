@@ -48,6 +48,10 @@ namespace Fling
 
         void RebuildDescriptors();
 
+        void RebuildDescriptors(MeshRenderer& t_MeshRend);
+
+        void ReleaseMeshRenderer(MeshRenderer& t_MeshRend);
+
         entt::registry* m_Registry;
         
         bool m_RebuildDescriptors = false;
@@ -60,6 +64,9 @@ namespace Fling
 
         Lighting m_Lighting = {};
         LightingUbo m_LightingUbo = {};
+
+        // Pool to hold unused meshrenderer that been deleted or changed
+        std::vector<MeshRenderer> m_DirtyMeshRenderers;
     };
 
 }   // namespace Fling

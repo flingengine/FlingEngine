@@ -365,11 +365,6 @@ namespace Fling
         InitImgui();
     }
 
-    void Renderer::CreateDescriptors()
-    {
-        //ShaderProgramManager::Get().CreateDescriptors();
-    }
-
     // Swapchain support --------------------------------------
 
     VkExtent2D Renderer::ChooseSwapExtent()
@@ -675,6 +670,10 @@ namespace Fling
 
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
 		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
+
+        m_Registry->on_replace<entt::tag<HS("PBR")>>().connect<&Renderer::MeshRendererMaterialChange>(*this);
+        m_Registry->on_replace<entt::tag<HS("Reflection")>>().connect<&Renderer::MeshRendererMaterialChange>(*this);
+
     }
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
@@ -707,9 +706,19 @@ namespace Fling
 
 	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
 	{
+        //Release meshrenderer resources
+        MeshRenderer& t_MeshRend = t_Reg.get<MeshRenderer>(t_Ent);
+        ShaderProgramManager::Get().ReleaseMeshRenderer(t_MeshRend);
+
         ShaderProgramManager::Get().SortMeshRender();
         m_RebuildCommanfBuffer = true;
 	}
+
+    void Renderer::MeshRendererMaterialChange(entt::entity t_Ent, entt::registry& t_Reg)
+    {
+        MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
+        ShaderProgramManager::Get().RebuildDescriptors(m);
+    }
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {

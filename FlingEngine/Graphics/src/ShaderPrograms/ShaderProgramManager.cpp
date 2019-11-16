@@ -34,6 +34,8 @@ namespace Fling
 
     void ShaderProgramManager::Shutdown()
     {
+        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
         if (m_PBRShaderProgram)
         {
             delete m_PBRShaderProgram;
@@ -45,17 +47,23 @@ namespace Fling
             delete m_ReflectionProgram;
             m_ReflectionProgram = nullptr;
         }
+
+        for (MeshRenderer& meshRender : m_DirtyMeshRenderers)
+        {
+            meshRender.Release();
+            vkDestroyDescriptorPool(Device, meshRender.m_DescriptorPool, nullptr);
+        }
     }
 
     void ShaderProgramManager::PrepShutdown()
     {
         VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
-        m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-            {
-                t_MeshRend.Release();
-                vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
-            });
+        //m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+        //    {
+        //        t_MeshRend.Release();
+        //        vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
+        //    });
 
         // Delete light buffers
         for (size_t i = 0; i < m_Lighting.m_LightingUBOs.size(); i++)
@@ -203,6 +211,18 @@ namespace Fling
             });
 
         CreateDescriptors();
+    }
+
+    void ShaderProgramManager::RebuildDescriptors(MeshRenderer& t_MeshRend)
+    {
+        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+        vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
+        CreateDescriptors(t_MeshRend);
+    }
+
+    void ShaderProgramManager::ReleaseMeshRenderer(MeshRenderer& t_MeshRend)
+    {
+        m_DirtyMeshRenderers.emplace_back(std::move(t_MeshRend));
     }
 
     void ShaderProgramManager::UpdateLightBuffers(UINT32 t_CurrentImage)
