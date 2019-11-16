@@ -3,7 +3,7 @@
 #include "FlingVulkan.h"
 #include "FlingTypes.h"
 #include "File.h"
-#include "Image.h"
+#include "Texture.h"
 #include "Buffer.h"
 
 #define VK_CHECK_RESULT(f)															\
@@ -171,7 +171,7 @@ namespace Fling
             VkDeviceSize t_Offset = 0);
 
         VkWriteDescriptorSet WriteDescriptorSetImage(
-            Image* t_Image,
+            Texture* t_Image,
             VkDescriptorSet t_DstSet,
             UINT32 t_Binding,
             UINT32 t_Set = 0,

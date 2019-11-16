@@ -700,7 +700,7 @@ namespace Fling
             return uniformSet;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSetImage(Image* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        VkWriteDescriptorSet WriteDescriptorSetImage(Texture* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
         {
             VkDescriptorImageInfo* imageInfo = t_Image->GetDescriptorInfo();
             // Create sampler information

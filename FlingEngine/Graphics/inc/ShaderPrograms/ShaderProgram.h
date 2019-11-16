@@ -2,7 +2,7 @@
 #include "FlingVulkan.h"
 #include "GraphicsPipeline.h"
 #include "Buffer.h"
-#include "Image.h"
+#include "Texture.h"
 #include "MultiSampler.h"
 
 #include <vector>

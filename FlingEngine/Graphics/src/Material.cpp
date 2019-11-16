@@ -26,19 +26,19 @@ namespace Fling
             // Load Textures -------------
             // Albedo
             const std::string& AlbedoPath = m_JsonData["albedo"];
-            m_Textures.m_AlbedoTexture = Image::Create(HS(AlbedoPath.c_str())).get();
+            m_Textures.m_AlbedoTexture = Texture::Create(HS(AlbedoPath.c_str())).get();
 
             // Normal
             const std::string& NormalPath = m_JsonData["normal"];
-            m_Textures.m_NormalTexture = Image::Create(HS(NormalPath.c_str())).get();
+            m_Textures.m_NormalTexture = Texture::Create(HS(NormalPath.c_str())).get();
 
             // Metal
             const std::string& MetalPath = m_JsonData["metal"];
-            m_Textures.m_MetalTexture = Image::Create(HS(MetalPath.c_str())).get();
+            m_Textures.m_MetalTexture = Texture::Create(HS(MetalPath.c_str())).get();
 
             // Rough
             const std::string& RoughPath = m_JsonData["rough"];
-            m_Textures.m_RoughnessTexture = Image::Create(HS(RoughPath.c_str())).get();
+            m_Textures.m_RoughnessTexture = Texture::Create(HS(RoughPath.c_str())).get();
         }
         catch (std::exception& e)
         {

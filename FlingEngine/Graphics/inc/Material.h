@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Shader.h"
-#include "Image.h"
+#include "Texture.h"
 #include "JsonFile.h"
 #include "ShaderPrograms/ShaderProgram.h"
 
@@ -12,10 +12,10 @@ namespace Fling
     */
     struct PBRTextures
     {
-        Image* m_AlbedoTexture        = nullptr;
-        Image* m_NormalTexture        = nullptr;
-        Image* m_RoughnessTexture    = nullptr;
-        Image* m_MetalTexture        = nullptr;
+        Texture* m_AlbedoTexture        = nullptr;
+        Texture* m_NormalTexture        = nullptr;
+        Texture* m_RoughnessTexture    = nullptr;
+        Texture* m_MetalTexture        = nullptr;
     };
 
     /**

@@ -117,7 +117,7 @@ namespace Fling
 	void DesktopWindow::SetWindowIcon(Guid t_ID)
 	{
 		// Load an image 
-		std::shared_ptr<Image> Icon = Image::Create(t_ID);
+		std::shared_ptr<Texture> Icon = Texture::Create(t_ID);
 		assert(Icon);
 
 		// Set the Pixel data for this image

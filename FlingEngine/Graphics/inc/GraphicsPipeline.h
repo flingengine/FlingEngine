@@ -46,8 +46,6 @@ namespace Fling
     private:
         void CreateAttributes(Multisampler* t_Sampler);
         
-        std::vector<VkShaderModule> m_Modules;
-        std::vector<VkPipelineShaderStageCreateInfo> m_Stages;
         std::vector<Shader*> m_Shaders;
 
         VkDevice m_Device;

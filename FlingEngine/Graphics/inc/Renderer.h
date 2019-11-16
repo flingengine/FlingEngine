@@ -264,9 +264,6 @@ namespace Fling
 
         static const int MAX_FRAMES_IN_FLIGHT;
 
-        /** The alignment of the dynamic UBO on this device */
-        size_t m_DynamicAlignment;
-
         /**
         * The frame buffers for the swap chain
         * @see Renderer::CreateFrameBuffers
@@ -287,7 +284,7 @@ namespace Fling
 
         // Lighting -----------------------
         Lighting m_Lighting = {};
-		std::shared_ptr<Image> m_BRDFLookupTexture;
+		std::shared_ptr<Texture> m_BRDFLookupTexture;
    
 
         LightingUbo m_LightingUBO = {}; 

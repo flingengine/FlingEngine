@@ -102,14 +102,14 @@ namespace Fling
         Guid t_PosZ_ID, 
         Guid t_NegZ_ID)
     {
-        std::array<std::shared_ptr<Image>, 6> images =
+        std::array<std::shared_ptr<Texture>, 6> images =
         {
-            ResourceManager::LoadResource<Image>(t_PosX_ID),
-            ResourceManager::LoadResource<Image>(t_NegX_ID),
-            ResourceManager::LoadResource<Image>(t_PosY_ID),
-            ResourceManager::LoadResource<Image>(t_NegY_ID),
-            ResourceManager::LoadResource<Image>(t_PosZ_ID),
-            ResourceManager::LoadResource<Image>(t_NegZ_ID),
+            ResourceManager::LoadResource<Texture>(t_PosX_ID),
+            ResourceManager::LoadResource<Texture>(t_NegX_ID),
+            ResourceManager::LoadResource<Texture>(t_PosY_ID),
+            ResourceManager::LoadResource<Texture>(t_NegY_ID),
+            ResourceManager::LoadResource<Texture>(t_PosZ_ID),
+            ResourceManager::LoadResource<Texture>(t_NegZ_ID),
         };
 
         m_ImageSize = images[0]->GetImageSize() * 6;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Model.h"
-#include "Image.h"
+#include "Texture.h"
 #include "FlingVulkan.h"
 #include "Buffer.h"
 #include "FlingTypes.h"
@@ -84,7 +84,7 @@ namespace Fling
 
             void SetupDescriptors();
 
-            std::vector<Image> m_cubeMapImages;
+            std::vector<Texture> m_cubeMapImages;
             std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
 
             VkImage m_Image;

@@ -23,8 +23,8 @@ namespace Fling
 
 		const std::vector<Shader*> DeferredShaders =
 		{
-			Shader::Create(HS("Shaders/Deferred_vert.spv")).get(),
-			Shader::Create(HS("Shaders/Deferred_frag.spv")).get(),
+			Shader::Create(HS("Shaders/Deferred/geometry_vert.spv")).get(),
+			Shader::Create(HS("Shaders/Deferred/geometry_frag.spv")).get(),
 		};
 
         //Initialize Shader Programs

@@ -6,6 +6,11 @@ namespace Fling
 {
     namespace ShaderProgramDeferred
     {
+		struct DeferredData
+		{
+			GBuffer m_GBuffer = {};
+		} deferred;
+
         void CreateDescriptorSets(
             MeshRenderer& t_MeshRend,
             Lighting& m_Lighting,
@@ -43,41 +48,41 @@ namespace Fling
                 VkWriteDescriptorSet albedoSet = Initializers::WriteDescriptorSetImage(
                     t_MeshRend.m_Material->GetTexture().m_AlbedoTexture,
                     t_MeshRend.m_DescriptorSets[i],
-                    2);
+                    1);
 
-                VkWriteDescriptorSet normalMapSet = Initializers::WriteDescriptorSetImage(
-                    t_MeshRend.m_Material->GetTexture().m_NormalTexture,
-                    t_MeshRend.m_DescriptorSets[i],
-                    3);
+				/*VkWriteDescriptorSet normalMapSet = Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_Material->GetTexture().m_NormalTexture,
+					t_MeshRend.m_DescriptorSets[i],
+					3);
 
-                VkWriteDescriptorSet metallicSet = Initializers::WriteDescriptorSetImage(
-                    t_MeshRend.m_Material->GetTexture().m_MetalTexture,
-                    t_MeshRend.m_DescriptorSets[i],
-                    4);
+				VkWriteDescriptorSet metallicSet = Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_Material->GetTexture().m_MetalTexture,
+					t_MeshRend.m_DescriptorSets[i],
+					4);
 
-                VkWriteDescriptorSet roughnessSet = Initializers::WriteDescriptorSetImage(
-                    t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
-                    t_MeshRend.m_DescriptorSets[i],
-                    5);
+				VkWriteDescriptorSet roughnessSet = Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
+					t_MeshRend.m_DescriptorSets[i],
+					5);
 
-                VkWriteDescriptorSet BRDFLookupSet = Initializers::WriteDescriptorSetImage(
-                    t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
-                    t_MeshRend.m_DescriptorSets[i],
-                    7);
+				VkWriteDescriptorSet lightUniformSet = Initializers::WriteDescriptorSetUniform(
+					m_Lighting.m_LightingUBOs[i],
+					t_MeshRend.m_DescriptorSets[i],
+					6
+				);
 
-                VkWriteDescriptorSet lightUniformSet = Initializers::WriteDescriptorSetUniform(
-                    m_Lighting.m_LightingUBOs[i],
-                    t_MeshRend.m_DescriptorSets[i],
-                    6
-                );
+				VkWriteDescriptorSet BRDFLookupSet = Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
+					t_MeshRend.m_DescriptorSets[i],
+					7);*/
 
                 descriptorWrites.push_back(uniformSet);
                 descriptorWrites.push_back(albedoSet);
-                descriptorWrites.push_back(normalMapSet);
-                descriptorWrites.push_back(metallicSet);
-                descriptorWrites.push_back(roughnessSet);
-                descriptorWrites.push_back(BRDFLookupSet);
-                descriptorWrites.push_back(lightUniformSet);
+				/*descriptorWrites.push_back(normalMapSet);
+				descriptorWrites.push_back(metallicSet);
+				descriptorWrites.push_back(roughnessSet);
+				descriptorWrites.push_back(BRDFLookupSet);
+				descriptorWrites.push_back(lightUniformSet);*/
 
                 vkUpdateDescriptorSets(Device, static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
             }
@@ -119,6 +124,12 @@ namespace Fling
             UINT32 t_CommandBufferIndex)
         {
             Fling::Model* Model = t_MeshRend.m_Model;
+
+			if (!Model)
+			{
+				return;
+			}
+
             VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
             VkDeviceSize offsets[1] = { 0 };
 

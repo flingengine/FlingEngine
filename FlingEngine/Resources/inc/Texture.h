@@ -8,14 +8,14 @@ namespace Fling
     /**
      * @brief   An image represents a 2D file that has data about each pixel in the image
      */
-    class Image : public Resource
+    class Texture : public Resource
     {
     public:
 
-		static std::shared_ptr<Fling::Image> Create(Guid t_ID, void* t_Data = nullptr);
+		static std::shared_ptr<Fling::Texture> Create(Guid t_ID, void* t_Data = nullptr);
 
-        explicit Image(Guid t_ID, void* t_Data = nullptr);
-        virtual ~Image();
+        explicit Texture(Guid t_ID, void* t_Data = nullptr);
+        virtual ~Texture();
 
 		FORCEINLINE UINT32 GetWidth() const { return m_Width; }
 		FORCEINLINE UINT32 GetHeight() const { return m_Height; }

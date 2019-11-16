@@ -48,20 +48,7 @@ namespace Fling
          * 
          * @param t_copyQueue 
          */
-        void InitResources(VkQueue t_copyQueue);
-        
-        /**
-         * @brief 
-         * 
-         * @tparam Candidate: type of the function delegate
-         * @tparam Type: object type 
-         * @param t_instance: object instance 
-         */
-        template <auto Candidate, typename Type>
-        void SetDisplay(Type& t_instance)
-        {
-            m_DisplayCallback.connect<Candidate>(t_instance);
-        }
+        void InitResources(VkQueue t_copyQueue);       
 
         /**
          * @brief Start a new ImGUI Frame and prepare for command buffers to be built. 
@@ -116,8 +103,6 @@ namespace Fling
         std::unique_ptr<class Buffer> m_indexBuffer;
 
         Swapchain* m_swapChain;
-
-        entt::delegate<void()> m_DisplayCallback{};
     };
 } //namespace fling
 

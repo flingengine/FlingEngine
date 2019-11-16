@@ -3,7 +3,7 @@
 // Define the STB library image implementation here. Make sure 
 // this is ONLY in this file 
 #define STB_IMAGE_IMPLEMENTATION
-#include "Image.h"
+#include "Texture.h"
 
 #include "FlingVulkan.h"
 
@@ -14,12 +14,12 @@
 
 namespace Fling
 {
-	std::shared_ptr<Fling::Image> Image::Create(Guid t_ID, void* t_Data)
+	std::shared_ptr<Fling::Texture> Texture::Create(Guid t_ID, void* t_Data)
 	{
-		return ResourceManager::LoadResource<Fling::Image>(t_ID, t_Data);
+		return ResourceManager::LoadResource<Fling::Texture>(t_ID, t_Data);
 	}
 
-	Image::Image(Guid t_ID, void* t_Data)
+	Texture::Texture(Guid t_ID, void* t_Data)
         : Resource(t_ID)
     {
         LoadVulkanImage();
@@ -34,7 +34,7 @@ namespace Fling
 		m_ImageInfo.sampler = m_TextureSampler;
 	}
 
-    void Image::LoadVulkanImage()
+    void Texture::LoadVulkanImage()
     {
         const std::string Filepath = GetFilepathReleativeToAssets();
 
@@ -95,7 +95,7 @@ namespace Fling
         GenerateMipMaps(VK_FORMAT_R8G8B8A8_UNORM);
     }
 
-    void Image::GenerateMipMaps(VkFormat imageFormat)
+    void Texture::GenerateMipMaps(VkFormat imageFormat)
     {
         // Check that we have linear filtering support on this device
         VkFormatProperties formatProperties = Renderer::Get().GetPhysicalDevice()->GetFormatProperties(imageFormat);
@@ -193,7 +193,7 @@ namespace Fling
         GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
     }
 
-    void Image::CopyBufferToImage(VkBuffer t_Buffer)
+    void Texture::CopyBufferToImage(VkBuffer t_Buffer)
     {
         VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
@@ -226,7 +226,7 @@ namespace Fling
         GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
     }
 
-    void Image::CreateImageView()
+    void Texture::CreateImageView()
     {
         m_ImageView = GraphicsHelpers::CreateVkImageView(
             m_vVkImage,
@@ -237,7 +237,7 @@ namespace Fling
         assert(m_ImageView != VK_NULL_HANDLE);
     }
 
-    void Image::CreateTextureSampler()
+    void Texture::CreateTextureSampler()
     {
         VkSamplerCreateInfo SamplerInfo = {};
         SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -269,7 +269,7 @@ namespace Fling
         }
     }
 
-    void Image::Release()
+    void Texture::Release()
     {
         // We don't need this stbi pixel data any more
         stbi_image_free(m_PixelData);
@@ -306,7 +306,7 @@ namespace Fling
         }
     }
 
-    Image::~Image()
+    Texture::~Texture()
     {
         Release();
     }

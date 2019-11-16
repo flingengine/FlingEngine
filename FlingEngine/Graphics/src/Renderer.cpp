@@ -3,7 +3,7 @@
 #include "ResourceManager.h"
 #include "FlingConfig.h"
 #include "File.h"
-#include "Image.h"
+#include "Texture.h"
 #include "GraphicsHelpers.h"
 #include "Components/Transform.h"
 #include <random>
@@ -69,7 +69,7 @@ namespace Fling
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
-		m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
+		m_BRDFLookupTexture = Texture::Create("Textures/brdfLUT.png"_hs);
 		assert(m_BRDFLookupTexture);
 
         CreateFrameBuffers();
