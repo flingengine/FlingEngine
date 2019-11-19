@@ -671,9 +671,9 @@ namespace Fling
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
 		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
 
-        m_Registry->on_replace<entt::tag<HS("PBR")>>().connect<&Renderer::MeshRendererMaterialChange>(*this);
-        m_Registry->on_replace<entt::tag<HS("Reflection")>>().connect<&Renderer::MeshRendererMaterialChange>(*this);
-
+        m_Registry->on_replace<entt::tag<HS("PBR")>>().connect<&Renderer::MeshRendererReplace>(*this);
+        m_Registry->on_replace<entt::tag<HS("Reflection")>>().connect<&Renderer::MeshRendererReplace>(*this);
+        m_Registry->on_replace<MeshRenderer>().connect<&Renderer::MeshRendererReplace>(*this);
     }
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
@@ -714,10 +714,16 @@ namespace Fling
         m_RebuildCommanfBuffer = true;
 	}
 
-    void Renderer::MeshRendererMaterialChange(entt::entity t_Ent, entt::registry& t_Reg)
+    void MeshRenderMaterialChange(entt::entity t_Ent, entt::registry& t_Reg)
+    {
+    }
+
+    void Renderer::MeshRendererReplace(entt::entity t_Ent, entt::registry& t_Reg)
     {
         MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
-        ShaderProgramManager::Get().RebuildDescriptors(m);
+        MeshRenderer::AssignShaderProgram(m, t_Reg, t_Ent);
+
+        m_RebuildCommanfBuffer = true;
     }
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)

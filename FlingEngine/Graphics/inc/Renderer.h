@@ -51,6 +51,8 @@
 
 #include "ShaderPrograms/ShaderProgramManager.h"
 
+#include <stack>
+
 namespace Fling
 {
     // File resource
@@ -203,7 +205,7 @@ namespace Fling
 
 		void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
 
-        void MeshRendererMaterialChange(entt::entity t_Ent, entt::registry& t_Reg);
+        void MeshRendererReplace(entt::entity t_Ent, entt::registry& t_Reg);
 
         /**
          * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many
@@ -299,5 +301,7 @@ namespace Fling
         // Flag for toggling imgui 
         bool m_DrawImgui;
 		bool m_IsQuitting = false;
+
+        //std::stack<entt::delegate<void()>> m_EndFrameFunction;
     };
 }    // namespace Fling

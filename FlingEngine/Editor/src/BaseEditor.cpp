@@ -105,13 +105,15 @@ namespace Fling
 				fileDialog.Display();
 				if(fileDialog.HasSelected())
 				{
+                    std::string ModelName = t_MeshRend.m_Model->GetGuidString();
 					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
 					t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    MeshRenderer::AssignShaderProgram(t_MeshRend, t_Reg, t_Entity);
+                    //t_Reg.assign<Fling::MeshRenderer>(t_Entity, "Models/cube.obj");
+                    auto& meshRender = t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
 
 					// Command buffers must be rebuilt after doing this
-					Renderer::Get().SetFrameBufferHasBeenResized(true);
+					//Renderer::Get().SetFrameBufferHasBeenResized(true);
 
 					fileDialog.ClearSelected();
 				}

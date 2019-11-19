@@ -73,8 +73,13 @@ namespace Fling
         private:
 
             void PreparePipeline(Multisampler* t_Sampler);
+
+            void LoadCubeMap();
+
+            /** Loads cubemaps with file format .hdr for ibl **/
+            void LoadCubeMapImage();
             
-            void LoadCubemap(
+            void LoadCubemapImages(
                 Guid t_PosX_ID,
                 Guid t_NegX_ID,
                 Guid t_PosY_ID,

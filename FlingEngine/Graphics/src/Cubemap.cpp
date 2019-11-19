@@ -1,6 +1,7 @@
 #include "Cubemap.h"
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
+#include "Renderer.h"
 
 namespace Fling
 {
@@ -20,11 +21,9 @@ namespace Fling
         m_Device(t_LogicalDevice), 
         m_RenderPass(t_RenderPass)
     {
-        //Default format
-        m_Format = VK_FORMAT_R8G8B8A8_UNORM;
         m_Cube = Model::Create("Models/cube.obj"_hs);   
 
-        LoadCubemap(
+        LoadCubemapImages(
             t_PosX_ID,
             t_NegX_ID,
             t_PosY_ID,
@@ -94,7 +93,15 @@ namespace Fling
         m_GraphicsPipeline->CreateGraphicsPipeline(m_RenderPass, t_Sampler);
     }
 
-    void Cubemap::LoadCubemap(
+    void Cubemap::LoadCubeMap()
+    {
+    }
+
+    void Cubemap::LoadCubeMapImage()
+    {
+    }
+
+    void Cubemap::LoadCubemapImages(
         Guid t_PosX_ID, 
         Guid t_NegX_ID, 
         Guid t_PosY_ID, 
@@ -116,7 +123,9 @@ namespace Fling
         m_NumChannels = images[0]->GetChannels();
         m_LayerSize = m_ImageSize / 6;
         //TODO: add mip levels to image
-        m_MipLevels = 1;
+        m_MipLevels = images[0]->GetMipLevels();
+        m_Format = images[0]->GetVkImageFormat();
+
 
         std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
         stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_SHARING_MODE_EXCLUSIVE, true);
@@ -222,7 +231,14 @@ namespace Fling
         sampler.minLod = 0.0f;
         sampler.maxLod = static_cast<float>(m_MipLevels);
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-        sampler.maxAnisotropy = 1.0f;
+
+        // Handle anisotropy
+        const PhysicalDevice* Device = Renderer::Get().GetPhysicalDevice();
+        if (Device->GetDeivceFeatures().samplerAnisotropy)
+        {
+            sampler.maxAnisotropy = Device->GetDeviceProps().limits.maxSamplerAnisotropy;
+            sampler.anisotropyEnable = VK_TRUE;
+        }
 
         if (vkCreateSampler(m_Device, &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
         {
