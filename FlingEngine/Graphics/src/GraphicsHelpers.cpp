@@ -186,7 +186,7 @@ namespace Fling
                 F_LOG_FATAL("Failed to allocate image memory!");
             }
 
-            vkBindImageMemory(Device, t_Image, t_Memory, 0);
+            VK_CHECK_RESULT(vkBindImageMemory(Device, t_Image, t_Memory, 0));
         }
 
 		VkSemaphore CreateSemaphore(VkDevice t_Dev)

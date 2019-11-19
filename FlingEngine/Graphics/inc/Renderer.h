@@ -51,6 +51,8 @@
 
 #include "ShaderPrograms/ShaderProgramManager.h"
 
+#include "FrameBuffer.h"
+
 namespace Fling
 {
     // File resource
@@ -269,6 +271,8 @@ namespace Fling
         * @see Renderer::CreateFrameBuffers
         */
         std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+
+		std::vector<Fling::FrameBuffer*> m_FrameBuffers;
 
         /**
         * Command buffers
