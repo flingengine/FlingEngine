@@ -30,6 +30,11 @@ namespace Fling
                 VkRenderPass t_RenderPass,
                 VkDevice t_LogicalDevice);
 
+            Cubemap(
+                Guid t_CubeMap_ID,
+                VkRenderPass t_Renderpass,
+                VkDevice t_LogicalDevice);
+
             ~Cubemap();
 
             void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);

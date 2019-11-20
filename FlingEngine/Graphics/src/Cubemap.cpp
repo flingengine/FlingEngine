@@ -32,6 +32,11 @@ namespace Fling
             t_NegZ_ID);
     }
 
+    Cubemap::Cubemap(Guid t_CubeMap_ID, VkRenderPass t_Renderpass, VkDevice t_LogicalDevice)
+    {
+
+    }
+
     Cubemap::~Cubemap()
     {
         if (m_ImageMemory)
