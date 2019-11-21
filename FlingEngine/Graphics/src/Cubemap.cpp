@@ -109,6 +109,7 @@ namespace Fling
         m_NumChannels = image->GetChannels();
         m_LayerSize = m_ImageSize / 6;
         m_MipLevels = image->GetMipLevels();
+        //m_MipLevels = 1.0f;
         m_Format = image->GetVkImageFormat();
 
         std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
@@ -205,13 +206,14 @@ namespace Fling
         sampler.minFilter = VK_FILTER_LINEAR;
         sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        sampler.addressModeV = sampler.addressModeU;
-        sampler.addressModeW = sampler.addressModeU;
+        sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         sampler.mipLodBias = 0.0f;
         sampler.compareOp = VK_COMPARE_OP_NEVER;
         sampler.minLod = 0.0f;
         sampler.maxLod = static_cast<float>(m_MipLevels);
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+        sampler.maxAnisotropy = 1.0f;
 
         // Handle anisotropy
         const PhysicalDevice* Device = Renderer::Get().GetPhysicalDevice();

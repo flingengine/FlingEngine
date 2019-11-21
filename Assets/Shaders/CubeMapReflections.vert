@@ -21,7 +21,9 @@ layout(location = 4) in vec2 inTexCoord;
 // Outputs ------------
 layout (location = 0) out vec3 outWorldPos;
 layout (location = 1) out vec3 outNormal;
-layout (location = 3) out mat4 outInvViewMatrix;
+layout (location = 4) out vec3 outViewVec;
+layout (location = 5) out vec3 outLightVec;
+layout (location = 6) out mat4 outInvViewMatrix;
 
 out gl_PerVertex 
 {
@@ -30,8 +32,15 @@ out gl_PerVertex
 
 void main() 
 {
+	mat4 modelView = ubo.view * ubo.model;
+
 	vec3 locPos = vec3(ubo.model * vec4(inPos, 1.0));
 	outWorldPos = locPos;
-	outNormal = mat3(ubo.model) * inNormal;
+	//outNormal = mat3(ubo.model) * inNormal;
+	outNormal = mat3(transpose(inverse(ubo.model))) * inNormal;
 	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
+
+	outInvViewMatrix = inverse(modelView);
+	outLightVec = outWorldPos - ubo.camPos;
+	outViewVec = -outWorldPos.xyz;
 }
