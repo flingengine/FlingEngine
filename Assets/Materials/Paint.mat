@@ -1,8 +1,7 @@
 {
     "name" : "Paint Material",
-
-    "vertex" : "Shaders/PBRDefault_vert.spv",
-    "frag" : "Shaders/PBRDefault_frag.spv",
+    
+    "ShaderProgram" : "PBR",
 
     "albedo" : "Textures/Paint/paint_A.png",
     "normal" : "Textures/Paint/paint_N.png",

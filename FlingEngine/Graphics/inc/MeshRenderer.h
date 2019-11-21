@@ -44,8 +44,6 @@ namespace Fling
 		template<class Archive>
 		void load(Archive& t_Archive);
 
-	private:
-
 		void LoadModelFromPath(const std::string t_MeshPath);
 
 		void LoadMaterialFromPath(const std::string t_MatPath);
@@ -79,3 +77,4 @@ namespace Fling
 		LoadMaterialFromPath(MaterialPath);
 	}
 }   // namespace Fling
+

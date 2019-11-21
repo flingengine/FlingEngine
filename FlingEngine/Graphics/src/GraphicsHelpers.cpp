@@ -409,6 +409,18 @@ namespace Fling
 
         }
 
+        void CreatePipelineCache(VkPipelineCache& t_PipelineCache)
+        {
+            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+
+            VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+            pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            if (vkCreatePipelineCache(Device, &pipelineCacheCreateInfo, nullptr, &t_PipelineCache) != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to create pipeline cache");
+            }
+        }
+
         void TransitionImageLayout(
             VkImage t_Image, 
             VkFormat t_Format, 
@@ -674,6 +686,36 @@ namespace Fling
             return descriptorSetLayoutCreateInfo;
         }
 
+        VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        {
+            VkWriteDescriptorSet uniformSet = {};
+            uniformSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            uniformSet.dstSet = t_DstSet;
+            uniformSet.dstBinding = t_Binding;
+            uniformSet.dstArrayElement = 0;
+            uniformSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uniformSet.descriptorCount = 1;
+            uniformSet.pBufferInfo = &(t_Buffer->GetDescriptor());
+
+            return uniformSet;
+        }
+
+        VkWriteDescriptorSet WriteDescriptorSetImage(Image* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        {
+            VkDescriptorImageInfo* imageInfo = t_Image->GetDescriptorInfo();
+            // Create sampler information
+            VkWriteDescriptorSet ImageSamplerSet = {};
+            ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            ImageSamplerSet.dstSet = t_DstSet;
+            ImageSamplerSet.dstBinding = t_Binding;
+            ImageSamplerSet.dstArrayElement = 0;
+            ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            ImageSamplerSet.descriptorCount = 1;
+            ImageSamplerSet.pImageInfo = imageInfo;
+
+            return ImageSamplerSet;
+        }
+
         VkSamplerCreateInfo SamplerCreateInfo()
         {
             VkSamplerCreateInfo samplerCreateInfo{};
@@ -890,6 +932,6 @@ namespace Fling
             viewport.minDepth = t_minDepth;
             return viewport;
         }
-    }    // namespace Initalizers
+    }    // namespace Initializers
 
 }   // namespace Fling        

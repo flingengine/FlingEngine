@@ -13,7 +13,6 @@
 
 #include "MovingAverage.hpp"
 #include "Stats.h"
-#include "ShaderProgram.h"
 #include "Game.h"
 
 #if WITH_EDITOR

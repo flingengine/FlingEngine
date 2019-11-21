@@ -137,4 +137,5 @@ namespace Fling
 		UINT32 localSizeY {};
 		UINT32 localSizeZ {};
     };
+    
 }   // namespace Fling
