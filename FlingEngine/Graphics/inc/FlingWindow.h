@@ -4,7 +4,12 @@
 #include "FlingTypes.h"
 #include "NonCopyable.hpp"
 
-enum WindowMode { Fullscreen, Windowed, BorderlessWindowed };
+enum WindowMode 
+{ 
+    Fullscreen, 
+    Windowed, 
+    BorderlessWindowed 
+};
 
 namespace Fling
 {
