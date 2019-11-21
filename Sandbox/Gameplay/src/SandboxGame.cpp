@@ -38,6 +38,11 @@ namespace Sandbox
         Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 
+		// Switch between window modes 
+		Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
+		Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
+		Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
+
         LightingTest(t_Reg);
         //OnLoadInitated();
         //GenerateTestMeshes(t_Reg);
@@ -216,5 +221,30 @@ namespace Sandbox
     {
         float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
         F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
+  }
+
+  void Game::SetWindowFullscreen()
+  {
+	  FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+	  if (CurrentWindow)
+	  {
+		  CurrentWindow->SetWindowMode(WindowMode::Fullscreen);
+	  }
+  }
+  void Game::SetWindowBorderlessWindowed()
+  {
+	  FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+	  if (CurrentWindow)
+	  {
+		  CurrentWindow->SetWindowMode(WindowMode::BorderlessWindowed);
+	  }
+  }
+  void Game::SetWindowWindowed()
+  {
+	  FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+	  if (CurrentWindow)
+	  {
+		  CurrentWindow->SetWindowMode(WindowMode::Windowed);
+	  }
     }
 }	// namespace Sandbox
