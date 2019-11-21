@@ -108,7 +108,7 @@ namespace Fling
         {
             auto& meshRender = ReflectionView.get<MeshRenderer>(entity);
             ShaderProgramReflections::CreateDescriptorPool(meshRender);
-            ShaderProgramReflections::CreateDescriptorSets(meshRender, m_Lighting, m_ReflectionProgram->GetDescriptorLayout());
+            ShaderProgramReflections::CreateDescriptorSets(meshRender, m_Lighting, Renderer::Get().GetSkybox()->GetImageInfo(), m_ReflectionProgram->GetDescriptorLayout());
         }
     }
 
@@ -122,7 +122,7 @@ namespace Fling
             break;
         case ShaderPrograms::ShaderProgramType::Reflection:
             ShaderProgramReflections::CreateDescriptorPool(t_MeshRend);
-            ShaderProgramReflections::CreateDescriptorSets(t_MeshRend, m_Lighting, m_ReflectionProgram->GetDescriptorLayout());
+            ShaderProgramReflections::CreateDescriptorSets(t_MeshRend, m_Lighting, Renderer::Get().GetSkybox()->GetImageInfo(), m_ReflectionProgram->GetDescriptorLayout());
             break;
         default:
             assert("Shader program not supported");

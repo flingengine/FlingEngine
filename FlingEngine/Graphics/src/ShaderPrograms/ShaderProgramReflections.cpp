@@ -5,14 +5,15 @@
 
 void Fling::ShaderProgramReflections::CreateDescriptorSets(
     MeshRenderer& t_MeshRend, 
-    Lighting& m_Lighting, 
-    VkDescriptorSetLayout m_DescriptorLayout)
+    Lighting& t_Lighting, 
+    VkDescriptorImageInfo& t_SkyboxInfo,
+    VkDescriptorSetLayout t_DescriptorLayout)
 {
     const std::vector<VkImage>& Images = Renderer::Get().GetSwapChain()->GetImages();
     VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
     // Specify what descriptor pool to allocate from and how many
-    std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorLayout);
+    std::vector<VkDescriptorSetLayout> layouts(Images.size(), t_DescriptorLayout);
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
@@ -38,7 +39,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
         );
 
         VkWriteDescriptorSet lightUniformSet = Initializers::WriteDescriptorSetUniform(
-            m_Lighting.m_LightingUBOs[i],
+            t_Lighting.m_LightingUBOs[i],
             t_MeshRend.m_DescriptorSets[i],
             2
         );
@@ -47,7 +48,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
             t_MeshRend.m_DescriptorSets[i],
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             4,
-            &Renderer::Get().GetSkybox()->GetImageInfo());
+            &t_SkyboxInfo);
 
         descriptorWrites.push_back(uniformSet);
         descriptorWrites.push_back(lightUniformSet);
