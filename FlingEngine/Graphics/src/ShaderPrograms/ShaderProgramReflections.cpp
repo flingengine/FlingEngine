@@ -27,8 +27,6 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
         F_LOG_FATAL("Failed to allocate descriptor sets!");
     }
 
-    const Cubemap* skybox = Renderer::Get().GetSkybox();
-
     for (size_t i = 0; i < Images.size(); ++i)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites;
@@ -49,7 +47,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
             t_MeshRend.m_DescriptorSets[i],
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             4,
-            &skybox->GetImageInfo());
+            &Renderer::Get().GetSkybox()->GetImageInfo());
 
         descriptorWrites.push_back(uniformSet);
         descriptorWrites.push_back(lightUniformSet);
