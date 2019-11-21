@@ -31,6 +31,7 @@ namespace Fling
          * @return UINT64
          */
         UINT64 GetImageSize() const { return m_Width * m_Height * 6; }
+        const float* GetPixelData() const { return m_PixelData; }
 
         void Release();
 

@@ -1,6 +1,7 @@
 #include "ShaderPrograms/ShaderProgramReflections.h"
 #include "GraphicsHelpers.h"
 #include "Renderer.h"
+#include "Cubemap.h"
 
 void Fling::ShaderProgramReflections::CreateDescriptorSets(
     MeshRenderer& t_MeshRend, 
@@ -26,6 +27,8 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
         F_LOG_FATAL("Failed to allocate descriptor sets!");
     }
 
+    const Cubemap* skybox = Renderer::Get().GetSkybox();
+
     for (size_t i = 0; i < Images.size(); ++i)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites;
@@ -42,8 +45,15 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
             2
         );
 
+        VkWriteDescriptorSet skyboxImageSampelr = Initializers::WriteDescriptorSet(
+            t_MeshRend.m_DescriptorSets[i],
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            4,
+            &skybox->GetImageInfo());
+
         descriptorWrites.push_back(uniformSet);
         descriptorWrites.push_back(lightUniformSet);
+        descriptorWrites.push_back(skyboxImageSampelr);
 
         vkUpdateDescriptorSets(Device, static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -59,7 +69,8 @@ void Fling::ShaderProgramReflections::CreateDescriptorPool(MeshRenderer& t_MeshR
     std::vector<VkDescriptorPoolSize> poolSizes =
     {
         Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
+        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount),
+        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
     };
 
     VkDescriptorPoolCreateInfo poolInfo = {};

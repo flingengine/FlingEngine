@@ -1,8 +1,5 @@
 #include "HDRImage.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "Image.h"
-
 #include "FlingVulkan.h"
 
 #include "Renderer.h"

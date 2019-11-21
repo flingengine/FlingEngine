@@ -23,17 +23,20 @@ layout (binding = 2) uniform LightingData
     PointLightData PointLights[32];
 } lights;
 
+layout (binding = 4) uniform samplerCube skybox;
+
 // Inputs --------------
 layout (location = 0) in vec3 inWorldPos;
-layout (location = 1) in vec2 inTexCoord;
-layout (location = 2) in vec3 inTangent;
-layout (location = 3) in vec3 inNormal;
+layout (location = 1) in vec3 inNormal;
 
 // Outputs ------------
 layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
+	vec3 viewDirection = normalize(ubo.camPos - inWorldPos);
+	vec3 reflectDirection = reflect(viewDirection, normalize(inNormal)); 
+
     // Output the vertex normal for testing
-    outFragColor = vec4(1.0, 0.0, 0.0, 1);
+    outFragColor = vec4(texture(skybox, reflectDirection).rgb, 1.0);
 }

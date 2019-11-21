@@ -75,14 +75,16 @@ namespace Fling
 
             VkIndexType GetIndexType() const { return m_Cube->GetIndexType(); }
 
+            VkImage GetImage() const { return m_Image; }
+            VkDeviceMemory GetImageMemory() const{ return m_ImageMemory; }
+            VkDescriptorImageInfo GetImageInfo() const { return m_DescriptorImageInfo; }
+
         private:
 
             void PreparePipeline(Multisampler* t_Sampler);
 
-            void LoadCubeMap();
-
             /** Loads cubemaps with file format .hdr for ibl **/
-            void LoadCubeMapImage();
+            void LoadCubeMapImage(Guid t_CubeMap_ID);
             
             void LoadCubemapImages(
                 Guid t_PosX_ID,
@@ -104,6 +106,7 @@ namespace Fling
             VkSampler m_Sampler;
             
             VkDescriptorSetLayout m_DescriptorSetLayout;
+            VkDescriptorImageInfo m_DescriptorImageInfo;
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
             VkRenderPass m_RenderPass;

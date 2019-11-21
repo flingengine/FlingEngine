@@ -84,12 +84,12 @@ namespace Fling
 
         // Load Skybox
 		m_Skybox = new Cubemap(
-			"Textures/Skybox/posx.jpg"_hs,
-			"Textures/Skybox/negx.jpg"_hs,
-			"Textures/Skybox/posy.jpg"_hs,
-			"Textures/Skybox/negy.jpg"_hs,
-			"Textures/Skybox/posz.jpg"_hs,
-			"Textures/Skybox/negz.jpg"_hs,
+			"Textures/Skybox/Garden/posx.jpg"_hs,
+            "Textures/Skybox/Garden/negx.jpg"_hs,
+            "Textures/Skybox/Garden/posy.jpg"_hs,
+            "Textures/Skybox/Garden/negy.jpg"_hs,
+            "Textures/Skybox/Garden/posz.jpg"_hs,
+            "Textures/Skybox/Garden/negz.jpg"_hs,
 			HS("Shaders/skybox/skybox.vert.spv"),
 			HS("Shaders/skybox/skybox.frag.spv"),
 			m_RenderPass,
