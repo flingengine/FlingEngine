@@ -6,9 +6,10 @@
 void Fling::ShaderProgramReflections::CreateDescriptorSets(
     MeshRenderer& t_MeshRend, 
     Lighting& t_Lighting, 
-    VkDescriptorImageInfo& t_SkyboxInfo,
     VkDescriptorSetLayout t_DescriptorLayout)
 {
+    static VkDescriptorImageInfo skyboxImageInfo = Renderer::Get().GetSkybox()->GetImageInfo();
+
     const std::vector<VkImage>& Images = Renderer::Get().GetSwapChain()->GetImages();
     VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
@@ -48,7 +49,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
             t_MeshRend.m_DescriptorSets[i],
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             4,
-            &t_SkyboxInfo);
+            &skyboxImageInfo);
 
         descriptorWrites.push_back(uniformSet);
         descriptorWrites.push_back(lightUniformSet);

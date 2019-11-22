@@ -77,7 +77,7 @@ namespace Fling
 
             VkImage GetImage() const { return m_Image; }
             VkDeviceMemory GetImageMemory() const{ return m_ImageMemory; }
-            VkDescriptorImageInfo GetImageInfo() const { return m_DescriptorImageInfo; }
+            VkDescriptorImageInfo& GetImageInfo() { return m_DescriptorImageInfo; }
 
         private:
 

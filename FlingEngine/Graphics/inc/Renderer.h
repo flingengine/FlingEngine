@@ -134,7 +134,7 @@ namespace Fling
 
         const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
 
-        const Cubemap* GetSkybox() const { return m_Skybox; }
+        Cubemap* GetSkybox() const { return m_Skybox; }
 
         Swapchain* GetSwapChain() const { return m_SwapChain; }
 
