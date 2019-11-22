@@ -55,6 +55,8 @@ namespace Fling
 		/** get the current GLFW window */
 		GLFWwindow* GetGlfwWindow() const { return m_Window; }
 
+		virtual void SetWindowMode(WindowMode t_WindowMode) override;
+		virtual WindowMode GetWindowMode() override;
 	private:
 
 		GLFWwindow* m_Window = nullptr;

@@ -15,6 +15,11 @@ namespace Sandbox
 		ImGui::Text("Press 'T' to toggle object rotation");
 		ImGui::Text("Press 'WASD' Move");
 		ImGui::Text("Right Click and drag to rotate camera");
+        ImGui::Text("Press 'WASD' Move");
+
+        ImGui::Text("Press '2' for fullscreen");
+        ImGui::Text("Press '3' for windowed");
+        ImGui::Text("Press '4' for borderless");
 
 		ImGui::End();
 
