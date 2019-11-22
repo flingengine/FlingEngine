@@ -7,11 +7,11 @@
 // Bindings -------------------
 layout (binding = 0) uniform UboView 
 {
-	mat4 model;			// AKA world matrix to DX people
-	mat4 projection;
-	mat4 view;
-	vec3 camPos;
-	vec3 objPos;
+    mat4 model;            // AKA world matrix to DX people
+    mat4 projection;
+    mat4 view;
+    vec3 camPos;
+    vec3 objPos;
 } ubo;
 
 layout (binding = 2) uniform LightingData 
@@ -19,7 +19,7 @@ layout (binding = 2) uniform LightingData
     uint DirLightCount;    
     uint PointLightCount;
 
-	DirectionalLightData DirLights[32];
+    DirectionalLightData DirLights[32];
     PointLightData PointLights[32];
 } lights;
 
@@ -81,32 +81,32 @@ vec3 CalcPointLight(PointLightData light, vec3 normal, vec3 pos, vec3 viewDir, v
 
 void main() 
 {
-	vec3 cI = normalize(inLightVec);
-	vec3 cR = reflect(cI, normalize(inNormal));
+    vec3 cI = normalize(inLightVec);
+    vec3 cR = reflect(cI, normalize(inNormal));
 
-	//cR = vec3(inInvViewMatrix * vec4(cR, 0.0));
-	//cR.x = -1.0f;
+    //cR = vec3(inInvViewMatrix * vec4(cR, 0.0));
+    //cR.x = -1.0f;
 
-	vec3 lightColor = vec3(0.0);
-	vec3 color = texture(skybox, cR).rgb;
-	vec3 ambient = vec3(0.1) * color.rgb;
+    vec3 lightColor = vec3(0.0);
+    vec3 color = texture(skybox, cR).rgb;
+    vec3 ambient = vec3(0.1) * color.rgb;
 
-	for(int i = 0; i < lights.DirLightCount; i++)
+    for(int i = 0; i < lights.DirLightCount; i++)
     {
-		lightColor += CalcDirLight(lights.DirLights[i], normalize(inNormal), normalize(inViewVec), ambient);
-	}
+        lightColor += CalcDirLight(lights.DirLights[i], normalize(inNormal), normalize(inViewVec), ambient);
+    }
 
-	for(int i = 0; i < lights.PointLightCount; i++)
-	{
-		lightColor += CalcPointLight(
-			lights.PointLights[i], 
-			normalize(inNormal), 
-			inWorldPos,
-			normalize(inViewVec),
-			ambient);
-	}
+    for(int i = 0; i < lights.PointLightCount; i++)
+    {
+        lightColor += CalcPointLight(
+            lights.PointLights[i], 
+            normalize(inNormal), 
+            inWorldPos,
+            normalize(inViewVec),
+            ambient);
+    }
 
-	//color = (ambient + lightColor) * color ;
+    //color = (ambient + lightColor) * color ;
     // Output the vertex normal for testing
     outFragColor = vec4(lightColor.rgb, 1.0);
 }
