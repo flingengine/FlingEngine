@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include <cstdint>
 #include "File.h"
+#include "VulkanApp.h"
 
 namespace Fling
 {
@@ -24,8 +25,10 @@ namespace Fling
 	#endif
 
         // Load command line args and any ini files
-        //#TODO Handle command line args
+        // #TODO Handle command line args :(
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
+
+		m_VulkanApp = new VulkanApp();
 
         Renderer::Get().CreateGameWindow(
             ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
@@ -114,6 +117,11 @@ namespace Fling
 		}
 		
 		g_Registry.reset();
+
+		if (m_VulkanApp)
+		{
+			delete m_VulkanApp;
+		}
 
 		// Cleanup any resources
 		Input::Shutdown();

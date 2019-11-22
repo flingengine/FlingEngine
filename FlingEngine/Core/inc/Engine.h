@@ -23,6 +23,8 @@
 
 namespace Fling
 {
+	class VulkanApp;
+
 	/**
 	 * @brief Core engine class of Fling. This is where the core update loop lives 
 	 * along with all startup/shutdown ordering. 
@@ -70,6 +72,9 @@ namespace Fling
 
 		/** Global registry that stores entities and components */
 		entt::registry g_Registry;
+
+		/** Vulkan part of the engine - handles all rendering */
+		Fling::VulkanApp* m_VulkanApp = nullptr;
 
 		/** The implementation of the game that this engine is running. @see Fling::Game */
 		Fling::Game* m_GameImpl = nullptr;
