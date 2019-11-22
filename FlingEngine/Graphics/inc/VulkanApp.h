@@ -18,6 +18,12 @@ namespace Fling
 		ALL = 0xff
 	};
 
+	class Instance;
+	class LogicalDevice;
+	class PhysicalDevice;
+	class Swapchain;
+	class FlingWindow;
+
 	/**
 	* @brief	Core rendering functionality of the Fling Engine. Controls what Render pipelines 
 	*			are available
@@ -25,35 +31,45 @@ namespace Fling
     class VulkanApp
     {
     public:
-        VulkanApp() = default;
-        ~VulkanApp() = default;
+        VulkanApp(PipelineFlags t_Conf, entt::registry& t_Reg);
+
+        ~VulkanApp();
 
 		/**
-		 * @brief	Prepares 
-		 */
-		void Prepare(PipelineFlags t_Conf);
-
+		* @brief	Updates all rendering buffers and sends commands to draw a frame
+		*/
 		void Update(float DeltaTime, entt::registry& t_Reg);
 
-		void Shutdown();
-
     private:
+		
+		/**
+		* @brief	Prepare logical, physical and swap chain devices. 
+		*			Prepares window based on the Fling Config
+		*/
+		void Prepare();
 
+		/**
+		* @brief	Creates a window and preps the VkSurfaceKHR 
+		*/
+		void CreateGameWindow(const UINT32 t_width, const UINT32 t_height);
+
+		VkExtent2D ChooseSwapExtent();
 
 		void BuildRenderPipelines(PipelineFlags t_Conf);
 
-		// Swap chain
+		Instance* m_Instance = nullptr;
+		LogicalDevice* m_LogicalDevice = nullptr;
+		PhysicalDevice* m_PhysicalDevice = nullptr;
+		Swapchain* m_SwapChain = nullptr;
+		FlingWindow* m_CurrentWindow = nullptr;
 
-		// Window
+		/** Handle to the surface extension used to interact with the windows system */
+		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 		
 		// Command Buffer pool
-		
-		// Logical Device
-		// Physical Device
 
 		std::vector<std::unique_ptr<Fling::RenderPipeline>> m_RenderPipelines;
 
 		// VMA Allocator
-
     };
 }   // namespace Fling

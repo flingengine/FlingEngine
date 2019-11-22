@@ -5,14 +5,14 @@
 namespace Fling
 {
 	class CommandBuffer;
+	class LogicalDevice;
 
 	// #TODO BH Move UBO Declarations here 
-
 
 	class GeometrySubpass : public Subpass
 	{
 	public:
-		GeometrySubpass(std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
+		GeometrySubpass(LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
 
 		virtual ~GeometrySubpass() = default;
 

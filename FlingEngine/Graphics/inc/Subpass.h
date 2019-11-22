@@ -8,11 +8,12 @@
 namespace Fling
 {
 	class CommandBuffer;
+	class LogicalDevice;
 
 	class Subpass : public NonCopyable
 	{
 	public:
-		Subpass(std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
+		Subpass(LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
 		
 		virtual ~Subpass() = default;
 
@@ -27,10 +28,16 @@ namespace Fling
 		// Given Swap chain image
 		virtual void CreateDescriptorSets(VkImage t_SwapChainImg, entt::registry& t_reg) = 0;
 
-	private:
+		VkDescriptorSetLayout GetDescriptorLayout() const { return m_DescriptorLayout; }
+
+	protected:
+
+		LogicalDevice* m_Device = nullptr;
 
 		std::shared_ptr<Fling::Shader> m_VertexShader;
 		
 		std::shared_ptr<Fling::Shader> m_FragShader;
+
+		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 	};
 }

@@ -617,12 +617,6 @@ namespace Fling
             delete m_SwapChain;
             m_SwapChain = nullptr;
         }
-
-        if (m_GraphicsPipeline)
-        {
-            delete m_GraphicsPipeline;
-            m_GraphicsPipeline = nullptr;
-        }
 		
 		if (m_DepthBuffer)
 		{

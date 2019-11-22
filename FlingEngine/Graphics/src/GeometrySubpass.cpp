@@ -4,8 +4,8 @@
 
 namespace Fling
 {
-	GeometrySubpass::GeometrySubpass(std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
-		: Subpass(t_Vert, t_Frag)
+	GeometrySubpass::GeometrySubpass(LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
+		: Subpass(t_Dev, t_Vert, t_Frag)
 	{
 		// Build descriptor sets
 		// Prepare frame buffer attachments

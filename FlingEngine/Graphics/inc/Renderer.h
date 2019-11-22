@@ -252,8 +252,6 @@ namespace Fling
         /** @see Renderer::CreateCommandPool */
         VkCommandPool m_CommandPool;
 
-        GraphicsPipeline* m_GraphicsPipeline = nullptr;
-
         DepthBuffer* m_DepthBuffer = nullptr;
 
         /** MSAA for the graphics pipeline */
@@ -271,8 +269,6 @@ namespace Fling
         * @see Renderer::CreateFrameBuffers
         */
         std::vector<VkFramebuffer> m_SwapChainFramebuffers;
-
-		std::vector<Fling::FrameBuffer*> m_FrameBuffers;
 
         /**
         * Command buffers

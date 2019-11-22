@@ -28,7 +28,12 @@ namespace Fling
         // #TODO Handle command line args :(
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
 
-		m_VulkanApp = new VulkanApp();
+		if (!ConfigLoaded)
+		{
+			F_LOG_WARN("NO EngineConf.ini has been provided! This may result in unexpected behavior from Fling!");
+		}
+
+		//m_VulkanApp = new VulkanApp(PipelineFlags::ALL, g_Registry);
 
         Renderer::Get().CreateGameWindow(
             ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
@@ -118,11 +123,6 @@ namespace Fling
 		
 		g_Registry.reset();
 
-		if (m_VulkanApp)
-		{
-			delete m_VulkanApp;
-		}
-
 		// Cleanup any resources
 		Input::Shutdown();
         ResourceManager::Get().Shutdown();
@@ -130,5 +130,10 @@ namespace Fling
         FlingConfig::Get().Shutdown();
 		Timing::Get().Shutdown();
 		Renderer::Get().Shutdown();
+		
+		if (m_VulkanApp)
+		{
+			delete m_VulkanApp;
+		}
 	}
 }

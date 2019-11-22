@@ -174,7 +174,6 @@ namespace Fling
 
     void ShaderProgramManager::UpdateUniformBuffers(UINT32 t_CurrentImage, Camera* t_Camera)
     {
-        //auto PBRGroup = m_Registry->view<Transform, MeshRenderer, entt::tag<HS("PBR")>>(); //Investigate why this doesn't work
         auto PBRview = m_Registry->view<MeshRenderer, Transform, entt::tag<HS("PBR")>>();
         auto ReflectionView = m_Registry->view<MeshRenderer, Transform, entt::tag<HS("Reflection")>>();
 		auto DeferredGroup = m_Registry->view<MeshRenderer, Transform, entt::tag<HS(DeferredStr)>>();
