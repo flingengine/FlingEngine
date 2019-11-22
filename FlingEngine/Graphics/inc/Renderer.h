@@ -103,17 +103,17 @@ namespace Fling
          */
         static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
 
-		static VkSampleCountFlagBits GetMsaaSampleCount() 
-		{ 
-			if (Renderer::Get().m_MsaaSampler)
-			{
-				return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
-			}
-			else
-			{
-				return VK_SAMPLE_COUNT_1_BIT;
-			}
-		}
+        static VkSampleCountFlagBits GetMsaaSampleCount() 
+        { 
+            if (Renderer::Get().m_MsaaSampler)
+            {
+                return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
+            }
+            else
+            {
+                return VK_SAMPLE_COUNT_1_BIT;
+            }
+        }
 
         LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
@@ -205,7 +205,7 @@ namespace Fling
         */
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
+        void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
 
         void MeshRendererReplace(entt::entity t_Ent, entt::registry& t_Reg);
 
@@ -215,7 +215,7 @@ namespace Fling
          */
         void DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light);
 
-		void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
+        void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
 
 
         /** Entt registry that the renderer will be using. Set by the Engine */
@@ -290,11 +290,11 @@ namespace Fling
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
 
-		std::shared_ptr<Material> m_DefaultMat;
+        std::shared_ptr<Material> m_DefaultMat;
 
         // Lighting -----------------------
         Lighting m_Lighting = {};
-		std::shared_ptr<Image> m_BRDFLookupTexture;
+        std::shared_ptr<Image> m_BRDFLookupTexture;
    
         LightingUbo m_LightingUBO = {}; 
 
@@ -302,7 +302,7 @@ namespace Fling
 
         // Flag for toggling imgui 
         bool m_DrawImgui;
-		bool m_IsQuitting = false;
+        bool m_IsQuitting = false;
 
         //std::stack<entt::delegate<void()>> m_EndFrameFunction;
     };
