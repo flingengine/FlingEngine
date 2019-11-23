@@ -701,7 +701,7 @@ namespace Fling
         ShaderProgramManager::Get().CreateDescriptors(t_MeshRend);
 
         ShaderProgramManager::Get().SortMeshRender();
-        m_RebuildCommanfBuffer = true;        
+        m_RebuildCommanfBuffer = true; // rebuild primary command buffers because we added more entities        
     }
 
     void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
@@ -716,6 +716,7 @@ namespace Fling
 
     void MeshRenderMaterialChange(entt::entity t_Ent, entt::registry& t_Reg)
     {
+        //TODO: Keep track of dirty descriptors when materials change 
     }
 
     void Renderer::MeshRendererReplace(entt::entity t_Ent, entt::registry& t_Reg)

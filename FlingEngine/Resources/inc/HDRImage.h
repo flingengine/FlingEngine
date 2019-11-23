@@ -5,6 +5,10 @@
 
 namespace Fling
 {
+    /**
+     * @brief Loads image R16G16B16_SFLOAT file formats
+     *  exmplae file format : .hdr
+     */
     class HDRImage : public Resource
     {
     public:
@@ -31,6 +35,11 @@ namespace Fling
          * @return UINT64
          */
         UINT64 GetImageSize() const { return m_Width * m_Height * 6; }
+        /**
+         * @brief Get the Pixel Data as signed floats
+         * 
+         * @return const float* 
+         */
         const float* GetPixelData() const { return m_PixelData; }
 
         void Release();
