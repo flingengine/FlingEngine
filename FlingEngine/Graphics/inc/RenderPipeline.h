@@ -19,9 +19,7 @@ namespace Fling
 	public:
 
 		RenderPipeline(LogicalDevice* t_dev, std::vector<std::unique_ptr<Subpass>>& t_Subpasses);
-		~RenderPipeline() = default;
-
-		void Prepare();
+		~RenderPipeline();
 
 		void Draw(CommandBuffer& t_CmdBuf, entt::registry& t_Reg);
 
@@ -33,5 +31,7 @@ namespace Fling
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 
 		const LogicalDevice* m_Device;
+
+		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
 	};
 }	// namespace Fling

@@ -39,5 +39,6 @@ namespace Fling
 		std::shared_ptr<Fling::Shader> m_FragShader;
 
 		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
+		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 	};
 }

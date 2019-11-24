@@ -29,6 +29,8 @@ namespace Fling
 
         static std::shared_ptr<Fling::Material> Create(Guid t_ID);
 
+		static std::shared_ptr<Fling::Material> GetDefaultMat();
+
         explicit Material(Guid t_ID);
 
         const PBRTextures& GetTexture() const { return m_Textures; }

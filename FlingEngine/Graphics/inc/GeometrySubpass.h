@@ -23,6 +23,7 @@ namespace Fling
 	private:
 
 		// #TODO Uniform buffers
+		// #TODO Callbacks when mesh renderers are added and removed? 
 	};
 
 }   // namespace Fling

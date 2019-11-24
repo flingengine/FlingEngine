@@ -9,6 +9,11 @@ namespace Fling
         return ResourceManager::LoadResource<Fling::Material>(t_ID);
     }
 
+	std::shared_ptr<Fling::Material> Material::GetDefaultMat()
+	{
+		return Material::Create("Materials/Default.mat");
+	}
+
     Material::Material(Guid t_ID)
         : JsonFile(t_ID)
     {
