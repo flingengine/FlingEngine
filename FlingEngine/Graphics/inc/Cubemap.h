@@ -15,6 +15,8 @@
 
 namespace Fling
 {
+	class LogicalDevice;
+
     class Cubemap
     {
         public:
@@ -28,7 +30,7 @@ namespace Fling
                 Guid t_VertexShader,
                 Guid t_FragShader,
                 VkRenderPass t_RenderPass,
-                VkDevice t_LogicalDevice);
+                LogicalDevice* t_LogicalDevice);
 
             ~Cubemap();
 
@@ -97,7 +99,7 @@ namespace Fling
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
             VkRenderPass m_RenderPass;
-            VkDevice m_Device;
+            LogicalDevice* m_Device;
             VkDescriptorBufferInfo m_UniformBufferDescriptor;
 
             VkDeviceSize m_ImageSize;

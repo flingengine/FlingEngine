@@ -2,7 +2,7 @@
 
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
-#include "RenderPipeline.h"
+#include "Singleton.hpp"
 
 #include <entt/entity/registry.hpp>
 #include <vector>
@@ -23,22 +23,32 @@ namespace Fling
 	class PhysicalDevice;
 	class Swapchain;
 	class FlingWindow;
+	class RenderPipeline;
 
 	/**
 	* @brief	Core rendering functionality of the Fling Engine. Controls what Render pipelines 
 	*			are available
 	*/
-    class VulkanApp
+    class VulkanApp : public Singleton<VulkanApp>
     {
     public:
-        VulkanApp(PipelineFlags t_Conf, entt::registry& t_Reg);
 
-        ~VulkanApp();
+		void Init(PipelineFlags t_Conf, entt::registry& t_Reg);
+		void Shutdown() override;
+
+        VulkanApp() = default;
+        ~VulkanApp() = default;
 
 		/**
 		* @brief	Updates all rendering buffers and sends commands to draw a frame
 		*/
 		void Update(float DeltaTime, entt::registry& t_Reg);
+
+		inline FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
+
+		inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
+		inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
 
     private:
 		
@@ -55,7 +65,7 @@ namespace Fling
 
 		VkExtent2D ChooseSwapExtent();
 
-		void BuildRenderPipelines(PipelineFlags t_Conf);
+		void BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg);
 
 		Instance* m_Instance = nullptr;
 		LogicalDevice* m_LogicalDevice = nullptr;
@@ -67,8 +77,9 @@ namespace Fling
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 		
 		// Command Buffer pool
+		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
 
-		std::vector<std::unique_ptr<Fling::RenderPipeline>> m_RenderPipelines;
+		std::vector<RenderPipeline*> m_RenderPipelines;
 
 		// VMA Allocator
     };

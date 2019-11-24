@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CommandBuffer.h"
 #include "LogicalDevice.h"
+#include "GraphicsHelpers.h"
 
 namespace Fling
 {
@@ -32,6 +33,28 @@ namespace Fling
 			vkFreeCommandBuffers(m_Device->GetVkDevice(), m_Pool, 1, &m_Handle);
 		}
 	}
+	
+	void CommandBuffer::Begin()
+	{
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		beginInfo.pInheritanceInfo = nullptr;
+
+		VK_CHECK_RESULT(vkBeginCommandBuffer(GetHandle(), &beginInfo));
+
+	}
+
+	void CommandBuffer::SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports)
+	{
+		vkCmdSetViewport(GetHandle(), first_viewport, to_u32(viewports.size()), viewports.data());
+	}
+
+	void CommandBuffer::SetScissor(UINT32 first_scissor, const std::vector<VkRect2D>& scissors)
+	{
+		vkCmdSetScissor(GetHandle(), first_scissor, to_u32(scissors.size()), scissors.data());
+	}
+
 	void CommandBuffer::EndRenderPass()
 	{
 		vkCmdEndRenderPass(GetHandle());

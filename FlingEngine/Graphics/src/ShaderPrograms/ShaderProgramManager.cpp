@@ -1,4 +1,8 @@
 #include "ShaderPrograms/ShaderProgramManager.h"
+#include "VulkanApp.h"
+#include "MeshRenderer.h"
+#include "LogicalDevice.h"
+
 #include "Renderer.h"
 
 namespace Fling
@@ -7,24 +11,26 @@ namespace Fling
     {
         assert(m_Registry);
 
-        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+		assert(Dev);
+		VkDevice Device = Dev->GetVkDevice();
 
         const std::vector<Shader*> PBRShaders =
         {
-            Shader::Create(HS("Shaders/PBRDefault_vert.spv")).get(),
-            Shader::Create(HS("Shaders/PBRDefault_frag.spv")).get(),
+			Shader::Create(HS("Shaders/PBRDefault_vert.spv"), Dev).get(),
+			Shader::Create(HS("Shaders/PBRDefault_frag.spv"), Dev).get(),
         };
 
         const std::vector<Shader*> ReflectionShaders =
         {
-            Shader::Create(HS("Shaders/CubeMapReflections_vert.spv")).get(),
-            Shader::Create(HS("Shaders/CubeMapReflections_frag.spv")).get(),
+			Shader::Create(HS("Shaders/CubeMapReflections_vert.spv"), Dev).get(),
+			Shader::Create(HS("Shaders/CubeMapReflections_frag.spv"), Dev).get(),
         };
 
 		const std::vector<Shader*> DeferredShaders =
 		{
-			Shader::Create(HS("Shaders/Deferred/geometry_vert.spv")).get(),
-			Shader::Create(HS("Shaders/Deferred/geometry_frag.spv")).get(),
+			Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), Dev).get(),
+			Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), Dev).get(),
 		};
 
         //Initialize Shader Programs
@@ -63,7 +69,9 @@ namespace Fling
 
     void ShaderProgramManager::PrepShutdown()
     {
-        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+		assert(Dev);
+		VkDevice Device = Dev->GetVkDevice();
 
         m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
             {

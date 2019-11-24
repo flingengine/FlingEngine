@@ -6,6 +6,7 @@
 #include "Texture.h"
 
 #include "FlingVulkan.h"
+#include "VulkanApp.h"
 
 #include "Renderer.h"        // For getting the devices 
 #include "ResourceManager.h"
@@ -14,12 +15,12 @@
 
 namespace Fling
 {
-	std::shared_ptr<Fling::Texture> Texture::Create(Guid t_ID, void* t_Data)
+	std::shared_ptr<Fling::Texture> Texture::Create(Guid t_ID)
 	{
-		return ResourceManager::LoadResource<Fling::Texture>(t_ID, t_Data);
+		return ResourceManager::LoadResource<Fling::Texture>(t_ID);
 	}
 
-	Texture::Texture(Guid t_ID, void* t_Data)
+	Texture::Texture(Guid t_ID)
         : Resource(t_ID)
     {
         LoadVulkanImage();
@@ -63,6 +64,7 @@ namespace Fling
         }
 
         GraphicsHelpers::CreateVkImage(
+			VulkanApp::Get().GetLogicalDevice()->GetVkDevice(),
             m_Width,
             m_Height,
             m_MipLevels, 

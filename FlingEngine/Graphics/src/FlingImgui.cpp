@@ -154,6 +154,7 @@ namespace Fling
         VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
 
         Fling::GraphicsHelpers::CreateVkImage(
+			logicalDevice, 
             texWidth, 
             texHeight, 
             VK_FORMAT_R8G8B8A8_UNORM,

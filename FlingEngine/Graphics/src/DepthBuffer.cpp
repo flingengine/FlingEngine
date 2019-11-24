@@ -1,13 +1,16 @@
 #include "pch.h"
+#include "DepthBuffer.h"
 #include "GraphicsHelpers.h"
-#include "Renderer.h"
-#include "SwapChain.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
-	DepthBuffer::DepthBuffer(VkSampleCountFlagBits t_SampleCount)
-		: m_SampleCount(t_SampleCount)
+	DepthBuffer::DepthBuffer(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount, VkExtent2D t_Extents)
+		: m_Device(t_Dev)
+		, m_Extents(t_Extents)
+		, m_SampleCount(t_SampleCount)
 	{
+		assert(m_Device);
 		Create();
 	}
 
@@ -37,7 +40,7 @@ namespace Fling
 
 	void DepthBuffer::Cleanup()
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		VkDevice Device = m_Device->GetVkDevice();
 
 		// Free up VK resources if we can
 		if (m_ImageView != VK_NULL_HANDLE)
@@ -66,14 +69,17 @@ namespace Fling
 		);
 	}
 
+	void DepthBuffer::SetExtents(VkExtent2D t_Extents)
+	{
+		m_Extents = { t_Extents };
+	}
+
 	void DepthBuffer::CreateImage()
 	{
-		Swapchain* Swap = Renderer::Get().GetSwapChain();
-		assert(Swap);
-
 		GraphicsHelpers::CreateVkImage(
-			Swap->GetExtents().width,
-			Swap->GetExtents().height,
+			m_Device->GetVkDevice(),
+			m_Extents.width,
+			m_Extents.height,
 			/* Format */ m_Format,
 			/* Tiling */ VK_IMAGE_TILING_OPTIMAL,
 			/* Usage */ VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,

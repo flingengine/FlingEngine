@@ -1,4 +1,5 @@
 #include "VulkanApp.h"
+#include "RenderPipeline.h"
 #include "GeometrySubpass.h"
 #include "CommandBuffer.h"
 #include "Instance.h"
@@ -7,18 +8,10 @@
 #include "SwapChain.h"
 #include "FlingWindow.h"
 #include "FlingConfig.h"
+#include "GraphicsHelpers.h"
 
 namespace Fling
 {
-	VulkanApp::VulkanApp(PipelineFlags t_Conf, entt::registry& t_Reg)
-	{
-		Prepare();
-
-		// Build VMA allocator
-
-		BuildRenderPipelines(t_Conf);
-	}
-
 	void VulkanApp::Prepare()
 	{
 		CreateGameWindow(
@@ -37,8 +30,10 @@ namespace Fling
 		m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_Surface);
 		assert(m_LogicalDevice);
 
-		m_SwapChain = new Swapchain(ChooseSwapExtent());
+		m_SwapChain = new Swapchain(ChooseSwapExtent(), m_LogicalDevice, m_PhysicalDevice, m_Surface);
 		assert(m_SwapChain);
+
+		GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
 	}
 
 	void VulkanApp::CreateGameWindow(const UINT32 t_width, const UINT32 t_height)
@@ -78,20 +73,20 @@ namespace Fling
 		m_CurrentWindow = FlingWindow::Create(Props);
 	}
 
-	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf)
+	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg)
 	{
 		if (t_Conf & PipelineFlags::DEFERRED)
 		{
 			F_LOG_TRACE("Bulid DEFERRED render pipeline!");
 			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
 			
-			auto Vert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"));
-			auto Frag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"));
+			auto Vert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), m_LogicalDevice);
+			auto Frag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), m_LogicalDevice);
 			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, Vert, Frag));
 			// #TODO Create Lighting sub pass
 
 			m_RenderPipelines.emplace_back(
-				std::make_unique<Fling::RenderPipeline>(m_LogicalDevice, Subpasses)
+				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
 			);
 		}
 
@@ -102,17 +97,33 @@ namespace Fling
 
 		if (t_Conf & PipelineFlags::IMGUI)
 		{
+#if WITH_IMGUI
 			F_LOG_WARN("Bulid IMGUI render pipeline! (NOT YET IMPL)");
+#else
+			F_LOG_ERROR("IMGUI requested but failed because the CMake flag is not set!");
+#endif
 		}
 	}
 
 	void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
 	{
-		// Prepare frame 
-			// Wait for the swap chain semaphore
+		m_CurrentWindow->Update();
 
 		// Get a valid command buffer
-		CommandBuffer CmdBuf = {};
+		CommandBuffer CmdBuf = { m_LogicalDevice, m_CommandPool };
+
+		CmdBuf.Begin();
+
+		VkViewport viewport{};
+		viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
+		viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		CmdBuf.SetViewport(0, { viewport });
+
+		VkRect2D scissor{};
+		scissor.extent = m_SwapChain->GetExtents();
+		CmdBuf.SetScissor(0, { scissor });
 
 		for (const auto& Pipeline : m_RenderPipelines)
 		{
@@ -120,6 +131,7 @@ namespace Fling
 		}
 
 		// Submit frame
+		CmdBuf.End();
 	}
 	
 	VkExtent2D VulkanApp::ChooseSwapExtent()
@@ -149,10 +161,36 @@ namespace Fling
 		}
 	}
 
-	VulkanApp::~VulkanApp()
+	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg)
+	{
+		Prepare();
+
+		// #TODO Build VMA allocator
+
+		BuildRenderPipelines(t_Conf, t_Reg);
+	}
+
+	void VulkanApp::Shutdown()
 	{
 		// Cleanup VMA allocator
 		// Cleanup render pipelines
+		for (auto& pipeline : m_RenderPipelines)
+		{
+			if (pipeline)
+			{
+				delete pipeline;
+				pipeline = nullptr;
+			}
+		}
+		m_RenderPipelines.clear();
+
+		if (m_SwapChain)
+		{
+			delete m_SwapChain;
+			m_SwapChain = nullptr;
+		}
+
+		vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
 		if (m_LogicalDevice)
 		{

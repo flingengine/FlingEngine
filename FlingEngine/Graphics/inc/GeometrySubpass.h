@@ -6,6 +6,7 @@ namespace Fling
 {
 	class CommandBuffer;
 	class LogicalDevice;
+	class FrameBuffer;
 
 	// #TODO BH Move UBO Declarations here 
 
@@ -18,7 +19,9 @@ namespace Fling
 
 		void Draw(CommandBuffer& t_CmdBuf, entt::registry& t_reg) override;
 
-		void CreateDescriptorSets(VkImage t_SwapChainImg, entt::registry& t_reg) override;
+		void CreateDescriptorSets(VkDescriptorPool t_Pool, const std::vector<FrameBuffer*>& t_FrameBufs, entt::registry& t_reg) override;
+
+		void PrepareAttachments(FrameBuffer& t_FrameBuffer) override;
 
 	private:
 

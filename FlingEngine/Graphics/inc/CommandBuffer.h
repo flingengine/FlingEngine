@@ -23,9 +23,16 @@ namespace Fling
 		inline const LogicalDevice* GetDevice() const { return m_Device; }
 		inline const VkCommandPool& GetPoolHandle() const { return m_Pool; }
 
+		/** Begin recording for this command buffer */
+		void Begin();
+
 		void BeginRenderPass();
 
 		void NextSubpass();
+
+		void SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports);
+
+		void SetScissor(UINT32 first_scissor, const std::vector<VkRect2D> &scissors);
 
 		void EndRenderPass();
 
@@ -38,7 +45,5 @@ namespace Fling
 		const VkCommandPool m_Pool;
 
 		VkCommandBuffer m_Handle = VK_NULL_HANDLE;
-
     };
-
 }   // namespace Fling

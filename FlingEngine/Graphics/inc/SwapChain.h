@@ -12,6 +12,10 @@ namespace Fling
         std::vector<VkPresentModeKHR> PresentModes;
     };
 
+	class PhysicalDevice;
+	class LogicalDevice;
+
+
     /**
      * @brief	Represents a swap chain that can be used throughout the program
 	 * @note	You must EXPLICITLY call Cleanup() on the swap chain
@@ -20,7 +24,7 @@ namespace Fling
     {
     public:
 
-		explicit Swapchain(const VkExtent2D& t_Extent);
+		explicit Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface);
 
 		~Swapchain() noexcept {}
 
@@ -63,6 +67,10 @@ namespace Fling
 		VkFormat m_ImageFormat;
 
 		UINT32 m_ActiveImageIndex{};
+
+		const LogicalDevice* m_Device;
+		const PhysicalDevice* m_PhysicalDevice;
+		const VkSurfaceKHR m_Surface;
 
 		/** The images inside of the swap chain */
 		std::vector<VkImage> m_Images;

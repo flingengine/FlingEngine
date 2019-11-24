@@ -24,3 +24,21 @@ namespace Fling
     typedef entt::hashed_string::hash_type          Guid_Handle;
     static Guid INVALID_GUID = { "INVALID_GUID"_hs };
 }
+
+/**
+ * @brief Helper function to check size_t is correctly converted to uint32_t
+ * @param value Value of type @ref size_t to convert
+ * @return An @ref uint32_t representation of the same value
+ */
+template <class T>
+UINT32 to_u32(T value)
+{
+	static_assert(std::is_arithmetic<T>::value, "T must be numeric");
+
+	if (static_cast<uintmax_t>(value) > static_cast<uintmax_t>(std::numeric_limits<UINT32>::max()))
+	{
+		throw std::runtime_error("to_u32() failed, value is too big to be converted to UINT32");
+	}
+
+	return static_cast<UINT32>(value);
+}

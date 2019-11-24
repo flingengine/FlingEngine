@@ -9,6 +9,7 @@ namespace Fling
 {
 	class CommandBuffer;
 	class LogicalDevice;
+	class FrameBuffer;
 
 	class Subpass : public NonCopyable
 	{
@@ -20,13 +21,15 @@ namespace Fling
 		/** create and map any uniform buffers that we may need for this subpass */
 		virtual void Prepare() {}
 
-		/** Add any attachments to the frame buffer that this subpass may need */
-		virtual void PrepareAttachments(class FrameBuffer& t_FrameBuffer) {}
+		/** Add any attachments to a frame buffer that this subpass may need */
+		virtual void PrepareAttachments(FrameBuffer& t_FrameBuffer) {}
 
 		virtual void Draw(CommandBuffer& t_CmdBuf, entt::registry& t_reg) = 0;
 
-		// Given Swap chain image
-		virtual void CreateDescriptorSets(VkImage t_SwapChainImg, entt::registry& t_reg) = 0;
+		/**
+		* @brief	Given the frame buffers and the registry, create any descriptor sets that we may need 
+		*/
+		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, const std::vector<FrameBuffer*>& t_FrameBufs, entt::registry& t_reg) = 0;
 
 		VkDescriptorSetLayout GetDescriptorLayout() const { return m_DescriptorLayout; }
 

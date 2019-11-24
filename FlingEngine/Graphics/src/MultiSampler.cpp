@@ -2,11 +2,13 @@
 #include "MultiSampler.h"
 #include "Renderer.h"
 #include "GraphicsHelpers.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
-	Multisampler::Multisampler(VkSampleCountFlagBits t_SampleCount)
+	Multisampler::Multisampler(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount)
 		: m_SampleCountBits(t_SampleCount)
+		, m_Device(t_Dev)
 	{
 	}
 
@@ -19,8 +21,8 @@ namespace Fling
     void Multisampler::Create(VkExtent2D t_Extents, VkFormat t_Format)
     {
 		// t_Format should the same format as the swap chain
-
 		GraphicsHelpers::CreateVkImage(
+			m_Device->GetVkDevice(),
 			t_Extents.width,
 			t_Extents.height,
 			/* Mip levels */ 1,

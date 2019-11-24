@@ -1,6 +1,7 @@
 #include "Cubemap.h"
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
@@ -14,7 +15,7 @@ namespace Fling
         Guid t_VertexShader,
         Guid t_FragShader,
         VkRenderPass t_RenderPass,
-        VkDevice t_LogicalDevice) : 
+        LogicalDevice* t_LogicalDevice) : 
         m_VertexShader(t_VertexShader), 
         m_FragShader(t_FragShader), 
         m_Device(t_LogicalDevice), 
@@ -37,7 +38,7 @@ namespace Fling
     {
         if (m_ImageMemory)
         {
-            vkFreeMemory(m_Device, m_ImageMemory, nullptr);
+            vkFreeMemory(m_Device->GetVkDevice(), m_ImageMemory, nullptr);
             m_ImageMemory = nullptr;
         }
 
@@ -47,11 +48,11 @@ namespace Fling
             m_GraphicsPipeline = nullptr;
         }
 
-        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
-        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
-        vkDestroyImage(m_Device, m_Image, nullptr);
-        vkDestroyImageView(m_Device, m_Imageview, nullptr);
-        vkDestroySampler(m_Device, m_Sampler, nullptr);   
+        vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
+        vkDestroyDescriptorSetLayout(m_Device->GetVkDevice(), m_DescriptorSetLayout, nullptr);
+        vkDestroyImage(m_Device->GetVkDevice(), m_Image, nullptr);
+        vkDestroyImageView(m_Device->GetVkDevice(), m_Imageview, nullptr);
+        vkDestroySampler(m_Device->GetVkDevice(), m_Sampler, nullptr);   
     }
 
     void Cubemap::Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumFramesInFlight, Multisampler* t_Sampler)
@@ -78,13 +79,13 @@ namespace Fling
     {
         std::vector<Shader*> shaders =
         {
-            Shader::Create(m_VertexShader).get(),
-            Shader::Create(m_FragShader).get(),
+            Shader::Create(m_VertexShader, m_Device).get(),
+            Shader::Create(m_FragShader, m_Device).get(),
         };
 
         m_GraphicsPipeline = new GraphicsPipeline(
             shaders,
-            m_Device, 
+            m_Device->GetVkDevice(), 
             VK_POLYGON_MODE_FILL, 
             GraphicsPipeline::Depth::ReadWrite,
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -133,6 +134,7 @@ namespace Fling
         stagingBuffer->UnmapMemory();
 
         GraphicsHelpers::CreateVkImage(
+			m_Device->GetVkDevice(),
             images[0]->GetWidth(),
             images[0]->GetHeight(),
             m_MipLevels, // MipLevels
@@ -224,7 +226,7 @@ namespace Fling
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
         sampler.maxAnisotropy = 1.0f;
 
-        if (vkCreateSampler(m_Device, &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
+        if (vkCreateSampler(m_Device->GetVkDevice(), &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube failed to create sampler");
         }
@@ -237,7 +239,7 @@ namespace Fling
         view.subresourceRange.layerCount = 6;
         view.subresourceRange.levelCount = m_MipLevels;
         view.image = m_Image;
-        if (vkCreateImageView(m_Device, &view, nullptr, &m_Imageview) != VK_SUCCESS)
+        if (vkCreateImageView(m_Device->GetVkDevice(), &view, nullptr, &m_Imageview) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube failed to create image view");
         }
@@ -255,7 +257,7 @@ namespace Fling
         VkDescriptorPoolCreateInfo descriptorPoolInfo =
             Initializers::DescriptorPoolCreateInfo(poolSizes, 2);
 
-        if (vkCreateDescriptorPool(m_Device, &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        if (vkCreateDescriptorPool(m_Device->GetVkDevice(), &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube map failed to create descriptor pool");
         }
@@ -279,7 +281,7 @@ namespace Fling
             Initializers::DescriptorSetLayoutCreateInfo(
                 setLayoutBinding);
 
-        if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayout, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+        if (vkCreateDescriptorSetLayout(m_Device->GetVkDevice(), &descriptorLayout, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube map failed to create descriptor set layout");
         }
@@ -297,7 +299,7 @@ namespace Fling
                 &m_DescriptorSetLayout,
                 1);
 
-        if (vkAllocateDescriptorSets(m_Device, &allocInfo, &m_DescriptorSet) != VK_SUCCESS)
+        if (vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &m_DescriptorSet) != VK_SUCCESS)
         {
             F_LOG_ERROR("Cube map failed to allocate descriptor sets")
         }
@@ -326,7 +328,7 @@ namespace Fling
                     &textureDescriptor),
             };
 
-            vkUpdateDescriptorSets(m_Device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
+            vkUpdateDescriptorSets(m_Device->GetVkDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
         }
     }
 

@@ -7,6 +7,7 @@
 #include "FlingVulkan.h"
 
 #include <GLFW/glfw3.h>
+#include <entt/entity/registry.hpp>
 
 #if WITH_IMGUI
 
@@ -36,7 +37,6 @@
 #include "DepthBuffer.h"
 #include "Model.h"
 
-#include <entt/entity/registry.hpp>
 #include "MeshRenderer.h"
 #include "Material.h"
 
@@ -114,8 +114,6 @@ namespace Fling
 				return VK_SAMPLE_COUNT_1_BIT;
 			}
 		}
-
-        LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
         /**
          * @brief Get the Physical Device object used by this renderer

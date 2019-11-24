@@ -42,14 +42,13 @@ namespace Fling
         m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_Surface);
         assert(m_LogicalDevice);
 
-        VkExtent2D Extent = ChooseSwapExtent();
-        m_SwapChain = new Swapchain(Extent);
+        m_SwapChain = new Swapchain(ChooseSwapExtent(), m_LogicalDevice, m_PhysicalDevice, m_Surface);
         assert(m_SwapChain);
     }
 
 	void Renderer::InitGraphics()
 	{
-		m_MsaaSampler = new Multisampler(m_PhysicalDevice->GetMaxUsableSampleCount());
+		m_MsaaSampler = new Multisampler(m_LogicalDevice, m_PhysicalDevice->GetMaxUsableSampleCount());
 		CreateRenderPass();
 
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
@@ -61,7 +60,7 @@ namespace Fling
 
 		m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
 
-        m_DepthBuffer = new DepthBuffer(m_PhysicalDevice->GetMaxUsableSampleCount());
+        m_DepthBuffer = new DepthBuffer(m_LogicalDevice, m_PhysicalDevice->GetMaxUsableSampleCount(), m_SwapChain->GetExtents());
         assert(m_DepthBuffer);
 
         // Create the camera
@@ -353,7 +352,7 @@ namespace Fling
 
         CreateRenderPass();
         //CreateGraphicsPipeline();
-
+		m_DepthBuffer->SetExtents(m_SwapChain->GetExtents());
         m_DepthBuffer->Create();
 		if (m_MsaaSampler)
 		{
@@ -462,11 +461,11 @@ namespace Fling
 #if WITH_IMGUI
         // Update imgui command buffers
         {
-            assert(m_Editor);
             vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_flingImgui->GetCommandPool(), 0);
             // Prepare the ImGUI buffers to be built
             m_flingImgui->PrepFrameBuild();
 #if WITH_EDITOR
+			assert(m_Editor);
             // Draw any ImGUI items here
             m_Editor->Draw(*m_Registry, DeltaTime);
 #endif

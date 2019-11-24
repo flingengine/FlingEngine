@@ -3,6 +3,7 @@
 #include "FlingVulkan.h"
 #include "FlingTypes.h"
 #include <vector>
+#include <memory>
 
 namespace Fling
 {
@@ -20,8 +21,8 @@ namespace Fling
 
     struct FrameBufferAttachment
     {
-		explicit FrameBufferAttachment(AttachmentCreateInfo t_Info, const VkDevice& t_Dev);
-		
+		FrameBufferAttachment(AttachmentCreateInfo t_Info, const VkDevice& t_Dev);
+
 		~FrameBufferAttachment();
 
 		void Release();
@@ -66,7 +67,7 @@ namespace Fling
     class FrameBuffer
     {
     public: 
-        explicit FrameBuffer(const VkDevice& t_Dev,INT32 t_Width, INT32 t_Height);
+        explicit FrameBuffer(const VkDevice& t_Dev,INT32 t_Width = 2048, INT32 t_Height = 2048);
         ~FrameBuffer();
 
 		void SizeSize(INT32 w, INT32 h);
@@ -81,7 +82,7 @@ namespace Fling
 		*			based on the given attachments it has. Should be called
 		*			AFTER adding attachments for proper uses. 
 		* 
-		* @return	VK_SUCESS if all resrouces have been created successfully 
+		* @return	VK_SUCESS if all resources have been created successfully 
 		*/
 		VkResult CreateRenderPass();
 
@@ -104,6 +105,6 @@ namespace Fling
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		const VkDevice& m_Device;
 
-		std::vector<FrameBufferAttachment> m_Attachments;	
+		std::vector<FrameBufferAttachment*> m_Attachments;	
     };
 }   // namespace Fling

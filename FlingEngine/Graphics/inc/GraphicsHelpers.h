@@ -37,6 +37,7 @@ namespace Fling
         void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             VkFormat t_Format,
@@ -51,6 +52,7 @@ namespace Fling
 		VkSemaphore CreateSemaphore(VkDevice t_Dev);
         
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             UINT32 t_MipLevels,

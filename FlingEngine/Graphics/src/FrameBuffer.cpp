@@ -36,6 +36,7 @@ namespace Fling
 
 		// Create image for this attachment
 		GraphicsHelpers::CreateVkImage(
+			m_Device,
 			t_Info.Width,
 			t_Info.Height,
 			/* Format */ t_Info.Format,
@@ -163,6 +164,14 @@ namespace Fling
 	{
 		assert(m_Device);
 
+		for (auto& attachment : m_Attachments)
+		{
+			if (attachment)
+			{
+				delete attachment;
+				attachment = nullptr;
+			}
+		}
 		// Cleanup attachments
 		m_Attachments.clear();
 
@@ -188,7 +197,7 @@ namespace Fling
 		std::vector<VkAttachmentDescription> attachmentDescriptions;
 		for (auto& attachment : m_Attachments)
 		{
-			attachmentDescriptions.push_back(attachment.GetDescription());
+			attachmentDescriptions.push_back(attachment->GetDescription());
 		}
 
 		// Collect attachment references
@@ -201,7 +210,7 @@ namespace Fling
 
 		for (auto& attachment : m_Attachments)
 		{
-			if (attachment.IsDepthStencil())
+			if (attachment->IsDepthStencil())
 			{
 				// Only one depth attachment allowed
 				assert(!hasDepth);
@@ -261,18 +270,18 @@ namespace Fling
 		VK_CHECK_RESULT(vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_RenderPass));
 
 		std::vector<VkImageView> attachmentViews;
-		for (auto attachment : m_Attachments)
+		for (auto& attachment : m_Attachments)
 		{
-			attachmentViews.push_back(attachment.GetViewHandle());
+			attachmentViews.push_back(attachment->GetViewHandle());
 		}
 
 		// Find. max number of layers across attachments
 		uint32_t maxLayers = 0;
-		for (auto attachment : m_Attachments)
+		for (auto& attachment : m_Attachments)
 		{
-			if (attachment.GetSubresourceRange().layerCount > maxLayers)
+			if (attachment->GetSubresourceRange().layerCount > maxLayers)
 			{
-				maxLayers = attachment.GetSubresourceRange().layerCount;
+				maxLayers = attachment->GetSubresourceRange().layerCount;
 			}
 		}
 
@@ -310,8 +319,7 @@ namespace Fling
 	UINT32 FrameBuffer::AddAttachment(AttachmentCreateInfo t_CreateInfo)
 	{
 		assert(m_Device);
-		FrameBufferAttachment attachment {t_CreateInfo, m_Device};
-		m_Attachments.push_back(attachment);
+		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device));
 		return static_cast<UINT32>(m_Attachments.size() - 1);
 	}
 }   // namespace Fling
