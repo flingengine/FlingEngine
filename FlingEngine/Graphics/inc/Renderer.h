@@ -51,6 +51,8 @@
 
 #include "ShaderPrograms/ShaderProgramManager.h"
 
+#include <stack>
+
 namespace Fling
 {
     // File resource
@@ -101,17 +103,17 @@ namespace Fling
          */
         static const VkDevice& GetLogicalVkDevice()  { return Renderer::Get().m_LogicalDevice->GetVkDevice(); }
 
-		static VkSampleCountFlagBits GetMsaaSampleCount() 
-		{ 
-			if (Renderer::Get().m_MsaaSampler)
-			{
-				return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
-			}
-			else
-			{
-				return VK_SAMPLE_COUNT_1_BIT;
-			}
-		}
+        static VkSampleCountFlagBits GetMsaaSampleCount() 
+        { 
+            if (Renderer::Get().m_MsaaSampler)
+            {
+                return Renderer::Get().m_MsaaSampler->GetSampleCountFlagBits();
+            }
+            else
+            {
+                return VK_SAMPLE_COUNT_1_BIT;
+            }
+        }
 
         LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 
@@ -131,6 +133,8 @@ namespace Fling
         void SetFrameBufferHasBeenResized(bool t_Setting) { m_FrameBufferResized = t_Setting; }
 
         const VkSurfaceKHR& GetVkSurface() const { return m_Surface; }
+
+        Cubemap* GetSkybox() const { return m_Skybox; }
 
         Swapchain* GetSwapChain() const { return m_SwapChain; }
 
@@ -167,7 +171,7 @@ namespace Fling
         /*
         * Builds command buffer to submit to device
         */
-        void BuildCommandBuffers(entt::registry& t_Reg);
+        void BindCommadBuffers(entt::registry& t_Reg);
 
         /**
         * Create semaphores and fence objects
@@ -180,8 +184,6 @@ namespace Fling
         * Re-create the image views, render passes, and command buffers
         */
         void RecreateFrameResources();
-
-        void CreateDescriptors();
 
         /**
         * Determine the best match extents based on our window width and height
@@ -203,7 +205,9 @@ namespace Fling
         */
         void MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
+        void MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
+
+        void MeshRendererReplace(entt::entity t_Ent, entt::registry& t_Reg);
 
         /**
          * @brief   Callback for when a directional light is added to Fling so that we can keep track of how many
@@ -211,7 +215,7 @@ namespace Fling
          */
         void DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light);
 
-		void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
+        void PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
 
 
         /** Entt registry that the renderer will be using. Set by the Engine */
@@ -262,6 +266,9 @@ namespace Fling
         /** Used to determine if the frame buffer has been resized or not */
         bool m_FrameBufferResized = false;
 
+        /** Used to determin if the primary command buffer should be rebuilt */
+        bool m_RebuildCommanfBuffer = false;
+
         static const int MAX_FRAMES_IN_FLIGHT;
 
         /** The alignment of the dynamic UBO on this device */
@@ -283,19 +290,20 @@ namespace Fling
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_InFlightFences;
 
-		std::shared_ptr<Material> m_DefaultMat;
+        std::shared_ptr<Material> m_DefaultMat;
 
         // Lighting -----------------------
         Lighting m_Lighting = {};
-		std::shared_ptr<Image> m_BRDFLookupTexture;
+        std::shared_ptr<Image> m_BRDFLookupTexture;
    
-
         LightingUbo m_LightingUBO = {}; 
 
         void CreateLightBuffers();
 
         // Flag for toggling imgui 
         bool m_DrawImgui;
-		bool m_IsQuitting = false;
+        bool m_IsQuitting = false;
+
+        //std::stack<entt::delegate<void()>> m_EndFrameFunction;
     };
 }    // namespace Fling

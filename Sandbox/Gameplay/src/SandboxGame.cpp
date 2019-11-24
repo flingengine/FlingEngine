@@ -135,7 +135,7 @@ namespace Sandbox
         AddModel(1, "Models/sphere.obj", "Materials/Paint.mat");
         AddModel(2, "Models/sphere.obj", "Materials/Bronze.mat");
         AddModel(3, "Models/sphere.obj", "Materials/Cobblestone.mat");
-        AddModel(4, "Models/sphere.obj", "Materials/Reflections.mat");
+        AddModel(4, "Models/cube.obj", "Materials/Reflections.mat");
 
 
         float Width = 2.0f;

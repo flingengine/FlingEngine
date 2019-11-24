@@ -535,7 +535,7 @@ namespace Fling
         ImGui::NewFrame();
     }
 
-    void FlingImgui::BuildCommandBuffers(bool t_displayOn)
+    void FlingImgui::BindCmdBuffers(bool t_displayOn)
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
