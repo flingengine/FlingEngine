@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
+#include <stdexcept>
 #include <inttypes.h>
 #include <entt/core/hashed_string.hpp>
 
