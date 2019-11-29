@@ -12,8 +12,14 @@ Fling::StackAllocator::StackAllocator(void* t_Start, void* t_End)
 {
     std::ptrdiff_t bufferSize = ((const char*)t_End - (const char*)t_Start);
 
-    m_Start = static_cast<char*>(AlignedAlloc(bufferSize, 0));
+    m_Start = static_cast<char*>(AlignedAlloc(bufferSize, SIZE_OF_ALLOCATION_OFFSET));
     m_End = m_Start + bufferSize;
+    m_Current = m_Start;
+}
+
+Fling::StackAllocator::~StackAllocator()
+{
+    AlignedFree(m_Start);
 }
 
 void* Fling::StackAllocator::Allocate(size_t t_Size, size_t t_Alignment, size_t t_Offset)

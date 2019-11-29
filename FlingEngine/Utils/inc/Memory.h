@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include "FlingTypes.h"
 
 namespace Fling
 {
@@ -14,7 +15,7 @@ namespace Fling
     {
         const size_t mask = t_Align - 1;
         assert((t_Align & mask) == 0); //power of 2
-        return (t_Addr + mask) & mask;
+        return (t_Addr + mask) & ~mask;
     }
     
     //Shift the given pointer upwards if/as necessary to ensure it is aligned
@@ -22,8 +23,8 @@ namespace Fling
     template<typename T>
     inline T* AlignPointer(T* t_Ptr, size_t t_Align)
     {
-        const uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
-        const uintptr_t addrAligned = AlignAddress(addr, align);
+        const uintptr_t addr = reinterpret_cast<uintptr_t>(t_Ptr);
+        const uintptr_t addrAligned = AlignAddress(addr, t_Align);
         return reinterpret_cast<T*>(addrAligned);
     }
 

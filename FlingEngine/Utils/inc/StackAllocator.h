@@ -12,6 +12,7 @@ namespace Fling
     {
     public:
         StackAllocator(void* t_Start, void* t_End);
+        ~StackAllocator();
 
         void* Allocate(size_t t_Size, size_t t_Alignment, size_t t_Offset);
 
