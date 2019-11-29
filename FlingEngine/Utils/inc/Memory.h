@@ -72,5 +72,4 @@ namespace Fling
             value &= ~(1u << bit);
         }
     }
-
 }   // namespace Fling
