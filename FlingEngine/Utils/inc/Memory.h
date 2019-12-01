@@ -9,25 +9,6 @@ namespace Fling
 
     void AlignedFree(void* t_Data);
 
-    //Shift the given address upwards if/as necessary to ensure it is aligned to
-    //the given number of bytes 
-    inline uintptr_t AlignAddress(uintptr_t t_Addr, size_t t_Align)
-    {
-        const size_t mask = t_Align - 1;
-        assert((t_Align & mask) == 0); //power of 2
-        return (t_Addr + mask) & ~mask;
-    }
-    
-    //Shift the given pointer upwards if/as necessary to ensure it is aligned
-    //to the given number of bytes
-    template<typename T>
-    inline T* AlignPointer(T* t_Ptr, size_t t_Align)
-    {
-        const uintptr_t addr = reinterpret_cast<uintptr_t>(t_Ptr);
-        const uintptr_t addrAligned = AlignAddress(addr, t_Align);
-        return reinterpret_cast<T*>(addrAligned);
-    }
-
 #if FLING_LINUX
     #define leading_zeroes(x) ((x) == 0 ? 32 : __builtin_clz(x))
     #define trailing_zeroes(x) ((x) == 0 ? 32 : __builtin_ctz(x))
@@ -63,7 +44,7 @@ namespace Fling
 #endif
 
     template<typename T>
-    inline void for_each_bit(UINT32 value, const T& func)
+    inline void for_each_bit(uint32_t value, const T& func)
     {
         while (value)
         {
@@ -71,5 +52,24 @@ namespace Fling
             func(bit);
             value &= ~(1u << bit);
         }
+    }
+
+    //Shift the given address upwards if/as necessary to ensure it is aligned to
+    //the given number of bytes 
+    inline uintptr_t AlignAddress(uintptr_t t_Addr, size_t t_Align)
+    {
+        const size_t mask = t_Align - 1;
+        assert((t_Align & mask) == 0); //power of 2
+        return (t_Addr + mask) & ~mask;
+    }
+
+    //Shift the given pointer upwards if/as necessary to ensure it is aligned
+    //to the given number of bytes
+    template<typename T>
+    inline T* AlignPointer(T* t_Ptr, size_t t_Align)
+    {
+        const uintptr_t addr = reinterpret_cast<uintptr_t>(t_Ptr);
+        const uintptr_t addrAligned = AlignAddress(addr, t_Align);
+        return reinterpret_cast<T*>(addrAligned);
     }
 }   // namespace Fling
