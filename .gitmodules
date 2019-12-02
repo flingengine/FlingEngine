@@ -31,12 +31,12 @@
 [submodule "external/imgui"]
 	path = external/imgui
 	url = https://github.com/flingengine/imgui.git
-
 [submodule "external/SPIRV-Cross"]
 	path = external/SPIRV-Cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
-
-
 [submodule "external/imgui_entt_entity_editor"]
 	path = external/imgui_entt_entity_editor
 	url = https://github.com/flingengine/imgui_entt_entity_editor.git
+[submodule "external/bullet3"]
+	path = external/bullet3
+	url = https://github.com/flingengine/bullet3.git
