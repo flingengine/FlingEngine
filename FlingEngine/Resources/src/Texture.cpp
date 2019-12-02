@@ -6,9 +6,10 @@
 #include "Texture.h"
 
 #include "FlingVulkan.h"
+#include "LogicalDevice.h"
+#include "PhyscialDevice.h"
 #include "VulkanApp.h"
 
-#include "Renderer.h"        // For getting the devices 
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
 #include "Buffer.h"
@@ -100,7 +101,7 @@ namespace Fling
     void Texture::GenerateMipMaps(VkFormat imageFormat)
     {
         // Check that we have linear filtering support on this device
-        VkFormatProperties formatProperties = Renderer::Get().GetPhysicalDevice()->GetFormatProperties(imageFormat);
+        VkFormatProperties formatProperties = VulkanApp::Get().GetPhysicalDevice()->GetFormatProperties(imageFormat);
 
         if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) 
         {
@@ -263,9 +264,10 @@ namespace Fling
         SamplerInfo.minLod = 0.0f;
         SamplerInfo.maxLod = static_cast<float>(m_MipLevels);
 
-        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+        LogicalDevice* LogDevice = VulkanApp::Get().GetLogicalDevice();
+		assert(LogDevice);
 
-        if (vkCreateSampler(Device, &SamplerInfo, nullptr, &m_TextureSampler) != VK_SUCCESS)
+        if (vkCreateSampler(LogDevice->GetVkDevice(), &SamplerInfo, nullptr, &m_TextureSampler) != VK_SUCCESS)
         {
             F_LOG_ERROR("Failed to create texture sampler!");
         }
@@ -276,7 +278,10 @@ namespace Fling
         // We don't need this stbi pixel data any more
         stbi_image_free(m_PixelData);
         
-        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		LogicalDevice* LogDevice = VulkanApp::Get().GetLogicalDevice();
+		assert(LogDevice);
+
+        VkDevice Device = LogDevice->GetVkDevice();
 
         if(Device == VK_NULL_HANDLE)
         {

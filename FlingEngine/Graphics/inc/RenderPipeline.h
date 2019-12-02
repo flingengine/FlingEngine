@@ -10,6 +10,7 @@ namespace Fling
 	class LogicalDevice;
 	class Swapchain;
 	class FrameBuffer;
+	class MeshRenderer;
 
 	/**
 	* @brief	A render pipeline encapsulates the functionality of a 
@@ -25,6 +26,8 @@ namespace Fling
 		void Draw(CommandBuffer& t_CmdBuf, entt::registry& t_Reg);
 
 	private:
+
+		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
 		/**
 		* @brief	Creates the descriptor pool and the descriptor sets for each sub pass to use

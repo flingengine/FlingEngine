@@ -4,20 +4,57 @@
 #include "PhyscialDevice.h"
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
+#include "MeshRenderer.h"
 
 #define FRAME_BUF_DIM 2048
 
 namespace Fling
 {
-	GeometrySubpass::GeometrySubpass(LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
+	GeometrySubpass::GeometrySubpass(const LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Vert, t_Frag)
 	{
 	}
 
-	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, entt::registry& t_reg)
+	GeometrySubpass::~GeometrySubpass()
 	{
+		// Clean up any allocated UBO's 
+		// Clean up any allocated descriptor sets
+	}
+
+	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, FrameBuffer& t_FrameBuf, entt::registry& t_reg)
+	{
+		// Begin render pass
+
 		// vkCmdBindPipeline
 		// Update UBO's 
+		t_reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		{
+			Fling::Model* Model = t_MeshRend.m_Model;
+			if (!Model)
+			{
+				return;
+			}
+
+			// UPDATE UNIFORM BUF of the mesh --------
+
+			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
+			VkDeviceSize offsets[1] = { 0 };
+
+			// Bind the descriptor set for rendering a mesh using the dynamic offset
+			vkCmdBindDescriptorSets(
+				t_CmdBuf.GetHandle(),
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_PipelineLayout,
+				0,
+				1,
+				&t_MeshRend.m_DescriptorSets[0],	// #TODO Descriptor set per cmd buf
+				0,
+				nullptr);
+
+			vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+			vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
+		});
 
 		// Cmd to bind frame buffer attachments
 		// for each mesh renderer
@@ -31,11 +68,43 @@ namespace Fling
 
 
 		// Binds UBO cmd
+
+		// End the render pass
 	}
 
-	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, const std::vector<FrameBuffer*>& t_FrameBufs, entt::registry& t_reg)
+	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf, entt::registry& t_reg)
 	{
+		t_reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		{
+			// Textured quad descriptor set
+			VkDescriptorSetAllocateInfo allocInfo =
+				Initializers::DescriptorSetAllocateInfo(
+					t_Pool,
+					&m_DescriptorLayout,
+					1);
 
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_MeshRend.m_DescriptorSets[0]));
+		
+			// Create the image info's for the write sets to reference
+			// that will give us access to the G-Buffer in the shaders
+			//VkDescriptorImageInfo texDescriptorPosition =
+			//	Initializers::DescriptorImageInfo(
+			//		t_FrameBuf.GetSamplerHandle(),
+
+			//		);
+
+			std::vector<VkWriteDescriptorSet> writeDescriptorSets =
+			{
+				// Image descriptor of the frame buffer sampler, and attachment 0's view
+				
+				// Attachment 0: (World space) Positions
+				// Attachment 1: (World space) Normals
+				// Attachment 2: Albedo (color)
+			};
+
+			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);	
+		});
+		
 		// For each mesh renderer
 		// Bind
 	}

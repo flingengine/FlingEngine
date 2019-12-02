@@ -4,6 +4,7 @@
 #include "GraphicsHelpers.h"
 #include "SwapChain.h"
 #include "FrameBuffer.h"
+#include "MeshRenderer.h"
 
 namespace Fling
 {
@@ -21,9 +22,9 @@ namespace Fling
 		}
 
 		// Let each subpass add their own attachments to the frame buffer ----
-		for (const auto& pass : m_Subpasses)
+		for (const std::unique_ptr<Subpass>& pass : m_Subpasses)
 		{
-			for (auto& frameBuffer : m_FrameBuffers)
+			for (FrameBuffer* frameBuffer : m_FrameBuffers)
 			{
 				assert(frameBuffer);
 				// Add any attachments and samplers to each frame buffer
@@ -32,7 +33,7 @@ namespace Fling
 		}
 
 		// Now that we have all the attachments on the frame buffers, build the render passes 
-		for (auto& frameBuffer : m_FrameBuffers)
+		for (FrameBuffer* frameBuffer : m_FrameBuffers)
 		{
 			assert(frameBuffer);
 			VK_CHECK_RESULT(frameBuffer->CreateRenderPass());
@@ -42,6 +43,11 @@ namespace Fling
 		CreateDescriptors(t_Reg);
 
 		// Build command buffers!
+
+		// Add Entt callbacks ----------
+		t_Reg.on_construct<MeshRenderer>().connect<&RenderPipeline::OnMeshRendererAdded>(*this);
+		// #TODO Light callbacks
+
 	}
 
 	RenderPipeline::~RenderPipeline()
@@ -64,32 +70,32 @@ namespace Fling
 	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, entt::registry& t_Reg)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
-
-		// Vk Bgein command buffer
-		// Begin render pass info struct
-		// Set clear values
-		// vkCmdBeginRenderPass
-		// vkCmdSetViewport
-
-		// vkCmdSetScissor
-
-		for (const auto& sub : m_Subpasses)
+	
+		for (const std::unique_ptr<Subpass>& sub : m_Subpasses)
 		{
-			// Draw each subpass
-			sub->Draw(t_CmdBuf, t_Reg);
+			// For each frame buffer
+			for (FrameBuffer* FrameBuf : m_FrameBuffers)
+			{
+				assert(FrameBuf);
+				sub->Draw(t_CmdBuf, *FrameBuf, t_Reg);
+			}
 		}
+	}
 
-		//t_CmdBuf.EndRenderPass();
+	void RenderPipeline::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+		F_LOG_TRACE("Mesh rend added!");
+		assert(m_DescriptorPool != VK_NULL_HANDLE);
 
-		// vkEndRenderPass
-		// vkEndCommandBuffer
+		// Initalize the mesh renderer to have data 
+		t_MeshRend.m_DescriptorPool = m_DescriptorPool;
 	}
 
 	void RenderPipeline::CreateDescriptors(entt::registry& t_Reg)
 	{
 		// Create the descriptor pool for us to use -------
 		const UINT32 SwapImageCount = static_cast<UINT32>(m_SwapChain->GetImageCount());
-		UINT32 DescriptorCount = 128;
+		UINT32 DescriptorCount = 256;
 
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
@@ -111,10 +117,13 @@ namespace Fling
 		// Build all the descriptor SETS in each subpass
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
-		for (auto& pass : m_Subpasses)
+		for (std::unique_ptr<Subpass>& Pass : m_Subpasses)
 		{
-			pass->CreateDescriptorSets(m_DescriptorPool, m_FrameBuffers, t_Reg);
+			for (FrameBuffer* FrameBuf : m_FrameBuffers)
+			{
+				assert(FrameBuf);
+				Pass->CreateDescriptorSets(m_DescriptorPool, *FrameBuf, t_Reg);
+			}
 		}
-
 	}
 }

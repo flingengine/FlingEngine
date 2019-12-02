@@ -38,7 +38,7 @@ namespace Sandbox
         Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 
-        //LightingTest(t_Reg);
+        LightingTest(t_Reg);
         //OnLoadInitated();
         //GenerateTestMeshes(t_Reg);
 

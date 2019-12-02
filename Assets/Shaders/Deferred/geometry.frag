@@ -39,4 +39,5 @@ void main()
 
     // Output the vertex normal for testing
     out_albedo = abledoColor;
+    out_albedo = vec4(1.0, 0.0, 0.0, 1.0);
 }

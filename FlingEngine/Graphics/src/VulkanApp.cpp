@@ -80,10 +80,15 @@ namespace Fling
 			F_LOG_TRACE("Bulid DEFERRED render pipeline!");
 			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
 			
-			auto Vert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), m_LogicalDevice);
-			auto Frag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, Vert, Frag));
-			// #TODO Create Lighting sub pass
+			// Create geometry pass ------
+			std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), m_LogicalDevice);
+			std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), m_LogicalDevice);
+			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, GeomVert, GeomFrag));
+
+			// Create lighting subpass -------
+			std::shared_ptr<Fling::Shader> LightVert = Shader::Create(HS("Shaders/Deferred/lighting_vert.spv"), m_LogicalDevice);
+			std::shared_ptr<Fling::Shader> LightFrag = Shader::Create(HS("Shaders/Deferred/lighting_frag.spv"), m_LogicalDevice);
+			//Subpasses.emplace_back(std::make_unique<LightingSubpass>(m_LogicalDevice, LightVert, LightFrag));
 
 			m_RenderPipelines.emplace_back(
 				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)

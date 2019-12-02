@@ -6,11 +6,6 @@ namespace Fling
 {
     namespace ShaderProgramDeferred
     {
-		struct DeferredData
-		{
-			GBuffer m_GBuffer = {};
-		} deferred;
-
         void CreateDescriptorSets(
             MeshRenderer& t_MeshRend,
             Lighting& m_Lighting,
