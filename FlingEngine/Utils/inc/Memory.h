@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include "Bullet3Common/b3AlignedAllocator.h"
 
 namespace Fling
 {

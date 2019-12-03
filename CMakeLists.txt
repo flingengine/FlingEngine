@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.11.0 )
+cmake_minimum_required ( VERSION 3.11.4 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
@@ -95,6 +95,34 @@ set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory( external/SPIRV-Cross )
+set_target_properties(spirv-cross-c PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-core PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-cpp PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-glsl PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-reflect PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
+
+# Bullet3 
+# set(BULLET_ROOT external/bullet3) # where to find Bullet
+# find_package(BULLET REQUIRED)
+# add_subdirectory(external/bullet3/src) # dive in our own code
+# include_directories(${BULLET_INCLUDE_DIR})
+foreach(_bullet3_option "BUILD_BULLET3" "BUILD_PYBULLET" "BUILD_BULLET2_DEMOS" "BUILD_OPENGL3_DEMOS" "BUILD_CPU_DEMOS" "BUILD_EXTRAS" "BUILD_UNIT_TESTS" "USE_GRAPHICAL_BENCHMARK" "USE_GLUT")
+    set(${_bullet3_option} OFF CACHE INTERNAL "")
+endforeach()
+if(MSVC)
+    set(BUILD_SHARED_LIBS OFF)
+endif()
+# Reset back to value before MSVC fix
+set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+add_subdirectory( external/bullet3 )
+set_target_properties(Bullet3Common PROPERTIES FOLDER Bullet)
+set_target_properties(BulletCollision PROPERTIES FOLDER Bullet)
+set_target_properties(BulletDynamics PROPERTIES FOLDER Bullet)
+set_target_properties(BulletInverseDynamics PROPERTIES FOLDER Bullet)
+set_target_properties(BulletSoftBody PROPERTIES FOLDER Bullet)
+set_target_properties(LinearMath PROPERTIES FOLDER Bullet)
+include_directories( external/bullet3/src )
 
 # ImGUI 
 if( WITH_IMGUI_FLAG )
