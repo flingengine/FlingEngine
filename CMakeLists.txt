@@ -106,6 +106,7 @@ set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
 foreach(_bullet3_option "BUILD_BULLET3" "BUILD_PYBULLET" "BUILD_BULLET2_DEMOS" "BUILD_OPENGL3_DEMOS" "BUILD_CPU_DEMOS" "BUILD_EXTRAS" "BUILD_UNIT_TESTS" "USE_GRAPHICAL_BENCHMARK" "USE_GLUT")
     set(${_bullet3_option} OFF CACHE INTERNAL "")
 endforeach()
+# On MSVC shared mode must be disabled with bullet currently
 if(MSVC)
     set(BUILD_SHARED_LIBS OFF)
 endif()

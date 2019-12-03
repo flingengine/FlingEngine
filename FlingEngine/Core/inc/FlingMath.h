@@ -13,3 +13,24 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp> 
 #include <glm/gtc/random.hpp>
+#include "btBulletDynamicsCommon.h"
+
+namespace Fling
+{
+    namespace MathConversions
+    {
+        glm::vec3 bulletToGlm(const btVector3& v);
+
+        glm::quat bulletToGlm(const btQuaternion& q);
+
+        btVector3 glmToBullet(const glm::vec3& v);
+
+        btQuaternion glmToBullet(const glm::quat& q);
+
+        btMatrix3x3 glmToBullet(const glm::mat3& m);
+
+        // btTransform does not contain a full 4x4 matrix, so this transform is lossy.
+        // Affine transformations are OK but perspective transformations are not.
+        btTransform glmToBullet(const glm::mat4& m);
+    }
+}
