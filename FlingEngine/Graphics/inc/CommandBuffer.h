@@ -6,7 +6,7 @@ namespace Fling
 {
 	class LogicalDevice;
 
-	// #TODO Pipeline state class definition
+	// #TODO Pipeline state class definition (just grab it from the official vulkan samples)
 	// #TODO Resource binding state class definition
 
     /**
@@ -16,6 +16,21 @@ namespace Fling
     class CommandBuffer
     {
 	public:
+		enum class ResetMode
+		{
+			ResetPool,
+			ResetIndividually,
+			AlwaysAllocate,
+		};
+
+		enum class State
+		{
+			Invalid,
+			Initial,
+			Recording,
+			Executable,
+		};
+
 		CommandBuffer(LogicalDevice* t_Device, VkCommandPool t_CmdPool);
 		~CommandBuffer();
 

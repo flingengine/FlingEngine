@@ -10,6 +10,7 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;
+	class Swapchain;
 	class GraphicsPipeline;
 
 	/**
@@ -23,12 +24,14 @@ namespace Fling
 	class Subpass : public NonCopyable
 	{
 	public:
-		Subpass(const LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
+		Subpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
 		
 		virtual ~Subpass();
 
 		/** Add any attachments to a frame buffer that this subpass may need */
 		virtual void PrepareAttachments(FrameBuffer& t_FrameBuffer) {}
+
+		virtual void CreateGraphicsPipeline(FrameBuffer& t_FrameBuffer) = 0;
 
 		virtual void Draw(CommandBuffer& t_CmdBuf, FrameBuffer& t_FrameBuf, entt::registry& t_reg) = 0;
 
@@ -40,11 +43,14 @@ namespace Fling
 
 		VkDescriptorSetLayout GetDescriptorLayout() const noexcept { return m_DescriptorLayout; }
 
+		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
+
 	protected:
 
 		// Get default graphics Pipeline
 
 		const LogicalDevice* m_Device;
+		const Swapchain* m_SwapChain;
 
 		std::shared_ptr<Fling::Shader> m_VertexShader;
 		
@@ -54,7 +60,6 @@ namespace Fling
 		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 
-		// How do we wanna handle this
 		GraphicsPipeline* m_GraphicsPipeline = nullptr;
 	};
 }

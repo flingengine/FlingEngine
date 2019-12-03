@@ -31,6 +31,7 @@ namespace Fling
 				pass->PrepareAttachments(*frameBuffer);
 			}
 		}
+		F_LOG_TRACE("Render pipeline attachments created...");
 
 		// Now that we have all the attachments on the frame buffers, build the render passes 
 		for (FrameBuffer* frameBuffer : m_FrameBuffers)
@@ -39,15 +40,31 @@ namespace Fling
 			VK_CHECK_RESULT(frameBuffer->CreateRenderPass());
 		}
 
+		F_LOG_TRACE("Render pipeline Render Passes created...");
+
+		// Create the graphics pipelines on each subpass now that we have render passes for them
+		for (const std::unique_ptr<Subpass>& pass : m_Subpasses)
+		{
+			for (FrameBuffer* frameBuffer : m_FrameBuffers)
+			{
+				if (frameBuffer)
+				{
+					pass->CreateGraphicsPipeline(*frameBuffer);
+				}
+			}
+		}
+		F_LOG_TRACE("Render pipeline Graphics Pipelines created...");
+
 		// Build Descriptor sets -------
 		CreateDescriptors(t_Reg);
 
-		// Build command buffers!
+		F_LOG_TRACE("Render pipeline Descriptors created...");
 
 		// Add Entt callbacks ----------
 		t_Reg.on_construct<MeshRenderer>().connect<&RenderPipeline::OnMeshRendererAdded>(*this);
 		// #TODO Light callbacks
 
+		F_LOG_TRACE("Render pipeline Creation done!");
 	}
 
 	RenderPipeline::~RenderPipeline()
@@ -67,20 +84,15 @@ namespace Fling
 		m_Subpasses.clear();
 	}
 
-	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, entt::registry& t_Reg)
+	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 	
 		for (const std::unique_ptr<Subpass>& sub : m_Subpasses)
 		{
-			// #TODO Only draw for the current frame buffer index, not every frame buffer
-			// For each frame buffer
-			for (FrameBuffer* FrameBuf : m_FrameBuffers)
-			{
-
-				assert(FrameBuf);
-				sub->Draw(t_CmdBuf, *FrameBuf, t_Reg);
-			}
+			// Build the subpasses for the active frame in flight	
+			assert(m_FrameBuffers[t_ActiveFrameInFlight]);
+			sub->Draw(t_CmdBuf, *m_FrameBuffers[t_ActiveFrameInFlight], t_Reg);
 		}
 	}
 
@@ -89,7 +101,7 @@ namespace Fling
 		F_LOG_TRACE("Mesh rend added!");
 		assert(m_DescriptorPool != VK_NULL_HANDLE);
 
-		// Initalize the mesh renderer to have data 
+		// Initialize the mesh renderer to have data 
 		t_MeshRend.m_DescriptorPool = m_DescriptorPool;
 	}
 

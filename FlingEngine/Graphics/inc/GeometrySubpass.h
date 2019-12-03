@@ -7,7 +7,11 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;	
-	
+	class MeshRenderer;
+	class Swapchain;
+	class GraphicsPipeline;
+
+	/** UBO for mesh data */
 	struct alignas(16) GeometryUBO
 	{
 		glm::mat4 Model;
@@ -25,7 +29,7 @@ namespace Fling
 	class GeometrySubpass : public Subpass
 	{
 	public:
-		GeometrySubpass(const LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
+		GeometrySubpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
 
 		virtual ~GeometrySubpass();
 
@@ -35,7 +39,11 @@ namespace Fling
 
 		void PrepareAttachments(FrameBuffer& t_FrameBuffer) override;
 
+		void CreateGraphicsPipeline(FrameBuffer& t_FrameBuffer) override;
+
 	private:
+
+		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
 		// #TODO Uniform buffers
 		// #TODO Callbacks when mesh renderers are added and removed? 

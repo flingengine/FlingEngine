@@ -5,14 +5,16 @@
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
 #include "MeshRenderer.h"
+#include "SwapChain.h"
 
 #define FRAME_BUF_DIM 2048
 
 namespace Fling
 {
-	GeometrySubpass::GeometrySubpass(const LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
-		: Subpass(t_Dev, t_Vert, t_Frag)
+	GeometrySubpass::GeometrySubpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
+		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 	{
+
 	}
 
 	GeometrySubpass::~GeometrySubpass()
@@ -112,6 +114,11 @@ namespace Fling
 				// Image descriptor of the frame buffer sampler, and attachment 0's view
 				
 				// Attachment 0: (World space) Positions
+				/*Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_DescriptorSets[0],
+					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					1,
+					&texDescriptorPosition),*/
 				// Attachment 1: (World space) Normals
 				// Attachment 2: Albedo (color)
 			};
@@ -161,5 +168,62 @@ namespace Fling
 
 		// Create sampler to sample from the color attachments
 		VK_CHECK_RESULT(t_FrameBuffer.CreateSampler(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE));
+	}
+
+	void GeometrySubpass::CreateGraphicsPipeline(FrameBuffer& t_FrameBuffer)
+	{
+		VkRenderPass RenderPass = t_FrameBuffer.GetRenderPassHandle();
+		assert(RenderPass != VK_NULL_HANDLE);
+
+		// Change anything about the graphics pipeline here
+		// Add color blend states
+		m_GraphicsPipeline->m_RasterizationState = 
+			Initializers::PipelineRasterizationStateCreateInfo(
+				VK_POLYGON_MODE_FILL,
+				VK_CULL_MODE_BACK_BIT,
+				VK_FRONT_FACE_CLOCKWISE,
+				0);
+
+		// Color Attachment
+		m_GraphicsPipeline->m_ColorBlendAttachmentStates[0] = 
+			Initializers::PipelineColorBlendAttachmentState(
+				0xf,
+				VK_FALSE);
+
+		m_GraphicsPipeline->m_ColorBlendState =
+			Initializers::PipelineColorBlendStateCreateInfo(
+				1,
+				&m_GraphicsPipeline->m_ColorBlendAttachmentStates[0]);
+
+		m_GraphicsPipeline->m_DepthStencilState =
+			Initializers::PipelineDepthStencilStateCreateInfo(
+				VK_TRUE,
+				VK_TRUE,
+				VK_COMPARE_OP_LESS_OR_EQUAL);
+
+		m_GraphicsPipeline->m_ViewportState =
+			Initializers::PipelineViewportStateCreateInfo(1, 1, 0);
+
+		m_GraphicsPipeline->m_MultisampleState =
+			Initializers::PipelineMultiSampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT, 0);
+		
+		std::vector<VkDynamicState> dynamicStateEnables = 
+		{
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR
+		};
+
+		m_GraphicsPipeline->m_DynamicState =
+			Initializers::PipelineDynamicStateCreateInfo(
+				dynamicStateEnables.data(), 
+				dynamicStateEnables.size(), 
+				0);
+
+		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
+	}
+
+	void GeometrySubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+
 	}
 }   // namespace Fling

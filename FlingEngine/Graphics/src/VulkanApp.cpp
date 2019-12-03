@@ -55,6 +55,12 @@ namespace Fling
 		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
 		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
 		m_Camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
+
+		// Build command buffers (one for each swap chain image)
+		for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); ++i)
+		{
+			m_CommandBuffers.emplace_back(new CommandBuffer(m_LogicalDevice, m_CommandPool));
+		}
 	}
 
 	void VulkanApp::CreateFrameSyncResources()
@@ -127,11 +133,11 @@ namespace Fling
 			// Create geometry pass ------
 			std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), m_LogicalDevice);
 			std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, GeomVert, GeomFrag));
+			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, GeomVert, GeomFrag));
 
 			// Create lighting subpass -------
-			std::shared_ptr<Fling::Shader> LightVert = Shader::Create(HS("Shaders/Deferred/lighting_vert.spv"), m_LogicalDevice);
-			std::shared_ptr<Fling::Shader> LightFrag = Shader::Create(HS("Shaders/Deferred/lighting_frag.spv"), m_LogicalDevice);
+			//std::shared_ptr<Fling::Shader> LightVert = Shader::Create(HS("Shaders/Deferred/lighting_vert.spv"), m_LogicalDevice);
+			//std::shared_ptr<Fling::Shader> LightFrag = Shader::Create(HS("Shaders/Deferred/lighting_frag.spv"), m_LogicalDevice);
 			//Subpasses.emplace_back(std::make_unique<LightingSubpass>(m_LogicalDevice, LightVert, LightFrag));
 
 			m_RenderPipelines.emplace_back(
@@ -156,37 +162,45 @@ namespace Fling
 
 	void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
 	{
-		// Aquire the active image index
-		//VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
-		//UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
-
-		//vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
-
 		m_CurrentWindow->Update();
 
-		// Get a valid command buffer
-		CommandBuffer CmdBuf = { m_LogicalDevice, m_CommandPool };
+		// Aquire the active image index
+		VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
+		UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
-		CmdBuf.Begin();
+		vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
-		VkViewport viewport{};
-		viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
-		viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		CmdBuf.SetViewport(0, { viewport });
-
-		VkRect2D scissor{};
-		scissor.extent = m_SwapChain->GetExtents();
-		CmdBuf.SetScissor(0, { scissor });
-
-		for (const auto& Pipeline : m_RenderPipelines)
+		if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
 		{
-			Pipeline->Draw(CmdBuf, t_Reg);
+			F_LOG_FATAL("Failed to acquire swap chain image!");
 		}
 
-		// Submit frame
-		CmdBuf.End();
+		for (CommandBuffer* CommandBuf : m_CommandBuffers)
+		{
+			CommandBuf->Begin();
+
+			VkViewport viewport{};
+			viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
+			viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			CommandBuf->SetViewport(0, { viewport });
+
+			VkRect2D scissor{};
+			scissor.extent = m_SwapChain->GetExtents();
+			CommandBuf->SetScissor(0, { scissor });
+
+			for (const auto& Pipeline : m_RenderPipelines)
+			{
+				Pipeline->Draw(*CommandBuf, CurrentFrameIndex, t_Reg);
+			}
+
+			// Submit frame
+			CommandBuf->End();
+		}
+
+		// Update the current frame index!
+		CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 	
 	VkExtent2D VulkanApp::ChooseSwapExtent()
@@ -252,6 +266,17 @@ namespace Fling
 			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
 			vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
 		}
+
+		// Clean up command buffers and command pool -------------
+		for (CommandBuffer* CmdBuf : m_CommandBuffers)
+		{
+			if (CmdBuf)
+			{
+				delete CmdBuf;
+				CmdBuf = nullptr;
+			}
+		}
+		m_CommandBuffers.clear();
 
 		vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 

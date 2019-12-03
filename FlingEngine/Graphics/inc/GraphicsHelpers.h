@@ -49,8 +49,8 @@ namespace Fling
 			VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
-		VkSemaphore CreateSemaphore(VkDevice t_Dev);
-        
+		VkSemaphore CreateSemaphore(VkDevice t_Dev);       
+
         void CreateVkImage(
 			VkDevice t_Dev,
             UINT32 t_Width,
@@ -236,6 +236,34 @@ namespace Fling
             VkColorComponentFlags t_colorWriteMask,
             VkBool32 t_blendEnable
         );
+
+		inline VkPipelineDepthStencilStateCreateInfo PipelineDepthStencilStateCreateInfo(
+			VkBool32 depthTestEnable,
+			VkBool32 depthWriteEnable,
+			VkCompareOp depthCompareOp)
+		{
+			VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo{};
+			pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			pipelineDepthStencilStateCreateInfo.depthTestEnable = depthTestEnable;
+			pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWriteEnable;
+			pipelineDepthStencilStateCreateInfo.depthCompareOp = depthCompareOp;
+			pipelineDepthStencilStateCreateInfo.front = pipelineDepthStencilStateCreateInfo.back;
+			pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+			return pipelineDepthStencilStateCreateInfo;
+		}
+
+		inline VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
+			const VkDynamicState* pDynamicStates,
+			uint32_t dynamicStateCount,
+			VkPipelineDynamicStateCreateFlags flags = 0)
+		{
+			VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};
+			pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			pipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
+			pipelineDynamicStateCreateInfo.dynamicStateCount = dynamicStateCount;
+			pipelineDynamicStateCreateInfo.flags = flags;
+			return pipelineDynamicStateCreateInfo;
+		}
 
         VkPipelineDepthStencilStateCreateInfo DepthStencilState(
             VkBool32 t_depthTestEnable,

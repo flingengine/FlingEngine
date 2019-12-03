@@ -22,6 +22,7 @@ namespace Fling
         m_CullMode(t_CullMode),
         m_FrontFace(t_FrontFace)
     {
+		CreateAttributes(nullptr);
     }
 
     void GraphicsPipeline::BindGraphicsPipeline(const VkCommandBuffer& t_CommandBuffer)
@@ -44,8 +45,11 @@ namespace Fling
                 m_CullMode,
                 m_FrontFace);
 
-        // Multisample State 
-        m_MultisampleState = Initializers::PipelineMultiSampleStateCreateInfo(t_Sampler->GetSampleCountFlagBits(), 0);
+        // Multisampler State (default to 1 bit)
+        m_MultisampleState = Initializers::PipelineMultiSampleStateCreateInfo(
+			t_Sampler ? t_Sampler->GetSampleCountFlagBits() : VK_SAMPLE_COUNT_1_BIT, 
+			0
+		);
 
         // Color Attatchment
         m_ColorBlendAttachmentStates[0] = Initializers::PipelineColorBlendAttachmentState(
@@ -88,7 +92,6 @@ namespace Fling
 
     void GraphicsPipeline::CreateGraphicsPipeline(VkRenderPass& t_RenderPass, Multisampler* t_Sampler)
     {
-        CreateAttributes(t_Sampler);
         // Pipeline Cache
         GraphicsHelpers::CreatePipelineCache(m_PipelineCache);
 

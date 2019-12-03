@@ -23,7 +23,7 @@ namespace Fling
 		RenderPipeline(entt::registry& t_Reg, LogicalDevice* t_dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses);
 		~RenderPipeline();
 
-		void Draw(CommandBuffer& t_CmdBuf, entt::registry& t_Reg);
+		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg);
 
 	private:
 

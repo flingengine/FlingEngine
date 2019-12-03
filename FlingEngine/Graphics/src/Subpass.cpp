@@ -1,11 +1,14 @@
 #include "Subpass.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
+#include "SwapChain.h"
+#include "GraphicsPipeline.h"
 
 namespace Fling
 {
-	Subpass::Subpass(const LogicalDevice* t_Dev, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
+	Subpass::Subpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
 		: m_Device(t_Dev)
+		, m_SwapChain(t_Swap)
 		, m_VertexShader(t_Vert)
 		, m_FragShader(t_Frag)
 	{
@@ -16,12 +19,21 @@ namespace Fling
 		
 		m_DescriptorLayout = Shader::CreateSetLayout(m_Device->GetVkDevice(), Shaders);
 		m_PipelineLayout = Shader::CreatePipelineLayout(m_Device->GetVkDevice(), m_DescriptorLayout, 0, 0);
+		
+		// Add entt callbacks for handling mesh renderers
+		m_GraphicsPipeline = new GraphicsPipeline(Shaders, m_Device->GetVkDevice());
 	}
 
 	Subpass::~Subpass()
 	{
 		assert(m_Device);
 		
+		if (m_GraphicsPipeline)
+		{
+			delete m_GraphicsPipeline;
+			m_GraphicsPipeline = nullptr;
+		}
+
 		if (m_PipelineLayout != VK_NULL_HANDLE)
 		{
 			vkDestroyPipelineLayout(m_Device->GetVkDevice(), m_PipelineLayout, nullptr);

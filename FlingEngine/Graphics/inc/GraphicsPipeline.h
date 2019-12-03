@@ -43,7 +43,6 @@ namespace Fling
 
         ~GraphicsPipeline();
 
-    private:
         void CreateAttributes(Multisampler* t_Sampler);
         
         std::vector<Shader*> m_Shaders;
