@@ -103,10 +103,6 @@ set_target_properties(spirv-cross-reflect PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
 
 # Bullet3 
-# set(BULLET_ROOT external/bullet3) # where to find Bullet
-# find_package(BULLET REQUIRED)
-# add_subdirectory(external/bullet3/src) # dive in our own code
-# include_directories(${BULLET_INCLUDE_DIR})
 foreach(_bullet3_option "BUILD_BULLET3" "BUILD_PYBULLET" "BUILD_BULLET2_DEMOS" "BUILD_OPENGL3_DEMOS" "BUILD_CPU_DEMOS" "BUILD_EXTRAS" "BUILD_UNIT_TESTS" "USE_GRAPHICAL_BENCHMARK" "USE_GLUT")
     set(${_bullet3_option} OFF CACHE INTERNAL "")
 endforeach()
