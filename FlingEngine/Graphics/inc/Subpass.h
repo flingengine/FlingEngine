@@ -10,6 +10,7 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;
+	class GraphicsPipeline;
 
 	/**
 	* @breif	A subpass represents one part of a RenderPipeline. Each subpass should 
@@ -41,6 +42,8 @@ namespace Fling
 
 	protected:
 
+		// Get default graphics Pipeline
+
 		const LogicalDevice* m_Device;
 
 		std::shared_ptr<Fling::Shader> m_VertexShader;
@@ -50,5 +53,8 @@ namespace Fling
 		/** Layouts created in the constructor via shader reflection */
 		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
+
+		// How do we wanna handle this
+		GraphicsPipeline* m_GraphicsPipeline = nullptr;
 	};
 }

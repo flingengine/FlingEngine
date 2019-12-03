@@ -97,6 +97,12 @@ namespace Fling
 		*/
         UINT32 AddAttachment(AttachmentCreateInfo t_CreateInfo);
 
+		/**
+		 * @brief	Get the frame buffer attachment at a given index
+		 * @return	Nullptr if index is invalid
+		 */
+		FrameBufferAttachment* GetAttachmentAtIndex(UINT32 t_Index);
+
     private:
         INT32 m_Width = 0;
         INT32 m_Height = 0;

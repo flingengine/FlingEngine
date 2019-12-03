@@ -45,6 +45,11 @@ namespace Fling
 
 	}
 
+	void CommandBuffer::BindPipeline(VkPipelineBindPoint t_BindPoint, VkPipeline t_Pipeline)
+	{
+		vkCmdBindPipeline(GetHandle(), t_BindPoint, t_Pipeline);
+	}
+
 	void CommandBuffer::SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports)
 	{
 		vkCmdSetViewport(GetHandle(), first_viewport, to_u32(viewports.size()), viewports.data());

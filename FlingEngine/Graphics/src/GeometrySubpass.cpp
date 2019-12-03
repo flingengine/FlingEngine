@@ -41,15 +41,15 @@ namespace Fling
 			VkDeviceSize offsets[1] = { 0 };
 
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
-			vkCmdBindDescriptorSets(
-				t_CmdBuf.GetHandle(),
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				m_PipelineLayout,
-				0,
-				1,
-				&t_MeshRend.m_DescriptorSets[0],	// #TODO Descriptor set per cmd buf
-				0,
-				nullptr);
+			//vkCmdBindDescriptorSets(
+			//	t_CmdBuf.GetHandle(),
+			//	VK_PIPELINE_BIND_POINT_GRAPHICS,
+			//	m_PipelineLayout,
+			//	0,
+			//	1,
+			//	&t_MeshRend.m_DescriptorSets[0],	// #TODO Descriptor set per cmd buf
+			//	0,
+			//	nullptr);
 
 			vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
@@ -87,14 +87,28 @@ namespace Fling
 		
 			// Create the image info's for the write sets to reference
 			// that will give us access to the G-Buffer in the shaders
-			//VkDescriptorImageInfo texDescriptorPosition =
-			//	Initializers::DescriptorImageInfo(
-			//		t_FrameBuf.GetSamplerHandle(),
+			VkDescriptorImageInfo texDescriptorPosition =
+				Initializers::DescriptorImageInfo(
+					t_FrameBuf.GetSamplerHandle(),
+					t_FrameBuf.GetAttachmentAtIndex(0)->GetViewHandle(),
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-			//		);
+			VkDescriptorImageInfo texDescriptorNormal =
+				Initializers::DescriptorImageInfo(
+					t_FrameBuf.GetSamplerHandle(),
+					t_FrameBuf.GetAttachmentAtIndex(1)->GetViewHandle(),
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+			VkDescriptorImageInfo texDescriptorAlbedo =
+				Initializers::DescriptorImageInfo(
+					t_FrameBuf.GetSamplerHandle(),
+					t_FrameBuf.GetAttachmentAtIndex(2)->GetViewHandle(),
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 			std::vector<VkWriteDescriptorSet> writeDescriptorSets =
 			{
+				// Uniform buffer for the mesh
+
 				// Image descriptor of the frame buffer sampler, and attachment 0's view
 				
 				// Attachment 0: (World space) Positions

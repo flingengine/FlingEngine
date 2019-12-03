@@ -6,8 +6,8 @@ namespace Fling
 {
 	class LogicalDevice;
 
-	// #TODO Pipelnie state class defintion
-	// #TODO Resource binding state class defintion
+	// #TODO Pipeline state class definition
+	// #TODO Resource binding state class definition
 
     /**
      * @brief Encapsulates functionality of a Vulkan Command buffer
@@ -29,6 +29,8 @@ namespace Fling
 		void BeginRenderPass();
 
 		void NextSubpass();
+
+		void BindPipeline(VkPipelineBindPoint t_BindPoint, VkPipeline t_Pipeline);
 
 		void SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports);
 

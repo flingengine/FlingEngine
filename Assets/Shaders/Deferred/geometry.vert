@@ -11,8 +11,8 @@ layout (binding = 0) uniform UboView
 	vec3 objPos;
 } ubo;
 
-// Inputs --------------
-layout(location = 0) in vec3 inPos;	// The position of this vertex in the world ? 
+// Inputs from the vertex description (see Vertex.h) --------------
+layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec3 inTangent;
 layout(location = 3) in vec3 inNormal;

@@ -73,9 +73,11 @@ namespace Fling
 	
 		for (const std::unique_ptr<Subpass>& sub : m_Subpasses)
 		{
+			// #TODO Only draw for the current frame buffer index, not every frame buffer
 			// For each frame buffer
 			for (FrameBuffer* FrameBuf : m_FrameBuffers)
 			{
+
 				assert(FrameBuf);
 				sub->Draw(t_CmdBuf, *FrameBuf, t_Reg);
 			}

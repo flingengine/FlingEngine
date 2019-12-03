@@ -322,4 +322,14 @@ namespace Fling
 		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device));
 		return static_cast<UINT32>(m_Attachments.size() - 1);
 	}
+	
+	FrameBufferAttachment* FrameBuffer::GetAttachmentAtIndex(UINT32 t_Index)
+	{
+		if (t_Index >= 0 && t_Index < m_Attachments.size())
+		{
+			return m_Attachments[t_Index];
+		}
+
+		return nullptr;
+	}
 }   // namespace Fling

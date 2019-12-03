@@ -8,10 +8,24 @@
 #include "SwapChain.h"
 #include "FlingWindow.h"
 #include "FlingConfig.h"
+#include "FirstPersonCamera.h"
 #include "GraphicsHelpers.h"
 
 namespace Fling
 {
+	const INT32 VulkanApp::MAX_FRAMES_IN_FLIGHT = 2;
+
+	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg)
+	{
+		Singleton<VulkanApp>::Init();
+
+		Prepare();
+
+		// #TODO Build VMA allocator
+
+		BuildRenderPipelines(t_Conf, t_Reg);
+	}
+
 	void VulkanApp::Prepare()
 	{
 		CreateGameWindow(
@@ -34,6 +48,36 @@ namespace Fling
 		assert(m_SwapChain);
 
 		GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
+
+		CreateFrameSyncResources();
+
+		// Create the camera
+		float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
+		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
+		m_Camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
+	}
+
+	void VulkanApp::CreateFrameSyncResources()
+	{
+		assert(m_LogicalDevice);
+
+		m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+		VkFenceCreateInfo fenceInfo = {};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		for (INT32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			m_ImageAvailableSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+			if (vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Failed to create semaphores or fence!");
+			}
+		}
 	}
 
 	void VulkanApp::CreateGameWindow(const UINT32 t_width, const UINT32 t_height)
@@ -112,6 +156,12 @@ namespace Fling
 
 	void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
 	{
+		// Aquire the active image index
+		//VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
+		//UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
+
+		//vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
+
 		m_CurrentWindow->Update();
 
 		// Get a valid command buffer
@@ -166,20 +216,10 @@ namespace Fling
 		}
 	}
 
-	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg)
-	{
-		Prepare();
-
-		// #TODO Build VMA allocator
-
-		BuildRenderPipelines(t_Conf, t_Reg);
-	}
-
 	void VulkanApp::Shutdown()
 	{
-		// Cleanup VMA allocator
-		// Cleanup render pipelines
-		for (auto& pipeline : m_RenderPipelines)
+		// Cleanup render pipelines (created in BuildRenderPipelines) -----------------
+		for (RenderPipeline* pipeline : m_RenderPipelines)
 		{
 			if (pipeline)
 			{
@@ -189,14 +229,33 @@ namespace Fling
 		}
 		m_RenderPipelines.clear();
 
+		// Camera cleanup ------------
+		if (m_Camera)
+		{
+			delete m_Camera;
+			m_Camera = nullptr;
+		}
+
+		// Destroy swap chain (created in Prepare) -----------
 		if (m_SwapChain)
 		{
 			delete m_SwapChain;
 			m_SwapChain = nullptr;
 		}
 
+		// #TODO Cleanup VMA allocator -------------
+
+		// Clean up Frame sync resources (created in CreateFrameSyncResources) --------------
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_RenderFinishedSemaphores[i], nullptr);
+			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
+			vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
+		}
+
 		vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
+		// Clean up devices and surface (created in Prepare) --------------
 		if (m_LogicalDevice)
 		{
 			delete m_LogicalDevice;
