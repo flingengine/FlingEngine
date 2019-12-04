@@ -64,7 +64,7 @@ namespace Fling
         VkPipelineVertexInputStateCreateInfo m_VertexInputStateCreateInfo = {};
         VkPipelineInputAssemblyStateCreateInfo m_InputAssemblyState = {};
         VkPipelineRasterizationStateCreateInfo m_RasterizationState = {};
-        std::array<VkPipelineColorBlendAttachmentState, 1> m_ColorBlendAttachmentStates;
+        std::vector<VkPipelineColorBlendAttachmentState> m_ColorBlendAttachmentStates;
         VkPipelineColorBlendStateCreateInfo m_ColorBlendState = {};
         VkPipelineDepthStencilStateCreateInfo m_DepthStencilState = {};
         VkPipelineViewportStateCreateInfo m_ViewportState = {};

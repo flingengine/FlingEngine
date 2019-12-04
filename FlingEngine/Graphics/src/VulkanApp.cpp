@@ -133,7 +133,7 @@ namespace Fling
 			// Create geometry pass ------
 			std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), m_LogicalDevice);
 			std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, GeomVert, GeomFrag));
+			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, t_Reg, GeomVert, GeomFrag));
 
 			// Create lighting subpass -------
 			//std::shared_ptr<Fling::Shader> LightVert = Shader::Create(HS("Shaders/Deferred/lighting_vert.spv"), m_LogicalDevice);

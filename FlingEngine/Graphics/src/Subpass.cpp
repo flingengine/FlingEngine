@@ -14,6 +14,10 @@ namespace Fling
 	{
 		assert(m_Device && m_VertexShader && m_FragShader);
 
+		// Default clear values
+		m_ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		m_ClearValues[1].depthStencil = { 1.0f, ~0U };
+
 		// Initialize the layouts that this subpass will use for descriptors and pipeline creation
 		std::vector<Shader*> Shaders = { m_VertexShader.get(), m_FragShader.get() };
 		

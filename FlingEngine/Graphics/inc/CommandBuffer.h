@@ -5,6 +5,7 @@
 namespace Fling
 {
 	class LogicalDevice;
+	class FrameBuffer;
 
 	// #TODO Pipeline state class definition (just grab it from the official vulkan samples)
 	// #TODO Resource binding state class definition
@@ -41,7 +42,7 @@ namespace Fling
 		/** Begin recording for this command buffer */
 		void Begin();
 
-		void BeginRenderPass();
+		void BeginRenderPass(FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales);
 
 		void NextSubpass();
 
@@ -56,11 +57,17 @@ namespace Fling
 		/** Stop recording commands to the command buffer */
 		void End();
 
+		inline bool IsRecording() const { return m_State == State::Recording; }
+
 	private:
 		const LogicalDevice* m_Device;
 
 		const VkCommandPool m_Pool;
 
 		VkCommandBuffer m_Handle = VK_NULL_HANDLE;
+
+		// Keep track of the state of this command buffer
+		State m_State = State::Initial;
+
     };
 }   // namespace Fling

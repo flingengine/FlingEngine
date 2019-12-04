@@ -2,6 +2,7 @@
 #include "CommandBuffer.h"
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
+#include "FrameBuffer.h"
 
 namespace Fling
 {
@@ -36,13 +37,41 @@ namespace Fling
 	
 	void CommandBuffer::Begin()
 	{
+		assert(!IsRecording());
+		m_State = State::Recording;
+
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		beginInfo.pInheritanceInfo = nullptr;
 
 		VK_CHECK_RESULT(vkBeginCommandBuffer(GetHandle(), &beginInfo));
+	}
 
+	void CommandBuffer::BeginRenderPass(FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales)
+	{
+		VkRenderPassBeginInfo begin_info{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+		// Frame buf info
+		begin_info.renderPass = t_frameBuf.GetRenderPassHandle();
+		begin_info.framebuffer = t_frameBuf.GetHandle();
+
+		// Render area
+		begin_info.renderArea.offset = { 0, 0 };
+		begin_info.renderArea.extent.width = t_frameBuf.GetWidth();
+		begin_info.renderArea.extent.height = t_frameBuf.GetHeight();
+
+		// Clear vals
+		begin_info.clearValueCount = to_u32(t_ClearVales.size());
+		begin_info.pClearValues = t_ClearVales.data();
+
+		vkCmdBeginRenderPass(GetHandle(), &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void CommandBuffer::NextSubpass()
+	{
+		// track pipeline state ?
+
+		vkCmdNextSubpass(GetHandle(), VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void CommandBuffer::BindPipeline(VkPipelineBindPoint t_BindPoint, VkPipeline t_Pipeline)
@@ -67,6 +96,10 @@ namespace Fling
 
 	void CommandBuffer::End()
 	{
+		assert(IsRecording() && "Command buffer is not recording, please call begin before end");
+
 		vkEndCommandBuffer(GetHandle());
+
+		m_State = State::Executable;
 	}
 }

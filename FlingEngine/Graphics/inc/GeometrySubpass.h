@@ -29,11 +29,17 @@ namespace Fling
 	class GeometrySubpass : public Subpass
 	{
 	public:
-		GeometrySubpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
+		GeometrySubpass(
+			const LogicalDevice* t_Dev,
+			const Swapchain* t_Swap,
+			entt::registry& t_reg,
+			std::shared_ptr<Fling::Shader> t_Vert,
+			std::shared_ptr<Fling::Shader> t_Frag
+		);
 
 		virtual ~GeometrySubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, FrameBuffer& t_FrameBuf, entt::registry& t_reg) override;
+		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, FrameBuffer& t_FrameBuf, entt::registry& t_reg) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf, entt::registry& t_reg) override;
 
@@ -44,6 +50,10 @@ namespace Fling
 	private:
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+
+		void OnMeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
+
+		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf);
 
 		// #TODO Uniform buffers
 		// #TODO Callbacks when mesh renderers are added and removed? 

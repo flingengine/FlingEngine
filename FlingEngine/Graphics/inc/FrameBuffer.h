@@ -67,7 +67,7 @@ namespace Fling
     class FrameBuffer
     {
     public: 
-        explicit FrameBuffer(const VkDevice& t_Dev,INT32 t_Width = 2048, INT32 t_Height = 2048);
+        explicit FrameBuffer(const VkDevice& t_Dev, INT32 t_Width = 2048, INT32 t_Height = 2048);
         ~FrameBuffer();
 
 		void SizeSize(INT32 w, INT32 h);
@@ -102,6 +102,9 @@ namespace Fling
 		 * @return	Nullptr if index is invalid
 		 */
 		FrameBufferAttachment* GetAttachmentAtIndex(UINT32 t_Index);
+
+		inline INT32 GetWidth() const { return m_Width; }
+		inline INT32 GetHeight() const { return m_Height; }
 
     private:
         INT32 m_Width = 0;

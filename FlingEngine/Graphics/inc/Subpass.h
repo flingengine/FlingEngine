@@ -33,7 +33,7 @@ namespace Fling
 
 		virtual void CreateGraphicsPipeline(FrameBuffer& t_FrameBuffer) = 0;
 
-		virtual void Draw(CommandBuffer& t_CmdBuf, FrameBuffer& t_FrameBuf, entt::registry& t_reg) = 0;
+		virtual void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, FrameBuffer& t_FrameBuf, entt::registry& t_reg) = 0;
 
 		/**
 		* @brief	Given the frame buffers and the registry, create any descriptor sets that we may need
@@ -44,6 +44,7 @@ namespace Fling
 		VkDescriptorSetLayout GetDescriptorLayout() const noexcept { return m_DescriptorLayout; }
 
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
+		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }
 
 	protected:
 
@@ -55,6 +56,9 @@ namespace Fling
 		std::shared_ptr<Fling::Shader> m_VertexShader;
 		
 		std::shared_ptr<Fling::Shader> m_FragShader;
+
+		/** The clear values that will be used when building the command buffer to run this subpass */
+		std::vector<VkClearValue> m_ClearValues = std::vector<VkClearValue>(2);
 
 		/** Layouts created in the constructor via shader reflection */
 		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;

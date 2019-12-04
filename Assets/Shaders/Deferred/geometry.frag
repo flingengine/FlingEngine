@@ -14,7 +14,9 @@ layout (binding = 0) uniform UboView
 	vec3 objPos;
 } ubo;
 
-layout (binding = 1) uniform sampler2D albedoSampler;
+layout (binding = 1) uniform sampler2D samplerposition;
+layout (binding = 2) uniform sampler2D samplerNormal;
+layout (binding = 3) uniform sampler2D samplerAlbedo;
 
 // Inputs from Vert shader --------------
 layout (location = 0) in vec3 inWorldPos;
@@ -31,7 +33,7 @@ layout (location = 1) out vec4 out_normal;
 void main() 
 {
     // Sample all the textures
-    vec4 abledoColor = texture(albedoSampler, inTexCoord);
+    vec4 abledoColor = texture(samplerAlbedo, inTexCoord);
 
     // Transform normals from [-1, 1] to [0, 1]
     vec3 normal = normalize(inNormal);

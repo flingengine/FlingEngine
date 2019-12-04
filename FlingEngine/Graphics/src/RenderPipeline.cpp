@@ -71,11 +71,12 @@ namespace Fling
 	{
 		assert(m_Device);
 
-		for (auto& buf : m_FrameBuffers)
+		for (FrameBuffer* buf : m_FrameBuffers)
 		{
 			if (buf)
 			{
 				delete buf;
+				buf = nullptr;
 			}
 		}
 		m_FrameBuffers.clear();
@@ -87,12 +88,30 @@ namespace Fling
 	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
-	
-		for (const std::unique_ptr<Subpass>& sub : m_Subpasses)
+		assert(m_FrameBuffers[t_ActiveFrameInFlight]);
+
+		for (size_t i = 0; i < m_Subpasses.size(); ++i)
 		{
+			// Either begin a new render pass command or a new subpass command
+			if (i == 0)
+			{
+				t_CmdBuf.BeginRenderPass(
+					*m_FrameBuffers[t_ActiveFrameInFlight], 
+					m_Subpasses[i]->GetClearValues()
+				);
+			}
+			else
+			{
+				t_CmdBuf.NextSubpass();
+			}
+
 			// Build the subpasses for the active frame in flight	
-			assert(m_FrameBuffers[t_ActiveFrameInFlight]);
-			sub->Draw(t_CmdBuf, *m_FrameBuffers[t_ActiveFrameInFlight], t_Reg);
+			m_Subpasses[i]->Draw(
+				t_CmdBuf, 
+				t_ActiveFrameInFlight, 
+				*m_FrameBuffers[t_ActiveFrameInFlight], 
+				t_Reg
+			);
 		}
 	}
 

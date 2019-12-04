@@ -52,6 +52,7 @@ namespace Fling
 		);
 
         // Color Attatchment
+		m_ColorBlendAttachmentStates.resize(1);
         m_ColorBlendAttachmentStates[0] = Initializers::PipelineColorBlendAttachmentState(
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
             VK_FALSE);

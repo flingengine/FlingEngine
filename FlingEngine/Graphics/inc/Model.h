@@ -35,7 +35,7 @@ namespace Fling
 		FORCEINLINE UINT32 GetIndexCount() const { return static_cast<UINT32>(m_Indices.size()); }
 		FORCEINLINE UINT32 GetVertexCount() const { return static_cast<UINT32>(m_Verts.size()); }
 
-		static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
+		constexpr static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
 		// Cadds bind commands to vertex and index buffers 
 		bool CmdRender(const VkCommandBuffer& t_CmdBuf) const;
