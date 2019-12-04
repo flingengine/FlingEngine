@@ -5,6 +5,7 @@
 #include "Timing.h"
 #include "ResourceManager.h"
 #include "Renderer.h"
+#include "LuaManager.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
 #include "World.h"

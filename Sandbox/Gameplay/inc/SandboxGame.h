@@ -49,10 +49,13 @@ namespace Sandbox
 
 		bool m_DoRotations = false;
 		bool m_MovePointLights = false;
+		bool m_RunLua = true;
 
 		void ToggleRotation();
 
 		void OnToggleMoveLights();
+
+		void ToggleLua();
 
 		void SetWindowIcon();
 

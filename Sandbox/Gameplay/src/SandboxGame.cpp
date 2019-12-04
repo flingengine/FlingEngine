@@ -44,6 +44,8 @@ namespace Sandbox
 		Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
 		Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
 
+		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
+
         LightingTest(t_Reg);
         //OnLoadInitated();
         //GenerateTestMeshes(t_Reg);
@@ -91,6 +93,11 @@ namespace Sandbox
                     t_Trans.SetPos(newPos);
                 });
         }
+
+		if (m_RunLua)
+		{
+			LuaManager::Get().Tick(DeltaTime);
+		}
     }
 
     void Game::LightingTest(entt::registry& t_Reg)
@@ -163,7 +170,16 @@ namespace Sandbox
 	void Game::ScriptingTest(entt::registry& t_Reg)
 	{
 		entt::entity e0 = t_Reg.create();
-		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
+		t_Reg.assign<Transform>(e0);
+		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua", e0);
+
+		entt::entity e1 = t_Reg.create();
+		t_Reg.assign<Transform>(e1);
+		t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
+		Transform& t0 = t_Reg.get<Transform>(e1);
+		t0.SetPos(glm::vec3(0, 3, 0));
+		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua", e1);
 
 		LuaManager::Get().Start();
 	}
@@ -212,6 +228,11 @@ namespace Sandbox
     {
         m_MovePointLights = !m_MovePointLights;
     }
+
+	void Game::ToggleLua()
+	{
+		m_RunLua = !m_RunLua;
+	}
 
     void Game::SetWindowIcon()
     {

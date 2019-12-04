@@ -9,7 +9,7 @@ namespace Fling
 	{
 	public:
 		ScriptComponent();
-		ScriptComponent(const std::string filePath);
+		ScriptComponent(const std::string filePath, entt::entity t_Ent);
 		~ScriptComponent();
 	private:
 		Guid m_ScriptGUID;

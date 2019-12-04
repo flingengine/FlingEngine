@@ -33,6 +33,7 @@ namespace Fling
         );
 
 		Renderer::Get().m_Registry = &g_Registry;
+		LuaManager::Get().m_Registry = &g_Registry;
 		
 		// Set the editor if we need to
 #if WITH_EDITOR
