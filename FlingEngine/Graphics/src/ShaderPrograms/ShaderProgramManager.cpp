@@ -154,7 +154,7 @@ namespace Fling
             for (auto entity : ReflectionView)
             {
                 auto& meshRender = ReflectionView.get<MeshRenderer>(entity);
-                ShaderProgramReflections::BindCmdBuffer(meshRender, t_CommandBuffer, pipeline, t_CommandBufferIndex);
+                ShaderProgramReflections::Bind  CmdBuffer(meshRender, t_CommandBuffer, pipeline, t_CommandBufferIndex);
             }
         }
     }
