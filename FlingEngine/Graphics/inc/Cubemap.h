@@ -30,6 +30,11 @@ namespace Fling
                 VkRenderPass t_RenderPass,
                 VkDevice t_LogicalDevice);
 
+            Cubemap(
+                Guid t_CubeMap_ID,
+                VkRenderPass t_Renderpass,
+                VkDevice t_LogicalDevice);
+
             ~Cubemap();
 
             void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);
@@ -70,11 +75,18 @@ namespace Fling
 
             VkIndexType GetIndexType() const { return m_Cube->GetIndexType(); }
 
+            VkImage GetImage() const { return m_Image; }
+            VkDeviceMemory GetImageMemory() const{ return m_ImageMemory; }
+            VkDescriptorImageInfo& GetImageInfo() { return m_DescriptorImageInfo; }
+
         private:
 
             void PreparePipeline(Multisampler* t_Sampler);
+
+            /** Loads cubemaps with file format .hdr for ibl **/
+            void LoadCubeMapImage(Guid t_CubeMap_ID);
             
-            void LoadCubemap(
+            void LoadCubemapImages(
                 Guid t_PosX_ID,
                 Guid t_NegX_ID,
                 Guid t_PosY_ID,
@@ -94,6 +106,7 @@ namespace Fling
             VkSampler m_Sampler;
             
             VkDescriptorSetLayout m_DescriptorSetLayout;
+            VkDescriptorImageInfo m_DescriptorImageInfo;
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
             VkRenderPass m_RenderPass;

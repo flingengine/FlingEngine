@@ -204,8 +204,6 @@ void main()
         );
     }
 
-
-
     for(int i = 0; i < lights.PointLightCount; i++)
     {
         LightColor += CalculatePointLight( 

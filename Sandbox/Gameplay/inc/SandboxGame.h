@@ -40,6 +40,11 @@ namespace Sandbox
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
 
+		/* Sets window mode of screen, for testing all possible transitions */
+		void SetWindowFullscreen();
+		void SetWindowBorderlessWindowed();
+		void SetWindowWindowed();
+
 	private:
 
 		bool m_DoRotations = false;

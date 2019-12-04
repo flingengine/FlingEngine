@@ -1,17 +1,20 @@
 #include "ShaderPrograms/ShaderProgramReflections.h"
 #include "GraphicsHelpers.h"
 #include "Renderer.h"
+#include "Cubemap.h"
 
 void Fling::ShaderProgramReflections::CreateDescriptorSets(
     MeshRenderer& t_MeshRend, 
-    Lighting& m_Lighting, 
-    VkDescriptorSetLayout m_DescriptorLayout)
+    Lighting& t_Lighting, 
+    VkDescriptorSetLayout t_DescriptorLayout)
 {
+    static VkDescriptorImageInfo skyboxImageInfo = Renderer::Get().GetSkybox()->GetImageInfo();
+
     const std::vector<VkImage>& Images = Renderer::Get().GetSwapChain()->GetImages();
     VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
     // Specify what descriptor pool to allocate from and how many
-    std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorLayout);
+    std::vector<VkDescriptorSetLayout> layouts(Images.size(), t_DescriptorLayout);
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
@@ -37,13 +40,20 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
         );
 
         VkWriteDescriptorSet lightUniformSet = Initializers::WriteDescriptorSetUniform(
-            m_Lighting.m_LightingUBOs[i],
+            t_Lighting.m_LightingUBOs[i],
             t_MeshRend.m_DescriptorSets[i],
             2
         );
 
+        VkWriteDescriptorSet skyboxImageSampelr = Initializers::WriteDescriptorSet(
+            t_MeshRend.m_DescriptorSets[i],
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            4,
+            &skyboxImageInfo);
+
         descriptorWrites.push_back(uniformSet);
         descriptorWrites.push_back(lightUniformSet);
+        descriptorWrites.push_back(skyboxImageSampelr);
 
         vkUpdateDescriptorSets(Device, static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -59,7 +69,8 @@ void Fling::ShaderProgramReflections::CreateDescriptorPool(MeshRenderer& t_MeshR
     std::vector<VkDescriptorPoolSize> poolSizes =
     {
         Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
+        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount),
+        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
     };
 
     VkDescriptorPoolCreateInfo poolInfo = {};

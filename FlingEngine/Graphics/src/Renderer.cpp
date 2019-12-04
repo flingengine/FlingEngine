@@ -12,10 +12,10 @@
 namespace Fling
 {
     const int Renderer::MAX_FRAMES_IN_FLIGHT = 2;
-	
+    
     void Renderer::Init()
-	{
-		// You must have the registry set before creating a renderer!
+    {
+        // You must have the registry set before creating a renderer!
         InitDevices();
 
         assert(m_Registry);
@@ -25,8 +25,8 @@ namespace Fling
         // Add entt component callbacks for mesh render etc
         InitComponentData();
 
-		// Initalize all graphics resources
-		InitGraphics();
+        // Initalize all graphics resources
+        InitGraphics();
     }
 
     void Renderer::InitDevices()
@@ -47,19 +47,19 @@ namespace Fling
         assert(m_SwapChain);
     }
 
-	void Renderer::InitGraphics()
-	{
-		m_MsaaSampler = new Multisampler(m_PhysicalDevice->GetMaxUsableSampleCount());
-		CreateRenderPass();
+    void Renderer::InitGraphics()
+    {
+        m_MsaaSampler = new Multisampler(m_PhysicalDevice->GetMaxUsableSampleCount());
+        CreateRenderPass();
 
         GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
 
-		// Load default material
-		m_DefaultMat = Material::Create("Materials/Default.mat");
-		
+        // Load default material
+        m_DefaultMat = Material::Create("Materials/Default.mat");
+        
         CreateGraphicsPipeline();
 
-		m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+        m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
 
         m_DepthBuffer = new DepthBuffer(m_PhysicalDevice->GetMaxUsableSampleCount());
         assert(m_DepthBuffer);
@@ -69,12 +69,10 @@ namespace Fling
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
-		m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
-		assert(m_BRDFLookupTexture);
+        m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
+        assert(m_BRDFLookupTexture);
 
         CreateFrameBuffers();
-
-        CreateDescriptors();
 
         assert(m_Registry);
     
@@ -85,20 +83,20 @@ namespace Fling
             m_CommandPool);
 
         // Load Skybox
-		m_Skybox = new Cubemap(
-			"Textures/Skybox/posx.jpg"_hs,
-			"Textures/Skybox/negx.jpg"_hs,
-			"Textures/Skybox/posy.jpg"_hs,
-			"Textures/Skybox/negy.jpg"_hs,
-			"Textures/Skybox/posz.jpg"_hs,
-			"Textures/Skybox/negz.jpg"_hs,
-			HS("Shaders/skybox/skybox.vert.spv"),
-			HS("Shaders/skybox/skybox.frag.spv"),
-			m_RenderPass,
-			m_LogicalDevice->GetVkDevice()
-		);
+        m_Skybox = new Cubemap(
+            "Textures/Skybox/Garden/posx.jpg"_hs,
+            "Textures/Skybox/Garden/negx.jpg"_hs,
+            "Textures/Skybox/Garden/posy.jpg"_hs,
+            "Textures/Skybox/Garden/negy.jpg"_hs,
+            "Textures/Skybox/Garden/posz.jpg"_hs,
+            "Textures/Skybox/Garden/negz.jpg"_hs,
+            HS("Shaders/skybox/skybox.vert.spv"),
+            HS("Shaders/skybox/skybox.frag.spv"),
+            m_RenderPass,
+            m_LogicalDevice->GetVkDevice()
+        );
 
-		m_Skybox->Init(
+        m_Skybox->Init(
             m_camera, 
             m_SwapChain->GetActiveImageIndex(), 
             m_SwapChain->GetImageViewCount(), 
@@ -106,7 +104,7 @@ namespace Fling
 
         CreateLightBuffers();
 
-        BuildCommandBuffers(*m_Registry);
+        BindCommadBuffers(*m_Registry);
 
 #if WITH_IMGUI
         // Initialize imgui
@@ -138,7 +136,7 @@ namespace Fling
 
     void Renderer::CreateRenderPass()
     {
-		assert(m_MsaaSampler && m_SwapChain);
+        assert(m_MsaaSampler && m_SwapChain);
 
         // We have a single color buffer for the images in the swap chain
         VkAttachmentDescription ColorAttachment = {};
@@ -152,7 +150,7 @@ namespace Fling
 
         ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         // Change to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL  for imgui
-		// and because multisampled images cannot be presented directly
+        // and because multisampled images cannot be presented directly
         ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription DepthAttatchment = {};
@@ -165,15 +163,15 @@ namespace Fling
         DepthAttatchment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         DepthAttatchment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-		VkAttachmentDescription colorAttachmentResolve = {};
-		colorAttachmentResolve.format = m_SwapChain->GetImageFormat();
-		colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentDescription colorAttachmentResolve = {};
+        colorAttachmentResolve.format = m_SwapChain->GetImageFormat();
+        colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         // Subpass -------------------
         VkAttachmentReference ColorAttachmentRef = {};
@@ -184,9 +182,9 @@ namespace Fling
         DepthAttatchmentRef.attachment = 1;
         DepthAttatchmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-		VkAttachmentReference colorAttachmentResolveRef = {};
-		colorAttachmentResolveRef.attachment = 2;
-		colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentReference colorAttachmentResolveRef = {};
+        colorAttachmentResolveRef.attachment = 2;
+        colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkSubpassDescription Subpass = {};
         Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;    // You need to be explicit that this is
@@ -194,7 +192,7 @@ namespace Fling
         Subpass.colorAttachmentCount = 1;
         Subpass.pColorAttachments = &ColorAttachmentRef;
         Subpass.pDepthStencilAttachment = &DepthAttatchmentRef;
-		Subpass.pResolveAttachments = &colorAttachmentResolveRef;
+        Subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
         // Add a subpass dependency
         VkSubpassDependency dependency = {};
@@ -241,9 +239,9 @@ namespace Fling
         {
             std::array<VkImageView, 3> attachments =
             {
-				m_MsaaSampler->GetImageView(),
+                m_MsaaSampler->GetImageView(),
                 m_DepthBuffer->GetVkImageView(),
-				ImageViews[i]
+                ImageViews[i]
             };
 
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -262,7 +260,7 @@ namespace Fling
         }
     }
 
-    void Renderer::BuildCommandBuffers(entt::registry& t_Reg)
+    void Renderer::BindCommadBuffers(entt::registry& t_Reg)
     {
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -325,8 +323,8 @@ namespace Fling
 
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-			m_ImageAvailableSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
-			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+            m_ImageAvailableSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+            m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
             if (vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to create semaphores or fence!");
@@ -346,17 +344,14 @@ namespace Fling
         m_SwapChain->Recreate(ChooseSwapExtent());
 
         CreateRenderPass();
-        //CreateGraphicsPipeline();
 
         m_DepthBuffer->Create();
-		if (m_MsaaSampler)
-		{
-			m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
-		}
+        if (m_MsaaSampler)
+        {
+            m_MsaaSampler->Create(m_SwapChain->GetExtents(), m_SwapChain->GetImageFormat());
+        }
 
         CreateFrameBuffers();
-
-        CreateDescriptors();
 
         assert(m_Registry);
 
@@ -366,13 +361,8 @@ namespace Fling
             static_cast<UINT32>(m_CommandBuffers.size()), 
             m_CommandPool);
 
-        BuildCommandBuffers(*m_Registry);
+        BindCommadBuffers(*m_Registry);
         InitImgui();
-    }
-
-    void Renderer::CreateDescriptors()
-    {
-        ShaderProgramManager::Get().CreateDescriptors();
     }
 
     // Swapchain support --------------------------------------
@@ -465,7 +455,7 @@ namespace Fling
             m_Editor->Draw(*m_Registry, DeltaTime);
 #endif
             // Build the actual ImGUI command buffers
-            m_flingImgui->BuildCommandBuffers(m_DrawImgui);
+            m_flingImgui->BindCmdBuffers(m_DrawImgui);
         }  
 #endif
         // Check if the swap chain needs to be recreated
@@ -525,12 +515,18 @@ namespace Fling
             F_LOG_FATAL("Failed to present swap chain image!");
         }
 
+        if (m_RebuildCommanfBuffer)
+        {
+            vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, 0);
+            BindCommadBuffers(t_Reg);
+            m_RebuildCommanfBuffer = false;
+        }
 
         CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-	void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
-	{
+    void Renderer::UpdateUniformBuffer(UINT32 t_CurrentImage)
+    {
         ShaderProgramManager::Get().UpdateUniformBuffers(t_CurrentImage, m_camera);
     }
 
@@ -557,7 +553,7 @@ namespace Fling
 
     void Renderer::PrepShutdown()
     {
-		m_IsQuitting = true;
+        m_IsQuitting = true;
 
         m_LogicalDevice->WaitForIdle();
 
@@ -565,17 +561,17 @@ namespace Fling
 
          // Delete light buffers
         for (size_t i = 0; i < m_Lighting.m_LightingUBOs.size(); i++)
-		{
-			if(m_Lighting.m_LightingUBOs[i])
+        {
+            if(m_Lighting.m_LightingUBOs[i])
             {
                 delete m_Lighting.m_LightingUBOs[i];
                 m_Lighting.m_LightingUBOs[i] = nullptr;
             }
-		}
+        }
         m_Lighting.m_LightingUBOs.clear();
 
-		// release refs to textures
-		m_BRDFLookupTexture = nullptr;
+        // release refs to textures
+        m_BRDFLookupTexture = nullptr;
     }
 
     void Renderer::Shutdown()
@@ -614,18 +610,18 @@ namespace Fling
             delete m_GraphicsPipeline;
             m_GraphicsPipeline = nullptr;
         }
-		
-		if (m_DepthBuffer)
-		{
-			delete m_DepthBuffer;
-			m_DepthBuffer = nullptr;
-		}
+        
+        if (m_DepthBuffer)
+        {
+            delete m_DepthBuffer;
+            m_DepthBuffer = nullptr;
+        }
 
-		if (m_MsaaSampler)
-		{
-			delete m_MsaaSampler;
-			m_MsaaSampler = nullptr;
-		}
+        if (m_MsaaSampler)
+        {
+            delete m_MsaaSampler;
+            m_MsaaSampler = nullptr;
+        }
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -665,70 +661,82 @@ namespace Fling
     }
 
     // @see https://github.com/skypjack/entt/wiki/Crash-Course:-entity-component-system#observe-changes
-	// for more on entt 
+    // for more on entt 
     void Renderer::InitComponentData()
     {
         // Add any component callbacks that we may need
         m_Registry->on_construct<MeshRenderer>().connect<&Renderer::MeshRendererAdded>(*this);
-		m_Registry->on_destroy<MeshRenderer>().connect<&Renderer::MeshRendererRemoved>(*this);
+        m_Registry->on_destroy<MeshRenderer>().connect<&Renderer::MeshRendererRemoved>(*this);
 
         m_Registry->on_construct<DirectionalLight>().connect<&Renderer::DirLightAdded>(*this);
-		m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
+        m_Registry->on_construct<PointLight>().connect<&Renderer::PointLightAdded>(*this);
+
+        m_Registry->on_replace<entt::tag<HS("PBR")>>().connect<&Renderer::MeshRendererReplace>(*this);
+        m_Registry->on_replace<entt::tag<HS("Reflection")>>().connect<&Renderer::MeshRendererReplace>(*this);
+        m_Registry->on_replace<MeshRenderer>().connect<&Renderer::MeshRendererReplace>(*this);
     }
 
     void Renderer::MeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
     {
-		const std::vector<VkImage>& Images = m_SwapChain->GetImages();
-		VkDeviceSize bufferSize = sizeof(UboVS);
+        const std::vector<VkImage>& Images = m_SwapChain->GetImages();
+        VkDeviceSize bufferSize = sizeof(UboVS);
 
-		t_MeshRend.m_UniformBuffers.resize(Images.size());
-		for (size_t i = 0; i < Images.size(); i++)
-		{
-			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffers[i]->MapMemory(bufferSize);
-		}
+        t_MeshRend.m_UniformBuffers.resize(Images.size());
+        for (size_t i = 0; i < Images.size(); i++)
+        {
+            t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            t_MeshRend.m_UniformBuffers[i]->MapMemory(bufferSize);
+        }
 
-		SetFrameBufferHasBeenResized(true);
+        SetFrameBufferHasBeenResized(true);
 
         // Assign shader program type
-		if (!t_MeshRend.m_Material)
-		{
-			F_LOG_WARN("Mesh renderer has no material! Default being assigned.");
-			t_MeshRend.m_Material = m_DefaultMat.get();
-		}
+        if (!t_MeshRend.m_Material)
+        {
+            F_LOG_WARN("Mesh renderer has no material! Default being assigned.");
+            t_MeshRend.m_Material = m_DefaultMat.get();
+        }
 
-		switch (t_MeshRend.m_Material->GetShaderProgramType())
-		{
-		case ShaderPrograms::PBR:
-			t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
-			break;
-		case ShaderPrograms::Reflection:
-			t_Reg.assign < entt::tag<HS("Reflection")>>(t_Ent);
-			break;
-		default:
-			F_LOG_ERROR("Shader program not supported");
-			assert("Shader not supported");
-		}
-		
-        
+        MeshRenderer::AssignShaderProgram(t_MeshRend, t_Reg, t_Ent);
+        ShaderProgramManager::Get().CreateDescriptors(t_MeshRend);
+
         ShaderProgramManager::Get().SortMeshRender();
+        m_RebuildCommanfBuffer = true; // rebuild primary command buffers because we added more entities        
     }
 
-	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
-	{
-		SetFrameBufferHasBeenResized(true);
-	}
+    void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)
+    {
+        //Release meshrenderer resources
+        MeshRenderer& t_MeshRend = t_Reg.get<MeshRenderer>(t_Ent);
+        ShaderProgramManager::Get().ReleaseMeshRenderer(t_MeshRend);
+
+        ShaderProgramManager::Get().SortMeshRender();
+        m_RebuildCommanfBuffer = true;
+    }
+
+    void MeshRenderMaterialChange(entt::entity t_Ent, entt::registry& t_Reg)
+    {
+        //TODO: Keep track of dirty descriptors when materials change 
+    }
+
+    void Renderer::MeshRendererReplace(entt::entity t_Ent, entt::registry& t_Reg)
+    {
+        MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
+        MeshRenderer::AssignShaderProgram(m, t_Reg, t_Ent);
+
+        m_RebuildCommanfBuffer = true;
+    }
 
     void Renderer::DirLightAdded(entt::entity t_Ent, entt::registry& t_Reg, DirectionalLight& t_Light)
     {
         F_LOG_TRACE("Directional Light added!");
         ++m_Lighting.m_CurrentDirLights;
 
-		// Ensure that we have a transform component before adding a light
-		if (!t_Reg.has<Transform>(t_Ent))
-		{
-			t_Reg.assign<Transform>(t_Ent);
-		}
+        // Ensure that we have a transform component before adding a light
+        if (!t_Reg.has<Transform>(t_Ent))
+        {
+            t_Reg.assign<Transform>(t_Ent);
+        }
 
         if(m_Lighting.m_CurrentDirLights > Lighting::MaxDirectionalLights)
         {
@@ -736,38 +744,38 @@ namespace Fling
         }
     }
 
-	void Renderer::PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
-	{
-		F_LOG_TRACE("Point Light added!");
-		++m_Lighting.m_CurrentPointLights;
+    void Renderer::PointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
+    {
+        F_LOG_TRACE("Point Light added!");
+        ++m_Lighting.m_CurrentPointLights;
 
-		// Ensure that we have a transform component before adding a light
-		if (!t_Reg.has<Transform>(t_Ent))
-		{
-			t_Reg.assign<Transform>(t_Ent);
-		}
+        // Ensure that we have a transform component before adding a light
+        if (!t_Reg.has<Transform>(t_Ent))
+        {
+            t_Reg.assign<Transform>(t_Ent);
+        }
 
-		Transform& t = t_Reg.get<Transform>(t_Ent);
+        Transform& t = t_Reg.get<Transform>(t_Ent);
 
 #if FLING_DEBUG
-		// Make a cute little debug mesh on a point light	
-		t.SetScale(glm::vec3{ 0.1f });
-		static std::string PointLightMesh = "Models/sphere.obj";
-		if (!t_Reg.has<MeshRenderer>(t_Ent))
-		{
-			t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh);
-		}
+        // Make a cute little debug mesh on a point light    
+        t.SetScale(glm::vec3{ 0.1f });
+        static std::string PointLightMesh = "Models/sphere.obj";
+        if (!t_Reg.has<MeshRenderer>(t_Ent))
+        {
+            t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh);
+        }
 
-		// Ensure that we have the proper point light mesh on for a nice little gizmo
-		MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
-		m.LoadModelFromPath(PointLightMesh);
-		m.LoadMaterialFromPath("Materials/Default.mat");
+        // Ensure that we have the proper point light mesh on for a nice little gizmo
+        MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
+        m.LoadModelFromPath(PointLightMesh);
+        m.LoadMaterialFromPath("Materials/Default.mat");
 
-#endif	// FLING_DEBUG
+#endif    // FLING_DEBUG
 
-		if (m_Lighting.m_CurrentPointLights > Lighting::MaxPointLights)
-		{
-			F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
-		}
-	}
+        if (m_Lighting.m_CurrentPointLights > Lighting::MaxPointLights)
+        {
+            F_LOG_WARN("You have enterer more then the max support point lights of Fling!");
+        }
+    }
 }    // namespace FlingR
