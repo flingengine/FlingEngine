@@ -3,17 +3,18 @@
 
 namespace Fling
 {
-	void LuaManager::Init()
+	void LuaManager::Init(entt::registry* t_Registry)
 	{
-
+		m_Registry = t_Registry;
 	}
 
 	void LuaManager::Shutdown()
 	{
 	}
 
-	void LuaManager::RegisterScript(entt::hashed_string t_FileGUID, entt::entity t_Ent)
+	void LuaManager::RegisterScript(Guid t_FileGUID, entt::entity t_Ent)
 	{
+		//Create a file ussing the GUID
 		File* f = new File(t_FileGUID);
 		LuaBehaviors luaBehavior;
 
@@ -24,8 +25,10 @@ namespace Fling
 
 	void LuaManager::Start()
 	{
+		//Loop through all of the lua components
 		for (auto const& script : m_LuaComponents)
 		{
+			//If this component has a start function, call it
 			if (script.second.Start != sol::nil)
 			{
 				script.second.Start();
@@ -35,8 +38,10 @@ namespace Fling
 
 	void LuaManager::Tick(float t_deltaTime)
 	{
+		//Loop through all of the lua components
 		for (auto const& script : m_LuaComponents)
 		{
+			//If this component has a tick function, call it
 			if (script.second.Tick != sol::nil)
 			{
 				script.second.Tick(t_deltaTime);
@@ -48,14 +53,17 @@ namespace Fling
 	{
 		t_Behavior->LuaState.open_libraries(sol::lib::base);
 
+		//Define the standard lua types and functions that we want all lua scripts to have
 		DefineLuaTypes(t_Behavior->LuaState);
 		DefineLuaFunctions(t_Behavior->LuaState);
 
-		t_Behavior->LuaState["entityTransform"] = m_Registry->get<Transform>(t_Ent);
-		t_Behavior->LuaState["entity"] = t_Ent;
+		//Give the script a reference to the transform
+		t_Behavior->LuaState["entityTransform"] = &m_Registry->get<Transform>(t_Ent);
 
+		//Load in the file
 		t_Behavior->LuaState.script_file(t_File->GetFilepathReleativeToAssets());
 
+		//Hook up the start and tick callbacks
 		AddCallback(t_Behavior->LuaState, "start", &t_Behavior->Start);
 		AddCallback(t_Behavior->LuaState, "tick", &t_Behavior->Tick);
 	}
@@ -76,12 +84,6 @@ namespace Fling
 		F_LOG_TRACE(t_Message);
 	}
 
-	void LuaManager::SetTransform(entt::entity t_Ent, Transform t_Transform)
-	{
-		Transform& t0 = m_Registry->get<Transform>(t_Ent);
-		t0.SetPos(t_Transform.GetPos());
-	}
-
 	void LuaManager::DefineLuaTypes(sol::state& t_LuaState)
 	{
 		t_LuaState.new_usertype<glm::vec3>("vec3",
@@ -100,12 +102,10 @@ namespace Fling
 				"SetRotation", &Transform::SetRotation,
 				"SetScale", &Transform::SetScale
 				);
-		t_LuaState.new_usertype<entt::entity>("Entity");
 	}
 
 	void LuaManager::DefineLuaFunctions(sol::state& t_LuaState)
 	{
 		t_LuaState.set_function("Print", &LuaManager::LuaPrint, this);
-		t_LuaState.set_function("SetTransform", &LuaManager::SetTransform, this);
 	}
 }

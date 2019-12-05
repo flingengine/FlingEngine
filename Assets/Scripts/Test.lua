@@ -25,6 +25,4 @@ function tick(deltaTime)
 	currentPosition.y = currentPosition.y + deltaY
 	currentPosition.z = currentPosition.z + deltaZ
 	entityTransform:SetPos(currentPosition)
-	
-	SetTransform(entity, entityTransform)
 end
