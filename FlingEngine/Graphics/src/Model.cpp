@@ -12,10 +12,80 @@ namespace Fling
 		return ResourceManager::LoadResource<Model>(t_ID);
 	}
 
+	std::shared_ptr<Fling::Model> Model::Quad()
+	{
+		std::vector<Vertex> Verts;
+
+		float x = 0.0f;
+		float y = 0.0f;
+		Verts.push_back({});
+
+		for (uint32_t i = 0; i < 3; i++)
+		{
+			Vertex v0 = {};
+			v0.Pos = {x+1.0f, y+1.0f, 0.0f};
+			v0.TexCoord = {1.0f, 1.0f};
+			v0.Color = {1.0f, 1.0f, 1.0f };
+			v0.Normal = {0.0f, 0.0f, (float)i};
+
+			Vertex v1 = {};
+			v0.Pos = { x,      y+1.0f, 0.0f };
+			v0.TexCoord = { 0.0f, 1.0f };
+			v1.Color = { 1.0f, 1.0f, 1.0f };
+			v1.Normal = { 0.0f, 0.0f, (float)i };
+
+			Vertex v2 = {};
+			v0.Pos = { x,      y,      0.0f  };
+			v0.TexCoord = { 0.0f, 0.0f };
+			v2.Color = { 1.0f, 1.0f, 1.0f };
+			v2.Normal = { 0.0f, 0.0f, (float)i };
+
+			Vertex v3 = {};
+			v0.Pos = { x+1.0f, y,      0.0f };
+			v0.TexCoord = { 1.0f, 0.0f };
+			v3.Color = { 1.0f, 1.0f, 1.0f };
+			v3.Normal = { 0.0f, 0.0f, (float)i };
+
+			Verts.push_back(v0);
+			Verts.push_back(v1);
+			Verts.push_back(v2);
+			Verts.push_back(v3);
+
+			x += 1.0f;
+			if (x > 1.0f)
+			{
+				x = 0.0f;
+				y += 1.0f;
+			}
+		}
+
+
+		std::vector<UINT32> indexBuffer = { 0,1,2, 2,3,0 };
+		for (UINT32 i = 0; i < 3; ++i)
+		{
+			UINT32 indices[6] = { 0,1,2, 2,3,0 };
+			for (UINT32 index : indices)
+			{
+				indexBuffer.push_back(i * 4 + index);
+			}
+		}
+
+		return ResourceManager::LoadResource<Model>(HS("Fling_Primative_QUAD"), Verts, indexBuffer);
+	}
+
 	Model::Model(Guid t_ID)
 		: Resource(t_ID)
 	{
 		LoadModel();
+	}
+
+	Model::Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<UINT32> t_Indecies)
+		: Resource(t_ID)
+	{
+		m_Verts = t_Verts;
+		m_Indices = t_Indecies;
+
+		CreateBuffers();
 	}
 
 	Model::~Model()
@@ -39,8 +109,6 @@ namespace Fling
 		{
 			F_LOG_ERROR("Failed to load model: {} {}", warn, err);
 			
-			//FLING_BREAK();
-
 			return;
 		}
 
@@ -77,6 +145,11 @@ namespace Fling
 			}
 		}
 
+		CreateBuffers();
+	}
+
+	void Model::CreateBuffers()
+	{
 		// Calculate our tangent vectors for this model
 		CalculateVertexTangents(m_Verts.data(), static_cast<UINT32>(m_Verts.size()), m_Indices.data(), static_cast<UINT32>(m_Indices.size()));
 
@@ -89,27 +162,9 @@ namespace Fling
 
 		// Create Index buffer
 		VkDeviceSize IndexBufferSize = sizeof(m_Indices[0]) * GetIndexCount();
-        Buffer IndexStagingBuffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Indices.data());
-        m_IndexBuffer = new Buffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		Buffer IndexStagingBuffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Indices.data());
+		m_IndexBuffer = new Buffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		Buffer::CopyBuffer(&IndexStagingBuffer, m_IndexBuffer, IndexBufferSize);
-	}
-
-	bool Model::CmdRender(const VkCommandBuffer& t_CmdBuf) const
-	{
-		if(m_VertexBuffer && m_IndexBuffer)
-		{
-			VkBuffer vertexBuffers[1] = { m_VertexBuffer->GetVkBuffer() };
-			VkDeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(t_CmdBuf, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(t_CmdBuf, m_IndexBuffer->GetVkBuffer(), 0, GetIndexType());
-			vkCmdDrawIndexed(t_CmdBuf, GetIndexCount(), /* instances */ 1, 0, 0, 0);
-		}
-		else
-		{
-			return false;
-		}
-
-		return true;
 	}
 
 	void Model::CalculateVertexTangents(Vertex* verts, UINT32 numVerts, UINT32* indices, UINT32 numIndices)

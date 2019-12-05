@@ -26,6 +26,9 @@ namespace Fling
 		
 		// Add entt callbacks for handling mesh renderers
 		m_GraphicsPipeline = new GraphicsPipeline(Shaders, m_Device->GetVkDevice());
+
+		PrepareAttachments();
+
 	}
 
 	Subpass::~Subpass()

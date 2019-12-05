@@ -131,8 +131,8 @@ namespace Sandbox
         };
 
         AddModel(0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
-        AddModel(1, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
-        AddModel(2, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+        //AddModel(1, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+        //AddModel(2, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
 
 		auto AddFloor = [&](
 			const std::string& t_Model,
@@ -147,16 +147,16 @@ namespace Sandbox
 			t0.SetScale(t_Scale);
 		};
 
-		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(30.0f, 0.1f, 30.0f));
+		//AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(30.0f, 0.1f, 30.0f));
 
 		// Ensure PBR still works
-        AddModel(3, "Models/sphere.obj", "Materials/Bronze.mat");
-		AddModel(4, "Models/sphere.obj", "Materials/Paint.mat");
-		AddModel(5, "Models/sphere.obj", "Materials/Wood.mat");
-		AddModel(6, "Models/sphere.obj", "Materials/Cobblestone.mat");
+        //AddModel(3, "Models/sphere.obj", "Materials/Bronze.mat");
+		//AddModel(4, "Models/sphere.obj", "Materials/Paint.mat");
+		//AddModel(5, "Models/sphere.obj", "Materials/Wood.mat");
+		//AddModel(6, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
 		// Ensure reflection spheres still work
-		AddModel(7, "Models/sphere.obj", "Materials/Reflections.mat");
+		//AddModel(7, "Models/sphere.obj", "Materials/Reflections.mat");
 
         float Width = 2.0f;
 		//AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));

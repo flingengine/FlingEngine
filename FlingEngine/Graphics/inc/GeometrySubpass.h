@@ -10,6 +10,8 @@ namespace Fling
 	class MeshRenderer;
 	class Swapchain;
 	class GraphicsPipeline;
+	class Model;
+	class Buffer;
 
 	/** UBO for mesh data */
 	struct alignas(16) GeometryUBO
@@ -21,10 +23,18 @@ namespace Fling
 		glm::vec3 ObjPos;
 	};
 
+	struct DeferredLight
+	{
+		glm::vec4 position;
+		glm::vec3 color;
+		float radius;
+	};
+
 	/**
 	* @brief	The geometry subpass is in charge of sending the geometry portion of 
 	*			the Deferred pipeline to the GPU. This includes frame buffer attachments for 
 	*			albedo, normals, and depth as well some actual mesh data via a Uniform buffer
+	*			Uses the Deferred shaders
 	*/
 	class GeometrySubpass : public Subpass
 	{
@@ -33,30 +43,44 @@ namespace Fling
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
 			entt::registry& t_reg,
+			FrameBuffer* t_OffscreenDep,
 			std::shared_ptr<Fling::Shader> t_Vert,
 			std::shared_ptr<Fling::Shader> t_Frag
 		);
 
 		virtual ~GeometrySubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, FrameBuffer& t_FrameBuf, entt::registry& t_reg) override;
+		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg) override;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf, entt::registry& t_reg) override;
+		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 
-		void PrepareAttachments(FrameBuffer& t_FrameBuffer) override;
-
-		void CreateGraphicsPipeline(FrameBuffer& t_FrameBuffer) override;
+		/** 
+		* @param t_FrameBuffer	The swap chain frame buffer
+		*/
+		void CreateGraphicsPipeline() override;
 
 	private:
 
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+		// Global render pass for frame buffer writes
+		// A quad model for displaying shit
+		std::shared_ptr<Model> m_QuadModel;
 
-		void OnMeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg);
+		/** The offscreen frame buffer that has the G Buffer attachments */
+		FrameBuffer* m_OffscreenFrameBuf = nullptr;
 
-		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf);
+		// UBO for Lights that will be sent to the frag shader
+		// Use 6 for now just because itll be easier to setup deferred
+		struct 
+		{
+			DeferredLight lights[6];
+			glm::vec4 viewPos;
+		} uboFragmentLights;
 
-		// #TODO Uniform buffers
-		// #TODO Callbacks when mesh renderers are added and removed? 
+		// Descriptor sets and Uniform buffers -- one per swap image
+		std::vector<VkDescriptorSet> m_DescriptorSets;
+		std::vector<Buffer*> m_LightingUBOs;
+
+		// #TODO Callbacks when Lights are added
 	};
 
 }   // namespace Fling

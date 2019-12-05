@@ -26,6 +26,7 @@ namespace Fling
 	class RenderPipeline;
 	class CommandBuffer;
 	class FirstPersonCamera;
+	class DepthBuffer;
 
 	/**
 	* @brief	Core rendering functionality of the Fling Engine. Controls what Render pipelines 
@@ -34,6 +35,12 @@ namespace Fling
     class VulkanApp : public Singleton<VulkanApp>
     {
     public:
+
+		/** 
+		* Having multiple frames in flight allows the GPU to start processing the next frame 
+		* while the current one is being drawn on the screen
+		*/
+		static const INT32 MAX_FRAMES_IN_FLIGHT;
 
 		void Init(PipelineFlags t_Conf, entt::registry& t_Reg);
 		void Shutdown() override;
@@ -54,6 +61,13 @@ namespace Fling
 		inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 		inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
+		inline VkRenderPass GetGlobalRenderPass() const { return m_RenderPass; }
+		inline VkFramebuffer GetFrameBufferAtIndex(UINT32 index) const { return m_SwapChainFrameBuffers[index]; }
+
+		/**
+		* @brief	Request a new command buffer from the command buffer pool
+		*/
+		CommandBuffer* RequestCommandBuffer();
 
     private:
 		
@@ -80,33 +94,49 @@ namespace Fling
 		/** Builds any render pipelines with their specific set of sub passes and shaders */
 		void BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg);
 
+		/**
+		 * @brief	Build the frame buffers for each swap chain image along with the render pass
+		 *			for it to use
+		 */
+		void BuildSwapChainResources();
+
+		void BuildGlobalRenderPass();
+
+		void BuildSwapChainFrameBuffer();
+
 		/** Vulkan Devices that need to get created. @See VulkanApp::Prepare */
 		Instance* m_Instance = nullptr;
 		LogicalDevice* m_LogicalDevice = nullptr;
 		PhysicalDevice* m_PhysicalDevice = nullptr;
-		Swapchain* m_SwapChain = nullptr;
 		FlingWindow* m_CurrentWindow = nullptr;
-
-		/** Handle to the surface extension used to interact with the windows system */
-		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 		
-		/** 
-		* Having multiple frames in flight allows the GPU to start processing the next frame 
-		* while the current one is being drawn on the screen
-		*/
-		static const INT32 MAX_FRAMES_IN_FLIGHT;
-		size_t CurrentFrameIndex = 0;
+		// Swap chain related stuff ---------------------------------------------------------------------
+		Swapchain* m_SwapChain = nullptr;
+		// Depth buffer acts as a container for our swap chain depth attachment
+		DepthBuffer* m_DepthBuffer = nullptr;
+		// Global render pass for frame buffer usage
+		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+		// List of available frame buffers (same as number of swap chain images)
+		std::vector<VkFramebuffer> m_SwapChainFrameBuffers;
 
-		// Command Buffer pool
-		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+		// Stages that the swap chain needs to wait on in order to present
+		VkPipelineStageFlags m_WaitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 		/** Keep a vector of command buffers that we want to use so that we can have one for each active frame */
-		std::vector<CommandBuffer*> m_CommandBuffers;
+		std::vector<CommandBuffer*> m_DrawCmdBuffers;
 
 		/** Synchronization primitives for drawing the frame. @see VulkanApp::CreateFrameSyncResources */
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores;
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
 		std::vector<VkFence> m_InFlightFences;
+
+		/** Handle to the surface extension used to interact with the windows system */
+		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
+		
+		size_t CurrentFrameIndex = 0;
+
+		// Command Buffer pool
+		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
 
 		std::vector<RenderPipeline*> m_RenderPipelines;
 

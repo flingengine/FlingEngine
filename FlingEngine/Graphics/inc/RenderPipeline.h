@@ -25,6 +25,9 @@ namespace Fling
 
 		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg);
 
+		/** Given a frame index, get any semaphores that the swap chain command buffer needs to wait for */
+		VkSemaphore GetDrawDepencies(UINT32 t_FrameIndex);
+
 	private:
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
@@ -35,8 +38,6 @@ namespace Fling
 		void CreateDescriptors(entt::registry& t_Reg);
 
 		std::vector<std::unique_ptr<Subpass>> m_Subpasses;
-
-		std::vector<FrameBuffer*> m_FrameBuffers;
 
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 

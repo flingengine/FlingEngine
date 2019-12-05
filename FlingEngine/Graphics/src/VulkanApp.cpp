@@ -1,6 +1,9 @@
 #include "VulkanApp.h"
 #include "RenderPipeline.h"
+
 #include "GeometrySubpass.h"
+#include "OffscreenSubpass.h"
+
 #include "CommandBuffer.h"
 #include "Instance.h"
 #include "LogicalDevice.h"
@@ -10,6 +13,7 @@
 #include "FlingConfig.h"
 #include "FirstPersonCamera.h"
 #include "GraphicsHelpers.h"
+#include "DepthBuffer.h"
 
 namespace Fling
 {
@@ -24,6 +28,11 @@ namespace Fling
 		// #TODO Build VMA allocator
 
 		BuildRenderPipelines(t_Conf, t_Reg);
+	}
+
+	CommandBuffer* VulkanApp::RequestCommandBuffer()
+	{
+		return new CommandBuffer(m_LogicalDevice, m_CommandPool);
 	}
 
 	void VulkanApp::Prepare()
@@ -56,10 +65,128 @@ namespace Fling
 		float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
 		m_Camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
 
+		BuildSwapChainResources();
+	}
+
+
+	void VulkanApp::BuildSwapChainResources()
+	{
 		// Build command buffers (one for each swap chain image)
 		for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); ++i)
 		{
-			m_CommandBuffers.emplace_back(new CommandBuffer(m_LogicalDevice, m_CommandPool));
+			m_DrawCmdBuffers.emplace_back(new CommandBuffer(m_LogicalDevice, m_CommandPool));
+		}
+
+		// Build the depth stencil
+		m_DepthBuffer = new DepthBuffer(m_LogicalDevice, VK_SAMPLE_COUNT_1_BIT, m_SwapChain->GetExtents());
+		assert(m_DepthBuffer);
+
+		BuildGlobalRenderPass();
+
+		BuildSwapChainFrameBuffer();
+	}
+
+	void VulkanApp::BuildGlobalRenderPass()
+	{
+		assert(m_SwapChain);
+
+		std::array<VkAttachmentDescription, 2> attachments = {};
+		// Color attachment
+		attachments[0].format = m_SwapChain->GetImageFormat();
+		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		// Depth attachment
+		attachments[1].format = DepthBuffer::GetDepthBufferFormat();
+		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference colorReference = {};
+		colorReference.attachment = 0;
+		colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthReference = {};
+		depthReference.attachment = 1;
+		depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpassDescription = {};
+		subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpassDescription.colorAttachmentCount = 1;
+		subpassDescription.pColorAttachments = &colorReference;
+		subpassDescription.pDepthStencilAttachment = &depthReference;
+		subpassDescription.inputAttachmentCount = 0;
+		subpassDescription.pInputAttachments = nullptr;
+		subpassDescription.preserveAttachmentCount = 0;
+		subpassDescription.pPreserveAttachments = nullptr;
+		subpassDescription.pResolveAttachments = nullptr;
+
+		// Subpass dependencies for layout transitions
+		std::array<VkSubpassDependency, 2> dependencies;
+
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[1].srcSubpass = 0;
+		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		renderPassInfo.pAttachments = attachments.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpassDescription;
+		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+		renderPassInfo.pDependencies = dependencies.data();
+
+		VK_CHECK_RESULT(vkCreateRenderPass(m_LogicalDevice->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass));	
+	}
+
+	void VulkanApp::BuildSwapChainFrameBuffer()
+	{
+		assert(m_DepthBuffer);
+
+		VkImageView attachments[2];
+
+		// Depth/Stencil attachment is the same for all frame buffers
+		attachments[1] = m_DepthBuffer->GetVkImageView();
+
+		VkFramebufferCreateInfo frameBufferCreateInfo = {};
+		frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		frameBufferCreateInfo.pNext = nullptr;
+		frameBufferCreateInfo.renderPass = m_RenderPass;
+		frameBufferCreateInfo.attachmentCount = 2;
+		frameBufferCreateInfo.pAttachments = attachments;
+		frameBufferCreateInfo.width = m_SwapChain->GetExtents().width;
+		frameBufferCreateInfo.height = m_SwapChain->GetExtents().height;
+		frameBufferCreateInfo.layers = 1;
+
+		const std::vector<VkImageView>& ImageViews = m_SwapChain->GetImageViews();
+
+		// Create frame buffers for every swap chain image
+		m_SwapChainFrameBuffers.resize(m_SwapChain->GetImageCount());
+		for (uint32_t i = 0; i < m_SwapChainFrameBuffers.size(); i++)
+		{
+			attachments[0] = ImageViews[i];
+			VK_CHECK_RESULT(vkCreateFramebuffer(m_LogicalDevice->GetVkDevice(), &frameBufferCreateInfo, nullptr, &m_SwapChainFrameBuffers[i]));
 		}
 	}
 
@@ -67,7 +194,7 @@ namespace Fling
 	{
 		assert(m_LogicalDevice);
 
-		m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_PresentCompleteSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -77,7 +204,7 @@ namespace Fling
 
 		for (INT32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_ImageAvailableSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+			m_PresentCompleteSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
 			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
 			if (vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
 			{
@@ -129,16 +256,22 @@ namespace Fling
 		{
 			F_LOG_TRACE("Bulid DEFERRED render pipeline!");
 			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
-			
-			// Create geometry pass ------
-			std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Shaders/Deferred/geometry_vert.spv"), m_LogicalDevice);
-			std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Shaders/Deferred/geometry_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, t_Reg, GeomVert, GeomFrag));
 
-			// Create lighting subpass -------
-			//std::shared_ptr<Fling::Shader> LightVert = Shader::Create(HS("Shaders/Deferred/lighting_vert.spv"), m_LogicalDevice);
-			//std::shared_ptr<Fling::Shader> LightFrag = Shader::Create(HS("Shaders/Deferred/lighting_frag.spv"), m_LogicalDevice);
-			//Subpasses.emplace_back(std::make_unique<LightingSubpass>(m_LogicalDevice, LightVert, LightFrag));
+			// Offscreen pipeline ------
+			// These shaders have vertex input and fill in the buffers that the final pass uses
+			std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(HS("Shaders/Deferred/mrt_vert.spv"), m_LogicalDevice);
+			std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(HS("Shaders/Deferred/mrt_frag.spv"), m_LogicalDevice);
+			Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, OffscreenVert, OffscreenFrag));
+
+			// Create geometry pass ------
+			// These shaders do not have any vertex input and do the final processing to the screen
+			OffscreenSubpass* Offscreen = static_cast<OffscreenSubpass*>(Subpasses[0].get());
+			assert(Offscreen);
+			FrameBuffer* OffscreenBuf = Offscreen->GetOffscreenFrameBuffer();
+			assert(OffscreenBuf);
+			std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Shaders/Deferred/deferred_vert.spv"), m_LogicalDevice);
+			std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Shaders/Deferred/deferred_frag.spv"), m_LogicalDevice);
+			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, t_Reg,  OffscreenBuf, GeomVert, GeomFrag));
 
 			m_RenderPipelines.emplace_back(
 				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
@@ -150,6 +283,8 @@ namespace Fling
 			F_LOG_WARN("Bulid REFLECTIONS render pipeline! (NOT YET IMPL)");
 		}
 
+		// #TODO Debug config (Unlit, wireframe, etc) 
+
 		if (t_Conf & PipelineFlags::IMGUI)
 		{
 #if WITH_IMGUI
@@ -160,12 +295,15 @@ namespace Fling
 		}
 	}
 
+
 	void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
 	{
+		// Prepare the frame for submission by waiting for the swap chain
 		m_CurrentWindow->Update();
+		m_Camera->Update(DeltaTime);
 
 		// Aquire the active image index
-		VkResult iResult = m_SwapChain->AquireNextImage(m_ImageAvailableSemaphores[CurrentFrameIndex]);
+		VkResult iResult = m_SwapChain->AquireNextImage(m_PresentCompleteSemaphores[CurrentFrameIndex]);
 		UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
 		vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
@@ -175,31 +313,65 @@ namespace Fling
 			F_LOG_FATAL("Failed to acquire swap chain image!");
 		}
 
-		for (CommandBuffer* CommandBuf : m_CommandBuffers)
+		// Track any semaphores that we may need to wait on for the render pipeline
+		std::vector<VkSemaphore> waitSemaphores = { m_PresentCompleteSemaphores[CurrentFrameIndex] };
+
+		// Get the current drawing command buffer associated with the current swap chain image
+		CommandBuffer* CurrentInFlightCmdBuf = m_DrawCmdBuffers[ImageIndex];
+		assert(CurrentInFlightCmdBuf);
+
+		// Build any command buffers that we need to during the frame
 		{
-			CommandBuf->Begin();
+			CurrentInFlightCmdBuf->Begin();
 
 			VkViewport viewport{};
 			viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
 			viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
-			CommandBuf->SetViewport(0, { viewport });
+			CurrentInFlightCmdBuf->SetViewport(0, { viewport });
 
 			VkRect2D scissor{};
 			scissor.extent = m_SwapChain->GetExtents();
-			CommandBuf->SetScissor(0, { scissor });
+			CurrentInFlightCmdBuf->SetScissor(0, { scissor });
 
-			for (const auto& Pipeline : m_RenderPipelines)
+			for (RenderPipeline* Pipeline : m_RenderPipelines)
 			{
-				Pipeline->Draw(*CommandBuf, CurrentFrameIndex, t_Reg);
+				Pipeline->Draw(*CurrentInFlightCmdBuf, ImageIndex, t_Reg);
 			}
 
-			// Submit frame
-			CommandBuf->End();
+			// End command buffer recording
+			CurrentInFlightCmdBuf->End();
 		}
 
-		// Update the current frame index!
+		// Submit any PIPELINE command buffers for work
+
+
+		
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		submitInfo.waitSemaphoreCount = static_cast<UINT32>(waitSemaphores.size());
+		submitInfo.pWaitSemaphores = waitSemaphores.data();
+		submitInfo.pWaitDstStageMask = &m_WaitStages;
+
+		std::vector<VkCommandBuffer> submitCommandBuffers = {};
+		submitCommandBuffers.emplace_back(CurrentInFlightCmdBuf->GetHandle());
+
+		VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]));
+		
+		// Finish up the frame by setting the in flight fences to wait -----
+		vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
+		
+		// Actually present the swap chain queue
+		VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[CurrentFrameIndex] };
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), *signalSemaphores);
+		
+		// #TODO If result is out of date then signal for resize
+		
+		// Update the current in flight frame index!
 		CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 	
@@ -263,12 +435,12 @@ namespace Fling
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_RenderFinishedSemaphores[i], nullptr);
-			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_ImageAvailableSemaphores[i], nullptr);
+			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_PresentCompleteSemaphores[i], nullptr);
 			vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_InFlightFences[i], nullptr);
 		}
 
 		// Clean up command buffers and command pool -------------
-		for (CommandBuffer* CmdBuf : m_CommandBuffers)
+		for (CommandBuffer* CmdBuf : m_DrawCmdBuffers)
 		{
 			if (CmdBuf)
 			{
@@ -276,7 +448,7 @@ namespace Fling
 				CmdBuf = nullptr;
 			}
 		}
-		m_CommandBuffers.clear();
+		m_DrawCmdBuffers.clear();
 
 		vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 

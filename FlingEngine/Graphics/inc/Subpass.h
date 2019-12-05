@@ -29,17 +29,18 @@ namespace Fling
 		virtual ~Subpass();
 
 		/** Add any attachments to a frame buffer that this subpass may need */
-		virtual void PrepareAttachments(FrameBuffer& t_FrameBuffer) {}
+		virtual void PrepareAttachments() {}
 
-		virtual void CreateGraphicsPipeline(FrameBuffer& t_FrameBuffer) = 0;
+		virtual void CreateGraphicsPipeline() = 0;
 
-		virtual void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, FrameBuffer& t_FrameBuf, entt::registry& t_reg) = 0;
+		virtual void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg) = 0;
 
 		/**
 		* @brief	Given the frame buffers and the registry, create any descriptor sets that we may need
 		*			Assumes that the frame buffer has been prepared with it's attachments already.
-		*/
-		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf, entt::registry& t_reg) = 0;
+		* @param t_FrameBuffer	The swap chain frame buffer
+		*/		
+		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) = 0;
 
 		VkDescriptorSetLayout GetDescriptorLayout() const noexcept { return m_DescriptorLayout; }
 

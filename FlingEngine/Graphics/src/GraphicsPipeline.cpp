@@ -127,23 +127,23 @@ namespace Fling
 
 
         // Create graphics pipeline ------------------------
-        VkGraphicsPipelineCreateInfo pipelineInfo = {};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = static_cast<UINT32>(shaderStages.size());
-        pipelineInfo.pStages = shaderStages.data();
-        pipelineInfo.pVertexInputState = &m_VertexInputStateCreateInfo;
-        pipelineInfo.pInputAssemblyState = &m_InputAssemblyState;
-        pipelineInfo.pViewportState = &m_ViewportState;
-        pipelineInfo.pRasterizationState = &m_RasterizationState;
-        pipelineInfo.pMultisampleState = &m_MultisampleState;
-        pipelineInfo.pDepthStencilState = &m_DepthStencilState;
-        pipelineInfo.pDynamicState = &m_DynamicState;
-        pipelineInfo.pColorBlendState = &m_ColorBlendState;
-        pipelineInfo.layout = m_PipelineLayout;
-        pipelineInfo.renderPass = t_RenderPass;
-        pipelineInfo.subpass = 0;
+        m_PipelineCreateInfo = {};
+        m_PipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        m_PipelineCreateInfo.stageCount = static_cast<UINT32>(shaderStages.size());
+        m_PipelineCreateInfo.pStages = shaderStages.data();
+        m_PipelineCreateInfo.pVertexInputState = &m_VertexInputStateCreateInfo;
+        m_PipelineCreateInfo.pInputAssemblyState = &m_InputAssemblyState;
+        m_PipelineCreateInfo.pViewportState = &m_ViewportState;
+        m_PipelineCreateInfo.pRasterizationState = &m_RasterizationState;
+        m_PipelineCreateInfo.pMultisampleState = &m_MultisampleState;
+        m_PipelineCreateInfo.pDepthStencilState = &m_DepthStencilState;
+        m_PipelineCreateInfo.pDynamicState = &m_DynamicState;
+        m_PipelineCreateInfo.pColorBlendState = &m_ColorBlendState;
+        m_PipelineCreateInfo.layout = m_PipelineLayout;
+        m_PipelineCreateInfo.renderPass = t_RenderPass;
+        m_PipelineCreateInfo.subpass = 0;
 
-        if (vkCreateGraphicsPipelines(m_Device, m_PipelineCache, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
+        if (vkCreateGraphicsPipelines(m_Device, m_PipelineCache, 1, &m_PipelineCreateInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
         {
             F_LOG_FATAL("Failed to create graphics pipeline");
         }

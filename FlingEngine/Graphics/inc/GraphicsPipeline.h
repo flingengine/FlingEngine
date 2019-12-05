@@ -60,6 +60,8 @@ namespace Fling
         VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
         VkPipelineBindPoint m_PipelineBindPoint;
 
+		VkGraphicsPipelineCreateInfo m_PipelineCreateInfo = {};
+
         VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineVertexInputStateCreateInfo m_VertexInputStateCreateInfo = {};
         VkPipelineInputAssemblyStateCreateInfo m_InputAssemblyState = {};

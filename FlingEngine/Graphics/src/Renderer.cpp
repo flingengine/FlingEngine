@@ -25,7 +25,7 @@ namespace Fling
         // Add entt component callbacks for mesh render etc
         InitComponentData();
 
-		// Initalize all graphics resources
+		// Initialize all graphics resources
 		InitGraphics();
     }
 

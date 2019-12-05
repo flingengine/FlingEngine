@@ -59,10 +59,6 @@ namespace Fling
         {
             F_LOG_ERROR("Failed to load image file: {}", Filepath);
         }
-        else
-        {
-            F_LOG_TRACE("Loaded image file: {}", Filepath);
-        }
 
         GraphicsHelpers::CreateVkImage(
 			VulkanApp::Get().GetLogicalDevice()->GetVkDevice(),
