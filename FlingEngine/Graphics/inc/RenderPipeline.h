@@ -26,7 +26,7 @@ namespace Fling
 		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg);
 
 		/** Given a frame index, get any semaphores that the swap chain command buffer needs to wait for */
-		VkSemaphore GetDrawDepencies(UINT32 t_FrameIndex);
+		void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex);
 
 	private:
 

@@ -64,9 +64,12 @@ namespace Fling
 		}
 	}
 
-	VkSemaphore RenderPipeline::GetDrawDepencies(UINT32 t_FrameIndex)
+	void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex)
 	{
-		return VK_NULL_HANDLE;
+		for (const auto& subpass : m_Subpasses)
+		{
+			subpass->GatherPresentDependencies(t_CmdBuffs, t_Deps, t_ActiveFrameIndex);
+		}
 	}
 
 	void RenderPipeline::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)

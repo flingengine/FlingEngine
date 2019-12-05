@@ -56,7 +56,7 @@ namespace Fling
 		m_SwapChain = new Swapchain(ChooseSwapExtent(), m_LogicalDevice, m_PhysicalDevice, m_Surface);
 		assert(m_SwapChain);
 
-		GraphicsHelpers::CreateCommandPool(&m_CommandPool, 0);
+		GraphicsHelpers::CreateCommandPool(&m_CommandPool, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 		CreateFrameSyncResources();
 
@@ -375,6 +375,10 @@ namespace Fling
 			F_LOG_FATAL("Failed to acquire swap chain image!");
 		}
 
+		// Fill this with the render pipelines
+		std::vector<VkSemaphore> SemaphoresToWaitOn = {};
+		std::vector<CommandBuffer*> DependentCmdBufs = {};
+
 		// Build all the command buffer for the swap chain
 		//for(size_t i = 0; i < m_DrawCmdBuffers.size(); ++i)
 		{
@@ -383,57 +387,68 @@ namespace Fling
 
 			for (RenderPipeline* Pipeline : m_RenderPipelines)
 			{
+				// Build the command buffers of the render pipeline
 				Pipeline->Draw(*m_DrawCmdBuffers[ImageIndex], ImageIndex, t_Reg);
+
+				// Gather the dependencies 
+				Pipeline->GatherPresentDependencies(DependentCmdBufs, SemaphoresToWaitOn, CurrentFrameIndex);
 			}
 		}
 
 		// Wait for the color attachment to be done 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-		std::vector<VkSemaphore> SemaphoresToWaitOn;
-
-		// For each render pass
-			// Submit it
-			
-
-
-		// Submit sub pass command buffers with their waits
-		VkSubmitInfo OffscreenSubmission = {};
-		OffscreenSubmission.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		OffscreenSubmission.pWaitDstStageMask = waitStages;
-		// Wait on Present complete
-		OffscreenSubmission.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
-		OffscreenSubmission.commandBufferCount = 1;
-		//OffscreenSubmission.pCommandBuffers = 
-		// Offscreen command buffer pointer
-
-		// Signal offscreen semaphore when this is completed
-
-
 		// Submit any PIPELINE command buffers for work		
 		VkSubmitInfo FinalScreenSubmitInfo = {};
 		FinalScreenSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-		// Then for the final submission...
-		for (RenderPipeline* pipe : m_RenderPipelines)
-		{
-			// Give it a ref to the semaphores to wait on
-				// Inside the render pipeline, loop through all the subpass
-					// Let a subpass add to that vector of dependent semaphores
-		}
-		// Wait for offscreen or any other semaphore from a render pipeline
-
-		// Signal render complete
-
-		// Track any semaphores that we may need to wait on for the render pipeline
-		FinalScreenSubmitInfo.waitSemaphoreCount = 1;
-		FinalScreenSubmitInfo.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
-
 		FinalScreenSubmitInfo.pWaitDstStageMask = waitStages;
 
+		// If There are dependent semaphores, then wait for them
+		// otherwise wait for the present 
+		if (!SemaphoresToWaitOn.empty() && !DependentCmdBufs.empty())
+		{
+			// Submit sub pass command buffers with their waits
+			VkSubmitInfo OffscreenSubmission = {};
+			OffscreenSubmission.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			OffscreenSubmission.pWaitDstStageMask = waitStages;
+			// Wait on Present complete
+			OffscreenSubmission.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
+			OffscreenSubmission.waitSemaphoreCount = 1;
+
+			// Signal that the dependent semaphores are done when this is complete
+			OffscreenSubmission.pSignalSemaphores = SemaphoresToWaitOn.data();
+			OffscreenSubmission.signalSemaphoreCount = (UINT32)SemaphoresToWaitOn.size();
+
+			// Mark the draw command buffer at this frame for submission
+			std::vector<VkCommandBuffer> submitCommandBuffers = {};
+			
+			for (CommandBuffer* Buf : DependentCmdBufs)
+			{
+				submitCommandBuffers.emplace_back(Buf->GetHandle());
+			}
+
+			OffscreenSubmission.pCommandBuffers = submitCommandBuffers.data();
+			OffscreenSubmission.commandBufferCount = (UINT32)submitCommandBuffers.size();
+			// Signal off screen semaphore when this is completed
+			VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &OffscreenSubmission, VK_NULL_HANDLE));
+
+			// Wait for dependent semaphores
+			FinalScreenSubmitInfo.waitSemaphoreCount = (UINT32)SemaphoresToWaitOn.size();
+			FinalScreenSubmitInfo.pWaitSemaphores = SemaphoresToWaitOn.data();
+		}
+		else
+		{
+			// Track any semaphores that we may need to wait on for the render pipeline
+			FinalScreenSubmitInfo.waitSemaphoreCount = 1;
+			FinalScreenSubmitInfo.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
+		}
+		
 		// Mark the draw command buffer at this frame for submission
 		std::vector<VkCommandBuffer> submitCommandBuffers = {};
 		submitCommandBuffers.emplace_back(m_DrawCmdBuffers[ImageIndex]->GetHandle());
+
+		FinalScreenSubmitInfo.pCommandBuffers = submitCommandBuffers.data();
+		FinalScreenSubmitInfo.commandBufferCount = (UINT32)submitCommandBuffers.size();
 
 		// Actually present the swap chain queue. This is always going to be the signal for the final semaphore
 		FinalScreenSubmitInfo.signalSemaphoreCount = 1;

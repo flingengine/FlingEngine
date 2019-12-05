@@ -44,6 +44,7 @@ namespace Fling
 		* @param t_FrameBuffer	The swap chain frame buffer
 		*/		
 		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) = 0;
+		virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex) {}
 
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
 		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }

@@ -34,6 +34,8 @@ namespace Fling
 
 		void CreateGraphicsPipeline() override;
 
+		void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex) override;
+
 	private:
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);

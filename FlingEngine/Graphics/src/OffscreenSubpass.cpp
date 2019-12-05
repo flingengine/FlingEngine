@@ -84,6 +84,7 @@ namespace Fling
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveFrameInFlight];
 		assert(OffscreenCmdBuf);
+		vkResetCommandBuffer(OffscreenCmdBuf->GetHandle(), VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT );
 
 		// Set viewport and scissors to the offscreen frame buffer
 		VkViewport viewport{};
@@ -300,6 +301,12 @@ namespace Fling
 				0);
 
 		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
+	}
+
+	void OffscreenSubpass::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex)
+	{
+		t_CmdBuffs.emplace_back(m_OffscreenCmdBufs[t_ActiveFrameIndex]);
+		t_Deps.emplace_back(m_OffscreenSemaphores[t_ActiveFrameIndex]);
 	}
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
