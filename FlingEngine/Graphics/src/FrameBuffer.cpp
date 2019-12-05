@@ -54,7 +54,7 @@ namespace Fling
 		m_SubresourceRange.layerCount = t_Info.LayerCount;
 
 		VkImageViewCreateInfo imageView = Initializers::ImageViewCreateInfo();
-		imageView.viewType = (t_Info.LayerCount== 1) ? VK_IMAGE_VIEW_TYPE_2D : VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+		imageView.viewType = (t_Info.LayerCount == 1) ? VK_IMAGE_VIEW_TYPE_2D : VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		imageView.format = t_Info.Format;
 		imageView.subresourceRange = m_SubresourceRange;
 		//todo: workaround for depth+stencil attachments
