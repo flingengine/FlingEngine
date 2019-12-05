@@ -165,6 +165,13 @@ namespace Fling
             const std::vector<VkDescriptorSetLayoutBinding>& t_bindings
         );
 
+		inline VkRenderPassBeginInfo RenderPassBeginInfo()
+		{
+			VkRenderPassBeginInfo renderPassBeginInfo{};
+			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			return renderPassBeginInfo;
+		}
+
         VkWriteDescriptorSet WriteDescriptorSetUniform(
             Buffer* t_Buffer,
             VkDescriptorSet t_DstSet,

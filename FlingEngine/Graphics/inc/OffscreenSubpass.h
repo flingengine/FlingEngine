@@ -9,7 +9,6 @@ namespace Fling
 	class FrameBuffer;	
 	class MeshRenderer;
 	class Swapchain;
-	class GraphicsPipeline;
 
 	// Uses the MRT shaders (mulitple render targets)
 	class OffscreenSubpass : public Subpass

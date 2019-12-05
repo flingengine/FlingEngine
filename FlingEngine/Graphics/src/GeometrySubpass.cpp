@@ -24,10 +24,10 @@ namespace Fling
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 		, m_OffscreenFrameBuf(t_OffscreenDep)
 	{
-		m_ClearValues.resize(4);
-		m_ClearValues[0].color = m_ClearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		m_ClearValues[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		m_ClearValues[3].depthStencil = { 1.0f, 0 };
+		// Set clear values
+		m_ClearValues.resize(2);
+		m_ClearValues[0].color = { { 0.0f, 0.0f, 0.2f, 0.0f } };
+		m_ClearValues[1].depthStencil = { 1.0f, 0 };
 
 		m_QuadModel = Model::Quad();
 
@@ -63,7 +63,63 @@ namespace Fling
 
 	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg)
 	{
+		VkViewport viewport{};
+		viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
+		viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
 
+		VkRect2D scissor{};
+		scissor.extent = m_SwapChain->GetExtents();
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		// Build the command buffer where t_CmdBuf is the drawing command buffer for the swap chain
+		t_CmdBuf.Begin();
+
+		// Start a render pass using the global render pass settings
+		VkRenderPass GlobalPass = VulkanApp::Get().GetGlobalRenderPass();
+		VkFramebuffer SwapFrameBuf = VulkanApp::Get().GetFrameBufferAtIndex(t_ActiveFrameInFlight);
+
+		VkRenderPassBeginInfo renderPassBeginInfo = Initializers::RenderPassBeginInfo();
+		renderPassBeginInfo.renderPass = GlobalPass;
+		renderPassBeginInfo.framebuffer = SwapFrameBuf;
+		
+		renderPassBeginInfo.renderArea.offset.x = 0;
+		renderPassBeginInfo.renderArea.offset.y = 0;
+		renderPassBeginInfo.renderArea.extent.width = m_SwapChain->GetExtents().width;
+		renderPassBeginInfo.renderArea.extent.height = m_SwapChain->GetExtents().height;
+		renderPassBeginInfo.clearValueCount = m_ClearValues.size();
+		renderPassBeginInfo.pClearValues = m_ClearValues.data();
+
+		vkCmdBeginRenderPass(t_CmdBuf.GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		t_CmdBuf.SetViewport(0, { viewport });
+		t_CmdBuf.SetScissor(0, { scissor });
+
+		VkDeviceSize offsets[1] = { 0 };
+		vkCmdBindDescriptorSets(
+			t_CmdBuf.GetHandle(), 
+			VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			m_GraphicsPipeline->GetPipelineLayout(), 
+			0, 
+			1, 
+			&m_DescriptorSets[t_ActiveFrameInFlight],
+			0, 
+			nullptr
+		);
+
+		// Final composition as full screen quad
+		VkBuffer vertexBuffers[1] = { m_QuadModel->GetVertexBuffer()->GetVkBuffer() };
+
+		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+		vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexBuffer()->GetVkBuffer(), 0, m_QuadModel->GetIndexType());
+		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), 6, 1, 0, 0, 1);
+
+		t_CmdBuf.EndRenderPass();
+
+		// End command buffer recording
+		t_CmdBuf.End();
 	}
 
 	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
@@ -73,7 +129,7 @@ namespace Fling
 		size_t ImageCount = m_SwapChain->GetImageCount();
 		m_DescriptorSets.resize(ImageCount);
 
-		std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_DescriptorLayout);
+		std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		// If we have specified a specific pool then use that, otherwise use the one on the mesh

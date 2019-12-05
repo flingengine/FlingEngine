@@ -20,15 +20,11 @@ namespace Fling
 
 		// Initialize the layouts that this subpass will use for descriptors and pipeline creation
 		std::vector<Shader*> Shaders = { m_VertexShader.get(), m_FragShader.get() };
-		
-		m_DescriptorLayout = Shader::CreateSetLayout(m_Device->GetVkDevice(), Shaders);
-		m_PipelineLayout = Shader::CreatePipelineLayout(m_Device->GetVkDevice(), m_DescriptorLayout, 0, 0);
-		
+
 		// Add entt callbacks for handling mesh renderers
 		m_GraphicsPipeline = new GraphicsPipeline(Shaders, m_Device->GetVkDevice());
 
 		PrepareAttachments();
-
 	}
 
 	Subpass::~Subpass()
@@ -39,16 +35,6 @@ namespace Fling
 		{
 			delete m_GraphicsPipeline;
 			m_GraphicsPipeline = nullptr;
-		}
-
-		if (m_PipelineLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyPipelineLayout(m_Device->GetVkDevice(), m_PipelineLayout, nullptr);
-		}
-
-		if (m_DescriptorLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorSetLayout(m_Device->GetVkDevice(), m_DescriptorLayout, nullptr);
 		}
 	}
 }

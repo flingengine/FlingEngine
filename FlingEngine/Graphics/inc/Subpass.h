@@ -42,15 +42,12 @@ namespace Fling
 		*/		
 		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) = 0;
 
-		VkDescriptorSetLayout GetDescriptorLayout() const noexcept { return m_DescriptorLayout; }
-
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
 		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }
 
 	protected:
 
 		// Get default graphics Pipeline
-
 		const LogicalDevice* m_Device;
 		const Swapchain* m_SwapChain;
 
@@ -62,9 +59,6 @@ namespace Fling
 		std::vector<VkClearValue> m_ClearValues = std::vector<VkClearValue>(2);
 
 		/** Layouts created in the constructor via shader reflection */
-		VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
-		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
-
 		GraphicsPipeline* m_GraphicsPipeline = nullptr;
 	};
 }

@@ -35,14 +35,14 @@ namespace Fling
 		}
 	}
 	
-	void CommandBuffer::Begin()
+	void CommandBuffer::Begin(VkCommandBufferUsageFlagBits t_Usage)
 	{
 		assert(!IsRecording());
 		m_State = State::Recording;
 
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		//beginInfo.flags = t_Usage;
 		beginInfo.pInheritanceInfo = nullptr;
 
 		VK_CHECK_RESULT(vkBeginCommandBuffer(GetHandle(), &beginInfo));

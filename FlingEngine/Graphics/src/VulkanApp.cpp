@@ -208,7 +208,7 @@ namespace Fling
 			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
 			if (vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]) != VK_SUCCESS)
 			{
-				F_LOG_FATAL("Failed to create semaphores or fence!");
+				F_LOG_FATAL("Failed to create fence!");
 			}
 		}
 	}
@@ -308,55 +308,44 @@ namespace Fling
 
 		vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
-		if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
+		if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			F_LOG_WARN("Swap chain out of date! ");
+			return;
+		}
+		else if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
 		{
 			F_LOG_FATAL("Failed to acquire swap chain image!");
 		}
 
-		// Track any semaphores that we may need to wait on for the render pipeline
-		std::vector<VkSemaphore> waitSemaphores = { m_PresentCompleteSemaphores[CurrentFrameIndex] };
-
-		// Get the current drawing command buffer associated with the current swap chain image
-		CommandBuffer* CurrentInFlightCmdBuf = m_DrawCmdBuffers[ImageIndex];
-		assert(CurrentInFlightCmdBuf);
-
-		// Build any command buffers that we need to during the frame
+		// Build all the command buffer for the swap chain
+		//for(size_t i = 0; i < m_DrawCmdBuffers.size(); ++i)
 		{
-			CurrentInFlightCmdBuf->Begin();
-
-			VkViewport viewport{};
-			viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
-			viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
-			viewport.minDepth = 0.0f;
-			viewport.maxDepth = 1.0f;
-			CurrentInFlightCmdBuf->SetViewport(0, { viewport });
-
-			VkRect2D scissor{};
-			scissor.extent = m_SwapChain->GetExtents();
-			CurrentInFlightCmdBuf->SetScissor(0, { scissor });
+			// Get the current drawing command buffer associated with the current swap chain image
+			assert(m_DrawCmdBuffers[ImageIndex]);
 
 			for (RenderPipeline* Pipeline : m_RenderPipelines)
 			{
-				Pipeline->Draw(*CurrentInFlightCmdBuf, ImageIndex, t_Reg);
+				Pipeline->Draw(*m_DrawCmdBuffers[ImageIndex], ImageIndex, t_Reg);
 			}
-
-			// End command buffer recording
-			CurrentInFlightCmdBuf->End();
 		}
 
-		// Submit any PIPELINE command buffers for work
-
-
-		
+		// Submit any PIPELINE command buffers for work		
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		submitInfo.waitSemaphoreCount = static_cast<UINT32>(waitSemaphores.size());
-		submitInfo.pWaitSemaphores = waitSemaphores.data();
-		submitInfo.pWaitDstStageMask = &m_WaitStages;
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
+		// Track any semaphores that we may need to wait on for the render pipeline
+		VkSemaphore waitSemaphores[] = { m_PresentCompleteSemaphores[CurrentFrameIndex] };
+
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+
+		// Mark the draw command buffer at this frame for submission
 		std::vector<VkCommandBuffer> submitCommandBuffers = {};
-		submitCommandBuffers.emplace_back(CurrentInFlightCmdBuf->GetHandle());
+		submitCommandBuffers.emplace_back(m_DrawCmdBuffers[ImageIndex]->GetHandle());
 
 		VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]));
 		
@@ -366,11 +355,20 @@ namespace Fling
 		// Actually present the swap chain queue
 		VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[CurrentFrameIndex] };
 		submitInfo.signalSemaphoreCount = 1;
+
 		submitInfo.pSignalSemaphores = signalSemaphores;
 		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), *signalSemaphores);
 		
-		// #TODO If result is out of date then signal for resize
-		
+		// Check if the swap chain is out of date and needs to be rebuilt
+		if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR)
+		{
+			// #TODO If result is out of date then signal for resize
+		}
+		else if (iResult != VK_SUCCESS)
+		{
+			F_LOG_FATAL("Failed to present swap chain image!");
+		}
+
 		// Update the current in flight frame index!
 		CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 	}

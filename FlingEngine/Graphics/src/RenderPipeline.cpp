@@ -37,7 +37,6 @@ namespace Fling
 
 		// Add Entt callbacks ----------
 		t_Reg.on_construct<MeshRenderer>().connect<&RenderPipeline::OnMeshRendererAdded>(*this);
-		// #TODO Light callbacks
 
 		F_LOG_TRACE("Render pipeline Creation done!");
 	}
@@ -72,7 +71,7 @@ namespace Fling
 
 	void RenderPipeline::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
-		// Initialize the mesh renderer to have data 
+		// Initialize the mesh renderer to have a descriptor pool that it can use
 		const UINT32 SwapImageCount = static_cast<UINT32>(m_SwapChain->GetImageCount());
 		VkDevice Device = m_Device->GetVkDevice();
 

@@ -85,23 +85,23 @@ namespace Fling
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveFrameInFlight];
 		assert(OffscreenCmdBuf);
 
-		OffscreenCmdBuf->Begin();
-		OffscreenCmdBuf->BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
-
 		// Set viewport and scissors to the offscreen frame buffer
 		VkViewport viewport{};
 		viewport.width = static_cast<float>(m_OffscreenFrameBuf->GetWidth());
 		viewport.height = static_cast<float>(m_OffscreenFrameBuf->GetHeight());
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		OffscreenCmdBuf->SetViewport(0, { viewport });
 
 		VkRect2D scissor{};
-		scissor.extent.width = static_cast<float>(m_OffscreenFrameBuf->GetWidth());
-		scissor.extent.height = static_cast<float>(m_OffscreenFrameBuf->GetHeight());
+		scissor.extent.width = static_cast<UINT32>(m_OffscreenFrameBuf->GetWidth());
+		scissor.extent.height = static_cast<UINT32>(m_OffscreenFrameBuf->GetHeight());
 		scissor.offset.x = 0;
 		scissor.offset.y = 0;
 
+		OffscreenCmdBuf->Begin();
+		OffscreenCmdBuf->BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
+
+		OffscreenCmdBuf->SetViewport(0, { viewport });
 		OffscreenCmdBuf->SetScissor(0, { scissor });
 
 		vkCmdBindPipeline(OffscreenCmdBuf->GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
@@ -131,7 +131,7 @@ namespace Fling
 			vkCmdBindDescriptorSets(
 				OffscreenCmdBuf->GetHandle(),
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				m_PipelineLayout,
+				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
 				1,
 				&t_MeshRend.m_DescriptorSets[t_ActiveFrameInFlight],
@@ -160,7 +160,7 @@ namespace Fling
 		size_t ImageCount = m_SwapChain->GetImageCount();
 		t_MeshRend.m_DescriptorSets.resize(ImageCount);
 
-		std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_DescriptorLayout);
+		std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		// If we have specified a specific pool then use that, otherwise use the one on the mesh
@@ -190,6 +190,7 @@ namespace Fling
 					t_MeshRend.m_Material->GetTexture().m_NormalTexture,
 					t_MeshRend.m_DescriptorSets[i],
 					2)
+				// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 			};
 
 			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);

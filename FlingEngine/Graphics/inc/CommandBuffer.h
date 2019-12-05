@@ -40,7 +40,7 @@ namespace Fling
 		inline const VkCommandPool& GetPoolHandle() const { return m_Pool; }
 
 		/** Begin recording for this command buffer */
-		void Begin();
+		void Begin(VkCommandBufferUsageFlagBits t_Usage = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
 		void BeginRenderPass(FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales);
 

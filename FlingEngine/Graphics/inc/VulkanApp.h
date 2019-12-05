@@ -126,7 +126,7 @@ namespace Fling
 		std::vector<CommandBuffer*> m_DrawCmdBuffers;
 
 		/** Synchronization primitives for drawing the frame. @see VulkanApp::CreateFrameSyncResources */
-		std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+		std::vector<VkSemaphore> m_PresentCompleteSemaphores;
 		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
 		std::vector<VkFence> m_InFlightFences;
 

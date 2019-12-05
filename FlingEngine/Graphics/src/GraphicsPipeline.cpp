@@ -22,6 +22,9 @@ namespace Fling
         m_CullMode(t_CullMode),
         m_FrontFace(t_FrontFace)
     {
+		m_DescriptorSetLayout = Shader::CreateSetLayout(m_Device, m_Shaders);
+		m_PipelineLayout = Shader::CreatePipelineLayout(m_Device, m_DescriptorSetLayout, 0, 0);
+		
 		CreateAttributes(nullptr);
     }
 
@@ -111,9 +114,6 @@ namespace Fling
             createInfo.pSpecializationInfo = nullptr;
             shaderStages.push_back(createInfo);
         }
-
-        m_DescriptorSetLayout = Shader::CreateSetLayout(m_Device, m_Shaders);
-        m_PipelineLayout = Shader::CreatePipelineLayout(m_Device, m_DescriptorSetLayout, 0, 0);
 
         // Vertex Input 
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
