@@ -330,34 +330,60 @@ namespace Fling
 			}
 		}
 
-		// Submit any PIPELINE command buffers for work		
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
+		// Wait for the color attachment to be done 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-		// Track any semaphores that we may need to wait on for the render pipeline
-		VkSemaphore waitSemaphores[] = { m_PresentCompleteSemaphores[CurrentFrameIndex] };
+		std::vector<VkSemaphore> SemaphoresToWaitOn;
 
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
+		// For each render pass
+			// Submit it
+			
+
+
+		// Submit sub pass command buffers with their waits
+		VkSubmitInfo OffscreenSubmission = {};
+		OffscreenSubmission.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		OffscreenSubmission.pWaitDstStageMask = waitStages;
+		// Wait on Present complete
+		OffscreenSubmission.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
+		OffscreenSubmission.commandBufferCount = 1;
+		//OffscreenSubmission.pCommandBuffers = 
+		// Offscreen command buffer pointer
+
+		// Signal offscreen semaphore when this is completed
+
+
+		// Submit any PIPELINE command buffers for work		
+		VkSubmitInfo FinalScreenSubmitInfo = {};
+		FinalScreenSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		// Then for the final submission...
+		// Wait for offscreen
+
+		// Signal render complete
+
+		// Track any semaphores that we may need to wait on for the render pipeline
+		FinalScreenSubmitInfo.waitSemaphoreCount = 1;
+		FinalScreenSubmitInfo.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
+
+		FinalScreenSubmitInfo.pWaitDstStageMask = waitStages;
 
 		// Mark the draw command buffer at this frame for submission
 		std::vector<VkCommandBuffer> submitCommandBuffers = {};
 		submitCommandBuffers.emplace_back(m_DrawCmdBuffers[ImageIndex]->GetHandle());
 
-		VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[CurrentFrameIndex]));
+		// Actually present the swap chain queue
+		FinalScreenSubmitInfo.signalSemaphoreCount = 1;
+		FinalScreenSubmitInfo.pSignalSemaphores = &m_RenderFinishedSemaphores[CurrentFrameIndex];
+
+		VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &FinalScreenSubmitInfo, m_InFlightFences[CurrentFrameIndex]));
 		
 		// Finish up the frame by setting the in flight fences to wait -----
 		vkWaitForFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
-		
-		// Actually present the swap chain queue
-		VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[CurrentFrameIndex] };
-		submitInfo.signalSemaphoreCount = 1;
+	
 
-		submitInfo.pSignalSemaphores = signalSemaphores;
-		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), *signalSemaphores);
+		// Present the swap chain with the renderer finished semaphore
+		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), m_RenderFinishedSemaphores[CurrentFrameIndex]);
 		
 		// Check if the swap chain is out of date and needs to be rebuilt
 		if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR)

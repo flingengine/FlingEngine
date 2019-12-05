@@ -35,6 +35,8 @@ namespace Fling
 
 		virtual void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg) = 0;
 
+		//virtual void Submit(VkSemaphore t_PresentCompleteSemaphore) = 0;
+
 		/**
 		* @brief	Given the frame buffers and the registry, create any descriptor sets that we may need
 		*			Assumes that the frame buffer has been prepared with it's attachments already.
