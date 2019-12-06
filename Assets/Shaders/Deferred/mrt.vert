@@ -40,11 +40,11 @@ void main()
 	vec3 locPos = vec3(ubo.model * vec4(inPos, 1.0));
 	outWorldPos = locPos;
 
-	//vec4 tmpPos = vec4(locPos, 1.0);
+	vec4 tmpPos = vec4(locPos, 1.0);
 
 	//gl_Position = ubo.projection * ubo.view * ubo.model * tmpPos;
 	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
-
+	//gl_Position = vec4(1.0, 1.0, 1.0, 1.0);
 	
 	outUV = inUV;
 	outUV.t = 1.0 - outUV.t;

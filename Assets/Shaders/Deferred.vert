@@ -37,7 +37,7 @@ void main()
 	outTextCoord = inTexCoord;
 	outTextCoord.t = 1.0 - inTexCoord.t;
 	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
-
+	//gl_Position = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	// Tangent -----
 	outTangent = normalize( inTangent * mat3(ubo.model) );
 }

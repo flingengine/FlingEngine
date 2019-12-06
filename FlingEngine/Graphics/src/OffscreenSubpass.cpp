@@ -126,7 +126,7 @@ namespace Fling
 
 			// UPDATE UNIFORM BUF of the mesh --------
 			OffscreenUBO CurrentUBO = {};
-			CurrentUBO.Model = t_trans.GetWorldMat();
+			CurrentUBO.Model = t_trans.GetWorldMatrix();
 			CurrentUBO.View = m_Camera->GetViewMatrix();
 			CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
 			CurrentUBO.Projection[1][1] *= -1.0f;
