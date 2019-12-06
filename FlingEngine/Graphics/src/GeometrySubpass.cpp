@@ -118,7 +118,7 @@ namespace Fling
 		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 		vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexBuffer()->GetVkBuffer(), 0, m_QuadModel->GetIndexType());
-		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), 6, 1, 0, 0, 1);
+		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexCount(), 1, 0, 0, 1);
 
 		t_CmdBuf.EndRenderPass();
 
