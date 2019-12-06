@@ -9,6 +9,7 @@
 #include "UniformBufferObject.h"
 #include "Model.h"
 #include "Buffer.h"
+#include "OffscreenSubpass.h"
 
 #include "VulkanApp.h"		// #TODO: Lets get rid of this
 
@@ -73,6 +74,9 @@ namespace Fling
 		scissor.extent = m_SwapChain->GetExtents();
 		scissor.offset.x = 0;
 		scissor.offset.y = 0;
+
+		UpdateLightingUBO(t_ActiveFrameInFlight);
+
 		// Build the command buffer where t_CmdBuf is the drawing command buffer for the swap chain
 		t_CmdBuf.Begin();
 
@@ -163,12 +167,6 @@ namespace Fling
 
 			std::vector<VkWriteDescriptorSet> writeDescriptorSets =
 			{
-				// 0: Vertex shader uniform buffer
-				//Initializers::WriteDescriptorSetUniform(
-				//	m_UniformBuffers[i],
-				//	m_DescriptorSets[i],
-				//	0
-				//),
 				// 1 : Position sampler
 				Initializers::WriteDescriptorSet(
 					m_DescriptorSets[i],
@@ -212,5 +210,37 @@ namespace Fling
 		// Create it otherwise with defaults
 		VkRenderPass RenderPass = VulkanApp::Get().GetGlobalRenderPass();
 		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
+	}
+
+	void GeometrySubpass::UpdateLightingUBO(UINT32 t_ActiveFrame)
+	{
+		// White
+		uboFragmentLights.lights[0].position = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
+		uboFragmentLights.lights[0].color = glm::vec3(1.5f);
+		uboFragmentLights.lights[0].radius = 15.0f * 0.25f;
+		// Red
+		uboFragmentLights.lights[1].position = glm::vec4(-2.0f, 0.0f, 0.0f, 0.0f);
+		uboFragmentLights.lights[1].color = glm::vec3(1.0f, 0.0f, 0.0f);
+		uboFragmentLights.lights[1].radius = 15.0f;
+		// Blue
+		uboFragmentLights.lights[2].position = glm::vec4(2.0f, 1.0f, 0.0f, 0.0f);
+		uboFragmentLights.lights[2].color = glm::vec3(0.0f, 0.0f, 2.5f);
+		uboFragmentLights.lights[2].radius = 5.0f;
+		// Yellow
+		uboFragmentLights.lights[3].position = glm::vec4(0.0f, 0.9f, 0.5f, 0.0f);
+		uboFragmentLights.lights[3].color = glm::vec3(1.0f, 1.0f, 0.0f);
+		uboFragmentLights.lights[3].radius = 2.0f;
+		// Green
+		uboFragmentLights.lights[4].position = glm::vec4(0.0f, 0.5f, 0.0f, 0.0f);
+		uboFragmentLights.lights[4].color = glm::vec3(0.0f, 1.0f, 0.2f);
+		uboFragmentLights.lights[4].radius = 5.0f;
+		// Yellow
+		uboFragmentLights.lights[5].position = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+		uboFragmentLights.lights[5].color = glm::vec3(1.0f, 0.7f, 0.3f);
+		uboFragmentLights.lights[5].radius = 25.0f;
+
+		// Memcpy to the buffer
+		Buffer* buf = m_LightingUBOs[t_ActiveFrame];
+		memcpy(buf->m_MappedMem, &uboFragmentLights, buf->GetSize());
 	}
 }   // namespace Fling

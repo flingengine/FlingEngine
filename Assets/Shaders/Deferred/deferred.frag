@@ -34,7 +34,7 @@ void main()
 	// Ambient part
 	vec3 fragcolor  = albedo.rgb * ambient;
 	
-	for(int i = 0; i < lightCount; ++i)
+	/*for(int i = 0; i < lightCount; ++i)
 	{
 		// Vector to light
 		vec3 L = ubo.lights[i].position.xyz - fragPos;
@@ -64,9 +64,16 @@ void main()
 			float NdotR = max(0.0, dot(R, V));
 			vec3 spec = ubo.lights[i].color * albedo.a * pow(NdotR, 16.0) * atten;
 
-			fragcolor += diff + spec;	
+			fragcolor += diff + spec;
 		}	
-	}    	
+	} */
    
   outFragcolor = vec4(fragcolor, 1.0);	
+
+	//outFragcolor = vec4(fragPos, 1.0);	
+	outFragcolor = vec4(normal, 1.0);	
+	//outFragcolor = albedo;	
+	// all red just for testing
+	//outFragcolor = vec4(1.0, 0.0, 0.0, 1.0);	
+
 }

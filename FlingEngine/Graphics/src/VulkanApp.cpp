@@ -318,7 +318,7 @@ namespace Fling
 			// These shaders have vertex input and fill in the buffers that the final pass uses
 			std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(HS("Shaders/Deferred/mrt_vert.spv"), m_LogicalDevice);
 			std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(HS("Shaders/Deferred/mrt_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, OffscreenVert, OffscreenFrag));
+			Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenVert, OffscreenFrag));
 
 			// Create geometry pass ------
 			// These shaders do not have any vertex input and do the final processing to the screen

@@ -18,31 +18,59 @@ namespace Fling
 
 		float x = 0.0f;
 		float y = 0.0f;
-		Verts.push_back({});
 
+		//float width = 1.0f;
+		//float height = 1.0f;
+
+		//Vertex v0 = {};
+		//v0.Normal = { 0.0f, 0.0f, 1.0f };
+		//v0.TexCoord = { 0.0f, 0.0f };
+		//v0.Pos = { 0.0f, 0.0f, 0.0f };
+
+		//Vertex v1 = {};
+		//v1.Normal = { 0.0f, 0.0f, 1.0f };
+		//v1.TexCoord = { 1.0f, 0.0f };
+		//v1.Pos = { width, 0.0f, 0.0f };
+
+		//Vertex v2 = {};
+		//v2.Normal = { 0.0f, 0.0f, 1.0f };
+		//v2.TexCoord = { 0.0f, 1.0f };
+		//v2.Pos = { 0.0f, height, 0.0f };
+
+		//Vertex v3 = {};
+		//v3.Normal = { 0.0f, 0.0f, 1.0f };
+		//v3.TexCoord = { 1.0f, 1.0f };
+		//v3.Pos = { width, height, 0.0f };
+
+		//Verts.push_back(v0);
+		//Verts.push_back(v1);
+		//Verts.push_back(v2);
+		//Verts.push_back(v3);
+
+		// Wtf
 		for (uint32_t i = 0; i < 3; i++)
 		{
 			Vertex v0 = {};
 			v0.Pos = {x+1.0f, y+1.0f, 0.0f};
 			v0.TexCoord = {1.0f, 1.0f};
 			v0.Color = {1.0f, 1.0f, 1.0f };
-			v0.Normal = {0.0f, 0.0f, (float)i};
+			v0.Normal = { 0.0f, 0.0f, (float)i };
 
 			Vertex v1 = {};
-			v0.Pos = { x,      y+1.0f, 0.0f };
-			v0.TexCoord = { 0.0f, 1.0f };
+			v1.Pos = { x,      y + 1.0f, 0.0f };
+			v1.TexCoord = { 0.0f, 1.0f };
 			v1.Color = { 1.0f, 1.0f, 1.0f };
 			v1.Normal = { 0.0f, 0.0f, (float)i };
 
 			Vertex v2 = {};
-			v0.Pos = { x,      y,      0.0f  };
-			v0.TexCoord = { 0.0f, 0.0f };
+			v2.Pos = { x,      y,      0.0f };
+			v2.TexCoord = { 0.0f, 0.0f };
 			v2.Color = { 1.0f, 1.0f, 1.0f };
 			v2.Normal = { 0.0f, 0.0f, (float)i };
 
 			Vertex v3 = {};
-			v0.Pos = { x+1.0f, y,      0.0f };
-			v0.TexCoord = { 1.0f, 0.0f };
+			v3.Pos = { x+1.0f, y,      0.0f };
+			v3.TexCoord = { 1.0f, 0.0f };
 			v3.Color = { 1.0f, 1.0f, 1.0f };
 			v3.Normal = { 0.0f, 0.0f, (float)i };
 
@@ -58,7 +86,6 @@ namespace Fling
 				y += 1.0f;
 			}
 		}
-
 
 		std::vector<UINT32> indexBuffer = { 0,1,2, 2,3,0 };
 		for (UINT32 i = 0; i < 3; ++i)
@@ -145,14 +172,14 @@ namespace Fling
 			}
 		}
 
+		// Calculate our tangent vectors for this model
+		CalculateVertexTangents(m_Verts.data(), static_cast<UINT32>(m_Verts.size()), m_Indices.data(), static_cast<UINT32>(m_Indices.size()));
+
 		CreateBuffers();
 	}
 
 	void Model::CreateBuffers()
 	{
-		// Calculate our tangent vectors for this model
-		CalculateVertexTangents(m_Verts.data(), static_cast<UINT32>(m_Verts.size()), m_Indices.data(), static_cast<UINT32>(m_Indices.size()));
-
 		// Create vertex buffer
 		VkDeviceSize VertBufferSize = sizeof(m_Verts[0]) * m_Verts.size();
 		// We use a staging buffer to get to a more optimial memory layout for the GPU

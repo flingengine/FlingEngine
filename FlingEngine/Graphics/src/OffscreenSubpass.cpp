@@ -4,9 +4,11 @@
 #include "PhyscialDevice.h"
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
+#include "Components/Transform.h"
 #include "MeshRenderer.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
+#include "FirstPersonCamera.h"
 
 #include "VulkanApp.h"	// #TODO See if we can get rid of this with VMA or something
 
@@ -18,10 +20,14 @@ namespace Fling
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
 		entt::registry& t_reg,
+		FirstPersonCamera* t_Cam,
 		std::shared_ptr<Fling::Shader> t_Vert,
 		std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
+		, m_Camera(t_Cam)
 	{
+		assert(m_Camera);
+
 		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
 
 		// Set the clear values for the G Buffer
@@ -84,7 +90,7 @@ namespace Fling
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveFrameInFlight];
 		assert(OffscreenCmdBuf);
-		vkResetCommandBuffer(OffscreenCmdBuf->GetHandle(), VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT );
+		//vkResetCommandBuffer(OffscreenCmdBuf->GetHandle(), VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT );
 
 		// Set viewport and scissors to the offscreen frame buffer
 		VkViewport viewport{};
@@ -110,7 +116,7 @@ namespace Fling
 		VkDeviceSize offsets[1] = { 0 };
 
 		// For every mesh bind it's model and descriptor set info
-		t_reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		t_reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_trans)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)
@@ -118,7 +124,17 @@ namespace Fling
 				return;
 			}
 
-			// #TODO UPDATE UNIFORM BUF of the mesh --------
+			// UPDATE UNIFORM BUF of the mesh --------
+			OffscreenUBO CurrentUBO = {};
+			CurrentUBO.Model = t_trans.GetWorldMat();
+			CurrentUBO.View = m_Camera->GetViewMatrix();
+			CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
+			CurrentUBO.Projection[1][1] *= -1.0f;
+			CurrentUBO.ObjPos = t_trans.GetPos();
+
+			// Memcpy to the buffer
+			Buffer* buf = t_MeshRend.m_UniformBuffers[t_ActiveFrameInFlight];
+			memcpy(buf->m_MappedMem, &CurrentUBO, buf->GetSize());
 
 			// If the mesh has no descriptor sets, then build them
 			// #TODO Investigate a better way to do this, probably by just moving the 
@@ -196,6 +212,7 @@ namespace Fling
 
 			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
+		F_LOG_TRACE("Offscreen descriptor set created!");
 	}
 
 	void OffscreenSubpass::PrepareAttachments()
@@ -213,6 +230,7 @@ namespace Fling
 		attachmentInfo.Usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 		// Color attachments
+
 		// Attachment 0: (World space) Positions
 		attachmentInfo.Format = VK_FORMAT_R16G16B16A16_SFLOAT;
 		m_OffscreenFrameBuf->AddAttachment(attachmentInfo);
@@ -317,7 +335,7 @@ namespace Fling
 		size_t ImageCount = m_SwapChain->GetImageCount();
 		t_MeshRend.m_UniformBuffers.resize(ImageCount);
 
-		VkDeviceSize bufferSize = sizeof(UboVS);
+		VkDeviceSize bufferSize = sizeof(OffscreenUBO);
 		for (size_t i = 0; i < ImageCount; i++)
 		{
 			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

@@ -13,16 +13,6 @@ namespace Fling
 	class Model;
 	class Buffer;
 
-	/** UBO for mesh data */
-	struct alignas(16) GeometryUBO
-	{
-		glm::mat4 Model;
-		glm::mat4 Projection;
-		glm::mat4 View;
-		glm::vec3 CamPos;
-		glm::vec3 ObjPos;
-	};
-
 	struct DeferredLight
 	{
 		glm::vec4 position;
@@ -61,6 +51,8 @@ namespace Fling
 
 	private:
 
+		void UpdateLightingUBO(UINT32 t_ActiveFrame);
+
 		// Global render pass for frame buffer writes
 		// A quad model for displaying shit
 		std::shared_ptr<Model> m_QuadModel;
@@ -79,6 +71,9 @@ namespace Fling
 		// Descriptor sets and Uniform buffers -- one per swap image
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		std::vector<Buffer*> m_LightingUBOs;
+
+		std::vector<Buffer*> m_QuadUBO;
+		std::vector<VkDescriptorSet> m_QuadDescriptor;
 
 		// #TODO Callbacks when Lights are added
 	};

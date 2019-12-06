@@ -9,6 +9,16 @@ namespace Fling
 	class FrameBuffer;	
 	class MeshRenderer;
 	class Swapchain;
+	class FirstPersonCamera;
+
+	/** UBO for mesh data */
+	struct OffscreenUBO
+	{
+		glm::mat4 Projection;
+		glm::mat4 Model;
+		glm::mat4 View;
+		glm::vec3 ObjPos;
+	};
 
 	// Uses the MRT shaders (mulitple render targets)
 	class OffscreenSubpass : public Subpass
@@ -18,6 +28,7 @@ namespace Fling
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
 			entt::registry& t_reg,
+			FirstPersonCamera* t_Cam,
 			std::shared_ptr<Fling::Shader> t_Vert,
 			std::shared_ptr<Fling::Shader> t_Frag
 		);
@@ -52,6 +63,8 @@ namespace Fling
 		std::vector<CommandBuffer*> m_OffscreenCmdBufs;
 
 		FrameBuffer* m_OffscreenFrameBuf = nullptr;
+
+		const FirstPersonCamera* m_Camera;
 	};
 
 }   // namespace Fling
