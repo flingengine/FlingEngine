@@ -120,6 +120,7 @@ set_target_properties(BulletInverseDynamics PROPERTIES FOLDER Bullet)
 set_target_properties(BulletSoftBody PROPERTIES FOLDER Bullet)
 set_target_properties(LinearMath PROPERTIES FOLDER Bullet)
 include_directories( external/bullet3/src )
+set(BULLET_LIBRARIES "BulletSoftBody" "BulletDynamics" "BulletCollision" "LinearMath")
 
 # ImGUI 
 if( WITH_IMGUI_FLAG )

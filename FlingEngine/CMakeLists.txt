@@ -67,9 +67,7 @@ set ( LINK_LIBS
     spirv-cross-core 
     spirv-cross-cpp
     spirv-cross-reflect
-    BulletDynamics 
-    BulletCollision 
-    LinearMath
+    ${BULLET_LIBRARIES}
 )
 
 IF( WITH_IMGUI_FLAG )

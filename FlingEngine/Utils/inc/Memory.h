@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdlib.h>
-#include "Bullet3Common/b3AlignedAllocator.h"
 
 namespace Fling
 {
@@ -10,9 +9,9 @@ namespace Fling
     void AlignedFree(void* t_Data);
 
 #if FLING_LINUX
-    #define leading_zeroes(x) ((x) == 0 ? 32 : __builtin_clz(x))
-    #define trailing_zeroes(x) ((x) == 0 ? 32 : __builtin_ctz(x))
-    #define trailing_ones(x) __builtin_ctz(~(x))
+#define leading_zeroes(x) ((x) == 0 ? 32 : __builtin_clz(x))
+#define trailing_zeroes(x) ((x) == 0 ? 32 : __builtin_ctz(x))
+#define trailing_ones(x) __builtin_ctz(~(x))
 #elif FLING_WINDOWS
 #include <intrin.h>
 
@@ -44,7 +43,7 @@ namespace Fling
 #endif
 
     template<typename T>
-    inline void for_each_bit(UINT32 value, const T& func)
+    inline void for_each_bit(uint32_t value, const T& func)
     {
         while (value)
         {

@@ -12,7 +12,8 @@ namespace Fling
         m_DynamicsWorld = new btDiscreteDynamicsWorld(
             m_CollisionDispatcher, 
             m_OverlappingPairCache, 
-            m_Solver, m_CollisionConfiguration);
+            m_Solver,
+            m_CollisionConfiguration);
     }
 
     void PhysicsManager::Shutdown()
@@ -62,5 +63,4 @@ namespace Fling
     void PhysicsManager::RigidBodyReplaced()
     {
     }
-
 }
