@@ -22,7 +22,16 @@ namespace Fling
 		std::vector<Shader*> Shaders = { m_VertexShader.get(), m_FragShader.get() };
 
 		// Add entt callbacks for handling mesh renderers
-		m_GraphicsPipeline = new GraphicsPipeline(Shaders, m_Device->GetVkDevice());
+
+        //Might want to change this per subpass?
+		m_GraphicsPipeline = new GraphicsPipeline(
+            Shaders, 
+            m_Device->GetVkDevice(),
+            VK_POLYGON_MODE_FILL,
+            GraphicsPipeline::Depth::ReadWrite,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            VK_CULL_MODE_BACK_BIT,
+            VK_FRONT_FACE_CLOCKWISE);
 
 		PrepareAttachments();
 	}
