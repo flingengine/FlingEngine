@@ -12,7 +12,7 @@ namespace Fling
 	class FirstPersonCamera;
 
 	/** UBO for mesh data */
-	struct OffscreenUBO
+	struct alignas(16) OffscreenUBO
 	{
 		glm::mat4 Projection;
 		glm::mat4 Model;

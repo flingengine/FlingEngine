@@ -34,33 +34,16 @@ out gl_PerVertex
 
 void main() 
 {
-	// original that used instancing
-	//vec4 tmpPos = inPos + ubo.instancePos[gl_InstanceIndex];
-
 	vec3 locPos = vec3(ubo.model * vec4(inPos, 1.0));
 	outWorldPos = locPos;
-
-	vec4 tmpPos = vec4(locPos, 1.0);
-
-	//gl_Position = ubo.projection * ubo.view * ubo.model * tmpPos;
-	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
-	//gl_Position = vec4(1.0, 1.0, 1.0, 1.0);
-	
+	outNormal = mat3(ubo.model) * inNormal;
 	outUV = inUV;
-	outUV.t = 1.0 - outUV.t;
+	outUV.t = 1.0 - inUV.t;
+	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
 
-	// Vertex position in world space
-	//outWorldPos = vec3(ubo.model * tmpPos);
-	// GL to Vulkan coord space
-	outWorldPos.y = -outWorldPos.y;
-	
-	// Normal in world space
-	mat3 mNormal = transpose(inverse(mat3(ubo.model)));
-	outNormal = mNormal * normalize(inNormal);	
-	outTangent = mNormal * normalize(inTangent);
-	// maybe we shuold use this? 
-	// 	outTangent = normalize( inTangent * mat3(ubo.model) );
-	
+	// Tangent -----
+	outTangent = normalize( inTangent * mat3(ubo.model) );
+
 	// Currently just vertex color
 	outColor = inColor;
 }

@@ -126,10 +126,12 @@ namespace Fling
 
 			// UPDATE UNIFORM BUF of the mesh --------
 			OffscreenUBO CurrentUBO = {};
-			CurrentUBO.Model = t_trans.GetWorldMatrix();
-			CurrentUBO.View = m_Camera->GetViewMatrix();
+			Transform::CalculateWorldMatrix(t_trans);
+
 			CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
 			CurrentUBO.Projection[1][1] *= -1.0f;
+			CurrentUBO.Model = t_trans.GetWorldMatrix();
+			CurrentUBO.View = m_Camera->GetViewMatrix();
 			CurrentUBO.ObjPos = t_trans.GetPos();
 
 			// Memcpy to the buffer
@@ -206,7 +208,17 @@ namespace Fling
 				Initializers::WriteDescriptorSetImage(
 					t_MeshRend.m_Material->GetTexture().m_NormalTexture,
 					t_MeshRend.m_DescriptorSets[i],
-					2)
+					2),
+				//// 3: Metal map
+				//Initializers::WriteDescriptorSetImage(
+				//	t_MeshRend.m_Material->GetTexture().m_MetalTexture,
+				//	t_MeshRend.m_DescriptorSets[i],
+				//	3),
+				//// 4: Roughness map
+				//Initializers::WriteDescriptorSetImage(
+				//	t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
+				//	t_MeshRend.m_DescriptorSets[i],
+				//	4)
 				// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 			};
 

@@ -10,6 +10,8 @@
 #include "Model.h"
 #include "Buffer.h"
 #include "OffscreenSubpass.h"
+#include "FirstPersonCamera.h"
+#include "Components/Transform.h"
 
 #include "VulkanApp.h"		// #TODO: Lets get rid of this
 
@@ -19,10 +21,12 @@ namespace Fling
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
 		entt::registry& t_reg,
+		FirstPersonCamera* t_Cam,
 		FrameBuffer* t_OffscreenDep,
 		std::shared_ptr<Fling::Shader> t_Vert,
 		std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
+		, m_Camera(t_Cam)
 		, m_OffscreenFrameBuf(t_OffscreenDep)
 	{
 		// Set clear values
@@ -32,25 +36,25 @@ namespace Fling
 
 		m_QuadModel = Model::Quad();
 
-		// Initializes the lighting UBO's  --------
-		VkDeviceSize bufferSize = sizeof(uboFragmentLights);
+		// Initializes the lighting UBO buffers  --------
+		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
-		m_LightingUBOs.resize(m_SwapChain->GetImageCount());
-		for (size_t i = 0; i < m_LightingUBOs.size(); i++)
+		m_LightingUboBuffers.resize(m_SwapChain->GetImageCount());
+		for (size_t i = 0; i < m_LightingUboBuffers.size(); i++)
 		{
-			m_LightingUBOs[i] = new Buffer(
+			m_LightingUboBuffers[i] = new Buffer(
 				bufferSize,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-			m_LightingUBOs[i]->MapMemory(bufferSize);
+			m_LightingUboBuffers[i]->MapMemory(bufferSize);
 		}
 	}
 
 	GeometrySubpass::~GeometrySubpass()
 	{
 		// Clean up any allocated UBO's 
-		for (Buffer* buf : m_LightingUBOs)
+		for (Buffer* buf : m_LightingUboBuffers)
 		{
 			if (buf)
 			{
@@ -58,7 +62,7 @@ namespace Fling
 				buf = nullptr;
 			}
 		}
-		m_LightingUBOs.clear();
+		m_LightingUboBuffers.clear();
 		// Clean up any allocated descriptor sets
 	}
 
@@ -75,7 +79,7 @@ namespace Fling
 		scissor.offset.x = 0;
 		scissor.offset.y = 0;
 
-		UpdateLightingUBO(t_ActiveFrameInFlight);
+		UpdateLightingUBO(t_reg, t_ActiveFrameInFlight);
 
 		// Build the command buffer where t_CmdBuf is the drawing command buffer for the swap chain
 		t_CmdBuf.Begin();
@@ -187,7 +191,7 @@ namespace Fling
 					&texDescriptorAlbedo),
 				// 4 : Lighting UBO to the fragment shader
 				Initializers::WriteDescriptorSetUniform(
-					m_LightingUBOs[i],
+					m_LightingUboBuffers[i],
 					m_DescriptorSets[i],
 					4
 				),
@@ -212,35 +216,80 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
 	}
 
-	void GeometrySubpass::UpdateLightingUBO(UINT32 t_ActiveFrame)
+	void GeometrySubpass::OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
 	{
-		// White
-		uboFragmentLights.lights[0].position = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
-		uboFragmentLights.lights[0].color = glm::vec3(1.5f);
-		uboFragmentLights.lights[0].radius = 15.0f * 0.25f;
-		// Red
-		uboFragmentLights.lights[1].position = glm::vec4(-2.0f, 0.0f, 0.0f, 0.0f);
-		uboFragmentLights.lights[1].color = glm::vec3(1.0f, 0.0f, 0.0f);
-		uboFragmentLights.lights[1].radius = 15.0f;
-		// Blue
-		uboFragmentLights.lights[2].position = glm::vec4(2.0f, 1.0f, 0.0f, 0.0f);
-		uboFragmentLights.lights[2].color = glm::vec3(0.0f, 0.0f, 2.5f);
-		uboFragmentLights.lights[2].radius = 5.0f;
-		// Yellow
-		uboFragmentLights.lights[3].position = glm::vec4(0.0f, 0.9f, 0.5f, 0.0f);
-		uboFragmentLights.lights[3].color = glm::vec3(1.0f, 1.0f, 0.0f);
-		uboFragmentLights.lights[3].radius = 2.0f;
-		// Green
-		uboFragmentLights.lights[4].position = glm::vec4(0.0f, 0.5f, 0.0f, 0.0f);
-		uboFragmentLights.lights[4].color = glm::vec3(0.0f, 1.0f, 0.2f);
-		uboFragmentLights.lights[4].radius = 5.0f;
-		// Yellow
-		uboFragmentLights.lights[5].position = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-		uboFragmentLights.lights[5].color = glm::vec3(1.0f, 0.7f, 0.3f);
-		uboFragmentLights.lights[5].radius = 25.0f;
+		F_LOG_TRACE("Point Light added!");
+		
+		// Ensure that we have a transform component before adding a light
+		if (!t_Reg.has<Transform>(t_Ent))
+		{
+			t_Reg.assign<Transform>(t_Ent);
+		}
+
+		Transform& t = t_Reg.get<Transform>(t_Ent);
+
+#if FLING_DEBUG
+		// Make a cute little debug mesh on a point light	
+		t.SetScale(glm::vec3{ 0.1f });
+		static std::string PointLightMesh = "Models/sphere.obj";
+		if (!t_Reg.has<MeshRenderer>(t_Ent))
+		{
+			t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh);
+		}
+
+		// Ensure that we have the proper point light mesh on for a nice little gizmo
+		MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
+		m.LoadModelFromPath(PointLightMesh);
+		m.LoadMaterialFromPath("Materials/Default.mat");
+
+#endif	// FLING_DEBUG
+	}
+
+	void GeometrySubpass::UpdateLightingUBO(entt::registry& t_Reg, UINT32 t_ActiveFrame)
+	{
+		auto PointLightView = t_Reg.view<PointLight, Transform>();
+		auto DirectionalLightView = t_Reg.view<DirectionalLight>();
+
+		UINT32 CurLightCount = 0;
+		// Directional Lights ----------------
+		for (auto entity : DirectionalLightView)
+		{
+			if (CurLightCount < DeferredLightSettings::MaxDirectionalLights)
+			{
+				DirectionalLight& Light = DirectionalLightView.get(entity);
+				// Copy the dir light info to the buffer
+				size_t size = sizeof(DirectionalLight);
+				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
+			}
+		}
+
+		m_LightingUBO.DirLightCount = CurLightCount;
+
+		CurLightCount = 0;
+
+		// Point lights ---------------------
+		for (auto entity : PointLightView)
+		{
+			if (CurLightCount < DeferredLightSettings::MaxPointLights)
+			{
+				PointLight& Light = PointLightView.get<PointLight>(entity);
+				Transform& Trans = PointLightView.get<Transform>(entity);
+
+				Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
+				// Copy the point light info to the buffer
+				size_t size = sizeof(PointLight);
+				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
+			}
+		}
 
 		// Memcpy to the buffer
-		Buffer* buf = m_LightingUBOs[t_ActiveFrame];
-		memcpy(buf->m_MappedMem, &uboFragmentLights, buf->GetSize());
+		m_LightingUBO.PointLightCount = CurLightCount;
+		m_LightingUBO.ViewPos = 
+			glm::vec4(m_Camera->GetPosition(), 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
+		
+		memcpy(
+			m_LightingUboBuffers[t_ActiveFrame]->m_MappedMem,
+			&m_LightingUBO,
+			sizeof(m_LightingUBO));
 	}
 }   // namespace Fling

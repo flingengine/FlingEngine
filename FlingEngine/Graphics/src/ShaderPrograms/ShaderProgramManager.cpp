@@ -263,7 +263,7 @@ namespace Fling
 
                 Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
                 // Copy the point light info to the buffer
-                size_t size = sizeof(DirectionalLight);
+                size_t size = sizeof(PointLight);
                 memcpy((m_LightingUbo.DirLightBuffer + (CurLightCount++)), &Light, size);
 
             }

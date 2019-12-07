@@ -22,6 +22,8 @@ namespace Fling
 
     struct LightingUbo
     {
+		glm::vec4 ViewPos = {};
+
         alignas(4) UINT32 DirLightCount = 0;
         alignas(4) UINT32 PointLightCount = 0;
 

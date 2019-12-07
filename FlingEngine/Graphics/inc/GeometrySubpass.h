@@ -2,6 +2,10 @@
 
 #include "Subpass.h"
 
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
+#include "Lighting/Lighting.hpp"
+
 namespace Fling
 {
 	class CommandBuffer;
@@ -12,12 +16,15 @@ namespace Fling
 	class GraphicsPipeline;
 	class Model;
 	class Buffer;
+	class FirstPersonCamera;
 
-	struct DeferredLight
+	struct DeferredLightSettings
 	{
-		glm::vec4 position;
-		glm::vec3 color;
-		float radius;
+		/** Dir Lights */
+		static const UINT32 MaxDirectionalLights = 32;
+
+		/** Point Lights */
+		static const UINT32 MaxPointLights = 32;
 	};
 
 	/**
@@ -33,6 +40,7 @@ namespace Fling
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
 			entt::registry& t_reg,
+			FirstPersonCamera* t_Cam,
 			FrameBuffer* t_OffscreenDep,
 			std::shared_ptr<Fling::Shader> t_Vert,
 			std::shared_ptr<Fling::Shader> t_Frag
@@ -51,28 +59,26 @@ namespace Fling
 
 	private:
 
-		void UpdateLightingUBO(UINT32 t_ActiveFrame);
+		void OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
+
+		void UpdateLightingUBO(entt::registry& t_Reg, UINT32 t_ActiveFrame);
 
 		// Global render pass for frame buffer writes
 		// A quad model for displaying shit
 		std::shared_ptr<Model> m_QuadModel;
 
+		const FirstPersonCamera* m_Camera;
+
 		/** The offscreen frame buffer that has the G Buffer attachments */
 		FrameBuffer* m_OffscreenFrameBuf = nullptr;
 
-		// UBO for Lights that will be sent to the frag shader
-		// Use 6 for now just because itll be easier to setup deferred
-		struct 
-		{
-			DeferredLight lights[6];
-			glm::vec4 viewPos;
-		} uboFragmentLights;
-
 		// Descriptor sets and Uniform buffers -- one per swap image
 		std::vector<VkDescriptorSet> m_DescriptorSets;
-		std::vector<Buffer*> m_LightingUBOs;
+		std::vector<Buffer*> m_LightingUboBuffers;
 
-		std::vector<Buffer*> m_QuadUBO;
+		LightingUbo m_LightingUBO = {};
+
+		std::vector<Buffer*> m_QuadUboBuffer;
 		std::vector<VkDescriptorSet> m_QuadDescriptor;
 
 		// #TODO Callbacks when Lights are added
