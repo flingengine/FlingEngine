@@ -158,9 +158,6 @@ namespace Fling
 		{
 			VkImageView attachments[2];
 
-			// Depth/Stencil attachment is the same for all frame buffers
-			attachments[1] = m_DepthBuffer->GetVkImageView();
-
 			VkFramebufferCreateInfo frameBufferCreateInfo = {};
 			frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			frameBufferCreateInfo.pNext = nullptr;
@@ -172,6 +169,9 @@ namespace Fling
 			frameBufferCreateInfo.layers = 1;
 
 			attachments[0] = ImageViews[i];
+
+			// Depth/Stencil attachment is the same for all frame buffers
+			attachments[1] = m_DepthBuffer->GetVkImageView();
 			VK_CHECK_RESULT(vkCreateFramebuffer(m_LogicalDevice->GetVkDevice(), &frameBufferCreateInfo, nullptr, &m_SwapChainFrameBuffers[i]));
 		}
 	}

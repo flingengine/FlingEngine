@@ -77,11 +77,8 @@ void main()
 {
 	// Get G-Buffer values
 	vec3 fragPos = texture(samplerposition, inUV).rgb;
-	vec3 normalSample = texture(samplerNormal, inUV).rgb;
+	vec3 normal = texture(samplerNormal, inUV).rgb;
 	vec4 albedo = texture(samplerAlbedo, inUV);
-
-	// Transform from [0,1] to [-1,1]
-	vec3 normal = 2.0 * normalSample - 1.0;
 
 	// Ambient part
 	vec3 LightColor  = vec3(0.0, 0.0, 0.0);   

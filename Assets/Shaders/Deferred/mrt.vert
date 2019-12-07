@@ -40,5 +40,5 @@ void main()
 
 	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
 	outTangent = normalize( inTangent * mat3(ubo.model) );
-	//gl_Position.y = -gl_Position.y;
+	gl_Position.y = -gl_Position.y;
 }

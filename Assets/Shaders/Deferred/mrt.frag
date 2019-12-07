@@ -40,9 +40,9 @@ void main()
 {
 	vec3 N = normalize(inNormal);
 	// Transform normals from [-1, 1] to [0, 1]
-    outNormal = vec4(0.5 * N + 0.5, 1.0);
+    //outNormal = vec4(0.5 * N + 0.5, 1.0);
 
-	//outNormal = vec4(perturbNormal(), 1.0);
+	outNormal = vec4(perturbNormal(), 1.0);
 
 	// N.y = -N.y;
 	// vec3 T = normalize(inTangent);

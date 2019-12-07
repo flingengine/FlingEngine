@@ -19,31 +19,31 @@ namespace Fling
 		float x = 0.0f;
 		float y = 0.0f;
 
-		for (uint32_t i = 0; i < 3; i++)
+		//for (uint32_t i = 0; i < 3; i++)
 		{
 			Vertex v0 = {};
 			v0.Pos = {x+1.0f, y+1.0f, 0.0f};
 			v0.TexCoord = {1.0f, 1.0f};
 			v0.Color = {1.0f, 1.0f, 1.0f };
-			v0.Normal = { 0.0f, 0.0f, (float)i };
+			v0.Normal = { 0.0f, 0.0f, (float)1.0f };
 
 			Vertex v1 = {};
 			v1.Pos = { x,      y + 1.0f, 0.0f };
 			v1.TexCoord = { 0.0f, 1.0f };
 			v1.Color = { 1.0f, 1.0f, 1.0f };
-			v1.Normal = { 0.0f, 0.0f, (float)i };
+			v1.Normal = { 0.0f, 0.0f, (float)1.0f };
 
 			Vertex v2 = {};
 			v2.Pos = { x,      y,      0.0f };
 			v2.TexCoord = { 0.0f, 0.0f };
 			v2.Color = { 1.0f, 1.0f, 1.0f };
-			v2.Normal = { 0.0f, 0.0f, (float)i };
+			v2.Normal = { 0.0f, 0.0f, (float)1.0f };
 
 			Vertex v3 = {};
 			v3.Pos = { x+1.0f, y,      0.0f };
 			v3.TexCoord = { 1.0f, 0.0f };
 			v3.Color = { 1.0f, 1.0f, 1.0f };
-			v3.Normal = { 0.0f, 0.0f, (float)i };
+			v3.Normal = { 0.0f, 0.0f, (float)1.0f };
 
 			Verts.push_back(v0);
 			Verts.push_back(v1);
@@ -59,14 +59,14 @@ namespace Fling
 		}
 
 		std::vector<UINT32> indexBuffer = { 0,1,2, 2,3,0 };
-		for (UINT32 i = 0; i < 3; ++i)
+		/*for (UINT32 i = 0; i < 3; ++i)
 		{
 			UINT32 indices[6] = { 0,1,2, 2,3,0 };
 			for (UINT32 index : indices)
 			{
 				indexBuffer.push_back(i * 4 + index);
 			}
-		}
+		}*/
 
 		return ResourceManager::LoadResource<Model>(HS("Fling_Primative_QUAD"), Verts, indexBuffer);
 	}

@@ -31,7 +31,7 @@ namespace Fling
 	{
 		// Set clear values
 		m_ClearValues.resize(2);
-		m_ClearValues[0].color = { { 0.0f, 0.0f, 0.2f, 0.0f } };
+		m_ClearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 		m_ClearValues[1].depthStencil = { 1.0f, 0 };
 
 		m_QuadModel = Model::Quad();
