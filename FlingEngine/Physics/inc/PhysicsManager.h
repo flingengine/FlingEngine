@@ -12,9 +12,7 @@ namespace Fling
     class PhysicsManager : Fling::Singleton<PhysicsManager>
     {
     public:
-        friend class Engine;
-
-        virtual void Init() override;
+        void Init(entt::registry* t_Registry);
 
         virtual void Shutdown() override;
 
@@ -30,9 +28,20 @@ namespace Fling
 
     private:
         void InitComponentData();
-        void RigidBodyAdded();
-        void RigidBodyRemoved();
-        void RigidBodyReplaced();
+        
+        void RigidBodyAdded(
+            entt::entity t_Ent,
+            entt::registry& t_Reg,
+            Components::Rigidbody& t_Rigidbody);
+
+        void RigidBodyRemoved(
+            entt::entity t_Ent,
+            entt::registry& t_Reg);
+
+        void RigidBodyReplaced(
+            entt::entity t_Ent,
+            entt::registry& t_Reg,
+            Components::Rigidbody& t_Rigidbody);
 
         entt::registry* m_Registry;
         btCollisionConfiguration* m_CollisionConfiguration;

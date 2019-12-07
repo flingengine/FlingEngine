@@ -2,8 +2,9 @@
 
 namespace Fling
 {
-    void PhysicsManager::Init()
+    void PhysicsManager::Init(entt::registry* t_Registry)
     {
+        m_Registry = t_Registry;
         //Intialize bullet physics
         m_CollisionConfiguration = new btDefaultCollisionConfiguration();
         m_CollisionDispatcher = new btCollisionDispatcher(m_CollisionConfiguration);
@@ -46,21 +47,35 @@ namespace Fling
 
     void PhysicsManager::InitComponentData()
     {
-        m_Registry->on_construct<Componenets::Rigidbody>().connect<&PhysicsManager::RigidBodyAdded>();
-        m_Registry->on_replace<Componenets::Rigidbody>().connect<&PhysicsManager::RigidBodyReplaced>();
-        m_Registry->on_destroy<Componenets::Rigidbody>().connect<&PhysicsManager::RigidBodyRemoved>();
+        m_Registry->on_construct<Components::Rigidbody>().connect<&PhysicsManager::RigidBodyAdded>(*this);
+        m_Registry->on_destroy<Components::Rigidbody>().connect<&PhysicsManager::RigidBodyRemoved>(*this);
+        m_Registry->on_replace<Components::Rigidbody>().connect<&PhysicsManager::RigidBodyReplaced>(*this);
     }
 
-    void PhysicsManager::RigidBodyAdded()
+    void PhysicsManager::RigidBodyAdded(
+        entt::entity t_Ent,
+        entt::registry& t_Reg, 
+        Components::Rigidbody& t_Rigidbody)
     {
-
+        //btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
+        //btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
+        //btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+        //btRigidBody* body = new btRigidBody(rbInfo);
+        //body->setUserPointer(&t_Ent);
+        ////add the body to the dynamics world
+        //m_DynamicsWorld->addRigidBody(body);
     }
 
-    void PhysicsManager::RigidBodyRemoved()
+    void PhysicsManager::RigidBodyRemoved(
+        entt::entity t_Ent,
+        entt::registry& t_Reg)
     {
     }
 
-    void PhysicsManager::RigidBodyReplaced()
+    void PhysicsManager::RigidBodyReplaced(
+        entt::entity t_Ent, 
+        entt::registry& t_Reg, 
+        Components::Rigidbody& t_Rigidbody)
     {
     }
 }
