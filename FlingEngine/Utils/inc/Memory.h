@@ -44,7 +44,7 @@ namespace Fling
 #endif
 
     template<typename T>
-    inline void for_each_bit(UINT32 value, const T& func)
+    inline void for_each_bit(uint32_t value, const T& func)
     {
         while (value)
         {
