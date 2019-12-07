@@ -1,11 +1,5 @@
 #version 450
 
-// layout (location = 0) in vec4 inPos;
-// layout (location = 1) in vec2 inUV;
-// layout (location = 2) in vec3 inColor;
-// layout (location = 3) in vec3 inNormal;
-// layout (location = 4) in vec3 inTangent;
-
 // Vertex bindings, see @Vertex.h
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inColor;
@@ -34,16 +28,17 @@ out gl_PerVertex
 
 void main() 
 {
-	vec3 locPos = vec3(ubo.model * vec4(inPos, 1.0));
-	outWorldPos = locPos;
-	outNormal = mat3(ubo.model) * inNormal;
+	// GL UV Coords to Vulkan coord space
 	outUV = inUV;
-	outUV.t = 1.0 - inUV.t;
-	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
-
-	// Tangent -----
-	outTangent = normalize( inTangent * mat3(ubo.model) );
-
+	outUV.t = 1.0 - outUV.t;
+	
 	// Currently just vertex color
 	outColor = inColor;
+	
+	outWorldPos = (ubo.model * vec4(inPos, 1.0)).rgb;
+	outNormal = mat3(ubo.model) * normalize(inNormal);
+
+	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
+	outTangent = normalize( inTangent * mat3(ubo.model) );
+	//gl_Position.y = -gl_Position.y;
 }

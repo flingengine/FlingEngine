@@ -120,7 +120,7 @@ namespace Sandbox
         {
             entt::entity e0 = t_Reg.create();
             PointLight& Light = t_Reg.assign<PointLight>(e0);
-            Transform& t0 = t_Reg.get<Transform>(e0);
+            Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
             Mover& m0 = t_Reg.assign<Mover>(e0);
 
             Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
@@ -130,7 +130,7 @@ namespace Sandbox
             t0.SetPos(t_Pos);
         };
 
-        AddModel(0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+        AddModel(0, "Models/InvertedSphere.obj", "Materials/DeferredBronzeMat.mat");
         AddModel(1, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
         AddModel(2, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
 
@@ -150,20 +150,20 @@ namespace Sandbox
 		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(30.0f, 0.1f, 30.0f));
 
 		// Ensure PBR still works
-        //AddModel(3, "Models/sphere.obj", "Materials/Bronze.mat");
-		//AddModel(4, "Models/sphere.obj", "Materials/Paint.mat");
-		//AddModel(5, "Models/sphere.obj", "Materials/Wood.mat");
-		//AddModel(6, "Models/sphere.obj", "Materials/Cobblestone.mat");
+		AddModel(3, "Models/cone.obj", "Materials/Bronze.mat");
+		AddModel(4, "Models/cube.obj", "Materials/Paint.mat");
+		AddModel(5, "Models/helix.obj", "Materials/Wood.mat");
+		AddModel(6, "Models/sphere.obj", "Materials/Cobblestone.mat");
 
 		// Ensure reflection spheres still work
 		//AddModel(7, "Models/sphere.obj", "Materials/Reflections.mat");
 
         float Width = 2.0f;
 		AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
-		//AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
+		AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
 		
-		//AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
-		//AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+		AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+		AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 
 
         auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)

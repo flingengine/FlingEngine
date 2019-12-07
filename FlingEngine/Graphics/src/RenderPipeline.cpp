@@ -99,8 +99,6 @@ namespace Fling
 		{
 			F_LOG_FATAL("Failed to create descriptor pool");
 		}
-
-		F_LOG_TRACE("[RenderPipeline] Mesh rend added! Set the desc. pool!");
 	}
 
 	void RenderPipeline::CreateDescriptors(entt::registry& t_Reg)

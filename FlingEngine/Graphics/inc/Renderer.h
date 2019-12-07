@@ -284,9 +284,6 @@ namespace Fling
         Lighting m_Lighting = {};
 		std::shared_ptr<Texture> m_BRDFLookupTexture;
    
-
-        LightingUbo m_LightingUBO = {}; 
-
         void CreateLightBuffers();
 
         // Flag for toggling imgui 

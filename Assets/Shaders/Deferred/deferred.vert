@@ -1,5 +1,7 @@
 #version 450
 
+
+// Outputs to the fragment shader
 layout (location = 0) out vec2 outUV;
 
 out gl_PerVertex

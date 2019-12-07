@@ -20,7 +20,7 @@ namespace Fling
 		}
 
 		// Depth (and/or stencil) attachment
-		if (t_Info.Usage& VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+		if (t_Info.Usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 		{
 			if (HasDepth())
 			{

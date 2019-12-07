@@ -49,6 +49,19 @@ namespace Fling
 
 			m_LightingUboBuffers[i]->MapMemory(bufferSize);
 		}
+
+		// Build camera UBO's
+		bufferSize = sizeof(m_CamInfoUBO);
+		m_CameraUboBuffers.resize(m_SwapChain->GetImageCount());
+		for (size_t i = 0; i < m_CameraUboBuffers.size(); i++)
+		{
+			m_CameraUboBuffers[i] = new Buffer(
+				bufferSize,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+			m_CameraUboBuffers[i]->MapMemory(bufferSize);
+		}
 	}
 
 	GeometrySubpass::~GeometrySubpass()
@@ -68,18 +81,15 @@ namespace Fling
 
 	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg)
 	{
-		VkViewport viewport{};
-		viewport.width = static_cast<float>(m_SwapChain->GetExtents().width);
-		viewport.height = static_cast<float>(m_SwapChain->GetExtents().height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
-		VkRect2D scissor{};
-		scissor.extent = m_SwapChain->GetExtents();
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-
 		UpdateLightingUBO(t_reg, t_ActiveFrameInFlight);
+
+		// Update camera UBO's		
+		{
+			m_CamInfoUBO.Projection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
+			m_CamInfoUBO.ModelView = glm::mat4(1.0f);
+
+			memcpy(m_CameraUboBuffers[t_ActiveFrameInFlight]->m_MappedMem, &m_CamInfoUBO, sizeof(m_CamInfoUBO));
+		}
 
 		// Build the command buffer where t_CmdBuf is the drawing command buffer for the swap chain
 		t_CmdBuf.Begin();
@@ -100,6 +110,21 @@ namespace Fling
 		renderPassBeginInfo.pClearValues = m_ClearValues.data();
 
 		vkCmdBeginRenderPass(t_CmdBuf.GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkExtent2D swapExtents = m_SwapChain->GetExtents(); 
+
+		VkViewport viewport = Initializers::Viewport(
+			static_cast<float>(swapExtents.width),
+			static_cast<float>(swapExtents.height),
+			0.0f, 1.0f
+		);
+
+		VkRect2D scissor = Initializers::Rect2D(
+			swapExtents.width,
+			swapExtents.height,
+			/** offsetX */ 0,
+			/** offsetY */ 0
+		);
 
 		t_CmdBuf.SetViewport(0, { viewport });
 		t_CmdBuf.SetScissor(0, { scissor });
@@ -195,6 +220,12 @@ namespace Fling
 					m_DescriptorSets[i],
 					4
 				),
+				// 5 : Camera UBO to the fragment shader
+				Initializers::WriteDescriptorSetUniform(
+					m_CameraUboBuffers[i],
+					m_DescriptorSets[i],
+					5
+				),
 			};
 
 			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
@@ -204,12 +235,12 @@ namespace Fling
 	void GeometrySubpass::CreateGraphicsPipeline()
 	{
 		// Use empty vertex descriptions here
-		VkPipelineVertexInputStateCreateInfo emptyInputState = {};
-		emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = {};
-		m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = &emptyInputState;
-		m_GraphicsPipeline->m_VertexInputStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-		m_GraphicsPipeline->m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+		//VkPipelineVertexInputStateCreateInfo emptyInputState = {};
+		//emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		//m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = {};
+		//m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = &emptyInputState;
+		//m_GraphicsPipeline->m_VertexInputStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+		//m_GraphicsPipeline->m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
 
 		// Create it otherwise with defaults
 		VkRenderPass RenderPass = VulkanApp::Get().GetGlobalRenderPass();
@@ -284,8 +315,8 @@ namespace Fling
 
 		// Memcpy to the buffer
 		m_LightingUBO.PointLightCount = CurLightCount;
-		m_LightingUBO.ViewPos = 
-			glm::vec4(m_Camera->GetPosition(), 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
+		//m_LightingUBO.ViewPos = 
+		//	glm::vec4(m_Camera->GetPosition(), 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
 		
 		memcpy(
 			m_LightingUboBuffers[t_ActiveFrame]->m_MappedMem,

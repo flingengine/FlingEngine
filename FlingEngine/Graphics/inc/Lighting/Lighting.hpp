@@ -20,16 +20,4 @@ namespace Fling
         std::vector<Buffer*> m_LightingUBOs;
     };
 
-    struct LightingUbo
-    {
-		glm::vec4 ViewPos = {};
-
-        alignas(4) UINT32 DirLightCount = 0;
-        alignas(4) UINT32 PointLightCount = 0;
-
-        alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
-
-        alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
-    };
-
 }

@@ -17,6 +17,7 @@
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
 #include "Lighting/Lighting.hpp"
+#include "GeometrySubpass.h"
 
 namespace Fling
 {

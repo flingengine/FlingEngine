@@ -18,6 +18,11 @@ namespace Fling
 	class Buffer;
 	class FirstPersonCamera;
 
+	/**
+	* @brief	Settings for the max directional lights and max point lights.
+	*			These settings are used 
+	* @todo		Ideally we would load these settings in from the game config file
+	*/
 	struct DeferredLightSettings
 	{
 		/** Dir Lights */
@@ -25,6 +30,25 @@ namespace Fling
 
 		/** Point Lights */
 		static const UINT32 MaxPointLights = 32;
+	};
+
+	/** Uniform buffer for passing lights to our final screen pass */
+	struct LightingUbo
+	{
+		//glm::vec4 ViewPos = {};
+
+		alignas(4) UINT32 DirLightCount = 0;
+		alignas(4) UINT32 PointLightCount = 0;
+
+		alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+
+		alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+	};
+
+	struct CameraInfoUbo
+	{
+		glm::mat4 Projection;
+		glm::mat4 ModelView;
 	};
 
 	/**
@@ -64,7 +88,6 @@ namespace Fling
 		void UpdateLightingUBO(entt::registry& t_Reg, UINT32 t_ActiveFrame);
 
 		// Global render pass for frame buffer writes
-		// A quad model for displaying shit
 		std::shared_ptr<Model> m_QuadModel;
 
 		const FirstPersonCamera* m_Camera;
@@ -75,8 +98,11 @@ namespace Fling
 		// Descriptor sets and Uniform buffers -- one per swap image
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		std::vector<Buffer*> m_LightingUboBuffers;
+		std::vector<Buffer*> m_CameraUboBuffers;
 
 		LightingUbo m_LightingUBO = {};
+
+		CameraInfoUbo m_CamInfoUBO = {};
 
 		std::vector<Buffer*> m_QuadUboBuffer;
 		std::vector<VkDescriptorSet> m_QuadDescriptor;

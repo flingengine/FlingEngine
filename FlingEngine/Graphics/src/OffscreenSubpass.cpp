@@ -93,17 +93,18 @@ namespace Fling
 		//vkResetCommandBuffer(OffscreenCmdBuf->GetHandle(), VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT );
 
 		// Set viewport and scissors to the offscreen frame buffer
-		VkViewport viewport{};
-		viewport.width = static_cast<float>(m_OffscreenFrameBuf->GetWidth());
-		viewport.height = static_cast<float>(m_OffscreenFrameBuf->GetHeight());
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
+		VkViewport viewport = Initializers::Viewport(
+			static_cast<float>(m_OffscreenFrameBuf->GetWidth()), 
+			static_cast<float>(m_OffscreenFrameBuf->GetHeight()),
+			0.0f, 1.0f
+		);
 
-		VkRect2D scissor{};
-		scissor.extent.width = static_cast<UINT32>(m_OffscreenFrameBuf->GetWidth());
-		scissor.extent.height = static_cast<UINT32>(m_OffscreenFrameBuf->GetHeight());
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
+		VkRect2D scissor = Initializers::Rect2D(
+			m_OffscreenFrameBuf->GetWidth(),
+			m_OffscreenFrameBuf->GetHeight(),
+			/** offsetX */ 0,
+			/** offsetY */ 0
+		);
 
 		OffscreenCmdBuf->Begin();
 		OffscreenCmdBuf->BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
@@ -128,6 +129,7 @@ namespace Fling
 			OffscreenUBO CurrentUBO = {};
 			Transform::CalculateWorldMatrix(t_trans);
 
+			// Invert the project value to match the proper coordinate space compared to OpenGL
 			CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
 			CurrentUBO.Projection[1][1] *= -1.0f;
 			CurrentUBO.Model = t_trans.GetWorldMatrix();
@@ -209,22 +211,21 @@ namespace Fling
 					t_MeshRend.m_Material->GetTexture().m_NormalTexture,
 					t_MeshRend.m_DescriptorSets[i],
 					2),
-				//// 3: Metal map
-				//Initializers::WriteDescriptorSetImage(
-				//	t_MeshRend.m_Material->GetTexture().m_MetalTexture,
-				//	t_MeshRend.m_DescriptorSets[i],
-				//	3),
-				//// 4: Roughness map
-				//Initializers::WriteDescriptorSetImage(
-				//	t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
-				//	t_MeshRend.m_DescriptorSets[i],
-				//	4)
+				// 3: Metal map
+				Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_Material->GetTexture().m_MetalTexture,
+					t_MeshRend.m_DescriptorSets[i],
+					3),
+				// 4: Roughness map
+				Initializers::WriteDescriptorSetImage(
+					t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
+					t_MeshRend.m_DescriptorSets[i],
+					4)
 				// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 			};
 
 			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
-		F_LOG_TRACE("Offscreen descriptor set created!");
 	}
 
 	void OffscreenSubpass::PrepareAttachments()
@@ -263,7 +264,7 @@ namespace Fling
 
 		VkBool32 validDepthFormat = PhysDevice->GetSupportedDepthFormat(&attDepthFormat);
 		assert(validDepthFormat);
-
+		// Attachment 3: Depth
 		attachmentInfo.Format = attDepthFormat;
 		attachmentInfo.Usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		m_OffscreenFrameBuf->AddAttachment(attachmentInfo);
@@ -282,18 +283,19 @@ namespace Fling
 
 		// Change anything about the graphics pipeline here
 		// Add color blend states
-		m_GraphicsPipeline->m_RasterizationState = 
-			Initializers::PipelineRasterizationStateCreateInfo(
-				VK_POLYGON_MODE_FILL,
-				VK_CULL_MODE_BACK_BIT,
-				VK_FRONT_FACE_CLOCKWISE,
-				0);
+		//m_GraphicsPipeline->m_RasterizationState = 
+		//	Initializers::PipelineRasterizationStateCreateInfo(
+		//		VK_POLYGON_MODE_FILL,
+		//		VK_CULL_MODE_BACK_BIT,
+		//		VK_FRONT_FACE_CLOCKWISE,
+		//		0);
 
 		// Color Attachment --------
 		// Blend attachment states required for all color attachments
 		// This is important, as color write mask will otherwise be 0x0 and you
 		// won't see anything rendered to the attachment
-		m_GraphicsPipeline->m_ColorBlendAttachmentStates = {
+		m_GraphicsPipeline->m_ColorBlendAttachmentStates = 
+		{
 			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE),
 			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE),
 			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE)
@@ -304,16 +306,6 @@ namespace Fling
 
 		m_GraphicsPipeline->m_ColorBlendState.pAttachments = 
 			m_GraphicsPipeline->m_ColorBlendAttachmentStates.data();
-
-		// Depth attachment -----
-		m_GraphicsPipeline->m_DepthStencilState =
-			Initializers::PipelineDepthStencilStateCreateInfo(
-				VK_TRUE,
-				VK_TRUE,
-				VK_COMPARE_OP_LESS_OR_EQUAL);
-
-		m_GraphicsPipeline->m_ViewportState =
-			Initializers::PipelineViewportStateCreateInfo(1, 1, 0);
 
 		m_GraphicsPipeline->m_MultisampleState =
 			Initializers::PipelineMultiSampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT, 0);
@@ -341,8 +333,6 @@ namespace Fling
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
-		// Build the UBO's for mesh renderers
-		F_LOG_TRACE("[OffscreenSubpass] Mesh renderer added!");
 		// Initialize and map the UBO of each mesh renderer
 		size_t ImageCount = m_SwapChain->GetImageCount();
 		t_MeshRend.m_UniformBuffers.resize(ImageCount);
