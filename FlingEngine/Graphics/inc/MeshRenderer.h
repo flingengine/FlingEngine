@@ -19,6 +19,8 @@ namespace Fling
 
 		MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
+		MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
+
 		~MeshRenderer() = default;
 
 		/** Pointer to the actual model  */

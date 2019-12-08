@@ -71,6 +71,10 @@ namespace Fling
 
 	void VulkanApp::BuildSwapChainResources()
 	{
+		// Default clear values
+		m_SwapChainClearVals[0].color = { 0.0f, 0.0f, 0.0f, 0.2F };
+		m_SwapChainClearVals[1].depthStencil = { 1.0f, ~0U };
+
 		// Build command buffers (one for each swap chain image)
 		for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); ++i)
 		{
@@ -316,21 +320,45 @@ namespace Fling
 			// Get the current drawing command buffer associated with the current swap chain image
 			assert(m_DrawCmdBuffers[i]);
 
-			for (RenderPipeline* Pipeline : m_RenderPipelines)
-			{
-				// Build the command buffers of the render pipeline
-				Pipeline->Draw(*m_DrawCmdBuffers[i], i, t_Reg);
+			m_DrawCmdBuffers[i]->Begin();
 
-				// Gather the dependencies 
-				//Pipeline->GatherPresentDependencies(DependentCmdBufs, SemaphoresToWaitOn, CurrentFrameIndex);
+			// Start a render pass using the global render pass settings
+			VkRenderPassBeginInfo renderPassBeginInfo = Initializers::RenderPassBeginInfo();
+			renderPassBeginInfo.renderPass = m_RenderPass;
+			renderPassBeginInfo.framebuffer =  m_SwapChainFrameBuffers[i];
+
+			renderPassBeginInfo.renderArea.offset = { 0, 0 };
+			renderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtents();
+
+			renderPassBeginInfo.clearValueCount = m_SwapChainClearVals.size();
+			renderPassBeginInfo.pClearValues = m_SwapChainClearVals.data();
+
+			vkCmdBeginRenderPass(m_DrawCmdBuffers[i]->GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkExtent2D swapExtents = m_SwapChain->GetExtents();
+
+			VkViewport viewport = Initializers::Viewport(static_cast<float>(swapExtents.width), static_cast<float>(swapExtents.height), 0.0f, 1.0f);
+
+			VkRect2D scissor = Initializers::Rect2D(swapExtents.width, swapExtents.height, /** offsetX */ 0, /** offsetY */ 0);
+
+			m_DrawCmdBuffers[i]->SetViewport(0, { viewport });
+			m_DrawCmdBuffers[i]->SetScissor(0, { scissor });
+
+			// Build the command buffers of the render pipelines
+			for (RenderPipeline* Pipeline : m_RenderPipelines)
+			{		
+				Pipeline->Draw(*m_DrawCmdBuffers[i], i, t_Reg);
 			}
+
+			m_DrawCmdBuffers[i]->EndRenderPass();
+
+			// End command buffer recording
+			m_DrawCmdBuffers[i]->End();
 		}
+
 		// Gather deps for the current frame only
 		for (RenderPipeline* Pipeline : m_RenderPipelines)
 		{
-			// Build the command buffers of the render pipeline
-			//Pipeline->Draw(*m_DrawCmdBuffers[i], i, t_Reg);
-
 			// Gather the dependencies 
 			Pipeline->GatherPresentDependencies(DependentCmdBufs, SemaphoresToWaitOn, CurrentFrameIndex);
 		}

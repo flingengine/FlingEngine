@@ -15,6 +15,16 @@ namespace Fling
 		LoadMaterialFromPath(t_MaterialPath);
 	}
 
+	MeshRenderer::MeshRenderer(Model* t_Model, Material* t_Mat)
+		:m_Model(t_Model)
+		, m_Material(t_Mat)
+	{
+		if (!m_Material)
+		{
+			LoadMaterialFromPath("Materials/Default.mat");
+		}
+	}
+
 	void MeshRenderer::Release()
 	{
 		for (Buffer* b : m_UniformBuffers)

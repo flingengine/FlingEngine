@@ -281,14 +281,12 @@ namespace Fling
 		VkRenderPass RenderPass = m_OffscreenFrameBuf->GetRenderPassHandle();
 		assert(RenderPass != VK_NULL_HANDLE);
 
-		// Change anything about the graphics pipeline here
-		// Add color blend states
-		//m_GraphicsPipeline->m_RasterizationState = 
-		//	Initializers::PipelineRasterizationStateCreateInfo(
-		//		VK_POLYGON_MODE_FILL,
-		//		VK_CULL_MODE_BACK_BIT,
-		//		VK_FRONT_FACE_CLOCKWISE,
-		//		0);
+		m_GraphicsPipeline->m_RasterizationState =
+			Initializers::PipelineRasterizationStateCreateInfo(
+				VK_POLYGON_MODE_FILL,
+				VK_CULL_MODE_BACK_BIT,
+				VK_FRONT_FACE_COUNTER_CLOCKWISE
+			);
 
 		// Color Attachment --------
 		// Blend attachment states required for all color attachments

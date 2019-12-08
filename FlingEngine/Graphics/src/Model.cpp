@@ -58,7 +58,9 @@ namespace Fling
 			}
 		}
 
-		std::vector<UINT32> indexBuffer = { 0,1,2, 2,3,0 };
+		//std::vector<UINT32> indexBuffer = { 0,1,2, 2,3,0 };
+		std::vector<UINT32> indexBuffer = { 2,3,0  ,0,1,2  };
+
 		/*for (UINT32 i = 0; i < 3; ++i)
 		{
 			UINT32 indices[6] = { 0,1,2, 2,3,0 };

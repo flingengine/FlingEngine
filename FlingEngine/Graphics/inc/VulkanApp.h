@@ -118,6 +118,8 @@ namespace Fling
 		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
 		// List of available frame buffers (same as number of swap chain images)
 		std::vector<VkFramebuffer> m_SwapChainFrameBuffers;
+		/** The clear values that will be used when building the command buffer to run this subpass */
+		std::vector<VkClearValue> m_SwapChainClearVals = std::vector<VkClearValue>(2);
 
 		// Stages that the swap chain needs to wait on in order to present
 		VkPipelineStageFlags m_WaitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };

@@ -91,44 +91,6 @@ namespace Fling
 			memcpy(m_CameraUboBuffers[t_ActiveFrameInFlight]->m_MappedMem, &m_CamInfoUBO, sizeof(m_CamInfoUBO));
 		}
 
-		// Build the command buffer where t_CmdBuf is the drawing command buffer for the swap chain
-		t_CmdBuf.Begin();
-
-		// Start a render pass using the global render pass settings
-		VkRenderPass GlobalPass = VulkanApp::Get().GetGlobalRenderPass();
-		VkFramebuffer SwapFrameBuf = VulkanApp::Get().GetFrameBufferAtIndex(t_ActiveFrameInFlight);
-
-		VkRenderPassBeginInfo renderPassBeginInfo = Initializers::RenderPassBeginInfo();
-		renderPassBeginInfo.renderPass = GlobalPass;
-		renderPassBeginInfo.framebuffer = SwapFrameBuf;
-		
-		renderPassBeginInfo.renderArea.offset.x = 0;
-		renderPassBeginInfo.renderArea.offset.y = 0;
-		renderPassBeginInfo.renderArea.extent.width = m_SwapChain->GetExtents().width;
-		renderPassBeginInfo.renderArea.extent.height = m_SwapChain->GetExtents().height;
-		renderPassBeginInfo.clearValueCount = m_ClearValues.size();
-		renderPassBeginInfo.pClearValues = m_ClearValues.data();
-
-		vkCmdBeginRenderPass(t_CmdBuf.GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		VkExtent2D swapExtents = m_SwapChain->GetExtents(); 
-
-		VkViewport viewport = Initializers::Viewport(
-			static_cast<float>(swapExtents.width),
-			static_cast<float>(swapExtents.height),
-			0.0f, 1.0f
-		);
-
-		VkRect2D scissor = Initializers::Rect2D(
-			swapExtents.width,
-			swapExtents.height,
-			/** offsetX */ 0,
-			/** offsetY */ 0
-		);
-
-		t_CmdBuf.SetViewport(0, { viewport });
-		t_CmdBuf.SetScissor(0, { scissor });
-
 		VkDeviceSize offsets[1] = { 0 };
 		vkCmdBindDescriptorSets(
 			t_CmdBuf.GetHandle(), 
@@ -148,11 +110,6 @@ namespace Fling
 		vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexBuffer()->GetVkBuffer(), 0, m_QuadModel->GetIndexType());
 		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexCount(), 1, 0, 0, 1);
-
-		t_CmdBuf.EndRenderPass();
-
-		// End command buffer recording
-		t_CmdBuf.End();
 	}
 
 	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
@@ -235,12 +192,26 @@ namespace Fling
 	void GeometrySubpass::CreateGraphicsPipeline()
 	{
 		// Use empty vertex descriptions here
-		//VkPipelineVertexInputStateCreateInfo emptyInputState = {};
-		//emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		//m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = {};
-		//m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = &emptyInputState;
-		//m_GraphicsPipeline->m_VertexInputStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-		//m_GraphicsPipeline->m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+		VkPipelineVertexInputStateCreateInfo emptyInputState = {};
+		emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		emptyInputState.vertexAttributeDescriptionCount = 0;
+		emptyInputState.pVertexAttributeDescriptions = nullptr;
+		emptyInputState.vertexBindingDescriptionCount = 0;
+		emptyInputState.pVertexBindingDescriptions = nullptr;
+
+		m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = {};
+		m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = &emptyInputState;
+		m_GraphicsPipeline->m_VertexInputStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+		m_GraphicsPipeline->m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+
+		// Set the rasterization state to counter clockwise and the front bit 
+		// for rendering with a single full screen triangle
+		m_GraphicsPipeline->m_RasterizationState = 
+			Initializers::PipelineRasterizationStateCreateInfo(
+				VK_POLYGON_MODE_FILL,
+				VK_CULL_MODE_FRONT_BIT,
+				VK_FRONT_FACE_COUNTER_CLOCKWISE
+			);
 
 		// Create it otherwise with defaults
 		VkRenderPass RenderPass = VulkanApp::Get().GetGlobalRenderPass();

@@ -176,6 +176,13 @@ namespace Sandbox
 
         // Directional Lights
         AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+
+		entt::entity eQuad = t_Reg.create();
+		auto Model = Model::Quad();
+		t_Reg.assign<MeshRenderer>(eQuad, Model.get());
+		t_Reg.assign<Rotator>(eQuad);
+		Transform& tQuad = t_Reg.assign<Transform>(eQuad);
+
     }
 
     void Game::GenerateTestMeshes(entt::registry& t_Reg)

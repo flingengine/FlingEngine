@@ -1,6 +1,5 @@
 #version 450
 
-
 // Outputs to the fragment shader
 layout (location = 0) out vec2 outUV;
 
@@ -11,8 +10,8 @@ out gl_PerVertex
 
 void main() 
 {
+	// This will give us the UV's betweeon 0-1 for rendering the full screen
+	// only using a single triangle
 	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
 	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
-	
-	gl_Position.y = -gl_Position.y;
 }
