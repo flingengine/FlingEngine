@@ -486,6 +486,13 @@ namespace Fling
 		}
 		m_RenderPipelines.clear();
 
+		for (size_t i = 0; i < m_SwapChainFrameBuffers.size(); i++)
+		{
+			vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFrameBuffers[i], nullptr);
+		}
+
+		vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
+
 		// Camera cleanup ------------
 		if (m_Camera)
 		{
@@ -498,6 +505,12 @@ namespace Fling
 		{
 			delete m_SwapChain;
 			m_SwapChain = nullptr;
+		}
+
+		if (m_DepthBuffer)
+		{
+			delete m_DepthBuffer;
+			m_DepthBuffer = nullptr;
 		}
 
 		// #TODO Cleanup VMA allocator -------------

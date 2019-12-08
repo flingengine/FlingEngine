@@ -37,6 +37,7 @@ namespace Sandbox
         // Toggle model rotation in Update
         Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
+		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
 
         LightingTest(t_Reg);
         //OnLoadInitated();
@@ -118,20 +119,6 @@ namespace Sandbox
             t0.SetPos(Fling::Random::GetRandomVec3(min, max));
         };
 
-        auto AddPointLight = [&](glm::vec3 t_Pos, glm::vec3 t_Color)
-        {
-            entt::entity e0 = t_Reg.create();
-            PointLight& Light = t_Reg.assign<PointLight>(e0);
-            Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
-            Mover& m0 = t_Reg.assign<Mover>(e0);
-
-            Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
-            Light.Intensity = 5.0f;
-            Light.Range = 3.0f;
-
-            t0.SetPos(t_Pos);
-        };
-
 		auto AddFloor = [&](
 			const std::string& t_Model,
 			const std::string& t_Mat,
@@ -148,13 +135,13 @@ namespace Sandbox
 		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
 
 		// Add a bunch of rando boi
-		for (size_t i = 0; i < 32; i++)
+		for (size_t i = 0; i < DeferredLightSettings::MaxPointLights; i++)
 		{
 			AddRandomPointLight();
 		}
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 2;
+		INT32 GridSize = 4;
 		for (size_t i = 0; i < GridSize; i++)
 		{
 			for (size_t j = 0; j < GridSize; j++)
@@ -237,6 +224,21 @@ namespace Sandbox
     {
         m_DoRotations = !m_DoRotations;
     }
+
+	void Game::OnTestSpawn()
+	{
+		entt::registry& t_Reg = m_OwningWorld->GetRegistry();
+
+		static float pos = -1.0f;
+		pos -= 1.0f;
+
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+		t_Reg.assign<Rotator>(e0);
+		Transform& t0 = t_Reg.assign<Transform>(e0);
+		t0.SetPos(glm::vec3(pos, 0.0f, 0.0f));
+		F_LOG_TRACE("Spawn a sphere to the left!");
+	}
 
     void Game::PrintFPS() const
     {

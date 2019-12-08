@@ -39,6 +39,8 @@ namespace Fling
 		m_QuadModel = Model::Quad();
 
 		// Initializes the lighting UBO buffers  --------
+		static_assert (sizeof(LightingUbo) < VULKAN_UBO_SIZE, "UBO size must be within the Vulkan Spec!");
+
 		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
 		m_LightingUboBuffers.resize(m_SwapChain->GetImageCount());

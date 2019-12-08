@@ -15,10 +15,8 @@ namespace Fling
 	class PhysicalDevice;
 	class LogicalDevice;
 
-
     /**
      * @brief	Represents a swap chain that can be used throughout the program
-	 * @note	You must EXPLICITLY call Cleanup() on the swap chain
      */
     class Swapchain
     {
@@ -26,7 +24,7 @@ namespace Fling
 
 		explicit Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface);
 
-		~Swapchain() noexcept {}
+		~Swapchain();
 
 		VkResult AquireNextImage(const VkSemaphore& t_CompletedSemaphore);
 

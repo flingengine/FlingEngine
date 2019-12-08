@@ -24,7 +24,7 @@ layout (binding = 6) uniform LightingData
     uint PointLightCount;
 
 	DirLight DirLights[32];
-    PointLight PointLights[32];
+    PointLight PointLights[64];
 } lights;
 
 // Camera info UBO that we will use for PBR

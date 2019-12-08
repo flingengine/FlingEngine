@@ -29,7 +29,7 @@ namespace Fling
 		static const UINT32 MaxDirectionalLights = 32;
 
 		/** Point Lights */
-		static const UINT32 MaxPointLights = 32;
+		static const UINT32 MaxPointLights = 64;
 	};
 
 	/** Uniform buffer for passing lights to our final screen pass */
@@ -38,9 +38,9 @@ namespace Fling
 		alignas(4) UINT32 DirLightCount = 0;
 		alignas(4) UINT32 PointLightCount = 0;
 
-		alignas(16) DirectionalLight DirLightBuffer[Lighting::MaxDirectionalLights] = {};
+		alignas(16) DirectionalLight DirLightBuffer[DeferredLightSettings::MaxDirectionalLights] = {};
 
-		alignas(16) PointLight PointLightBuffer[Lighting::MaxPointLights] = {};
+		alignas(16) PointLight PointLightBuffer[DeferredLightSettings::MaxPointLights] = {};
 	};
 
 	struct CameraInfoUbo

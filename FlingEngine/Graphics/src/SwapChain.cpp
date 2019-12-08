@@ -16,6 +16,11 @@ namespace Fling
 		Recreate(m_Extents);
 	}
 
+	Swapchain::~Swapchain()
+	{
+		Cleanup();
+	}
+
 	void Swapchain::Recreate(const VkExtent2D& t_Extent)
 	{
 		// Make sure that we have a valid extent first
@@ -36,10 +41,16 @@ namespace Fling
 		// Image views
 		for (size_t i = 0; i < m_ImageViews.size(); i++)
 		{
-			vkDestroyImageView(Device, m_ImageViews[i], nullptr);
+			if (m_ImageViews[i] != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(Device, m_ImageViews[i], nullptr);
+			}
 		}
 
-		vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
+		if (m_SwapChain != VK_NULL_HANDLE)
+		{
+			vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
+		}
 	}
 
 	SwapChainSupportDetails Swapchain::QuerySwapChainSupport()
