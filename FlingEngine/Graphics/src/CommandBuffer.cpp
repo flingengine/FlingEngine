@@ -6,7 +6,7 @@
 
 namespace Fling
 {
-	CommandBuffer::CommandBuffer(LogicalDevice* t_Device, VkCommandPool t_CmdPool)
+	CommandBuffer::CommandBuffer(const LogicalDevice* t_Device, VkCommandPool t_CmdPool)
 		: m_Device(t_Device)
 		, m_Pool(t_CmdPool)
 	{

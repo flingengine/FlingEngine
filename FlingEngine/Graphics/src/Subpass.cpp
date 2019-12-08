@@ -32,8 +32,6 @@ namespace Fling
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_CULL_MODE_FRONT_BIT,
             VK_FRONT_FACE_COUNTER_CLOCKWISE);
-
-		PrepareAttachments();
 	}
 
 	Subpass::~Subpass()

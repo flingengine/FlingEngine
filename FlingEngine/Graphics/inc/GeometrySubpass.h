@@ -35,8 +35,6 @@ namespace Fling
 	/** Uniform buffer for passing lights to our final screen pass */
 	struct LightingUbo
 	{
-		//glm::vec4 ViewPos = {};
-
 		alignas(4) UINT32 DirLightCount = 0;
 		alignas(4) UINT32 PointLightCount = 0;
 
@@ -49,6 +47,7 @@ namespace Fling
 	{
 		glm::mat4 Projection;
 		glm::mat4 ModelView;
+		glm::vec3 CamPos = {};
 	};
 
 	/**
@@ -64,6 +63,7 @@ namespace Fling
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
 			entt::registry& t_reg,
+			VkRenderPass t_GlobalRenderPass,
 			FirstPersonCamera* t_Cam,
 			FrameBuffer* t_OffscreenDep,
 			std::shared_ptr<Fling::Shader> t_Vert,
@@ -90,6 +90,8 @@ namespace Fling
 		// Global render pass for frame buffer writes
 		std::shared_ptr<Model> m_QuadModel;
 
+		VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
+
 		const FirstPersonCamera* m_Camera;
 
 		/** The offscreen frame buffer that has the G Buffer attachments */
@@ -100,14 +102,10 @@ namespace Fling
 		std::vector<Buffer*> m_LightingUboBuffers;
 		std::vector<Buffer*> m_CameraUboBuffers;
 
+		std::vector<Buffer*> m_QuadUboBuffer;
+
 		LightingUbo m_LightingUBO = {};
 
 		CameraInfoUbo m_CamInfoUBO = {};
-
-		std::vector<Buffer*> m_QuadUboBuffer;
-		std::vector<VkDescriptorSet> m_QuadDescriptor;
-
-		// #TODO Callbacks when Lights are added
 	};
-
 }   // namespace Fling

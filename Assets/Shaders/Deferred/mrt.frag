@@ -17,6 +17,8 @@ layout (location = 4) in vec3 inTangent;
 layout (location = 0) out vec4 outPosition;
 layout (location = 1) out vec4 outNormal;
 layout (location = 2) out vec4 outAlbedo;
+layout (location = 3) out vec4 outMetal;
+layout (location = 4) out vec4 outRoughness;
 
 // Perturb normal, see http://www.thetenthplanet.de/archives/1180
 vec3 perturbNormal()
@@ -38,21 +40,13 @@ vec3 perturbNormal()
 
 void main() 
 {
+	// Use the perturbed normal for our calculations 
 	vec3 N = normalize(inNormal);
-	// Transform normals from [-1, 1] to [0, 1]
-    //outNormal = vec4(0.5 * N + 0.5, 1.0);
-
 	outNormal = vec4(perturbNormal(), 1.0);
 
-	// N.y = -N.y;
-	// vec3 T = normalize(inTangent);
-	// vec3 B = cross(N, T);
-	// mat3 TBN = mat3(T, B, N);
-	// vec3 tnorm = TBN * normalize(texture(samplerNormalMap, inUV).xyz * 2.0 - vec3(1.0));
-	// outNormal = vec4(tnorm, 1.0);
-
-	// Position is correct
 	outPosition = vec4(inWorldPos, 1.0);
-	// This works fine
 	outAlbedo = texture(samplerColor, inUV);
+
+	outMetal = texture(samplerMetalMap, inUV);
+	outRoughness = texture(samplerRoughnessMap, inUV);
 }

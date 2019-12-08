@@ -17,8 +17,6 @@
 
 namespace Fling
 {
-	const INT32 VulkanApp::MAX_FRAMES_IN_FLIGHT = 2;
-
 	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg)
 	{
 		Singleton<VulkanApp>::Init();
@@ -67,7 +65,6 @@ namespace Fling
 
 		BuildSwapChainResources();
 	}
-
 
 	void VulkanApp::BuildSwapChainResources()
 	{
@@ -184,15 +181,15 @@ namespace Fling
 	{
 		assert(m_LogicalDevice);
 
-		m_PresentCompleteSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+		m_PresentCompleteSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
+		m_RenderFinishedSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
+		m_InFlightFences.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
 
 		VkFenceCreateInfo fenceInfo = {};
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		for (INT32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		for (INT32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			m_PresentCompleteSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
 			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
@@ -261,7 +258,7 @@ namespace Fling
 			assert(OffscreenBuf);
 			std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Shaders/Deferred/deferred_vert.spv"), m_LogicalDevice);
 			std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Shaders/Deferred/deferred_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenBuf, GeomVert, GeomFrag));
+			Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_RenderPass, m_Camera, OffscreenBuf, GeomVert, GeomFrag));
 
 			m_RenderPipelines.emplace_back(
 				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
@@ -284,7 +281,6 @@ namespace Fling
 #endif
 		}
 	}
-
 
 	void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
 	{
@@ -441,7 +437,7 @@ namespace Fling
 		}
 
 		// Update the current in flight frame index!
-		CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+		CurrentFrameIndex = (CurrentFrameIndex + 1) % VkConfig::MAX_FRAMES_IN_FLIGHT;
 	}
 	
 	VkExtent2D VulkanApp::ChooseSwapExtent()
@@ -471,13 +467,19 @@ namespace Fling
 		}
 	}
 
-	void VulkanApp::Shutdown()
+	void VulkanApp::Shutdown(entt::registry& t_Reg)
 	{
+		Singleton<VulkanApp>::Shutdown();
+
+		// Wait for the device to be ready before shutting down
+		m_LogicalDevice->WaitForIdle();
+
 		// Cleanup render pipelines (created in BuildRenderPipelines) -----------------
 		for (RenderPipeline* pipeline : m_RenderPipelines)
 		{
 			if (pipeline)
 			{
+				pipeline->CleanUp(t_Reg);
 				delete pipeline;
 				pipeline = nullptr;
 			}
@@ -501,7 +503,7 @@ namespace Fling
 		// #TODO Cleanup VMA allocator -------------
 
 		// Clean up Frame sync resources (created in CreateFrameSyncResources) --------------
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		for (size_t i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_RenderFinishedSemaphores[i], nullptr);
 			vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_PresentCompleteSemaphores[i], nullptr);

@@ -15,14 +15,6 @@ namespace Fling
 	{
 		assert(m_Device && m_SwapChain);
 
-		// Let each subpass add their own attachments to the frame buffer ----
-		for (const std::unique_ptr<Subpass>& pass : m_Subpasses)
-		{	
-			// Add any attachments and samplers to each frame buffer
-			//pass->PrepareAttachments();
-		}
-		F_LOG_TRACE("Render pipeline attachments created...");
-
 		// Create the graphics pipelines on each subpass now that we have render passes for them
 		for (const std::unique_ptr<Subpass>& pass : m_Subpasses)
 		{	
@@ -44,6 +36,8 @@ namespace Fling
 	RenderPipeline::~RenderPipeline()
 	{
 		assert(m_Device);
+
+		vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
 
 		// Cleanup subpasses
 		m_Subpasses.clear();
@@ -69,6 +63,20 @@ namespace Fling
 		for (const auto& subpass : m_Subpasses)
 		{
 			subpass->GatherPresentDependencies(t_CmdBuffs, t_Deps, t_ActiveFrameIndex);
+		}
+	}
+
+	void RenderPipeline::CleanUp(entt::registry& t_reg)
+	{
+		t_reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		{
+			t_MeshRend.Release();
+			vkDestroyDescriptorPool(m_Device->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+		});
+
+		for (const auto& Sub : m_Subpasses)
+		{
+			Sub->CleanUp(t_reg);
 		}
 	}
 

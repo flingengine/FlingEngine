@@ -25,7 +25,6 @@ namespace Fling
 	#endif
 
         // Load command line args and any ini files
-        // #TODO Handle command line args :(
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
 
 		if (!ConfigLoaded)
@@ -34,20 +33,12 @@ namespace Fling
 		}
 
 		VulkanApp::Get().Init(PipelineFlags::DEFERRED, g_Registry);
-        //Renderer::Get().CreateGameWindow(
-        //    ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
-        //    ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
-        //);
-
-		//Renderer::Get().m_Registry = &g_Registry;
 		
 		// Set the editor if we need to
 #if WITH_EDITOR
 		m_Editor->RegisterComponents(g_Registry);
-		//Renderer::Get().m_Editor = m_Editor;
 #endif
 
-		//Renderer::Get().Init();
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
@@ -66,7 +57,6 @@ namespace Fling
 		
 		assert(m_World && m_GameImpl);		// We HAVE to have a world
 		
-		//Renderer& Renderer = Renderer::Get();
 		VulkanApp& VkApp = VulkanApp::Get();
 		Timing& Timing = Timing::Get();
 
@@ -81,9 +71,7 @@ namespace Fling
 
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
-			
-			//Renderer.Tick(DeltaTime);
-			
+						
 			Input::Poll();
 
 			m_World->Update(DeltaTime);
@@ -94,20 +82,15 @@ namespace Fling
 				break;
 			}
 			
-			//Renderer.DrawFrame(g_Registry, DeltaTime);
 			VkApp.Update(DeltaTime, g_Registry);
 
 			Timing.UpdateFps();
 		}
-
-		// Any waiting that we may need to do before the shutdown function should go here
-		//Renderer.PrepShutdown();
 	}
 
 	void Engine::Shutdown()
 	{	
 		// Cleanup game play stuff
-
 		if(m_World)
 		{
 			m_World->Shutdown();
@@ -122,15 +105,14 @@ namespace Fling
 			m_World = nullptr;
 		}
 		
-		g_Registry.reset();
-
 		// Cleanup any resources
 		Input::Shutdown();
         ResourceManager::Get().Shutdown();
 		Logger::Get().Shutdown();
         FlingConfig::Get().Shutdown();
 		Timing::Get().Shutdown();
-		//Renderer::Get().Shutdown();
-		VulkanApp::Get().Shutdown();
+		VulkanApp::Get().Shutdown(g_Registry);
+
+		g_Registry.reset();
 	}
 }

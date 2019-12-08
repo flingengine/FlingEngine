@@ -9,8 +9,7 @@
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 #include "FirstPersonCamera.h"
-
-#include "VulkanApp.h"	// #TODO See if we can get rid of this with VMA or something
+#include "FlingVulkan.h"
 
 #define FRAME_BUF_DIM 2048
 
@@ -31,23 +30,25 @@ namespace Fling
 		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
 
 		// Set the clear values for the G Buffer
-		m_ClearValues.resize(4);
+		m_ClearValues.resize(6);
 		m_ClearValues[0].color = m_ClearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		m_ClearValues[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		m_ClearValues[3].depthStencil = { 1.0f, 0 };
+		m_ClearValues[2].color = m_ClearValues[3].color = m_ClearValues[4].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		m_ClearValues[5].depthStencil = { 1.0f, 0 };
 
 		// Build offscreen semaphores -------
-		m_OffscreenSemaphores.resize(VulkanApp::MAX_FRAMES_IN_FLIGHT);
-		for (INT32 i = 0; i < VulkanApp::MAX_FRAMES_IN_FLIGHT; i++)
+		m_OffscreenSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
+		for (INT32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			m_OffscreenSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_Device->GetVkDevice());
 		}
+
+		GraphicsHelpers::CreateCommandPool(&m_CommandPool, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 		// Build offscreen command buffers
 		m_OffscreenCmdBufs.resize(m_SwapChain->GetImageCount());
 		for (size_t i = 0; i < m_OffscreenCmdBufs.size(); ++i)
 		{
-			m_OffscreenCmdBufs[i] = VulkanApp::Get().RequestCommandBuffer();
+			m_OffscreenCmdBufs[i] = new Fling::CommandBuffer(m_Device, m_CommandPool);
 			assert(m_OffscreenCmdBufs[i] != nullptr);
 		}
 
@@ -74,14 +75,13 @@ namespace Fling
 		}
 		m_OffscreenCmdBufs.clear();
 
+		vkDestroyCommandPool(m_Device->GetVkDevice(), m_CommandPool, nullptr);
+
 		if (m_OffscreenFrameBuf)
 		{
 			delete m_OffscreenFrameBuf;
 			m_OffscreenFrameBuf = nullptr;
 		}
-
-		// Clean up any allocated UBO's 
-		// Clean up any allocated descriptor sets
 	}
 
 	void OffscreenSubpass::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg)
@@ -256,6 +256,14 @@ namespace Fling
 		attachmentInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
 		m_OffscreenFrameBuf->AddAttachment(attachmentInfo);
 
+		// Attachment 3: Metal
+		attachmentInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+		m_OffscreenFrameBuf->AddAttachment(attachmentInfo);
+
+		// Attachment 4: Roughness
+		attachmentInfo.Format = VK_FORMAT_R8G8B8A8_UNORM;
+		m_OffscreenFrameBuf->AddAttachment(attachmentInfo);
+
 		// Depth attachment
 		// Find a suitable depth format
 		VkFormat attDepthFormat;
@@ -296,6 +304,8 @@ namespace Fling
 		{
 			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE),
 			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE),
+			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE),
+			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE),
 			Initializers::PipelineColorBlendAttachmentState(0xf, VK_FALSE)
 		};
 
@@ -327,6 +337,12 @@ namespace Fling
 	{
 		t_CmdBuffs.emplace_back(m_OffscreenCmdBufs[t_ActiveFrameIndex]);
 		t_Deps.emplace_back(m_OffscreenSemaphores[t_ActiveFrameIndex]);
+	}
+
+	void OffscreenSubpass::CleanUp(entt::registry& t_reg)
+	{
+		assert(m_Device != nullptr);
+		// Do we need this? 
 	}
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)

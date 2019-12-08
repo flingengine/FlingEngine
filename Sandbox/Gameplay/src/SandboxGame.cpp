@@ -107,13 +107,15 @@ namespace Sandbox
         {
             entt::entity e0 = t_Reg.create();
             PointLight& Light = t_Reg.assign<PointLight>(e0);
-            Transform& t0 = t_Reg.get<Transform>(e0);
+            Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
 
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
-            Light.Intensity = 10.0f;
-            Light.Range = 30.0f;
+            Light.Intensity = 5.0f;
+            Light.Range = 3.0f;
 
-            t0.SetPos(Fling::Random::GetRandomVec3(glm::vec3(-5.0f), glm::vec3(5.0f)));
+			glm::vec3 min = { -15.0f, 0.2f, 15.0f };
+			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
+            t0.SetPos(Fling::Random::GetRandomVec3(min, max));
         };
 
         auto AddPointLight = [&](glm::vec3 t_Pos, glm::vec3 t_Color)
@@ -124,15 +126,11 @@ namespace Sandbox
             Mover& m0 = t_Reg.assign<Mover>(e0);
 
             Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
-            Light.Intensity = 10.0f;
-            Light.Range = 10.0f;
+            Light.Intensity = 5.0f;
+            Light.Range = 3.0f;
 
             t0.SetPos(t_Pos);
         };
-
-        AddModel(0, "Models/InvertedSphere.obj", "Materials/DeferredBronzeMat.mat");
-        AddModel(1, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
-        AddModel(2, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
 
 		auto AddFloor = [&](
 			const std::string& t_Model,
@@ -147,24 +145,27 @@ namespace Sandbox
 			t0.SetScale(t_Scale);
 		};
 
-		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(30.0f, 0.1f, 30.0f));
+		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
 
-		// Ensure PBR still works
-		AddModel(3, "Models/cone.obj", "Materials/Bronze.mat");
-		AddModel(4, "Models/cube.obj", "Materials/Paint.mat");
-		AddModel(5, "Models/helix.obj", "Materials/Wood.mat");
-		AddModel(6, "Models/sphere.obj", "Materials/Cobblestone.mat");
-
-		// Ensure reflection spheres still work
-		//AddModel(7, "Models/sphere.obj", "Materials/Reflections.mat");
-
-        float Width = 2.0f;
-		AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
-		AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
-		
-		AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
-		AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
-
+		// Add a bunch of rando boi
+		for (size_t i = 0; i < 32; i++)
+		{
+			AddRandomPointLight();
+		}
+		// Spawn a little grid of spheres
+		float Spacing = 1.5f;
+		INT32 GridSize = 2;
+		for (size_t i = 0; i < GridSize; i++)
+		{
+			for (size_t j = 0; j < GridSize; j++)
+			{
+				entt::entity e0 = t_Reg.create();
+				t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+				t_Reg.assign<Rotator>(e0);
+				Transform& t0 = t_Reg.assign<Transform>(e0);
+				t0.SetPos(glm::vec3(((float)i * Spacing), 0.0f, float(j) * Spacing));
+			}
+		}
 
         auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
         {
@@ -175,14 +176,7 @@ namespace Sandbox
         };
 
         // Directional Lights
-        AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
-
-		entt::entity eQuad = t_Reg.create();
-		auto Model = Model::Quad();
-		t_Reg.assign<MeshRenderer>(eQuad, Model.get());
-		t_Reg.assign<Rotator>(eQuad);
-		Transform& tQuad = t_Reg.assign<Transform>(eQuad);
-
+        //AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
     }
 
     void Game::GenerateTestMeshes(entt::registry& t_Reg)

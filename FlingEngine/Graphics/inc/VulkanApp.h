@@ -36,14 +36,8 @@ namespace Fling
     {
     public:
 
-		/** 
-		* Having multiple frames in flight allows the GPU to start processing the next frame 
-		* while the current one is being drawn on the screen
-		*/
-		static const INT32 MAX_FRAMES_IN_FLIGHT;
-
 		void Init(PipelineFlags t_Conf, entt::registry& t_Reg);
-		void Shutdown() override;
+		void Shutdown(entt::registry& t_Reg);
 
 		/** 
 		* Specify default constructible so that we have more explicit 

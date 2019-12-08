@@ -13,22 +13,24 @@
 #include "FirstPersonCamera.h"
 #include "Components/Transform.h"
 
-#include "VulkanApp.h"		// #TODO: Lets get rid of this
-
 namespace Fling
 {
 	GeometrySubpass::GeometrySubpass(
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
 		entt::registry& t_reg,
+		VkRenderPass t_GlobalRenderPass,
 		FirstPersonCamera* t_Cam,
 		FrameBuffer* t_OffscreenDep,
 		std::shared_ptr<Fling::Shader> t_Vert,
 		std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
+		, m_GlobalRenderPass(t_GlobalRenderPass)
 		, m_Camera(t_Cam)
 		, m_OffscreenFrameBuf(t_OffscreenDep)
 	{
+		assert(m_GlobalRenderPass != VK_NULL_HANDLE);
+
 		// Set clear values
 		m_ClearValues.resize(2);
 		m_ClearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -62,20 +64,31 @@ namespace Fling
 
 			m_CameraUboBuffers[i]->MapMemory(bufferSize);
 		}
+
+		t_reg.on_construct<PointLight>().connect<&GeometrySubpass::OnPointLightAdded>(*this);
 	}
 
 	GeometrySubpass::~GeometrySubpass()
 	{
 		// Clean up any allocated UBO's 
-		for (Buffer* buf : m_LightingUboBuffers)
+
+		auto ClearBufferVector = [&](std::vector<Buffer*>& t_Vec)
 		{
-			if (buf)
+			for (Buffer* buf : t_Vec)
 			{
-				delete buf;
-				buf = nullptr;
+				if (buf)
+				{
+					delete buf;
+					buf = nullptr;
+				}
 			}
-		}
-		m_LightingUboBuffers.clear();
+			t_Vec.clear();
+		};
+
+		ClearBufferVector(m_LightingUboBuffers);
+		ClearBufferVector(m_QuadUboBuffer);
+		ClearBufferVector(m_CameraUboBuffers);
+
 		// Clean up any allocated descriptor sets
 	}
 
@@ -85,9 +98,9 @@ namespace Fling
 
 		// Update camera UBO's		
 		{
-			m_CamInfoUBO.Projection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-			m_CamInfoUBO.ModelView = glm::mat4(1.0f);
-
+			m_CamInfoUBO.Projection = m_Camera->GetProjectionMatrix();
+			m_CamInfoUBO.ModelView = m_Camera->GetViewMatrix();
+			m_CamInfoUBO.CamPos = m_Camera->GetPosition();
 			memcpy(m_CameraUboBuffers[t_ActiveFrameInFlight]->m_MappedMem, &m_CamInfoUBO, sizeof(m_CamInfoUBO));
 		}
 
@@ -151,6 +164,18 @@ namespace Fling
 					m_OffscreenFrameBuf->GetAttachmentAtIndex(2)->GetViewHandle(),
 					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+			VkDescriptorImageInfo texDescriptorMetal =
+				Initializers::DescriptorImageInfo(
+					m_OffscreenFrameBuf->GetSamplerHandle(),
+					m_OffscreenFrameBuf->GetAttachmentAtIndex(3)->GetViewHandle(),
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+			VkDescriptorImageInfo texDescriptorRough =
+				Initializers::DescriptorImageInfo(
+					m_OffscreenFrameBuf->GetSamplerHandle(),
+					m_OffscreenFrameBuf->GetAttachmentAtIndex(4)->GetViewHandle(),
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 			std::vector<VkWriteDescriptorSet> writeDescriptorSets =
 			{
 				// 1 : Position sampler
@@ -171,17 +196,31 @@ namespace Fling
 					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 					3,
 					&texDescriptorAlbedo),
-				// 4 : Lighting UBO to the fragment shader
+
+				// 4 : Metal sampler
+				Initializers::WriteDescriptorSet(
+					m_DescriptorSets[i],
+					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					4,
+					&texDescriptorMetal),
+				// 5 : Roughness sampler
+				Initializers::WriteDescriptorSet(
+					m_DescriptorSets[i],
+					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					5,
+					&texDescriptorRough),
+
+				// 6 : Lighting UBO to the fragment shader
 				Initializers::WriteDescriptorSetUniform(
 					m_LightingUboBuffers[i],
 					m_DescriptorSets[i],
-					4
+					6
 				),
-				// 5 : Camera UBO to the fragment shader
+				// 7 : Camera UBO to the fragment shader
 				Initializers::WriteDescriptorSetUniform(
 					m_CameraUboBuffers[i],
 					m_DescriptorSets[i],
-					5
+					7
 				),
 			};
 
@@ -214,14 +253,11 @@ namespace Fling
 			);
 
 		// Create it otherwise with defaults
-		VkRenderPass RenderPass = VulkanApp::Get().GetGlobalRenderPass();
-		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
+		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
 	}
 
 	void GeometrySubpass::OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
-	{
-		F_LOG_TRACE("Point Light added!");
-		
+	{		
 		// Ensure that we have a transform component before adding a light
 		if (!t_Reg.has<Transform>(t_Ent))
 		{
@@ -260,8 +296,7 @@ namespace Fling
 			{
 				DirectionalLight& Light = DirectionalLightView.get(entity);
 				// Copy the dir light info to the buffer
-				size_t size = sizeof(DirectionalLight);
-				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
+				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
 			}
 		}
 
@@ -279,15 +314,12 @@ namespace Fling
 
 				Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
 				// Copy the point light info to the buffer
-				size_t size = sizeof(PointLight);
-				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, size);
+				memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light, sizeof(PointLight));
 			}
 		}
 
 		// Memcpy to the buffer
 		m_LightingUBO.PointLightCount = CurLightCount;
-		//m_LightingUBO.ViewPos = 
-		//	glm::vec4(m_Camera->GetPosition(), 0.0f) * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
 		
 		memcpy(
 			m_LightingUboBuffers[t_ActiveFrame]->m_MappedMem,

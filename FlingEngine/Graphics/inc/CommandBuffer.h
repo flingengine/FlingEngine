@@ -32,7 +32,7 @@ namespace Fling
 			Executable,
 		};
 
-		CommandBuffer(LogicalDevice* t_Device, VkCommandPool t_CmdPool);
+		CommandBuffer(const LogicalDevice* t_Device, VkCommandPool t_CmdPool);
 		~CommandBuffer();
 
 		inline VkCommandBuffer GetHandle() const { return m_Handle; }

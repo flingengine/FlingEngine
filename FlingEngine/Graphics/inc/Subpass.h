@@ -35,8 +35,8 @@ namespace Fling
 
 		virtual void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg) = 0;
 
-		//virtual void Submit(VkSemaphore t_PresentCompleteSemaphore) = 0;
-
+		/** Cleanup any allocated resources that you may need a registry for */
+		virtual void CleanUp(entt::registry& t_reg) {}
 
 		/**
 		* @brief	Given the frame buffers and the registry, create any descriptor sets that we may need

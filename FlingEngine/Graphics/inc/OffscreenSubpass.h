@@ -47,6 +47,8 @@ namespace Fling
 
 		void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex) override;
 
+		void CleanUp(entt::registry& t_reg) override;
+
 	private:
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
@@ -58,6 +60,8 @@ namespace Fling
 		// We need an offscreen semaphore for each possible frame in flight because the swap chain
 		// presentation will depend on this command buffer being complete
 		std::vector<VkSemaphore> m_OffscreenSemaphores;
+
+		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
 
 		// Offscreen command buffers for populating the GBuffer
 		std::vector<CommandBuffer*> m_OffscreenCmdBufs;
