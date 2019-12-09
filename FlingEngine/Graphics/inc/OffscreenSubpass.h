@@ -73,6 +73,8 @@ namespace Fling
 		FrameBuffer* m_OffscreenFrameBuf = nullptr;
 
 		const FirstPersonCamera* m_Camera;
+
+		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 	};
 
 }   // namespace Fling

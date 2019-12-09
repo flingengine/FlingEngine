@@ -12,9 +12,10 @@ namespace Fling
 	/** Configuration that can determine what render pipelines will be added to this application */
 	enum PipelineFlags
 	{
-		DEFERRED = 0x01,
-		REFLECTIONS = 0x02,
-		IMGUI = 0x04,	
+		DEFERRED 		= (1u << 0),
+		REFLECTIONS 	= (1u << 1),
+		IMGUI 			= (1u << 2),
+		CUBEMAP 		= (1u << 3),
 		ALL = 0xff
 	};
 

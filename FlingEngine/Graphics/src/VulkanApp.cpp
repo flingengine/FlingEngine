@@ -267,6 +267,12 @@ namespace Fling
 			F_LOG_WARN("Bulid REFLECTIONS render pipeline! (NOT YET IMPL)");
 		}
 
+		if(t_Conf & PipelineFlags::CUBEMAP)
+		{
+			F_LOG_WARN("Build CUBEMAP render pipeline!");
+			// Add a cubemap
+		}
+
 		if (t_Conf & PipelineFlags::IMGUI)
 		{
 #if WITH_IMGUI
