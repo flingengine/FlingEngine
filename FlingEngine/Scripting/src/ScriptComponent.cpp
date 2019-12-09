@@ -9,11 +9,16 @@ namespace Fling
 		m_ScriptGUID = "";
 	}
 
-	ScriptComponent::ScriptComponent(const std::string filePath, entt::entity t_Ent)
+	ScriptComponent::ScriptComponent(const std::string t_FilePath, entt::entity t_Ent)
 	{
-		m_ScriptGUID = entt::hashed_string{ filePath.c_str() };
+		//Convert the filepath into a GUID
+		m_ScriptGUID = entt::hashed_string{ t_FilePath.c_str() };
+
+		//Grab a reference to the lua manager
 		m_luaManager = &LuaManager::Get();
-		if (filePath.length() > 0)
+
+		//If the filepath isn't empty, register the script with the lua manager
+		if (t_FilePath.length() > 0)
 		{
 			m_luaManager->RegisterScript(m_ScriptGUID, t_Ent);
 		}
