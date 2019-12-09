@@ -2,7 +2,6 @@
 #pragma once
 #include "pch.h"
 #include "File.h"
-#include "LuaManager.h"
 
 namespace Fling
 {
@@ -14,30 +13,28 @@ namespace Fling
 	public:
 
 		/**
-		* @brief Default constructor
-		*/
-		ScriptComponent();
-
-		/**
 		* @brief Parameterized constructor
 		*
 		* @param t_FilePath		The path to the lua script file
-		* @param t_Ent			The entity this component is attached to
 		*/
-		ScriptComponent(const std::string t_FilePath, entt::entity t_Ent);
+		ScriptComponent(const std::string t_FilePath);
 
 		/**
 		* @brief Destructor
 		*/
 		~ScriptComponent();
 
+		/**
+		* @brief Getter for the lua script file reference
+		*
+		* @return Fling::File*
+		*/
+		inline File* GetScriptFile() { return m_ScriptFile; }
+
 	private:
 
-		//The GUID representation of the script file
-		Guid m_ScriptGUID;
-
-		//A reference to the lua manager
-		LuaManager* m_luaManager = nullptr;
+		//A reference to the script file
+		File* m_ScriptFile = nullptr;
 	};
 }
 #endif

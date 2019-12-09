@@ -7,21 +7,20 @@ namespace Fling
 	void LuaManager::Init(entt::registry* t_Registry)
 	{
 		m_Registry = t_Registry;
+		m_Registry->on_construct<ScriptComponent>().connect<&LuaManager::LuaScriptAdded>(*this);
 	}
 
 	void LuaManager::Shutdown()
 	{
 	}
 
-	void LuaManager::RegisterScript(Guid t_FileGUID, entt::entity t_Ent)
+	void LuaManager::RegisterScript(File* t_ScriptFile, entt::entity t_Ent)
 	{
-		//Create a file ussing the GUID
-		File* f = new File(t_FileGUID);
 		LuaBehaviors luaBehavior;
 
-		LoadScript(f, t_Ent, &luaBehavior);
-
-		m_LuaComponents[f] = std::move(luaBehavior);
+		//Load the script into the new lua behavior and then add it to the lua components map
+		LoadScript(t_ScriptFile, t_Ent, &luaBehavior);
+		m_LuaComponents[t_ScriptFile] = std::move(luaBehavior);
 	}
 
 	void LuaManager::Start()
@@ -108,6 +107,17 @@ namespace Fling
 	void LuaManager::DefineLuaFunctions(sol::state& t_LuaState)
 	{
 		t_LuaState.set_function("Print", &LuaManager::LuaPrint, this);
+	}
+
+	void LuaManager::LuaScriptAdded(entt::entity t_Ent, entt::registry& t_Reg, ScriptComponent& t_LuaScript)
+	{
+		File* scriptFile = t_LuaScript.GetScriptFile();
+
+		//Make sure we actually have a file before trying to register the script
+		if (scriptFile != nullptr)
+		{
+			RegisterScript(scriptFile, t_Ent);
+		}
 	}
 }
 #endif

@@ -12,7 +12,7 @@
 #include "Mover.h"
 
 #if WITH_LUA
-#include "ScriptComponent.h"
+#include "LuaManager.h"
 #endif
 
 namespace Sandbox
@@ -183,14 +183,14 @@ namespace Sandbox
 		entt::entity e0 = t_Reg.create();
 		t_Reg.assign<Transform>(e0);
 		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua", e0);
+		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
 
 		entt::entity e1 = t_Reg.create();
 		t_Reg.assign<Transform>(e1);
 		t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
 		Transform& t0 = t_Reg.get<Transform>(e1);
 		t0.SetPos(glm::vec3(0, 3, 0));
-		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua", e1);
+		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
 
 		LuaManager::Get().Start();
 #endif

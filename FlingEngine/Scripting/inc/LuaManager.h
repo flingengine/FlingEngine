@@ -7,6 +7,7 @@
 #include <sol/sol.hpp>
 #include "Components/Transform.h"
 #include <entt/entity/registry.hpp>
+#include "ScriptComponent.h"
 
 namespace Fling
 {
@@ -41,14 +42,6 @@ namespace Fling
 		void Shutdown() override;
 
 		/**
-		* @brief Register the specified script and entity with the LuaManager
-		*
-		* @param t_FileGUID		The GUID for the lua script file we are using
-		* @param t_Ent			The entity this script is attached to
-		*/
-		void RegisterScript(Guid t_FileGUID, entt::entity t_Ent);
-
-		/**
 		* @brief Run the start method for all of the lua scripts
 		*/
 		void Start();
@@ -61,6 +54,14 @@ namespace Fling
 		void Tick(float t_deltaTime);
 
 	private:
+
+		/**
+		* @brief Register the specified script and entity with the LuaManager
+		*
+		* @param t_ScriptFile	The file for the lua script we are loading
+		* @param t_Ent			The entity this script is attached to
+		*/
+		void RegisterScript(File* t_ScriptFile, entt::entity t_Ent);
 
 		/**
 		* @brief Load in the specified lua script for the entity
@@ -100,6 +101,15 @@ namespace Fling
 		* @param t_LuaState		The LuaState to define the functions in
 		*/
 		void DefineLuaFunctions(sol::state& t_LuaState);
+
+		/**
+		* @brief Callback method that is called when a new ScriptComponent is constructed
+		* 
+		* @param t_Ent				The entity the new script component is attached to
+		* @param t_Reg				The registry
+		* @param t_LuaScript		The newly constructed script component
+		*/
+		void LuaScriptAdded(entt::entity t_Ent, entt::registry& t_Reg, ScriptComponent& t_LuaScript);
 
 		//A reference to the registry
 		entt::registry* m_Registry = nullptr;
