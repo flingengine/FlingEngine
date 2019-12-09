@@ -1,8 +1,5 @@
 {
     "name" : "Default Material",
-
-    "ShaderProgram" : "PBR",
-
     "albedo" : "Textures/cobblestone/cobblestone_A.png",
     "normal" : "Textures/cobblestone/cobblestone_N.png",
     "metal" : "Textures/cobblestone/cobblestone_M.png",

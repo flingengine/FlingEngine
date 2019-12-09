@@ -208,22 +208,22 @@ namespace Fling
 				),
 				// 1: Color map 
 				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetTexture().m_AlbedoTexture,
+					t_MeshRend.m_Material->GetPBRTextures().m_AlbedoTexture,
 					t_MeshRend.m_DescriptorSets[i],
 					1),
 				// 2: Normal map
 				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetTexture().m_NormalTexture,
+					t_MeshRend.m_Material->GetPBRTextures().m_NormalTexture,
 					t_MeshRend.m_DescriptorSets[i],
 					2),
 				// 3: Metal map
 				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetTexture().m_MetalTexture,
+					t_MeshRend.m_Material->GetPBRTextures().m_MetalTexture,
 					t_MeshRend.m_DescriptorSets[i],
 					3),
 				// 4: Roughness map
 				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetTexture().m_RoughnessTexture,
+					t_MeshRend.m_Material->GetPBRTextures().m_RoughnessTexture,
 					t_MeshRend.m_DescriptorSets[i],
 					4)
 				// Any other PBR textures or other samplers go HERE and you add to the MRT shader
@@ -360,6 +360,12 @@ namespace Fling
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
+		// #TODO If this mesh renderer material is set to deferred, then do this
+		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() == Material::Type::Default)
+		{
+			t_Reg.assign<entt::tag<HS("Default")>>(t_Ent);
+		}
+
 		// Initialize the mesh renderer to have a descriptor pool that it can use
 		size_t ImageCount = m_SwapChain->GetImageCount();
 		VkDevice Device = m_Device->GetVkDevice();

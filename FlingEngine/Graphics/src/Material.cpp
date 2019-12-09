@@ -1,10 +1,18 @@
 #include "pch.h"
 #include "Material.h"
 #include "ResourceManager.h"
+#include <unordered_map>
 
 namespace Fling
 {    
-    std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
+	std::unordered_map<std::string, Material::Type> Material::TypeMap =
+	{
+		{ "DEFAULT",		Type::Default },
+		{ "CUBEMAP" ,		Type::Cubemap},
+		{ "REFLECTION",		Type::Reflection },
+	};
+	
+	std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
     {
         return ResourceManager::LoadResource<Fling::Material>(t_ID);
     }
@@ -25,8 +33,8 @@ namespace Fling
         try
         {
             // Load Shaders -------------
-            std::string ShaderProgram = m_JsonData["ShaderProgram"];		
-			m_ShaderProgramType = ShaderProgram::ShaderProgramFromStr(ShaderProgram);				
+            std::string PipelineName = m_JsonData.value("pipeline", "DEFAULT");
+			m_Type = GetTypeFromStr(PipelineName);				
 
             // Load Textures -------------
             // Albedo
@@ -51,4 +59,27 @@ namespace Fling
             FLING_BREAK();
         }
     }
+
+	Material::Type Material::GetTypeFromStr(const std::string& t_Str)
+	{
+		if (TypeMap.find(t_Str) != TypeMap.end())
+		{
+			return TypeMap[t_Str];
+		}
+
+		return Type::Default;
+	}
+
+	const std::string& Material::GetStringFromType(const Material::Type t_Type)
+	{
+		auto it = std::find_if(std::begin(TypeMap), std::end(TypeMap),
+			[&t_Type](auto&& p) { return p.second == t_Type; });
+
+		if (it == std::end(TypeMap))
+		{
+			static std::string DefaultStr = "DEFAULT";
+			return DefaultStr;
+		}
+		return it->first;
+	}
 }   // namespace Fling

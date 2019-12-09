@@ -1,7 +1,5 @@
 {
     "name" : "Bronze Deferred Material",
-
-    "ShaderProgram" : "Deferred",
     
     "albedo" : "Textures/Bronze/bronze_A.png",
     "normal" : "Textures/Bronze/bronze_N.png",

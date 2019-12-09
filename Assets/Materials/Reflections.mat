@@ -1,7 +1,7 @@
 {
     "name" : "Reflection Material",
     
-    "ShaderProgram" : "Reflection",
+    "pipeline" : "REFLECTION",
 
     "albedo" : "Textures/DefaultTexture.png",
     "normal" : "Textures/DefaultTexture.png",

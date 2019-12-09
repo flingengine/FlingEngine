@@ -10,9 +10,7 @@
 #include "entt/entity/registry.hpp"
 #include "entt/entity/group.hpp"
 
-#include "ShaderPrograms/ShaderProgramPbr.h"
 #include "ShaderPrograms/ShaderProgramReflections.h"
-#include "ShaderPrograms/ShaderProgramDeferred.h"
 
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
@@ -50,9 +48,7 @@ namespace Fling
     private:
         void UpdateLightBuffers(UINT32 t_CurrentImage);
 
-        ShaderProgram* m_PBRShaderProgram = nullptr;
         ShaderProgram* m_ReflectionProgram = nullptr;
-		ShaderProgram* m_DefferedProgram = nullptr;
 
         Lighting m_Lighting = {};
         LightingUbo m_LightingUbo = {};

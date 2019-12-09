@@ -41,7 +41,7 @@ namespace Sandbox
 
         LightingTest(t_Reg);
         //OnLoadInitated();
-        //GenerateTestMeshes(t_Reg);
+        GenerateTestMeshes(t_Reg);
 
         SetWindowIcon();
     }
@@ -181,11 +181,11 @@ namespace Sandbox
                     entt::entity e0 = t_Reg.create();
                     if (x % 2 == 0)
                     {
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Cobblestone.mat");
                     }
                     else
                     {
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj", "Materials/Wood.mat");
+                        t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj", "Materials/DeferredBronzeMat.mat");
                     }
 
                     // Add a transform to this entity

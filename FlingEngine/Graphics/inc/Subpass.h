@@ -4,6 +4,7 @@
 #include "NonCopyable.hpp"
 
 #include <entt/entity/registry.hpp>
+#include <entt/entity/helper.hpp>
 
 namespace Fling
 {

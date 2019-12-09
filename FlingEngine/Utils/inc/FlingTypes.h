@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <inttypes.h>
 #include <entt/core/hashed_string.hpp>
+#include <entt/entity/helper.hpp>
 
 // Integer typedefs for ease of use
 typedef uint8_t                 UINT8;

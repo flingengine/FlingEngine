@@ -697,21 +697,6 @@ namespace Fling
 			F_LOG_WARN("Mesh renderer has no material! Default being assigned.");
 			t_MeshRend.m_Material = m_DefaultMat.get();
 		}
-
-        // Assign shader program type
-        switch (t_MeshRend.m_Material->GetShaderProgramType())
-        {
-        case ShaderProgramType::PBR:
-            t_Reg.assign<entt::tag<HS("PBR")>>(t_Ent);
-            break;
-        case ShaderProgramType::Reflection:
-            t_Reg.assign<entt::tag<HS("Reflection")>>(t_Ent);
-            break;
-		case ShaderProgramType::Deferred:
-			t_Reg.assign<entt::tag<HS(DeferredStr)>>(t_Ent);
-        }
-        
-        ShaderProgramManager::Get().SortMeshRender();
     }
 
 	void Renderer::MeshRendererRemoved(entt::entity t_Ent, entt::registry& t_Reg)

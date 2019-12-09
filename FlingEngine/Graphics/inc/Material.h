@@ -26,6 +26,12 @@ namespace Fling
     {
         friend class Renderer;
     public:
+		enum class Type : UINT8
+		{
+			Default,
+			Cubemap,
+			Reflection
+		};
 
         static std::shared_ptr<Fling::Material> Create(Guid t_ID);
 
@@ -33,9 +39,14 @@ namespace Fling
 
         explicit Material(Guid t_ID);
 
-        const PBRTextures& GetTexture() const { return m_Textures; }
+        const PBRTextures& GetPBRTextures() const { return m_Textures; }
 
-        ShaderProgramType GetShaderProgramType() const { return m_ShaderProgramType; }
+		Material::Type GetType() const { return m_Type; }
+
+		static Material::Type GetTypeFromStr(const std::string& t_Str);
+
+		static const std::string& GetStringFromType(const Material::Type);
+
     private:
 
         void LoadMaterial();
@@ -45,6 +56,11 @@ namespace Fling
         
         ShaderProgramType m_ShaderProgramType;
 
-        float m_Shininiess = 0.5f;        
+		Material::Type m_Type = Type::Default;
+
+        float m_Shininiess = 0.5f;
+
+		// A map of types to their parsed names
+		static std::unordered_map<std::string, Material::Type> TypeMap;
     };
 }   // namespace Fling

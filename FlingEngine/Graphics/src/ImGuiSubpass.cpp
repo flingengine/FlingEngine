@@ -427,7 +427,7 @@ namespace Fling
 		style.Colors[ImGuiCol_CheckMark] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 		//Dimensions
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2(m_Window->GetWidth(), m_Window->GetHeight());
+		io.DisplaySize = ImVec2((float)m_Window->GetWidth(), (float)m_Window->GetHeight());
 		io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 	}
 
