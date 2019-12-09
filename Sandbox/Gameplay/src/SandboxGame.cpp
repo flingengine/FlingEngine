@@ -150,7 +150,7 @@ namespace Sandbox
 		}
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 4;
+		INT32 GridSize = 10;
 		for (size_t i = 0; i < GridSize; i++)
 		{
 			for (size_t j = 0; j < GridSize; j++)
