@@ -130,7 +130,7 @@ namespace Fling
 			io.KeyMap[ImGuiKey_Y] = FL_KEYCODE_Y;
 			io.KeyMap[ImGuiKey_Z] = FL_KEYCODE_Z;
 
-			DesktopWindow* DesktopWin = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+			DesktopWindow* DesktopWin = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 
 			assert(DesktopWin);
 

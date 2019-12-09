@@ -3,6 +3,7 @@
 
 #include "GeometrySubpass.h"
 #include "OffscreenSubpass.h"
+#include "ImGuiSubpass.h"
 
 #include "CommandBuffer.h"
 #include "Instance.h"
@@ -14,10 +15,11 @@
 #include "FirstPersonCamera.h"
 #include "GraphicsHelpers.h"
 #include "DepthBuffer.h"
+#include "BaseEditor.h"
 
 namespace Fling
 {
-	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg)
+	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
 	{
 		Singleton<VulkanApp>::Init();
 
@@ -25,12 +27,7 @@ namespace Fling
 
 		// #TODO Build VMA allocator
 
-		BuildRenderPipelines(t_Conf, t_Reg);
-	}
-
-	CommandBuffer* VulkanApp::RequestCommandBuffer()
-	{
-		return new CommandBuffer(m_LogicalDevice, m_CommandPool);
+		BuildRenderPipelines(t_Conf, t_Reg, t_Editor);
 	}
 
 	void VulkanApp::Prepare()
@@ -237,7 +234,7 @@ namespace Fling
 		m_CurrentWindow = FlingWindow::Create(Props);
 	}
 
-	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg)
+	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
 	{
 		if (t_Conf & PipelineFlags::DEFERRED)
 		{
@@ -270,12 +267,20 @@ namespace Fling
 			F_LOG_WARN("Bulid REFLECTIONS render pipeline! (NOT YET IMPL)");
 		}
 
-		// #TODO Debug config (Unlit, wireframe, etc) 
-
 		if (t_Conf & PipelineFlags::IMGUI)
 		{
 #if WITH_IMGUI
-			F_LOG_WARN("Bulid IMGUI render pipeline! (NOT YET IMPL)");
+			F_LOG_TRACE("Bulid IMGUI render pipeline! ");
+			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
+			std::shared_ptr<Fling::Shader> ImGuiVert = Shader::Create(HS("Shaders/imgui/ui.vert.spv"), m_LogicalDevice);
+			std::shared_ptr<Fling::Shader> ImGuiFrag = Shader::Create(HS("Shaders/imgui/ui.frag.spv"), m_LogicalDevice);
+			Subpasses.emplace_back(std::make_unique<ImGuiSubpass>(
+				m_LogicalDevice, m_SwapChain, t_Reg, m_CurrentWindow, m_RenderPass, t_Editor, ImGuiVert, ImGuiFrag)
+			);
+
+			m_RenderPipelines.emplace_back(
+				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
+			);
 #else
 			F_LOG_ERROR("IMGUI requested but failed because the CMake flag is not set!");
 #endif
@@ -308,6 +313,11 @@ namespace Fling
 		std::vector<VkSemaphore> SemaphoresToWaitOn = {};
 		std::vector<CommandBuffer*> DependentCmdBufs = {};
 
+		// Vector of command buffers to be sent out with the final swap chain presentation
+		// the swap chain draw buffer is always first
+		std::vector<CommandBuffer*> FinalSubmissionBufs = {};
+		FinalSubmissionBufs.emplace_back(m_DrawCmdBuffers[ImageIndex]);
+
 		// Build all the command buffer for the swap chain
 		// build all of the command buffers so that the studder studder boi stops
 		// #TODO Investigate that ^^
@@ -321,7 +331,7 @@ namespace Fling
 			// Start a render pass using the global render pass settings
 			VkRenderPassBeginInfo renderPassBeginInfo = Initializers::RenderPassBeginInfo();
 			renderPassBeginInfo.renderPass = m_RenderPass;
-			renderPassBeginInfo.framebuffer =  m_SwapChainFrameBuffers[i];
+			renderPassBeginInfo.framebuffer = m_SwapChainFrameBuffers[i];
 
 			renderPassBeginInfo.renderArea.offset = { 0, 0 };
 			renderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtents();
@@ -343,7 +353,7 @@ namespace Fling
 			// Build the command buffers of the render pipelines
 			for (RenderPipeline* Pipeline : m_RenderPipelines)
 			{		
-				Pipeline->Draw(*m_DrawCmdBuffers[i], i, t_Reg);
+				Pipeline->Draw(*m_DrawCmdBuffers[i], m_SwapChainFrameBuffers[i], i, t_Reg, DeltaTime);
 			}
 
 			m_DrawCmdBuffers[i]->EndRenderPass();
@@ -357,6 +367,7 @@ namespace Fling
 		{
 			// Gather the dependencies 
 			Pipeline->GatherPresentDependencies(DependentCmdBufs, SemaphoresToWaitOn, CurrentFrameIndex);
+			Pipeline->GatherPresentBuffers(FinalSubmissionBufs, CurrentFrameIndex);
 		}
 
 		// Wait for the color attachment to be done 
@@ -408,8 +419,14 @@ namespace Fling
 		}
 		
 		// Mark the draw command buffer at this frame for submission
+
+		// Collect any addition command buffers that we want to submit, but are not dependent on offscreen
 		std::vector<VkCommandBuffer> submitCommandBuffers = {};
-		submitCommandBuffers.emplace_back(m_DrawCmdBuffers[ImageIndex]->GetHandle());
+		for (CommandBuffer* buf : FinalSubmissionBufs)
+		{
+			submitCommandBuffers.emplace_back(buf->GetHandle());
+		}
+		//submitCommandBuffers.emplace_back(m_DrawCmdBuffers[ImageIndex]->GetHandle());
 
 		FinalScreenSubmitInfo.pCommandBuffers = submitCommandBuffers.data();
 		FinalScreenSubmitInfo.commandBufferCount = (UINT32)submitCommandBuffers.size();

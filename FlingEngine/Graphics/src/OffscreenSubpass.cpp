@@ -84,7 +84,7 @@ namespace Fling
 		}
 	}
 
-	void OffscreenSubpass::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg)
+	void OffscreenSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		assert(m_GraphicsPipeline);
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
@@ -342,13 +342,49 @@ namespace Fling
 	void OffscreenSubpass::CleanUp(entt::registry& t_reg)
 	{
 		assert(m_Device != nullptr);
-		// Do we need this? 
+		t_reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		{
+			t_MeshRend.Release();
+			if (t_MeshRend.m_DescriptorPool != VK_NULL_HANDLE)
+			{
+				vkDestroyDescriptorPool(m_Device->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
+				t_MeshRend.m_DescriptorPool = VK_NULL_HANDLE;
+			}
+		});
 	}
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
-		// Initialize and map the UBO of each mesh renderer
+		// Initialize the mesh renderer to have a descriptor pool that it can use
 		size_t ImageCount = m_SwapChain->GetImageCount();
+		VkDevice Device = m_Device->GetVkDevice();
+
+		// Create descriptor pools for this mesh
+		{
+			UINT32 DescriptorCount = 128;
+
+			std::vector<VkDescriptorPoolSize> poolSizes =
+			{
+				Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
+				Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
+				Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
+				Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
+				Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
+			};
+
+			VkDescriptorPoolCreateInfo poolInfo = {};
+			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
+			poolInfo.pPoolSizes = poolSizes.data();
+			poolInfo.maxSets = ImageCount;
+
+			if (vkCreateDescriptorPool(Device, &poolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
+			{
+				F_LOG_FATAL("Failed to create descriptor pool");
+			}
+		}
+
+		// Initialize and map the UBO of each mesh renderer
 		t_MeshRend.m_UniformBuffers.resize(ImageCount);
 
 		VkDeviceSize bufferSize = sizeof(OffscreenUBO);

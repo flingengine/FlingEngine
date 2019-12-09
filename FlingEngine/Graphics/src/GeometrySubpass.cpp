@@ -33,8 +33,8 @@ namespace Fling
 
 		// Set clear values
 		m_ClearValues.resize(2);
-		m_ClearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		m_ClearValues[1].depthStencil = { 1.0f, 0 };
+		m_ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.2F };
+		m_ClearValues[1].depthStencil = { 1.0f, ~0U };
 
 		m_QuadModel = Model::Quad();
 
@@ -94,8 +94,30 @@ namespace Fling
 		// Clean up any allocated descriptor sets
 	}
 
-	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg)
+	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
+		// Start a render pass using the global render pass settings
+		//VkRenderPassBeginInfo renderPassBeginInfo = Initializers::RenderPassBeginInfo();
+		//renderPassBeginInfo.renderPass = m_GlobalRenderPass;
+		//renderPassBeginInfo.framebuffer = t_PresentFrameBuf;
+
+		//renderPassBeginInfo.renderArea.offset = { 0, 0 };
+		//renderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtents();
+
+		//renderPassBeginInfo.clearValueCount = m_ClearValues.size();
+		//renderPassBeginInfo.pClearValues = m_ClearValues.data();
+
+		//vkCmdBeginRenderPass(t_CmdBuf.GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		//VkExtent2D swapExtents = m_SwapChain->GetExtents();
+
+		//VkViewport viewport = Initializers::Viewport(static_cast<float>(swapExtents.width), static_cast<float>(swapExtents.height), 0.0f, 1.0f);
+
+		//VkRect2D scissor = Initializers::Rect2D(swapExtents.width, swapExtents.height, /** offsetX */ 0, /** offsetY */ 0);
+
+		//t_CmdBuf.SetViewport(0, { viewport });
+		//t_CmdBuf.SetScissor(0, { scissor });
+
 		UpdateLightingUBO(t_reg, t_ActiveFrameInFlight);
 
 		// Update camera UBO's		

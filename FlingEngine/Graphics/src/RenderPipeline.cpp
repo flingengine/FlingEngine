@@ -25,11 +25,6 @@ namespace Fling
 		// Build Descriptor sets -------
 		CreateDescriptors(t_Reg);
 
-		F_LOG_TRACE("Render pipeline Descriptors created...");
-
-		// Add Entt callbacks ----------
-		t_Reg.on_construct<MeshRenderer>().connect<&RenderPipeline::OnMeshRendererAdded>(*this);
-
 		F_LOG_TRACE("Render pipeline Creation done!");
 	}
 
@@ -43,7 +38,7 @@ namespace Fling
 		m_Subpasses.clear();
 	}
 
-	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg)
+	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg, float DeltaTime)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -52,8 +47,10 @@ namespace Fling
 			// Build the subpasses for the active frame in flight	
 			m_Subpasses[i]->Draw(
 				t_CmdBuf, 
+				t_PresentFrameBuf,
 				t_ActiveFrameInFlight, 
-				t_Reg
+				t_Reg,
+				DeltaTime
 			);
 		}
 	}
@@ -66,46 +63,19 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::CleanUp(entt::registry& t_reg)
+	void RenderPipeline::GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, UINT32 t_ActiveFrameIndex)
 	{
-		t_reg.view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
+		for (const auto& subpass : m_Subpasses)
 		{
-			t_MeshRend.Release();
-			vkDestroyDescriptorPool(m_Device->GetVkDevice(), t_MeshRend.m_DescriptorPool, nullptr);
-		});
-
-		for (const auto& Sub : m_Subpasses)
-		{
-			Sub->CleanUp(t_reg);
+			subpass->GatherPresentBuffers(t_CmdBuffs, t_ActiveFrameIndex);
 		}
 	}
 
-	void RenderPipeline::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	void RenderPipeline::CleanUp(entt::registry& t_reg)
 	{
-		// Initialize the mesh renderer to have a descriptor pool that it can use
-		const UINT32 SwapImageCount = static_cast<UINT32>(m_SwapChain->GetImageCount());
-		VkDevice Device = m_Device->GetVkDevice();
-
-		UINT32 DescriptorCount = 128;
-
-		std::vector<VkDescriptorPoolSize> poolSizes =
+		for (const auto& Sub : m_Subpasses)
 		{
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
-		};
-
-		VkDescriptorPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
-		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = SwapImageCount;
-
-		if (vkCreateDescriptorPool(Device, &poolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to create descriptor pool");
+			Sub->CleanUp(t_reg);
 		}
 	}
 

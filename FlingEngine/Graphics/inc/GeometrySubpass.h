@@ -29,7 +29,7 @@ namespace Fling
 		static const UINT32 MaxDirectionalLights = 32;
 
 		/** Point Lights */
-		static const UINT32 MaxPointLights = 64;
+		static const UINT32 MaxPointLights = 128;
 	};
 
 	/** Uniform buffer for passing lights to our final screen pass */
@@ -72,7 +72,7 @@ namespace Fling
 
 		virtual ~GeometrySubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg) override;
+		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 

@@ -8,7 +8,7 @@
 // Glfw -------------------
 #include <GLFW/glfw3.h>
 #include "DesktopWindow.h"
-//#include "ImGuiInputBinding.hpp"
+#include "ImGuiInputBinding.hpp"
 
 namespace Fling
 {
@@ -25,7 +25,7 @@ namespace Fling
 	void WindowsInput::PreUpdateImpl()
 	{
 #if WITH_IMGUI
-		//InternalImGui::SetImGuiCallbacks();
+		InternalImGui::SetImGuiCallbacks();
 #endif
 	}
 

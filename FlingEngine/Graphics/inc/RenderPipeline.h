@@ -23,17 +23,17 @@ namespace Fling
 		RenderPipeline(entt::registry& t_Reg, LogicalDevice* t_dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses);
 		~RenderPipeline();
 
-		void Draw(CommandBuffer& t_CmdBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg);
+		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg, float DeltaTime);
 
 		/** Given a frame index, get any semaphores that the swap chain command buffer needs to wait for */
 		void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex);
+
+		void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, UINT32 t_ActiveFrameIndex);
 
 		/** Clean up any allocated VK resources that may have been set in a sub pass and need the registry */
 		void CleanUp(entt::registry& t_reg);
 
 	private:
-
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
 		/**
 		* @brief	Creates the descriptor pool and the descriptor sets for each sub pass to use

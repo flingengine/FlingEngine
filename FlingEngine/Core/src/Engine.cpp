@@ -32,13 +32,16 @@ namespace Fling
 			F_LOG_WARN("NO EngineConf.ini has been provided! This may result in unexpected behavior from Fling!");
 		}
 
-		VulkanApp::Get().Init(PipelineFlags::DEFERRED, g_Registry);
+		VulkanApp::Get().Init(
+			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
+			g_Registry,
+			m_Editor
+		);
 		
 		// Set the editor if we need to
 #if WITH_EDITOR
 		m_Editor->RegisterComponents(g_Registry);
 #endif
-
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
