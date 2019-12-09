@@ -1,3 +1,4 @@
+#if WITH_LUA
 #include "pch.h"
 #include "ScriptComponent.h"
 
@@ -22,3 +23,4 @@ namespace Fling
 	{
 	}
 }
+#endif

@@ -1,3 +1,4 @@
+#if WITH_LUA
 #pragma once
 
 #include "Platform.h"
@@ -107,3 +108,4 @@ namespace Fling
 		std::unordered_map<File*, LuaBehaviors> m_LuaComponents;
 	};
 }
+#endif

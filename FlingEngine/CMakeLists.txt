@@ -61,18 +61,18 @@ else()
     message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
 endif()
 
-
-find_package(Lua53 REQUIRED)
-if(LUA53_FOUND)
-	message(STATUS "Lua 5.3 found!")
-else()
-	message(FATAL_ERROR "Lua 5.3 NOT FOUND! Stopping")
+if( WITH_LUA_FLAG )
+	find_package(Lua53 REQUIRED)
+	if(LUA53_FOUND)
+		message(STATUS "Lua 5.3 found!")
+	else()
+		message(FATAL_ERROR "Lua 5.3 NOT FOUND! Stopping")
+	endif()
 endif()
 
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
     Vulkan::Vulkan  
-	${LUA53_LIBRARIES}
     spirv-cross-core 
     spirv-cross-cpp
     spirv-cross-reflect
@@ -81,6 +81,12 @@ set ( LINK_LIBS
 IF( WITH_IMGUI_FLAG )
 set ( LINK_LIBS ${LINK_LIBS}
     ImGui ${IMGUI_LIBRARIES}
+)
+endif()
+
+if( WITH_LUA_FLAG )
+set ( LINK_LIBS ${LINK_LIBS}
+    ${LUA53_LIBRARIES}
 )
 endif()
 

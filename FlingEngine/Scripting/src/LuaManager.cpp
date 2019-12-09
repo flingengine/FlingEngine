@@ -1,3 +1,4 @@
+#if WITH_LUA
 #include "LuaManager.h"
 #include "pch.h"
 
@@ -109,3 +110,4 @@ namespace Fling
 		t_LuaState.set_function("Print", &LuaManager::LuaPrint, this);
 	}
 }
+#endif

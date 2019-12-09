@@ -5,7 +5,6 @@
 #include "Timing.h"
 #include "ResourceManager.h"
 #include "Renderer.h"
-#include "LuaManager.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
 #include "World.h"
@@ -21,6 +20,12 @@
 #include "BaseEditor.h"
 
 #endif	// WITH_EDITOR
+
+#if WITH_LUA
+
+#include "LuaManager.h"
+
+#endif
 
 namespace Fling
 {

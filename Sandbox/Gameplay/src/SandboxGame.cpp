@@ -6,12 +6,14 @@
 #include "MeshRenderer.h"
 #include "Renderer.h"
 #include "Stats.h"
-#include "ScriptComponent.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "Random.h"
-
 #include "Mover.h"
+
+#if WITH_LUA
+#include "ScriptComponent.h"
+#endif
 
 namespace Sandbox
 {
@@ -24,6 +26,10 @@ namespace Sandbox
 
 #if WITH_EDITOR
         F_LOG_TRACE("Enable Editor!");
+#endif
+
+#if WITH_LUA
+		F_LOG_TRACE("Enable Lua!");
 #endif
 
         // Temp saving and load functions
@@ -44,7 +50,9 @@ namespace Sandbox
 		Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
 		Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
 
+#if WITH_LUA
 		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
+#endif
 
         LightingTest(t_Reg);
         //OnLoadInitated();
@@ -94,10 +102,12 @@ namespace Sandbox
                 });
         }
 
+#if WITH_LUA
 		if (m_RunLua)
 		{
 			LuaManager::Get().Tick(DeltaTime);
 		}
+#endif
     }
 
     void Game::LightingTest(entt::registry& t_Reg)
@@ -169,6 +179,7 @@ namespace Sandbox
 
 	void Game::ScriptingTest(entt::registry& t_Reg)
 	{
+#if WITH_LUA
 		entt::entity e0 = t_Reg.create();
 		t_Reg.assign<Transform>(e0);
 		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
@@ -182,6 +193,7 @@ namespace Sandbox
 		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua", e1);
 
 		LuaManager::Get().Start();
+#endif
 	}
 
     void Game::GenerateTestMeshes(entt::registry& t_Reg)

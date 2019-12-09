@@ -1,3 +1,4 @@
+#if WITH_LUA
 #pragma once
 #include "pch.h"
 #include "File.h"
@@ -17,3 +18,4 @@ namespace Fling
 		LuaManager* m_luaManager = nullptr;
 	};
 }
+#endif
