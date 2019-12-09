@@ -23,7 +23,7 @@ layout (binding = 6) uniform LightingData
     uint DirLightCount;
     uint PointLightCount;
 
-	DirLight DirLights[32];
+	DirLight DirLights[8];  // see @GeometrySubpass.h for the defintions of this
     PointLight PointLights[128];
 } lights;
 
@@ -45,6 +45,10 @@ void main()
     float metal = texture(samplerMetal, inUV).x;
     vec3 specColor = mix( F0_NON_METAL.rrr, albedo.rgb, metal );
 
+    // Use these to calculate shading and lighting in screen space, 
+    // so that calculations only have to be done for visible fragments 
+    // independent of no. of lights.
+
 	// Ambient part
 	vec3 LightColor  = vec3(0.0, 0.0, 0.0);   
 	// Directional lights -------------------------
@@ -65,16 +69,25 @@ void main()
 	// Point lights -------------------------
     for(uint i = 0; i < lights.PointLightCount; i++)
     {
-        LightColor += CalculatePointLight( 
-            lights.PointLights[ i ], 
-            normal, 
-            fragPos,
-            ubo.camPos.xyz, 
-            roughness,
-            metal, 
-            albedo.rgb,
-            specColor 
-        );
+        // Vector to light
+		vec3 L = lights.PointLights[i].Pos.xyz - fragPos;
+		// Distance from light to fragment position
+		float dist = length(L);
+
+        // Only calculate lights that are in the range of this light
+        if(dist < lights.PointLights[i].Range)
+        {
+            LightColor += CalculatePointLight( 
+                lights.PointLights[ i ], 
+                normal, 
+                fragPos,
+                ubo.camPos.xyz, 
+                roughness,
+                metal, 
+                albedo.rgb,
+                specColor 
+            );
+        }
     }
 
 	// This is what it should be

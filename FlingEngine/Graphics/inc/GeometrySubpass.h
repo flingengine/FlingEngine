@@ -26,7 +26,7 @@ namespace Fling
 	struct DeferredLightSettings
 	{
 		/** Dir Lights */
-		static const UINT32 MaxDirectionalLights = 32;
+		static const UINT32 MaxDirectionalLights = 8;
 
 		/** Point Lights */
 		static const UINT32 MaxPointLights = 128;

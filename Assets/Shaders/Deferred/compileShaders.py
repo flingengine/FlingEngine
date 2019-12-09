@@ -24,12 +24,12 @@ def buildShaders():
 			# Find the name that we should output to
 			print("Out file name: " + outFileName);
 
-			# Compile the shader 
-			call([ 
+			# Compile the shader
+			call([
 				os.environ['VK_BIN_PATH'] + "/glslangValidator",
 				"-V",
 				filename,
-				"-o", 
+				"-o",
 				outFileName
 			]);
 

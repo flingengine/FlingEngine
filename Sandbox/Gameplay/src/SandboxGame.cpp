@@ -41,7 +41,7 @@ namespace Sandbox
 
         LightingTest(t_Reg);
         //OnLoadInitated();
-        GenerateTestMeshes(t_Reg);
+        //GenerateTestMeshes(t_Reg);
 
         SetWindowIcon();
     }
@@ -65,25 +65,30 @@ namespace Sandbox
 
             // For each active mesh renderer
             t_Reg.view<Rotator, Transform>().each([&](Rotator& t_MeshRend, Transform& t_Trans)
-                {
-                    const glm::vec3& curRot = t_Trans.GetRotation();
-                    t_Trans.SetRotation(curRot + RotOffset);
-                });
+            {
+                const glm::vec3& curRot = t_Trans.GetRotation();
+                t_Trans.SetRotation(curRot + RotOffset);
+            });
         }
 
         if (m_MovePointLights)
         {
             t_Reg.view<Mover, Transform>().each([&](Mover& t_Mover, Transform& t_Trans)
-                {
-                    glm::vec3 newPos = t_Trans.GetPos();
-                    if (newPos.x <= t_Mover.MinPos || newPos.x >= t_Mover.MaxPos)
-                    {
-                        t_Mover.Speed *= -1.0f;
-                    }
+            {
+                glm::vec3 curPos = t_Trans.GetPos();
 
-                    newPos.x += t_Mover.Speed * DeltaTime;
-                    t_Trans.SetPos(newPos);
-                });
+                glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
+
+                // Move in a direction between two points and the speed
+                if(glm::length(DistanceToTarget) <= 0.5f)
+                {
+                    t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
+                }
+
+                // Lerp towards the target position
+                glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos,  t_Mover.Speed * DeltaTime);
+                t_Trans.SetPos(newPos);
+            });
         }
     }
 
@@ -109,13 +114,17 @@ namespace Sandbox
             entt::entity e0 = t_Reg.create();
             PointLight& Light = t_Reg.assign<PointLight>(e0);
             Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
+            Mover& m0 = t_Reg.assign<Mover>(e0);
+
+            // The min and max bounds of our little demo
+            glm::vec3 min = { -15.0f, 0.2f, 15.0f };
+			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
+            m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
 
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
             Light.Intensity = 5.0f;
             Light.Range = 3.0f;
 
-			glm::vec3 min = { -15.0f, 0.2f, 15.0f };
-			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
             t0.SetPos(Fling::Random::GetRandomVec3(min, max));
         };
 
