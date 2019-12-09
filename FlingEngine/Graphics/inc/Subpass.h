@@ -49,7 +49,7 @@ namespace Fling
 		 * @brief	If a subpass has a command buffer that the final swap chain presentation is dependent on, 
 		 *			then add it this vector. The Deferred offscreen GBuffer is an example of this
 		 */
-		virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex) {}
+		virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex, UINT32 t_CurrentFrameInFlight) {}
 		
 		/**
 		* @brief	If a subpass has an additional command buffer to add to the final swap chain draw submission

@@ -2,7 +2,8 @@
 
 #include "pch.h"
 #include "BaseEditor.h"
-#include "Renderer.h"
+#include "VulkanApp.h"
+#include "PhyscialDevice.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
@@ -71,8 +72,6 @@ namespace Fling
 					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
 					t_MeshRend.LoadModelFromPath(SelectedAsset);
-					// Command buffers must be rebuilt after doing this
-					Renderer::Get().SetFrameBufferHasBeenResized(true);
 
 					fileDialog.ClearSelected();
 				}
@@ -107,8 +106,6 @@ namespace Fling
 					std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
 					t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-					// Command buffers must be rebuilt after doing this
-					Renderer::Get().SetFrameBufferHasBeenResized(true);
 
 					fileDialog.ClearSelected();
 				}
@@ -345,7 +342,7 @@ namespace Fling
 
 		ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-		VkPhysicalDeviceProperties props = Renderer::Get().GetPhysicalDevice()->GetDeviceProps();
+		VkPhysicalDeviceProperties props = VulkanApp::Get().GetPhysicalDevice()->GetDeviceProps();
 		ImGui::Text("Device: %s", props.deviceName);
 
 		// Update fps graph

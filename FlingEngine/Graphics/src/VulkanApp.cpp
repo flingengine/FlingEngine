@@ -318,20 +318,24 @@ namespace Fling
 		std::vector<CommandBuffer*> FinalSubmissionBufs = {};
 		FinalSubmissionBufs.emplace_back(m_DrawCmdBuffers[ImageIndex]);
 
+		//vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, 0);
+
 		// Build all the command buffer for the swap chain
 		// build all of the command buffers so that the studder studder boi stops
 		// #TODO Investigate that ^^
-		for(size_t i = 0; i < m_DrawCmdBuffers.size(); ++i)
+		//for(size_t i = 0; i < m_DrawCmdBuffers.size(); ++i)
 		{
 			// Get the current drawing command buffer associated with the current swap chain image
-			assert(m_DrawCmdBuffers[i]);
+			CommandBuffer* CmdBuf = m_DrawCmdBuffers[ImageIndex];
+			VkFramebuffer FrameBuf = m_SwapChainFrameBuffers[ImageIndex];
+			assert(CmdBuf && FrameBuf != VK_NULL_HANDLE);
 
-			m_DrawCmdBuffers[i]->Begin();
+			CmdBuf->Begin();
 
 			// Start a render pass using the global render pass settings
 			VkRenderPassBeginInfo renderPassBeginInfo = Initializers::RenderPassBeginInfo();
 			renderPassBeginInfo.renderPass = m_RenderPass;
-			renderPassBeginInfo.framebuffer = m_SwapChainFrameBuffers[i];
+			renderPassBeginInfo.framebuffer = FrameBuf;
 
 			renderPassBeginInfo.renderArea.offset = { 0, 0 };
 			renderPassBeginInfo.renderArea.extent = m_SwapChain->GetExtents();
@@ -339,7 +343,7 @@ namespace Fling
 			renderPassBeginInfo.clearValueCount = m_SwapChainClearVals.size();
 			renderPassBeginInfo.pClearValues = m_SwapChainClearVals.data();
 
-			vkCmdBeginRenderPass(m_DrawCmdBuffers[i]->GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(CmdBuf->GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkExtent2D swapExtents = m_SwapChain->GetExtents();
 
@@ -347,27 +351,27 @@ namespace Fling
 
 			VkRect2D scissor = Initializers::Rect2D(swapExtents.width, swapExtents.height, /** offsetX */ 0, /** offsetY */ 0);
 
-			m_DrawCmdBuffers[i]->SetViewport(0, { viewport });
-			m_DrawCmdBuffers[i]->SetScissor(0, { scissor });
+			CmdBuf->SetViewport(0, { viewport });
+			CmdBuf->SetScissor(0, { scissor });
 
 			// Build the command buffers of the render pipelines
 			for (RenderPipeline* Pipeline : m_RenderPipelines)
 			{		
-				Pipeline->Draw(*m_DrawCmdBuffers[i], m_SwapChainFrameBuffers[i], i, t_Reg, DeltaTime);
+				Pipeline->Draw(*CmdBuf, FrameBuf, ImageIndex, t_Reg, DeltaTime);
 			}
 
-			m_DrawCmdBuffers[i]->EndRenderPass();
+			CmdBuf->EndRenderPass();
 
 			// End command buffer recording
-			m_DrawCmdBuffers[i]->End();
+			CmdBuf->End();
 		}
 
 		// Gather deps for the current frame only
 		for (RenderPipeline* Pipeline : m_RenderPipelines)
 		{
 			// Gather the dependencies 
-			Pipeline->GatherPresentDependencies(DependentCmdBufs, SemaphoresToWaitOn, CurrentFrameIndex);
-			Pipeline->GatherPresentBuffers(FinalSubmissionBufs, CurrentFrameIndex);
+			Pipeline->GatherPresentDependencies(DependentCmdBufs, SemaphoresToWaitOn, ImageIndex, CurrentFrameIndex);
+			Pipeline->GatherPresentBuffers(FinalSubmissionBufs, ImageIndex);
 		}
 
 		// Wait for the color attachment to be done 
@@ -418,15 +422,12 @@ namespace Fling
 			FinalScreenSubmitInfo.pWaitSemaphores = &m_PresentCompleteSemaphores[CurrentFrameIndex];
 		}
 		
-		// Mark the draw command buffer at this frame for submission
-
 		// Collect any addition command buffers that we want to submit, but are not dependent on offscreen
 		std::vector<VkCommandBuffer> submitCommandBuffers = {};
 		for (CommandBuffer* buf : FinalSubmissionBufs)
 		{
 			submitCommandBuffers.emplace_back(buf->GetHandle());
 		}
-		//submitCommandBuffers.emplace_back(m_DrawCmdBuffers[ImageIndex]->GetHandle());
 
 		FinalScreenSubmitInfo.pCommandBuffers = submitCommandBuffers.data();
 		FinalScreenSubmitInfo.commandBufferCount = (UINT32)submitCommandBuffers.size();

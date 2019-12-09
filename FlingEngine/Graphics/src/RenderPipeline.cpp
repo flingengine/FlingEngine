@@ -55,11 +55,11 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex)
+	void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex, UINT32 t_CurrentFrameInFlight)
 	{
 		for (const auto& subpass : m_Subpasses)
 		{
-			subpass->GatherPresentDependencies(t_CmdBuffs, t_Deps, t_ActiveFrameIndex);
+			subpass->GatherPresentDependencies(t_CmdBuffs, t_Deps, t_ActiveFrameIndex, t_CurrentFrameInFlight);
 		}
 	}
 
