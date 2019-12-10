@@ -199,7 +199,7 @@ namespace Sandbox
 
                 auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
                 
-                rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
+                //rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
             }
             else
             {
@@ -208,7 +208,7 @@ namespace Sandbox
 
                 auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
 
-                rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
+                //rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
                 //rigidbody.SetMass(0.0f);
             }
 
@@ -223,7 +223,8 @@ namespace Sandbox
             auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
 
             //rigidbody.SetLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
-            rigidbody.SetMass(1000000.0f);
+            rigidbody.SetMass(10000000.0f);
+            rigidbody.SetGravity({ 0.0f, 0.0f, 0.0f });
         };
 
         float Width = 2.0f;

@@ -50,7 +50,7 @@ namespace Fling
         btSequentialImpulseConstraintSolver* m_Solver;
         btDiscreteDynamicsWorld* m_DynamicsWorld;
 
-        btVector3 m_Gravity = { 0, 0, 0 };
+        btVector3 m_Gravity = { 0, -10, 0 };
     };
 
     //Bullet wrapper for entity 

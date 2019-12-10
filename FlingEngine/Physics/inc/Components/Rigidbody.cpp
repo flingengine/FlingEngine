@@ -85,6 +85,14 @@ namespace Fling
             }
         }
 
+        void Rigidbody::SetGravity(const btVector3& t_Gravity)
+        {
+            if (m_Rigidbody)
+            {
+                m_Rigidbody->setGravity(t_Gravity);
+            }
+        }
+
         void Rigidbody::RecalculateMass()
         {
             //Recalculate mass
