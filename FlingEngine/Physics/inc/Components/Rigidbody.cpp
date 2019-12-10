@@ -4,40 +4,62 @@ namespace Fling
 {
     namespace Components
     {
-        void Rigidbody::SetLinearFactor(const glm::vec3& t_LinearFactor)
+        void Rigidbody::SetLinearFactor(const btVector3& t_LinearFactor)
         {
             m_LinearFactor = t_LinearFactor;
 
             if (m_Rigidbody) {
-                m_Rigidbody->setLinearFactor(MathConversions::glmToBullet(m_LinearFactor));
+                m_Rigidbody->setLinearFactor(m_LinearFactor);
             }
         }
 
-        void Rigidbody::SetAngularFactor(const glm::vec3& t_AngularFactor)
+        void Rigidbody::SetAngularFactor(const btVector3& t_AngularFactor)
         {
             m_AngularFactor = t_AngularFactor;
 
             if (m_Rigidbody) {
-                m_Rigidbody->setAngularFactor(MathConversions::glmToBullet(m_AngularFactor));
+                m_Rigidbody->setAngularFactor(m_AngularFactor);
             }
         }
 
-        void Rigidbody::SetLinearVelocity(const glm::vec3& t_LinearVelocity)
+        void Rigidbody::SetLinearVelocity(const btVector3& t_LinearVelocity)
         {
             m_LinearVelocity = t_LinearVelocity;
 
             if (m_Rigidbody) {
-                m_Rigidbody->setAngularVelocity(MathConversions::glmToBullet(m_LinearVelocity));
+                m_Rigidbody->setAngularVelocity(m_LinearVelocity);
             }
         }
 
-        void Rigidbody::SetAngularVelocity(const glm::vec3& t_AngularVelocity)
+        void Rigidbody::SetAngularVelocity(const btVector3& t_AngularVelocity)
         {
             m_AngularVelocity = t_AngularVelocity;
 
             if (m_Rigidbody) {
-                m_Rigidbody->setAngularVelocity(MathConversions::glmToBullet(m_AngularVelocity));
+                m_Rigidbody->setAngularVelocity(m_AngularVelocity);
             }
+        }
+
+        void Rigidbody::SetMass(float t_Mass)
+        {
+            m_Mass = t_Mass;
+
+            //Recalculate mass
+            if (!m_Rigidbody)
+            {
+                return;
+            }
+
+            bool isDynamic = m_Mass != 0.0f;
+            btVector3 localIntertia;
+
+            if (m_Collider && isDynamic)
+            {
+                m_Collider->calculateLocalInertia(m_Mass, localIntertia);
+            }
+
+            m_LocalInertia = localIntertia;
+            m_Rigidbody->setMassProps(m_Mass, localIntertia);
         }
 
         void Rigidbody::SetFritcion(float t_Friction)
@@ -64,6 +86,13 @@ namespace Fling
 
             if (m_Rigidbody) {
                 m_Rigidbody->setSpinningFriction(m_FrictionSpinning);
+            }
+        }
+        void Rigidbody::SetCollisionShape(std::unique_ptr<btCollisionShape> t_Collider)
+        {
+            if (t_Collider)
+            {
+                m_Collider = std::move(t_Collider);
             }
         }
     }

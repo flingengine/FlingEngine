@@ -1,4 +1,5 @@
 #include "Physics/inc/PhysicsManager.h"
+#include "Gameplay/inc/Components/Transform.h"
 
 namespace Fling
 {
@@ -36,6 +37,33 @@ namespace Fling
         m_DynamicsWorld->stepSimulation(DeltaTime);
 
         //Update registrys
+        for (int i = m_DynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+        {
+            btTransform trans;
+            btCollisionObject* obj  =  m_DynamicsWorld->getCollisionObjectArray()[i];
+            btRigidBody* body       =  btRigidBody::upcast(obj);
+            entt::entity* entity    =  static_cast<entt::entity*>(body->getUserPointer());
+            Transform& transform    =  t_Reg.get<Transform>(*entity);
+
+            if (body && body->getMotionState())
+            {
+                body->getMotionState()->getWorldTransform(trans);
+            }
+            else
+            {
+                trans = obj->getWorldTransform();
+            }
+
+            transform.m_Rotation = glm::vec3(
+                trans.getRotation().getX(), 
+                trans.getRotation().getY(), 
+                trans.getRotation().getZ());
+
+            transform.m_Pos = glm::vec3(
+                trans.getOrigin().getX(),
+                trans.getOrigin().getY(),
+                trans.getOrigin().getZ());
+        }
     }
 
     void PhysicsManager::SetGravity(const btVector3& t_Gravity)
@@ -57,13 +85,40 @@ namespace Fling
         entt::registry& t_Reg, 
         Components::Rigidbody& t_Rigidbody)
     {
-        //btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-        //btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-        //btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-        //btRigidBody* body = new btRigidBody(rbInfo);
-        //body->setUserPointer(&t_Ent);
-        ////add the body to the dynamics world
-        //m_DynamicsWorld->addRigidBody(body);
+        if (!t_Rigidbody.m_Collider)
+        {
+            F_LOG_ERROR("Collider component needs to be attached when using rigidbody");
+            assert(t_Rigidbody.m_Collider);
+        }
+
+        Transform& transform = t_Reg.get<Transform>(t_Ent);
+        btTransform worldTransform = MathConversions::glmToBullet(transform.GetWorldMatrix());
+
+        btDefaultMotionState* myMotionState = new btDefaultMotionState(worldTransform);
+
+        btVector3 localInertia;
+        t_Rigidbody.m_Collider->calculateLocalInertia(t_Rigidbody.m_Mass, localInertia);
+
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(
+            t_Rigidbody.m_Mass, 
+            myMotionState, 
+            t_Rigidbody.m_Collider.get(), 
+            localInertia);
+
+        t_Rigidbody.m_Rigidbody = std::make_unique<btRigidBody>(rbInfo);
+        t_Rigidbody.m_Rigidbody->setUserPointer(&t_Ent);
+
+        //rigidbody properties
+        t_Rigidbody.m_Rigidbody->setWorldTransform(worldTransform);
+        t_Rigidbody.m_Rigidbody->setFriction(t_Rigidbody.m_Friction);
+        t_Rigidbody.m_Rigidbody->setRollingFriction(t_Rigidbody.m_FrictionRolling);
+        t_Rigidbody.m_Rigidbody->setSpinningFriction(t_Rigidbody.m_FrictionSpinning);
+        t_Rigidbody.m_Rigidbody->setGravity(m_Gravity);
+        t_Rigidbody.m_Rigidbody->setLinearFactor(t_Rigidbody.m_LinearFactor);
+        t_Rigidbody.m_Rigidbody->setAngularFactor(t_Rigidbody.m_AngularFactor);
+
+        //add the body to the dynamics world
+        m_DynamicsWorld->addRigidBody(t_Rigidbody.m_Rigidbody.get());
     }
 
     void PhysicsManager::RigidBodyRemoved(

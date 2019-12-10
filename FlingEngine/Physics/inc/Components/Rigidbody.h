@@ -17,31 +17,32 @@ namespace Fling
             template<class Archive>
             void serialize(Archive& t_Archive);
 
-            void SetLinearFactor(const glm::vec3& t_LinearFactor);
-            void SetAngularFactor(const glm::vec3& t_AngularFactor);
-            void SetLinearVelocity(const glm::vec3& t_LinearVelocity);
-            void SetAngularVelocity(const glm::vec3& t_AngularVelocity);
+            void SetLinearFactor(const btVector3& t_LinearFactor);
+            void SetAngularFactor(const btVector3& t_AngularFactor);
+            void SetLinearVelocity(const btVector3& t_LinearVelocity);
+            void SetAngularVelocity(const btVector3& t_AngularVelocity);
             void SetMass(float t_Mass);
             void SetFritcion(float t_Friction);
             void SetFrictionRolling(float t_FrictionRolling);
             void SetFritcionSpinning(float t_FrictionSpinning);
+            void SetCollisionShape(std::unique_ptr<btCollisionShape> t_Collider);
 
-            inline const glm::vec3& GetLinearFactor() const { return m_LinearFactor; }
-            inline const glm::vec3& GetAngularFactor() const { return m_AngularFactor; }
-            inline const glm::vec3& GetLinearVelocity() const { return m_LinearVelocity; }
-            inline const glm::vec3& GetAngularVelocity() const { return m_AngularVelocity; }
+            inline const btVector3& GetLinearFactor() const { return m_LinearFactor; }
+            inline const btVector3& GetAngularFactor() const { return m_AngularFactor; }
+            inline const btVector3& GetLinearVelocity() const { return m_LinearVelocity; }
+            inline const btVector3& GetAngularVelocity() const { return m_AngularVelocity; }
             inline float GetMass() const { return m_Mass; }
             inline float GetFriction() const { return m_Friction; }
             inline float GetFrictionRolling() const { return m_FrictionRolling; }
             inline float GetFrictionSpinning() const { return m_FrictionSpinning; }
-
-
+            
             btTransform m_WorldTransform;
+            btVector3 m_LocalInertia;
 
-            glm::vec3 m_LinearFactor    = glm::vec3(1.0f);
-            glm::vec3 m_AngularFactor   = glm::vec3(1.0f);
-            glm::vec3 m_LinearVelocity  = glm::vec3(0.0f);
-            glm::vec3 m_AngularVelocity = glm::vec3(0.0f);
+            btVector3 m_LinearFactor    = btVector3(1.0f, 1.0f, 1.0f);
+            btVector3 m_AngularFactor   = btVector3(1.0f, 1.0f, 1.0f);
+            btVector3 m_LinearVelocity  = btVector3(0.0f, 0.0f, 0.0f);
+            btVector3 m_AngularVelocity = btVector3(0.0f, 0.0f, 0.0f);
             
             std::unique_ptr<btCollisionShape> m_Collider;
             std::unique_ptr<btRigidBody> m_Rigidbody;
