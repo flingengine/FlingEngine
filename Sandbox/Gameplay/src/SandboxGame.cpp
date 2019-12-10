@@ -38,14 +38,14 @@ namespace Sandbox
         Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 
-		// Switch between window modes 
-		Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
-		Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
-		Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
+        // Switch between window modes 
+        Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
+        Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
+        Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
 
-        LightingTest(t_Reg);
+        //LightingTest(t_Reg);
         //OnLoadInitated();
-        //GenerateTestMeshes(t_Reg);
+        GenerateTestMeshes(t_Reg);
 
         SetWindowIcon();
     }
@@ -55,11 +55,11 @@ namespace Sandbox
         F_LOG_TRACE("Sandbox Game Shutdown!");
     }
 
-	void Game::OnQuitPressed()
-	{
-		F_LOG_TRACE("The Sandbox game wants to quit!");
-		m_WantsToQuit = true;
-	}
+    void Game::OnQuitPressed()
+    {
+        F_LOG_TRACE("The Sandbox game wants to quit!");
+        m_WantsToQuit = true;
+    }
 
     void Game::Update(entt::registry& t_Reg, float DeltaTime)
     {
@@ -141,7 +141,7 @@ namespace Sandbox
         float Width = 2.0f;
         AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
         AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
-		
+        
         AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
         AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 
@@ -160,9 +160,58 @@ namespace Sandbox
 
     void Game::GenerateTestMeshes(entt::registry& t_Reg)
     {
+        auto AddRandomPointLight = [&]()
+        {
+            entt::entity e0 = t_Reg.create();
+            PointLight& Light = t_Reg.assign<PointLight>(e0);
+            Transform& t0 = t_Reg.get<Transform>(e0);
+
+            Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
+            Light.Intensity = 10.0f;
+            Light.Range = 30.0f;
+
+            t0.SetPos(Fling::Random::GetRandomVec3(glm::vec3(-5.0f), glm::vec3(5.0f)));
+        };
+
+        auto AddPointLight = [&](glm::vec3 t_Pos, glm::vec3 t_Color)
+        {
+            entt::entity e0 = t_Reg.create();
+            PointLight& Light = t_Reg.assign<PointLight>(e0);
+            Transform& t0 = t_Reg.get<Transform>(e0);
+            Mover& m0 = t_Reg.assign<Mover>(e0);
+
+            Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
+            Light.Intensity = 100.0f;
+            Light.Range = 100.0f;
+
+            t0.SetPos(t_Pos);
+        };
+
+        float Width = 2.0f;
+        //AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
+        //AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
+
+        //AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+        //AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+
+
+        auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
+        {
+            entt::entity e0 = t_Reg.create();
+            DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
+            Light.Direction = glm::vec4(t_Dir, 1.0f);
+            Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
+        };
+
+        // Directional Lights
+        AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+        AddDirLight(glm::vec3(+1.0f, +1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+        AddDirLight(glm::vec3(-1.0f, -1.0f, +0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+        AddDirLight(glm::vec3(-1.0f, +1.0f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+
         // Make a little cube of cubes!
         int Dimension = 10;
-        float Offset = 2.5f;
+        float Offset = 1.f;
 
         for (int x = 0; x < Dimension; ++x)
         {
@@ -173,13 +222,15 @@ namespace Sandbox
                     entt::entity e0 = t_Reg.create();
                     if (x % 2 == 0)
                     {
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+                        //t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj");
+                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Bronze.mat");
                     }
                     else
                     {
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj", "Materials/Wood.mat");
+                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Paint.mat");
                     }
 
+                    //t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
                     // Add a transform to this entity
                     Transform& t = t_Reg.assign<Transform>(e0);
                     glm::vec3 pos = glm::vec3(static_cast<float>(x)* Offset, static_cast<float>(y)* Offset, static_cast<float>(z)* Offset);
@@ -225,26 +276,26 @@ namespace Sandbox
 
   void Game::SetWindowFullscreen()
   {
-	  FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
-	  if (CurrentWindow)
-	  {
-		  CurrentWindow->SetWindowMode(WindowMode::Fullscreen);
-	  }
+      FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+      if (CurrentWindow)
+      {
+          CurrentWindow->SetWindowMode(WindowMode::Fullscreen);
+      }
   }
   void Game::SetWindowBorderlessWindowed()
   {
-	  FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
-	  if (CurrentWindow)
-	  {
-		  CurrentWindow->SetWindowMode(WindowMode::BorderlessWindowed);
-	  }
+      FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+      if (CurrentWindow)
+      {
+          CurrentWindow->SetWindowMode(WindowMode::BorderlessWindowed);
+      }
   }
   void Game::SetWindowWindowed()
   {
-	  FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
-	  if (CurrentWindow)
-	  {
-		  CurrentWindow->SetWindowMode(WindowMode::Windowed);
-	  }
+      FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+      if (CurrentWindow)
+      {
+          CurrentWindow->SetWindowMode(WindowMode::Windowed);
+      }
     }
 }	// namespace Sandbox

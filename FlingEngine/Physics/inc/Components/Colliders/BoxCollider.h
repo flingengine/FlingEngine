@@ -26,16 +26,14 @@ namespace Fling
             std::unique_ptr<btCollisionShape> m_BtBoxCollider;
         };
 
-
-        template<class Archive>
-        void BoxCollider::serialize(Archive& t_Archive)
-        {
-            t_Archive(
-                cereal::make_nvp("BOXCOLLIDER_X", m_BoxCollider.x),
-                cereal::make_nvp("BOXCOLLIDER_Y", m_BoxCollider.y),
-                cereal::make_nvp("BOXCOLLIDER_Z", m_BoxCollider.z),
-
-            );
-        }
+        //template<class Archive>
+        //void BoxCollider::serialize(Archive& t_Archive)
+        //{
+        //    t_Archive(
+        //        cereal::make_nvp("BOXCOLLIDER_X", m_BoxCollider.x),
+        //        cereal::make_nvp("BOXCOLLIDER_Y", m_BoxCollider.y),
+        //        cereal::make_nvp("BOXCOLLIDER_Z", m_BoxCollider.z)
+        //    );
+        //}
     }
 }
