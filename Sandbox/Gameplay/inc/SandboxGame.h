@@ -35,6 +35,8 @@ namespace Sandbox
 
 		void LightingTest(entt::registry& t_Reg);
 
+		void ScriptingTest(entt::registry& t_Reg);
+
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
 
@@ -47,10 +49,13 @@ namespace Sandbox
 
 		bool m_DoRotations = false;
 		bool m_MovePointLights = false;
+		bool m_RunLua = true;
 
 		void ToggleRotation();
 
 		void OnToggleMoveLights();
+
+		void ToggleLua();
 
 		void SetWindowIcon();
 
