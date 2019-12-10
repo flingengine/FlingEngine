@@ -9,7 +9,7 @@
 
 namespace Fling
 {
-    class PhysicsManager : Fling::Singleton<PhysicsManager>
+    class PhysicsManager : public Fling::Singleton<PhysicsManager>
     {
     public:
         void Init(entt::registry* t_Registry);

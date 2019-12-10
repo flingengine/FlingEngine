@@ -3,6 +3,8 @@
 #include "World.h"
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
+#include "Physics/inc/Components/Colliders/BoxCollider.h"
+#include "Physics/inc/Components/Rigidbody.h"
 #include "MeshRenderer.h"
 #include "Renderer.h"
 #include "Stats.h"
@@ -187,6 +189,16 @@ namespace Sandbox
             t0.SetPos(t_Pos);
         };
 
+        auto AddRigidBody = [&](entt::entity& e0)
+        {
+            auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
+            boxCollider.SetBoxCollider({ 1.0f, 1.0f, 1.0f });
+
+            auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
+
+            //rigidbody.SetCollisionShape(boxCollider.m_BtBoxCollider);
+        };
+
         float Width = 2.0f;
         //AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
         //AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
@@ -233,6 +245,7 @@ namespace Sandbox
                     //t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
                     // Add a transform to this entity
                     Transform& t = t_Reg.assign<Transform>(e0);
+                    AddRigidBody(e0);
                     glm::vec3 pos = glm::vec3(static_cast<float>(x)* Offset, static_cast<float>(y)* Offset, static_cast<float>(z)* Offset);
                     t.SetPos(pos);
                 }

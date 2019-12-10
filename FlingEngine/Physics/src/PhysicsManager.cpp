@@ -16,6 +16,8 @@ namespace Fling
             m_OverlappingPairCache, 
             m_Solver,
             m_CollisionConfiguration);
+
+        InitComponentData();
     }
 
     void PhysicsManager::Shutdown()
@@ -30,6 +32,11 @@ namespace Fling
         delete m_OverlappingPairCache;
         delete m_CollisionDispatcher;
         delete m_CollisionConfiguration;
+    }
+
+    void PhysicsManager::Tick(float DeltaTime)
+    {
+        //Tick subsystems
     }
 
     void PhysicsManager::Update(entt::registry& t_Reg, float DeltaTime)
@@ -91,6 +98,13 @@ namespace Fling
             assert(t_Rigidbody.m_Collider);
         }
 
+        bool hasTransform = t_Reg.has<Transform>(t_Ent);
+        if (!hasTransform)
+        {
+            F_LOG_ERROR("Transform component needs to be attached when using rigidbody");
+            assert(hasTransform);
+        }
+
         Transform& transform = t_Reg.get<Transform>(t_Ent);
         btTransform worldTransform = MathConversions::glmToBullet(transform.GetWorldMatrix());
 
@@ -106,7 +120,7 @@ namespace Fling
             localInertia);
 
         t_Rigidbody.m_Rigidbody = std::make_unique<btRigidBody>(rbInfo);
-        t_Rigidbody.m_Rigidbody->setUserPointer(&t_Ent);
+        t_Rigidbody.m_Rigidbody->setUserPointer(static_cast<void*>(&t_Ent));
 
         //rigidbody properties
         t_Rigidbody.m_Rigidbody->setWorldTransform(worldTransform);

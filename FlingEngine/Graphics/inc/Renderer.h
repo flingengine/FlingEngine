@@ -51,8 +51,6 @@
 
 #include "ShaderPrograms/ShaderProgramManager.h"
 
-#include <stack>
-
 namespace Fling
 {
     // File resource
@@ -304,6 +302,5 @@ namespace Fling
         bool m_DrawImgui;
         bool m_IsQuitting = false;
 
-        //std::stack<entt::delegate<void()>> m_EndFrameFunction;
     };
 }    // namespace Fling

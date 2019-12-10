@@ -4,6 +4,11 @@ namespace Fling
 {
     namespace Components
     {
+        Rigidbody::Rigidbody(std::unique_ptr<btCollisionShape>& t_Collider)
+            : m_Collider(std::move(t_Collider))
+        {
+        }
+
         void Rigidbody::SetLinearFactor(const btVector3& t_LinearFactor)
         {
             m_LinearFactor = t_LinearFactor;
@@ -88,7 +93,7 @@ namespace Fling
                 m_Rigidbody->setSpinningFriction(m_FrictionSpinning);
             }
         }
-        void Rigidbody::SetCollisionShape(std::unique_ptr<btCollisionShape> t_Collider)
+        void Rigidbody::SetCollisionShape(std::unique_ptr<btCollisionShape>& t_Collider)
         {
             if (t_Collider)
             {

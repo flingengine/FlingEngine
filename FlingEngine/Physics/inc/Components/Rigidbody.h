@@ -9,6 +9,8 @@ namespace Fling
     {
         struct Rigidbody
         {
+            Rigidbody(std::unique_ptr<btCollisionShape>& t_Collider);
+
             bool operator==(const Rigidbody& other) const;
             bool operator!=(const Rigidbody& other) const;
             friend std::ostream& operator << (std::ostream& t_OutStream, 
@@ -25,7 +27,7 @@ namespace Fling
             void SetFritcion(float t_Friction);
             void SetFrictionRolling(float t_FrictionRolling);
             void SetFritcionSpinning(float t_FrictionSpinning);
-            void SetCollisionShape(std::unique_ptr<btCollisionShape> t_Collider);
+            void SetCollisionShape(std::unique_ptr<btCollisionShape>& t_Collider);
 
             inline const btVector3& GetLinearFactor() const { return m_LinearFactor; }
             inline const btVector3& GetAngularFactor() const { return m_AngularFactor; }

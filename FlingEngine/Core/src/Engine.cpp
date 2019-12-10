@@ -13,6 +13,7 @@ namespace Fling
 		Timing::Get().Init();
         FlingConfig::Get().Init();
 		Input::Init();
+		PhysicsManager::Get().Init(&g_Registry);
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
@@ -61,6 +62,7 @@ namespace Fling
 		
 		Renderer& Renderer = Renderer::Get();
 		Timing& Timing = Timing::Get();
+		PhysicsManager& Physics = PhysicsManager::Get();
 
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
@@ -75,7 +77,8 @@ namespace Fling
             Stats::Frames::TickStats(DeltaTime);
 			
 			Renderer.Tick(DeltaTime);
-			
+			Physics.Tick(DeltaTime);
+
 			Input::Poll();
 
 			m_World->Update(DeltaTime);
@@ -86,6 +89,7 @@ namespace Fling
 				break;
 			}
 			
+			Physics.Update(g_Registry, DeltaTime);
 			Renderer.DrawFrame(g_Registry, DeltaTime);
 
 			Timing.UpdateFps();

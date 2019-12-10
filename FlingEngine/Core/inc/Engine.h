@@ -4,6 +4,7 @@
 #include "Logger.h"
 #include "Timing.h"
 #include "ResourceManager.h"
+#include "Physics/inc/PhysicsManager.h"
 #include "Renderer.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
