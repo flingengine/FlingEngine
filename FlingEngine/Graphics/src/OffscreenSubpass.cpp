@@ -116,7 +116,7 @@ namespace Fling
 		VkDeviceSize offsets[1] = { 0 };
 
 		// For every mesh bind it's model and descriptor set info
-		t_reg.group<Transform>(entt::get<MeshRenderer>).each([&](auto ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		t_reg.group<Transform>(entt::get<MeshRenderer>).each([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)

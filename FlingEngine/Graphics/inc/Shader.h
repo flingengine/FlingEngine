@@ -7,7 +7,6 @@
 #include "spirv.h"
 
 #include "Resource.h"
-#include "Sampler.hpp"
 #include "FlingExports.h"
 #include <fstream>
 #include <vector>

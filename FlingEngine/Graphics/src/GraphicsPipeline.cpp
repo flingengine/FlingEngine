@@ -1,6 +1,5 @@
 #include "GraphicsPipeline.h"
 #include "GraphicsHelpers.h"
-#include "Renderer.h"
 
 namespace Fling
 {

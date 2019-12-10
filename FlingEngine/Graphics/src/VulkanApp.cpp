@@ -273,6 +273,11 @@ namespace Fling
 			// Add a cubemap
 		}
 
+		if (t_Conf & PipelineFlags::DEBUG)
+		{
+			F_LOG_WARN("Build DEBUG render pipeline!");
+		}
+
 		if (t_Conf & PipelineFlags::IMGUI)
 		{
 #if WITH_IMGUI

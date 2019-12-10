@@ -1,14 +1,13 @@
 #include "ShaderPrograms/ShaderProgramReflections.h"
 #include "GraphicsHelpers.h"
-#include "Renderer.h"
 
 void Fling::ShaderProgramReflections::CreateDescriptorSets(
     MeshRenderer& t_MeshRend, 
     Lighting& m_Lighting, 
     VkDescriptorSetLayout m_DescriptorLayout)
 {
-    const std::vector<VkImage>& Images = Renderer::Get().GetSwapChain()->GetImages();
-    VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+	const std::vector<VkImage> Images;
+    VkDevice Device = VK_NULL_HANDLE;
 
     // Specify what descriptor pool to allocate from and how many
     std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorLayout);
@@ -89,17 +88,16 @@ void Fling::ShaderProgramReflections::UpdateUniformBuffer(
     Camera* camera = t_Camera;
     Transform::CalculateWorldMatrix(transform);
 
-    // Calculate the world matrix based on the given transform
-    UboVS ubo = {};
-    ubo.Model = transform.GetWorldMat();
-    ubo.View = camera->GetViewMatrix();
-    ubo.Projection = camera->GetProjectionMatrix();
-    ubo.Projection[1][1] *= -1.0f;
-    ubo.CamPos = camera->GetPosition();
-    ubo.ObjPos = transform.GetPos();
+    //// Calculate the world matrix based on the given transform
+    //UboVS ubo = {};
+    //ubo.Model = transform.GetWorldMat();
+    //ubo.View = camera->GetViewMatrix();
+    //ubo.Projection = camera->GetProjectionMatrix();
+    //ubo.Projection[1][1] *= -1.0f;
+    //ubo.CamPos = camera->GetPosition();
+    //ubo.ObjPos = transform.GetPos();
 
-    // Copy the ubo to the GPU
-    Buffer* buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
-    memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
+    //// Copy the ubo to the GPU
+    //Buffer* buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
+    //memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
 }
-

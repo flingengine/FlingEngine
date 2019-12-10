@@ -30,7 +30,8 @@ namespace Fling
 		{
 			Default,
 			Cubemap,
-			Reflection
+			Reflection,
+			Debug
 		};
 
         static std::shared_ptr<Fling::Material> Create(Guid t_ID);

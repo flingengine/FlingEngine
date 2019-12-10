@@ -10,6 +10,7 @@ namespace Fling
 		{ "DEFAULT",		Type::Default },
 		{ "CUBEMAP" ,		Type::Cubemap},
 		{ "REFLECTION",		Type::Reflection },
+		{ "DEBUG",			Type::Debug },
 	};
 	
 	std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
@@ -34,7 +35,7 @@ namespace Fling
         {
             // Load Shaders -------------
             std::string PipelineName = m_JsonData.value("pipeline", "DEFAULT");
-			m_Type = GetTypeFromStr(PipelineName);				
+			m_Type = GetTypeFromStr(PipelineName);
 
             // Load Textures -------------
             // Albedo

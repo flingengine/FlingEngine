@@ -3,10 +3,10 @@
 
 #include "pch.h"
 #include "Engine.h"
-#include "Renderer.h"
 #include "Platform.h"
 #include "Logger.h"
 #include "Timing.h"
+#include "VulkanApp.h"
 #include "ResourceManager.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"

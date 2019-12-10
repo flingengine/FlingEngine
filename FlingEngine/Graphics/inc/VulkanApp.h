@@ -16,6 +16,7 @@ namespace Fling
 		REFLECTIONS 	= (1u << 1),
 		IMGUI 			= (1u << 2),
 		CUBEMAP 		= (1u << 3),
+		DEBUG			= (1u << 4),
 		ALL = 0xff
 	};
 

@@ -4,11 +4,13 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
-#include "Renderer.h"
 #include "Stats.h"
+#include "VulkanApp.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "Random.h"
+// For getting some lighting info
+#include "GeometrySubpass.h"
 
 #include "Mover.h"
 
@@ -202,7 +204,8 @@ namespace Sandbox
 
     void Game::ToggleCursorVisibility()
     {
-        FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+		// You have to include VulkanApp for this
+        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
         if (CurrentWindow)
         {
             CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
@@ -216,7 +219,7 @@ namespace Sandbox
 
     void Game::SetWindowIcon()
     {
-        FlingWindow* CurrentWindow = Renderer::Get().GetCurrentWindow();
+        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
         if (CurrentWindow)
         {
             CurrentWindow->SetWindowIcon("Icons/Fling_Logo.png"_hs);
