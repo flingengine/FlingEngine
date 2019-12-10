@@ -116,7 +116,7 @@ namespace Fling
 		VkDeviceSize offsets[1] = { 0 };
 
 		// For every mesh bind it's model and descriptor set info
-		t_reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_trans)
+		t_reg.group<Transform>(entt::get<MeshRenderer>).each([&](auto ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)
@@ -395,8 +395,6 @@ namespace Fling
 		// Initialize the mesh renderer to have a descriptor pool that it can use
 		size_t ImageCount = m_SwapChain->GetImageCount();
 		VkDevice Device = m_Device->GetVkDevice();
-
-		t_MeshRend.m_DescriptorPool = m_DescriptorPool;
 
 		// Initialize and map the UBO of each mesh renderer
 		t_MeshRend.m_UniformBuffers.resize(ImageCount);

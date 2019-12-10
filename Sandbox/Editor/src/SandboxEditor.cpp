@@ -12,7 +12,7 @@ namespace Sandbox
 
 		ImGui::Begin("Demo Info");
 		ImGui::Text("Press 'M' to hide the mouse cursor");
-		ImGui::Text("Press 'T' to toggle object rotation");
+		ImGui::Text("Press 'Space' to move lights around");
 		ImGui::Text("Press 'WASD' Move");
 		ImGui::Text("Right Click and drag to rotate camera");
 

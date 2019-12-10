@@ -42,11 +42,6 @@ namespace Fling
 		assert(Dev);
 		VkDevice Device = Dev->GetVkDevice();
 
-        m_Registry->view<MeshRenderer>().each([&](MeshRenderer& t_MeshRend)
-            {
-                t_MeshRend.Release();
-                vkDestroyDescriptorPool(Device, t_MeshRend.m_DescriptorPool, nullptr);
-            });
 
         // Delete light buffers
         for (size_t i = 0; i < m_Lighting.m_LightingUBOs.size(); i++)

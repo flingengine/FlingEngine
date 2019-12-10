@@ -64,7 +64,7 @@ namespace Sandbox
             glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
             // For each active mesh renderer
-            t_Reg.view<Rotator, Transform>().each([&](Rotator& t_MeshRend, Transform& t_Trans)
+            t_Reg.group<Transform>(entt::get<Rotator>).each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
             {
                 const glm::vec3& curRot = t_Trans.GetRotation();
                 t_Trans.SetRotation(curRot + RotOffset);
@@ -73,7 +73,7 @@ namespace Sandbox
 
         if (m_MovePointLights)
         {
-            t_Reg.view<Mover, Transform>().each([&](Mover& t_Mover, Transform& t_Trans)
+            t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
             {
                 glm::vec3 curPos = t_Trans.GetPos();
 
@@ -143,14 +143,16 @@ namespace Sandbox
 
 		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
 
-		// Add a bunch of rando boi
+		// Add a bunch of random light bois
 		for (size_t i = 0; i < DeferredLightSettings::MaxPointLights; i++)
 		{
 			AddRandomPointLight();
 		}
+
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
 		INT32 GridSize = 10;
+		glm::vec3 Center(0.0f);
 		for (size_t i = 0; i < GridSize; i++)
 		{
 			for (size_t j = 0; j < GridSize; j++)
@@ -159,20 +161,12 @@ namespace Sandbox
 				t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
 				t_Reg.assign<Rotator>(e0);
 				Transform& t0 = t_Reg.assign<Transform>(e0);
-				t0.SetPos(glm::vec3(((float)i * Spacing), 0.0f, float(j) * Spacing));
+
+				t0.SetPos(
+					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
+				);
 			}
 		}
-
-        auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
-        {
-            entt::entity e0 = t_Reg.create();
-            DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
-            Light.Direction = glm::vec4(t_Dir, 1.0f);
-            Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
-        };
-
-        // Directional Lights
-        //AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
     }
 
     void Game::GenerateTestMeshes(entt::registry& t_Reg)

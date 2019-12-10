@@ -14,7 +14,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
     std::vector<VkDescriptorSetLayout> layouts(Images.size(), m_DescriptorLayout);
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
+    allocInfo.descriptorPool = VK_NULL_HANDLE;
     allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
     allocInfo.pSetLayouts = layouts.data();
 
@@ -51,27 +51,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
 
 void Fling::ShaderProgramReflections::CreateDescriptorPool(MeshRenderer& t_MeshRend)
 {
-    const UINT32 SwapImageCount = static_cast<UINT32>(Renderer::Get().GetSwapChain()->GetImageCount());
-    VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
-    UINT32 DescriptorCount = 128;
-
-    std::vector<VkDescriptorPoolSize> poolSizes =
-    {
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
-    };
-
-    VkDescriptorPoolCreateInfo poolInfo = {};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = SwapImageCount;
-
-    if (vkCreateDescriptorPool(Device, &poolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
-    {
-        F_LOG_FATAL("Failed to create descriptor pool");
-    }
 }
 
 void Fling::ShaderProgramReflections::BindCmdBuffer(

@@ -33,7 +33,6 @@ namespace Fling
 		std::vector<Buffer*> m_UniformBuffers {};
 
         std::vector<VkDescriptorSet> m_DescriptorSets;
-		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 
 		void Release();
 
