@@ -222,8 +222,8 @@ namespace Sandbox
         AddDirLight(glm::vec3(-1.0f, +1.0f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 
         // Make a little cube of cubes!
-        int Dimension = 10;
-        float Offset = 1.f;
+        int Dimension = 5;
+        float Offset = 1.25f;
 
         for (int x = 0; x < Dimension; ++x)
         {
@@ -245,12 +245,23 @@ namespace Sandbox
                     //t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
                     // Add a transform to this entity
                     Transform& t = t_Reg.assign<Transform>(e0);
-                    AddRigidBody(e0);
                     glm::vec3 pos = glm::vec3(static_cast<float>(x)* Offset, static_cast<float>(y)* Offset, static_cast<float>(z)* Offset);
                     t.SetPos(pos);
+                    AddRigidBody(e0);
                 }
             }
         }
+
+        //Ground 
+        entt::entity ground = t_Reg.create();
+        t_Reg.assign<MeshRenderer>(ground, "Models/cube.obj", "Materials/Cobblestone.mat");
+        Transform& t = t_Reg.assign<Transform>(ground);
+        t.SetPos({ 0.0f, -10.0f, 0.0f });
+        t.SetScale({ 100.0f, 1.0f, 100.0f });
+        auto& boxCollider = t_Reg.assign<Components::BoxCollider>(ground);
+        boxCollider.SetBoxCollider({ 100.0f, 100.0f, 100.0f });
+        auto& rigidbody = t_Reg.assign<Components::Rigidbody>(ground, boxCollider.m_BtBoxCollider);
+        rigidbody.SetMass(0.0f);
     }
 
     void Game::ToggleCursorVisibility()

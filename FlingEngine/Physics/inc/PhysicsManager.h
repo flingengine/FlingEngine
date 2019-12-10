@@ -52,4 +52,11 @@ namespace Fling
 
         btVector3 m_Gravity = { 0, -10, 0 };
     };
+
+    //Bullet wrapper for entity 
+    struct PhysicsEntity
+    {
+        PhysicsEntity(entt::entity t_Entity) : m_Entity(t_Entity) { }
+        entt::entity m_Entity;
+    };
 }

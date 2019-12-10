@@ -26,6 +26,8 @@ namespace Fling
 
         //TODO:: Remove contact bodies 
 
+        //TODO:: Delete usepointers from all bodies
+
 
         delete m_DynamicsWorld;
         delete m_Solver;
@@ -49,8 +51,8 @@ namespace Fling
             btTransform trans;
             btCollisionObject* obj  =  m_DynamicsWorld->getCollisionObjectArray()[i];
             btRigidBody* body       =  btRigidBody::upcast(obj);
-            entt::entity* entity    =  static_cast<entt::entity*>(body->getUserPointer());
-            Transform& transform    =  t_Reg.get<Transform>(*entity);
+            entt::entity& entity    =  static_cast<PhysicsEntity*>(body->getUserPointer())->m_Entity;
+            Transform& transform    =  t_Reg.get<Transform>(entity);
 
             if (body && body->getMotionState())
             {
@@ -120,7 +122,9 @@ namespace Fling
             localInertia);
 
         t_Rigidbody.m_Rigidbody = std::make_unique<btRigidBody>(rbInfo);
-        t_Rigidbody.m_Rigidbody->setUserPointer(static_cast<void*>(&t_Ent));
+        
+        PhysicsEntity* physicsEntity = new PhysicsEntity(t_Ent);
+        t_Rigidbody.m_Rigidbody->setUserPointer(static_cast<void*>(physicsEntity));
 
         //rigidbody properties
         t_Rigidbody.m_Rigidbody->setWorldTransform(worldTransform);
