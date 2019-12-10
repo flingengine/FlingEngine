@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshRenderer.h"
 
+#include <entt/entity/helper.hpp>
+
 namespace Fling
 {
 	MeshRenderer::MeshRenderer(const std::string& t_MeshPath)

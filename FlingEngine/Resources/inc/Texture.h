@@ -26,7 +26,7 @@ namespace Fling
 		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
 		FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
 		FORCEINLINE VkDescriptorImageInfo* GetDescriptorInfo() { return &m_ImageInfo; }
-
+        FORCEINLINE const VkFormat& GetVkImageFormat() const { return m_Format; }
         /**
          * @brief   Get the Image Size object (width * height * 4)
          *          Multiply by 4 because the pixel is laid out row by row with 4 bytes per pixel
@@ -90,5 +90,7 @@ namespace Fling
         
         /** Pixel data of image **/
         stbi_uc* m_PixelData;
+
+        VkFormat m_Format = VK_FORMAT_R8G8B8A8_UNORM;
     };
 }   // namespace Fling

@@ -15,6 +15,10 @@ namespace Fling
         FlingConfig::Get().Init();
 		Input::Init();
 
+#if WITH_LUA
+		LuaManager::Get().Init(&g_Registry);
+#endif
+
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
         F_LOG_TRACE("Fling Engine Logs dir:   \t{}", Fling::FlingPaths::EngineLogDir());

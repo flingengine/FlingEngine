@@ -11,8 +11,8 @@ namespace Fling
     {
         void CreateDescriptorSets(
             MeshRenderer& t_MeshRend,
-            Lighting& m_Lighting,
-            VkDescriptorSetLayout m_DescriptorLayout);
+            Lighting& t_Lighting,
+            VkDescriptorSetLayout t_DescriptorLayout);
 
         void CreateDescriptorPool(MeshRenderer& t_MeshRend);
 

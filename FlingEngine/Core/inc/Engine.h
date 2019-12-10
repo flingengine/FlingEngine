@@ -20,6 +20,12 @@
 
 #endif	// WITH_EDITOR
 
+#if WITH_LUA
+
+#include "LuaManager.h"
+
+#endif
+
 namespace Fling
 {
 	class VulkanApp;

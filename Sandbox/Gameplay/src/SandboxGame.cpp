@@ -14,6 +14,10 @@
 
 #include "Mover.h"
 
+#if WITH_LUA
+#include "LuaManager.h"
+#endif
+
 namespace Sandbox
 {
     using namespace Fling;
@@ -25,6 +29,10 @@ namespace Sandbox
 
 #if WITH_EDITOR
         F_LOG_TRACE("Enable Editor!");
+#endif
+
+#if WITH_LUA
+		F_LOG_TRACE("Enable Lua!");
 #endif
 
         // Temp saving and load functions
@@ -41,9 +49,19 @@ namespace Sandbox
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
 
+		// Switch between window modes 
+		Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
+		Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
+		Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
+
+#if WITH_LUA
+		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
+#endif
+
         LightingTest(t_Reg);
         //OnLoadInitated();
         //GenerateTestMeshes(t_Reg);
+		//ScriptingTest(t_Reg);
 
         SetWindowIcon();
     }
@@ -92,6 +110,13 @@ namespace Sandbox
                 t_Trans.SetPos(newPos);
             });
         }
+
+#if WITH_LUA
+		if (m_RunLua)
+		{
+			LuaManager::Get().Tick(DeltaTime);
+		}
+#endif
     }
 
     void Game::LightingTest(entt::registry& t_Reg)
@@ -122,7 +147,7 @@ namespace Sandbox
             glm::vec3 min = { -15.0f, 0.2f, 15.0f };
 			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
-
+            
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
             Light.Intensity = 5.0f;
             Light.Range = 3.0f;
@@ -171,6 +196,25 @@ namespace Sandbox
 		}
     }
 
+	void Game::ScriptingTest(entt::registry& t_Reg)
+	{
+#if WITH_LUA
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<Transform>(e0);
+		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
+		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
+
+		entt::entity e1 = t_Reg.create();
+		t_Reg.assign<Transform>(e1);
+		t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
+		Transform& t0 = t_Reg.get<Transform>(e1);
+		t0.SetPos(glm::vec3(0, 3, 0));
+		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
+
+		LuaManager::Get().Start();
+#endif
+	}
+
     void Game::GenerateTestMeshes(entt::registry& t_Reg)
     {
         // Make a little cube of cubes!
@@ -217,6 +261,11 @@ namespace Sandbox
         m_MovePointLights = !m_MovePointLights;
     }
 
+	void Game::ToggleLua()
+	{
+		m_RunLua = !m_RunLua;
+	}
+
     void Game::SetWindowIcon()
     {
         FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
@@ -250,5 +299,32 @@ namespace Sandbox
     {
         float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
         F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
-    }
+  }
+
+	void Game::SetWindowFullscreen()
+	{
+		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetWindowMode(WindowMode::Fullscreen);
+		}
+	}
+
+	void Game::SetWindowBorderlessWindowed()
+	{
+		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetWindowMode(WindowMode::BorderlessWindowed);
+		}
+	}
+
+	void Game::SetWindowWindowed()
+	{
+		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetWindowMode(WindowMode::Windowed);
+		}
+	}
 }	// namespace Sandbox

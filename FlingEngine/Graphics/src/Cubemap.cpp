@@ -2,6 +2,9 @@
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
 #include "LogicalDevice.h"
+#include "PhyscialDevice.h"
+#include "HDRImage.h"
+#include "VulkanApp.h"
 
 namespace Fling
 {
@@ -21,17 +24,22 @@ namespace Fling
         m_Device(t_LogicalDevice), 
         m_RenderPass(t_RenderPass)
     {
-        //Default format
-        m_Format = VK_FORMAT_R8G8B8A8_UNORM;
         m_Cube = Model::Create("Models/cube.obj"_hs);   
 
-        LoadCubemap(
+        LoadCubemapImages(
             t_PosX_ID,
             t_NegX_ID,
             t_PosY_ID,
             t_NegY_ID,
             t_PosZ_ID,
             t_NegZ_ID);
+    }
+
+    Cubemap::Cubemap(Guid t_CubeMap_ID, VkRenderPass t_Renderpass, VkDevice t_LogicalDevice)
+    {
+        m_Cube = Model::Create("Models/cube.obj"_hs);
+
+        LoadCubeMapImage(t_CubeMap_ID);
     }
 
     Cubemap::~Cubemap()
@@ -95,7 +103,149 @@ namespace Fling
         m_GraphicsPipeline->CreateGraphicsPipeline(m_RenderPass, t_Sampler);
     }
 
-    void Cubemap::LoadCubemap(
+    void Cubemap::LoadCubeMapImage(Guid t_CubeMap_ID)
+    {
+        std::shared_ptr<HDRImage> image = ResourceManager::LoadResource<HDRImage>(t_CubeMap_ID, m_Device);
+
+        m_ImageSize = image->GetImageSize();
+        m_NumChannels = image->GetChannels();
+        m_LayerSize = m_ImageSize / 6;
+        m_MipLevels = image->GetMipLevels();
+        //m_MipLevels = 1.0f;
+        m_Format = image->GetVkImageFormat();
+
+        std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
+        stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_SHARING_MODE_EXCLUSIVE, true);
+        stagingBuffer->MapMemory();
+
+        float* pixelDst = (float*)(stagingBuffer->m_MappedMem);
+        const float* pixels = image->GetPixelData();
+        memcpy(pixelDst, pixels, m_ImageSize);
+
+        stagingBuffer->UnmapMemory();
+
+
+        GraphicsHelpers::CreateVkImage(
+			m_Device->GetVkDevice(),
+            image->GetWidth(),
+            image->GetHeight(),
+            m_MipLevels, // MipLevels
+            1, // Depth
+            6, // Array layers
+            m_Format,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+            m_Image,
+            m_ImageMemory);
+
+        VkCommandBuffer copyCmd = GraphicsHelpers::BeginSingleTimeCommands();
+
+        std::vector< VkBufferImageCopy> bufferCopyRegions;
+        VkDeviceSize offset = 0;
+
+        for (size_t face = 0; face < 6; face++)
+        {
+            VkBufferImageCopy bufferCopyRegion = {};
+            bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            bufferCopyRegion.imageSubresource.mipLevel = 0;
+            bufferCopyRegion.imageSubresource.baseArrayLayer = face;
+            bufferCopyRegion.imageSubresource.layerCount = 1;
+            bufferCopyRegion.imageExtent.width = image->GetWidth();
+            bufferCopyRegion.imageExtent.height = image->GetHeight();
+            bufferCopyRegion.imageExtent.depth = 1;
+            bufferCopyRegion.bufferOffset = offset;
+
+            bufferCopyRegions.push_back(bufferCopyRegion);
+
+            // Increase offset into staging buffer for next level / face
+            offset += image->GetImageSize();
+        }
+
+        // Image barrier for optimal image (target)
+        // Set initial layout for all array layers (faces) of the optimal (target) tiled texture
+        VkImageSubresourceRange subresourceRange = {};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = m_MipLevels;
+        subresourceRange.layerCount = 6;
+
+        GraphicsHelpers::SetImageLayout(
+            copyCmd,
+            m_Image,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            subresourceRange,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+        // Copy the cube map faces from the staging buffer to the optimal tiled image
+        vkCmdCopyBufferToImage(
+            copyCmd,
+            stagingBuffer->GetVkBuffer(),
+            m_Image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            static_cast<uint32_t>(bufferCopyRegions.size()),
+            bufferCopyRegions.data()
+        );
+
+        // Change texture image layout to shader read after all faces have been copied
+        m_ImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        GraphicsHelpers::SetImageLayout(
+            copyCmd,
+            m_Image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            m_ImageLayout,
+            subresourceRange,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+        GraphicsHelpers::EndSingleTimeCommands(copyCmd);
+
+        // Create sampler
+        VkSamplerCreateInfo sampler = Initializers::SamplerCreateInfo();
+        sampler.magFilter = VK_FILTER_LINEAR;
+        sampler.minFilter = VK_FILTER_LINEAR;
+        sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler.mipLodBias = 0.0f;
+        sampler.compareOp = VK_COMPARE_OP_NEVER;
+        sampler.minLod = 0.0f;
+        sampler.maxLod = static_cast<float>(m_MipLevels);
+        sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+        sampler.maxAnisotropy = 1.0f;
+
+        // Handle anisotropy
+        const PhysicalDevice* Device = VulkanApp::Get().GetPhysicalDevice();
+        if (Device->GetDeivceFeatures().samplerAnisotropy)
+        {
+            sampler.maxAnisotropy = Device->GetDeviceProps().limits.maxSamplerAnisotropy;
+            sampler.anisotropyEnable = VK_TRUE;
+        }
+
+        if (vkCreateSampler(m_Device->GetVkDevice(), &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
+        {
+            F_LOG_ERROR("Cube failed to create sampler");
+        }
+
+        VkImageViewCreateInfo view = Initializers::ImageViewCreateInfo();
+        view.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        view.format = m_Format;
+        view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+        view.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+        view.subresourceRange.layerCount = 6;
+        view.subresourceRange.levelCount = m_MipLevels;
+        view.image = m_Image;
+        if (vkCreateImageView(m_Device->GetVkDevice(), &view, nullptr, &m_Imageview) != VK_SUCCESS)
+        {
+            F_LOG_ERROR("Cube failed to create image view");
+        }
+    }
+
+    void Cubemap::LoadCubemapImages(
         Guid t_PosX_ID, 
         Guid t_NegX_ID, 
         Guid t_PosY_ID, 
@@ -117,7 +267,9 @@ namespace Fling
         m_NumChannels = images[0]->GetChannels();
         m_LayerSize = m_ImageSize / 6;
         //TODO: add mip levels to image
-        m_MipLevels = 1;
+        m_MipLevels = images[0]->GetMipLevels();
+        m_Format = images[0]->GetVkImageFormat();
+
 
         std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
         stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_SHARING_MODE_EXCLUSIVE, true);
@@ -224,7 +376,14 @@ namespace Fling
         sampler.minLod = 0.0f;
         sampler.maxLod = static_cast<float>(m_MipLevels);
         sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-        sampler.maxAnisotropy = 1.0f;
+
+        // Handle anisotropy
+        const PhysicalDevice* Device = VulkanApp::Get().GetPhysicalDevice();
+        if (Device->GetDeivceFeatures().samplerAnisotropy)
+        {
+            sampler.maxAnisotropy = Device->GetDeviceProps().limits.maxSamplerAnisotropy;
+            sampler.anisotropyEnable = VK_TRUE;
+        }
 
         if (vkCreateSampler(m_Device->GetVkDevice(), &sampler, nullptr, &m_Sampler) != VK_SUCCESS)
         {
@@ -287,7 +446,7 @@ namespace Fling
         }
 
         //Descriptor Sets
-        VkDescriptorImageInfo textureDescriptor =
+        m_DescriptorImageInfo =
             Initializers::DescriptorImageInfo(
                 m_Sampler,
                 m_Imageview,
@@ -325,7 +484,7 @@ namespace Fling
                     m_DescriptorSet,
                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                     1,
-                    &textureDescriptor),
+                    &m_DescriptorImageInfo),
             };
 
             vkUpdateDescriptorSets(m_Device->GetVkDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, NULL);
