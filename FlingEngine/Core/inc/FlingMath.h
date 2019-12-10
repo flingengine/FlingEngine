@@ -13,6 +13,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp> 
 #include <glm/gtc/random.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "btBulletDynamicsCommon.h"
 
 namespace Fling

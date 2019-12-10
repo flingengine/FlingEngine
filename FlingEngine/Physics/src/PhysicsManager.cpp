@@ -17,6 +17,8 @@ namespace Fling
             m_Solver,
             m_CollisionConfiguration);
 
+        m_DynamicsWorld->setGravity(m_Gravity);
+
         InitComponentData();
     }
 
@@ -49,10 +51,12 @@ namespace Fling
         for (int i = m_DynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
         {
             btTransform trans;
-            btCollisionObject* obj  =  m_DynamicsWorld->getCollisionObjectArray()[i];
-            btRigidBody* body       =  btRigidBody::upcast(obj);
-            entt::entity& entity    =  static_cast<PhysicsEntity*>(body->getUserPointer())->m_Entity;
-            Transform& transform    =  t_Reg.get<Transform>(entity);
+            //auto a = m_DynamicsWorld->getCollisionWorld()->getCollisionObjectArray();
+            btCollisionObject* obj = m_DynamicsWorld->getCollisionObjectArray()[i];
+            btRigidBody* body = btRigidBody::upcast(obj);
+            auto s = body->getLocalInertia();
+            entt::entity& entity = static_cast<PhysicsEntity*>(body->getUserPointer())->m_Entity;
+            Transform& transform = t_Reg.get<Transform>(entity);
 
             if (body && body->getMotionState())
             {
@@ -63,15 +67,14 @@ namespace Fling
                 trans = obj->getWorldTransform();
             }
 
-            transform.m_Rotation = glm::vec3(
-                trans.getRotation().getX(), 
-                trans.getRotation().getY(), 
-                trans.getRotation().getZ());
+            float yaw, pitch, roll;
+            trans.getRotation().getEulerZYX(yaw, pitch, roll);
+            //F_LOG_TRACE("ROTATION: {:05.2f} {:03.2f} {:03.2f}", yaw, pitch, roll);
 
-            transform.m_Pos = glm::vec3(
-                trans.getOrigin().getX(),
-                trans.getOrigin().getY(),
-                trans.getOrigin().getZ());
+            glm::vec3 position = glm::vec3(MathConversions::bulletToGlm(trans.getOrigin()));
+
+            //transform.SetRotation(glm::vec3(yaw, pitch, roll));
+            transform.SetPos(position);
         }
     }
 
@@ -111,14 +114,15 @@ namespace Fling
         btTransform worldTransform = MathConversions::glmToBullet(transform.GetWorldMatrix());
 
         btDefaultMotionState* myMotionState = new btDefaultMotionState(worldTransform);
-
-        btVector3 localInertia;
-        t_Rigidbody.m_Collider->calculateLocalInertia(t_Rigidbody.m_Mass, localInertia);
+        
+        btVector3 localInertia = { 0.0f, 0.0f, 0.0f };
+        if(t_Rigidbody.m_Mass)
+            t_Rigidbody.m_Collider->calculateLocalInertia(t_Rigidbody.m_Mass, localInertia);
 
         btRigidBody::btRigidBodyConstructionInfo rbInfo(
             t_Rigidbody.m_Mass, 
             myMotionState, 
-            t_Rigidbody.m_Collider.get(), 
+            t_Rigidbody.m_Collider.get(),
             localInertia);
 
         t_Rigidbody.m_Rigidbody = std::make_unique<btRigidBody>(rbInfo);
@@ -134,9 +138,9 @@ namespace Fling
         t_Rigidbody.m_Rigidbody->setGravity(m_Gravity);
         t_Rigidbody.m_Rigidbody->setLinearFactor(t_Rigidbody.m_LinearFactor);
         t_Rigidbody.m_Rigidbody->setAngularFactor(t_Rigidbody.m_AngularFactor);
-
         //add the body to the dynamics world
         m_DynamicsWorld->addRigidBody(t_Rigidbody.m_Rigidbody.get());
+        t_Rigidbody.RecalculateMass();
     }
 
     void PhysicsManager::RigidBodyRemoved(

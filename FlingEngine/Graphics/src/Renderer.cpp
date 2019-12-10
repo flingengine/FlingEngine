@@ -68,6 +68,7 @@ namespace Fling
         float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
         m_camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
+        m_camera->SetPosition({ 7.0f, 4.0f, 56.0f});
 
         m_BRDFLookupTexture = Image::Create("Textures/brdfLUT.png"_hs);
         assert(m_BRDFLookupTexture);

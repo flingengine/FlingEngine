@@ -32,7 +32,7 @@ namespace Fling
             m_LinearVelocity = t_LinearVelocity;
 
             if (m_Rigidbody) {
-                m_Rigidbody->setAngularVelocity(m_LinearVelocity);
+                m_Rigidbody->setLinearVelocity(m_LinearVelocity);
             }
         }
 
@@ -48,23 +48,7 @@ namespace Fling
         void Rigidbody::SetMass(float t_Mass)
         {
             m_Mass = t_Mass;
-
-            //Recalculate mass
-            if (!m_Rigidbody)
-            {
-                return;
-            }
-
-            bool isDynamic = m_Mass != 0.0f;
-            btVector3 localIntertia;
-
-            if (m_Collider && isDynamic)
-            {
-                m_Collider->calculateLocalInertia(m_Mass, localIntertia);
-            }
-
-            m_LocalInertia = localIntertia;
-            m_Rigidbody->setMassProps(m_Mass, localIntertia);
+            RecalculateMass();
         }
 
         void Rigidbody::SetFritcion(float t_Friction)
@@ -99,6 +83,26 @@ namespace Fling
             {
                 m_Collider = std::move(t_Collider);
             }
+        }
+
+        void Rigidbody::RecalculateMass()
+        {
+            //Recalculate mass
+            if (!m_Rigidbody)
+            {
+                return;
+            }
+
+            bool isDynamic = m_Mass != 0.0f;
+            btVector3 localInertia(0, 0, 0);
+
+            if (m_Collider && isDynamic)
+            {
+                m_Collider->calculateLocalInertia(m_Mass, localInertia);
+            }
+
+            m_LocalInertia = localInertia;
+            m_Rigidbody->setMassProps(m_Mass, localInertia);
         }
     }
 }

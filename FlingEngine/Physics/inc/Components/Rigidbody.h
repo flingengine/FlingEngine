@@ -28,6 +28,7 @@ namespace Fling
             void SetFrictionRolling(float t_FrictionRolling);
             void SetFritcionSpinning(float t_FrictionSpinning);
             void SetCollisionShape(std::unique_ptr<btCollisionShape>& t_Collider);
+            void RecalculateMass();
 
             inline const btVector3& GetLinearFactor() const { return m_LinearFactor; }
             inline const btVector3& GetAngularFactor() const { return m_AngularFactor; }
@@ -38,6 +39,8 @@ namespace Fling
             inline float GetFrictionRolling() const { return m_FrictionRolling; }
             inline float GetFrictionSpinning() const { return m_FrictionSpinning; }
             
+            btVector3& GetLocalInertia() { return m_LocalInertia; }
+
             btTransform m_WorldTransform;
             btVector3 m_LocalInertia;
 

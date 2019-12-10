@@ -69,7 +69,7 @@ namespace Sandbox
         {
             glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
-            // For each active mesh renderer
+            // For each active mesh renderesr
             t_Reg.view<MeshRenderer, Transform>().each([&](MeshRenderer& t_MeshRend, Transform& t_Trans)
                 {
                     const glm::vec3& curRot = t_Trans.GetRotation();
@@ -189,14 +189,41 @@ namespace Sandbox
             t0.SetPos(t_Pos);
         };
 
-        auto AddRigidBody = [&](entt::entity& e0)
+        auto AddRigidBody = [&](entt::entity& e0, int x)
+        {
+
+            if (x % 2 == 0)
+            {
+                auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
+                boxCollider.SetBoxCollider({ .50f, .50f, .50f });
+
+                auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
+                
+                rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
+            }
+            else
+            {
+                auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
+                boxCollider.SetBoxCollider({ .50f, .50f, .50f });
+
+                auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
+
+                rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
+                //rigidbody.SetMass(0.0f);
+            }
+
+            //rigidbody.SetCollisionShape(boxCollider.m_BtBoxCollider);
+        };
+
+        auto AddGroundRigidBody = [&](entt::entity& e0)
         {
             auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
-            boxCollider.SetBoxCollider({ 1.0f, 1.0f, 1.0f });
+            boxCollider.SetBoxCollider({ 50.0f, .50f, 50.0f });
 
             auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
 
-            //rigidbody.SetCollisionShape(boxCollider.m_BtBoxCollider);
+            //rigidbody.SetLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
+            rigidbody.SetMass(1000000.0f);
         };
 
         float Width = 2.0f;
@@ -222,8 +249,8 @@ namespace Sandbox
         AddDirLight(glm::vec3(-1.0f, +1.0f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 
         // Make a little cube of cubes!
-        int Dimension = 5;
-        float Offset = 1.0f;
+        int Dimension = 3;
+        float Offset = 5.25f;
 
         for (int x = 0; x < Dimension; ++x)
         {
@@ -245,9 +272,12 @@ namespace Sandbox
                     //t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
                     // Add a transform to this entity
                     Transform& t = t_Reg.assign<Transform>(e0);
-                    glm::vec3 pos = glm::vec3(static_cast<float>(x)* Offset, static_cast<float>(y)* Offset, static_cast<float>(z)* Offset);
+                    glm::vec3 pos = glm::vec3(
+                        static_cast<float>(x) * Offset, 
+                        static_cast<float>(y + 10) * Offset, 
+                        static_cast<float>(z) * Offset);
                     t.SetPos(pos);
-                    AddRigidBody(e0);
+                    AddRigidBody(e0, x);
                 }
             }
         }
@@ -256,12 +286,11 @@ namespace Sandbox
         entt::entity ground = t_Reg.create();
         t_Reg.assign<MeshRenderer>(ground, "Models/cube.obj", "Materials/Cobblestone.mat");
         Transform& t = t_Reg.assign<Transform>(ground);
-        t.SetPos({ 0.0f, -10.0f, 0.0f });
-        t.SetScale({ 100.0f, 1.0f, 100.0f });
-        auto& boxCollider = t_Reg.assign<Components::BoxCollider>(ground);
-        boxCollider.SetBoxCollider({ 100.0f, 100.0f, 100.0f });
-        auto& rigidbody = t_Reg.assign<Components::Rigidbody>(ground, boxCollider.m_BtBoxCollider);
-        rigidbody.SetMass(0.0f);
+        glm::vec3 pos = glm::vec3(glm::vec3(0.0f, -10.0f, 0.0f));
+        t.SetPos(pos);
+        t.SetScale(glm::vec3(50.0f, 1.0f, 50.0f ));
+
+        AddGroundRigidBody(ground);
     }
 
     void Game::ToggleCursorVisibility()
@@ -296,7 +325,7 @@ namespace Sandbox
     {
         float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
         F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
-  }
+    }
 
   void Game::SetWindowFullscreen()
   {

@@ -50,6 +50,8 @@ namespace Fling
 		const float GetSpeed() const { return m_speed; }
 		const float GetAspectRatio() const { return m_aspectRatio; }
 
+		void SetPosition(const glm::vec3& t_Position) { m_position = t_Position; }
+
 		/**
 		 * @brief Gets the view matrix created by the current camera position and rotation
 		 * 
