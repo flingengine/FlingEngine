@@ -178,17 +178,23 @@ namespace Fling
 	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf)
 	{
 		size_t ImageCount = m_SwapChain->GetImageCount();
-		t_MeshRend.m_DescriptorSets.resize(ImageCount);
+		// Only allocate new descriptor sets if there are none
+		// Some may exist if entt decisdes to re-use the component
+		if (t_MeshRend.m_DescriptorSets.empty())
+		{
+			t_MeshRend.m_DescriptorSets.resize(ImageCount);
 
-		std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
-		VkDescriptorSetAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		// If we have specified a specific pool then use that, otherwise use the one on the mesh
-		allocInfo.descriptorPool = m_DescriptorPool;
-		allocInfo.descriptorSetCount = static_cast<UINT32>(ImageCount);
-		allocInfo.pSetLayouts = layouts.data();
+			std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
+			VkDescriptorSetAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			// If we have specified a specific pool then use that, otherwise use the one on the mesh
+			allocInfo.descriptorPool = m_DescriptorPool;
+			allocInfo.descriptorSetCount = static_cast<UINT32>(ImageCount);
+			allocInfo.pSetLayouts = layouts.data();
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, t_MeshRend.m_DescriptorSets.data()));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, t_MeshRend.m_DescriptorSets.data()));
+		}
+
 
 		// Ensure that we have a material to try and sample from
 		if (t_MeshRend.m_Material == nullptr)
