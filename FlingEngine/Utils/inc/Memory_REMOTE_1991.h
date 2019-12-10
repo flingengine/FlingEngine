@@ -11,6 +11,7 @@ namespace Fling
     void AlignedFree(void* t_Data);
 
 #if FLING_LINUX
+
     #define leading_zeroes(x)       ((x) == 0 ? 32 : __builtin_clz(x))
     #define trailing_zeroes(x)      ((x) == 0 ? 32 : __builtin_ctz(x))
     #define trailing_ones(x)        __builtin_ctz(~(x))
@@ -43,6 +44,7 @@ namespace Fling
 #define trailing_ones(x)        Fling::Internal::ctz(~(x))
 
 #endif
+
     //Shift the given address upwards if/as necessary to ensure it is aligned to
     //the given number of bytes 
     inline uintptr_t AlignAddress(uintptr_t t_Addr, size_t t_Align)

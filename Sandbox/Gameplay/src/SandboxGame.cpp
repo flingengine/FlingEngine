@@ -223,7 +223,7 @@ namespace Sandbox
 
         // Make a little cube of cubes!
         int Dimension = 5;
-        float Offset = 1.25f;
+        float Offset = 1.0f;
 
         for (int x = 0; x < Dimension; ++x)
         {

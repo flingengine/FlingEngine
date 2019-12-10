@@ -11,9 +11,16 @@ namespace Fling
     void AlignedFree(void* t_Data);
 
 #if FLING_LINUX
+<<<<<<< HEAD
+#define leading_zeroes(x) ((x) == 0 ? 32 : __builtin_clz(x))
+#define trailing_zeroes(x) ((x) == 0 ? 32 : __builtin_ctz(x))
+#define trailing_ones(x) __builtin_ctz(~(x))
+=======
+
     #define leading_zeroes(x)       ((x) == 0 ? 32 : __builtin_clz(x))
     #define trailing_zeroes(x)      ((x) == 0 ? 32 : __builtin_ctz(x))
     #define trailing_ones(x)        __builtin_ctz(~(x))
+>>>>>>> 779c4187183ff3adf40d4ba265571c97d558695b
 #elif FLING_WINDOWS
 #include <intrin.h>
 
@@ -43,9 +50,15 @@ namespace Fling
 #define trailing_ones(x)        Fling::Internal::ctz(~(x))
 
 #endif
+
+<<<<<<< HEAD
+    template<typename T>
+    inline void for_each_bit(uint32_t value, const T& func)
+=======
     //Shift the given address upwards if/as necessary to ensure it is aligned to
     //the given number of bytes 
     inline uintptr_t AlignAddress(uintptr_t t_Addr, size_t t_Align)
+>>>>>>> 779c4187183ff3adf40d4ba265571c97d558695b
     {
         const size_t mask = t_Align - 1;
         assert((t_Align & mask) == 0); //power of 2
