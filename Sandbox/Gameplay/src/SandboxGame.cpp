@@ -58,7 +58,7 @@ namespace Sandbox
 		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
 #endif
 
-        //LightingTest(t_Reg);
+        LightingTest(t_Reg);
         //OnLoadInitated();
         //GenerateTestMeshes(t_Reg);
 		//ScriptingTest(t_Reg);
