@@ -31,6 +31,7 @@ namespace Fling
         glm::vec3 m_Pos { 0.0f, 0.0f, 0.0f };
         glm::vec3 m_Rotation { 0.0f, 0.0f, 0.0f };
         glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
+        glm::quat m_QRotation;
 		glm::mat4 m_worldMat {};
     };
     

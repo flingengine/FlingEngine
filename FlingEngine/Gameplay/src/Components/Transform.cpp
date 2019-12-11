@@ -28,7 +28,8 @@ namespace Fling
         // World = Scale * rot * pos
         glm::mat4 worldMat = glm::identity<glm::mat4>();
         worldMat = glm::translate( worldMat, m_Pos );
-        worldMat = worldMat * glm::yawPitchRoll(glm::radians(m_Rotation.y), glm::radians(m_Rotation.x), glm::radians(m_Rotation.z) );
+        //worldMat = worldMat * glm::yawPitchRoll(glm::radians(m_Rotation.y), glm::radians(m_Rotation.x), glm::radians(m_Rotation.z) );
+        worldMat = worldMat * glm::mat4_cast(m_QRotation);
         worldMat = glm::scale( worldMat, m_Scale );
 
         return worldMat;
@@ -41,8 +42,9 @@ namespace Fling
 		//*t_OutMat = *t_OutMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
 		//*t_OutMat = glm::scale(*t_OutMat, t_Trans.m_Scale);
 		t_Trans.m_worldMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);;
-		t_Trans.m_worldMat= t_Trans.m_worldMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
-		t_Trans.m_worldMat = glm::scale(t_Trans.m_worldMat, t_Trans.m_Scale);
+		//t_Trans.m_worldMat= t_Trans.m_worldMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
+        t_Trans.m_worldMat = t_Trans.m_worldMat * glm::mat4_cast(t_Trans.m_QRotation);
+        t_Trans.m_worldMat = glm::scale(t_Trans.m_worldMat, t_Trans.m_Scale);
 	}
 
     void Transform::SetPos(const glm::vec3& t_Pos)

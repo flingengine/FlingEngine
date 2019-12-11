@@ -35,5 +35,18 @@ namespace Fling
             glm::mat3 m3(m);
             return btTransform(glmToBullet(m3), glmToBullet(glm::vec3(m[3][0], m[3][1], m[3][2])));
         }
+
+        btTransform glmToBullet(const glm::vec3& t_Position, const glm::vec3& t_Rotation)
+        {
+            btQuaternion rotation;
+            rotation.setEulerZYX(t_Rotation.y, t_Rotation.x, t_Rotation.z);
+
+            btTransform worldTransform;
+            worldTransform.setIdentity();
+            worldTransform.setOrigin(glmToBullet(t_Position));
+            worldTransform.setRotation(rotation);
+            return worldTransform;
+        }
+
     }
 }

@@ -33,5 +33,7 @@ namespace Fling
         // btTransform does not contain a full 4x4 matrix, so this transform is lossy.
         // Affine transformations are OK but perspective transformations are not.
         btTransform glmToBullet(const glm::mat4& m);
+
+        btTransform glmToBullet(const glm::vec3& t_Position, const glm::vec3& t_Rotation);
     }
 }

@@ -208,7 +208,7 @@ namespace Sandbox
 
                 auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
 
-                //rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
+                //rigidbody.SetAngularVelocity(btVector3(0.0f, 10.0f, 0.0f));
                 //rigidbody.SetMass(0.0f);
             }
 
@@ -251,7 +251,7 @@ namespace Sandbox
 
         // Make a little cube of cubes!
         int Dimension = 3;
-        float Offset = 5.25f;
+        float Offset = 3.0f;
 
         for (int x = 0; x < Dimension; ++x)
         {
@@ -278,6 +278,7 @@ namespace Sandbox
                         static_cast<float>(y + 10) * Offset, 
                         static_cast<float>(z) * Offset);
                     t.SetPos(pos);
+                    t.SetRotation({ 0.0f, 45.0f, 0.0f });
                     AddRigidBody(e0, x);
                 }
             }

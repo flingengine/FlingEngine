@@ -67,13 +67,14 @@ namespace Fling
                 trans = obj->getWorldTransform();
             }
 
-            float yaw, pitch, roll;
-            trans.getRotation().getEulerZYX(yaw, pitch, roll);
+            //float yaw, pitch, roll;
+            transform.m_QRotation =  MathConversions::bulletToGlm(trans.getRotation());
+            //auto s = body->getAngularVelocity();
             //F_LOG_TRACE("ROTATION: {:05.2f} {:03.2f} {:03.2f}", yaw, pitch, roll);
 
             glm::vec3 position = glm::vec3(MathConversions::bulletToGlm(trans.getOrigin()));
 
-            //transform.SetRotation(glm::vec3(yaw, pitch, roll));
+            //transform.SetRotation(glm::vec3(roll, pitch, yaw));
             transform.SetPos(position);
         }
     }
@@ -111,7 +112,8 @@ namespace Fling
         }
 
         Transform& transform = t_Reg.get<Transform>(t_Ent);
-        btTransform worldTransform = MathConversions::glmToBullet(transform.GetWorldMatrix());
+        //btTransform worldTransform = MathConversions::glmToBullet(transform.GetWorldMatrix());
+        btTransform worldTransform = MathConversions::glmToBullet(transform.GetPos(), transform.GetRotation());
 
         btDefaultMotionState* myMotionState = new btDefaultMotionState(worldTransform);
         
