@@ -64,6 +64,12 @@ namespace Fling
 		 */
 		const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
 
+		float GetGamma() const { return m_Gamma; }
+		void SetGamma(float t_Gam) { m_Gamma = t_Gam; }
+
+		float GetExposure() const { return m_Exposure; }
+		void SetExposure(float t_Val) { m_Exposure = t_Val; }
+
 	protected:
 		glm::mat4 m_viewMatrix;
 		glm::mat4 m_projectionMatrix;
@@ -77,5 +83,8 @@ namespace Fling
 		float m_nearPlane;
 		float m_farPlane;
 		float m_fieldOfView;
+
+		float m_Gamma = 2.2f;
+		float m_Exposure = 4.5f;
 	};
 } //namespace fling

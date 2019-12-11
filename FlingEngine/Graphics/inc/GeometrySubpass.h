@@ -47,7 +47,9 @@ namespace Fling
 	{
 		glm::mat4 Projection;
 		glm::mat4 ModelView;
-		glm::vec3 CamPos = {};
+		glm::vec4 CamPos = {};
+		float Gamma = 2.2f;
+		float Exposure = 4.5f;
 	};
 
 	/**

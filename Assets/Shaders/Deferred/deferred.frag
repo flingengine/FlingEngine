@@ -32,7 +32,9 @@ layout (binding = 7) uniform UBO
 {
 	mat4 projection;
 	mat4 modelview;
-	vec3 camPos;
+	vec4 camPos;
+    float gamma;
+    float exposure;
 } ubo;
 
 void main() 
@@ -90,8 +92,14 @@ void main()
         }
     }
 
-	// This is what it should be
-    vec3 gammaCorrect = vec3( pow( abs( LightColor * albedo.rgb ), vec3(1.0 / 2.2) ) );
+    LightColor = abs( LightColor * albedo.rgb );
+
+    // Tone mapping
+	LightColor = Uncharted2Tonemap(LightColor * ubo.exposure);
+	LightColor = LightColor * (1.0f / Uncharted2Tonemap(vec3(11.2f)));	
+
+	// Gamma correction
+    vec3 gammaCorrect = vec3( pow( LightColor, vec3(1.0 / ubo.gamma) ) );
   	outFragcolor = vec4(gammaCorrect, 1.0);	
 
 	// Uncomment to see the different G-Buffers

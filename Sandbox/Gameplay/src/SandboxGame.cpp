@@ -50,9 +50,9 @@ namespace Sandbox
 		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
 
 		// Switch between window modes 
-		Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
-		Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
-		Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
+		//Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
+		//Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
+		//Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
 
 #if WITH_LUA
 		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
@@ -182,10 +182,55 @@ namespace Sandbox
 		glm::vec3 Center(0.0f);
 		for (size_t i = 0; i < GridSize; i++)
 		{
+			std::string ModelPath = "Models/sphere.obj";
+			std::string MatPath = "Materials/DeferredBronzeMat.mat";
+
 			for (size_t j = 0; j < GridSize; j++)
 			{
 				entt::entity e0 = t_Reg.create();
-				t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
+
+				// Set the material -----------------
+				if (j == 0)
+				{
+					MatPath = "Materials/Damascus.mat";
+				}
+				else if (j == 1)
+				{
+					MatPath = "Materials/SheetMetal.mat";
+				}
+				else if (j == 2)
+				{
+					MatPath = "Materials/Snow.mat";
+				}
+				else if (j == 3)
+				{
+					MatPath = "Materials/Cobblestone.mat";
+				}
+				else if (j == 4)
+				{
+					MatPath = "Materials/DotMetal.mat";
+				}
+				else
+				{
+					MatPath = "Materials/DeferredBronzeMat.mat";
+				}
+
+				// Set the model -------------
+				if (i == 1)
+				{
+					ModelPath = "Models/cube.obj";
+				}
+				else if(i == 2)
+				{
+					ModelPath = "Models/cone.obj";
+				}
+				else
+				{
+					ModelPath = "Models/sphere.obj";
+				}
+
+				t_Reg.assign<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
+
 				t_Reg.assign<Rotator>(e0);
 				Transform& t0 = t_Reg.assign<Transform>(e0);
 

@@ -1,0 +1,8 @@
+{
+  "name": "DotMetal Material",
+
+  "albedo": "Textures/DotMetal/DotMetal_A.png",
+  "normal": "Textures/DotMetal/DotMetal_N.png",
+  "metal": "Textures/DotMetal/DotMetal_M.png",
+  "rough": "Textures/DotMetal/DotMetal_R.png"
+}

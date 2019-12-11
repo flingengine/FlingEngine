@@ -1,0 +1,8 @@
+{
+  "name": "Sheet Metal Deferred Material",
+
+  "albedo": "Textures/Snow/Snow_A.png",
+  "normal": "Textures/Snow/Snow_N.png",
+  "metal": "Textures/Snow/Snow_H.png",
+  "rough": "Textures/Snow/Snow_R.png"
+}

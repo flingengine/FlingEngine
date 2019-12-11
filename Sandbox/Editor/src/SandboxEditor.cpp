@@ -5,6 +5,9 @@
 #include "World.h"
 #include "Mover.h"
 
+#include "VulkanApp.h"
+#include "FirstPersonCamera.h"
+
 namespace Sandbox
 {
     void SandboxEditor::Draw(entt::registry& t_Reg, float DeltaTime)
@@ -19,9 +22,15 @@ namespace Sandbox
 		ImGui::Text("Right Click and drag to rotate camera");
         ImGui::Text("Press 'WASD' Move");
 
-        ImGui::Text("Press '2' for fullscreen");
-        ImGui::Text("Press '3' for windowed");
-        ImGui::Text("Press '4' for borderless");
+		// Gamma correction settings
+		float GammaLevel = Fling::VulkanApp::Get().GetCamera()->GetGamma();
+		ImGui::SliderFloat("Gamma", &GammaLevel, .01f, 5.0f);
+		Fling::VulkanApp::Get().GetCamera()->SetGamma(GammaLevel);
+
+		// Exposure settings
+		float ExposureSetting = Fling::VulkanApp::Get().GetCamera()->GetExposure();
+		ImGui::SliderFloat("Exposure", &ExposureSetting, 0.0f, 100.0f);
+		Fling::VulkanApp::Get().GetCamera()->SetExposure(ExposureSetting);
 
 		ImGui::End();
     }

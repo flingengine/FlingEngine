@@ -58,6 +58,7 @@ namespace Fling
 		inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
 		inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
+		inline FirstPersonCamera* GetCamera() const { return m_Camera; }
 
     private:
 		

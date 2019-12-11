@@ -102,7 +102,10 @@ namespace Fling
 		{
 			m_CamInfoUBO.Projection = m_Camera->GetProjectionMatrix();
 			m_CamInfoUBO.ModelView = m_Camera->GetViewMatrix();
-			m_CamInfoUBO.CamPos = m_Camera->GetPosition();
+			m_CamInfoUBO.CamPos = glm::vec4(m_Camera->GetPosition(), 1.0f);
+			m_CamInfoUBO.Gamma = m_Camera->GetGamma();
+			m_CamInfoUBO.Exposure = m_Camera->GetExposure();
+
 			memcpy(m_CameraUboBuffers[t_ActiveFrameInFlight]->m_MappedMem, &m_CamInfoUBO, sizeof(m_CamInfoUBO));
 		}
 
