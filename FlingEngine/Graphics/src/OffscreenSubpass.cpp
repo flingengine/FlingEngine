@@ -84,11 +84,20 @@ namespace Fling
 		}
 	}
 
-	void OffscreenSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void OffscreenSubpass::Draw(
+		CommandBuffer& t_CmdBuf, 
+		VkFramebuffer t_PresentFrameBuf, 
+		UINT32 t_ActiveSwapImage, 
+		entt::registry& t_reg, 
+		float DeltaTime)
 	{
+		// If the dirty stack has something in it then process that and rebuild cmd buffers
+
+		// Otherwise we don't need to build the offscreen cmd bufs every time
+
 		assert(m_GraphicsPipeline);
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
-		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveFrameInFlight];
+		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveSwapImage];
 		assert(OffscreenCmdBuf);
 
 		// Set viewport and scissors to the offscreen frame buffer
@@ -115,8 +124,16 @@ namespace Fling
 
 		VkDeviceSize offsets[1] = { 0 };
 
+		OffscreenUBO CurrentUBO = {};
+		// Invert the project value to match the proper coordinate space compared to OpenGL
+		CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
+		CurrentUBO.Projection[1][1] *= -1.0f;
+		CurrentUBO.View = m_Camera->GetViewMatrix();
+
 		// For every mesh bind it's model and descriptor set info
-		t_reg.group<Transform>(entt::get<MeshRenderer>).each([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Default"_hs>>);
+
+		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)
@@ -125,24 +142,23 @@ namespace Fling
 			}
 
 			// UPDATE UNIFORM BUF of the mesh --------
-			OffscreenUBO CurrentUBO = {};
+			
 			Transform::CalculateWorldMatrix(t_trans);
-
-			// Invert the project value to match the proper coordinate space compared to OpenGL
-			CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
-			CurrentUBO.Projection[1][1] *= -1.0f;
 			CurrentUBO.Model = t_trans.GetWorldMatrix();
-			CurrentUBO.View = m_Camera->GetViewMatrix();
 			CurrentUBO.ObjPos = t_trans.GetPos();
 
 			// Memcpy to the buffer
-			Buffer* buf = t_MeshRend.m_UniformBuffers[t_ActiveFrameInFlight];
-			memcpy(buf->m_MappedMem, &CurrentUBO, buf->GetSize());
+			Buffer* buf = t_MeshRend.m_UniformBuffer;
+			memcpy(
+				buf->m_MappedMem, 
+				&CurrentUBO,
+				buf->GetSize()
+			);
 
 			// If the mesh has no descriptor sets, then build them
 			// #TODO Investigate a better way to do this, probably by just moving the 
 			// descriptors off of the mesh
-			if (t_MeshRend.m_DescriptorSets.empty())
+			if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
 			{
 				CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
 			}
@@ -154,7 +170,7 @@ namespace Fling
 				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
 				1,
-				&t_MeshRend.m_DescriptorSets[t_ActiveFrameInFlight],
+				&t_MeshRend.m_DescriptorSet,
 				0,
 				nullptr);
 
@@ -177,66 +193,64 @@ namespace Fling
 
 	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf)
 	{
-		size_t ImageCount = m_SwapChain->GetImageCount();
 		// Only allocate new descriptor sets if there are none
-		// Some may exist if entt decisdes to re-use the component
-		if (t_MeshRend.m_DescriptorSets.empty())
+		// Some may exist if entt decides to re-use the component
+		if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
 		{
-			t_MeshRend.m_DescriptorSets.resize(ImageCount);
-
-			std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
+			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			// If we have specified a specific pool then use that, otherwise use the one on the mesh
 			allocInfo.descriptorPool = m_DescriptorPool;
-			allocInfo.descriptorSetCount = static_cast<UINT32>(ImageCount);
-			allocInfo.pSetLayouts = layouts.data();
+			allocInfo.descriptorSetCount = 1;
+			allocInfo.pSetLayouts = &layout;
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, t_MeshRend.m_DescriptorSets.data()));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_MeshRend.m_DescriptorSet));
 		}
-
 
 		// Ensure that we have a material to try and sample from
 		if (t_MeshRend.m_Material == nullptr)
 		{
-			t_MeshRend.LoadMaterialFromPath("Materials/Default.mat");
+			t_MeshRend.m_Material = Material::GetDefaultMat().get();
 		}
+		
+		std::vector<VkWriteDescriptorSet> writeDescriptorSets =
+		{
+			// 0: UBO
+			Initializers::WriteDescriptorSetUniform(
+				t_MeshRend.m_UniformBuffer,
+				t_MeshRend.m_DescriptorSet,
+				0
+			),
+			// 1: Color map 
+			Initializers::WriteDescriptorSetImage(
+				t_MeshRend.m_Material->GetPBRTextures().m_AlbedoTexture,
+				t_MeshRend.m_DescriptorSet,
+				1),
+			// 2: Normal map
+			Initializers::WriteDescriptorSetImage(
+				t_MeshRend.m_Material->GetPBRTextures().m_NormalTexture,
+				t_MeshRend.m_DescriptorSet,
+				2),
+			// 3: Metal map
+			Initializers::WriteDescriptorSetImage(
+				t_MeshRend.m_Material->GetPBRTextures().m_MetalTexture,
+				t_MeshRend.m_DescriptorSet,
+				3),
+			// 4: Roughness map
+			Initializers::WriteDescriptorSetImage(
+				t_MeshRend.m_Material->GetPBRTextures().m_RoughnessTexture,
+				t_MeshRend.m_DescriptorSet,
+				4)
+			// Any other PBR textures or other samplers go HERE and you add to the MRT shader
+		};
 
-		for (size_t i = 0; i < t_MeshRend.m_DescriptorSets.size(); ++i)
-		{	
-			std::vector<VkWriteDescriptorSet> writeDescriptorSets =
-			{
-				// 0: UBO
-				Initializers::WriteDescriptorSetUniform(
-					t_MeshRend.m_UniformBuffers[i],
-					t_MeshRend.m_DescriptorSets[i],
-					0
-				),
-				// 1: Color map 
-				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetPBRTextures().m_AlbedoTexture,
-					t_MeshRend.m_DescriptorSets[i],
-					1),
-				// 2: Normal map
-				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetPBRTextures().m_NormalTexture,
-					t_MeshRend.m_DescriptorSets[i],
-					2),
-				// 3: Metal map
-				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetPBRTextures().m_MetalTexture,
-					t_MeshRend.m_DescriptorSets[i],
-					3),
-				// 4: Roughness map
-				Initializers::WriteDescriptorSetImage(
-					t_MeshRend.m_Material->GetPBRTextures().m_RoughnessTexture,
-					t_MeshRend.m_DescriptorSets[i],
-					4)
-				// Any other PBR textures or other samplers go HERE and you add to the MRT shader
-			};
+		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+	}
 
-			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
-		}
+	void OffscreenSubpass::BuildOffscreenCommandBuffer(entt::registry& t_reg, UINT32 t_ActiveFrameInFlight)
+	{
+
 	}
 
 	void OffscreenSubpass::PrepareAttachments()
@@ -395,7 +409,7 @@ namespace Fling
 		// #TODO If this mesh renderer material is set to deferred, then do this
 		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() == Material::Type::Default)
 		{
-			t_Reg.assign<entt::tag<HS("Default")>>(t_Ent);
+			t_Reg.assign<entt::tag<"Default"_hs >>(t_Ent);
 		}
 
 		// Initialize the mesh renderer to have a descriptor pool that it can use
@@ -403,17 +417,18 @@ namespace Fling
 		VkDevice Device = m_Device->GetVkDevice();
 
 		// Initialize and map the UBO of each mesh renderer
-		t_MeshRend.m_UniformBuffers.resize(ImageCount);
-
-		VkDeviceSize bufferSize = sizeof(OffscreenUBO);
-		for (size_t i = 0; i < ImageCount; i++)
+		if (t_MeshRend.m_UniformBuffer == nullptr)
 		{
-			t_MeshRend.m_UniformBuffers[i] = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffers[i]->MapMemory(bufferSize);
+			VkDeviceSize bufferSize = sizeof(OffscreenUBO);
+			t_MeshRend.m_UniformBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			t_MeshRend.m_UniformBuffer->MapMemory(bufferSize);
 		}
 		
 		// I would love to create some descriptor sets here		
 		assert(m_OffscreenFrameBuf);
 		CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
+
+		// Put this mesh into a stack that needs to have their stuff built 
+		m_CommandBufferDirty = true;
 	}
 }   // namespace Fling

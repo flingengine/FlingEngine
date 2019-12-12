@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Subpass.h"
+#include <stack>
 
 namespace Fling
 {
@@ -37,7 +38,7 @@ namespace Fling
 
 		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 
@@ -59,6 +60,8 @@ namespace Fling
 
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf);
 
+		void BuildOffscreenCommandBuffer(entt::registry& t_reg, UINT32 t_ActiveFrameInFlight);
+
 		// Offscreen resources that we can use to create the G Buffer
 
 		// We need an offscreen semaphore for each possible frame in flight because the swap chain
@@ -75,6 +78,11 @@ namespace Fling
 		const FirstPersonCamera* m_Camera;
 
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+
+		/** A stack of dirty mesh renderers that need to have their VK resources built */
+		std::stack<MeshRenderer*> m_DirtyMeshRends;
+
+		bool m_CommandBufferDirty = false;
 	};
 
 }   // namespace Fling

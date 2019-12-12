@@ -27,18 +27,18 @@ namespace Fling
 		}
 	}
 
+	MeshRenderer::~MeshRenderer()
+	{
+		//Release();
+	}
+
 	void MeshRenderer::Release()
 	{
-		for (Buffer* b : m_UniformBuffers)
+		if (m_UniformBuffer)
 		{
-			if (b)
-			{
-				delete b;
-				b = nullptr;
-			}
+			delete m_UniformBuffer;
+			m_UniformBuffer = nullptr;
 		}
-
-		m_UniformBuffers.clear();
 	}
 
 	bool MeshRenderer::operator==(const MeshRenderer& other) const

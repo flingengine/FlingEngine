@@ -4,6 +4,7 @@
 #include "GeometrySubpass.h"
 #include "OffscreenSubpass.h"
 #include "ImGuiSubpass.h"
+#include "DebugSubpass.h"
 
 #include "CommandBuffer.h"
 #include "Instance.h"
@@ -276,6 +277,15 @@ namespace Fling
 		if (t_Conf & PipelineFlags::DEBUG)
 		{
 			F_LOG_WARN("Build DEBUG render pipeline!");
+			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
+
+			std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);
+			std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);
+			Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, DebugVert, DebugFrag));
+
+			m_RenderPipelines.emplace_back(
+				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
+			);
 		}
 
 		if (t_Conf & PipelineFlags::IMGUI)
@@ -331,10 +341,6 @@ namespace Fling
 
 		//vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, 0);
 
-		// Build all the command buffer for the swap chain
-		// build all of the command buffers so that the studder studder boi stops
-		// #TODO Investigate that ^^
-		//for(size_t i = 0; i < m_DrawCmdBuffers.size(); ++i)
 		{
 			// Get the current drawing command buffer associated with the current swap chain image
 			CommandBuffer* CmdBuf = m_DrawCmdBuffers[ImageIndex];

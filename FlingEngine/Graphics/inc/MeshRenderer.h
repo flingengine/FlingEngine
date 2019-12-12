@@ -23,7 +23,7 @@ namespace Fling
 
 		MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
 
-		~MeshRenderer() = default;
+		~MeshRenderer();
 
         /** Pointer to the actual model  */
         Model* m_Model = nullptr;
@@ -32,9 +32,9 @@ namespace Fling
         Material* m_Material = nullptr;
 
         /** We need a uniform buffer per-swap chain image */
-        std::vector<Buffer*> m_UniformBuffers {};
+        Buffer* m_UniformBuffer = nullptr;
 
-        std::vector<VkDescriptorSet> m_DescriptorSets;
+        VkDescriptorSet m_DescriptorSet  = VK_NULL_HANDLE;
 
         void Release();
 

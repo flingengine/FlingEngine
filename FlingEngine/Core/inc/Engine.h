@@ -28,8 +28,6 @@
 
 namespace Fling
 {
-	class VulkanApp;
-
 	/**
 	 * @brief Core engine class of Fling. This is where the core update loop lives 
 	 * along with all startup/shutdown ordering. 
