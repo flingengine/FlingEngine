@@ -224,6 +224,14 @@ namespace Sandbox
 				{
 					ModelPath = "Models/cone.obj";
 				}
+				else if (i == 3)
+				{
+					ModelPath = "Models/RoundedCube.obj";
+				}
+				else if (i == 4)
+				{
+					ModelPath = "Models/torus.obj";
+				}
 				else
 				{
 					ModelPath = "Models/sphere.obj";
@@ -259,37 +267,6 @@ namespace Sandbox
 		LuaManager::Get().Start();
 #endif
 	}
-
-    void Game::GenerateTestMeshes(entt::registry& t_Reg)
-    {
-        // Make a little cube of cubes!
-        int Dimension = 1;
-        float Offset = 2.5f;
-
-        for (int x = 0; x < Dimension; ++x)
-        {
-            for (int y = 0; y < Dimension; ++y)
-            {
-                for (int z = 0; z < Dimension; ++z)
-                {
-                    entt::entity e0 = t_Reg.create();
-                    if (x % 2 == 0)
-                    {
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Cobblestone.mat");
-                    }
-                    else
-                    {
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cone.obj", "Materials/DeferredBronzeMat.mat");
-                    }
-
-                    // Add a transform to this entity
-                    Transform& t = t_Reg.assign<Transform>(e0);
-                    glm::vec3 pos = glm::vec3(static_cast<float>(x)* Offset, static_cast<float>(y)* Offset, static_cast<float>(z)* Offset);
-                    t.SetPos(pos);
-                }
-            }
-        }
-    }
 
     void Game::ToggleCursorVisibility()
     {
