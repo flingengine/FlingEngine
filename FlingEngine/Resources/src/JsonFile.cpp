@@ -36,16 +36,12 @@ namespace Fling
 	void JsonFile::LoadJsonFile()
     {
         const std::string FilePath = GetFilepathReleativeToAssets();
-
-        F_LOG_TRACE("Attempting to Load JSON {}", FilePath);
-
         std::ifstream ifs(FilePath.c_str());
 
         if (ifs.is_open())
         {
             // Store the info in the scene file in the JSON object
             ifs >> m_JsonData;
-            F_LOG_TRACE("Successfully Loaded JSON file {}", FilePath);
         }
         else
         {

@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include <cstdint>
 #include "File.h"
+#include "VulkanApp.h"
 
 namespace Fling
 {
@@ -28,23 +29,24 @@ namespace Fling
 	#endif
 
         // Load command line args and any ini files
-        //#TODO Handle command line args
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
 
-        Renderer::Get().CreateGameWindow(
-            ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH,
-            ConfigLoaded ? FlingConfig::GetInt("Engine", "WindowHeight") : FLING_DEFAULT_WINDOW_WIDTH
-        );
+		if (!ConfigLoaded)
+		{
+			F_LOG_WARN("NO EngineConf.ini has been provided! This may result in unexpected behavior from Fling!");
+		}
 
-		Renderer::Get().m_Registry = &g_Registry;
+		VulkanApp::Get().Init(
+			//static_cast<PipelineFlags>(PipelineFlags::DEFERRED),
+			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
+			g_Registry,
+			m_Editor
+		);
 		
 		// Set the editor if we need to
 #if WITH_EDITOR
 		m_Editor->RegisterComponents(g_Registry);
-		Renderer::Get().m_Editor = m_Editor;
 #endif
-
-		Renderer::Get().Init();
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
@@ -63,13 +65,13 @@ namespace Fling
 		
 		assert(m_World && m_GameImpl);		// We HAVE to have a world
 		
-		Renderer& Renderer = Renderer::Get();
+		VulkanApp& VkApp = VulkanApp::Get();
 		Timing& Timing = Timing::Get();
 
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
-		while(!Renderer.GetCurrentWindow()->ShouldClose())
+		while(!VkApp.GetCurrentWindow()->ShouldClose())
 		{
             // Update timing
             Timing.Update();
@@ -77,9 +79,7 @@ namespace Fling
 
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
-			
-			Renderer.Tick(DeltaTime);
-			
+						
 			Input::Poll();
 
 			m_World->Update(DeltaTime);
@@ -90,19 +90,15 @@ namespace Fling
 				break;
 			}
 			
-			Renderer.DrawFrame(g_Registry, DeltaTime);
+			VkApp.Update(DeltaTime, g_Registry);
 
 			Timing.UpdateFps();
 		}
-
-		// Any waiting that we may need to do before the shutdown function should go here
-		Renderer.PrepShutdown();
 	}
 
 	void Engine::Shutdown()
 	{	
 		// Cleanup game play stuff
-
 		if(m_World)
 		{
 			m_World->Shutdown();
@@ -117,14 +113,14 @@ namespace Fling
 			m_World = nullptr;
 		}
 		
-		g_Registry.reset();
-
 		// Cleanup any resources
 		Input::Shutdown();
         ResourceManager::Get().Shutdown();
 		Logger::Get().Shutdown();
         FlingConfig::Get().Shutdown();
 		Timing::Get().Shutdown();
-		Renderer::Get().Shutdown();
+		VulkanApp::Get().Shutdown(g_Registry);
+
+		g_Registry.reset();
 	}
 }

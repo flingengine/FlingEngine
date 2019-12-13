@@ -53,6 +53,8 @@ namespace Sandbox
 
 		void ToggleRotation();
 
+		void OnTestSpawn();
+
 		void OnToggleMoveLights();
 
 		void ToggleLua();

@@ -1,8 +1,5 @@
 {
-    "name" : "Bronze Material",
-
-    "ShaderProgram" : "PBR",
-    
+    "name" : "Bronze Material",    
     "albedo" : "Textures/Bronze/bronze_A.png",
     "normal" : "Textures/Bronze/bronze_N.png",
     "metal" : "Textures/Bronze/bronze_M.png",

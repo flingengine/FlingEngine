@@ -1,21 +1,22 @@
 #include "HDRImage.h"
 
 #include "FlingVulkan.h"
-
-#include "Renderer.h"
+#include "LogicalDevice.h"
+#include "PhyscialDevice.h"
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
 #include "Buffer.h"
 
 namespace Fling
 {
-    std::shared_ptr<Fling::HDRImage> HDRImage::Create(Guid t_ID, void* t_Data)
+    std::shared_ptr<Fling::HDRImage> HDRImage::Create(Guid t_ID, LogicalDevice* t_dev, void* t_Data)
     {
-        return ResourceManager::LoadResource<Fling::HDRImage>(t_ID, t_Data);
+        return ResourceManager::LoadResource<Fling::HDRImage>(t_ID, t_dev, t_Data);
     }
 
-    HDRImage::HDRImage(Guid t_ID, void* t_Data)
+    HDRImage::HDRImage(Guid t_ID, LogicalDevice* t_dev, void* t_Data)
         : Resource(t_ID)
+		, m_Device(t_dev)
     {
         LoadVulkanImage();
 
@@ -61,6 +62,7 @@ namespace Fling
         }
 
         GraphicsHelpers::CreateVkImage(
+			m_Device->GetVkDevice(),
             m_Width,
             m_Height,
             m_MipLevels,
@@ -155,7 +157,7 @@ namespace Fling
     void HDRImage::GenerateMipMaps(VkFormat t_ImageFormat)
     {
         // Check that we have linear filtering support on this device
-        VkFormatProperties formatProperties = Renderer::Get().GetPhysicalDevice()->GetFormatProperties(t_ImageFormat);
+        VkFormatProperties formatProperties = m_Device->GetPhysicalDevice()->GetFormatProperties(t_ImageFormat);
 
         if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
         {
@@ -255,7 +257,7 @@ namespace Fling
         // We don't need this stbi pixel data any more
         stbi_image_free(m_PixelData);
 
-        VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+        VkDevice Device = m_Device->GetVkDevice();
 
         if (Device == VK_NULL_HANDLE)
         {

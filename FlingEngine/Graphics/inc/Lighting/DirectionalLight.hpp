@@ -11,14 +11,12 @@ namespace Fling
      */
     struct alignas(16) DirectionalLight
     {
-        glm::vec4 DiffuseColor { 1.0f };
-        glm::vec4 Direction { 1.0f, -1.0f, -0.5f, 1.0f  };
-		float Intensity = 1.0f;
+        alignas(16) glm::vec4 DiffuseColor { 1.0f };
+        alignas(16) glm::vec4 Direction { 1.0f, -1.0f, -0.5f, 1.0f  };
+		alignas(4)  float Intensity = 1.0f;
 
         template<class Archive>
         void serialize(Archive & t_Archive);
-
-		static void DrawWidget(DirectionalLight& t_Light);
     };
 
      /** Serilazation to an archive */

@@ -1,12 +1,13 @@
 #include "pch.h"
 #include "MultiSampler.h"
-#include "Renderer.h"
 #include "GraphicsHelpers.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
-	Multisampler::Multisampler(VkSampleCountFlagBits t_SampleCount)
+	Multisampler::Multisampler(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount)
 		: m_SampleCountBits(t_SampleCount)
+		, m_Device(t_Dev)
 	{
 	}
 
@@ -19,8 +20,8 @@ namespace Fling
     void Multisampler::Create(VkExtent2D t_Extents, VkFormat t_Format)
     {
 		// t_Format should the same format as the swap chain
-
 		GraphicsHelpers::CreateVkImage(
+			m_Device->GetVkDevice(),
 			t_Extents.width,
 			t_Extents.height,
 			/* Mip levels */ 1,
@@ -54,24 +55,24 @@ namespace Fling
 
     void Multisampler::Release()
     {
-        VkDevice device = Renderer::Get().GetLogicalVkDevice();
-        if(m_ColorImage != VK_NULL_HANDLE)
-        {
-            vkDestroyImage(device, m_ColorImage, nullptr);
-            m_ColorImage = VK_NULL_HANDLE;
-        }
+		assert(false);
+        //if(m_ColorImage != VK_NULL_HANDLE)
+        //{
+        //    vkDestroyImage(device, m_ColorImage, nullptr);
+        //    m_ColorImage = VK_NULL_HANDLE;
+        //}
 
-        if(m_ColorImageView != VK_NULL_HANDLE)
-        {
-            vkDestroyImageView(device, m_ColorImageView, nullptr);
-            m_ColorImageView = VK_NULL_HANDLE;
-        }
+        //if(m_ColorImageView != VK_NULL_HANDLE)
+        //{
+        //    vkDestroyImageView(device, m_ColorImageView, nullptr);
+        //    m_ColorImageView = VK_NULL_HANDLE;
+        //}
 
-        if(m_ColorImageMemory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(device, m_ColorImageMemory, nullptr);
-            m_ColorImageMemory = VK_NULL_HANDLE;
-        }
+        //if(m_ColorImageMemory != VK_NULL_HANDLE)
+        //{
+        //    vkFreeMemory(device, m_ColorImageMemory, nullptr);
+        //    m_ColorImageMemory = VK_NULL_HANDLE;
+        //}
     }
 
     Multisampler::~Multisampler()

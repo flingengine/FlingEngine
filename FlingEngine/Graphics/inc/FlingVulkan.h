@@ -30,4 +30,10 @@ namespace Fling
     static const unsigned VULKAN_PUSH_CONSTANT_SIZE = 128;
     static const unsigned VULKAN_UBO_SIZE = 16 * 1024;
     static const unsigned VULKAN_NUM_SPEC_CONSTANTS = 8;
+
+	namespace VkConfig
+	{
+		static const int MAX_FRAMES_IN_FLIGHT = 2;
+	}
+
 }   // namespace Fling

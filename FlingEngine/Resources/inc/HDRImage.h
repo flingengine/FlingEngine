@@ -5,6 +5,7 @@
 
 namespace Fling
 {
+	class LogicalDevice;
     /**
      * @brief Loads image R16G16B16_SFLOAT file formats
      *  exmplae file format : .hdr
@@ -12,9 +13,9 @@ namespace Fling
     class HDRImage : public Resource
     {
     public:
-        static std::shared_ptr<Fling::HDRImage> Create(Guid t_ID, void* t_Data = nullptr);
+        static std::shared_ptr<Fling::HDRImage> Create(Guid t_ID, LogicalDevice* t_dev, void* t_Data = nullptr);
 
-        explicit HDRImage(Guid t_ID, void* t_Data = nullptr);
+        explicit HDRImage(Guid t_ID, LogicalDevice* t_dev, void* t_Data = nullptr);
         virtual ~HDRImage();
 
         FORCEINLINE UINT32 GetWidth() const { return m_Width; }
@@ -54,7 +55,7 @@ namespace Fling
         void CopyBufferToImage(VkBuffer t_Buffer);
 
         void GenerateMipMaps(VkFormat t_ImageFormat);
-
+		const LogicalDevice* m_Device;
         VkImage m_Image;
 
         VkImageView m_ImageView;

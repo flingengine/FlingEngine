@@ -1,0 +1,8 @@
+{
+    "name" : "Bronze Deferred Material",
+    
+    "albedo" : "Textures/Bronze/bronze_A.png",
+    "normal" : "Textures/Bronze/bronze_N.png",
+    "metal" : "Textures/Bronze/bronze_M.png",
+    "rough" : "Textures/Bronze/bronze_R.png" 
+}

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Shader.h"
-#include "Image.h"
+#include "Texture.h"
 #include "JsonFile.h"
-#include "ShaderPrograms/ShaderPrograms.h"
+#include "ShaderPrograms/ShaderProgram.h"
 
 namespace Fling
 {
@@ -12,10 +12,10 @@ namespace Fling
     */
     struct PBRTextures
     {
-        Image* m_AlbedoTexture        = nullptr;
-        Image* m_NormalTexture        = nullptr;
-        Image* m_RoughnessTexture    = nullptr;
-        Image* m_MetalTexture        = nullptr;
+        Texture* m_AlbedoTexture        = nullptr;
+        Texture* m_NormalTexture        = nullptr;
+        Texture* m_RoughnessTexture    = nullptr;
+        Texture* m_MetalTexture        = nullptr;
     };
 
     /**
@@ -26,14 +26,28 @@ namespace Fling
     {
         friend class Renderer;
     public:
+		enum class Type : UINT8
+		{
+			Default,
+			Cubemap,
+			Reflection,
+			Debug
+		};
 
         static std::shared_ptr<Fling::Material> Create(Guid t_ID);
 
+		static std::shared_ptr<Fling::Material> GetDefaultMat();
+
         explicit Material(Guid t_ID);
 
-        const PBRTextures& GetTexture() const { return m_Textures; }
+        const PBRTextures& GetPBRTextures() const { return m_Textures; }
 
-        const ShaderPrograms::ShaderProgramType GetShaderProgramType() { return m_ShaderProgram; }
+		Material::Type GetType() const { return m_Type; }
+
+		static Material::Type GetTypeFromStr(const std::string& t_Str);
+
+		static const std::string& GetStringFromType(const Material::Type);
+
     private:
 
         void LoadMaterial();
@@ -41,8 +55,11 @@ namespace Fling
         // Textures that this material uses
         PBRTextures m_Textures = {};
         
-        ShaderPrograms::ShaderProgramType m_ShaderProgram;
+		Material::Type m_Type = Type::Default;
 
-        float m_Shininiess = 0.5f;        
+        float m_Shininiess = 0.5f;
+
+		// A map of types to their parsed names
+		static std::unordered_map<std::string, Material::Type> TypeMap;
     };
 }   // namespace Fling

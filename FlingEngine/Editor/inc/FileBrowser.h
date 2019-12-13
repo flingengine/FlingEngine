@@ -2,9 +2,9 @@
 
 #include <string>
 #include <filesystem>
-
+#if WITH_IMGUI
 #include <imgui.h>
-
+#endif
 namespace Fling
 {
     class FileBrowser

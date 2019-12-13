@@ -17,18 +17,28 @@ namespace Fling
 		LoadMaterialFromPath(t_MaterialPath);
 	}
 
+	MeshRenderer::MeshRenderer(Model* t_Model, Material* t_Mat)
+		:m_Model(t_Model)
+		, m_Material(t_Mat)
+	{
+		if (!m_Material)
+		{
+			LoadMaterialFromPath("Materials/Default.mat");
+		}
+	}
+
+	MeshRenderer::~MeshRenderer()
+	{
+		//Release();
+	}
+
 	void MeshRenderer::Release()
 	{
-		for (Buffer* b : m_UniformBuffers)
+		if (m_UniformBuffer)
 		{
-			if (b)
-			{
-				delete b;
-				b = nullptr;
-			}
+			delete m_UniformBuffer;
+			m_UniformBuffer = nullptr;
 		}
-
-		m_UniformBuffers.clear();
 	}
 
 	bool MeshRenderer::operator==(const MeshRenderer& other) const
@@ -53,23 +63,4 @@ namespace Fling
 		m_Material = Material::Create(entt::hashed_string{ t_MatPath.c_str() }).get();
 		assert(m_Material);
 	}
-
-    void MeshRenderer::AssignShaderProgram(
-        MeshRenderer& t_MeshRender, 
-        entt::registry& t_Registry,
-        entt::entity& t_Entity)
-    {
-        switch (t_MeshRender.m_Material->GetShaderProgramType())
-        {
-        case ShaderPrograms::PBR:
-            t_Registry.assign_or_replace<entt::tag<HS("PBR")>>(t_Entity);
-            break;
-        case ShaderPrograms::Reflection:
-            t_Registry.assign_or_replace<entt::tag<HS("Reflection")>>(t_Entity);
-            break;
-        default:
-            F_LOG_ERROR("Shader program not supported");
-            assert("Shader program not supported");
-        }
-    }
 }   // namespace Fling

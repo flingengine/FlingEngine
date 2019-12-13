@@ -1,16 +1,24 @@
 #include "pch.h"
 #include "SwapChain.h"
-#include "Renderer.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
 #include "FlingWindow.h"
 
 namespace Fling
 {
-	Swapchain::Swapchain(const VkExtent2D& t_Extent)
+	Swapchain::Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface)
 		: m_Extents{ t_Extent }
+		, m_Device(t_Dev)
+		, m_PhysicalDevice(t_PhysDev)
+		, m_Surface(t_Surface)
 	{
+		assert(m_Device && m_PhysicalDevice && m_Surface);
 		Recreate(m_Extents);
+	}
+
+	Swapchain::~Swapchain()
+	{
+		Cleanup();
 	}
 
 	void Swapchain::Recreate(const VkExtent2D& t_Extent)
@@ -27,46 +35,50 @@ namespace Fling
 	
 	void Swapchain::Cleanup()
 	{
-		LogicalDevice* LogicalDevice = Renderer::Get().GetLogicalDevice();
-		assert(LogicalDevice);
-		VkDevice Device = LogicalDevice->GetVkDevice();
+		assert(m_Device);
+		VkDevice Device = m_Device->GetVkDevice();
 		
 		// Image views
 		for (size_t i = 0; i < m_ImageViews.size(); i++)
 		{
-			vkDestroyImageView(Device, m_ImageViews[i], nullptr);
+			if (m_ImageViews[i] != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(Device, m_ImageViews[i], nullptr);
+			}
 		}
 
-		vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
+		if (m_SwapChain != VK_NULL_HANDLE)
+		{
+			vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
+		}
 	}
 
 	SwapChainSupportDetails Swapchain::QuerySwapChainSupport()
 	{
 		SwapChainSupportDetails Details = {};
-		PhysicalDevice* t_PhysDevice = Renderer::Get().GetPhysicalDevice();
-		VkSurfaceKHR Surface = Renderer::Get().GetVkSurface();
 
-		if (t_PhysDevice)
+		if (m_PhysicalDevice)
 		{
-			VkPhysicalDevice PhysDevice = t_PhysDevice->GetVkPhysicalDevice();
+			assert(m_Surface);
+			VkPhysicalDevice PhysDevice = m_PhysicalDevice->GetVkPhysicalDevice();
 
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysDevice, Surface, &Details.Capabilities);
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysDevice, m_Surface, &Details.Capabilities);
 
 			UINT32 FormatCount = 0;
-			vkGetPhysicalDeviceSurfaceFormatsKHR(PhysDevice, Surface, &FormatCount, nullptr);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(PhysDevice, m_Surface, &FormatCount, nullptr);
 			if (FormatCount != 0)
 			{
 				Details.Formats.resize(FormatCount);
-				vkGetPhysicalDeviceSurfaceFormatsKHR(PhysDevice, Surface, &FormatCount, Details.Formats.data());
+				vkGetPhysicalDeviceSurfaceFormatsKHR(PhysDevice, m_Surface, &FormatCount, Details.Formats.data());
 			}
 
 			UINT32 PresentModeCount = 0;
-			vkGetPhysicalDeviceSurfacePresentModesKHR(PhysDevice, Surface, &PresentModeCount, nullptr);
+			vkGetPhysicalDeviceSurfacePresentModesKHR(PhysDevice, m_Surface, &PresentModeCount, nullptr);
 
 			if (PresentModeCount != 0)
 			{
 				Details.PresentModes.resize(PresentModeCount);
-				vkGetPhysicalDeviceSurfacePresentModesKHR(PhysDevice, Surface, &PresentModeCount, Details.PresentModes.data());
+				vkGetPhysicalDeviceSurfacePresentModesKHR(PhysDevice, m_Surface, &PresentModeCount, Details.PresentModes.data());
 			}
 		}
 
@@ -75,9 +87,7 @@ namespace Fling
 
 	void Swapchain::CreateResources()
 	{
-		VkSurfaceKHR Surface = Renderer::Get().GetVkSurface();
-		LogicalDevice* LogicalDev = Renderer::Get().GetLogicalDevice();
-		assert(LogicalDev);
+		assert(m_Device && m_Surface);
 
 		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport();
 		VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
@@ -96,7 +106,7 @@ namespace Fling
 
 		VkSwapchainCreateInfoKHR CreateInfo = {};
 		CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		CreateInfo.surface = Surface;
+		CreateInfo.surface = m_Surface;
 		CreateInfo.minImageCount = ImageCount;
 		CreateInfo.imageFormat = SwapChainSurfaceFormat.format;
 		CreateInfo.imageColorSpace = SwapChainSurfaceFormat.colorSpace;
@@ -105,8 +115,8 @@ namespace Fling
 		CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 		// Specify the handling of multiple queue families
-		UINT32 GraphicsFam = LogicalDev->GetGraphicsFamily();
-		UINT32 PresentFam = LogicalDev->GetPresentFamily();
+		UINT32 GraphicsFam = m_Device->GetGraphicsFamily();
+		UINT32 PresentFam = m_Device->GetPresentFamily();
 
 		UINT32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
 
@@ -130,21 +140,20 @@ namespace Fling
 		CreateInfo.clipped = VK_TRUE;
 		CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		if (vkCreateSwapchainKHR(LogicalDev->GetVkDevice(), &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
+		if (vkCreateSwapchainKHR(m_Device->GetVkDevice(), &CreateInfo, nullptr, &m_SwapChain) != VK_SUCCESS)
 		{
 			F_LOG_FATAL("Failed to create swap chain!");
 		}
 
 		// Get handles to the swap chain images
-		vkGetSwapchainImagesKHR(LogicalDev->GetVkDevice(), m_SwapChain, &ImageCount, nullptr);
+		vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &ImageCount, nullptr);
 		m_Images.resize(ImageCount);
-		vkGetSwapchainImagesKHR(LogicalDev->GetVkDevice(), m_SwapChain, &ImageCount, m_Images.data());
+		vkGetSwapchainImagesKHR(m_Device->GetVkDevice(), m_SwapChain, &ImageCount, m_Images.data());
 	}
 
 	void Swapchain::CreateImageViews()
 	{
-		LogicalDevice* LogicalDev = Renderer::Get().GetLogicalDevice();
-		assert(LogicalDev);
+		assert(m_Device);
 		m_ImageViews.resize(m_Images.size());
 
 		for (size_t i = 0; i < m_Images.size(); i++)
@@ -168,7 +177,7 @@ namespace Fling
 			createInfo.subresourceRange.baseArrayLayer = 0;
 			createInfo.subresourceRange.layerCount = 1;
 
-			if (vkCreateImageView(LogicalDev->GetVkDevice(), &createInfo, nullptr, &m_ImageViews[i]) != VK_SUCCESS)
+			if (vkCreateImageView(m_Device->GetVkDevice(), &createInfo, nullptr, &m_ImageViews[i]) != VK_SUCCESS)
 			{
 				F_LOG_FATAL("Failed to create image views!");
 			}
@@ -209,7 +218,9 @@ namespace Fling
 
 	VkResult Swapchain::AquireNextImage(const VkSemaphore& t_CompletedSemaphore)
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		assert(m_Device);
+
+		VkDevice Device = m_Device->GetVkDevice();
 		VkResult iRes = vkAcquireNextImageKHR(
 			Device, 
 			m_SwapChain, 

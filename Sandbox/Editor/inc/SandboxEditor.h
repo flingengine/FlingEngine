@@ -14,5 +14,9 @@ namespace Sandbox
 
     protected:
 
+		void OnLoadLevel(std::string t_FileName) override;
+
+		void OnSaveLevel(std::string t_FileName) override;
+
     };
 }   // namespace Sandbox

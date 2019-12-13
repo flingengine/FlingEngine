@@ -1,88 +1,63 @@
 #include "ShaderPrograms/ShaderProgramReflections.h"
 #include "GraphicsHelpers.h"
-#include "Renderer.h"
-#include "Cubemap.h"
 
 void Fling::ShaderProgramReflections::CreateDescriptorSets(
     MeshRenderer& t_MeshRend, 
     Lighting& t_Lighting, 
     VkDescriptorSetLayout t_DescriptorLayout)
 {
-    static VkDescriptorImageInfo skyboxImageInfo = Renderer::Get().GetSkybox()->GetImageInfo();
+	//const std::vector<VkImage> Images;
+ //   VkDevice Device = VK_NULL_HANDLE;
 
-    const std::vector<VkImage>& Images = Renderer::Get().GetSwapChain()->GetImages();
-    VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+ //   // Specify what descriptor pool to allocate from and how many
+ //   std::vector<VkDescriptorSetLayout> layouts(Images.size(), t_DescriptorLayout);
+ //   VkDescriptorSetAllocateInfo allocInfo = {};
+ //   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+ //   allocInfo.descriptorPool = VK_NULL_HANDLE;
+ //   allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
+ //   allocInfo.pSetLayouts = layouts.data();
 
-    // Specify what descriptor pool to allocate from and how many
-    std::vector<VkDescriptorSetLayout> layouts(Images.size(), t_DescriptorLayout);
-    VkDescriptorSetAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = t_MeshRend.m_DescriptorPool;
-    allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
-    allocInfo.pSetLayouts = layouts.data();
+ //   t_MeshRend.m_DescriptorSet.resize(Images.size());
 
-    t_MeshRend.m_DescriptorSets.resize(Images.size());
+ //   // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
+ //   if (vkAllocateDescriptorSets(Device, &allocInfo, t_MeshRend.m_DescriptorSet.data()) != VK_SUCCESS)
+ //   {
+ //       F_LOG_FATAL("Failed to allocate descriptor sets!");
+ //   }
 
-    // Sets will be cleaned up when the descriptor pool is, no need for an explicit free call in cleanup
-    if (vkAllocateDescriptorSets(Device, &allocInfo, t_MeshRend.m_DescriptorSets.data()) != VK_SUCCESS)
-    {
-        F_LOG_FATAL("Failed to allocate descriptor sets!");
-    }
+ //   for (size_t i = 0; i < Images.size(); ++i)
+ //   {
+ //       std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-    for (size_t i = 0; i < Images.size(); ++i)
-    {
-        std::vector<VkWriteDescriptorSet> descriptorWrites;
+ //       //VkWriteDescriptorSet uniformSet = Initializers::WriteDescriptorSetUniform(
+ //       //    t_MeshRend.m_UniformBuffer[i],
+ //       //    t_MeshRend.m_DescriptorSets[i],
+ //       //    0
+ //       //);
 
-        VkWriteDescriptorSet uniformSet = Initializers::WriteDescriptorSetUniform(
-            t_MeshRend.m_UniformBuffers[i],
-            t_MeshRend.m_DescriptorSets[i],
-            0
-        );
+ //       VkWriteDescriptorSet lightUniformSet = Initializers::WriteDescriptorSetUniform(
+ //           t_Lighting.m_LightingUBOs[i],
+ //           t_MeshRend.m_DescriptorSet[i],
+ //           2
+ //       );
 
-        VkWriteDescriptorSet lightUniformSet = Initializers::WriteDescriptorSetUniform(
-            t_Lighting.m_LightingUBOs[i],
-            t_MeshRend.m_DescriptorSets[i],
-            2
-        );
+ //       //VkWriteDescriptorSet skyboxImageSampelr = Initializers::WriteDescriptorSet(
+ //       //    t_MeshRend.m_DescriptorSets[i],
+ //       //    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+ //       //    4,
+ //       //    &skyboxImageInfo);
 
-        VkWriteDescriptorSet skyboxImageSampelr = Initializers::WriteDescriptorSet(
-            t_MeshRend.m_DescriptorSets[i],
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            4,
-            &skyboxImageInfo);
+ //       //descriptorWrites.push_back(uniformSet);
+ //       descriptorWrites.push_back(lightUniformSet);
+ //       //descriptorWrites.push_back(skyboxImageSampelr);
 
-        descriptorWrites.push_back(uniformSet);
-        descriptorWrites.push_back(lightUniformSet);
-        descriptorWrites.push_back(skyboxImageSampelr);
-
-        vkUpdateDescriptorSets(Device, static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-    }
+ //       vkUpdateDescriptorSets(Device, static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+ //   }
 }
 
 void Fling::ShaderProgramReflections::CreateDescriptorPool(MeshRenderer& t_MeshRend)
 {
-    const UINT32 SwapImageCount = static_cast<UINT32>(Renderer::Get().GetSwapChain()->GetImageCount());
-    VkDevice Device = Renderer::Get().GetLogicalVkDevice();
 
-    UINT32 DescriptorCount = 128;
-
-    std::vector<VkDescriptorPoolSize> poolSizes =
-    {
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount),
-        Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
-    };
-
-    VkDescriptorPoolCreateInfo poolInfo = {};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = SwapImageCount;
-
-    if (vkCreateDescriptorPool(Device, &poolInfo, nullptr, &t_MeshRend.m_DescriptorPool) != VK_SUCCESS)
-    {
-        F_LOG_FATAL("Failed to create descriptor pool");
-    }
 }
 
 void Fling::ShaderProgramReflections::BindCmdBuffer(
@@ -91,24 +66,24 @@ void Fling::ShaderProgramReflections::BindCmdBuffer(
     GraphicsPipeline* t_GraphicsPipeline, 
     UINT32 t_CommandBufferIndex)
 {
-    Fling::Model* Model = t_MeshRend.m_Model;
-    VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
-    VkDeviceSize offsets[1] = { 0 };
+    //Fling::Model* Model = t_MeshRend.m_Model;
+    //VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
+    //VkDeviceSize offsets[1] = { 0 };
 
-    // Bind the descriptor set for rendering a mesh using the dynamic offset
-    vkCmdBindDescriptorSets(
-        t_CommandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        t_GraphicsPipeline->GetPipelineLayout(),
-        0,
-        1,
-        &t_MeshRend.m_DescriptorSets[t_CommandBufferIndex],
-        0,
-        nullptr);
+    //// Bind the descriptor set for rendering a mesh using the dynamic offset
+    //vkCmdBindDescriptorSets(
+    //    t_CommandBuffer,
+    //    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    //    t_GraphicsPipeline->GetPipelineLayout(),
+    //    0,
+    //    1,
+    //    &t_MeshRend.m_DescriptorSet[t_CommandBufferIndex],
+    //    0,
+    //    nullptr);
 
-    vkCmdBindVertexBuffers(t_CommandBuffer, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(t_CommandBuffer, Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
-    vkCmdDrawIndexed(t_CommandBuffer, Model->GetIndexCount(), 1, 0, 0, 0);
+    //vkCmdBindVertexBuffers(t_CommandBuffer, 0, 1, vertexBuffers, offsets);
+    //vkCmdBindIndexBuffer(t_CommandBuffer, Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+    //vkCmdDrawIndexed(t_CommandBuffer, Model->GetIndexCount(), 1, 0, 0, 0);
 }
 
 void Fling::ShaderProgramReflections::UpdateUniformBuffer(
@@ -120,17 +95,16 @@ void Fling::ShaderProgramReflections::UpdateUniformBuffer(
     Camera* camera = t_Camera;
     Transform::CalculateWorldMatrix(transform);
 
-    // Calculate the world matrix based on the given transform
-    UboVS ubo = {};
-    ubo.Model = transform.GetWorldMat();
-    ubo.View = camera->GetViewMatrix();
-    ubo.Projection = camera->GetProjectionMatrix();
-    ubo.Projection[1][1] *= -1.0f;
-    ubo.CamPos = camera->GetPosition();
-    ubo.ObjPos = transform.GetPos();
+    //// Calculate the world matrix based on the given transform
+    //UboVS ubo = {};
+    //ubo.Model = transform.GetWorldMat();
+    //ubo.View = camera->GetViewMatrix();
+    //ubo.Projection = camera->GetProjectionMatrix();
+    //ubo.Projection[1][1] *= -1.0f;
+    //ubo.CamPos = camera->GetPosition();
+    //ubo.ObjPos = transform.GetPos();
 
-    // Copy the ubo to the GPU
-    Buffer* buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
-    memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
+    //// Copy the ubo to the GPU
+    //Buffer* buf = t_MeshRend.m_UniformBuffers[t_CurrentImage];
+    //memcpy(buf->m_MappedMem, &ubo, buf->GetSize());
 }
-

@@ -5,6 +5,8 @@
 
 namespace Fling
 {
+	class LogicalDevice;
+
     /**
      * @brief   A multi-sampler will allow us to enable MSAA. Should be recreated with the swap chain
      *          as it needs the most up to date extents
@@ -16,7 +18,7 @@ namespace Fling
 		/**
 		* @brief	Creates a multi-sampler with the set sample count, but does not create it
 		*/
-		Multisampler(VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
+		Multisampler(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
 
 		/**
 		* @brief	Initializes and creates this multi-sampler.
@@ -43,5 +45,6 @@ namespace Fling
 
 		/** The max sample count allowed on this device. Calculated in PhysicalDevice ctor */
         VkSampleCountFlagBits m_SampleCountBits = VK_SAMPLE_COUNT_1_BIT;
+		const LogicalDevice* m_Device;
     }; 
 }   // namespace Fling

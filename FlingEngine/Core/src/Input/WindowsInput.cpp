@@ -3,7 +3,7 @@
 #if FLING_WINDOWS
 
 #include "Input/WindowsInput.h"
-#include "Renderer.h"
+#include "VulkanApp.h"
 
 // Glfw -------------------
 #include <GLFW/glfw3.h>
@@ -166,7 +166,7 @@ namespace Fling
 		// Update imgui mouse events and timings
 		ImGuiIO& io = ImGui::GetIO();
 
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 
 		io.DisplaySize = ImVec2(
 			static_cast<float>(Window->GetWidth()),
@@ -182,7 +182,7 @@ namespace Fling
 
 	bool WindowsInput::IsKeyDownImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			// Check the old state of this input!
@@ -206,7 +206,7 @@ namespace Fling
 
 	bool WindowsInput::IsKeyHelpImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			// Check the old state of this input!
@@ -230,7 +230,7 @@ namespace Fling
 
 	bool WindowsInput::IsMouseButtonPressedImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			Key& CurKey = m_KeyMap.at(t_KeyName);
@@ -253,7 +253,7 @@ namespace Fling
 
 	bool WindowsInput::IsMouseDownImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			Key& CurKey = m_KeyMap.at(t_KeyName);
@@ -270,7 +270,7 @@ namespace Fling
 		MousePos CurPos = {};
 
 		// #TODO Get rid of this WINDOW DEPENDECNY!!!!
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			double xPos = 0.0;
