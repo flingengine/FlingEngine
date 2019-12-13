@@ -274,19 +274,19 @@ namespace Fling
 			// Add a cubemap
 		}
 
-		if (t_Conf & PipelineFlags::DEBUG)
+		/*if (t_Conf & PipelineFlags::DEBUG)
 		{
 			F_LOG_WARN("Build DEBUG render pipeline!");
 			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
 
 			std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);
-			std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, DebugVert, DebugFrag));
+			std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_frag.spv"), m_LogicalDevice);
+			Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_RenderPass, m_Camera, DebugVert, DebugFrag));
 
 			m_RenderPipelines.emplace_back(
 				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
 			);
-		}
+		}*/
 
 		if (t_Conf & PipelineFlags::IMGUI)
 		{

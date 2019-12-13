@@ -110,21 +110,23 @@ namespace Fling
 		}
 
 		VkDeviceSize offsets[1] = { 0 };
-		vkCmdBindDescriptorSets(
-			t_CmdBuf.GetHandle(), 
-			VK_PIPELINE_BIND_POINT_GRAPHICS, 
-			m_GraphicsPipeline->GetPipelineLayout(), 
-			0, 
-			1, 
-			&m_DescriptorSets[t_ActiveFrameInFlight],
-			0, 
-			nullptr
-		);
 
 		// Final composition as full screen quad
 		VkBuffer vertexBuffers[1] = { m_QuadModel->GetVertexBuffer()->GetVkBuffer() };
 
+		vkCmdBindDescriptorSets(
+			t_CmdBuf.GetHandle(),
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			m_GraphicsPipeline->GetPipelineLayout(),
+			0,
+			1,
+			&m_DescriptorSets[t_ActiveFrameInFlight],
+			0,
+			nullptr
+		);
+
 		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+
 		vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexBuffer()->GetVkBuffer(), 0, m_QuadModel->GetIndexType());
 		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexCount(), 1, 0, 0, 1);

@@ -55,8 +55,6 @@ namespace Fling
         // Textures that this material uses
         PBRTextures m_Textures = {};
         
-        ShaderProgramType m_ShaderProgramType;
-
 		Material::Type m_Type = Type::Default;
 
         float m_Shininiess = 0.5f;

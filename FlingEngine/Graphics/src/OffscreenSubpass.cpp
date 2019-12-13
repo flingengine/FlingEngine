@@ -406,11 +406,12 @@ namespace Fling
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
-		// #TODO If this mesh renderer material is set to deferred, then do this
-		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() == Material::Type::Default)
+		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Default)
 		{
-			t_Reg.assign<entt::tag<"Default"_hs >>(t_Ent);
+			return;
 		}
+
+		t_Reg.assign<entt::tag<"Default"_hs >>(t_Ent);
 
 		// Initialize the mesh renderer to have a descriptor pool that it can use
 		size_t ImageCount = m_SwapChain->GetImageCount();
@@ -427,8 +428,5 @@ namespace Fling
 		// I would love to create some descriptor sets here		
 		assert(m_OffscreenFrameBuf);
 		CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
-
-		// Put this mesh into a stack that needs to have their stuff built 
-		m_CommandBufferDirty = true;
 	}
 }   // namespace Fling

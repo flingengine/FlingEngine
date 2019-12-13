@@ -37,6 +37,11 @@ namespace Fling
             std::string PipelineName = m_JsonData.value("pipeline", "DEFAULT");
 			m_Type = GetTypeFromStr(PipelineName);
 
+			if (m_Type != Material::Type::Default)
+			{
+				return;
+			}
+
             // Load Textures -------------
             // Albedo
             const std::string& AlbedoPath = m_JsonData["albedo"];
