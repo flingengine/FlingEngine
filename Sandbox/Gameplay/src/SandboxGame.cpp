@@ -22,36 +22,36 @@
 
 namespace Sandbox
 {
-    using namespace Fling;
+	using namespace Fling;
 
-    void Game::Init(entt::registry& t_Reg)
-    {
-        // Lets create an entity! 
-        F_LOG_TRACE("Sandbox Game Init!");
+	void Game::Init(entt::registry& t_Reg)
+	{
+		// Lets create an entity! 
+		F_LOG_TRACE("Sandbox Game Init!");
 
 #if WITH_EDITOR
-        F_LOG_TRACE("Enable Editor!");
+		F_LOG_TRACE("Enable Editor!");
 #endif
 
 #if WITH_LUA
 		F_LOG_TRACE("Enable Lua!");
 #endif
 
-        // Temp saving and load functions
-        Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
+		// Temp saving and load functions
+		Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
 
-        // notify we want to quit when we press escape
-        Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
+		// notify we want to quit when we press escape
+		Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
-        // Toggle cursor/mouse visibility with M
-        Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
+		// Toggle cursor/mouse visibility with M
+		Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
 
-        // Toggle model rotation in Update
-        Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
-        Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
+		// Toggle model rotation in Update
+		Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
+		Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
 
-        // Switch between window modes 
+		// Switch between window modes 
 		//Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
 		//Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
 		//Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
@@ -60,58 +60,58 @@ namespace Sandbox
 		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
 #endif
 
-        //LightingTest(t_Reg);
-        //OnLoadInitated();
-        GenerateTestMeshes(t_Reg);
+		LightingTest(t_Reg);
+		//OnLoadInitated();
+		//GenerateTestMeshes(t_Reg);
 		//ScriptingTest(t_Reg);
 
-        SetWindowIcon();
-    }
+		SetWindowIcon();
+	}
 
-    void Game::Shutdown(entt::registry& t_Reg)
-    {
-        F_LOG_TRACE("Sandbox Game Shutdown!");
-    }
+	void Game::Shutdown(entt::registry& t_Reg)
+	{
+		F_LOG_TRACE("Sandbox Game Shutdown!");
+	}
 
-    void Game::OnQuitPressed()
-    {
-        F_LOG_TRACE("The Sandbox game wants to quit!");
-        m_WantsToQuit = true;
-    }
+	void Game::OnQuitPressed()
+	{
+		F_LOG_TRACE("The Sandbox game wants to quit!");
+		m_WantsToQuit = true;
+	}
 
-    void Game::Update(entt::registry& t_Reg, float DeltaTime)
-    {
-        if (m_DoRotations)
-        {
-            glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
+	void Game::Update(entt::registry& t_Reg, float DeltaTime)
+	{
+		if (m_DoRotations)
+		{
+			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
-            // For each active mesh renderesr
-            t_Reg.group<Transform>(entt::get<Rotator>).each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
-            {
-                const glm::vec3& curRot = t_Trans.GetRotation();
-                t_Trans.SetRotation(curRot + RotOffset);
-            });
-        }
+			// For each active mesh renderer
+			t_Reg.group<Transform>(entt::get<Rotator>).each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
+				{
+					const glm::vec3& curRot = t_Trans.GetRotation();
+					t_Trans.SetRotation(curRot + RotOffset);
+				});
+		}
 
-        if (m_MovePointLights)
-        {
-            t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
-            {
-                glm::vec3 curPos = t_Trans.GetPos();
+		if (m_MovePointLights)
+		{
+			t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
+				{
+					glm::vec3 curPos = t_Trans.GetPos();
 
-                glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
+					glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
 
-                // Move in a direction between two points and the speed
-                if(glm::length(DistanceToTarget) <= 0.5f)
-                {
-                    t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
-                }
+					// Move in a direction between two points and the speed
+					if (glm::length(DistanceToTarget) <= 0.5f)
+					{
+						t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
+					}
 
-                // Lerp towards the target position
-                glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos,  t_Mover.Speed * DeltaTime);
-                t_Trans.SetPos(newPos);
-            });
-        }
+					// Lerp towards the target position
+					glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos, t_Mover.Speed * DeltaTime);
+					t_Trans.SetPos(newPos);
+				});
+		}
 
 #if WITH_LUA
 		if (m_RunLua)
@@ -119,43 +119,43 @@ namespace Sandbox
 			LuaManager::Get().Tick(DeltaTime);
 		}
 #endif
-    }
+	}
 
-    void Game::LightingTest(entt::registry& t_Reg)
-    {
-        auto AddModel = [&](INT32 t_Itr, 
+	void Game::LightingTest(entt::registry& t_Reg)
+	{
+		auto AddModel = [&](INT32 t_Itr,
 			const std::string& t_Model,
-			const std::string& t_Mat, 
-			const glm::vec3 t_Scale = glm::vec3(1.0f), 
+			const std::string& t_Mat,
+			const glm::vec3 t_Scale = glm::vec3(1.0f),
 			const glm::vec3 t_Rot = glm::vec3(0.0f))
-        {
-            entt::entity e0 = t_Reg.create();
-            t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
+		{
+			entt::entity e0 = t_Reg.create();
+			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
 			t_Reg.assign<Rotator>(e0);
-            Transform& t0 = t_Reg.assign<Transform>(e0);
-            t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
+			Transform& t0 = t_Reg.assign<Transform>(e0);
+			t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
 			t0.SetRotation(t_Rot);
-            t0.SetScale(t_Scale);
-        };
+			t0.SetScale(t_Scale);
+		};
 
-        auto AddRandomPointLight = [&]()
-        {
-            entt::entity e0 = t_Reg.create();
-            PointLight& Light = t_Reg.assign<PointLight>(e0);
-            Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
-            Mover& m0 = t_Reg.assign<Mover>(e0);
+		auto AddRandomPointLight = [&]()
+		{
+			entt::entity e0 = t_Reg.create();
+			PointLight& Light = t_Reg.assign<PointLight>(e0);
+			Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
+			Mover& m0 = t_Reg.assign<Mover>(e0);
 
-            // The min and max bounds of our little demo
-            glm::vec3 min = { -15.0f, 0.2f, 15.0f };
+			// The min and max bounds of our little demo
+			glm::vec3 min = { -15.0f, 0.2f, 15.0f };
 			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
-            m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
-            
-            Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
-            Light.Intensity = 5.0f;
-            Light.Range = 3.0f;
+			m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
 
-            t0.SetPos(Fling::Random::GetRandomVec3(min, max));
-        };
+			Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
+			Light.Intensity = 5.0f;
+			Light.Range = 3.0f;
+
+			t0.SetPos(Fling::Random::GetRandomVec3(min, max));
+		};
 
 		auto AddFloor = [&](
 			const std::string& t_Model,
@@ -216,82 +216,13 @@ namespace Sandbox
 				{
 					MatPath = "Materials/DeferredBronzeMat.mat";
 				}
-            Mover& m0 = t_Reg.assign<Mover>(e0);
-
-            Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
-            Light.Intensity = 100.0f;
-            Light.Range = 100.0f;
-
-            t0.SetPos(t_Pos);
-        };
-
-        auto AddRigidBody = [&](entt::entity& e0, int x)
-        {
-
-            if (x % 2 == 0)
-            {
-                auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
-                boxCollider.SetBoxCollider({ .50f, .50f, .50f });
-
-                auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
-                
-                //rigidbody.SetLinearVelocity(btVector3(0.0f, -10.0f, 0.0f));
-            }
-            else
-            {
-                auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
-                boxCollider.SetBoxCollider({ .50f, .50f, .50f });
-
-                auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
-
-                //rigidbody.SetAngularVelocity(btVector3(0.0f, 10.0f, 0.0f));
-                //rigidbody.SetMass(0.0f);
-            }
-
-            //rigidbody.SetCollisionShape(boxCollider.m_BtBoxCollider);
-        };
-
-        auto AddGroundRigidBody = [&](entt::entity& e0)
-        {
-            auto& boxCollider = t_Reg.assign<Components::BoxCollider>(e0);
-            boxCollider.SetBoxCollider({ 50.0f, .50f, 50.0f });
-
-            auto& rigidbody = t_Reg.assign<Components::Rigidbody>(e0, boxCollider.m_BtBoxCollider);
-
-            //rigidbody.SetLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
-            rigidbody.SetMass(10000000.0f);
-            rigidbody.SetGravity({ 0.0f, 0.0f, 0.0f });
-        };
-
-        float Width = 2.0f;
-        //AddPointLight(glm::vec3(+0.0f, +0.0f, +Width), glm::vec3(1.0f, 0.0f, 0.0f));
-        //AddPointLight(glm::vec3(+0.0f, +0.0f, -Width), glm::vec3(1.0f, 1.0f, 0.0f));
-
-        //AddPointLight(glm::vec3(+0.0f, +Width, +0.0f), glm::vec3(0.0f, 1.0f, 1.0f));
-        //AddPointLight(glm::vec3(+0.0f, -Width, +0.0f), glm::vec3(1.0f, 0.0f, 1.0f));
-
-
-        auto AddDirLight = [&](glm::vec3 t_Dir, glm::vec3 t_Color)
-        {
-            entt::entity e0 = t_Reg.create();
-            DirectionalLight& Light = t_Reg.assign<DirectionalLight>(e0);
-            Light.Direction = glm::vec4(t_Dir, 1.0f);
-            Light.DiffuseColor = glm::vec4(t_Color, 1.0f);
-        };
-
-        // Directional Lights
-        AddDirLight(glm::vec3(+1.0f, -1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
-        AddDirLight(glm::vec3(+1.0f, +1.0f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
-        AddDirLight(glm::vec3(-1.0f, -1.0f, +0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
-        AddDirLight(glm::vec3(-1.0f, +1.0f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
-
 
 				// Set the model -------------
 				if (i == 1)
 				{
 					ModelPath = "Models/cube.obj";
 				}
-				else if(i == 2)
+				else if (i == 2)
 				{
 					ModelPath = "Models/cone.obj";
 				}
@@ -302,7 +233,6 @@ namespace Sandbox
 				else if (i == 4)
 				{
 					ModelPath = "Models/torus.obj";
-                        t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj", "Materials/Bronze.mat");
 				}
 				else
 				{
@@ -315,13 +245,11 @@ namespace Sandbox
 				Transform& t0 = t_Reg.assign<Transform>(e0);
 
 				t0.SetPos(
-					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
+					glm::vec3((-(float)(GridSize / 2) + ((float)i * Spacing)), 0.0f, -(float)(GridSize / 2) + float(j) * Spacing)
 				);
-                    t.SetRotation({ 0.0f, 45.0f, 0.0f });
-                    AddRigidBody(e0, x);
 			}
 		}
-    }
+	}
 
 	void Game::ScriptingTest(entt::registry& t_Reg)
 	{
@@ -342,39 +270,39 @@ namespace Sandbox
 #endif
 	}
 
-    void Game::ToggleCursorVisibility()
-    {
+	void Game::ToggleCursorVisibility()
+	{
 		// You have to include VulkanApp for this
-        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-        if (CurrentWindow)
-        {
-            CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
-        }
-    }
+		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
+		}
+	}
 
-    void Game::OnToggleMoveLights()
-    {
-        m_MovePointLights = !m_MovePointLights;
-    }
+	void Game::OnToggleMoveLights()
+	{
+		m_MovePointLights = !m_MovePointLights;
+	}
 
 	void Game::ToggleLua()
 	{
 		m_RunLua = !m_RunLua;
 	}
 
-    void Game::SetWindowIcon()
-    {
-        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-        if (CurrentWindow)
-        {
-            CurrentWindow->SetWindowIcon("Icons/Fling_Logo.png"_hs);
-        }
-    }
+	void Game::SetWindowIcon()
+	{
+		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
+		if (CurrentWindow)
+		{
+			CurrentWindow->SetWindowIcon("Icons/Fling_Logo.png"_hs);
+		}
+	}
 
-    void Game::ToggleRotation()
-    {
-        m_DoRotations = !m_DoRotations;
-    }
+	void Game::ToggleRotation()
+	{
+		m_DoRotations = !m_DoRotations;
+	}
 
 	void Game::OnTestSpawn()
 	{
@@ -391,11 +319,11 @@ namespace Sandbox
 		F_LOG_TRACE("Spawn a sphere to the left!");
 	}
 
-    void Game::PrintFPS() const
-    {
-        float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
-        F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
-    }
+	void Game::PrintFPS() const
+	{
+		float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
+		F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
+	}
 
 	void Game::SetWindowFullscreen()
 	{
