@@ -40,3 +40,6 @@
 [submodule "external/bullet3"]
 	path = external/bullet3
 	url = https://github.com/flingengine/bullet3.git
+[submodule "external/sol2"]
+	path = external/sol2
+	url = https://github.com/ThePhD/sol2.git

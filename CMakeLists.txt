@@ -12,6 +12,8 @@ OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths t
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
 
+OPTION (WITH_LUA_FLAG "WITH_LUA_FLAG will enable or disable the ability to use Lua scripting in the engine" ON)
+
 # We can't have the editor without ImGUI!
 IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     SET( WITH_EDITOR_FLAG OFF )
@@ -22,6 +24,7 @@ message( STATUS "----- Build Config ----" )
 message( STATUS "Compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}" )
 message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
+message( STATUS "WITH_LUA_FLAG=${WITH_LUA_FLAG}")
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
 
 # set the flags to 0 or 1 respectively for ImGUI and the Editor
@@ -35,6 +38,13 @@ IF( WITH_EDITOR_FLAG )
     ADD_DEFINITIONS ( -DWITH_EDITOR=1 )
 else()
     ADD_DEFINITIONS ( -DWITH_EDITOR=0 )
+endif()
+
+# set the lua flag to 0 or 1
+IF( WITH_LUA_FLAG )
+	ADD_DEFINITIONS ( -DWITH_LUA=1 )
+else()
+	ADD_DEFINITIONS ( -DWITH_LUA=0 )
 endif()
 
 IF( DEFINE_SHIPPING )
@@ -56,6 +66,10 @@ message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
 include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
 include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
+
+if( WITH_LUA_FLAG )
+include(FindLua53)
+endif()
 
 message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 
@@ -137,6 +151,13 @@ include_directories( external/json/single_include )
 include_directories( external/stb )
 include_directories( external/tinyobjloader )
 include_directories( external/cereal/include )
+
+# Lua
+if( WITH_LUA_FLAG )
+include_directories( external/sol2/include )
+include_directories( external/lua53/include )
+include_directories( external/lua53/lib )
+endif()
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

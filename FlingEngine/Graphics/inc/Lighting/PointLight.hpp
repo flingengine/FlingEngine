@@ -11,7 +11,6 @@ namespace Fling
      */
     struct alignas(16) PointLight
     {
-		friend class Renderer;
     public:
         /**
          * @brief Diffuse color of this point light, RBA on a scale of 0.0 to 1.0

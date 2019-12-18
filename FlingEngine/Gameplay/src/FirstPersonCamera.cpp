@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "Renderer.h"
+#include "VulkanApp.h"
 #include "FirstPersonCamera.h"
 #include "FlingMath.h"
 
@@ -114,8 +114,8 @@ namespace Fling
 		MousePos CurMousePos = Input::GetMousePos();
 
 		//Normalize screen coordinates 
-		CurMousePos.X = static_cast<float>(CurMousePos.X / Renderer::Get().GetCurrentWindow()->GetWidth());
-		CurMousePos.Y = static_cast<float>(CurMousePos.Y / Renderer::Get().GetCurrentWindow()->GetHeight());
+		CurMousePos.X = static_cast<float>(CurMousePos.X / VulkanApp::Get().GetCurrentWindow()->GetWidth());
+		CurMousePos.Y = static_cast<float>(CurMousePos.Y / VulkanApp::Get().GetCurrentWindow()->GetHeight());
 
 		if (m_IsRotating)
 		{

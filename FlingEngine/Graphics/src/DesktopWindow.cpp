@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "DesktopWindow.h"
-#include "Renderer.h"
+#include "Texture.h"
 #include "FlingConfig.h"
 
 namespace Fling
@@ -29,7 +29,6 @@ namespace Fling
 
 	void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
 	{
-		Renderer::Get().SetFrameBufferHasBeenResized(true);
 	}
 
 	void DesktopWindow::CreateSurface(void* t_GraphicsInstance, void* t_SurfData)
@@ -118,7 +117,7 @@ namespace Fling
 	void DesktopWindow::SetWindowIcon(Guid t_ID)
 	{
 		// Load an image 
-		std::shared_ptr<Image> Icon = Image::Create(t_ID);
+		std::shared_ptr<Texture> Icon = Texture::Create(t_ID);
 		assert(Icon);
 
 		// Set the Pixel data for this image

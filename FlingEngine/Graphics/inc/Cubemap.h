@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Model.h"
-#include "Image.h"
+#include "Texture.h"
 #include "FlingVulkan.h"
 #include "Buffer.h"
 #include "FlingTypes.h"
@@ -15,6 +15,8 @@
 
 namespace Fling
 {
+	class LogicalDevice;
+
     class Cubemap
     {
         public:
@@ -28,7 +30,7 @@ namespace Fling
                 Guid t_VertexShader,
                 Guid t_FragShader,
                 VkRenderPass t_RenderPass,
-                VkDevice t_LogicalDevice);
+                LogicalDevice* t_LogicalDevice);
 
             Cubemap(
                 Guid t_CubeMap_ID,
@@ -96,7 +98,7 @@ namespace Fling
 
             void SetupDescriptors();
 
-            std::vector<Image> m_cubeMapImages;
+            std::vector<Texture> m_cubeMapImages;
             std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
 
             VkImage m_Image;
@@ -110,7 +112,7 @@ namespace Fling
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
             VkRenderPass m_RenderPass;
-            VkDevice m_Device;
+            LogicalDevice* m_Device;
             VkDescriptorBufferInfo m_UniformBufferDescriptor;
 
             VkDeviceSize m_ImageSize;

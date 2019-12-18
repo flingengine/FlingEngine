@@ -21,7 +21,9 @@ namespace Fling
 
         MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
-        ~MeshRenderer() = default;
+		MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
+
+		~MeshRenderer();
 
         /** Pointer to the actual model  */
         Model* m_Model = nullptr;
@@ -30,10 +32,9 @@ namespace Fling
         Material* m_Material = nullptr;
 
         /** We need a uniform buffer per-swap chain image */
-        std::vector<Buffer*> m_UniformBuffers {};
+        Buffer* m_UniformBuffer = nullptr;
 
-        std::vector<VkDescriptorSet> m_DescriptorSets;
-        VkDescriptorPool m_DescriptorPool;
+        VkDescriptorSet m_DescriptorSet  = VK_NULL_HANDLE;
 
         void Release();
 
@@ -49,11 +50,6 @@ namespace Fling
         void LoadModelFromPath(const std::string t_MeshPath);
 
         void LoadMaterialFromPath(const std::string t_MatPath);
-
-        static void AssignShaderProgram(
-            MeshRenderer& t_MeshRender, 
-            entt::registry& t_registry, 
-            entt::entity& t_Entity);
     };
 
     /** Serialization to an Archive */

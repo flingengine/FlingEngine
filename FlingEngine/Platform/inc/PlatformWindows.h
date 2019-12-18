@@ -11,7 +11,7 @@
 #include <crtdbg.h> 
 
 #ifdef _MSC_VER
-#	define FLING_BREAK(...)	__debugbreak
+#	define FLING_BREAK(...)	__debugbreak()
 #else
 #	define FLING_BREAK(...)	asm("int $3")
 #endif	// _MSC_VER

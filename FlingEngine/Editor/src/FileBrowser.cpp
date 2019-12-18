@@ -1,3 +1,5 @@
+#if WITH_EDITOR
+
 #include "pch.h"
 #include "FileBrowser.h"
 
@@ -93,3 +95,5 @@ namespace Fling
 		}
 	}
 }
+
+#endif

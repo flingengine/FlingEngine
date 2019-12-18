@@ -1,8 +1,6 @@
 {
     "name" : "Paint Material",
     
-    "ShaderProgram" : "PBR",
-
     "albedo" : "Textures/Paint/paint_A.png",
     "normal" : "Textures/Paint/paint_N.png",
     "metal" : "Textures/Paint/paint_M.png",

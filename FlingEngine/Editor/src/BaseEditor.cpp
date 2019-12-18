@@ -2,7 +2,8 @@
 
 #include "pch.h"
 #include "BaseEditor.h"
-#include "Renderer.h"
+#include "VulkanApp.h"
+#include "PhyscialDevice.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
@@ -71,8 +72,6 @@ namespace Fling
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadModelFromPath(SelectedAsset);
-                    // Command buffers must be rebuilt after doing this
-                    Renderer::Get().SetFrameBufferHasBeenResized(true);
 
                     fileDialog.ClearSelected();
                 }
@@ -112,11 +111,31 @@ namespace Fling
                     //t_Reg.assign<Fling::MeshRenderer>(t_Entity, "Models/cube.obj");
                     auto& meshRender = t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
 
-                    // Command buffers must be rebuilt after doing this
-                    //Renderer::Get().SetFrameBufferHasBeenResized(true);
-
                     fileDialog.ClearSelected();
                 }
+
+				// Material type --------
+
+				const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS" };
+				static const char* current_item = NULL;
+
+				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+				{
+					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+					{
+						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(items[n], is_selected))
+						{
+							current_item = items[n];
+							if (is_selected)
+							{
+								ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+
+							}
+						}
+					}
+					ImGui::EndCombo();
+				}
             }
         }
     }
@@ -350,7 +369,9 @@ namespace Fling
 
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-        VkPhysicalDeviceProperties props = Renderer::Get().GetPhysicalDevice()->GetDeviceProps();
+		PhysicalDevice* PhysDev = VulkanApp::Get().GetPhysicalDevice();
+		assert(PhysDev);
+        VkPhysicalDeviceProperties props = PhysDev->GetDeviceProps();
         ImGui::Text("Device: %s", props.deviceName);
 
         // Update fps graph

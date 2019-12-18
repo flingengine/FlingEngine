@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "Buffer.h"
 #include "GraphicsHelpers.h"
-#include "Renderer.h"	// Needed to be able to get all the graphics devices and family information
+#include "VulkanApp.h"	// #TODO Pass in the devices by arg and not using this singleton
+#include "LogicalDevice.h"
+#include "PhyscialDevice.h"
 
 namespace Fling
 {
@@ -42,14 +44,19 @@ namespace Fling
 
 	VkResult Buffer::MapMemory(VkDeviceSize t_Size, VkDeviceSize t_Offset)
 	{
-		return vkMapMemory(Renderer::Get().GetLogicalVkDevice(), m_BufferMemory, t_Offset, t_Size, 0, &m_MappedMem);
+		LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+		assert(Dev);
+		VkDevice Device = Dev->GetVkDevice();
+		return vkMapMemory(Device, m_BufferMemory, t_Offset, t_Size, 0, &m_MappedMem);
 	}
 
 	void Buffer::UnmapMemory()
 	{
 		if (m_MappedMem)
 		{
-			VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+			VkDevice Device = Dev->GetVkDevice();			
 			vkUnmapMemory(Device, m_BufferMemory);
 			m_MappedMem = nullptr;
 		}
@@ -62,8 +69,13 @@ namespace Fling
 		bool  t_unmapBuffer,
 		const void * t_Data)
 	{
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-		VkPhysicalDevice PhysicalDevice = Renderer::Get().GetPhysicalVkDevice();
+		LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+		assert(Dev);
+		VkDevice Device = Dev->GetVkDevice();
+
+		PhysicalDevice* Phys = VulkanApp::Get().GetPhysicalDevice();
+		assert(Phys);
+		VkPhysicalDevice PhysicalDevice = Phys->GetVkPhysicalDevice();
 
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -139,7 +151,10 @@ namespace Fling
 
 	void Buffer::Flush(VkDeviceSize t_size, VkDeviceSize t_offset)
 	{
-		VkDevice LogicalDevice = Renderer::Get().GetLogicalVkDevice();
+		LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+		assert(Dev);
+		VkDevice LogicalDevice = Dev->GetVkDevice();
+
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		mappedRange.memory = m_BufferMemory;
@@ -156,7 +171,9 @@ namespace Fling
 		// Free up the VK memory that this buffer uses
 		UnmapMemory();
 		
-		VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+		LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+		assert(Dev);
+		VkDevice Device = Dev->GetVkDevice();
 		if (m_Buffer)
 		{
 			vkDestroyBuffer(Device, m_Buffer, nullptr);

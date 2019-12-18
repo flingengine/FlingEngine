@@ -4,6 +4,9 @@
 
 namespace Fling
 {
+	class PhysicalDevice;
+	class Instance;
+
     /**
      * @brief A logical device represents the application view of the device
      */
@@ -22,6 +25,9 @@ namespace Fling
 
 		const VkQueueFlags& GetSupportedQueues() const { return m_SupportedQueues; }
 
+		const PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+		const Instance* GetInstance() const { return m_Instance; }
+
 		UINT32 GetGraphicsFamily() const { return m_GraphicsFamily; }
 		UINT32 GetPresentFamily() const { return m_PresentFamily; }
 
@@ -33,8 +39,8 @@ namespace Fling
         /** The vulkan logical device */
         VkDevice m_Device = VK_NULL_HANDLE;
 
-        const class Instance* m_Instance;
-		const class PhysicalDevice* m_PhysicalDevice;
+        const Instance* m_Instance;
+		const PhysicalDevice* m_PhysicalDevice;
 		const VkSurfaceKHR m_Surface;
         
         /** Handle for the graphics queue */

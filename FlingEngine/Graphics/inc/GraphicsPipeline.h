@@ -43,11 +43,8 @@ namespace Fling
 
         ~GraphicsPipeline();
 
-    private:
         void CreateAttributes(Multisampler* t_Sampler);
         
-        std::vector<VkShaderModule> m_Modules;
-        std::vector<VkPipelineShaderStageCreateInfo> m_Stages;
         std::vector<Shader*> m_Shaders;
 
         VkDevice m_Device;
@@ -63,11 +60,13 @@ namespace Fling
         VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
         VkPipelineBindPoint m_PipelineBindPoint;
 
+		VkGraphicsPipelineCreateInfo m_PipelineCreateInfo = {};
+
         VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineVertexInputStateCreateInfo m_VertexInputStateCreateInfo = {};
         VkPipelineInputAssemblyStateCreateInfo m_InputAssemblyState = {};
         VkPipelineRasterizationStateCreateInfo m_RasterizationState = {};
-        std::array<VkPipelineColorBlendAttachmentState, 1> m_ColorBlendAttachmentStates;
+        std::vector<VkPipelineColorBlendAttachmentState> m_ColorBlendAttachmentStates;
         VkPipelineColorBlendStateCreateInfo m_ColorBlendState = {};
         VkPipelineDepthStencilStateCreateInfo m_DepthStencilState = {};
         VkPipelineViewportStateCreateInfo m_ViewportState = {};

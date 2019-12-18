@@ -43,6 +43,8 @@ namespace Fling
 
 		VkSampleCountFlagBits GetMaxUsableSampleCount();
 
+		VkBool32 GetSupportedDepthFormat(VkFormat* depthFormat) const;
+
     private:
 
 		/**

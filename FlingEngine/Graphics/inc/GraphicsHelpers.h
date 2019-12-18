@@ -3,7 +3,7 @@
 #include "FlingVulkan.h"
 #include "FlingTypes.h"
 #include "File.h"
-#include "Image.h"
+#include "Texture.h"
 #include "Buffer.h"
 
 #define VK_CHECK_RESULT(f)															\
@@ -37,6 +37,7 @@ namespace Fling
         void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             VkFormat t_Format,
@@ -48,9 +49,10 @@ namespace Fling
 			VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
-		VkSemaphore CreateSemaphore(VkDevice t_Dev);
-        
+		VkSemaphore CreateSemaphore(VkDevice t_Dev);       
+
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             UINT32 t_MipLevels,
@@ -163,6 +165,13 @@ namespace Fling
             const std::vector<VkDescriptorSetLayoutBinding>& t_bindings
         );
 
+		inline VkRenderPassBeginInfo RenderPassBeginInfo()
+		{
+			VkRenderPassBeginInfo renderPassBeginInfo{};
+			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			return renderPassBeginInfo;
+		}
+
         VkWriteDescriptorSet WriteDescriptorSetUniform(
             Buffer* t_Buffer,
             VkDescriptorSet t_DstSet,
@@ -171,7 +180,7 @@ namespace Fling
             VkDeviceSize t_Offset = 0);
 
         VkWriteDescriptorSet WriteDescriptorSetImage(
-            Image* t_Image,
+            Texture* t_Image,
             VkDescriptorSet t_DstSet,
             UINT32 t_Binding,
             UINT32 t_Set = 0,
@@ -234,6 +243,34 @@ namespace Fling
             VkColorComponentFlags t_colorWriteMask,
             VkBool32 t_blendEnable
         );
+
+		inline VkPipelineDepthStencilStateCreateInfo PipelineDepthStencilStateCreateInfo(
+			VkBool32 depthTestEnable,
+			VkBool32 depthWriteEnable,
+			VkCompareOp depthCompareOp)
+		{
+			VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo{};
+			pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			pipelineDepthStencilStateCreateInfo.depthTestEnable = depthTestEnable;
+			pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWriteEnable;
+			pipelineDepthStencilStateCreateInfo.depthCompareOp = depthCompareOp;
+			pipelineDepthStencilStateCreateInfo.front = pipelineDepthStencilStateCreateInfo.back;
+			pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+			return pipelineDepthStencilStateCreateInfo;
+		}
+
+		inline VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
+			const VkDynamicState* pDynamicStates,
+			uint32_t dynamicStateCount,
+			VkPipelineDynamicStateCreateFlags flags = 0)
+		{
+			VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};
+			pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			pipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
+			pipelineDynamicStateCreateInfo.dynamicStateCount = dynamicStateCount;
+			pipelineDynamicStateCreateInfo.flags = flags;
+			return pipelineDynamicStateCreateInfo;
+		}
 
         VkPipelineDepthStencilStateCreateInfo DepthStencilState(
             VkBool32 t_depthTestEnable,

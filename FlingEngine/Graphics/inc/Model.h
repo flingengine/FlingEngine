@@ -18,11 +18,19 @@ namespace Fling
 
 		static std::shared_ptr<Fling::Model> Create(Guid t_ID);
 
+		/** Creates a quad primitive model */
+		static std::shared_ptr<Fling::Model> Quad();
+
 		/**
 		 * @brief	Construct a new model object
 		 * @param t_ID              The GUID that represents the file path to this model
 		 */
-		explicit Model(Guid t_ID);
+		Model(Guid t_ID);
+
+		/**
+		 * @param	t_ID The GUID that represents a unique name for this model. It's up to the user to ensure uniqueness
+		 */
+		Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<UINT32> t_Indecies);
 
 		~Model();
 
@@ -35,12 +43,11 @@ namespace Fling
 		FORCEINLINE UINT32 GetIndexCount() const { return static_cast<UINT32>(m_Indices.size()); }
 		FORCEINLINE UINT32 GetVertexCount() const { return static_cast<UINT32>(m_Verts.size()); }
 
-		static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
-
-		// Cadds bind commands to vertex and index buffers 
-		bool CmdRender(const VkCommandBuffer& t_CmdBuf) const;
+		constexpr static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
 	private:
+
+		void CreateBuffers();
 
 		static void CalculateVertexTangents(Vertex* verts, UINT32 numVerts, UINT32* indices, UINT32 numIndices);
 
