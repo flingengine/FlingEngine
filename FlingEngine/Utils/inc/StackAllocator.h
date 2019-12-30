@@ -29,11 +29,11 @@ namespace Fling
          * @brief 
          * 
          * @param t_Size        Size of the block of memory 
-         * @param t_Alignment   Alignment of the element (perfer sizes are a power of 2)
-         * @param t_Offset      Offset of the element
+         * @param t_Alignment   Alignment of the element (Default = 8)
+         * @param t_Offset      Offset of the element (Default = 0)
          * @return void*        Obtain a chunk of memory of the size, alignment, and offset (asserts when we exceed preallocated size) 
          */
-        void* Allocate(size_t t_Size, size_t t_Alignment, size_t t_Offset);
+        void* Allocate(size_t t_Size, size_t t_Alignment = 0, size_t t_Offset = 0);
 
         /**
          * @brief Returns a block of memory to the stack in a LIFO manner 
