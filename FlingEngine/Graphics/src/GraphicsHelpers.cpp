@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "GraphicsHelpers.h"
-#include "Renderer.h"        // For getting devices/queue/command pools
+#include "VulkanApp.h"
+#include "LogicalDevice.h"
+#include "PhyscialDevice.h"
 
 namespace Fling
 {
@@ -62,8 +64,10 @@ namespace Fling
 
         VkCommandBuffer BeginSingleTimeCommands()
         {
-            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-            const VkCommandPool& CommandPool = Renderer::Get().GetCommandPool();
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+            VkDevice Device = Dev->GetVkDevice();
+            const VkCommandPool& CommandPool = VulkanApp::Get().GetCommandPool();
 
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -84,9 +88,11 @@ namespace Fling
 
         void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
         {
-            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-            VkCommandPool CmdPool = Renderer::Get().GetCommandPool();
-            VkQueue GraphicsQueue = Renderer::Get().GetGraphicsQueue();
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+            VkDevice Device = Dev->GetVkDevice();
+            VkCommandPool CmdPool = VulkanApp::Get().GetCommandPool();
+            VkQueue GraphicsQueue = Dev->GetGraphicsQueue();
 
             vkEndCommandBuffer(t_CommandBuffer);
 
@@ -102,6 +108,7 @@ namespace Fling
         }
 
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             VkFormat t_Format, 
@@ -109,13 +116,30 @@ namespace Fling
             VkImageUsageFlags t_Useage, 
             VkMemoryPropertyFlags t_Props, 
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+			VkSampleCountFlagBits t_NumSamples
         )
         {
-            CreateVkImage(t_Width, t_Height, 1, 1, 1, t_Format, t_Tiling, t_Useage, t_Props, 0, t_Image, t_Memory);
+            CreateVkImage(
+				t_Dev,
+				t_Width, 
+				t_Height, 
+				/* t_MipLevels */ 1, 
+				/* t_Depth */ 1, 
+				/* t_ArrayLayers */ 1, 
+				t_Format, 
+				t_Tiling, 
+				t_Useage, 
+				t_Props, 
+				/* t_flags */ 0, 
+				t_Image, 
+				t_Memory,
+				t_NumSamples
+			);
         }
 
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width, 
             UINT32 t_Height, 
             UINT32 t_MipLevels, 
@@ -127,10 +151,14 @@ namespace Fling
             VkMemoryPropertyFlags t_Props, 
             VkImageCreateFlags t_flags,
             VkImage& t_Image, 
-            VkDeviceMemory& t_Memory)
+            VkDeviceMemory& t_Memory, 
+            VkSampleCountFlagBits t_NumSamples
+            )
         {
-            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
-            VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
+            VkDevice Device = t_Dev;
+			PhysicalDevice* Phys = VulkanApp::Get().GetPhysicalDevice();
+			assert(Phys);
+            VkPhysicalDevice PhysDevice = Phys->GetVkPhysicalDevice();
 
             VkImageCreateInfo imageInfo = {};
             imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -147,7 +175,7 @@ namespace Fling
             imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             imageInfo.usage = t_Useage;
 
-            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.samples = t_NumSamples;
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = t_flags;
 
@@ -169,7 +197,7 @@ namespace Fling
                 F_LOG_FATAL("Failed to allocate image memory!");
             }
 
-            vkBindImageMemory(Device, t_Image, t_Memory, 0);
+            VK_CHECK_RESULT(vkBindImageMemory(Device, t_Image, t_Memory, 0));
         }
 
 		VkSemaphore CreateSemaphore(VkDevice t_Dev)
@@ -193,7 +221,9 @@ namespace Fling
             VkBorderColor t_borderColor, 
             VkSampler& t_sampler)
         {
-            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+			VkDevice Device = Dev->GetVkDevice();
 
             VkSamplerCreateInfo samplerInfo = {};
             samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -361,7 +391,7 @@ namespace Fling
 
         void CreateCommandPool(VkCommandPool * t_commandPool, VkCommandPoolCreateFlags t_flags)
         {
-            LogicalDevice* logicalDevice = Renderer::Get().GetLogicalDevice();
+            LogicalDevice* logicalDevice = VulkanApp::Get().GetLogicalDevice();
 
             VkCommandPoolCreateInfo commandPoolCreateInfo = {};
             UINT32 GraphicsFamily = logicalDevice->GetGraphicsFamily();
@@ -377,7 +407,9 @@ namespace Fling
 
         void CreateCommandBuffers(VkCommandBuffer * t_commandBuffer, UINT32 t_commandBufferCount, VkCommandPool & t_commandPool)
         {
-            VkDevice logicalDevice = Renderer::Get().GetLogicalVkDevice();
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+			VkDevice logicalDevice = Dev->GetVkDevice();
 
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
             commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -392,7 +424,27 @@ namespace Fling
 
         }
 
-        void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)
+        void CreatePipelineCache(VkPipelineCache& t_PipelineCache)
+        {
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+			VkDevice Device = Dev->GetVkDevice();
+
+            VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+            pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+            if (vkCreatePipelineCache(Device, &pipelineCacheCreateInfo, nullptr, &t_PipelineCache) != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to create pipeline cache");
+            }
+        }
+
+        void TransitionImageLayout(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageLayout t_oldLayout, 
+            VkImageLayout t_NewLayout,
+            UINT32 t_MipLevels /* = 1 */
+        )
         {
             VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
 
@@ -420,7 +472,7 @@ namespace Fling
             }
 
             barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = 1;
+            barrier.subresourceRange.levelCount = t_MipLevels;        // TODO: Set this as the mip levels passed in
             barrier.subresourceRange.baseArrayLayer = 0;
             barrier.subresourceRange.layerCount = 1;
 
@@ -452,9 +504,16 @@ namespace Fling
                 SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 DestinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
             }
-            else 
+			else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			{
+				barrier.srcAccessMask = 0;
+				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				DestinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			}
+            else
             {
-                F_LOG_ERROR("Unsupported layout transition!");
+                F_LOG_FATAL("Unsupported layout transition!");
             }
 
             vkCmdPipelineBarrier(
@@ -469,9 +528,16 @@ namespace Fling
             GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
         }
 
-        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)
+        VkImageView CreateVkImageView(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageAspectFlags t_AspectFalgs, 
+            UINT32 t_MipLevels
+        )
         {
-            VkDevice Device = Renderer::Get().GetLogicalVkDevice();
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+			VkDevice Device = Dev->GetVkDevice();
 
             assert(Device != VK_NULL_HANDLE);
 
@@ -487,6 +553,7 @@ namespace Fling
             createInfo.subresourceRange.levelCount = 1;
             createInfo.subresourceRange.baseArrayLayer = 0;
             createInfo.subresourceRange.layerCount = 1;
+            createInfo.subresourceRange.levelCount = t_MipLevels;
 
             VkImageView imageView = VK_NULL_HANDLE;
             if (vkCreateImageView(Device, &createInfo, nullptr, &imageView) != VK_SUCCESS)
@@ -498,7 +565,11 @@ namespace Fling
 
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features)
         {
-            VkPhysicalDevice PhysDevice = Renderer::Get().GetPhysicalVkDevice();
+			PhysicalDevice* Dev = VulkanApp::Get().GetPhysicalDevice();
+			assert(Dev);
+			VkPhysicalDevice PhysDevice = Dev->GetVkPhysicalDevice();
+
+
             for (VkFormat CurFormat : t_Candidates)
             {
                 VkFormatProperties Props;
@@ -526,7 +597,12 @@ namespace Fling
             CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode->GetData());
 
             VkShaderModule ShaderModule;
-            if (vkCreateShaderModule(Renderer::Get().GetLogicalVkDevice(), &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
+
+			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+			assert(Dev);
+			VkDevice Device = Dev->GetVkDevice();
+
+            if (vkCreateShaderModule(Device, &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
             {
                 F_LOG_FATAL("Failed to create shader module!");
             }
@@ -541,7 +617,7 @@ namespace Fling
 
     }    // namespace GraphicsHelpers
 
-    namespace Initalizers
+    namespace Initializers
     {
         VkMappedMemoryRange MappedMemoryRange()
         {
@@ -636,6 +712,36 @@ namespace Fling
             descriptorSetLayoutCreateInfo.pBindings = t_bindings.data();
             descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(t_bindings.size());
             return descriptorSetLayoutCreateInfo;
+        }
+
+        VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        {
+            VkWriteDescriptorSet uniformSet = {};
+            uniformSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            uniformSet.dstSet = t_DstSet;
+            uniformSet.dstBinding = t_Binding;
+            uniformSet.dstArrayElement = 0;
+            uniformSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            uniformSet.descriptorCount = 1;
+            uniformSet.pBufferInfo = &(t_Buffer->GetDescriptor());
+
+            return uniformSet;
+        }
+
+        VkWriteDescriptorSet WriteDescriptorSetImage(Texture* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        {
+            VkDescriptorImageInfo* imageInfo = t_Image->GetDescriptorInfo();
+            // Create sampler information
+            VkWriteDescriptorSet ImageSamplerSet = {};
+            ImageSamplerSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            ImageSamplerSet.dstSet = t_DstSet;
+            ImageSamplerSet.dstBinding = t_Binding;
+            ImageSamplerSet.dstArrayElement = 0;
+            ImageSamplerSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            ImageSamplerSet.descriptorCount = 1;
+            ImageSamplerSet.pImageInfo = imageInfo;
+
+            return ImageSamplerSet;
         }
 
         VkSamplerCreateInfo SamplerCreateInfo()
@@ -854,6 +960,6 @@ namespace Fling
             viewport.minDepth = t_minDepth;
             return viewport;
         }
-    }    // namespace Initalizers
+    }    // namespace Initializers
 
 }   // namespace Fling        

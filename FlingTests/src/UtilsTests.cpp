@@ -6,6 +6,8 @@
 #include "Singleton.hpp"
 #include "Random.h"
 #include "Logger.h"
+#include "FreeList.h"
+#include "StackAllocator.h"
 
 TEST_CASE("Timing", "[utils]")
 {
@@ -48,4 +50,40 @@ TEST_CASE("Logger", "[utils]")
     {
 		REQUIRE(Logger::GetCurrentLogFile() != nullptr);
     }
+}
+
+TEST_CASE("Free List", "[utils]")
+{
+	using namespace Fling;
+
+    char buf[1024] = {};
+
+    FreeList freelist(buf, buf + 1024, 32, 8, 0);
+
+    void* obj0 = freelist.Obtain();
+	REQUIRE(obj0 != nullptr);
+
+    void* obj1 = freelist.Obtain();	
+	REQUIRE(obj1 != nullptr);
+
+	freelist.Return(obj1);
+	freelist.Return(obj0);
+}
+
+TEST_CASE("Stack Allocator", "[utils]")
+{
+    using namespace Fling;
+
+    char buf[1024] = {};
+
+    StackAllocator stackAllocator(buf, buf + 1024);
+
+    void* obj0 = stackAllocator.Allocate(2, 4, 0);
+    REQUIRE(obj0 != nullptr);
+
+    void* obj1 = stackAllocator.Allocate(4, 4, 0);
+    REQUIRE(obj1 != nullptr);
+
+    stackAllocator.Free(obj1);
+    stackAllocator.Free(obj0);
 }

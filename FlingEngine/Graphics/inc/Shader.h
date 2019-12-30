@@ -7,7 +7,6 @@
 #include "spirv.h"
 
 #include "Resource.h"
-#include "Sampler.hpp"
 #include "FlingExports.h"
 #include <fstream>
 #include <vector>
@@ -61,6 +60,8 @@ namespace Fling
 		}
 	};
 
+	class LogicalDevice;
+
     /**
      * @brief   Class that represents what a shader is in the Fling engine.
      *          Performs shader reflection and provides some helper functionality
@@ -71,14 +72,14 @@ namespace Fling
 		friend class ResourceManager;
     public:
 
-		static std::shared_ptr<Fling::Shader> Create(Guid t_ID);
+		static std::shared_ptr<Fling::Shader> Create(Guid t_ID, LogicalDevice* t_Dev);
 
         /**
          * @brief Construct a new Shader object. Loads from disk and compiles the shader
          * 
          * @param t_ID  The GUID that represents the file path to this file.
          */
-        explicit Shader(Guid t_ID);
+        explicit Shader(Guid t_ID, LogicalDevice* t_Dev);
 
         ~Shader();
 
@@ -129,6 +130,8 @@ namespace Fling
 
         /** The stage in the pipeline that this shader is in */
         VkShaderStageFlagBits m_Stage = VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT;
+		
+		const LogicalDevice* m_Device;
 
 		bool m_UsesPushConstants = false;
 
@@ -137,4 +140,5 @@ namespace Fling
 		UINT32 localSizeY {};
 		UINT32 localSizeZ {};
     };
+    
 }   // namespace Fling

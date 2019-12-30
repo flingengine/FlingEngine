@@ -24,18 +24,6 @@ namespace Sandbox
 		void Update(entt::registry& t_Reg, float DeltaTime) override;
 
 		/**
-		 * @brief Called when player presses the button to initate loading
-		 *
-		 */
-		void OnLoadInitated();
-
-		/**
-		 * @brief Called when the user presses the button to initalize saving
-		 *
-		 */
-		void OnSaveInitated();
-
-		/**
 		 * @brief Callback for when the user has given input that shows they want to exit
 		 */
 		void OnQuitPressed();
@@ -47,21 +35,31 @@ namespace Sandbox
 
 		void LightingTest(entt::registry& t_Reg);
 
+		void ScriptingTest(entt::registry& t_Reg);
+
 		/* Toggles the visibility of the cursor */
 		void ToggleCursorVisibility();
+
+		/* Sets window mode of screen, for testing all possible transitions */
+		void SetWindowFullscreen();
+		void SetWindowBorderlessWindowed();
+		void SetWindowWindowed();
 
 	private:
 
 		bool m_DoRotations = false;
 		bool m_MovePointLights = false;
+		bool m_RunLua = true;
 
 		void ToggleRotation();
 
-		void OnLeftArrowPressed();
+		void OnTestSpawn();
 
 		void OnToggleMoveLights();
 
-		void OnRightArrowPressed();
+		void ToggleLua();
+
+		void SetWindowIcon();
 
 		/** Temp vector for keeping track of the movement of things */
 		glm::vec3 MoveDelta = {};

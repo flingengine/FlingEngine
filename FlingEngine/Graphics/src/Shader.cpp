@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Shader.h"
-#include "Renderer.h"
 #include "ResourceManager.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
@@ -15,22 +15,17 @@ namespace Fling
 		uint32_t set{};
 	};
 
-    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID)
+    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID, LogicalDevice* t_Dev)
     {
-		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID);
-        bool IsNew = ShaderProgram::Get().AddShader(shader);
-		
-		//if (IsNew)
-		//{
-		//	Renderer::Get().SetFrameBufferHasBeenResized(true);
-		//}
-
+		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID, t_Dev);
 		return shader;
     }
 
-    Shader::Shader(Guid t_ID)
+    Shader::Shader(Guid t_ID, LogicalDevice* t_Dev)
         : Resource(t_ID)
+		, m_Device(t_Dev)
     {
+		assert(m_Device);
         std::vector<char> RawCode = LoadRawBytes(GetFilepathReleativeToAssets());
         
         if (CreateShaderModule(RawCode) != VK_SUCCESS)
@@ -56,7 +51,7 @@ namespace Fling
         CreateInfo.codeSize = t_ShaderCode.size();
         CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode.data());
 
-        return vkCreateShaderModule(Renderer::GetLogicalVkDevice(), &CreateInfo, nullptr, &m_Module);
+        return vkCreateShaderModule(m_Device->GetVkDevice(), &CreateInfo, nullptr, &m_Module);
     }
 
     std::vector<char> Shader::LoadRawBytes(const std::string& FilePath)
@@ -279,7 +274,7 @@ namespace Fling
 	{
 		if (m_Module != VK_NULL_HANDLE)
 		{
-			vkDestroyShaderModule(Renderer::GetLogicalVkDevice(), m_Module, nullptr);
+			vkDestroyShaderModule(m_Device->GetVkDevice(), m_Module, nullptr);
 			m_Module = VK_NULL_HANDLE;
 		}
 	}

@@ -1,0 +1,8 @@
+{
+  "name": "Damascus Material",
+
+  "albedo": "Textures/Damascus/Damascus_A.png",
+  "normal": "Textures/Damascus/Damascus_N.png",
+  "metal": "Textures/Damascus/Damascus_M.png",
+  "rough": "Textures/Damascus/Damascus_R.png"
+}

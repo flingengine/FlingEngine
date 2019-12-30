@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Model.h"
-#include "Image.h"
+#include "Texture.h"
 #include "FlingVulkan.h"
 #include "Buffer.h"
 #include "FlingTypes.h"
@@ -10,9 +10,13 @@
 #include "LogicalDevice.h"
 #include "UniformBufferObject.h"
 #include "Camera.h"
+#include "GraphicsPipeline.h"
+#include "MultiSampler.h"
 
 namespace Fling
 {
+	class LogicalDevice;
+
     class Cubemap
     {
         public:
@@ -26,27 +30,22 @@ namespace Fling
                 Guid t_VertexShader,
                 Guid t_FragShader,
                 VkRenderPass t_RenderPass,
+                LogicalDevice* t_LogicalDevice);
+
+            Cubemap(
+                Guid t_CubeMap_ID,
+                VkRenderPass t_Renderpass,
                 VkDevice t_LogicalDevice);
 
             ~Cubemap();
 
-            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight);
+            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);
 
             void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
 
-            /**
-             * @brief Get the Pipeline Layout object
-             * 
-             * @return const VkPipelineLayout 
-             */
-            VkPipelineLayout GetPipelineLayout() const { return m_PipelineLayout; }
+            void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer);
 
-            /**
-             * @brief Get the Pipe Line object
-             * 
-             * @return const VkPipline 
-             */
-            VkPipeline GetPipeLine() const { return m_Pipeline; }
+            std::unique_ptr<GraphicsPipeline> GetGraphicsPipeline() const { return std::unique_ptr<GraphicsPipeline>(m_GraphicsPipeline); }
 
             /**
              * @brief Get the Descriptor Sets object
@@ -78,11 +77,18 @@ namespace Fling
 
             VkIndexType GetIndexType() const { return m_Cube->GetIndexType(); }
 
+            VkImage GetImage() const { return m_Image; }
+            VkDeviceMemory GetImageMemory() const{ return m_ImageMemory; }
+            VkDescriptorImageInfo& GetImageInfo() { return m_DescriptorImageInfo; }
+
         private:
 
-            void PreparePipeline();
+            void PreparePipeline(Multisampler* t_Sampler);
+
+            /** Loads cubemaps with file format .hdr for ibl **/
+            void LoadCubeMapImage(Guid t_CubeMap_ID);
             
-            void LoadCubemap(
+            void LoadCubemapImages(
                 Guid t_PosX_ID,
                 Guid t_NegX_ID,
                 Guid t_PosY_ID,
@@ -92,7 +98,7 @@ namespace Fling
 
             void SetupDescriptors();
 
-            std::vector<Image> m_cubeMapImages;
+            std::vector<Texture> m_cubeMapImages;
             std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
 
             VkImage m_Image;
@@ -102,13 +108,11 @@ namespace Fling
             VkSampler m_Sampler;
             
             VkDescriptorSetLayout m_DescriptorSetLayout;
+            VkDescriptorImageInfo m_DescriptorImageInfo;
             VkDescriptorSet m_DescriptorSet;
             VkDescriptorPool m_DescriptorPool;
-            VkPipelineLayout m_PipelineLayout;
-            VkPipeline m_Pipeline;
             VkRenderPass m_RenderPass;
-            VkDevice m_Device;
-            VkPipelineCache m_PipelineCache;
+            LogicalDevice* m_Device;
             VkDescriptorBufferInfo m_UniformBufferDescriptor;
 
             VkDeviceSize m_ImageSize;
@@ -120,6 +124,7 @@ namespace Fling
 
             UboSkyboxVS m_UboVS;
             std::shared_ptr<Model> m_Cube;
+            GraphicsPipeline* m_GraphicsPipeline;
 
             Guid m_FragShader;
             Guid m_VertexShader;

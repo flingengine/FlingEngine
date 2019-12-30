@@ -3,6 +3,8 @@
 #include "FlingVulkan.h"
 #include "FlingTypes.h"
 #include "File.h"
+#include "Texture.h"
+#include "Buffer.h"
 
 #define VK_CHECK_RESULT(f)															\
 {																					\
@@ -35,6 +37,7 @@ namespace Fling
         void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer);
 
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             VkFormat t_Format,
@@ -42,12 +45,14 @@ namespace Fling
             VkImageUsageFlags t_Useage,
             VkMemoryPropertyFlags t_Props,
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+			VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
-		VkSemaphore CreateSemaphore(VkDevice t_Dev);
-        
+		VkSemaphore CreateSemaphore(VkDevice t_Dev);       
+
         void CreateVkImage(
+			VkDevice t_Dev,
             UINT32 t_Width,
             UINT32 t_Height,
             UINT32 t_MipLevels,
@@ -59,7 +64,8 @@ namespace Fling
             VkMemoryPropertyFlags t_Props,
             VkImageCreateFlags t_flags,
             VkImage& t_Image,
-            VkDeviceMemory& t_Memory
+            VkDeviceMemory& t_Memory,
+            VkSampleCountFlagBits t_NumSamples = VK_SAMPLE_COUNT_1_BIT
         );
 
         void CreateVkSampler(
@@ -104,16 +110,24 @@ namespace Fling
             VkCommandPool& t_commandPool
         );
 
+        void CreatePipelineCache(VkPipelineCache& t_PipelineCache);
+
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
         /**
          * @brief    Create a an image view for Vulkan with the given format
          */
-        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs);
+        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, UINT32 t_MipLevels = 1);
 
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
 
-        void TransitionImageLayout(VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout);
+        void TransitionImageLayout(
+            VkImage t_Image, 
+            VkFormat t_Format, 
+            VkImageLayout t_oldLayout, 
+            VkImageLayout t_NewLayout,
+            UINT32 t_MipLevels = 1
+        );
 
         /**
          * @brief    Returns true if the given format has a stencil component 
@@ -125,7 +139,7 @@ namespace Fling
 
     // Some helpers for Vulkan initialization 
     // Grabbed these from https://github.com/SaschaWillems/Vulkan/tree/master/examples/dynamicuniformbuffer
-    namespace Initalizers
+    namespace Initializers
     {
         VkMappedMemoryRange MappedMemoryRange();
 
@@ -150,6 +164,27 @@ namespace Fling
         VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(
             const std::vector<VkDescriptorSetLayoutBinding>& t_bindings
         );
+
+		inline VkRenderPassBeginInfo RenderPassBeginInfo()
+		{
+			VkRenderPassBeginInfo renderPassBeginInfo{};
+			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			return renderPassBeginInfo;
+		}
+
+        VkWriteDescriptorSet WriteDescriptorSetUniform(
+            Buffer* t_Buffer,
+            VkDescriptorSet t_DstSet,
+            UINT32 t_Binding,
+            UINT32 t_Set = 0,
+            VkDeviceSize t_Offset = 0);
+
+        VkWriteDescriptorSet WriteDescriptorSetImage(
+            Texture* t_Image,
+            VkDescriptorSet t_DstSet,
+            UINT32 t_Binding,
+            UINT32 t_Set = 0,
+            VkDeviceSize t_Offset = 0);
 
         VkSamplerCreateInfo SamplerCreateInfo();
 
@@ -208,6 +243,34 @@ namespace Fling
             VkColorComponentFlags t_colorWriteMask,
             VkBool32 t_blendEnable
         );
+
+		inline VkPipelineDepthStencilStateCreateInfo PipelineDepthStencilStateCreateInfo(
+			VkBool32 depthTestEnable,
+			VkBool32 depthWriteEnable,
+			VkCompareOp depthCompareOp)
+		{
+			VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo{};
+			pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			pipelineDepthStencilStateCreateInfo.depthTestEnable = depthTestEnable;
+			pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWriteEnable;
+			pipelineDepthStencilStateCreateInfo.depthCompareOp = depthCompareOp;
+			pipelineDepthStencilStateCreateInfo.front = pipelineDepthStencilStateCreateInfo.back;
+			pipelineDepthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+			return pipelineDepthStencilStateCreateInfo;
+		}
+
+		inline VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
+			const VkDynamicState* pDynamicStates,
+			uint32_t dynamicStateCount,
+			VkPipelineDynamicStateCreateFlags flags = 0)
+		{
+			VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};
+			pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			pipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
+			pipelineDynamicStateCreateInfo.dynamicStateCount = dynamicStateCount;
+			pipelineDynamicStateCreateInfo.flags = flags;
+			return pipelineDynamicStateCreateInfo;
+		}
 
         VkPipelineDepthStencilStateCreateInfo DepthStencilState(
             VkBool32 t_depthTestEnable,

@@ -1,8 +1,7 @@
 {
     "name" : "Default Material",
-
-    "vertex" : "Shaders/PBRDefault_vert.spv",
-    "frag" : "Shaders/PBRDefault_frag.spv",
+    
+    "pipeline" : "DEFAULT",
 
     "albedo" : "Textures/DefaultTexture.png",
     "normal" : "Textures/DefaultTexture.png",

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshRenderer.h"
 
+#include <entt/entity/helper.hpp>
+
 namespace Fling
 {
 	MeshRenderer::MeshRenderer(const std::string& t_MeshPath)
@@ -15,17 +17,28 @@ namespace Fling
 		LoadMaterialFromPath(t_MaterialPath);
 	}
 
+	MeshRenderer::MeshRenderer(Model* t_Model, Material* t_Mat)
+		:m_Model(t_Model)
+		, m_Material(t_Mat)
+	{
+		if (!m_Material)
+		{
+			LoadMaterialFromPath("Materials/Default.mat");
+		}
+	}
+
+	MeshRenderer::~MeshRenderer()
+	{
+		//Release();
+	}
+
 	void MeshRenderer::Release()
 	{
-		for (Buffer* b : m_UniformBuffers)
+		if (m_UniformBuffer)
 		{
-			if (b)
-			{
-				delete b;
-				b = nullptr;
-			}
+			delete m_UniformBuffer;
+			m_UniformBuffer = nullptr;
 		}
-		m_UniformBuffers.clear();
 	}
 
 	bool MeshRenderer::operator==(const MeshRenderer& other) const

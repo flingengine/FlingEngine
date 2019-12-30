@@ -5,13 +5,13 @@
 #if defined(_DEBUG)
 
 #   define FLING_DEBUG 1
-#	define _CRTDBG_MAP_ALLOC  
+//#	define _CRTDBG_MAP_ALLOC  
 
 #include <stdlib.h>
 #include <crtdbg.h> 
 
 #ifdef _MSC_VER
-#	define FLING_BREAK(...)	__debugbreak
+#	define FLING_BREAK(...)	__debugbreak()
 #else
 #	define FLING_BREAK(...)	asm("int $3")
 #endif	// _MSC_VER

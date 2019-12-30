@@ -3,13 +3,12 @@
 #if FLING_WINDOWS
 
 #include "Input/WindowsInput.h"
+#include "VulkanApp.h"
 
-// Oof on this renderer dependency
-// #TODO: Figure something else that's better for this
-#include "Renderer.h"
+// Glfw -------------------
 #include <GLFW/glfw3.h>
-
 #include "DesktopWindow.h"
+#include "ImGuiInputBinding.hpp"
 
 namespace Fling
 {
@@ -21,6 +20,13 @@ namespace Fling
 	{
 		// Any specific input binds that may be needed
 		InitKeyMap();
+	}
+
+	void WindowsInput::PreUpdateImpl()
+	{
+#if WITH_IMGUI
+		InternalImGui::SetImGuiCallbacks();
+#endif
 	}
 
 	void WindowsInput::ShutdownImpl()
@@ -155,11 +161,28 @@ namespace Fling
 				InputMapping.second();
 			}
 		}
+
+#if WITH_IMGUI
+		// Update imgui mouse events and timings
+		ImGuiIO& io = ImGui::GetIO();
+
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
+
+		io.DisplaySize = ImVec2(
+			static_cast<float>(Window->GetWidth()),
+			static_cast<float>(Window->GetHeight())
+		);
+
+		io.MousePos = ImVec2(Input::GetMousePos().X, Input::GetMousePos().Y);
+
+		io.MouseDown[0] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_1);
+		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
+#endif
 	}
 
 	bool WindowsInput::IsKeyDownImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			// Check the old state of this input!
@@ -183,7 +206,7 @@ namespace Fling
 
 	bool WindowsInput::IsKeyHelpImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			// Check the old state of this input!
@@ -207,7 +230,7 @@ namespace Fling
 
 	bool WindowsInput::IsMouseButtonPressedImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			Key& CurKey = m_KeyMap.at(t_KeyName);
@@ -230,7 +253,7 @@ namespace Fling
 
 	bool WindowsInput::IsMouseDownImpl(const std::string& t_KeyName)
 	{
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			Key& CurKey = m_KeyMap.at(t_KeyName);
@@ -247,7 +270,7 @@ namespace Fling
 		MousePos CurPos = {};
 
 		// #TODO Get rid of this WINDOW DEPENDECNY!!!!
-		DesktopWindow* Window = static_cast<DesktopWindow*>(Renderer::Get().GetCurrentWindow());
+		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			double xPos = 0.0;
@@ -259,7 +282,7 @@ namespace Fling
 
 		return CurPos;
 	}
-	
+
 } // namespace Fling
 
 #endif	// FLING_WINDOWS

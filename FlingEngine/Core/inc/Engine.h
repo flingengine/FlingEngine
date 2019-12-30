@@ -4,7 +4,6 @@
 #include "Logger.h"
 #include "Timing.h"
 #include "ResourceManager.h"
-#include "Renderer.h"
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
 #include "World.h"
@@ -13,8 +12,19 @@
 
 #include "MovingAverage.hpp"
 #include "Stats.h"
-#include "ShaderProgram.h"
 #include "Game.h"
+
+#if WITH_EDITOR
+
+#include "BaseEditor.h"
+
+#endif	// WITH_EDITOR
+
+#if WITH_LUA
+
+#include "LuaManager.h"
+
+#endif
 
 namespace Fling
 {
@@ -35,8 +45,13 @@ namespace Fling
 		 * 
 		 * @return UINT64 0 for success, otherwise an error has occured
 		 */
+#if WITH_EDITOR
+		template<class T_GameType, class T_EditorType = Fling::BaseEditor>
+		FLING_API UINT64 Run();
+#else
 		template<class T_GameType>
 		FLING_API UINT64 Run();
+#endif
 
 	private:
 
@@ -63,18 +78,36 @@ namespace Fling
 
 		/** The implementation of the game that this engine is running. @see Fling::Game */
 		Fling::Game* m_GameImpl = nullptr;
+
+#if WITH_EDITOR
+
+		/** Overrideable editor class for Drawing with ImGUI. Drawn in Renderer::DrawFrame */
+		std::shared_ptr<Fling::BaseEditor> m_Editor;
+
+#endif
 	};
 
+
+#if WITH_EDITOR
+	template<class T_GameType, class T_EditorType>
+	FLING_API UINT64 Engine::Run()
+#else
 	template<class T_GameType>
 	FLING_API UINT64 Engine::Run()
+#endif
+
 	{
 		static_assert(std::is_default_constructible<T_GameType>::value, "T_GameType requires default-constructible elements");
 		static_assert(std::is_base_of<Fling::Game, T_GameType>::value, "T_GameType must inherit from Fling::Game");
 
 		// #TODO Use a pool allocator for new
 		m_GameImpl = new T_GameType();
-
-
+		
+#if WITH_EDITOR
+		static_assert(std::is_default_constructible<T_EditorType>::value, "T_EditorType requires default-constructible elements");
+		static_assert(std::is_base_of<Fling::BaseEditor, T_EditorType>::value, "T_EditorType must inherit from Fling::BaseEditor");
+		m_Editor = std::make_shared<T_EditorType>();
+#endif
 		Startup();
 
 		Tick();

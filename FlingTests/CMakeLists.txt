@@ -10,16 +10,6 @@ include_directories(
 
 ##################### Linking #################
 
-### Find Vulkan
-find_package(Vulkan REQUIRED)
-
-## Ensure we have Vulkan
-if(Vulkan_FOUND)
-    message(STATUS "Vulkan found!" )
-else()
-    message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
-endif()
-
 # Prepare "Catch" library for other executables
 set( CATCH_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/../external/Catch2/single_include )
 add_library ( Catch INTERFACE )
@@ -27,8 +17,6 @@ target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
 
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
-    ImGui ${IMGUI_LIBRARIES}
-    Vulkan::Vulkan 
 	Catch
 	"FlingEngine"
 )

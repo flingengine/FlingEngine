@@ -26,6 +26,12 @@ namespace Fling
 		/** Initialize the input instance on this platform. Handle and input mapping on this platform */
 		static void Init() { m_Instance->InitImpl(); }
 		
+		/** 
+		* @brief	PreUpdate is called before polling of input, and after Init. Useful for 
+		*			anything that needs to happen after Window creation.
+		*/
+		static void PreUpdate() { m_Instance->PreUpdateImpl(); };
+
 		/**
 		* Shuts down input manager.
 		* Deletes the input implementation pointer.
@@ -94,6 +100,7 @@ namespace Fling
 		}
 
 		virtual void InitImpl() = 0;
+		virtual void PreUpdateImpl() = 0;
 		virtual void ShutdownImpl() = 0;
 
 		/** Poll for input from the keyboard */

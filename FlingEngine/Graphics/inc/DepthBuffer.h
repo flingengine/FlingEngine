@@ -4,11 +4,12 @@
 
 namespace Fling
 {
-    
+	class LogicalDevice;
+
 	class DepthBuffer
 	{
 	public:
-		DepthBuffer();
+		explicit DepthBuffer(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount, VkExtent2D t_Extents);
 
 		~DepthBuffer();
 
@@ -33,15 +34,22 @@ namespace Fling
 
 		static VkFormat GetDepthBufferFormat();
 
+		void SetExtents(VkExtent2D t_Extents);
+
 	private:
 
 		void CreateImage();
 
 		void CreateImageView();
 
+		const LogicalDevice* m_Device;
+
 		VkImage m_Image = VK_NULL_HANDLE;
 		VkDeviceMemory m_Memory = VK_NULL_HANDLE;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
-		VkFormat m_Format;
+		VkFormat m_Format{};
+		VkExtent2D m_Extents{};
+
+		VkSampleCountFlagBits m_SampleCount = VK_SAMPLE_COUNT_1_BIT;
 	};
 }   // namespace Fling

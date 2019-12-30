@@ -1,47 +1,65 @@
 #pragma once
 
-#include <cereal/archives/json.hpp> // For serialization of a material
 #include "Shader.h"
-#include "Image.h"
+#include "Texture.h"
 #include "JsonFile.h"
+#include "ShaderPrograms/ShaderProgram.h"
 
 namespace Fling
 {
-	/**
-	* @brief the properties of a PBR 
-	*/
-	struct PBRTextures
-	{
-		Image* m_AlbedoTexture		= nullptr;
-		Image* m_NormalTexture		= nullptr;
-		Image* m_RoughnessTexture	= nullptr;
-		Image* m_MetalTexture		= nullptr;
-	};
+    /**
+    * @brief the properties of a PBR 
+    */
+    struct PBRTextures
+    {
+        Texture* m_AlbedoTexture        = nullptr;
+        Texture* m_NormalTexture        = nullptr;
+        Texture* m_RoughnessTexture    = nullptr;
+        Texture* m_MetalTexture        = nullptr;
+    };
 
-	/**
-	* @brief	A material represents what properties should be given to a set
-	*			of shaders. This is referenced by the MeshRednerer and Renderer::DrawFrame
-	*/
+    /**
+    * @brief    A material represents what properties should be given to a set
+    *            of shaders. This is referenced by the MeshRednerer and Renderer::DrawFrame
+    */
     class Material : public JsonFile
     {
-		friend class Renderer;
-	public:
+        friend class Renderer;
+    public:
+		enum class Type : UINT8
+		{
+			Default,
+			Cubemap,
+			Reflection,
+			Debug
+		};
 
-		static std::shared_ptr<Fling::Material> Create(Guid t_ID);
+        static std::shared_ptr<Fling::Material> Create(Guid t_ID);
 
-		explicit Material(Guid t_ID);
+		static std::shared_ptr<Fling::Material> GetDefaultMat();
 
-	private:
+        explicit Material(Guid t_ID);
 
-		void LoadMaterial();
+        const PBRTextures& GetPBRTextures() const { return m_Textures; }
 
-        // Shaders that this material uses
-		Shader* m_VertShader = nullptr;
-		Shader* m_FragShader = nullptr;
+		Material::Type GetType() const { return m_Type; }
 
-		// Textures that this material uses
-		PBRTextures m_Textures = {};
+		static Material::Type GetTypeFromStr(const std::string& t_Str);
 
-		float m_Shininiess = 0.5f;
+		static const std::string& GetStringFromType(const Material::Type);
+
+    private:
+
+        void LoadMaterial();
+
+        // Textures that this material uses
+        PBRTextures m_Textures = {};
+        
+		Material::Type m_Type = Type::Default;
+
+        float m_Shininiess = 0.5f;
+
+		// A map of types to their parsed names
+		static std::unordered_map<std::string, Material::Type> TypeMap;
     };
 }   // namespace Fling

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "DesktopWindow.h"
-#include "Renderer.h"
+#include "Texture.h"
+#include "FlingConfig.h"
 
 namespace Fling
 {
@@ -28,7 +29,6 @@ namespace Fling
 
 	void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
 	{
-		Renderer::Get().SetFrameBufferHasBeenResized(true);
 	}
 
 	void DesktopWindow::CreateSurface(void* t_GraphicsInstance, void* t_SurfData)
@@ -88,7 +88,6 @@ namespace Fling
 		return height;
 	}
 
-
 	float DesktopWindow::GetAspectRatio() const
 	{
 		int width, height;
@@ -113,6 +112,59 @@ namespace Fling
 	bool DesktopWindow::GetMouseVisible()
 	{
 		return m_IsMouseVisible;
+	}
+
+	void DesktopWindow::SetWindowIcon(Guid t_ID)
+	{
+		// Load an image 
+		std::shared_ptr<Texture> Icon = Texture::Create(t_ID);
+		assert(Icon);
+
+		// Set the Pixel data for this image
+		GLFWimage GLFW_Image;
+		GLFW_Image.height = Icon->GetHeight();
+		GLFW_Image.width = Icon->GetWidth();
+		GLFW_Image.pixels = Icon->GetPixelData();
+
+		// Set it via GLFW
+		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
+	}
+
+	void DesktopWindow::SetWindowMode(WindowMode t_WindowMode)
+	{
+		//early return if nothing would change
+        if (t_WindowMode == m_WindowMode)
+        {
+            return;
+        }
+
+        int windowedWidth = FlingConfig::GetInt("Windowed", "WindowWidth") ? FlingConfig::GetInt("Windowed", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH;
+        int windowedHeight = FlingConfig::GetInt("Windowed", "WindowHeight") ? FlingConfig::GetInt("Windowed", "WindowHeight") : FLING_DEFAULT_WINDOW_HEIGHT;
+
+		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+		switch (t_WindowMode)
+		{
+		case WindowMode::Fullscreen:
+			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+			glfwSetWindowMonitor(m_Window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, 0);
+			break;
+		case WindowMode::Windowed:
+			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+			glfwSetWindowMonitor(m_Window, nullptr, 100, 100, windowedWidth, windowedHeight, 0);
+            break;
+        case WindowMode::BorderlessWindowed:
+            glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_FALSE);
+            glfwSetWindowMonitor(m_Window, nullptr, 100, 100, windowedWidth, windowedHeight, 0);
+			break;
+		}
+		m_WindowMode = t_WindowMode;
+
+	}
+
+	WindowMode DesktopWindow::GetWindowMode()
+	{
+		return m_WindowMode;
 	}
 
 }   // namespace Fling

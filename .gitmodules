@@ -37,3 +37,9 @@
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
 
 
+[submodule "external/imgui_entt_entity_editor"]
+	path = external/imgui_entt_entity_editor
+	url = https://github.com/flingengine/imgui_entt_entity_editor.git
+[submodule "external/sol2"]
+	path = external/sol2
+	url = https://github.com/ThePhD/sol2.git

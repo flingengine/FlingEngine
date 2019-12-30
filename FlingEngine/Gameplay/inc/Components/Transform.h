@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cereal/archives/json.hpp>
+#include "Serilization.h"
 #include "FlingMath.h"
 
 namespace Fling
@@ -27,7 +27,7 @@ namespace Fling
         void SetScale(const glm::vec3& t_Scale);
         void SetRotation(const glm::vec3& t_Rot);
 
-    private:
+    //private:
         glm::vec3 m_Pos { 0.0f, 0.0f, 0.0f };
         glm::vec3 m_Rotation { 0.0f, 0.0f, 0.0f };
         glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
