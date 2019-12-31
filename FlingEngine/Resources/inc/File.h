@@ -14,6 +14,8 @@ namespace Fling
     {
     public:
 
+		static std::shared_ptr<Fling::File> Create(Guid t_ID);
+
         /**
          * @brief Construct a new File object
          * 

@@ -47,7 +47,6 @@ namespace Fling
             0
         );
 
-        UINT32 HDRTexture;
         m_Width = static_cast<UINT32>(Width);
         m_Height = static_cast<UINT32>(Height);
         m_MipLevels = static_cast<UINT32>(std::floor(std::log2(std::max(m_Width, m_Height)))) + 1;
