@@ -65,6 +65,7 @@ $(function() {
 <a href="#nested-classes">Data Structures</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">Fling Namespace Reference</div>  </div>
@@ -75,25 +76,63 @@ $(function() {
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceFling_1_1GraphicsHelpers"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html">GraphicsHelpers</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceFling_1_1Initializers"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1Initializers.html">Initializers</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceFling_1_1ParseHelpers"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1ParseHelpers.html">ParseHelpers</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceFling_1_1ShaderProgramReflections"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1ShaderProgramReflections.html">ShaderProgramReflections</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceFling_1_1Stats"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1Stats.html">Stats</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceFling_1_1VkConfig"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1VkConfig.html">VkConfig</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1AttachmentCreateInfo.html">AttachmentCreateInfo</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the attributes of an attachment to be created.  <a href="structFling_1_1AttachmentCreateInfo.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1BaseEditor.html">BaseEditor</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classFling_1_1BaseEditor.html" title="The BaseEditor of the Fling Engine. ">BaseEditor</a> of the <a class="el" href="namespaceFling.html">Fling</a> <a class="el" href="classFling_1_1Engine.html" title="Core engine class of Fling. ">Engine</a>.  <a href="classFling_1_1BaseEditor.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html">Buffer</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A <a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> represents a Vulkan buffer with a size, buffer pointer, and buffer memory.  <a href="classFling_1_1Buffer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html">Camera</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for camera, meant to be overridden.  <a href="classFling_1_1Camera.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1CameraInfoUbo.html">CameraInfoUbo</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1CircularBuffer.html">CircularBuffer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A simple circular buffer that will allow you get the next element in a buffer It does not ensure that the item is not in use, but simply loops around.  <a href="classFling_1_1CircularBuffer.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1CommandBuffer.html">CommandBuffer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encapsulates functionality of a Vulkan Command buffer.  <a href="classFling_1_1CommandBuffer.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Cubemap.html">Cubemap</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DebugSubpass.html">DebugSubpass</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1DeferredLightSettings.html">DeferredLightSettings</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Settings for the max directional lights and max point lights.  <a href="structFling_1_1DeferredLightSettings.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html">DepthBuffer</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1DescriptorInfo.html">DescriptorInfo</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DesktopWindow.html">DesktopWindow</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class that represents a window to the <a class="el" href="namespaceFling.html">Fling</a> <a class="el" href="classFling_1_1Engine.html" title="Core engine class of Fling. ">Engine</a> using GLFW.  <a href="classFling_1_1DesktopWindow.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1DirectionalLight.html">DirectionalLight</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple representation of a directional light for <a class="el" href="namespaceFling.html">Fling</a>.  <a href="structFling_1_1DirectionalLight.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Engine.html">Engine</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core engine class of <a class="el" href="namespaceFling.html">Fling</a>.  <a href="classFling_1_1Engine.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1File.html">File</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A file is a basic text file that contains a basic text file.  <a href="classFling_1_1File.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FileBrowser.html">FileBrowser</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html">FirstPersonCamera</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A simple first person camera.  <a href="classFling_1_1FirstPersonCamera.html#details">More...</a><br /></td></tr>
@@ -107,8 +146,27 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FlingWindow.html">FlingWindow</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class that represents a window to the <a class="el" href="namespaceFling.html">Fling</a> <a class="el" href="classFling_1_1Engine.html" title="Core engine class of Fling. ">Engine</a>.  <a href="classFling_1_1FlingWindow.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Image.html">Image</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An image represents a 2D file that has data about each pixel in the image.  <a href="classFling_1_1Image.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FrameBuffer.html">FrameBuffer</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1FrameBufferAttachment.html">FrameBufferAttachment</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FreeList.html">FreeList</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helpful for allocating/freeing objects of a certain size which have to be created/destroeyed dynamically.  <a href="classFling_1_1FreeList.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Game.html">Game</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The game class is mean to be overridden on a per-game instance.  <a href="classFling_1_1Game.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1GeometrySubpass.html">GeometrySubpass</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The geometry subpass is in charge of sending the geometry portion of the Deferred pipeline to the GPU.  <a href="classFling_1_1GeometrySubpass.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1GraphicsPipeline.html">GraphicsPipeline</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1HDRImage.html">HDRImage</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads image R16G16B16_SFLOAT file formats exmplae file format : .hdr.  <a href="classFling_1_1HDRImage.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1Id.html">Id</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1ImGuiSubpass.html">ImGuiSubpass</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html">Input</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base input class for polling input in the <a class="el" href="namespaceFling.html">Fling</a> <a class="el" href="classFling_1_1Engine.html" title="Core engine class of Fling. ">Engine</a>.  <a href="classFling_1_1Input.html#details">More...</a><br /></td></tr>
@@ -126,11 +184,21 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Level.html">Level</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A level contains active objects and provides the environment for the player.  <a href="classFling_1_1Level.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1Lighting.html">Lighting</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1LightingUbo.html">LightingUbo</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uniform buffer for passing lights to our final screen pass.  <a href="structFling_1_1LightingUbo.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Logger.html">Logger</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFling_1_1Singleton.html" title="Class that can have only one instance. ">Singleton</a> class that allows logging to the console as well as async to a file.  <a href="classFling_1_1Logger.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logical device represents the application view of the device.  <a href="classFling_1_1LogicalDevice.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Material.html">Material</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A material represents what properties should be given to a set of shaders.  <a href="classFling_1_1Material.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1MeshRenderer.html">MeshRenderer</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Model.html">Model</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A model represents a 3D model (.obj files for now) with vertices and indecies.  <a href="classFling_1_1Model.html#details">More...</a><br /></td></tr>
@@ -138,16 +206,35 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1MousePos.html">MousePos</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">represents the current mouse position in screen space  <a href="structFling_1_1MousePos.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1MovingAverage.html">MovingAverage</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A moving average can be used to calculate things like FPS.  <a href="classFling_1_1MovingAverage.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Multisampler.html">Multisampler</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A multi-sampler will allow us to enable MSAA.  <a href="classFling_1_1Multisampler.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1NameComponent.html">NameComponent</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1NonCopyable.html">NonCopyable</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class that removes the copy operator and constructor.  <a href="classFling_1_1NonCopyable.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1OffscreenSubpass.html">OffscreenSubpass</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1OffscreenUBO.html">OffscreenUBO</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">UBO for mesh data.  <a href="structFling_1_1OffscreenUBO.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1PBRTextures.html">PBRTextures</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">the properties of a PBR  <a href="structFling_1_1PBRTextures.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html">PhysicalDevice</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A physical device represents the Vulkan physical device (the GPU) that we are currently using.  <a href="classFling_1_1PhysicalDevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1PointLight.html">PointLight</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple representation of a point light in Light Vox.  <a href="structFling_1_1PointLight.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Random.html">Random</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Renderer.html">Renderer</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core renderer for the application  <a href="classFling_1_1Renderer.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1RenderPipeline.html">RenderPipeline</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A render pipeline encapsulates the functionality of a.  <a href="classFling_1_1RenderPipeline.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html">Resource</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class that represents a loaded resource in the engine.  <a href="classFling_1_1Resource.html#details">More...</a><br /></td></tr>
@@ -155,23 +242,43 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1ResourceManager.html">ResourceManager</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The resource manager handles loading of files off disk.  <a href="classFling_1_1ResourceManager.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Shader.html">Shader</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class that represents what a shader is in the <a class="el" href="namespaceFling.html">Fling</a> engine.  <a href="classFling_1_1Shader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1ShaderProgram.html">ShaderProgram</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Singleton.html">Singleton</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class that can have only one instance.  <a href="classFling_1_1Singleton.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1StackAllocator.html">StackAllocator</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Subpass.html">Subpass</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A subpass represents one part of a <a class="el" href="classFling_1_1RenderPipeline.html" title="A render pipeline encapsulates the functionality of a. ">RenderPipeline</a>.  <a href="classFling_1_1Subpass.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html">Swapchain</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a swap chain that can be used throughout the program.  <a href="classFling_1_1Swapchain.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1SwapChainSupportDetails.html">SwapChainSupportDetails</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Texture.html">Texture</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">An image represents a 2D file that has data about each pixel in the image.  <a href="classFling_1_1Texture.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Timing.html">Timing</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1UniformBufferObject.html">UniformBufferObject</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">UniformBufferObjectRepresents the UBO in C++.  <a href="structFling_1_1UniformBufferObject.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1Transform.html">Transform</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1UboSkyboxVS.html">UboSkyboxVS</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1UboVS.html">UboVS</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Representation of what vertex data of the dynamic UBO that there is only one of.  <a href="structFling_1_1UboVS.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1Version.html">Version</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1Vertex.html">Vertex</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Basic <a class="el" href="structFling_1_1Vertex.html" title="Basic Vertex outline for use with our vertex buffers. ">Vertex</a> outline for use with our vertex buffers.  <a href="structFling_1_1Vertex.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1VulkanApp.html">VulkanApp</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core rendering functionality of the <a class="el" href="namespaceFling.html">Fling</a> <a class="el" href="classFling_1_1Engine.html" title="Core engine class of Fling. ">Engine</a>.  <a href="classFling_1_1VulkanApp.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFling_1_1WindowProps.html">WindowProps</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Window creation data.  <a href="structFling_1_1WindowProps.html#details">More...</a><br /></td></tr>
@@ -182,8 +289,6 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a863a7a911dfb283d4aa5626620d93368"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a863a7a911dfb283d4aa5626620d93368">json</a> = nlohmann::json</td></tr>
-<tr class="separator:a863a7a911dfb283d4aa5626620d93368"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7db6182ede3178e4b8716bfc7eba2bf"><td class="memItemLeft" align="right" valign="top">typedef entt::hashed_string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Guid</a></td></tr>
 <tr class="separator:ae7db6182ede3178e4b8716bfc7eba2bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32c408f77edd77f0d78ba58c188aefbf"><td class="memItemLeft" align="right" valign="top">typedef entt::hashed_string::hash_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a32c408f77edd77f0d78ba58c188aefbf">Guid_Handle</a></td></tr>
@@ -196,11 +301,63 @@ Enumerations</h2></td></tr>
 <a class="el" href="namespaceFling.html#a7060a4ef627b8d98623c9a624c4d2f12afbaedde498cdead4f2780217646e9ba1">KeyState::UP</a>
  }</td></tr>
 <tr class="separator:a7060a4ef627b8d98623c9a624c4d2f12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7181abc145824564e547c6e71e4cdc5"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ac7181abc145824564e547c6e71e4cdc5">ShaderProgramType</a> { <a class="el" href="namespaceFling.html#ac7181abc145824564e547c6e71e4cdc5af8357427a3733ebed1a8647f3d5fa31b">ShaderProgramType::PBR</a> = 0, 
+<a class="el" href="namespaceFling.html#ac7181abc145824564e547c6e71e4cdc5aaea1e492943ccbad7ee270ec1e064758">ShaderProgramType::Reflection</a> = 1, 
+<a class="el" href="namespaceFling.html#ac7181abc145824564e547c6e71e4cdc5a4ed71db54748b36eeb398876b0c747ac">ShaderProgramType::Deferred</a> = 2, 
+<a class="el" href="namespaceFling.html#ac7181abc145824564e547c6e71e4cdc5afd4487453885e6013ddea8e02030afb0">ShaderProgramType::MAX_COUNT</a>
+ }</td></tr>
+<tr class="separator:ac7181abc145824564e547c6e71e4cdc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a367eef3a5f276c6f91b3d985c0d063f8"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8">PipelineFlags</a> { <br />
+&#160;&#160;<a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8a4829465e28da75ee714c76a4858f4ac4">DEFERRED</a> = (1u &lt;&lt; 0), 
+<a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8a56e6a192077d29a395c0094858d3992e">REFLECTIONS</a> = (1u &lt;&lt; 1), 
+<a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8a812837cde1e3619503662c768c538cd5">IMGUI</a> = (1u &lt;&lt; 2), 
+<a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8a1cdbb41e196bd611e91f704d18cc0305">CUBEMAP</a> = (1u &lt;&lt; 3), 
+<br />
+&#160;&#160;<a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8accc3c0a5c903c81ee40df00bf73d3640">DEBUG</a> = (1u &lt;&lt; 4), 
+<a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8a48f4277059f3b0f6d4f46d22dd1a5e5c">ALL</a> = 0xff
+<br />
+ }<tr class="memdesc:a367eef3a5f276c6f91b3d985c0d063f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration that can determine what render pipelines will be added to this application.  <a href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8">More...</a><br /></td></tr>
+</td></tr>
+<tr class="separator:a367eef3a5f276c6f91b3d985c0d063f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a0fb09f80085a0a2846c9211afc326af7"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a0fb09f80085a0a2846c9211afc326af7">operator&lt;&lt;</a> (std::ostream &amp;t_OutStream, const <a class="el" href="structFling_1_1Transform.html">Fling::Transform</a> &amp;t_Transform)</td></tr>
+<tr class="separator:a0fb09f80085a0a2846c9211afc326af7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ce570b11a50619f019747893a861a19"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a6ce570b11a50619f019747893a861a19">AlignedAlloc</a> (size_t t_Size, size_t t_Alignment)</td></tr>
+<tr class="separator:a6ce570b11a50619f019747893a861a19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a107fd5fcc58e0ca7978cb0ba7b37d2da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a107fd5fcc58e0ca7978cb0ba7b37d2da">AlignedFree</a> (void *t_Data)</td></tr>
+<tr class="separator:a107fd5fcc58e0ca7978cb0ba7b37d2da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ad9534b6e9cdf00d82764f12ad58ae7"><td class="memItemLeft" align="right" valign="top">uintptr_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a5ad9534b6e9cdf00d82764f12ad58ae7">AlignAddress</a> (uintptr_t t_Addr, size_t t_Align)</td></tr>
+<tr class="separator:a5ad9534b6e9cdf00d82764f12ad58ae7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a593009a3e17b01c4b59305d25d8a8d08"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a593009a3e17b01c4b59305d25d8a8d08"><td class="memTemplItemLeft" align="right" valign="top">T *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a593009a3e17b01c4b59305d25d8a8d08">AlignPointer</a> (T *t_Ptr, size_t t_Align)</td></tr>
+<tr class="separator:a593009a3e17b01c4b59305d25d8a8d08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
+<tr class="memitem:a2ff537c0e98b747cecc73e2532adae17"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a2ff537c0e98b747cecc73e2532adae17">VULKAN_NUM_DESCRIPTOR_SETS</a> = 4</td></tr>
+<tr class="separator:a2ff537c0e98b747cecc73e2532adae17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5ed1eb5f2ad09f0cab560914c6f97f5"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#aa5ed1eb5f2ad09f0cab560914c6f97f5">VULKAN_NUM_BINDINGS</a> = 16</td></tr>
+<tr class="separator:aa5ed1eb5f2ad09f0cab560914c6f97f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90202e13070c0b8495d3ae552290b499"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a90202e13070c0b8495d3ae552290b499">VULKAN_NUM_ATTACHMENTS</a> = 8</td></tr>
+<tr class="separator:a90202e13070c0b8495d3ae552290b499"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a733745dad1751cf262c74c16f684d764"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a733745dad1751cf262c74c16f684d764">VULKAN_NUM_VERTEX_ATTRIBS</a> = 16</td></tr>
+<tr class="separator:a733745dad1751cf262c74c16f684d764"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac974a5b59ae1713141101d564f180d69"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ac974a5b59ae1713141101d564f180d69">VULKAN_NUM_VERTEX_BUFFERS</a> = 4</td></tr>
+<tr class="separator:ac974a5b59ae1713141101d564f180d69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeca45f551393af5aa1d969b7730c3987"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#aeca45f551393af5aa1d969b7730c3987">VULKAN_PUSH_CONSTANT_SIZE</a> = 128</td></tr>
+<tr class="separator:aeca45f551393af5aa1d969b7730c3987"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c647f82799ed1271552bce1242fa75b"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a1c647f82799ed1271552bce1242fa75b">VULKAN_UBO_SIZE</a> = 16 * 1024</td></tr>
+<tr class="separator:a1c647f82799ed1271552bce1242fa75b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8615531e56b0a4dd8046d81dd136b2d6"><td class="memItemLeft" align="right" valign="top">static const unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a8615531e56b0a4dd8046d81dd136b2d6">VULKAN_NUM_SPEC_CONSTANTS</a> = 8</td></tr>
+<tr class="separator:a8615531e56b0a4dd8046d81dd136b2d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac945142b195f94bcd887d10e8a35312b"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ac945142b195f94bcd887d10e8a35312b">bGlfwInitalized</a> = false</td></tr>
 <tr class="separator:ac945142b195f94bcd887d10e8a35312b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae14209fdf6a09d93aaedec4759418270"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; VkDynamicState &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ae14209fdf6a09d93aaedec4759418270">DYNAMIC_STATES</a> = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH }</td></tr>
+<tr class="separator:ae14209fdf6a09d93aaedec4759418270"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac26ca65e86809859290ce863f4f80ba7"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Guid</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ac26ca65e86809859290ce863f4f80ba7">INVALID_GUID</a> = { &quot;INVALID_GUID&quot;_hs }</td></tr>
+<tr class="separator:ac26ca65e86809859290ce863f4f80ba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13bbf719a4efcb2f7a7a525216144e92"><td class="memItemLeft" align="right" valign="top">std::chrono::high_resolution_clock::time_point&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a13bbf719a4efcb2f7a7a525216144e92">sStartTime</a></td></tr>
 <tr class="separator:a13bbf719a4efcb2f7a7a525216144e92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -235,20 +392,6 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="a863a7a911dfb283d4aa5626620d93368"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a863a7a911dfb283d4aa5626620d93368">&#9670;&nbsp;</a></span>json</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="namespaceFling.html#a863a7a911dfb283d4aa5626620d93368">Fling::json</a> = typedef nlohmann::json</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a7060a4ef627b8d98623c9a624c4d2f12"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7060a4ef627b8d98623c9a624c4d2f12">&#9670;&nbsp;</a></span>KeyState</h2>
@@ -277,6 +420,207 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a367eef3a5f276c6f91b3d985c0d063f8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a367eef3a5f276c6f91b3d985c0d063f8">&#9670;&nbsp;</a></span>PipelineFlags</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="namespaceFling.html#a367eef3a5f276c6f91b3d985c0d063f8">Fling::PipelineFlags</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Configuration that can determine what render pipelines will be added to this application. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a367eef3a5f276c6f91b3d985c0d063f8a4829465e28da75ee714c76a4858f4ac4"></a>DEFERRED&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a367eef3a5f276c6f91b3d985c0d063f8a56e6a192077d29a395c0094858d3992e"></a>REFLECTIONS&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a367eef3a5f276c6f91b3d985c0d063f8a812837cde1e3619503662c768c538cd5"></a>IMGUI&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a367eef3a5f276c6f91b3d985c0d063f8a1cdbb41e196bd611e91f704d18cc0305"></a>CUBEMAP&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a367eef3a5f276c6f91b3d985c0d063f8accc3c0a5c903c81ee40df00bf73d3640"></a>DEBUG&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a367eef3a5f276c6f91b3d985c0d063f8a48f4277059f3b0f6d4f46d22dd1a5e5c"></a>ALL&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="ac7181abc145824564e547c6e71e4cdc5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7181abc145824564e547c6e71e4cdc5">&#9670;&nbsp;</a></span>ShaderProgramType</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="namespaceFling.html#ac7181abc145824564e547c6e71e4cdc5">Fling::ShaderProgramType</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ac7181abc145824564e547c6e71e4cdc5af8357427a3733ebed1a8647f3d5fa31b"></a>PBR&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac7181abc145824564e547c6e71e4cdc5aaea1e492943ccbad7ee270ec1e064758"></a>Reflection&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac7181abc145824564e547c6e71e4cdc5a4ed71db54748b36eeb398876b0c747ac"></a>Deferred&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac7181abc145824564e547c6e71e4cdc5afd4487453885e6013ddea8e02030afb0"></a>MAX_COUNT&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a5ad9534b6e9cdf00d82764f12ad58ae7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ad9534b6e9cdf00d82764f12ad58ae7">&#9670;&nbsp;</a></span>AlignAddress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uintptr_t Fling::AlignAddress </td>
+          <td>(</td>
+          <td class="paramtype">uintptr_t&#160;</td>
+          <td class="paramname"><em>t_Addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>t_Align</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6ce570b11a50619f019747893a861a19"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ce570b11a50619f019747893a861a19">&#9670;&nbsp;</a></span>AlignedAlloc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void * Fling::AlignedAlloc </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>t_Size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>t_Alignment</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a107fd5fcc58e0ca7978cb0ba7b37d2da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a107fd5fcc58e0ca7978cb0ba7b37d2da">&#9670;&nbsp;</a></span>AlignedFree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::AlignedFree </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>t_Data</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a593009a3e17b01c4b59305d25d8a8d08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a593009a3e17b01c4b59305d25d8a8d08">&#9670;&nbsp;</a></span>AlignPointer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">T* Fling::AlignPointer </td>
+          <td>(</td>
+          <td class="paramtype">T *&#160;</td>
+          <td class="paramname"><em>t_Ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>t_Align</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0fb09f80085a0a2846c9211afc326af7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0fb09f80085a0a2846c9211afc326af7">&#9670;&nbsp;</a></span>operator<<()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::ostream&amp; Fling::operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>t_OutStream</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structFling_1_1Transform.html">Fling::Transform</a> &amp;&#160;</td>
+          <td class="paramname"><em>t_Transform</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Variable Documentation</h2>
 <a id="ac945142b195f94bcd887d10e8a35312b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac945142b195f94bcd887d10e8a35312b">&#9670;&nbsp;</a></span>bGlfwInitalized</h2>
@@ -300,6 +644,42 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="ae14209fdf6a09d93aaedec4759418270"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae14209fdf6a09d93aaedec4759418270">&#9670;&nbsp;</a></span>DYNAMIC_STATES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;VkDynamicState&gt; Fling::DYNAMIC_STATES = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac26ca65e86809859290ce863f4f80ba7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac26ca65e86809859290ce863f4f80ba7">&#9670;&nbsp;</a></span>INVALID_GUID</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Guid</a> Fling::INVALID_GUID = { &quot;INVALID_GUID&quot;_hs }</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a13bbf719a4efcb2f7a7a525216144e92"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a13bbf719a4efcb2f7a7a525216144e92">&#9670;&nbsp;</a></span>sStartTime</h2>
 
@@ -310,6 +690,182 @@ Variables</h2></td></tr>
           <td class="memname">std::chrono::high_resolution_clock::time_point Fling::sStartTime</td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a90202e13070c0b8495d3ae552290b499"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a90202e13070c0b8495d3ae552290b499">&#9670;&nbsp;</a></span>VULKAN_NUM_ATTACHMENTS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_NUM_ATTACHMENTS = 8</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa5ed1eb5f2ad09f0cab560914c6f97f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa5ed1eb5f2ad09f0cab560914c6f97f5">&#9670;&nbsp;</a></span>VULKAN_NUM_BINDINGS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_NUM_BINDINGS = 16</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2ff537c0e98b747cecc73e2532adae17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ff537c0e98b747cecc73e2532adae17">&#9670;&nbsp;</a></span>VULKAN_NUM_DESCRIPTOR_SETS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_NUM_DESCRIPTOR_SETS = 4</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8615531e56b0a4dd8046d81dd136b2d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8615531e56b0a4dd8046d81dd136b2d6">&#9670;&nbsp;</a></span>VULKAN_NUM_SPEC_CONSTANTS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_NUM_SPEC_CONSTANTS = 8</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a733745dad1751cf262c74c16f684d764"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a733745dad1751cf262c74c16f684d764">&#9670;&nbsp;</a></span>VULKAN_NUM_VERTEX_ATTRIBS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_NUM_VERTEX_ATTRIBS = 16</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac974a5b59ae1713141101d564f180d69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac974a5b59ae1713141101d564f180d69">&#9670;&nbsp;</a></span>VULKAN_NUM_VERTEX_BUFFERS</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_NUM_VERTEX_BUFFERS = 4</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aeca45f551393af5aa1d969b7730c3987"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeca45f551393af5aa1d969b7730c3987">&#9670;&nbsp;</a></span>VULKAN_PUSH_CONSTANT_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_PUSH_CONSTANT_SIZE = 128</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1c647f82799ed1271552bce1242fa75b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c647f82799ed1271552bce1242fa75b">&#9670;&nbsp;</a></span>VULKAN_UBO_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const unsigned Fling::VULKAN_UBO_SIZE = 16 * 1024</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>

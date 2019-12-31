@@ -66,6 +66,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a>  </div>
   <div class="headertitle">
@@ -96,6 +97,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6d2aa26ba76201997e3e67c2b5a0c925"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#a6d2aa26ba76201997e3e67c2b5a0c925">LogPhysicalDeviceInfo</a> ()</td></tr>
 <tr class="memdesc:a6d2aa26ba76201997e3e67c2b5a0c925"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logs info about this physical device (vendor, model, ID, etc) to the console/Log file.  <a href="#a6d2aa26ba76201997e3e67c2b5a0c925">More...</a><br /></td></tr>
 <tr class="separator:a6d2aa26ba76201997e3e67c2b5a0c925"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35c50b04bfb5a4d90ad1ffec12f6764c"><td class="memItemLeft" align="right" valign="top">VkFormatProperties&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#a35c50b04bfb5a4d90ad1ffec12f6764c">GetFormatProperties</a> (VkFormat t_Form) const</td></tr>
+<tr class="memdesc:a35c50b04bfb5a4d90ad1ffec12f6764c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks hte given format properties that are supported on this physical device.  <a href="#a35c50b04bfb5a4d90ad1ffec12f6764c">More...</a><br /></td></tr>
+<tr class="separator:a35c50b04bfb5a4d90ad1ffec12f6764c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a776318665f2f66235f2483e819b61802"><td class="memItemLeft" align="right" valign="top">VkSampleCountFlagBits&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#a776318665f2f66235f2483e819b61802">GetMaxUsableSampleCount</a> ()</td></tr>
+<tr class="separator:a776318665f2f66235f2483e819b61802"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cb0691629c4a624384f108e083d68cb"><td class="memItemLeft" align="right" valign="top">VkBool32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#a2cb0691629c4a624384f108e083d68cb">GetSupportedDepthFormat</a> (VkFormat *depthFormat) const</td></tr>
+<tr class="separator:a2cb0691629c4a624384f108e083d68cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:ae3f3ff3fd8b7ca431b9831386b366fac"><td class="memItemLeft" align="right" valign="top">static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#ae3f3ff3fd8b7ca431b9831386b366fac">GetDeviceType</a> (VkPhysicalDeviceProperties t_Props)</td></tr>
+<tr class="memdesc:ae3f3ff3fd8b7ca431b9831386b366fac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a string representing the device vendor.  <a href="#ae3f3ff3fd8b7ca431b9831386b366fac">More...</a><br /></td></tr>
+<tr class="separator:ae3f3ff3fd8b7ca431b9831386b366fac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bb7b637300ffdd1a4ff7e8dc504e9e1"><td class="memItemLeft" align="right" valign="top">static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#a0bb7b637300ffdd1a4ff7e8dc504e9e1">GetDeviceVendor</a> (VkPhysicalDeviceProperties t_Props)</td></tr>
+<tr class="separator:a0bb7b637300ffdd1a4ff7e8dc504e9e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -118,6 +134,9 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a4c32c9464373ce9932b39e71fac4e5cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c42ea641ac5c7f6efb231313bc6e917"><td class="memItemLeft" align="right" valign="top">VkPhysicalDeviceMemoryProperties&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#a1c42ea641ac5c7f6efb231313bc6e917">m_MemoryProperties</a> {}</td></tr>
 <tr class="separator:a1c42ea641ac5c7f6efb231313bc6e917"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac85ba8f1504c5c72389013cdaaa2bd89"><td class="memItemLeft" align="right" valign="top">VkSampleCountFlagBits&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1PhysicalDevice.html#ac85ba8f1504c5c72389013cdaaa2bd89">m_MSAASamples</a> = VK_SAMPLE_COUNT_1_BIT</td></tr>
+<tr class="memdesc:ac85ba8f1504c5c72389013cdaaa2bd89"><td class="mdescLeft">&#160;</td><td class="mdescRight">The max supported MSSA level on this device.  <a href="#ac85ba8f1504c5c72389013cdaaa2bd89">More...</a><br /></td></tr>
+<tr class="separator:ac85ba8f1504c5c72389013cdaaa2bd89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A physical device represents the Vulkan physical device (the GPU) that we are currently using. </p>
@@ -250,6 +269,122 @@ Private Attributes</h2></td></tr>
 <span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae3f3ff3fd8b7ca431b9831386b366fac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3f3ff3fd8b7ca431b9831386b366fac">&#9670;&nbsp;</a></span>GetDeviceType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * Fling::PhysicalDevice::GetDeviceType </td>
+          <td>(</td>
+          <td class="paramtype">VkPhysicalDeviceProperties&#160;</td>
+          <td class="paramname"><em>t_Props</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get a string representing the device vendor. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t_Props</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>const char* </dd></dl>
+
+</div>
+</div>
+<a id="a0bb7b637300ffdd1a4ff7e8dc504e9e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0bb7b637300ffdd1a4ff7e8dc504e9e1">&#9670;&nbsp;</a></span>GetDeviceVendor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * Fling::PhysicalDevice::GetDeviceVendor </td>
+          <td>(</td>
+          <td class="paramtype">VkPhysicalDeviceProperties&#160;</td>
+          <td class="paramname"><em>t_Props</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a35c50b04bfb5a4d90ad1ffec12f6764c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35c50b04bfb5a4d90ad1ffec12f6764c">&#9670;&nbsp;</a></span>GetFormatProperties()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkFormatProperties Fling::PhysicalDevice::GetFormatProperties </td>
+          <td>(</td>
+          <td class="paramtype">VkFormat&#160;</td>
+          <td class="paramname"><em>t_Form</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Checks hte given format properties that are supported on this physical device. </p>
+
+</div>
+</div>
+<a id="a776318665f2f66235f2483e819b61802"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a776318665f2f66235f2483e819b61802">&#9670;&nbsp;</a></span>GetMaxUsableSampleCount()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkSampleCountFlagBits Fling::PhysicalDevice::GetMaxUsableSampleCount </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2cb0691629c4a624384f108e083d68cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2cb0691629c4a624384f108e083d68cb">&#9670;&nbsp;</a></span>GetSupportedDepthFormat()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkBool32 Fling::PhysicalDevice::GetSupportedDepthFormat </td>
+          <td>(</td>
+          <td class="paramtype">VkFormat *&#160;</td>
+          <td class="paramname"><em>depthFormat</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
 </div><div class="memdoc">
 
 </div>
@@ -414,6 +549,30 @@ Private Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac85ba8f1504c5c72389013cdaaa2bd89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac85ba8f1504c5c72389013cdaaa2bd89">&#9670;&nbsp;</a></span>m_MSAASamples</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkSampleCountFlagBits Fling::PhysicalDevice::m_MSAASamples = VK_SAMPLE_COUNT_1_BIT</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The max supported MSSA level on this device. </p>
 
 </div>
 </div>

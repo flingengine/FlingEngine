@@ -1,4 +1,5 @@
 #/bin/sh
 doxygen doxyfile
 cd docs/html
-cp -rp * ..
+mv * ..
+rm -rf html

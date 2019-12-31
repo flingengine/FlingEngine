@@ -85,15 +85,24 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a258591c482e960adf7ebfec16ceec935"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; std::string, <a class="el" href="classFling_1_1Key.html">Fling::Key</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a258591c482e960adf7ebfec16ceec935">KeyMap</a></td></tr>
+<tr class="memdesc:a258591c482e960adf7ebfec16ceec935"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFling_1_1Input.html" title="Base input class for polling input in the Fling Engine. ">Input</a> <a class="el" href="classFling_1_1Key.html">Key</a> mappings.  <a href="#a258591c482e960adf7ebfec16ceec935">More...</a><br /></td></tr>
 <tr class="separator:a258591c482e960adf7ebfec16ceec935"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82768565084ecdf72293f6f98f2ffafe"><td class="memItemLeft" align="right" valign="top">typedef std::pair&lt; std::string, <a class="el" href="classFling_1_1Key.html">Fling::Key</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a82768565084ecdf72293f6f98f2ffafe">KeyPair</a></td></tr>
 <tr class="separator:a82768565084ecdf72293f6f98f2ffafe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a974560c5ab903bfa596ef4304d4b2614"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; std::string, entt::delegate&lt; void()&gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a974560c5ab903bfa596ef4304d4b2614">KeyDownMap</a></td></tr>
+<tr class="memdesc:a974560c5ab903bfa596ef4304d4b2614"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFling_1_1Key.html">Key</a> press delegate mappings.  <a href="#a974560c5ab903bfa596ef4304d4b2614">More...</a><br /></td></tr>
+<tr class="separator:a974560c5ab903bfa596ef4304d4b2614"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c6aabaa3bfb6f5dd61af52a20430351"><td class="memItemLeft" align="right" valign="top">typedef std::pair&lt; std::string, entt::delegate&lt; void()&gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a3c6aabaa3bfb6f5dd61af52a20430351">KeyDownMapPair</a></td></tr>
+<tr class="separator:a3c6aabaa3bfb6f5dd61af52a20430351"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:af29f164c373a343e92e7c2bad8d4d2cb"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#af29f164c373a343e92e7c2bad8d4d2cb">Init</a> ()</td></tr>
 <tr class="memdesc:af29f164c373a343e92e7c2bad8d4d2cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the input instance on this platform.  <a href="#af29f164c373a343e92e7c2bad8d4d2cb">More...</a><br /></td></tr>
 <tr class="separator:af29f164c373a343e92e7c2bad8d4d2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecf4ff03ec2154bbcf0ee38819f83641"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#aecf4ff03ec2154bbcf0ee38819f83641">PreUpdate</a> ()</td></tr>
+<tr class="memdesc:aecf4ff03ec2154bbcf0ee38819f83641"><td class="mdescLeft">&#160;</td><td class="mdescRight">PreUpdate is called before polling of input, and after Init.  <a href="#aecf4ff03ec2154bbcf0ee38819f83641">More...</a><br /></td></tr>
+<tr class="separator:aecf4ff03ec2154bbcf0ee38819f83641"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a432774aef0dea1fb3e4f8e1991514732"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a432774aef0dea1fb3e4f8e1991514732">Shutdown</a> ()</td></tr>
 <tr class="memdesc:a432774aef0dea1fb3e4f8e1991514732"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shuts down input manager.  <a href="#a432774aef0dea1fb3e4f8e1991514732">More...</a><br /></td></tr>
 <tr class="separator:a432774aef0dea1fb3e4f8e1991514732"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -111,11 +120,17 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a99d4d5f2951532cc0945ce649d60aaf1"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structFling_1_1MousePos.html">MousePos</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a99d4d5f2951532cc0945ce649d60aaf1">GetMousePos</a> ()</td></tr>
 <tr class="memdesc:a99d4d5f2951532cc0945ce649d60aaf1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current mouse position in screen space.  <a href="#a99d4d5f2951532cc0945ce649d60aaf1">More...</a><br /></td></tr>
 <tr class="separator:a99d4d5f2951532cc0945ce649d60aaf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b4fece64d059e01fec3ad752cc8fc67"><td class="memTemplParams" colspan="2">template&lt;auto Candidate, typename Type &gt; </td></tr>
+<tr class="memitem:a8b4fece64d059e01fec3ad752cc8fc67"><td class="memTemplItemLeft" align="right" valign="top">static void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a8b4fece64d059e01fec3ad752cc8fc67">BindKeyPress</a> (const std::string &amp;t_KeyName, Type &amp;t_Instance)</td></tr>
+<tr class="memdesc:a8b4fece64d059e01fec3ad752cc8fc67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind a callback function to when a key is pressed.  <a href="#a8b4fece64d059e01fec3ad752cc8fc67">More...</a><br /></td></tr>
+<tr class="separator:a8b4fece64d059e01fec3ad752cc8fc67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a13a8a8016360d142bec90be063bac4ed"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a13a8a8016360d142bec90be063bac4ed">InitImpl</a> ()=0</td></tr>
 <tr class="separator:a13a8a8016360d142bec90be063bac4ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05e68a5bf97c91b06a4e28af37e4adb9"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a05e68a5bf97c91b06a4e28af37e4adb9">PreUpdateImpl</a> ()=0</td></tr>
+<tr class="separator:a05e68a5bf97c91b06a4e28af37e4adb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada7d50ab3454f77dfd1797e4023d7380"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#ada7d50ab3454f77dfd1797e4023d7380">ShutdownImpl</a> ()=0</td></tr>
 <tr class="separator:ada7d50ab3454f77dfd1797e4023d7380"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f04526cf8dd4bcb039e72b259a71c54"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a7f04526cf8dd4bcb039e72b259a71c54">PollImpl</a> ()=0</td></tr>
@@ -150,9 +165,11 @@ Static Protected Attributes</h2></td></tr>
 <tr class="memitem:ae4981626047c5d938df530a18c2eee07"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classFling_1_1Input.html#a258591c482e960adf7ebfec16ceec935">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#ae4981626047c5d938df530a18c2eee07">m_KeyMap</a></td></tr>
 <tr class="memdesc:ae4981626047c5d938df530a18c2eee07"><td class="mdescLeft">&#160;</td><td class="mdescRight">The actual key map.  <a href="#ae4981626047c5d938df530a18c2eee07">More...</a><br /></td></tr>
 <tr class="separator:ae4981626047c5d938df530a18c2eee07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a970b698dd64e578d44f9627956714e84"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classFling_1_1Input.html">Input</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a970b698dd64e578d44f9627956714e84">m_Instace</a></td></tr>
-<tr class="memdesc:a970b698dd64e578d44f9627956714e84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Created by the implementation class.  <a href="#a970b698dd64e578d44f9627956714e84">More...</a><br /></td></tr>
-<tr class="separator:a970b698dd64e578d44f9627956714e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89ed7ccb324874b67609b5f7c3c8b8b4"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classFling_1_1Input.html#a974560c5ab903bfa596ef4304d4b2614">KeyDownMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a89ed7ccb324874b67609b5f7c3c8b8b4">m_KeyDownMap</a></td></tr>
+<tr class="separator:a89ed7ccb324874b67609b5f7c3c8b8b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a136dab0c703bec7b7f435c1c589d54f2"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classFling_1_1Input.html">Input</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Input.html#a136dab0c703bec7b7f435c1c589d54f2">m_Instance</a></td></tr>
+<tr class="memdesc:a136dab0c703bec7b7f435c1c589d54f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Created by the implementation class.  <a href="#a136dab0c703bec7b7f435c1c589d54f2">More...</a><br /></td></tr>
+<tr class="separator:a136dab0c703bec7b7f435c1c589d54f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -169,6 +186,36 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base input class for polling input in the <a class="el" href="namespaceFling.html">Fling</a> <a class="el" href="classFling_1_1Engine.html" title="Core engine class of Fling. ">Engine</a>. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a974560c5ab903bfa596ef4304d4b2614"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a974560c5ab903bfa596ef4304d4b2614">&#9670;&nbsp;</a></span>KeyDownMap</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::map&lt;std::string, entt::delegate&lt;void()&gt; &gt; <a class="el" href="classFling_1_1Input.html#a974560c5ab903bfa596ef4304d4b2614">Fling::Input::KeyDownMap</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classFling_1_1Key.html">Key</a> press delegate mappings. </p>
+
+</div>
+</div>
+<a id="a3c6aabaa3bfb6f5dd61af52a20430351"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c6aabaa3bfb6f5dd61af52a20430351">&#9670;&nbsp;</a></span>KeyDownMapPair</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::pair&lt;std::string, entt::delegate&lt;void()&gt; &gt; <a class="el" href="classFling_1_1Input.html#a3c6aabaa3bfb6f5dd61af52a20430351">Fling::Input::KeyDownMapPair</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a258591c482e960adf7ebfec16ceec935"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a258591c482e960adf7ebfec16ceec935">&#9670;&nbsp;</a></span>KeyMap</h2>
 
@@ -180,6 +227,8 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p><a class="el" href="classFling_1_1Input.html" title="Base input class for polling input in the Fling Engine. ">Input</a> <a class="el" href="classFling_1_1Key.html">Key</a> mappings. </p>
 
 </div>
 </div>
@@ -240,6 +289,62 @@ Additional Inherited Members</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a8b4fece64d059e01fec3ad752cc8fc67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b4fece64d059e01fec3ad752cc8fc67">&#9670;&nbsp;</a></span>BindKeyPress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;auto Candidate, typename Type &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Input::BindKeyPress </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>t_KeyName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Type &amp;&#160;</td>
+          <td class="paramname"><em>t_Instance</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Bind a callback function to when a key is pressed. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Candidate</td><td>The function that you would like to bind </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t_KeyName</td><td><a class="el" href="classFling_1_1Key.html">Key</a> name to bind to </td></tr>
+    <tr><td class="paramname">t_Instance</td><td>The instance of the object you are binding to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a href="https://github.com/skypjack/entt/wiki/Crash-Course:-events,-signals-and-everything-in-between#delegate">https://github.com/skypjack/entt/wiki/Crash-Course:-events,-signals-and-everything-in-between#delegate</a> </dd>
+<dd>
+<a class="el" href="structFling_1_1KeyNames.html">Fling::KeyNames</a> </dd></dl>
 
 </div>
 </div>
@@ -635,6 +740,59 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aecf4ff03ec2154bbcf0ee38819f83641"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecf4ff03ec2154bbcf0ee38819f83641">&#9670;&nbsp;</a></span>PreUpdate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void Fling::Input::PreUpdate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>PreUpdate is called before polling of input, and after Init. </p>
+<p>Useful for anything that needs to happen after Window creation. </p>
+
+</div>
+</div>
+<a id="a05e68a5bf97c91b06a4e28af37e4adb9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05e68a5bf97c91b06a4e28af37e4adb9">&#9670;&nbsp;</a></span>PreUpdateImpl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void Fling::Input::PreUpdateImpl </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a432774aef0dea1fb3e4f8e1991514732"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a432774aef0dea1fb3e4f8e1991514732">&#9670;&nbsp;</a></span>Shutdown()</h2>
 
@@ -689,8 +847,8 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Field Documentation</h2>
-<a id="a970b698dd64e578d44f9627956714e84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a970b698dd64e578d44f9627956714e84">&#9670;&nbsp;</a></span>m_Instace</h2>
+<a id="a136dab0c703bec7b7f435c1c589d54f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a136dab0c703bec7b7f435c1c589d54f2">&#9670;&nbsp;</a></span>m_Instance</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -699,7 +857,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classFling_1_1Input.html">Input</a>* Fling::Input::m_Instace</td>
+          <td class="memname"><a class="el" href="classFling_1_1Input.html">Input</a>* Fling::Input::m_Instance</td>
         </tr>
       </table>
   </td>
@@ -711,6 +869,28 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Created by the implementation class. </p>
 <dl class="section see"><dt>See also</dt><dd>WindowInput </dd></dl>
+
+</div>
+</div>
+<a id="a89ed7ccb324874b67609b5f7c3c8b8b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89ed7ccb324874b67609b5f7c3c8b8b4">&#9670;&nbsp;</a></span>m_KeyDownMap</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classFling_1_1Input.html#a974560c5ab903bfa596ef4304d4b2614">KeyDownMap</a> Fling::Input::m_KeyDownMap</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -738,8 +918,9 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li>FlingEngine/Core/inc/Input/<a class="el" href="Input_8h_source.html">Input.h</a></li>
+<li>FlingEngine/Core/inc/Input/<a class="el" href="Input_8inl.html">Input.inl</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

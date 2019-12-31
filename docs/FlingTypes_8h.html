@@ -66,14 +66,20 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#typedef-members">Typedefs</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">FlingTypes.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;inttypes.h&gt;</code><br />
 <code>#include &lt;entt/core/hashed_string.hpp&gt;</code><br />
+<code>#include &lt;entt/entity/helper.hpp&gt;</code><br />
 </div>
 <p><a href="FlingTypes_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -81,6 +87,11 @@ $(function() {
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceFling"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html">Fling</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:abc88c4e8b392f35dadd6f7bb958afbb8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="FlingTypes_8h.html#abc88c4e8b392f35dadd6f7bb958afbb8">HS</a>(str)&#160;&#160;&#160;entt::hashed_string { (str) }</td></tr>
+<tr class="separator:abc88c4e8b392f35dadd6f7bb958afbb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -104,7 +115,38 @@ Typedefs</h2></td></tr>
 <tr class="separator:ae7db6182ede3178e4b8716bfc7eba2bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32c408f77edd77f0d78ba58c188aefbf"><td class="memItemLeft" align="right" valign="top">typedef entt::hashed_string::hash_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#a32c408f77edd77f0d78ba58c188aefbf">Fling::Guid_Handle</a></td></tr>
 <tr class="separator:a32c408f77edd77f0d78ba58c188aefbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a0450d3669b1e2c111b82adfad589466f"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a0450d3669b1e2c111b82adfad589466f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="FlingTypes_8h.html#a0450d3669b1e2c111b82adfad589466f">to_u32</a> (T value)</td></tr>
+<tr class="memdesc:a0450d3669b1e2c111b82adfad589466f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check size_t is correctly converted to uint32_t.  <a href="#a0450d3669b1e2c111b82adfad589466f">More...</a><br /></td></tr>
+<tr class="separator:a0450d3669b1e2c111b82adfad589466f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:ac26ca65e86809859290ce863f4f80ba7"><td class="memItemLeft" align="right" valign="top">static Guid&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling.html#ac26ca65e86809859290ce863f4f80ba7">Fling::INVALID_GUID</a> = { &quot;INVALID_GUID&quot;_hs }</td></tr>
+<tr class="separator:ac26ca65e86809859290ce863f4f80ba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="abc88c4e8b392f35dadd6f7bb958afbb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc88c4e8b392f35dadd6f7bb958afbb8">&#9670;&nbsp;</a></span>HS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define HS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">str</td><td>)</td>
+          <td>&#160;&#160;&#160;entt::hashed_string { (str) }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="a30f500129d8c688af07726d5d34ce52d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a30f500129d8c688af07726d5d34ce52d">&#9670;&nbsp;</a></span>INT16</h2>
@@ -215,6 +257,36 @@ Typedefs</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a0450d3669b1e2c111b82adfad589466f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0450d3669b1e2c111b82adfad589466f">&#9670;&nbsp;</a></span>to_u32()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> to_u32 </td>
+          <td>(</td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Helper function to check size_t is correctly converted to uint32_t. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>Value of type size_t to convert </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An uint32_t representation of the same value </dd></dl>
 
 </div>
 </div>
