@@ -76,6 +76,8 @@ $(function() {
 <code>#include &quot;<a class="el" href="Singleton_8hpp_source.html">Singleton.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="Random_8h_source.html">Random.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="Logger_8h_source.html">Logger.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="FreeList_8h_source.html">FreeList.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="StackAllocator_8h_source.html">StackAllocator.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -85,10 +87,14 @@ Functions</h2></td></tr>
 <tr class="separator:aba2acf1bef3d403fe2f250c872dd6b4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51f0e256d392a3dcd60eeb38e1d4e03f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="UtilsTests_8cpp.html#a51f0e256d392a3dcd60eeb38e1d4e03f">TEST_CASE</a> (&quot;Logger&quot;, &quot;[utils]&quot;)</td></tr>
 <tr class="separator:a51f0e256d392a3dcd60eeb38e1d4e03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3ae18fbe4c0cfaf10df4e554b8cea16"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="UtilsTests_8cpp.html#ad3ae18fbe4c0cfaf10df4e554b8cea16">TEST_CASE</a> (&quot;Free List&quot;, &quot;[utils]&quot;)</td></tr>
+<tr class="separator:ad3ae18fbe4c0cfaf10df4e554b8cea16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd672a9ed0cc97475b98694f6904c0d0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="UtilsTests_8cpp.html#abd672a9ed0cc97475b98694f6904c0d0">TEST_CASE</a> (&quot;Stack Allocator&quot;, &quot;[utils]&quot;)</td></tr>
+<tr class="separator:abd672a9ed0cc97475b98694f6904c0d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="af4bcd5c04c9b0c35813993c94a28b828"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af4bcd5c04c9b0c35813993c94a28b828">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[1/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#af4bcd5c04c9b0c35813993c94a28b828">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -116,7 +122,7 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a id="aba2acf1bef3d403fe2f250c872dd6b4f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aba2acf1bef3d403fe2f250c872dd6b4f">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[2/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aba2acf1bef3d403fe2f250c872dd6b4f">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[2/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -144,7 +150,7 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a id="a51f0e256d392a3dcd60eeb38e1d4e03f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51f0e256d392a3dcd60eeb38e1d4e03f">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[3/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a51f0e256d392a3dcd60eeb38e1d4e03f">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[3/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -153,6 +159,62 @@ Functions</h2></td></tr>
           <td class="memname">TEST_CASE </td>
           <td>(</td>
           <td class="paramtype">&quot;Logger&quot;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&quot;&quot;&#160;</td>
+          <td class="paramname">[utils]&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad3ae18fbe4c0cfaf10df4e554b8cea16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3ae18fbe4c0cfaf10df4e554b8cea16">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[4/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TEST_CASE </td>
+          <td>(</td>
+          <td class="paramtype">&quot;Free List&quot;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&quot;&quot;&#160;</td>
+          <td class="paramname">[utils]&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abd672a9ed0cc97475b98694f6904c0d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd672a9ed0cc97475b98694f6904c0d0">&#9670;&nbsp;</a></span>TEST_CASE() <span class="overload">[5/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TEST_CASE </td>
+          <td>(</td>
+          <td class="paramtype">&quot;Stack Allocator&quot;&#160;</td>
           <td class="paramname">, </td>
         </tr>
         <tr>

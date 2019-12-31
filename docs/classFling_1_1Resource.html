@@ -78,7 +78,7 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="Resource_8h_source.html">Resource.h</a>&gt;</code></p>
 
-<p>Inherited by <a class="el" href="classFling_1_1File.html">Fling::File</a>, <a class="el" href="classFling_1_1Image.html">Fling::Image</a>, <a class="el" href="classFling_1_1JsonFile.html">Fling::JsonFile</a>, and <a class="el" href="classFling_1_1Model.html">Fling::Model</a>.</p>
+<p>Inherited by <a class="el" href="classFling_1_1File.html">Fling::File</a>, <a class="el" href="classFling_1_1HDRImage.html">Fling::HDRImage</a>, <a class="el" href="classFling_1_1JsonFile.html">Fling::JsonFile</a>, <a class="el" href="classFling_1_1Model.html">Fling::Model</a>, <a class="el" href="classFling_1_1Shader.html">Fling::Shader</a>, and <a class="el" href="classFling_1_1Texture.html">Fling::Texture</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -89,9 +89,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab5764ce3cd430d26aac69e6954f2a309"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceFling.html#a32c408f77edd77f0d78ba58c188aefbf">Fling::Guid_Handle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#ab5764ce3cd430d26aac69e6954f2a309">GetGuidHandle</a> () const</td></tr>
 <tr class="memdesc:ab5764ce3cd430d26aac69e6954f2a309"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get GUID handle (just an int) for this resources guid.  <a href="#ab5764ce3cd430d26aac69e6954f2a309">More...</a><br /></td></tr>
 <tr class="separator:ab5764ce3cd430d26aac69e6954f2a309"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17114db32c553cdae151ac0f8103374e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a17114db32c553cdae151ac0f8103374e">GetGuidString</a> () const</td></tr>
-<tr class="memdesc:a17114db32c553cdae151ac0f8103374e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the human-readable string representation of this GUID.  <a href="#a17114db32c553cdae151ac0f8103374e">More...</a><br /></td></tr>
-<tr class="separator:a17114db32c553cdae151ac0f8103374e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32e32763f0b9f084b9730e4eb0f28810"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a32e32763f0b9f084b9730e4eb0f28810">GetGuidString</a> () const</td></tr>
+<tr class="memdesc:a32e32763f0b9f084b9730e4eb0f28810"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the human-readable string representation of this GUID.  <a href="#a32e32763f0b9f084b9730e4eb0f28810">More...</a><br /></td></tr>
+<tr class="separator:a32e32763f0b9f084b9730e4eb0f28810"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9291aa6d4bdb1b550829227bc0c1339c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a9291aa6d4bdb1b550829227bc0c1339c">GetFilepathReleativeToAssets</a> () const</td></tr>
 <tr class="memdesc:a9291aa6d4bdb1b550829227bc0c1339c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the full file path that is relative to the assets path based on the GUID of this resource.  <a href="#a9291aa6d4bdb1b550829227bc0c1339c">More...</a><br /></td></tr>
 <tr class="separator:a9291aa6d4bdb1b550829227bc0c1339c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -100,6 +100,8 @@ Public Member Functions</h2></td></tr>
 Protected Attributes</h2></td></tr>
 <tr class="memitem:a819a16875e9d96beff1ea60cc0048953"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Fling::Guid</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a819a16875e9d96beff1ea60cc0048953">m_Guid</a></td></tr>
 <tr class="separator:a819a16875e9d96beff1ea60cc0048953"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f70cebcb4fb30f661c436fda8386d63"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a0f70cebcb4fb30f661c436fda8386d63">m_HumanReadableName</a></td></tr>
+<tr class="separator:a0f70cebcb4fb30f661c436fda8386d63"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
@@ -209,8 +211,8 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="a17114db32c553cdae151ac0f8103374e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17114db32c553cdae151ac0f8103374e">&#9670;&nbsp;</a></span>GetGuidString()</h2>
+<a id="a32e32763f0b9f084b9730e4eb0f28810"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32e32763f0b9f084b9730e4eb0f28810">&#9670;&nbsp;</a></span>GetGuidString()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -219,7 +221,7 @@ Friends</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::string Fling::Resource::GetGuidString </td>
+          <td class="memname">const std::string&amp; Fling::Resource::GetGuidString </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -272,6 +274,28 @@ Friends</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Fling::Guid</a> Fling::Resource::m_Guid</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0f70cebcb4fb30f661c436fda8386d63"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f70cebcb4fb30f661c436fda8386d63">&#9670;&nbsp;</a></span>m_HumanReadableName</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string Fling::Resource::m_HumanReadableName</td>
         </tr>
       </table>
   </td>

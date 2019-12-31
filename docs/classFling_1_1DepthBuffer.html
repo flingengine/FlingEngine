@@ -78,8 +78,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0a409fa86a47369fa74960805bcae250"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a0a409fa86a47369fa74960805bcae250">DepthBuffer</a> ()</td></tr>
-<tr class="separator:a0a409fa86a47369fa74960805bcae250"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c47a07dd77d5e4ff194b3eb363b03f1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a1c47a07dd77d5e4ff194b3eb363b03f1">DepthBuffer</a> (<a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a> *t_Dev, VkSampleCountFlagBits t_SampleCount, VkExtent2D t_Extents)</td></tr>
+<tr class="separator:a1c47a07dd77d5e4ff194b3eb363b03f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a306cd4c8ef1a79880da6d39725eeeae3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a306cd4c8ef1a79880da6d39725eeeae3">~DepthBuffer</a> ()</td></tr>
 <tr class="separator:a306cd4c8ef1a79880da6d39725eeeae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a63d6a0414067726ccd2e5583b249827b"><td class="memItemLeft" align="right" valign="top">FORCEINLINE const VkImage &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a63d6a0414067726ccd2e5583b249827b">GetVkImage</a> () const</td></tr>
@@ -96,6 +96,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0ea3f117e513b85f4cdb970760a61af0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a0ea3f117e513b85f4cdb970760a61af0">Cleanup</a> ()</td></tr>
 <tr class="memdesc:a0ea3f117e513b85f4cdb970760a61af0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cleans up all Vulkan resources of this depth buffer.  <a href="#a0ea3f117e513b85f4cdb970760a61af0">More...</a><br /></td></tr>
 <tr class="separator:a0ea3f117e513b85f4cdb970760a61af0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13a96b5fc56b4dc932c43052baff165e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a13a96b5fc56b4dc932c43052baff165e">SetExtents</a> (VkExtent2D t_Extents)</td></tr>
+<tr class="separator:a13a96b5fc56b4dc932c43052baff165e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -111,29 +113,60 @@ Private Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
+<tr class="memitem:a1d3e29e6e04d9f92ce80e680a083154e"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a1d3e29e6e04d9f92ce80e680a083154e">m_Device</a></td></tr>
+<tr class="separator:a1d3e29e6e04d9f92ce80e680a083154e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a604a737c0c814330ea948c42635f5190"><td class="memItemLeft" align="right" valign="top">VkImage&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a604a737c0c814330ea948c42635f5190">m_Image</a> = VK_NULL_HANDLE</td></tr>
 <tr class="separator:a604a737c0c814330ea948c42635f5190"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4f20bc32d2b309c71ceaf37fbbefa55"><td class="memItemLeft" align="right" valign="top">VkDeviceMemory&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#ac4f20bc32d2b309c71ceaf37fbbefa55">m_Memory</a> = VK_NULL_HANDLE</td></tr>
 <tr class="separator:ac4f20bc32d2b309c71ceaf37fbbefa55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b2701fb82a10a46618fa4f76328bbad"><td class="memItemLeft" align="right" valign="top">VkImageView&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a1b2701fb82a10a46618fa4f76328bbad">m_ImageView</a> = VK_NULL_HANDLE</td></tr>
 <tr class="separator:a1b2701fb82a10a46618fa4f76328bbad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4f593745dd664a7240b140c3f49be63f"><td class="memItemLeft" align="right" valign="top">VkFormat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a4f593745dd664a7240b140c3f49be63f">m_Format</a></td></tr>
+<tr class="memitem:a4f593745dd664a7240b140c3f49be63f"><td class="memItemLeft" align="right" valign="top">VkFormat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a4f593745dd664a7240b140c3f49be63f">m_Format</a> {}</td></tr>
 <tr class="separator:a4f593745dd664a7240b140c3f49be63f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a468c9420252f4bdd5d7ad852ed9cc0"><td class="memItemLeft" align="right" valign="top">VkExtent2D&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a6a468c9420252f4bdd5d7ad852ed9cc0">m_Extents</a> {}</td></tr>
+<tr class="separator:a6a468c9420252f4bdd5d7ad852ed9cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b13bf9998f5da59f677dc87f210377e"><td class="memItemLeft" align="right" valign="top">VkSampleCountFlagBits&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1DepthBuffer.html#a2b13bf9998f5da59f677dc87f210377e">m_SampleCount</a> = VK_SAMPLE_COUNT_1_BIT</td></tr>
+<tr class="separator:a2b13bf9998f5da59f677dc87f210377e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0a409fa86a47369fa74960805bcae250"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a409fa86a47369fa74960805bcae250">&#9670;&nbsp;</a></span>DepthBuffer()</h2>
+<a id="a1c47a07dd77d5e4ff194b3eb363b03f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c47a07dd77d5e4ff194b3eb363b03f1">&#9670;&nbsp;</a></span>DepthBuffer()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">Fling::DepthBuffer::DepthBuffer </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a> *&#160;</td>
+          <td class="paramname"><em>t_Dev</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">VkSampleCountFlagBits&#160;</td>
+          <td class="paramname"><em>t_SampleCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkExtent2D&#160;</td>
+          <td class="paramname"><em>t_Extents</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -371,7 +404,69 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a13a96b5fc56b4dc932c43052baff165e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13a96b5fc56b4dc932c43052baff165e">&#9670;&nbsp;</a></span>SetExtents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::DepthBuffer::SetExtents </td>
+          <td>(</td>
+          <td class="paramtype">VkExtent2D&#160;</td>
+          <td class="paramname"><em>t_Extents</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Field Documentation</h2>
+<a id="a1d3e29e6e04d9f92ce80e680a083154e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d3e29e6e04d9f92ce80e680a083154e">&#9670;&nbsp;</a></span>m_Device</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a>* Fling::DepthBuffer::m_Device</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6a468c9420252f4bdd5d7ad852ed9cc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a468c9420252f4bdd5d7ad852ed9cc0">&#9670;&nbsp;</a></span>m_Extents</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkExtent2D Fling::DepthBuffer::m_Extents {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a4f593745dd664a7240b140c3f49be63f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4f593745dd664a7240b140c3f49be63f">&#9670;&nbsp;</a></span>m_Format</h2>
 
@@ -382,7 +477,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">VkFormat Fling::DepthBuffer::m_Format</td>
+          <td class="memname">VkFormat Fling::DepthBuffer::m_Format {}</td>
         </tr>
       </table>
   </td>
@@ -449,6 +544,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">VkDeviceMemory Fling::DepthBuffer::m_Memory = VK_NULL_HANDLE</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2b13bf9998f5da59f677dc87f210377e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b13bf9998f5da59f677dc87f210377e">&#9670;&nbsp;</a></span>m_SampleCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkSampleCountFlagBits Fling::DepthBuffer::m_SampleCount = VK_SAMPLE_COUNT_1_BIT</td>
         </tr>
       </table>
   </td>

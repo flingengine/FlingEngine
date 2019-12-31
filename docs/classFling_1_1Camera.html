@@ -116,6 +116,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1d8b585dee814a8bef1e7ff5d8c6d3f4"><td class="memItemLeft" align="right" valign="top">const glm::mat4 &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a1d8b585dee814a8bef1e7ff5d8c6d3f4">GetProjectionMatrix</a> () const</td></tr>
 <tr class="memdesc:a1d8b585dee814a8bef1e7ff5d8c6d3f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the projection matrix used by camera.  <a href="#a1d8b585dee814a8bef1e7ff5d8c6d3f4">More...</a><br /></td></tr>
 <tr class="separator:a1d8b585dee814a8bef1e7ff5d8c6d3f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a147521a9fd539ed9a103cbfe46d6ed"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a4a147521a9fd539ed9a103cbfe46d6ed">GetGamma</a> () const</td></tr>
+<tr class="separator:a4a147521a9fd539ed9a103cbfe46d6ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada2b5fe13438e1ee2bd7551b68c1d9af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#ada2b5fe13438e1ee2bd7551b68c1d9af">SetGamma</a> (float t_Gam)</td></tr>
+<tr class="separator:ada2b5fe13438e1ee2bd7551b68c1d9af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c8021600f47ac477785272179bcfd89"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a9c8021600f47ac477785272179bcfd89">GetExposure</a> () const</td></tr>
+<tr class="separator:a9c8021600f47ac477785272179bcfd89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa74f6f8eb77c44220dd409b1078363b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#aa74f6f8eb77c44220dd409b1078363b3">SetExposure</a> (float t_Val)</td></tr>
+<tr class="separator:aa74f6f8eb77c44220dd409b1078363b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -137,6 +145,10 @@ Protected Attributes</h2></td></tr>
 <tr class="separator:a48dd0712d15a7fd792b5ade9c17c0de1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b205755e97709173e3adba7c4bb17d1"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a9b205755e97709173e3adba7c4bb17d1">m_fieldOfView</a></td></tr>
 <tr class="separator:a9b205755e97709173e3adba7c4bb17d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc988015d01f3c31132b1a9de1e0fc13"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#abc988015d01f3c31132b1a9de1e0fc13">m_Gamma</a> = 2.2f</td></tr>
+<tr class="separator:abc988015d01f3c31132b1a9de1e0fc13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51f6bdea0e23ab20a1d54ed5c68fd848"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a51f6bdea0e23ab20a1d54ed5c68fd848">m_Exposure</a> = 4.5f</td></tr>
+<tr class="separator:a51f6bdea0e23ab20a1d54ed5c68fd848"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base class for camera, meant to be overridden. </p>
@@ -217,6 +229,31 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a9c8021600f47ac477785272179bcfd89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c8021600f47ac477785272179bcfd89">&#9670;&nbsp;</a></span>GetExposure()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Fling::Camera::GetExposure </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aaf9caf9ea8220d38e89156567deca47d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aaf9caf9ea8220d38e89156567deca47d">&#9670;&nbsp;</a></span>GetFarPlane()</h2>
 
@@ -270,6 +307,31 @@ Protected Attributes</h2></td></tr>
 
 <p>Gets the field of view angle from the view frustrum. </p>
 <dl class="section return"><dt>Returns</dt><dd>const float&amp; m_fieldOfView </dd></dl>
+
+</div>
+</div>
+<a id="a4a147521a9fd539ed9a103cbfe46d6ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a147521a9fd539ed9a103cbfe46d6ed">&#9670;&nbsp;</a></span>GetGamma()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Fling::Camera::GetGamma </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -432,6 +494,32 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="aa74f6f8eb77c44220dd409b1078363b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa74f6f8eb77c44220dd409b1078363b3">&#9670;&nbsp;</a></span>SetExposure()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Camera::SetExposure </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>t_Val</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ae5b3f636bc8c7a8d917b7def206d21f2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae5b3f636bc8c7a8d917b7def206d21f2">&#9670;&nbsp;</a></span>SetFarPlane()</h2>
 
@@ -472,6 +560,32 @@ Protected Attributes</h2></td></tr>
           <td>(</td>
           <td class="paramtype">const float &amp;&#160;</td>
           <td class="paramname"><em>fieldOfView</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ada2b5fe13438e1ee2bd7551b68c1d9af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada2b5fe13438e1ee2bd7551b68c1d9af">&#9670;&nbsp;</a></span>SetGamma()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Camera::SetGamma </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>t_Gam</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -561,6 +675,28 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a51f6bdea0e23ab20a1d54ed5c68fd848"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51f6bdea0e23ab20a1d54ed5c68fd848">&#9670;&nbsp;</a></span>m_Exposure</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Fling::Camera::m_Exposure = 4.5f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a48dd0712d15a7fd792b5ade9c17c0de1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a48dd0712d15a7fd792b5ade9c17c0de1">&#9670;&nbsp;</a></span>m_farPlane</h2>
 
@@ -594,6 +730,28 @@ Protected Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">float Fling::Camera::m_fieldOfView</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abc988015d01f3c31132b1a9de1e0fc13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc988015d01f3c31132b1a9de1e0fc13">&#9670;&nbsp;</a></span>m_Gamma</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Fling::Camera::m_Gamma = 2.2f</td>
         </tr>
       </table>
   </td>

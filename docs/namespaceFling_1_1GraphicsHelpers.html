@@ -82,15 +82,33 @@ Functions</h2></td></tr>
 <tr class="separator:ac1e7a93c7ff440503f6a22b5cefa4ebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bc566f39b853a637b04d84ca3f12eb4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a9bc566f39b853a637b04d84ca3f12eb4">EndSingleTimeCommands</a> (VkCommandBuffer t_CommandBuffer)</td></tr>
 <tr class="separator:a9bc566f39b853a637b04d84ca3f12eb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9593db203f880ab489331487c8d7d43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#ad9593db203f880ab489331487c8d7d43">CreateVkImage</a> (<a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Width, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Height, VkFormat t_Format, VkImageTiling t_Tiling, VkImageUsageFlags t_Useage, VkMemoryPropertyFlags t_Props, VkImage &amp;t_Image, VkDeviceMemory &amp;t_Memory)</td></tr>
-<tr class="separator:ad9593db203f880ab489331487c8d7d43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff6c96949928c68b71a7eef6e9ae405c"><td class="memItemLeft" align="right" valign="top">VkImageView&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#aff6c96949928c68b71a7eef6e9ae405c">CreateVkImageView</a> (VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs)</td></tr>
-<tr class="memdesc:aff6c96949928c68b71a7eef6e9ae405c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a an image view for vulkan with the given format.  <a href="#aff6c96949928c68b71a7eef6e9ae405c">More...</a><br /></td></tr>
-<tr class="separator:aff6c96949928c68b71a7eef6e9ae405c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12edd093661b2cde0dc2e2a9cb60dcc0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a12edd093661b2cde0dc2e2a9cb60dcc0">CreateVkImage</a> (VkDevice t_Dev, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Width, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Height, VkFormat t_Format, VkImageTiling t_Tiling, VkImageUsageFlags t_Useage, VkMemoryPropertyFlags t_Props, VkImage &amp;t_Image, VkDeviceMemory &amp;t_Memory, VkSampleCountFlagBits t_NumSamples=VK_SAMPLE_COUNT_1_BIT)</td></tr>
+<tr class="separator:a12edd093661b2cde0dc2e2a9cb60dcc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02668e57d9237f56e6ee8935c88b64fe"><td class="memItemLeft" align="right" valign="top">VkSemaphore&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a02668e57d9237f56e6ee8935c88b64fe">CreateSemaphore</a> (VkDevice t_Dev)</td></tr>
+<tr class="separator:a02668e57d9237f56e6ee8935c88b64fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f08e7cf4d012aaba9e20abdbe3a9fb8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a5f08e7cf4d012aaba9e20abdbe3a9fb8">CreateVkImage</a> (VkDevice t_Dev, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Width, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Height, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_MipLevels, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_Depth, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_ArrayLayers, VkFormat t_Format, VkImageTiling t_Tiling, VkImageUsageFlags t_Useage, VkMemoryPropertyFlags t_Props, VkImageCreateFlags t_flags, VkImage &amp;t_Image, VkDeviceMemory &amp;t_Memory, VkSampleCountFlagBits t_NumSamples=VK_SAMPLE_COUNT_1_BIT)</td></tr>
+<tr class="separator:a5f08e7cf4d012aaba9e20abdbe3a9fb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30bd2be4cae3118079cd5c539c48e1af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a30bd2be4cae3118079cd5c539c48e1af">CreateVkSampler</a> (VkFilter t_magFilter, VkFilter t_minFilter, VkSamplerMipmapMode t_mipmapMode, VkSamplerAddressMode t_addressModeU, VkSamplerAddressMode t_addressModeV, VkSamplerAddressMode t_addressModeM, VkBorderColor t_borderColor, VkSampler &amp;t_sampler)</td></tr>
+<tr class="separator:a30bd2be4cae3118079cd5c539c48e1af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f8d3d05d900e749e597f13aebf3df73"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a2f8d3d05d900e749e597f13aebf3df73">SetImageLayout</a> (VkCommandBuffer t_cmdbuffer, VkImage t_image, VkImageAspectFlags t_aspectMask, VkImageLayout t_oldImageLayout, VkImageLayout t_newImageLayout, VkPipelineStageFlags t_srcStageMask, VkPipelineStageFlags t_dstStageMask)</td></tr>
+<tr class="separator:a2f8d3d05d900e749e597f13aebf3df73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd5bf4ffd54bfb704398753829b01bfd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#afd5bf4ffd54bfb704398753829b01bfd">SetImageLayout</a> (VkCommandBuffer t_cmdbuffer, VkImage t_image, VkImageLayout t_oldImageLayout, VkImageLayout t_newImageLayout, VkImageSubresourceRange t_subresourceRange, VkPipelineStageFlags t_srcStageMask, VkPipelineStageFlags t_dstStageMask)</td></tr>
+<tr class="separator:afd5bf4ffd54bfb704398753829b01bfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a400944a67e4408f6db9a5504a46bcf2d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a400944a67e4408f6db9a5504a46bcf2d">CreateCommandPool</a> (VkCommandPool *t_commandPool, VkCommandPoolCreateFlags t_flags)</td></tr>
+<tr class="separator:a400944a67e4408f6db9a5504a46bcf2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add77a2994d8f77dd5a0056a5d2447576"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#add77a2994d8f77dd5a0056a5d2447576">CreateCommandBuffers</a> (VkCommandBuffer *t_commandBuffer, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_commandBufferCount, VkCommandPool &amp;t_commandPool)</td></tr>
+<tr class="separator:add77a2994d8f77dd5a0056a5d2447576"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44a19e37943bcf66a27ada202ca2aa55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a44a19e37943bcf66a27ada202ca2aa55">CreatePipelineCache</a> (VkPipelineCache &amp;t_PipelineCache)</td></tr>
+<tr class="separator:a44a19e37943bcf66a27ada202ca2aa55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dc3b8ad914086b3809a37a145ad19bf"><td class="memItemLeft" align="right" valign="top">VkShaderModule&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a3dc3b8ad914086b3809a37a145ad19bf">CreateShaderModule</a> (std::shared_ptr&lt; <a class="el" href="classFling_1_1File.html">File</a> &gt; t_ShaderCode)</td></tr>
+<tr class="separator:a3dc3b8ad914086b3809a37a145ad19bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca87269cf82dfbf6d2b2038ecfee8ec7"><td class="memItemLeft" align="right" valign="top">VkImageView&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#aca87269cf82dfbf6d2b2038ecfee8ec7">CreateVkImageView</a> (VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_MipLevels=1)</td></tr>
+<tr class="memdesc:aca87269cf82dfbf6d2b2038ecfee8ec7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a an image view for Vulkan with the given format.  <a href="#aca87269cf82dfbf6d2b2038ecfee8ec7">More...</a><br /></td></tr>
+<tr class="separator:aca87269cf82dfbf6d2b2038ecfee8ec7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e743da279e0d5257dff676949240be0"><td class="memItemLeft" align="right" valign="top">VkFormat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a5e743da279e0d5257dff676949240be0">FindSupportedFormat</a> (const std::vector&lt; VkFormat &gt; &amp;t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features)</td></tr>
 <tr class="separator:a5e743da279e0d5257dff676949240be0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51e016c14e73a42ec7b9f8091fd787ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a51e016c14e73a42ec7b9f8091fd787ab">TransitionImageLayout</a> (VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout)</td></tr>
-<tr class="separator:a51e016c14e73a42ec7b9f8091fd787ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab03446ab42b1f04607a5f6d46c633bad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#ab03446ab42b1f04607a5f6d46c633bad">TransitionImageLayout</a> (VkImage t_Image, VkFormat t_Format, VkImageLayout t_oldLayout, VkImageLayout t_NewLayout, <a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> t_MipLevels=1)</td></tr>
+<tr class="separator:ab03446ab42b1f04607a5f6d46c633bad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9467814beddd5f56f336019bf5b06d4e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceFling_1_1GraphicsHelpers.html#a9467814beddd5f56f336019bf5b06d4e">HasStencilComponent</a> (VkFormat t_format)</td></tr>
 <tr class="memdesc:a9467814beddd5f56f336019bf5b06d4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the given format has a stencil component.  <a href="#a9467814beddd5f56f336019bf5b06d4e">More...</a><br /></td></tr>
 <tr class="separator:a9467814beddd5f56f336019bf5b06d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,8 +189,124 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ad9593db203f880ab489331487c8d7d43"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad9593db203f880ab489331487c8d7d43">&#9670;&nbsp;</a></span>CreateVkImage()</h2>
+<a id="add77a2994d8f77dd5a0056a5d2447576"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add77a2994d8f77dd5a0056a5d2447576">&#9670;&nbsp;</a></span>CreateCommandBuffers()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::CreateCommandBuffers </td>
+          <td>(</td>
+          <td class="paramtype">VkCommandBuffer *&#160;</td>
+          <td class="paramname"><em>t_commandBuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_commandBufferCount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkCommandPool &amp;&#160;</td>
+          <td class="paramname"><em>t_commandPool</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a400944a67e4408f6db9a5504a46bcf2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a400944a67e4408f6db9a5504a46bcf2d">&#9670;&nbsp;</a></span>CreateCommandPool()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::CreateCommandPool </td>
+          <td>(</td>
+          <td class="paramtype">VkCommandPool *&#160;</td>
+          <td class="paramname"><em>t_commandPool</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkCommandPoolCreateFlags&#160;</td>
+          <td class="paramname"><em>t_flags</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a44a19e37943bcf66a27ada202ca2aa55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44a19e37943bcf66a27ada202ca2aa55">&#9670;&nbsp;</a></span>CreatePipelineCache()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::CreatePipelineCache </td>
+          <td>(</td>
+          <td class="paramtype">VkPipelineCache &amp;&#160;</td>
+          <td class="paramname"><em>t_PipelineCache</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a02668e57d9237f56e6ee8935c88b64fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02668e57d9237f56e6ee8935c88b64fe">&#9670;&nbsp;</a></span>CreateSemaphore()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkSemaphore Fling::GraphicsHelpers::CreateSemaphore </td>
+          <td>(</td>
+          <td class="paramtype">VkDevice&#160;</td>
+          <td class="paramname"><em>t_Dev</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3dc3b8ad914086b3809a37a145ad19bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3dc3b8ad914086b3809a37a145ad19bf">&#9670;&nbsp;</a></span>CreateShaderModule()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkShaderModule Fling::GraphicsHelpers::CreateShaderModule </td>
+          <td>(</td>
+          <td class="paramtype">std::shared_ptr&lt; <a class="el" href="classFling_1_1File.html">File</a> &gt;&#160;</td>
+          <td class="paramname"><em>t_ShaderCode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a12edd093661b2cde0dc2e2a9cb60dcc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12edd093661b2cde0dc2e2a9cb60dcc0">&#9670;&nbsp;</a></span>CreateVkImage() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -180,6 +314,12 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">void Fling::GraphicsHelpers::CreateVkImage </td>
           <td>(</td>
+          <td class="paramtype">VkDevice&#160;</td>
+          <td class="paramname"><em>t_Dev</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
           <td class="paramname"><em>t_Width</em>, </td>
         </tr>
@@ -223,7 +363,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">VkDeviceMemory &amp;&#160;</td>
-          <td class="paramname"><em>t_Memory</em>&#160;</td>
+          <td class="paramname"><em>t_Memory</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSampleCountFlagBits&#160;</td>
+          <td class="paramname"><em>t_NumSamples</em> = <code>VK_SAMPLE_COUNT_1_BIT</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -235,8 +381,108 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aff6c96949928c68b71a7eef6e9ae405c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aff6c96949928c68b71a7eef6e9ae405c">&#9670;&nbsp;</a></span>CreateVkImageView()</h2>
+<a id="a5f08e7cf4d012aaba9e20abdbe3a9fb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f08e7cf4d012aaba9e20abdbe3a9fb8">&#9670;&nbsp;</a></span>CreateVkImage() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::CreateVkImage </td>
+          <td>(</td>
+          <td class="paramtype">VkDevice&#160;</td>
+          <td class="paramname"><em>t_Dev</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_Width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_Height</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_MipLevels</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_Depth</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_ArrayLayers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkFormat&#160;</td>
+          <td class="paramname"><em>t_Format</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageTiling&#160;</td>
+          <td class="paramname"><em>t_Tiling</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageUsageFlags&#160;</td>
+          <td class="paramname"><em>t_Useage</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkMemoryPropertyFlags&#160;</td>
+          <td class="paramname"><em>t_Props</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageCreateFlags&#160;</td>
+          <td class="paramname"><em>t_flags</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImage &amp;&#160;</td>
+          <td class="paramname"><em>t_Image</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkDeviceMemory &amp;&#160;</td>
+          <td class="paramname"><em>t_Memory</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSampleCountFlagBits&#160;</td>
+          <td class="paramname"><em>t_NumSamples</em> = <code>VK_SAMPLE_COUNT_1_BIT</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aca87269cf82dfbf6d2b2038ecfee8ec7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca87269cf82dfbf6d2b2038ecfee8ec7">&#9670;&nbsp;</a></span>CreateVkImageView()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -257,7 +503,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">VkImageAspectFlags&#160;</td>
-          <td class="paramname"><em>t_AspectFalgs</em>&#160;</td>
+          <td class="paramname"><em>t_AspectFalgs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_MipLevels</em> = <code>1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -267,7 +519,71 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Create a an image view for vulkan with the given format. </p>
+<p>Create a an image view for Vulkan with the given format. </p>
+
+</div>
+</div>
+<a id="a30bd2be4cae3118079cd5c539c48e1af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30bd2be4cae3118079cd5c539c48e1af">&#9670;&nbsp;</a></span>CreateVkSampler()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::CreateVkSampler </td>
+          <td>(</td>
+          <td class="paramtype">VkFilter&#160;</td>
+          <td class="paramname"><em>t_magFilter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkFilter&#160;</td>
+          <td class="paramname"><em>t_minFilter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSamplerMipmapMode&#160;</td>
+          <td class="paramname"><em>t_mipmapMode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSamplerAddressMode&#160;</td>
+          <td class="paramname"><em>t_addressModeU</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSamplerAddressMode&#160;</td>
+          <td class="paramname"><em>t_addressModeV</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSamplerAddressMode&#160;</td>
+          <td class="paramname"><em>t_addressModeM</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkBorderColor&#160;</td>
+          <td class="paramname"><em>t_borderColor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSampler &amp;&#160;</td>
+          <td class="paramname"><em>t_sampler</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -387,8 +703,124 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a51e016c14e73a42ec7b9f8091fd787ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51e016c14e73a42ec7b9f8091fd787ab">&#9670;&nbsp;</a></span>TransitionImageLayout()</h2>
+<a id="a2f8d3d05d900e749e597f13aebf3df73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f8d3d05d900e749e597f13aebf3df73">&#9670;&nbsp;</a></span>SetImageLayout() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::SetImageLayout </td>
+          <td>(</td>
+          <td class="paramtype">VkCommandBuffer&#160;</td>
+          <td class="paramname"><em>t_cmdbuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImage&#160;</td>
+          <td class="paramname"><em>t_image</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageAspectFlags&#160;</td>
+          <td class="paramname"><em>t_aspectMask</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageLayout&#160;</td>
+          <td class="paramname"><em>t_oldImageLayout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageLayout&#160;</td>
+          <td class="paramname"><em>t_newImageLayout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkPipelineStageFlags&#160;</td>
+          <td class="paramname"><em>t_srcStageMask</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkPipelineStageFlags&#160;</td>
+          <td class="paramname"><em>t_dstStageMask</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afd5bf4ffd54bfb704398753829b01bfd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd5bf4ffd54bfb704398753829b01bfd">&#9670;&nbsp;</a></span>SetImageLayout() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::GraphicsHelpers::SetImageLayout </td>
+          <td>(</td>
+          <td class="paramtype">VkCommandBuffer&#160;</td>
+          <td class="paramname"><em>t_cmdbuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImage&#160;</td>
+          <td class="paramname"><em>t_image</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageLayout&#160;</td>
+          <td class="paramname"><em>t_oldImageLayout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageLayout&#160;</td>
+          <td class="paramname"><em>t_newImageLayout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkImageSubresourceRange&#160;</td>
+          <td class="paramname"><em>t_subresourceRange</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkPipelineStageFlags&#160;</td>
+          <td class="paramname"><em>t_srcStageMask</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkPipelineStageFlags&#160;</td>
+          <td class="paramname"><em>t_dstStageMask</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab03446ab42b1f04607a5f6d46c633bad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab03446ab42b1f04607a5f6d46c633bad">&#9670;&nbsp;</a></span>TransitionImageLayout()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -415,7 +847,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">VkImageLayout&#160;</td>
-          <td class="paramname"><em>t_NewLayout</em>&#160;</td>
+          <td class="paramname"><em>t_NewLayout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td>
+          <td class="paramname"><em>t_MipLevels</em> = <code>1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

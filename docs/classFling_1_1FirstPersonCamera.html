@@ -130,6 +130,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1d8b585dee814a8bef1e7ff5d8c6d3f4 inherit pub_methods_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">const glm::mat4 &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a1d8b585dee814a8bef1e7ff5d8c6d3f4">GetProjectionMatrix</a> () const</td></tr>
 <tr class="memdesc:a1d8b585dee814a8bef1e7ff5d8c6d3f4 inherit pub_methods_classFling_1_1Camera"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the projection matrix used by camera.  <a href="classFling_1_1Camera.html#a1d8b585dee814a8bef1e7ff5d8c6d3f4">More...</a><br /></td></tr>
 <tr class="separator:a1d8b585dee814a8bef1e7ff5d8c6d3f4 inherit pub_methods_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a147521a9fd539ed9a103cbfe46d6ed inherit pub_methods_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a4a147521a9fd539ed9a103cbfe46d6ed">GetGamma</a> () const</td></tr>
+<tr class="separator:a4a147521a9fd539ed9a103cbfe46d6ed inherit pub_methods_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada2b5fe13438e1ee2bd7551b68c1d9af inherit pub_methods_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#ada2b5fe13438e1ee2bd7551b68c1d9af">SetGamma</a> (float t_Gam)</td></tr>
+<tr class="separator:ada2b5fe13438e1ee2bd7551b68c1d9af inherit pub_methods_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c8021600f47ac477785272179bcfd89 inherit pub_methods_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a9c8021600f47ac477785272179bcfd89">GetExposure</a> () const</td></tr>
+<tr class="separator:a9c8021600f47ac477785272179bcfd89 inherit pub_methods_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa74f6f8eb77c44220dd409b1078363b3 inherit pub_methods_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#aa74f6f8eb77c44220dd409b1078363b3">SetExposure</a> (float t_Val)</td></tr>
+<tr class="separator:aa74f6f8eb77c44220dd409b1078363b3 inherit pub_methods_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -150,10 +158,14 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ae8a2540bc0cc33988fde9fbab55f661a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afeac8acc94cc77f3c046b5960c7ad916"><td class="memItemLeft" align="right" valign="top">glm::vec3&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html#afeac8acc94cc77f3c046b5960c7ad916">m_worldUp</a></td></tr>
 <tr class="separator:afeac8acc94cc77f3c046b5960c7ad916"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdf58aedffd7502de976b0ccc14c2992"><td class="memItemLeft" align="right" valign="top">glm::vec3&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html#acdf58aedffd7502de976b0ccc14c2992">m_worldFront</a> = { 0.f, 0.f, -1.0 }</td></tr>
+<tr class="separator:acdf58aedffd7502de976b0ccc14c2992"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7101af04df1d65c32aabdfaade8be14"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html#ab7101af04df1d65c32aabdfaade8be14">m_RotationSpeed</a> = 20.0f</td></tr>
 <tr class="separator:ab7101af04df1d65c32aabdfaade8be14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a939103857df55f3295f0a2106c4675ac"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html#a939103857df55f3295f0a2106c4675ac">m_IsRotating</a> = false</td></tr>
 <tr class="separator:a939103857df55f3295f0a2106c4675ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb467a84026749577b160accbb70d684"><td class="memItemLeft" align="right" valign="top">const float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html#afb467a84026749577b160accbb70d684">MAX_PITCH</a> = (glm::pi&lt;float&gt;() / 2.0f) - .017f</td></tr>
+<tr class="separator:afb467a84026749577b160accbb70d684"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add777b398a698496709c4ab7d20a12f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structFling_1_1MousePos.html">MousePos</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1FirstPersonCamera.html#add777b398a698496709c4ab7d20a12f4">m_PrevMousePos</a></td></tr>
 <tr class="separator:add777b398a698496709c4ab7d20a12f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -178,6 +190,10 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a48dd0712d15a7fd792b5ade9c17c0de1 inherit pro_attribs_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b205755e97709173e3adba7c4bb17d1 inherit pro_attribs_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a9b205755e97709173e3adba7c4bb17d1">m_fieldOfView</a></td></tr>
 <tr class="separator:a9b205755e97709173e3adba7c4bb17d1 inherit pro_attribs_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc988015d01f3c31132b1a9de1e0fc13 inherit pro_attribs_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#abc988015d01f3c31132b1a9de1e0fc13">m_Gamma</a> = 2.2f</td></tr>
+<tr class="separator:abc988015d01f3c31132b1a9de1e0fc13 inherit pro_attribs_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51f6bdea0e23ab20a1d54ed5c68fd848 inherit pro_attribs_classFling_1_1Camera"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Camera.html#a51f6bdea0e23ab20a1d54ed5c68fd848">m_Exposure</a> = 4.5f</td></tr>
+<tr class="separator:a51f6bdea0e23ab20a1d54ed5c68fd848 inherit pro_attribs_classFling_1_1Camera"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A simple first person camera. </p>
@@ -640,6 +656,28 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="acdf58aedffd7502de976b0ccc14c2992"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acdf58aedffd7502de976b0ccc14c2992">&#9670;&nbsp;</a></span>m_worldFront</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">glm::vec3 Fling::FirstPersonCamera::m_worldFront = { 0.f, 0.f, -1.0 }</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="afeac8acc94cc77f3c046b5960c7ad916"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afeac8acc94cc77f3c046b5960c7ad916">&#9670;&nbsp;</a></span>m_worldUp</h2>
 
@@ -651,6 +689,28 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">glm::vec3 Fling::FirstPersonCamera::m_worldUp</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afb467a84026749577b160accbb70d684"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb467a84026749577b160accbb70d684">&#9670;&nbsp;</a></span>MAX_PITCH</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const float Fling::FirstPersonCamera::MAX_PITCH = (glm::pi&lt;float&gt;() / 2.0f) - .017f</td>
         </tr>
       </table>
   </td>
