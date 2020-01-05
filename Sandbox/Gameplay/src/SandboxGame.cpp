@@ -121,21 +121,7 @@ namespace Sandbox
 
     void Game::LightingTest(entt::registry& t_Reg)
     {
-        auto AddModel = [&](INT32 t_Itr, 
-			const std::string& t_Model,
-			const std::string& t_Mat, 
-			const glm::vec3 t_Scale = glm::vec3(1.0f), 
-			const glm::vec3 t_Rot = glm::vec3(0.0f))
-        {
-            entt::entity e0 = t_Reg.create();
-            t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-			t_Reg.assign<Rotator>(e0);
-            Transform& t0 = t_Reg.assign<Transform>(e0);
-            t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
-			t0.SetRotation(t_Rot);
-            t0.SetScale(t_Scale);
-        };
-
+        
         auto AddRandomPointLight = [&]()
         {
             entt::entity e0 = t_Reg.create();
@@ -180,12 +166,12 @@ namespace Sandbox
 		float Spacing = 1.5f;
 		INT32 GridSize = 10;
 		glm::vec3 Center(0.0f);
-		for (size_t i = 0; i < GridSize; i++)
+		for (INT32 i = 0; i < GridSize; i++)
 		{
 			std::string ModelPath = "Models/sphere.obj";
 			std::string MatPath = "Materials/DeferredBronzeMat.mat";
 
-			for (size_t j = 0; j < GridSize; j++)
+			for (INT32 j = 0; j < GridSize; j++)
 			{
 				entt::entity e0 = t_Reg.create();
 
@@ -255,15 +241,16 @@ namespace Sandbox
 		entt::entity e0 = t_Reg.create();
 		t_Reg.assign<Transform>(e0);
 		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
+		t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
 
 		entt::entity e1 = t_Reg.create();
 		t_Reg.assign<Transform>(e1);
 		t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
 		Transform& t0 = t_Reg.get<Transform>(e1);
 		t0.SetPos(glm::vec3(0, 3, 0));
-		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
+		t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
 
+		// @Seth: This should not be here, but in the Engine!
 		LuaManager::Get().Start();
 #endif
 	}
