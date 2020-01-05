@@ -3,7 +3,6 @@
 #include <imgui.h>
 #include <entt/entity/registry.hpp>
 #include "imgui_entt_entity_editor.hpp"
-#include "FileBrowser.h"
 
 namespace Fling
 {

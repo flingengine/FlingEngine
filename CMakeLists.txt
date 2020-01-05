@@ -68,7 +68,7 @@ include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
 include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
 
 if( WITH_LUA_FLAG )
-include(FindLua53)
+    include(FindLua53)
 endif()
 
 message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
@@ -78,17 +78,15 @@ if( MSVC )
     add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 	if ( NOT DEFINED NOMINMAX )
 		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
-	endif()
+    endif()
+    
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_definitions( -Wno-unused-private-field )
-    add_definitions( -Wno-exceptions )
-    #add_definitions( -shared ) 
+
     add_definitions( -fPIC )
 
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    #add_definitions( -shared ) 
     add_definitions( -fPIC )
 endif()
 
@@ -128,9 +126,9 @@ include_directories( external/cereal/include )
 
 # Lua
 if( WITH_LUA_FLAG )
-include_directories( external/sol2/include )
-include_directories( external/lua53/include )
-include_directories( external/lua53/lib )
+    include_directories( external/sol2/include )
+    include_directories( external/lua53/include )
+    include_directories( external/lua53/lib )
 endif()
 
 # Add the engine and tests
