@@ -108,8 +108,7 @@ namespace Fling
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    //t_Reg.assign<Fling::MeshRenderer>(t_Entity, "Models/cube.obj");
-                    auto& meshRender = t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
+                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
 
                     fileDialog.ClearSelected();
                 }

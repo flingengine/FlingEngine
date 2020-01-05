@@ -272,10 +272,10 @@ namespace Fling
 		}
 
 		Transform& t = t_Reg.get<Transform>(t_Ent);
-
-#if FLING_DEBUG
 		// Make a cute little debug mesh on a point light	
 		t.SetScale(glm::vec3{ 0.1f });
+
+#if FLING_DEBUG
 		static std::string PointLightMesh = "Models/sphere.obj";
 		if (!t_Reg.has<MeshRenderer>(t_Ent))
 		{

@@ -9,11 +9,9 @@
 
 namespace Fling
 {
-    class MeshRenderer
+    struct MeshRenderer
     {
-        friend class Renderer;
-    public:
-        /*! Default constructor. */
+        /** Default constructor. */
         MeshRenderer() = default;
         
         /** Load a mesh renderer with the default material */

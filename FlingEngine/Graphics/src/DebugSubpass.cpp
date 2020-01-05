@@ -186,8 +186,6 @@ namespace Fling
 
 		t_Reg.assign<entt::tag<"Debug"_hs >>(t_Ent);
 
-		VkDevice Device = m_Device->GetVkDevice();
-
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)
 		{

@@ -92,8 +92,8 @@ void Fling::ShaderProgramReflections::UpdateUniformBuffer(
     UINT32 t_CurrentImage, 
     Camera* t_Camera)
 {
-    Camera* camera = t_Camera;
-    Transform::CalculateWorldMatrix(transform);
+    //Camera* camera = t_Camera;
+    //Transform::CalculateWorldMatrix(transform);
 
     //// Calculate the world matrix based on the given transform
     //UboVS ubo = {};
