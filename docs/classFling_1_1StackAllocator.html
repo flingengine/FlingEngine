@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -81,8 +82,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a8543fcbbf8c2834d37ed000c628dcac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0110ee5709ad5a8aa1826915cf0bf9e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1StackAllocator.html#ac0110ee5709ad5a8aa1826915cf0bf9e">~StackAllocator</a> ()</td></tr>
 <tr class="separator:ac0110ee5709ad5a8aa1826915cf0bf9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3eade1216d9f8aa66d0022498566f6be"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1StackAllocator.html#a3eade1216d9f8aa66d0022498566f6be">Allocate</a> (size_t t_Size, size_t t_Alignment, size_t t_Offset)</td></tr>
-<tr class="separator:a3eade1216d9f8aa66d0022498566f6be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab98b7739708ab8de260eddbfbf183c37"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1StackAllocator.html#ab98b7739708ab8de260eddbfbf183c37">Allocate</a> (size_t t_Size, size_t t_Alignment=0, size_t t_Offset=0)</td></tr>
+<tr class="separator:ab98b7739708ab8de260eddbfbf183c37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a933f71a3722972e6efec94a099aa1094"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1StackAllocator.html#a933f71a3722972e6efec94a099aa1094">Free</a> (void *t_Ptr)</td></tr>
 <tr class="memdesc:a933f71a3722972e6efec94a099aa1094"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a block of memory to the stack in a LIFO manner.  <a href="#a933f71a3722972e6efec94a099aa1094">More...</a><br /></td></tr>
 <tr class="separator:a933f71a3722972e6efec94a099aa1094"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -154,8 +155,8 @@ Private Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a3eade1216d9f8aa66d0022498566f6be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3eade1216d9f8aa66d0022498566f6be">&#9670;&nbsp;</a></span>Allocate()</h2>
+<a id="ab98b7739708ab8de260eddbfbf183c37"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98b7739708ab8de260eddbfbf183c37">&#9670;&nbsp;</a></span>Allocate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -170,13 +171,13 @@ Private Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>t_Alignment</em>, </td>
+          <td class="paramname"><em>t_Alignment</em> = <code>0</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>t_Offset</em>&#160;</td>
+          <td class="paramname"><em>t_Offset</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -188,8 +189,8 @@ Private Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">t_Size</td><td>Size of the block of memory </td></tr>
-    <tr><td class="paramname">t_Alignment</td><td>Alignment of the element (perfer sizes are a power of 2) </td></tr>
-    <tr><td class="paramname">t_Offset</td><td>Offset of the element </td></tr>
+    <tr><td class="paramname">t_Alignment</td><td>Alignment of the element (Default = 8) </td></tr>
+    <tr><td class="paramname">t_Offset</td><td>Offset of the element (Default = 0) </td></tr>
   </table>
   </dd>
 </dl>
