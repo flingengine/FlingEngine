@@ -274,7 +274,7 @@ namespace Fling
 			// Add a cubemap
 		}
 
-		/*if (t_Conf & PipelineFlags::DEBUG)
+		if (t_Conf & PipelineFlags::DEBUG)
 		{
 			F_LOG_WARN("Build DEBUG render pipeline!");
 			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
@@ -286,7 +286,7 @@ namespace Fling
 			m_RenderPipelines.emplace_back(
 				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
 			);
-		}*/
+		}
 
 		if (t_Conf & PipelineFlags::IMGUI)
 		{
@@ -323,7 +323,7 @@ namespace Fling
 		if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			F_LOG_WARN("Swap chain out of date! ");
-			return;
+			//return;
 		}
 		else if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
 		{
@@ -338,8 +338,6 @@ namespace Fling
 		// the swap chain draw buffer is always first
 		std::vector<CommandBuffer*> FinalSubmissionBufs = {};
 		FinalSubmissionBufs.emplace_back(m_DrawCmdBuffers[ImageIndex]);
-
-		//vkResetCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, 0);
 
 		{
 			// Get the current drawing command buffer associated with the current swap chain image

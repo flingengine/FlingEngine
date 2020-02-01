@@ -18,12 +18,23 @@ namespace Fling
 	}
 
 	MeshRenderer::MeshRenderer(Model* t_Model, Material* t_Mat)
-		:m_Model(t_Model)
+		: m_Model(t_Model)
 		, m_Material(t_Mat)
 	{
 		if (!m_Material)
 		{
-			LoadMaterialFromPath("Materials/Default.mat");
+			m_Material = Material::GetDefaultMat().get();
+		}
+	}
+
+	MeshRenderer::MeshRenderer(const std::string& t_MeshPath, Material* t_Mat)
+		: m_Material(t_Mat)
+	{
+		LoadModelFromPath(t_MeshPath);
+
+		if (!m_Material)
+		{
+			m_Material = Material::GetDefaultMat().get();
 		}
 	}
 

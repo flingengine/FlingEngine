@@ -11,8 +11,6 @@
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
 
-#define FRAME_BUF_DIM 2048
-
 namespace Fling
 {
 	DebugSubpass::DebugSubpass(
@@ -34,18 +32,24 @@ namespace Fling
 
 	DebugSubpass::~DebugSubpass()
 	{
-		
+		if (m_DescriptorPool != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
+			m_DescriptorPool = VK_NULL_HANDLE;
+		}
 	}
 
 	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		// For every mesh bind it's model and descriptor set info
-		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Debug"_hs>>);
+		auto RenderGroup = t_reg.view<Transform, MeshRenderer, entt::tag<"Debug"_hs>>();
 
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
 		m_Ubo.Projection[1][1] *= -1.0f;
 		VkDeviceSize offsets[1] = { 0 };
+
+		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 
 		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
@@ -86,7 +90,7 @@ namespace Fling
 				0,
 				nullptr);
 
-			vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+			//vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 
 			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
 			// Render the mesh
@@ -159,7 +163,7 @@ namespace Fling
 		m_GraphicsPipeline->m_RasterizationState =
 			Initializers::PipelineRasterizationStateCreateInfo(
 				VK_POLYGON_MODE_FILL,
-				VK_CULL_MODE_BACK_BIT,
+				VK_CULL_MODE_FRONT_BIT,
 				VK_FRONT_FACE_COUNTER_CLOCKWISE
 			);
 

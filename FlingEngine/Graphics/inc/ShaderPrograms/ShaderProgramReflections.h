@@ -19,7 +19,7 @@ namespace Fling
         void BindCmdBuffer(
             MeshRenderer& t_MeshRend,
             VkCommandBuffer t_CommandBuffer,
-            GraphicsPipeline* t_GraphicsPipeline,
+            class GraphicsPipeline* t_GraphicsPipeline,
             UINT32 t_CommandBufferIndex);
 
         void UpdateUniformBuffer(

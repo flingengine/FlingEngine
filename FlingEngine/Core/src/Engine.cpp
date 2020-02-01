@@ -38,7 +38,7 @@ namespace Fling
 
 		VulkanApp::Get().Init(
 			//static_cast<PipelineFlags>(PipelineFlags::DEFERRED),
-			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
+			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::DEBUG | PipelineFlags::IMGUI),
 			g_Registry,
 			m_Editor
 		);

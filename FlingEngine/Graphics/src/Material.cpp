@@ -23,6 +23,11 @@ namespace Fling
 		return Material::Create("Materials/Default.mat");
 	}
 
+	std::shared_ptr<Fling::Material> Material::GetDebugMat()
+	{
+		return Material::Create("Materials/Debug.mat");
+	}
+
     Material::Material(Guid t_ID)
         : JsonFile(t_ID)
     {

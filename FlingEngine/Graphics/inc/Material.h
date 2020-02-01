@@ -24,7 +24,6 @@ namespace Fling
     */
     class Material : public JsonFile
     {
-        friend class Renderer;
     public:
 		enum class Type : UINT8
 		{
@@ -37,6 +36,8 @@ namespace Fling
         static std::shared_ptr<Fling::Material> Create(Guid t_ID);
 
 		static std::shared_ptr<Fling::Material> GetDefaultMat();
+
+		static std::shared_ptr<Fling::Material> GetDebugMat();
 
         explicit Material(Guid t_ID);
 

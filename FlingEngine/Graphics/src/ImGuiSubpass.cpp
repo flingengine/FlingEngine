@@ -156,16 +156,6 @@ namespace Fling
 		}
 	}
 
-	void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
-	{
-		
-	}
-
-	void ImGuiSubpass::PrepareAttachments()
-	{
-
-	}
-
 	void ImGuiSubpass::CreateGraphicsPipeline()
 	{
 		ImGuiIO& io = ImGui::GetIO();

@@ -162,9 +162,19 @@ namespace Sandbox
 			AddRandomPointLight();
 		}
 
+		// Create a debug entity
+		entt::entity DebugEnt = t_Reg.create();
+
+		std::string DebugModelPath = "Models/sphere.obj";
+		
+		t_Reg.assign<MeshRenderer>(DebugEnt, DebugModelPath.c_str(), Material::GetDebugMat().get());
+		Transform& DebugTransform = t_Reg.assign<Transform>(DebugEnt);
+
+		DebugTransform.SetPos(glm::vec3(1.0f, 0.0f, 0.0f));
+
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 10;
+		INT32 GridSize = 1;
 		glm::vec3 Center(0.0f);
 		for (INT32 i = 0; i < GridSize; i++)
 		{
@@ -308,7 +318,7 @@ namespace Sandbox
     {
         float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
         F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
-  }
+	}
 
 	void Game::SetWindowFullscreen()
 	{

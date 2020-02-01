@@ -131,7 +131,7 @@ namespace Fling
 		CurrentUBO.View = m_Camera->GetViewMatrix();
 
 		// For every mesh bind it's model and descriptor set info
-		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Default"_hs>>);
+		auto RenderGroup = t_reg.view<Transform, MeshRenderer, entt::tag<"Default"_hs>>();
 
 		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
@@ -154,14 +154,6 @@ namespace Fling
 				&CurrentUBO,
 				buf->GetSize()
 			);
-
-			// If the mesh has no descriptor sets, then build them
-			// #TODO Investigate a better way to do this, probably by just moving the 
-			// descriptors off of the mesh
-			if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
-			{
-				CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
-			}
 
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(
