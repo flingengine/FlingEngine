@@ -248,6 +248,15 @@ namespace Fling
 			std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(HS("Shaders/Deferred/mrt_frag.spv"), m_LogicalDevice);
 			Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenVert, OffscreenFrag));
 
+			if (t_Conf & PipelineFlags::DEBUG)
+			{
+				F_LOG_TRACE("Build DEBUG Subpass!");
+
+				std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);
+				std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_frag.spv"), m_LogicalDevice);
+				Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_RenderPass, m_Camera, DebugVert, DebugFrag));
+			}
+
 			// Create geometry pass ------
 			// These shaders do not have any vertex input and do the final processing to the screen
 			OffscreenSubpass* Offscreen = static_cast<OffscreenSubpass*>(Subpasses[0].get());
@@ -272,20 +281,6 @@ namespace Fling
 		{
 			F_LOG_WARN("Build CUBEMAP render pipeline!");
 			// Add a cubemap
-		}
-
-		if (t_Conf & PipelineFlags::DEBUG)
-		{
-			F_LOG_TRACE("Build DEBUG render pipeline!");
-			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
-
-			std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);
-			std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_frag.spv"), m_LogicalDevice);
-			Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg, m_RenderPass, m_Camera, DebugVert, DebugFrag));
-
-			m_RenderPipelines.emplace_back(
-				new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
-			);
 		}
 
 		if (t_Conf & PipelineFlags::IMGUI)

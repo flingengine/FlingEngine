@@ -10,7 +10,7 @@ namespace Fling
 	class LogicalDevice;
 	class Swapchain;
 	class FrameBuffer;
-	class MeshRenderer;
+	struct MeshRenderer;
 
 	/**
 	* @brief	A render pipeline encapsulates the functionality of a 
