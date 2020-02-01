@@ -47,6 +47,8 @@ namespace Fling
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
 		m_Ubo.Projection[1][1] *= -1.0f;
+		m_Ubo.View = m_Camera->GetViewMatrix();
+
 		VkDeviceSize offsets[1] = { 0 };
 
 		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());

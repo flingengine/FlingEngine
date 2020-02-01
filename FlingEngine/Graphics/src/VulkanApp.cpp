@@ -276,7 +276,7 @@ namespace Fling
 
 		if (t_Conf & PipelineFlags::DEBUG)
 		{
-			F_LOG_WARN("Build DEBUG render pipeline!");
+			F_LOG_TRACE("Build DEBUG render pipeline!");
 			std::vector<std::unique_ptr<Subpass>> Subpasses = {};
 
 			std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"), m_LogicalDevice);

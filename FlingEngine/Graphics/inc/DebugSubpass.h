@@ -50,6 +50,7 @@ namespace Fling
 		{
 			glm::mat4 Projection;
 			glm::mat4 Model;
+			glm::mat4 View;
 		} m_Ubo;
 
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;

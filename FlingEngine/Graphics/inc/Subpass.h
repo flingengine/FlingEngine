@@ -44,7 +44,7 @@ namespace Fling
 		*			Assumes that the frame buffer has been prepared with it's attachments already.
 		* @param t_FrameBuffer	The swap chain frame buffer
 		*/		
-		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) = 0;
+		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) {};
 		
 		/**
 		 * @brief	If a subpass has a command buffer that the final swap chain presentation is dependent on, 

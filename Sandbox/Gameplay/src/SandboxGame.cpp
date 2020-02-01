@@ -157,7 +157,7 @@ namespace Sandbox
 		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
 
 		// Add a bunch of random light bois
-		for (size_t i = 0; i < DeferredLightSettings::MaxPointLights; i++)
+		for (size_t i = 0; i < /*DeferredLightSettings::MaxPointLights*/5; i++)
 		{
 			AddRandomPointLight();
 		}

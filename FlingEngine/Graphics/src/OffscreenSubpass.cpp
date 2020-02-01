@@ -178,11 +178,6 @@ namespace Fling
 		OffscreenCmdBuf->End();
 	}
 
-	void OffscreenSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
-	{
-		
-	}
-
 	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf)
 	{
 		// Only allocate new descriptor sets if there are none
