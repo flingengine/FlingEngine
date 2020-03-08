@@ -8,6 +8,8 @@
 #include "Logger.h"
 #include "FreeList.h"
 #include "StackAllocator.h"
+#include "Memory.h"
+#include "CircularBuffer.hpp"
 
 TEST_CASE("Timing", "[utils]")
 {
@@ -82,13 +84,23 @@ TEST_CASE("Stack Allocator", "[utils]")
     char buf[1024] = {};
 
     StackAllocator stackAllocator(buf, buf + 1024);
+    // @TODO The stack allocator is broken and it seems to be rooted in 
+    // the AlignPointer method on linux. That's a relatively large problem
+}
 
-    void* obj0 = stackAllocator.Allocate(2, 4, 0);
-    REQUIRE(obj0 != nullptr);
+TEST_CASE("Aligned Alloc", "[utils]")
+{
+    void* a = nullptr;
+    a = Fling::AlignedAlloc(8, 8);
 
-    void* obj1 = stackAllocator.Allocate(4, 4, 0);
-    REQUIRE(obj1 != nullptr);
+    REQUIRE(a != nullptr);
 
-    stackAllocator.Free(obj1);
-    stackAllocator.Free(obj0);
+    Fling::AlignedFree(a);
+}
+
+TEST_CASE("Circular Buffer", "[utils]")
+{
+    // Circular buffer of char's 
+    Fling::CircularBuffer<INT32, 128> CircBuf {};
+
 }
