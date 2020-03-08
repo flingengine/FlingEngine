@@ -58,7 +58,12 @@ TEST_CASE("Free List", "[utils]")
 
     char buf[1024] = {};
 
-    FreeList freelist(buf, buf + 1024, 32, 8, 0);
+    FreeList freelist(
+        /* start = */ buf,
+        /* end = */buf + 1024,
+        /* elm size */ 32, 
+        /* alignment */ 8,
+        /* offset */ 0);
 
     void* obj0 = freelist.Obtain();
 	REQUIRE(obj0 != nullptr);
