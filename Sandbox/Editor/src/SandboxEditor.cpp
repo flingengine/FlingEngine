@@ -16,7 +16,7 @@ namespace Sandbox
 
 		ImGui::Begin("Demo Info");
 		// Set it up in a nice spot
-		ImGui::SetWindowPos(ImVec2(0.0f, 500.0f), true);
+		ImGui::SetWindowPos(ImVec2(0.0f, 500.0f), ImGuiCond_FirstUseEver);
 		
 		ImGui::Text("Press 'M' to hide the mouse cursor");
 		ImGui::Text("Press 'Space' to move lights around");

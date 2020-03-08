@@ -211,8 +211,8 @@ namespace Fling
     {
         ImGui::Begin("World Outline");
 
-		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), true);
-		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), true);
+		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
 
         auto view = t_Reg.view<Transform>();
         for(auto entity: view) 
@@ -235,8 +235,8 @@ namespace Fling
     void BaseEditor::DrawComponentEditor(entt::registry& t_Reg)
     {
 		// Set the window options for the component editor
-		ImGui::SetNextWindowSize(ImVec2(250.0f, 400.0f), true);
-		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), true);
+		ImGui::SetNextWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), ImGuiCond_FirstUseEver);
 
 		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
     }
