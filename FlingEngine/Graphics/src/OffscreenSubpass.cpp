@@ -425,4 +425,9 @@ namespace Fling
 		assert(m_OffscreenFrameBuf);
 		CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
 	}
+
+	void OffscreenSubpass::OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+		//t_MeshRend.Release();
+	}
 }   // namespace Fling

@@ -11,7 +11,7 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;	
-	class MeshRenderer;
+	struct MeshRenderer;
 	class Swapchain;
 	class GraphicsPipeline;
 	class Model;

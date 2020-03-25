@@ -198,7 +198,7 @@ namespace Fling
 
         if(m_DisplayComponentEditor)
         {
-            m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+            DrawComponentEditor(t_Reg);
         }
 
         if (m_DisplayWindowOptions)
@@ -211,13 +211,24 @@ namespace Fling
     {
         ImGui::Begin("World Outline");
 
+		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
+
         auto view = t_Reg.view<Transform>();
-        for(auto entity: view) 
+        for(auto entity : view) 
         {
             std::ostringstream os;
             os << "Entity " << static_cast<UINT64>(entity);
             std::string label = os.str();
 
+            if (ImGui::Button(" - "))
+            {
+                F_LOG_TRACE("Delete {}", label);
+                t_Reg.destroy(entity);
+            }
+
+            ImGui::SameLine();
+            
             // gets only the components that are going to be used ...
             if(ImGui::Button(label.c_str(), ImVec2( ImGui::GetWindowWidth(), 0.f ) ))
             {
@@ -227,6 +238,15 @@ namespace Fling
         }
 
         ImGui::End();
+    }
+
+    void BaseEditor::DrawComponentEditor(entt::registry& t_Reg)
+    {
+		// Set the window options for the component editor
+		ImGui::SetNextWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), ImGuiCond_FirstUseEver);
+
+		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
     }
 
     void BaseEditor::DrawWindowOptions()

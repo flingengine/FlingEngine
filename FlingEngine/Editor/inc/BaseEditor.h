@@ -52,6 +52,9 @@ namespace Fling
 
         void DrawWorldOutline(entt::registry& t_Reg);
 
+        /** assumes that m_DisplayComponentEditor is true */
+		void DrawComponentEditor(entt::registry& t_Reg);
+
 		void DrawWindowOptions();
 
         class World* m_OwningWorld = nullptr;

@@ -7,7 +7,7 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;	
-	class MeshRenderer;
+	struct MeshRenderer;
 	class Swapchain;
 	class FirstPersonCamera;
 
@@ -56,6 +56,8 @@ namespace Fling
 	private:
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+
+		void OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf);
 

@@ -84,7 +84,7 @@ namespace Sandbox
             glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
             // For each active mesh renderer
-            t_Reg.group<Transform>(entt::get<Rotator>).each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
+            t_Reg.view<Transform, Rotator>().each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
             {
                 const glm::vec3& curRot = t_Trans.GetRotation();
                 t_Trans.SetRotation(curRot + RotOffset);

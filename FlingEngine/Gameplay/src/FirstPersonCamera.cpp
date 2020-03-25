@@ -124,8 +124,8 @@ namespace Fling
 			float MouseDeltaX = m_PrevMousePos.X - CurMousePos.X;
 			float MouseDeltaY = CurMousePos.Y - m_PrevMousePos.Y;
 
-			m_rotation.x += RotSpeed * -MouseDeltaX;	
-			m_rotation.y += RotSpeed * MouseDeltaY;
+			m_rotation.x += RotSpeed * MouseDeltaX;
+			m_rotation.y += RotSpeed * -MouseDeltaY;
 
 			m_rotation.y = glm::clamp(m_rotation.y, -MAX_PITCH, MAX_PITCH);
 		}
