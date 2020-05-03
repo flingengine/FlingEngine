@@ -1,12 +1,12 @@
 matrix:
   include:
   #- os: windows
-
+os: linux
+dist: bionic
+sudo: required
 
   # GCC 9
-  - os: linux
-    dist: xenial
-    sudo: required
+  - name: GCC 9 Linux
     addons: &gcc9
       apt:
         sources:
@@ -35,9 +35,7 @@ matrix:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
 
 # Clang 8
-  - os: linux
-    dist: xenial
-    sudo: required
+  - name: Clang 8 Release
     addons: &clang8
       apt:
         sources:
@@ -65,35 +63,34 @@ matrix:
     before_install:
     - sudo apt-get update -qq
 
-    # Clang 10
-  - os: linux
-    dist: xenial
-    sudo: required
-    addons: &clang10
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-xenial-10
-        - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
-          key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-        packages:
-        - pkg-config
-        - ninja-build
-        - cmake
-        - clang-10
-        - xorg-dev
-        - libglu1-mesa-dev
-        - libvulkan-dev
-        - libopenal-dev
-    language: cpp
-    compiler: clang
-    env:
-    - COMPILER=clang++-10
-    - GSL_CXX_STANDARD=17
-    - BUILD_TYPE=Release
-    - BUILD_SHARED=ON
-    before_install:
-    - sudo apt-get update -qq
+# Clang 10
+- name: Clang 8 Release
+  stage: Latest
+  addons: &clang10
+    apt:
+      sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-xenial-10
+      - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
+        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+      packages:
+      - pkg-config
+      - ninja-build
+      - cmake
+      - clang-10
+      - xorg-dev
+      - libglu1-mesa-dev
+      - libvulkan-dev
+      - libopenal-dev
+  language: cpp
+  compiler: clang
+  env:
+  - CXX=clang++-10
+  - GSL_CXX_STANDARD=17
+  - BUILD_TYPE=Release
+  - BUILD_SHARED=ON
+  before_install:
+  - sudo apt-get update -qq
 
 script:
 - git submodule update --init --recursive
