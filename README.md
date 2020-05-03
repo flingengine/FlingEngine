@@ -1,5 +1,4 @@
-![Fling Engine Logo](Fling-Engine-logo/cover_256x256.png)
-
+![Fling Engine Logo](docs/Fling-Engine-logo/cover.png)
 
 The Fling Engine aims to be a cross platform Vulkan game engine that will experiment with the following:
 

@@ -28,11 +28,11 @@ namespace Sandbox
         F_LOG_TRACE("Sandbox Game Init!");
 
 #if WITH_EDITOR
-        F_LOG_TRACE("Enable Editor!");
+        F_LOG_TRACE("Running with Editor!");
 #endif
 
 #if WITH_LUA
-		F_LOG_TRACE("Enable Lua!");
+		F_LOG_TRACE("Running with Lua!");
 #endif
 
         // Temp saving and load functions
@@ -164,7 +164,7 @@ namespace Sandbox
 
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 10;
+		INT32 GridSize = 25;
 		
 		for (INT32 i = 0; i < GridSize; i++)
 		{
@@ -229,7 +229,7 @@ namespace Sandbox
 				Transform& t0 = t_Reg.assign<Transform>(e0);
 
 				t0.SetPos(
-					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
+					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
 				);
 			}
 		}

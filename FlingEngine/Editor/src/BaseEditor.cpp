@@ -215,25 +215,43 @@ namespace Fling
 		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
 
         auto view = t_Reg.view<Transform>();
-        for(auto entity : view) 
+        for(entt::entity entity : view) 
         {
+            const bool bStartedSelected = (m_CompEditorEntityType == entity);
+            
             std::ostringstream os;
             os << "Entity " << static_cast<UINT64>(entity);
             std::string label = os.str();
 
             if (ImGui::Button(" - "))
             {
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::Text("Hovered");
+                }
+
                 F_LOG_TRACE("Delete {}", label);
                 t_Reg.destroy(entity);
             }
 
             ImGui::SameLine();
             
+            // If the entity is currently selected, then give it a different color in the editor
+            if(bStartedSelected)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
+            }
+
             // gets only the components that are going to be used ...
             if(ImGui::Button(label.c_str(), ImVec2( ImGui::GetWindowWidth(), 0.f ) ))
             {
                 // Select this eneity for the component editor
                 m_CompEditorEntityType = entity;
+            }
+
+            if(bStartedSelected)
+            {
+                ImGui::PopStyleColor(1);
             }
         }
 
@@ -250,13 +268,11 @@ namespace Fling
     }
 
     void BaseEditor::DrawWindowOptions()
-    {
-        
+    {        
         ImGui::Begin("Window Options");
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-        // Dropdown for windowed ,borderless, etc
-
+        // Dropdown for windowed, borderless, etc
 
         ImGui::End();
     }
