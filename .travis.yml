@@ -1,13 +1,15 @@
+language: cpp
+os: linux
+dist: xenial
+sudo: required
+
 matrix:
   include:
   #- os: windows
 
 
   # GCC 9
-  - os: linux
-    dist: xenial
-    sudo: required
-    addons: &gcc9
+  - addons: &gcc9
       apt:
         sources:
         - ubuntu-toolchain-r-test
@@ -35,10 +37,7 @@ matrix:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
 
 # Clang 8
-  - os: linux
-    dist: xenial
-    sudo: required
-    addons: &clang8
+  - addons: &clang8
       apt:
         sources:
         - ubuntu-toolchain-r-test
@@ -64,6 +63,36 @@ matrix:
     - BUILD_SHARED=ON
     before_install:
     - sudo apt-get update -qq
+
+# # Clang 10
+#   - os: linux
+#     dist: xenial
+#     sudo: required
+#     addons: &clang10
+#       apt:
+#         sources:
+#         - ubuntu-toolchain-r-test
+#         - llvm-toolchain-xenial-10
+#         - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
+#           key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+#         packages:
+#         - pkg-config
+#         - ninja-build
+#         - cmake
+#         - clang-10
+#         - xorg-dev
+#         - libglu1-mesa-dev
+#         - libvulkan-dev
+#         - libopenal-dev    
+#     compiler: clang
+#     env:
+#     - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+#     - GSL_CXX_STANDARD=17
+#     - BUILD_TYPE=Release
+#     - BUILD_SHARED=ON
+#     before_install:
+#     - sudo apt-get update -qq
+#     - eval "${MATRIX_EVAL}"
 
 script:
 - git submodule update --init --recursive
