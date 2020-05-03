@@ -58,11 +58,12 @@ matrix:
         - libx11-dev
     compiler: clang
     env:
-    - COMPILER=clang++-8
+    - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
     - GSL_CXX_STANDARD=17
     - BUILD_TYPE=Release
     - BUILD_SHARED=ON
     before_install:
+    - eval "${MATRIX_EVAL}"
     - sudo apt-get update -qq
 
 # # Clang 10
