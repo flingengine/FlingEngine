@@ -3,23 +3,10 @@
 language: cpp
 os: linux
 dist: xenial
-sudo: required
-packages:
-  - pkg-config
-  - ninja-build
-  - cmake
-  - xorg-dev
-  - libglu1-mesa-dev
-  - libvulkan-dev
-  - libglfw3-dev
-  - libwayland-dev
-  - libx11-dev
-
 
 matrix:
   include:
   #- os: windows
-
 
   # GCC 9
   - name: GCC 9 Release Build
@@ -30,6 +17,15 @@ matrix:
         packages:
         - gcc-9
         - g++-9
+        - pkg-config
+        - ninja-build
+        - cmake
+        - xorg-dev
+        - libglu1-mesa-dev
+        - libvulkan-dev
+        - libglfw3-dev
+        - libwayland-dev
+        - libx11-dev
     compiler: gcc
     env:
     - COMPILER=g++-9
@@ -51,6 +47,15 @@ matrix:
           key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
         packages:
         - clang-8
+        - pkg-config
+        - ninja-build
+        - cmake
+        - xorg-dev
+        - libglu1-mesa-dev
+        - libvulkan-dev
+        - libglfw3-dev
+        - libwayland-dev
+        - libx11-dev
     compiler: clang
     env:
     - COMPILER=clang++-8
