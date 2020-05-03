@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo Building Fling Engine in Release mode...
+echo Building Fling Engine in SHIPPING mode...
 
 # Create the build folders if they are not created already
 mkdir build -p

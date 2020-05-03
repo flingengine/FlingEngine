@@ -165,7 +165,7 @@ namespace Sandbox
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
 		INT32 GridSize = 10;
-		glm::vec3 Center(0.0f);
+		
 		for (INT32 i = 0; i < GridSize; i++)
 		{
 			std::string ModelPath = "Models/sphere.obj";

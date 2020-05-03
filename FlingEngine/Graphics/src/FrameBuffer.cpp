@@ -66,7 +66,7 @@ namespace Fling
 		m_Description = {};
 		m_Description.samples = VK_SAMPLE_COUNT_1_BIT;
 		m_Description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		m_Description.storeOp = (t_Info.Usage & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		m_Description.storeOp = (t_Info.Usage & m_Usage) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		m_Description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		m_Description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		m_Description.format = t_Info.Format;
