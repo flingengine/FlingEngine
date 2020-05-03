@@ -53,6 +53,8 @@ jobs:
           key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
         packages:
         - clang-8
+        - gcc-9   # Need gcc for std::optional
+        - g++-9
         - pkg-config
         - ninja-build
         - cmake
@@ -83,6 +85,8 @@ jobs:
           key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
         packages:
         - clang-10
+        - gcc-9   # Need gcc for std::optional
+        - g++-9
         - pkg-config
         - ninja-build
         - cmake
