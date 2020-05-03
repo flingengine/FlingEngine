@@ -65,6 +65,36 @@ matrix:
     before_install:
     - sudo apt-get update -qq
 
+    # Clang 10
+  - os: linux
+    dist: xenial
+    sudo: required
+    addons: &clang10
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-xenial-10
+        - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
+          key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+        packages:
+        - pkg-config
+        - ninja-build
+        - cmake
+        - clang-10
+        - xorg-dev
+        - libglu1-mesa-dev
+        - libvulkan-dev
+        - libopenal-dev
+    language: cpp
+    compiler: clang
+    env:
+    - COMPILER=clang++-10
+    - GSL_CXX_STANDARD=17
+    - BUILD_TYPE=Release
+    - BUILD_SHARED=ON
+    before_install:
+    - sudo apt-get update -qq
+
 script:
 - git submodule update --init --recursive
 - mkdir Build && cd Build
