@@ -1,88 +1,72 @@
 matrix:
   include:
+  #- os: windows
 
-os: linux
-dist: bionic
-sudo: required
-env:
-- GSL_CXX_STANDARD=17
-language: cpp
-packages:
-- pkg-config
-- ninja-build
-- cmake
-- xorg-dev
-- libglu1-mesa-dev
-- libvulkan-dev
-- libglfw3-dev
-- libwayland-dev
-- libx11-dev
 
-# GCC 9
-- name: GCC 9 Linux
-  addons: &gcc9
-    apt:
-      sources:
-      - ubuntu-toolchain-r-test
-      packages:
-      - gcc-9
-      - g++-9
-  language: cpp
-  compiler: gcc
-  env:
-  - COMPILER=g++-9
-  - BUILD_TYPE=Release
-  - BUILD_SHARED=ON
-  - SET_SHIPPING=ON
-  before_install:
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
+  # GCC 9
+  - os: linux
+    dist: xenial
+    sudo: required
+    addons: &gcc9
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - pkg-config
+        - ninja-build
+        - cmake
+        - gcc-9
+        - g++-9
+        - xorg-dev
+        - libglu1-mesa-dev
+        - libvulkan-dev
+        - libglfw3-dev
+        - libwayland-dev
+        - libx11-dev
+    language: cpp
+    compiler: gcc
+    env:
+    - COMPILER=g++-9
+    - GSL_CXX_STANDARD=17
+    - BUILD_TYPE=Release
+    - BUILD_SHARED=ON
+    before_install:
+    - sudo apt-get update -qq
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
 
 # Clang 8
-- name: Clang 8 Shipping
-  addons: &clang8
-    apt:
-      sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-bionic-8
-      - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main'
-        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-      packages:
-      - clang-8
-  language: cpp
-  compiler: clang
-  env:
-  - COMPILER=clang++-8
-  - BUILD_TYPE=Release
-  - BUILD_SHARED=ON
-  - SET_SHIPPING=ON
+  - os: linux
+    dist: xenial
+    sudo: required
+    addons: &clang8
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-xenial-8
+        - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main'
+          key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+        packages:
+        - pkg-config
+        - ninja-build
+        - cmake
+        - g++-8
+        - clang-8
+        - xorg-dev
+        - libglu1-mesa-dev
+        - libvulkan-dev
+        - libopenal-dev
+    language: cpp
+    compiler: clang
+    env:
+    - COMPILER=clang++-8
+    - GSL_CXX_STANDARD=17
+    - BUILD_TYPE=Release
+    - BUILD_SHARED=ON
+    before_install:
+    - sudo apt-get update -qq
 
-# Clang 8 Debug
-- name: Clang 8 Debug
-  addons: &clang8
-    apt:
-      sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-bionic-8
-      - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main'
-        key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-      packages:
-      - clang-8
-  language: cpp
-  compiler: clang
-  env:
-  - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
-  - BUILD_TYPE=Debug
-  - BUILD_SHARED=ON
-  - SET_SHIPPING=OFF
-
-# Update packages and get the c/c++ compiler type for each job
-before_install:
-- eval "${MATRIX_EVAL}"
-- sudo apt-get update -qq
-
-# Build the engine fully with ninja
 script:
 - git submodule update --init --recursive
 - mkdir Build && cd Build
-- cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDEFINE_SHIPPING=$SET_SHIPPING
+- cmake .. -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 - ninja
