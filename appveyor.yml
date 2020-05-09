@@ -12,8 +12,8 @@ image:
 
 # Grab submodules for initalization
 init:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - git submodule update --init --recursive
+ # - cd %APPVEYOR_BUILD_FOLDER%
+ # - git submodule update --init --recursive
 
 # TODO: Make this a build matrix with different env vars
 configuration:
