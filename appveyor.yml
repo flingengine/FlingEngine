@@ -38,5 +38,5 @@ install:
 
 build:
   parallel: true                  # enable MSBuild parallel builds
-  project: build/FlingEngine.sln # path to Visual Studio solution or project
+  project: FlingEngine.sln # path to Visual Studio solution or project
   verbosity: normal                # quiet|minimal|normal|detailed
