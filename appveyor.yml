@@ -30,13 +30,15 @@ platform:
 # this is the place to add it
 install:
   - cmake --version
-  - echo Starting build for %APPVEYOR_REPO_NAME% in %APPVEYOR_BUILD_FOLDER%
-  - dir
-  - pwd
-  - mkdir build && cd build
   - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - mkdir build
+  - cd build
+  - cmake .. -A %PLATFORM%
+  - dir
+  - echo Building platform=%PLATFORM% configuration=%CONFIGURATION%
 
 build:
   parallel: true                  # enable MSBuild parallel builds
-  project: FlingEngine.sln # path to Visual Studio solution or project
+  project: build/FlingEngine.sln # path to Visual Studio solution or project
   verbosity: normal                # quiet|minimal|normal|detailed
