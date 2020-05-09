@@ -10,11 +10,6 @@ image:
 - Visual Studio 2017
 - Visual Studio 2015
 
-# Grab submodules for initalization
-init:
- # - cd %APPVEYOR_BUILD_FOLDER%
- # - git submodule update --init --recursive
-
 configuration:
 - Debug
 - Release
@@ -35,8 +30,6 @@ platform:
 # this is the place to add it
 install:
   - cmake --version
-
-before_build:
   - echo Starting build for %APPVEYOR_REPO_NAME% in %APPVEYOR_BUILD_FOLDER%
   - dir
   - pwd
