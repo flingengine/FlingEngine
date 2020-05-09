@@ -1,0 +1,39 @@
+# build version format
+version: '{build}'
+
+# Free accounts have a max of 1, but ask anyway.
+max_jobs: 4
+
+# Any VSVisual studio version we want
+image:
+- Visual Studio 2019
+- Visual Studio 2017
+- Visual Studio 2015
+
+# Grab submodules for initalization
+init:
+  - git submodule update --init --recursive
+
+# TODO: Make this a build matrix with different env vars
+configuration:
+- Debug
+- Release
+
+# We only care about x64 for right now
+platform:
+- x64
+
+# If we had a specific CMake version we wanted 
+# this is the place to add it
+install:
+  - cmake --version
+
+before_build:
+  - echo Starting build for %APPVEYOR_REPO_NAME% in %APPVEYOR_BUILD_FOLDER%
+  - mkdir build && cd build
+  - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
+
+build:
+  parallel: true                  # enable MSBuild parallel builds
+  project: build/FlingEngine.sln # path to Visual Studio solution or project
+  verbosity: normal                # quiet|minimal|normal|detailed
