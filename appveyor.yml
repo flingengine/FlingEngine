@@ -32,6 +32,7 @@ install:
   - cmake --version
   - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
   - cd %APPVEYOR_BUILD_FOLDER%
+  - git submodule update --init --recursive
   - mkdir build
   - cd build
   - cmake .. -A %PLATFORM%
