@@ -15,10 +15,17 @@ init:
  # - cd %APPVEYOR_BUILD_FOLDER%
  # - git submodule update --init --recursive
 
-# TODO: Make this a build matrix with different env vars
 configuration:
 - Debug
 - Release
+
+# Enviornment variable matrix
+environment:
+  matrix:
+  - DDEFINE_SHIPPING: 0
+  - DDEFINE_SHIPPING: 1
+  - DWITH_LUA_FLAG: 0
+  - DWITH_LUA_FLAG: 1
 
 # We only care about x64 for right now
 platform:
@@ -31,6 +38,8 @@ install:
 
 before_build:
   - echo Starting build for %APPVEYOR_REPO_NAME% in %APPVEYOR_BUILD_FOLDER%
+  - dir
+  - pwd
   - mkdir build && cd build
   - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
 
