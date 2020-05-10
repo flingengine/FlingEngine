@@ -16,8 +16,8 @@ configuration:
 
 # Enviornment variable matrix
 environment:
-  - VULKAN_SDK: C:\VulkanSDK\1.0.51.0
   matrix:
+  - VULKAN_SDK: C:\VulkanSDK\1.0.51.0
   - DDEFINE_SHIPPING: 0
   - DDEFINE_SHIPPING: 1
   - DWITH_LUA_FLAG: 0
