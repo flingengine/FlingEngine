@@ -26,6 +26,30 @@ environment:
 platform:
 - x64
 
+# Vulkan maybe? 
+before_build:
+  - "SET PATH=C:\\Python35;C:\\Python35\\Scripts;%PATH%"
+  - echo Starting build for %APPVEYOR_REPO_NAME% in %APPVEYOR_BUILD_FOLDER%
+  - cmake --version
+  # Build Vulkan-Headers
+  - echo Building Vulkan-Headers for %PLATFORM% %CONFIGURATION%
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - git clone https://github.com/KhronosGroup/Vulkan-Headers.git
+  - cd Vulkan-Headers
+  - mkdir build
+  - cd build
+  - cmake -A %PLATFORM% -DCMAKE_INSTALL_PREFIX=install ..
+  - cmake --build . --config %CONFIGURATION% --target install -- /maxcpucount
+  # Build Vulkan-Loader
+  - echo Building Vulkan-Loader for %PLATFORM% %CONFIGURATION%
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - git clone https://github.com/KhronosGroup/Vulkan-Loader.git
+  - cd Vulkan-Loader
+  - mkdir build
+  - cd build
+  - cmake -A %PLATFORM% -DVULKAN_HEADERS_INSTALL_DIR=%APPVEYOR_BUILD_FOLDER%/Vulkan-Headers/build/install -DCMAKE_INSTALL_PREFIX=install ..
+  - cmake --build . --config %CONFIGURATION% --target install -- /maxcpucount
+
 # If we had a specific CMake version we wanted 
 # this is the place to add it
 install:
