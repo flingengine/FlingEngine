@@ -55,7 +55,7 @@ install:
   - echo Downloading Vulkan SDK platform=%PLATFORM% configuration=%CONFIGURATION%
   - pwd
   - dir
-  - curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.0.51.0/windows/VulkanSDK-1.0.51.0-Installer.exe?Human=true
+  - curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/latest/windows/vulkan-sdk.exe?Human=true
   - .\VulkanSDK.exe /S
   - dir
 
