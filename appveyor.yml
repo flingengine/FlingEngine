@@ -17,11 +17,14 @@ configuration:
 # Enviornment variable matrix
 environment:
   matrix:
-  - VULKAN_SDK: C:\VulkanSDK\1.0.51.0
+  - VULKAN_SDK: C:/VulkanSDK/1.1.114.0
   - DDEFINE_SHIPPING: 0
   - DDEFINE_SHIPPING: 1
   - DWITH_LUA_FLAG: 0
   - DWITH_LUA_FLAG: 1
+
+cache:
+  - VulkanSDK.exe
 
 # We only care about x64 for right now
 platform:
@@ -55,8 +58,11 @@ install:
   - echo Downloading Vulkan SDK platform=%PLATFORM% configuration=%CONFIGURATION%
   - pwd
   - dir
-  - curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/latest/windows/vulkan-sdk.exe?Human=true
-  - .\VulkanSDK.exe /S
+  #- curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/latest/windows/vulkan-sdk.exe?Human=true
+  #- .\VulkanSDK.exe /S
+  # Meh?
+  - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.114.0/windows/VulkanSDK-1.1.114.0-Installer.exe?Human=true
+  - VulkanSDK.exe /S
   - dir
 
 # Build Fling
