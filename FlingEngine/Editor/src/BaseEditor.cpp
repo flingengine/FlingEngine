@@ -108,8 +108,7 @@ namespace Fling
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    //t_Reg.assign<Fling::MeshRenderer>(t_Entity, "Models/cube.obj");
-                    auto& meshRender = t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
+                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
 
                     fileDialog.ClearSelected();
                 }
@@ -199,7 +198,7 @@ namespace Fling
 
         if(m_DisplayComponentEditor)
         {
-            m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+            DrawComponentEditor(t_Reg);
         }
 
         if (m_DisplayWindowOptions)
@@ -212,12 +211,36 @@ namespace Fling
     {
         ImGui::Begin("World Outline");
 
+		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
+
         auto view = t_Reg.view<Transform>();
-        for(auto entity: view) 
+        for(entt::entity entity : view) 
         {
+            const bool bStartedSelected = (m_CompEditorEntityType == entity);
+            
             std::ostringstream os;
             os << "Entity " << static_cast<UINT64>(entity);
             std::string label = os.str();
+
+            if (ImGui::Button(" - "))
+            {
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::Text("Hovered");
+                }
+
+                F_LOG_TRACE("Delete {}", label);
+                t_Reg.destroy(entity);
+            }
+
+            ImGui::SameLine();
+            
+            // If the entity is currently selected, then give it a different color in the editor
+            if(bStartedSelected)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
+            }
 
             // gets only the components that are going to be used ...
             if(ImGui::Button(label.c_str(), ImVec2( ImGui::GetWindowWidth(), 0.f ) ))
@@ -225,19 +248,31 @@ namespace Fling
                 // Select this eneity for the component editor
                 m_CompEditorEntityType = entity;
             }
+
+            if(bStartedSelected)
+            {
+                ImGui::PopStyleColor(1);
+            }
         }
 
         ImGui::End();
     }
 
-    void BaseEditor::DrawWindowOptions()
+    void BaseEditor::DrawComponentEditor(entt::registry& t_Reg)
     {
-        
+		// Set the window options for the component editor
+		ImGui::SetNextWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), ImGuiCond_FirstUseEver);
+
+		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+    }
+
+    void BaseEditor::DrawWindowOptions()
+    {        
         ImGui::Begin("Window Options");
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-        // Dropdown for windowed ,borderless, etc
-
+        // Dropdown for windowed, borderless, etc
 
         ImGui::End();
     }

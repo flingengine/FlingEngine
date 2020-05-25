@@ -7,11 +7,7 @@ namespace Fling
 	ScriptComponent::ScriptComponent(const std::string t_FilePath)
 	{
 		//Convert the filepath into a GUID
-		m_ScriptFile = new File(entt::hashed_string{ t_FilePath.c_str() });
-	}
-
-	ScriptComponent::~ScriptComponent()
-	{
+		m_ScriptFile = File::Create(HS(t_FilePath.c_str())).get();
 	}
 }
 #endif

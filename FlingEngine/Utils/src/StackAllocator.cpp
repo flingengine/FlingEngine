@@ -30,6 +30,7 @@ void* Fling::StackAllocator::Allocate(size_t t_Size, size_t t_Alignment, size_t 
     const UINT32 allocationOffset = static_cast<UINT32>(m_Current - m_Start);
     
     //offset the pointer first, align it, and then offset it back
+    // This is a problem on Linux!!
     m_Current = AlignPointer<char>(m_Current + t_Offset, t_Alignment) - t_Offset;
 
     if (m_Current + t_Size > m_End)
@@ -41,7 +42,7 @@ void* Fling::StackAllocator::Allocate(size_t t_Size, size_t t_Alignment, size_t 
     {
         void* as_void;
         char* as_char;
-        uint32_t* as_uint32_t;
+        UINT32* as_uint32_t;
     };
 
     as_char = m_Current;

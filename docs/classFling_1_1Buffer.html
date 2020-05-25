@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -67,7 +68,7 @@ $(function() {
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pri-methods">Private Member Functions</a> &#124;
+<a href="#pub-attribs">Data Fields</a> &#124;
 <a href="#pri-attribs">Private Attributes</a>  </div>
   <div class="headertitle">
 <div class="title">Fling::Buffer Class Reference</div>  </div>
@@ -84,39 +85,56 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3bdf048356e80e05cacbc2e58d6aa865"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a3bdf048356e80e05cacbc2e58d6aa865">Buffer</a> ()</td></tr>
 <tr class="memdesc:a3bdf048356e80e05cacbc2e58d6aa865"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default Ctor for a buffer.  <a href="#a3bdf048356e80e05cacbc2e58d6aa865">More...</a><br /></td></tr>
 <tr class="separator:a3bdf048356e80e05cacbc2e58d6aa865"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaded40799f6ec6e057e76192b77b640"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#afaded40799f6ec6e057e76192b77b640">Buffer</a> (const <a class="el" href="classFling_1_1Buffer.html">Buffer</a> &amp;t_Other)</td></tr>
+<tr class="memdesc:afaded40799f6ec6e057e76192b77b640"><td class="mdescLeft">&#160;</td><td class="mdescRight">copy constructor.  <a href="#afaded40799f6ec6e057e76192b77b640">More...</a><br /></td></tr>
+<tr class="separator:afaded40799f6ec6e057e76192b77b640"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30003db133da5bf6b505833d36ab2b38"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a30003db133da5bf6b505833d36ab2b38">Buffer</a> (const VkDeviceSize &amp;t_Size, const VkBufferUsageFlags &amp;t_Usage, const VkMemoryPropertyFlags &amp;t_Properties, const void *t_Data=nullptr)</td></tr>
 <tr class="memdesc:a30003db133da5bf6b505833d36ab2b38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> object.  <a href="#a30003db133da5bf6b505833d36ab2b38">More...</a><br /></td></tr>
 <tr class="separator:a30003db133da5bf6b505833d36ab2b38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf11f11b30a2f1c916a34d7475470a7a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#acf11f11b30a2f1c916a34d7475470a7a">~Buffer</a> ()</td></tr>
 <tr class="memdesc:acf11f11b30a2f1c916a34d7475470a7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the <a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> object, frees Vk memory and destroys buffer.  <a href="#acf11f11b30a2f1c916a34d7475470a7a">More...</a><br /></td></tr>
 <tr class="separator:acf11f11b30a2f1c916a34d7475470a7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ff5050b23a46aa56581802ba6c8cb80"><td class="memItemLeft" align="right" valign="top">const VkBuffer &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a6ff5050b23a46aa56581802ba6c8cb80">GetVkBuffer</a> () const</td></tr>
-<tr class="separator:a6ff5050b23a46aa56581802ba6c8cb80"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2be46dbf2aee7a85b0655ee49d78b36"><td class="memItemLeft" align="right" valign="top">const VkDeviceMemory &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#ae2be46dbf2aee7a85b0655ee49d78b36">GetVkDeviceMemory</a> () const</td></tr>
-<tr class="separator:ae2be46dbf2aee7a85b0655ee49d78b36"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a12d43f3c5c1501301fb2c02036f9c6db"><td class="memItemLeft" align="right" valign="top">const VkDeviceSize &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a12d43f3c5c1501301fb2c02036f9c6db">GetSize</a> () const</td></tr>
-<tr class="separator:a12d43f3c5c1501301fb2c02036f9c6db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b060ea81411e771283514080ab1666f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a8b060ea81411e771283514080ab1666f">operator==</a> (const <a class="el" href="classFling_1_1Buffer.html">Buffer</a> &amp;other) const</td></tr>
+<tr class="separator:a8b060ea81411e771283514080ab1666f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64b1344a8a24736b7cf536b38dc41391"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a64b1344a8a24736b7cf536b38dc41391">operator!=</a> (const <a class="el" href="classFling_1_1Buffer.html">Buffer</a> &amp;other) const</td></tr>
+<tr class="separator:a64b1344a8a24736b7cf536b38dc41391"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb298817c64047400af161c77e092f4a"><td class="memItemLeft" align="right" valign="top">FORCEINLINE const VkBuffer &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#acb298817c64047400af161c77e092f4a">GetVkBuffer</a> () const</td></tr>
+<tr class="separator:acb298817c64047400af161c77e092f4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b03d03335a4b3e48419f0664f3accaa"><td class="memItemLeft" align="right" valign="top">FORCEINLINE const VkDeviceMemory &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a5b03d03335a4b3e48419f0664f3accaa">GetVkDeviceMemory</a> () const</td></tr>
+<tr class="separator:a5b03d03335a4b3e48419f0664f3accaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa32cbb92a0be4a4d8a56fa9ab5357a61"><td class="memItemLeft" align="right" valign="top">FORCEINLINE const VkDeviceSize &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#aa32cbb92a0be4a4d8a56fa9ab5357a61">GetSize</a> () const</td></tr>
+<tr class="separator:aa32cbb92a0be4a4d8a56fa9ab5357a61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2855c3338ac9010c1a91e6ac54cad7fd"><td class="memItemLeft" align="right" valign="top">FORCEINLINE VkDescriptorBufferInfo &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a2855c3338ac9010c1a91e6ac54cad7fd">GetDescriptor</a> ()</td></tr>
+<tr class="separator:a2855c3338ac9010c1a91e6ac54cad7fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdbcddbdf77e11619a01ec7ef358f6a8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#abdbcddbdf77e11619a01ec7ef358f6a8">Release</a> ()</td></tr>
 <tr class="memdesc:abdbcddbdf77e11619a01ec7ef358f6a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the VK buffer object, frees vk memory.  <a href="#abdbcddbdf77e11619a01ec7ef358f6a8">More...</a><br /></td></tr>
 <tr class="separator:abdbcddbdf77e11619a01ec7ef358f6a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb352ce3c1d18c837ed67af1625e9e24"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#acb352ce3c1d18c837ed67af1625e9e24">IsUsed</a> () const</td></tr>
-<tr class="memdesc:acb352ce3c1d18c837ed67af1625e9e24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if this buffer's vulkan assets are used.  <a href="#acb352ce3c1d18c837ed67af1625e9e24">More...</a><br /></td></tr>
+<tr class="memdesc:acb352ce3c1d18c837ed67af1625e9e24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if this buffer's Vulkan assets are used.  <a href="#acb352ce3c1d18c837ed67af1625e9e24">More...</a><br /></td></tr>
 <tr class="separator:acb352ce3c1d18c837ed67af1625e9e24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaae2dcdd3d66a1b8edca6d34c7350749"><td class="memItemLeft" align="right" valign="top">VkResult&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#aaae2dcdd3d66a1b8edca6d34c7350749">MapMemory</a> (VkDeviceSize t_Size=VK_WHOLE_SIZE, VkDeviceSize t_Offset=0)</td></tr>
+<tr class="memdesc:aaae2dcdd3d66a1b8edca6d34c7350749"><td class="mdescLeft">&#160;</td><td class="mdescRight">Map the memory of this buffer to the given data.  <a href="#aaae2dcdd3d66a1b8edca6d34c7350749">More...</a><br /></td></tr>
+<tr class="separator:aaae2dcdd3d66a1b8edca6d34c7350749"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c449acde87a4ba1081c2145e882a32c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a3c449acde87a4ba1081c2145e882a32c">UnmapMemory</a> ()</td></tr>
+<tr class="memdesc:a3c449acde87a4ba1081c2145e882a32c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unmap this buffers memory from the Vulkan device.  <a href="#a3c449acde87a4ba1081c2145e882a32c">More...</a><br /></td></tr>
+<tr class="separator:a3c449acde87a4ba1081c2145e882a32c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6647854e19d199005d19e38c32d54aa2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a6647854e19d199005d19e38c32d54aa2">CreateBuffer</a> (const VkDeviceSize &amp;t_size, const VkBufferUsageFlags &amp;t_Usage, const VkMemoryPropertyFlags &amp;t_Properties, bool t_unmapBuffer, const void *t_Data=nullptr)</td></tr>
+<tr class="memdesc:a6647854e19d199005d19e38c32d54aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a <a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> object.  <a href="#a6647854e19d199005d19e38c32d54aa2">More...</a><br /></td></tr>
+<tr class="separator:a6647854e19d199005d19e38c32d54aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d18ac52db00907b351021d9c76d3bde"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a7d18ac52db00907b351021d9c76d3bde">Flush</a> (VkDeviceSize t_size, VkDeviceSize t_offset)</td></tr>
+<tr class="memdesc:a7d18ac52db00907b351021d9c76d3bde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flush memory range to device.  <a href="#a7d18ac52db00907b351021d9c76d3bde">More...</a><br /></td></tr>
+<tr class="separator:a7d18ac52db00907b351021d9c76d3bde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:af66e5c6de377cd4eef365d243149e0c3"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#af66e5c6de377cd4eef365d243149e0c3">CopyBuffer</a> (<a class="el" href="classFling_1_1Buffer.html">Buffer</a> *t_SrcBuffer, <a class="el" href="classFling_1_1Buffer.html">Buffer</a> *t_DstBuffer, VkDeviceSize t_Size)</td></tr>
-<tr class="memdesc:af66e5c6de377cd4eef365d243149e0c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy the contents of the source buffer to the destintation buffer using a single command.  <a href="#af66e5c6de377cd4eef365d243149e0c3">More...</a><br /></td></tr>
+<tr class="memdesc:af66e5c6de377cd4eef365d243149e0c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy the contents of the source buffer to the destination buffer using a single command.  <a href="#af66e5c6de377cd4eef365d243149e0c3">More...</a><br /></td></tr>
 <tr class="separator:af66e5c6de377cd4eef365d243149e0c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
-Private Member Functions</h2></td></tr>
-<tr class="memitem:a8b518d0c51bc1decdf2ad38443fbb5ef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a8b518d0c51bc1decdf2ad38443fbb5ef">MapMemory</a> (void **t_Data) const</td></tr>
-<tr class="memdesc:a8b518d0c51bc1decdf2ad38443fbb5ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Map the memory of this buffer to the given data.  <a href="#a8b518d0c51bc1decdf2ad38443fbb5ef">More...</a><br /></td></tr>
-<tr class="separator:a8b518d0c51bc1decdf2ad38443fbb5ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3c449acde87a4ba1081c2145e882a32c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a3c449acde87a4ba1081c2145e882a32c">UnmapMemory</a> ()</td></tr>
-<tr class="memdesc:a3c449acde87a4ba1081c2145e882a32c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unmap this bufferes memory from the vulkan device.  <a href="#a3c449acde87a4ba1081c2145e882a32c">More...</a><br /></td></tr>
-<tr class="separator:a3c449acde87a4ba1081c2145e882a32c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Data Fields</h2></td></tr>
+<tr class="memitem:ad5e22aef55c9815c23aef50dc91072f5"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#ad5e22aef55c9815c23aef50dc91072f5">m_MappedMem</a> = nullptr</td></tr>
+<tr class="separator:ad5e22aef55c9815c23aef50dc91072f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -127,14 +145,20 @@ Private Attributes</h2></td></tr>
 <tr class="memdesc:abbf290897e7804c984ccac28b4da88db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vulkan logical buffer object.  <a href="#abbf290897e7804c984ccac28b4da88db">More...</a><br /></td></tr>
 <tr class="separator:abbf290897e7804c984ccac28b4da88db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61efaa61bdab8c3dfa1075d317f9d6cf"><td class="memItemLeft" align="right" valign="top">VkDeviceMemory&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a61efaa61bdab8c3dfa1075d317f9d6cf">m_BufferMemory</a></td></tr>
-<tr class="memdesc:a61efaa61bdab8c3dfa1075d317f9d6cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the physcial device memory for this buffer.  <a href="#a61efaa61bdab8c3dfa1075d317f9d6cf">More...</a><br /></td></tr>
+<tr class="memdesc:a61efaa61bdab8c3dfa1075d317f9d6cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the physical device memory for this buffer.  <a href="#a61efaa61bdab8c3dfa1075d317f9d6cf">More...</a><br /></td></tr>
 <tr class="separator:a61efaa61bdab8c3dfa1075d317f9d6cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3888f90b773ef0159ed61948b033f6fe"><td class="memItemLeft" align="right" valign="top">VkDescriptorBufferInfo&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#a3888f90b773ef0159ed61948b033f6fe">m_Descriptor</a></td></tr>
+<tr class="memdesc:a3888f90b773ef0159ed61948b033f6fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">The descriptor stores info about the offset, buffer, and; size of this.  <a href="#a3888f90b773ef0159ed61948b033f6fe">More...</a><br /></td></tr>
+<tr class="separator:a3888f90b773ef0159ed61948b033f6fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0e4a1a00ddde36822d73f16cf363e1d"><td class="memItemLeft" align="right" valign="top">VkDeviceSize&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Buffer.html#ac0e4a1a00ddde36822d73f16cf363e1d">m_Offset</a> = 0</td></tr>
+<tr class="memdesc:ac0e4a1a00ddde36822d73f16cf363e1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset offset of buffer.  <a href="#ac0e4a1a00ddde36822d73f16cf363e1d">More...</a><br /></td></tr>
+<tr class="separator:ac0e4a1a00ddde36822d73f16cf363e1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A <a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> represents a Vulkan buffer with a size, buffer pointer, and buffer memory. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a3bdf048356e80e05cacbc2e58d6aa865"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3bdf048356e80e05cacbc2e58d6aa865">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bdf048356e80e05cacbc2e58d6aa865">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -157,12 +181,32 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Default Ctor for a buffer. </p>
-<p><a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> is initalized to 0 </p>
+<p><a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> is initialized to 0 </p>
+
+</div>
+</div>
+<a id="afaded40799f6ec6e057e76192b77b640"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afaded40799f6ec6e057e76192b77b640">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Fling::Buffer::Buffer </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classFling_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
+          <td class="paramname"><em>t_Other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>copy constructor. </p>
 
 </div>
 </div>
 <a id="a30003db133da5bf6b505833d36ab2b38"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a30003db133da5bf6b505833d36ab2b38">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a30003db133da5bf6b505833d36ab2b38">&#9670;&nbsp;</a></span>Buffer() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -204,7 +248,7 @@ Private Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">t_Size</td><td>Size of this buffer in bytes </td></tr>
     <tr><td class="paramname">t_Usage</td><td>Vk usage flags for this buffer </td></tr>
-    <tr><td class="paramname">t_Properties</td><td>Vk props of this buffer, used to find the memroy type </td></tr>
+    <tr><td class="paramname">t_Properties</td><td>Vk props of this buffer, used to find the memory type </td></tr>
     <tr><td class="paramname">t_Data</td><td>Pointer to data that this buffer should map to, e.g. a staging buffer (Default = nullptr) </td></tr>
   </table>
   </dd>
@@ -272,7 +316,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Copy the contents of the source buffer to the destintation buffer using a single command. </p>
+<p>Copy the contents of the source buffer to the destination buffer using a single command. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">t_SrcBuffer</td><td>Source buffer data </td></tr>
@@ -284,8 +328,103 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a12d43f3c5c1501301fb2c02036f9c6db"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a12d43f3c5c1501301fb2c02036f9c6db">&#9670;&nbsp;</a></span>GetSize()</h2>
+<a id="a6647854e19d199005d19e38c32d54aa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6647854e19d199005d19e38c32d54aa2">&#9670;&nbsp;</a></span>CreateBuffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Buffer::CreateBuffer </td>
+          <td>(</td>
+          <td class="paramtype">const VkDeviceSize &amp;&#160;</td>
+          <td class="paramname"><em>t_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const VkBufferUsageFlags &amp;&#160;</td>
+          <td class="paramname"><em>t_Usage</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const VkMemoryPropertyFlags &amp;&#160;</td>
+          <td class="paramname"><em>t_Properties</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>t_unmapBuffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const void *&#160;</td>
+          <td class="paramname"><em>t_Data</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a <a class="el" href="classFling_1_1Buffer.html" title="A Buffer represents a Vulkan buffer with a size, buffer pointer, and buffer memory. ">Buffer</a> object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t_size</td><td>device size </td></tr>
+    <tr><td class="paramname">t_Usage</td><td>buffer usage flag </td></tr>
+    <tr><td class="paramname">t_Properties</td><td>memory properties </td></tr>
+    <tr><td class="paramname">t_unmapBuffer</td><td>flag to unmap buffer </td></tr>
+    <tr><td class="paramname">t_Data</td><td>data to map to buffer </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a7d18ac52db00907b351021d9c76d3bde"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d18ac52db00907b351021d9c76d3bde">&#9670;&nbsp;</a></span>Flush()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Fling::Buffer::Flush </td>
+          <td>(</td>
+          <td class="paramtype">VkDeviceSize&#160;</td>
+          <td class="paramname"><em>t_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkDeviceSize&#160;</td>
+          <td class="paramname"><em>t_offset</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Flush memory range to device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t_size</td><td>Size of the memory range to flush to </td></tr>
+    <tr><td class="paramname">t_offset</td><td>offset from the beginning </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a2855c3338ac9010c1a91e6ac54cad7fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2855c3338ac9010c1a91e6ac54cad7fd">&#9670;&nbsp;</a></span>GetDescriptor()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -294,7 +433,32 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const VkDeviceSize&amp; Fling::Buffer::GetSize </td>
+          <td class="memname">FORCEINLINE VkDescriptorBufferInfo&amp; Fling::Buffer::GetDescriptor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa32cbb92a0be4a4d8a56fa9ab5357a61"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa32cbb92a0be4a4d8a56fa9ab5357a61">&#9670;&nbsp;</a></span>GetSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">FORCEINLINE const VkDeviceSize&amp; Fling::Buffer::GetSize </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -309,8 +473,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a6ff5050b23a46aa56581802ba6c8cb80"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ff5050b23a46aa56581802ba6c8cb80">&#9670;&nbsp;</a></span>GetVkBuffer()</h2>
+<a id="acb298817c64047400af161c77e092f4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb298817c64047400af161c77e092f4a">&#9670;&nbsp;</a></span>GetVkBuffer()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -319,7 +483,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const VkBuffer&amp; Fling::Buffer::GetVkBuffer </td>
+          <td class="memname">FORCEINLINE const VkBuffer&amp; Fling::Buffer::GetVkBuffer </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -334,8 +498,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ae2be46dbf2aee7a85b0655ee49d78b36"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae2be46dbf2aee7a85b0655ee49d78b36">&#9670;&nbsp;</a></span>GetVkDeviceMemory()</h2>
+<a id="a5b03d03335a4b3e48419f0664f3accaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b03d03335a4b3e48419f0664f3accaa">&#9670;&nbsp;</a></span>GetVkDeviceMemory()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -344,7 +508,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const VkDeviceMemory&amp; Fling::Buffer::GetVkDeviceMemory </td>
+          <td class="memname">FORCEINLINE const VkDeviceMemory&amp; Fling::Buffer::GetVkDeviceMemory </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -382,33 +546,35 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Check if this buffer's vulkan assets are used. </p>
+<p>Check if this buffer's Vulkan assets are used. </p>
 <dl class="section return"><dt>Returns</dt><dd>true memory is not null and the size is greater than 0 </dd></dl>
 
 </div>
 </div>
-<a id="a8b518d0c51bc1decdf2ad38443fbb5ef"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8b518d0c51bc1decdf2ad38443fbb5ef">&#9670;&nbsp;</a></span>MapMemory()</h2>
+<a id="aaae2dcdd3d66a1b8edca6d34c7350749"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaae2dcdd3d66a1b8edca6d34c7350749">&#9670;&nbsp;</a></span>MapMemory()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void Fling::Buffer::MapMemory </td>
+          <td class="memname">VkResult Fling::Buffer::MapMemory </td>
           <td>(</td>
-          <td class="paramtype">void **&#160;</td>
-          <td class="paramname"><em>t_Data</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype">VkDeviceSize&#160;</td>
+          <td class="paramname"><em>t_Size</em> = <code>VK_WHOLE_SIZE</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkDeviceSize&#160;</td>
+          <td class="paramname"><em>t_Offset</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Map the memory of this buffer to the given data. </p>
@@ -418,6 +584,42 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a64b1344a8a24736b7cf536b38dc41391"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64b1344a8a24736b7cf536b38dc41391">&#9670;&nbsp;</a></span>operator!=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Fling::Buffer::operator!= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classFling_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8b060ea81411e771283514080ab1666f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b060ea81411e771283514080ab1666f">&#9670;&nbsp;</a></span>operator==()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Fling::Buffer::operator== </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classFling_1_1Buffer.html">Buffer</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -445,9 +647,6 @@ Private Attributes</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void Fling::Buffer::UnmapMemory </td>
@@ -456,14 +655,9 @@ Private Attributes</h2></td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Unmap this bufferes memory from the vulkan device. </p>
+<p>Unmap this buffers memory from the Vulkan device. </p>
 
 </div>
 </div>
@@ -512,7 +706,69 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Pointer to the physcial device memory for this buffer. </p>
+<p>Pointer to the physical device memory for this buffer. </p>
+
+</div>
+</div>
+<a id="a3888f90b773ef0159ed61948b033f6fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3888f90b773ef0159ed61948b033f6fe">&#9670;&nbsp;</a></span>m_Descriptor</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkDescriptorBufferInfo Fling::Buffer::m_Descriptor</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The descriptor stores info about the offset, buffer, and; size of this. </p>
+
+</div>
+</div>
+<a id="ad5e22aef55c9815c23aef50dc91072f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5e22aef55c9815c23aef50dc91072f5">&#9670;&nbsp;</a></span>m_MappedMem</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* Fling::Buffer::m_MappedMem = nullptr</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac0e4a1a00ddde36822d73f16cf363e1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0e4a1a00ddde36822d73f16cf363e1d">&#9670;&nbsp;</a></span>m_Offset</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">VkDeviceSize Fling::Buffer::m_Offset = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Offset offset of buffer. </p>
 
 </div>
 </div>

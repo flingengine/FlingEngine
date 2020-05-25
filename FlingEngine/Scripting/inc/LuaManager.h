@@ -53,6 +53,9 @@ namespace Fling
 		*/
 		void Tick(float t_deltaTime);
 
+	protected:
+		void Init() override {}
+
 	private:
 
 		/**

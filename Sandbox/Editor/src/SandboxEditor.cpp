@@ -12,10 +12,12 @@ namespace Sandbox
 {
     void SandboxEditor::Draw(entt::registry& t_Reg, float DeltaTime)
     {
-        // #TODO: Draw some bois
 		Fling::BaseEditor::Draw(t_Reg, DeltaTime);
 
 		ImGui::Begin("Demo Info");
+		// Set it up in a nice spot
+		ImGui::SetWindowPos(ImVec2(0.0f, 500.0f), ImGuiCond_FirstUseEver);
+		
 		ImGui::Text("Press 'M' to hide the mouse cursor");
 		ImGui::Text("Press 'Space' to move lights around");
 		ImGui::Text("Press 'WASD' Move");

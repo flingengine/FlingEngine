@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['model',['Model',['../classFling_1_1Model.html',1,'Fling']]],
-  ['mousepos',['MousePos',['../structFling_1_1MousePos.html',1,'Fling']]]
+  ['key',['Key',['../classFling_1_1Key.html',1,'Fling']]],
+  ['keynames',['KeyNames',['../structFling_1_1KeyNames.html',1,'Fling']]]
 ];

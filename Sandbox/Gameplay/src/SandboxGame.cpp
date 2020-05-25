@@ -30,11 +30,11 @@ namespace Sandbox
 		F_LOG_TRACE("Sandbox Game Init!");
 
 #if WITH_EDITOR
-		F_LOG_TRACE("Enable Editor!");
+        F_LOG_TRACE("Running with Editor!");
 #endif
 
 #if WITH_LUA
-		F_LOG_TRACE("Enable Lua!");
+		F_LOG_TRACE("Running with Lua!");
 #endif
 
 		// Temp saving and load functions
@@ -79,39 +79,39 @@ namespace Sandbox
 		m_WantsToQuit = true;
 	}
 
-	void Game::Update(entt::registry& t_Reg, float DeltaTime)
-	{
-		if (m_DoRotations)
-		{
-			glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
+    void Game::Update(entt::registry& t_Reg, float DeltaTime)
+    {
+        if (m_DoRotations)
+        {
+            glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
-			// For each active mesh renderer
-			t_Reg.group<Transform>(entt::get<Rotator>).each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
-				{
-					const glm::vec3& curRot = t_Trans.GetRotation();
-					t_Trans.SetRotation(curRot + RotOffset);
-				});
-		}
+            // For each active mesh renderer
+            t_Reg.view<Transform, Rotator>().each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
+            {
+                const glm::vec3& curRot = t_Trans.GetRotation();
+                t_Trans.SetRotation(curRot + RotOffset);
+            });
+        }
 
-		if (m_MovePointLights)
-		{
-			t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
-				{
-					glm::vec3 curPos = t_Trans.GetPos();
+        if (m_MovePointLights)
+        {
+            t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
+            {
+                glm::vec3 curPos = t_Trans.GetPos();
 
-					glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
+                glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
 
-					// Move in a direction between two points and the speed
-					if (glm::length(DistanceToTarget) <= 0.5f)
-					{
-						t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
-					}
+                // Move in a direction between two points and the speed
+                if(glm::length(DistanceToTarget) <= 0.5f)
+                {
+                    t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
+                }
 
-					// Lerp towards the target position
-					glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos, t_Mover.Speed * DeltaTime);
-					t_Trans.SetPos(newPos);
-				});
-		}
+                // Lerp towards the target position
+                glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos,  t_Mover.Speed * DeltaTime);
+                t_Trans.SetPos(newPos);
+            });
+        }
 
 #if WITH_LUA
 		if (m_RunLua)
@@ -121,32 +121,18 @@ namespace Sandbox
 #endif
 	}
 
-	void Game::LightingTest(entt::registry& t_Reg)
-	{
-		auto AddModel = [&](INT32 t_Itr,
-			const std::string& t_Model,
-			const std::string& t_Mat,
-			const glm::vec3 t_Scale = glm::vec3(1.0f),
-			const glm::vec3 t_Rot = glm::vec3(0.0f))
-		{
-			entt::entity e0 = t_Reg.create();
-			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-			t_Reg.assign<Rotator>(e0);
-			Transform& t0 = t_Reg.assign<Transform>(e0);
-			t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
-			t0.SetRotation(t_Rot);
-			t0.SetScale(t_Scale);
-		};
+    void Game::LightingTest(entt::registry& t_Reg)
+    {
+        
+        auto AddRandomPointLight = [&]()
+        {
+            entt::entity e0 = t_Reg.create();
+            PointLight& Light = t_Reg.assign<PointLight>(e0);
+            Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
+            Mover& m0 = t_Reg.assign<Mover>(e0);
 
-		auto AddRandomPointLight = [&]()
-		{
-			entt::entity e0 = t_Reg.create();
-			PointLight& Light = t_Reg.assign<PointLight>(e0);
-			Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
-			Mover& m0 = t_Reg.assign<Mover>(e0);
-
-			// The min and max bounds of our little demo
-			glm::vec3 min = { -15.0f, 0.2f, 15.0f };
+            // The min and max bounds of our little demo
+            glm::vec3 min = { -15.0f, 0.2f, 15.0f };
 			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
 			m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
 
@@ -180,14 +166,14 @@ namespace Sandbox
 
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 10;
-		glm::vec3 Center(0.0f);
-		for (size_t i = 0; i < GridSize; i++)
+		INT32 GridSize = 25;
+		
+		for (INT32 i = 0; i < GridSize; i++)
 		{
 			std::string ModelPath = "Models/sphere.obj";
 			std::string MatPath = "Materials/DeferredBronzeMat.mat";
 
-			for (size_t j = 0; j < GridSize; j++)
+			for (INT32 j = 0; j < GridSize; j++)
 			{
 				entt::entity e0 = t_Reg.create();
 
@@ -245,7 +231,7 @@ namespace Sandbox
 				Transform& t0 = t_Reg.assign<Transform>(e0);
 
 				t0.SetPos(
-					glm::vec3((-(float)(GridSize / 2) + ((float)i * Spacing)), 0.0f, -(float)(GridSize / 2) + float(j) * Spacing)
+					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
 				);
 			}
 		}
@@ -257,15 +243,16 @@ namespace Sandbox
 		entt::entity e0 = t_Reg.create();
 		t_Reg.assign<Transform>(e0);
 		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
+		t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
 
 		entt::entity e1 = t_Reg.create();
 		t_Reg.assign<Transform>(e1);
 		t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
 		Transform& t0 = t_Reg.get<Transform>(e1);
 		t0.SetPos(glm::vec3(0, 3, 0));
-		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
+		t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
 
+		// @Seth: This should not be here, but in the Engine!
 		LuaManager::Get().Start();
 #endif
 	}

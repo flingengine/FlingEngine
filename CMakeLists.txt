@@ -68,7 +68,7 @@ include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
 include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
 
 if( WITH_LUA_FLAG )
-include(FindLua53)
+    include(FindLua53)
 endif()
 
 message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
@@ -78,17 +78,15 @@ if( MSVC )
     add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 	if ( NOT DEFINED NOMINMAX )
 		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
-	endif()
+    endif()
+    
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_definitions( -Wno-unused-private-field )
-    add_definitions( -Wno-exceptions )
-    #add_definitions( -shared ) 
+
     add_definitions( -fPIC )
 
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    #add_definitions( -shared ) 
     add_definitions( -fPIC )
 endif()
 
@@ -109,6 +107,7 @@ set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory( external/SPIRV-Cross )
+# Make the folders look pretty in Visual Studio
 set_target_properties(spirv-cross-c PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-core PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-cpp PROPERTIES FOLDER SPIRV-Cross)
@@ -124,6 +123,7 @@ endforeach()
 if(MSVC)
     set(BUILD_SHARED_LIBS OFF)
 endif()
+
 # Reset back to value before MSVC fix
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 add_subdirectory( external/bullet3 )
@@ -154,9 +154,9 @@ include_directories( external/cereal/include )
 
 # Lua
 if( WITH_LUA_FLAG )
-include_directories( external/sol2/include )
-include_directories( external/lua53/include )
-include_directories( external/lua53/lib )
+    include_directories( external/sol2/include )
+    include_directories( external/lua53/include )
+    include_directories( external/lua53/lib )
 endif()
 
 # Add the engine and tests

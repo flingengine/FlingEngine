@@ -1,4 +1,7 @@
 #/bin/sh
+rm -rf docs
 doxygen doxyfile
+cp -r Fling-Engine-logo docs 
 cd docs/html
-cp -rp * ..
+mv * ..
+rm -rf html

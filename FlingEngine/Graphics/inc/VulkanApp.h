@@ -60,6 +60,10 @@ namespace Fling
 		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
 		inline FirstPersonCamera* GetCamera() const { return m_Camera; }
 
+	protected:
+		void Init() override {}
+		void Shutdown() override {}
+
     private:
 		
 		/**
@@ -126,6 +130,8 @@ namespace Fling
 		/** Handle to the surface extension used to interact with the windows system */
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 		
+		/** The index of the current frame in flight. This is controlled with the in flight fences 
+		and is updated every Update of the vulkan app. */
 		size_t CurrentFrameIndex = 0;
 
 		// Command Buffer pool

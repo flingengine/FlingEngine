@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -66,6 +67,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a>  </div>
   <div class="headertitle">
@@ -102,12 +104,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab5764ce3cd430d26aac69e6954f2a309 inherit pub_methods_classFling_1_1Resource"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceFling.html#a32c408f77edd77f0d78ba58c188aefbf">Fling::Guid_Handle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#ab5764ce3cd430d26aac69e6954f2a309">GetGuidHandle</a> () const</td></tr>
 <tr class="memdesc:ab5764ce3cd430d26aac69e6954f2a309 inherit pub_methods_classFling_1_1Resource"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get GUID handle (just an int) for this resources guid.  <a href="classFling_1_1Resource.html#ab5764ce3cd430d26aac69e6954f2a309">More...</a><br /></td></tr>
 <tr class="separator:ab5764ce3cd430d26aac69e6954f2a309 inherit pub_methods_classFling_1_1Resource"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17114db32c553cdae151ac0f8103374e inherit pub_methods_classFling_1_1Resource"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a17114db32c553cdae151ac0f8103374e">GetGuidString</a> () const</td></tr>
-<tr class="memdesc:a17114db32c553cdae151ac0f8103374e inherit pub_methods_classFling_1_1Resource"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the human-readable string representation of this GUID.  <a href="classFling_1_1Resource.html#a17114db32c553cdae151ac0f8103374e">More...</a><br /></td></tr>
-<tr class="separator:a17114db32c553cdae151ac0f8103374e inherit pub_methods_classFling_1_1Resource"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32e32763f0b9f084b9730e4eb0f28810 inherit pub_methods_classFling_1_1Resource"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a32e32763f0b9f084b9730e4eb0f28810">GetGuidString</a> () const</td></tr>
+<tr class="memdesc:a32e32763f0b9f084b9730e4eb0f28810 inherit pub_methods_classFling_1_1Resource"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the human-readable string representation of this GUID.  <a href="classFling_1_1Resource.html#a32e32763f0b9f084b9730e4eb0f28810">More...</a><br /></td></tr>
+<tr class="separator:a32e32763f0b9f084b9730e4eb0f28810 inherit pub_methods_classFling_1_1Resource"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9291aa6d4bdb1b550829227bc0c1339c inherit pub_methods_classFling_1_1Resource"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a9291aa6d4bdb1b550829227bc0c1339c">GetFilepathReleativeToAssets</a> () const</td></tr>
 <tr class="memdesc:a9291aa6d4bdb1b550829227bc0c1339c inherit pub_methods_classFling_1_1Resource"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the full file path that is relative to the assets path based on the GUID of this resource.  <a href="classFling_1_1Resource.html#a9291aa6d4bdb1b550829227bc0c1339c">More...</a><br /></td></tr>
 <tr class="separator:a9291aa6d4bdb1b550829227bc0c1339c inherit pub_methods_classFling_1_1Resource"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a7a4a02be7ff9d96c432478c6c260b4b3"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr&lt; <a class="el" href="classFling_1_1File.html">Fling::File</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1File.html#a7a4a02be7ff9d96c432478c6c260b4b3">Create</a> (<a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Guid</a> t_ID)</td></tr>
+<tr class="separator:a7a4a02be7ff9d96c432478c6c260b4b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -126,6 +133,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_classFling_1_1Resource"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classFling_1_1Resource')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classFling_1_1Resource.html">Fling::Resource</a></td></tr>
 <tr class="memitem:a819a16875e9d96beff1ea60cc0048953 inherit pro_attribs_classFling_1_1Resource"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Fling::Guid</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a819a16875e9d96beff1ea60cc0048953">m_Guid</a></td></tr>
 <tr class="separator:a819a16875e9d96beff1ea60cc0048953 inherit pro_attribs_classFling_1_1Resource"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f70cebcb4fb30f661c436fda8386d63 inherit pro_attribs_classFling_1_1Resource"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Resource.html#a0f70cebcb4fb30f661c436fda8386d63">m_HumanReadableName</a></td></tr>
+<tr class="separator:a0f70cebcb4fb30f661c436fda8386d63 inherit pro_attribs_classFling_1_1Resource"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A file is a basic text file that contains a basic text file. </p>
@@ -165,6 +174,32 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a7a4a02be7ff9d96c432478c6c260b4b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a4a02be7ff9d96c432478c6c260b4b3">&#9670;&nbsp;</a></span>Create()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt; <a class="el" href="classFling_1_1File.html">Fling::File</a> &gt; Fling::File::Create </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceFling.html#ae7db6182ede3178e4b8716bfc7eba2bf">Guid</a>&#160;</td>
+          <td class="paramname"><em>t_ID</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="abdb5ee0809f46817666bc9d1373e52e3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abdb5ee0809f46817666bc9d1373e52e3">&#9670;&nbsp;</a></span>GetData()</h2>
 

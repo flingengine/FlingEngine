@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -80,10 +81,10 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab49e836759736dbc285c4ef7cb32d4b3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#ab49e836759736dbc285c4ef7cb32d4b3">Swapchain</a> (const VkExtent2D &amp;t_Extent)</td></tr>
-<tr class="separator:ab49e836759736dbc285c4ef7cb32d4b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85fdd0a94d3b67eed72b781cc1dc13c3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a85fdd0a94d3b67eed72b781cc1dc13c3">~Swapchain</a> () noexcept</td></tr>
-<tr class="separator:a85fdd0a94d3b67eed72b781cc1dc13c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae07d1762d962ba08cf516353ba2ef0d5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#ae07d1762d962ba08cf516353ba2ef0d5">Swapchain</a> (const VkExtent2D &amp;t_Extent, <a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a> *t_Dev, <a class="el" href="classFling_1_1PhysicalDevice.html">PhysicalDevice</a> *t_PhysDev, VkSurfaceKHR t_Surface)</td></tr>
+<tr class="separator:ae07d1762d962ba08cf516353ba2ef0d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a210b8d470dfd75f79e82b5768c32764d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a210b8d470dfd75f79e82b5768c32764d">~Swapchain</a> ()</td></tr>
+<tr class="separator:a210b8d470dfd75f79e82b5768c32764d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a75894e075394d35114fe2783952003"><td class="memItemLeft" align="right" valign="top">VkResult&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a6a75894e075394d35114fe2783952003">AquireNextImage</a> (const VkSemaphore &amp;t_CompletedSemaphore)</td></tr>
 <tr class="separator:a6a75894e075394d35114fe2783952003"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4beeb0b5b5ca43f6514537bbc14aa6a"><td class="memItemLeft" align="right" valign="top">VkResult&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#af4beeb0b5b5ca43f6514537bbc14aa6a">QueuePresent</a> (const VkQueue &amp;t_PresentQueue, const VkSemaphore &amp;t_WaitSemaphore)</td></tr>
@@ -143,8 +144,14 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a961596233586655ccf8b93e20c2ac1d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac35a1c99109de225c2484ee8f5590b2b"><td class="memItemLeft" align="right" valign="top">VkFormat&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#ac35a1c99109de225c2484ee8f5590b2b">m_ImageFormat</a></td></tr>
 <tr class="separator:ac35a1c99109de225c2484ee8f5590b2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70e5dca2ddb2345860e2a4f08f1f173d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a70e5dca2ddb2345860e2a4f08f1f173d">m_ActiveImageIndex</a></td></tr>
+<tr class="memitem:a70e5dca2ddb2345860e2a4f08f1f173d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a70e5dca2ddb2345860e2a4f08f1f173d">m_ActiveImageIndex</a> {}</td></tr>
 <tr class="separator:a70e5dca2ddb2345860e2a4f08f1f173d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a211a4a4cd4443b77a9ae759f7cce6216"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a211a4a4cd4443b77a9ae759f7cce6216">m_Device</a></td></tr>
+<tr class="separator:a211a4a4cd4443b77a9ae759f7cce6216"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab903e79ceab6d3f215bbed944d7a1a88"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classFling_1_1PhysicalDevice.html">PhysicalDevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#ab903e79ceab6d3f215bbed944d7a1a88">m_PhysicalDevice</a></td></tr>
+<tr class="separator:ab903e79ceab6d3f215bbed944d7a1a88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23cb2a3d94707b30289e4654d445ce8d"><td class="memItemLeft" align="right" valign="top">const VkSurfaceKHR&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a23cb2a3d94707b30289e4654d445ce8d">m_Surface</a></td></tr>
+<tr class="separator:a23cb2a3d94707b30289e4654d445ce8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a31d792e605d02e775c99eceaf149c2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; VkImage &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFling_1_1Swapchain.html#a2a31d792e605d02e775c99eceaf149c2">m_Images</a></td></tr>
 <tr class="memdesc:a2a31d792e605d02e775c99eceaf149c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">The images inside of the swap chain.  <a href="#a2a31d792e605d02e775c99eceaf149c2">More...</a><br /></td></tr>
 <tr class="separator:a2a31d792e605d02e775c99eceaf149c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,10 +160,9 @@ Private Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents a swap chain that can be used throughout the program. </p>
-<dl class="section note"><dt>Note</dt><dd>You must EXPLICITLY call <a class="el" href="classFling_1_1Swapchain.html#afc1c74a1e3ab8662a887daae550cdf6e" title="Cleanup all swapchain resources. ">Cleanup()</a> on the swap chain </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ab49e836759736dbc285c4ef7cb32d4b3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab49e836759736dbc285c4ef7cb32d4b3">&#9670;&nbsp;</a></span>Swapchain()</h2>
+<a id="ae07d1762d962ba08cf516353ba2ef0d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae07d1762d962ba08cf516353ba2ef0d5">&#9670;&nbsp;</a></span>Swapchain()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -168,8 +174,30 @@ Private Attributes</h2></td></tr>
           <td class="memname">Fling::Swapchain::Swapchain </td>
           <td>(</td>
           <td class="paramtype">const VkExtent2D &amp;&#160;</td>
-          <td class="paramname"><em>t_Extent</em></td><td>)</td>
+          <td class="paramname"><em>t_Extent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a> *&#160;</td>
+          <td class="paramname"><em>t_Dev</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classFling_1_1PhysicalDevice.html">PhysicalDevice</a> *&#160;</td>
+          <td class="paramname"><em>t_PhysDev</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VkSurfaceKHR&#160;</td>
+          <td class="paramname"><em>t_Surface</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -181,14 +209,11 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a85fdd0a94d3b67eed72b781cc1dc13c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a85fdd0a94d3b67eed72b781cc1dc13c3">&#9670;&nbsp;</a></span>~Swapchain()</h2>
+<a id="a210b8d470dfd75f79e82b5768c32764d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a210b8d470dfd75f79e82b5768c32764d">&#9670;&nbsp;</a></span>~Swapchain()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">Fling::Swapchain::~Swapchain </td>
@@ -197,11 +222,6 @@ Private Attributes</h2></td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -714,7 +734,29 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> Fling::Swapchain::m_ActiveImageIndex</td>
+          <td class="memname"><a class="el" href="FlingTypes_8h.html#adfe04a44baaebba6143c3a23507ff85b">UINT32</a> Fling::Swapchain::m_ActiveImageIndex {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a211a4a4cd4443b77a9ae759f7cce6216"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a211a4a4cd4443b77a9ae759f7cce6216">&#9670;&nbsp;</a></span>m_Device</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classFling_1_1LogicalDevice.html">LogicalDevice</a>* Fling::Swapchain::m_Device</td>
         </tr>
       </table>
   </td>
@@ -816,6 +858,28 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ab903e79ceab6d3f215bbed944d7a1a88"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab903e79ceab6d3f215bbed944d7a1a88">&#9670;&nbsp;</a></span>m_PhysicalDevice</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classFling_1_1PhysicalDevice.html">PhysicalDevice</a>* Fling::Swapchain::m_PhysicalDevice</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a9b3d31ef07337fd137896041ff1272ba"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9b3d31ef07337fd137896041ff1272ba">&#9670;&nbsp;</a></span>m_PresentMode</h2>
 
@@ -827,6 +891,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">VkPresentModeKHR Fling::Swapchain::m_PresentMode</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a23cb2a3d94707b30289e4654d445ce8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23cb2a3d94707b30289e4654d445ce8d">&#9670;&nbsp;</a></span>m_Surface</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const VkSurfaceKHR Fling::Swapchain::m_Surface</td>
         </tr>
       </table>
   </td>

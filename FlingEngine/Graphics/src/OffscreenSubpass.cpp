@@ -295,8 +295,8 @@ namespace Fling
 		const PhysicalDevice* PhysDevice = m_Device->GetPhysicalDevice();
 		assert(PhysDevice);
 
-		VkBool32 validDepthFormat = PhysDevice->GetSupportedDepthFormat(&attDepthFormat);
-		assert(validDepthFormat);
+		PhysDevice->GetSupportedDepthFormat(&attDepthFormat);
+		
 		// Attachment 3: Depth
 		attachmentInfo.Format = attDepthFormat;
 		attachmentInfo.Usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -413,10 +413,6 @@ namespace Fling
 
 		t_Reg.assign<entt::tag<"Default"_hs >>(t_Ent);
 
-		// Initialize the mesh renderer to have a descriptor pool that it can use
-		size_t ImageCount = m_SwapChain->GetImageCount();
-		VkDevice Device = m_Device->GetVkDevice();
-
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)
 		{
@@ -428,5 +424,10 @@ namespace Fling
 		// I would love to create some descriptor sets here		
 		assert(m_OffscreenFrameBuf);
 		CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
+	}
+
+	void OffscreenSubpass::OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+		//t_MeshRend.Release();
 	}
 }   // namespace Fling

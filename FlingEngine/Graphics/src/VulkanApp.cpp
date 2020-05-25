@@ -29,6 +29,8 @@ namespace Fling
 		// #TODO Build VMA allocator
 
 		BuildRenderPipelines(t_Conf, t_Reg, t_Editor);
+
+		F_LOG_TRACE("Vulkan App Init!");
 	}
 
 	void VulkanApp::Prepare()
@@ -126,9 +128,9 @@ namespace Fling
 		VkSubpassDependency dependency = {};
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcStageMask = m_WaitStages;
 		dependency.srcAccessMask = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstStageMask = m_WaitStages;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
@@ -392,7 +394,7 @@ namespace Fling
 		}
 
 		// Wait for the color attachment to be done 
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkPipelineStageFlags waitStages[] = { m_WaitStages };
 
 		// Submit any PIPELINE command buffers for work		
 		VkSubmitInfo FinalScreenSubmitInfo = {};
@@ -598,5 +600,7 @@ namespace Fling
 			delete m_CurrentWindow;
 			m_CurrentWindow = nullptr;
 		}
+
+		F_LOG_TRACE("Vulkan App Shutdown!");
 	}
 }	// namespace Fling
