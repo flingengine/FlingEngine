@@ -39,6 +39,6 @@ namespace Fling
 
 	float Random::GetRandomFloat(float t_Min, float t_Max)
 	{
-		return (static_cast<float>(rand()) / static_cast<float>(RAND_MAX / (t_Max - t_Min))) + t_Min;
+		return (static_cast<float>(rand()) / static_cast<float>(static_cast<float>(RAND_MAX) / (t_Max - t_Min))) + t_Min;
 	}
 }	// namespace Fling

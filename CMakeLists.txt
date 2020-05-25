@@ -107,6 +107,13 @@ set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory( external/SPIRV-Cross )
+# Make the folders look pretty in Visual Studio
+set_target_properties(spirv-cross-c PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-core PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-cpp PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-glsl PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-reflect PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
 
 # ImGUI 
 if( WITH_IMGUI_FLAG )

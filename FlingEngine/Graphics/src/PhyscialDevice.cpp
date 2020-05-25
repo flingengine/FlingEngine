@@ -181,7 +181,7 @@ namespace Fling
 			{
 				bool ExtensionFound = false;
 
-				for (const VkExtensionProperties Extension : ExtensionProperties)
+				for (const VkExtensionProperties& Extension : ExtensionProperties)
 				{
 					if (strcmp(currentExtension, Extension.extensionName) == 0)
 					{

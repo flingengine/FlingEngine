@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo Building Fling Engine in SHIPPING mode...
+echo Building Fling Engine in Release mode...
 
 # Create the build folders if they are not created already
 mkdir build -p
@@ -9,4 +9,4 @@ mkdir build -p
 git submodule update --init --recursive
 
 # Run cmake!
-cmake . -B build -DCMAKE_BUILD_TYPE=Release -DDEFINE_SHIPPING=ON
+cmake . -B build -DCMAKE_BUILD_TYPE=Debug -DDEFINE_SHIPPING=OFF

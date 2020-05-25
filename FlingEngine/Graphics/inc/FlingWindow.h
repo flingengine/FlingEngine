@@ -4,15 +4,16 @@
 #include "FlingTypes.h"
 #include "NonCopyable.hpp"
 
-enum WindowMode 
-{ 
-    Fullscreen, 
-    Windowed, 
-    BorderlessWindowed 
-};
-
 namespace Fling
 {
+	/** The current window mode  */
+	enum class WindowMode : UINT8
+	{
+		Fullscreen, 
+		Windowed, 
+		BorderlessWindowed 
+	};
+
 	/** Window creation data */
 	struct WindowProps
 	{

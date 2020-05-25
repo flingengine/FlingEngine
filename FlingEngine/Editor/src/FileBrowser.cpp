@@ -65,7 +65,7 @@ namespace Fling
 
 			ImGui::Text("------");
 
-			ImGui::LabelText("Selected file", m_SelectedFile.c_str());
+			ImGui::TextUnformatted("Selected file %s", m_SelectedFile.c_str());
 
 			ImGui::SameLine();
 
