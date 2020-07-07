@@ -14,6 +14,8 @@ OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" O
 
 OPTION (WITH_LUA_FLAG "WITH_LUA_FLAG will enable or disable the ability to use Lua scripting in the engine" ON)
 
+OPTION ( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
+
 # We can't have the editor without ImGUI!
 IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     SET( WITH_EDITOR_FLAG OFF )
@@ -81,9 +83,10 @@ if( MSVC )
     endif()
     
     # Enable multiple processor compilation
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-
+    if(ENABLE_MULTICORE)
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    endif()
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 

@@ -42,7 +42,7 @@ install:
   - git submodule update --init --recursive
   - mkdir build
   - cd build
-  - cmake .. -A %PLATFORM%
+  - cmake .. -A %PLATFORM%  -DENABLE_MULTICORE=OFF
   - dir
   - echo Building platform=%PLATFORM% configuration=%CONFIGURATION%
 
