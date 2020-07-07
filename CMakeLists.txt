@@ -28,6 +28,7 @@ message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "WITH_LUA_FLAG=${WITH_LUA_FLAG}")
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
+message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
 
 # set the flags to 0 or 1 respectively for ImGUI and the Editor
 IF( WITH_IMGUI_FLAG )
