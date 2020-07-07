@@ -7,7 +7,7 @@
 namespace Fling
 {
 	/** The current window mode  */
-	enum class WindowMode : UINT8
+	enum class WindowMode : uint8
 	{
 		Fullscreen, 
 		Windowed, 
@@ -17,8 +17,8 @@ namespace Fling
 	/** Window creation data */
 	struct WindowProps
 	{
-		UINT32 m_Width = 800;
-		UINT32 m_Height = 600;
+		uint32 m_Width = 800;
+		uint32 m_Height = 600;
 		std::string m_Title = "Fling Engine";
 	};
 
@@ -44,10 +44,10 @@ namespace Fling
 		virtual void RecreateSwapChain() = 0;
 
 		/** The current width of this window */
-		virtual UINT32 GetWidth() const = 0;
+		virtual uint32 GetWidth() const = 0;
 
 		/** The current height of this window */
-		virtual UINT32 GetHeight() const = 0;
+		virtual uint32 GetHeight() const = 0;
 
 		/** The current aspect ratio of this windows*/
 		virtual float GetAspectRatio() const = 0;

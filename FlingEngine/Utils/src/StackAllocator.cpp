@@ -3,7 +3,7 @@
 
 namespace 
 {
-    static const size_t SIZE_OF_ALLOCATION_OFFSET = sizeof(UINT32);
+    static const size_t SIZE_OF_ALLOCATION_OFFSET = sizeof(uint32);
     static_assert(SIZE_OF_ALLOCATION_OFFSET == 4, "Allocation offset has wrong size");
 }
 
@@ -27,7 +27,7 @@ void* Fling::StackAllocator::Allocate(size_t t_Size, size_t t_Alignment, size_t 
     t_Size += SIZE_OF_ALLOCATION_OFFSET;
     t_Offset += SIZE_OF_ALLOCATION_OFFSET;
 
-    const UINT32 allocationOffset = static_cast<UINT32>(m_Current - m_Start);
+    const uint32 allocationOffset = static_cast<uint32>(m_Current - m_Start);
     
     //offset the pointer first, align it, and then offset it back
     // This is a problem on Linux!!
@@ -42,7 +42,7 @@ void* Fling::StackAllocator::Allocate(size_t t_Size, size_t t_Alignment, size_t 
     {
         void* as_void;
         char* as_char;
-        UINT32* as_uint32_t;
+        uint32* as_uint32_t;
     };
 
     as_char = m_Current;
@@ -64,14 +64,14 @@ void Fling::StackAllocator::Free(void* t_Ptr)
     {
         void* as_void;
         char* as_char;
-        uint32_t* as_uint32_t;
+        uint32* as_uint32_t;
     };
 
     as_void = t_Ptr;
 
     // grab the allocation offset from the 4 bytes right before the given pointer
     as_char -= SIZE_OF_ALLOCATION_OFFSET;
-    const uint32_t allocationOffset = *as_uint32_t;
+    const uint32 allocationOffset = *as_uint32_t;
 
     m_Current = m_Start + allocationOffset;
 }

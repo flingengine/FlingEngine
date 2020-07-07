@@ -34,11 +34,11 @@ namespace Fling
 		virtual int ShouldClose() override;
 
 		/** Is this window currently minimized? */
-		virtual bool IsMinimized() const override;
+		virtual bool IsMinimized() const override final;
 
-		virtual UINT32 GetWidth() const override;
+		virtual uint32 GetWidth() const override;
 
-		virtual UINT32 GetHeight() const override;
+		virtual uint32 GetHeight() const override;
 
 		virtual float GetAspectRatio() const override;
 

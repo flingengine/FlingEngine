@@ -45,7 +45,7 @@ namespace Fling
         * @param argv   Command line args
         * @return Number of options loaded
         */
-        UINT32 LoadCommandLineOpts( int argc, char* argv[] );
+        uint32 LoadCommandLineOpts( int argc, char* argv[] );
         
     private:
 

@@ -49,7 +49,7 @@ namespace Fling
 		const std::vector<VkImage>& GetImages() const { return m_Images; }
 		const size_t GetImageCount() const { return m_Images.size(); }
 		const VkImage& GetActiveImage() const { return m_Images[m_ActiveImageIndex]; }
-		const UINT32 GetActiveImageIndex() const { return m_ActiveImageIndex; }
+		const uint32 GetActiveImageIndex() const { return m_ActiveImageIndex; }
 
 		const size_t GetImageViewCount() const { return m_ImageViews.size(); }
 		const std::vector<VkImageView>& GetImageViews() const { return m_ImageViews; }
@@ -64,7 +64,7 @@ namespace Fling
 
 		VkFormat m_ImageFormat;
 
-		UINT32 m_ActiveImageIndex{};
+		uint32 m_ActiveImageIndex{};
 
 		const LogicalDevice* m_Device;
 		const PhysicalDevice* m_PhysicalDevice;

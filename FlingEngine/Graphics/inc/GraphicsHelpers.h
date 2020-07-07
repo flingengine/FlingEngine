@@ -28,7 +28,7 @@ namespace Fling
         *
         * @return The
         */
-        UINT32 FindMemoryType(VkPhysicalDevice t_PhysicalDevice, UINT32 t_Filter, VkMemoryPropertyFlags t_Props);
+        uint32 FindMemoryType(VkPhysicalDevice t_PhysicalDevice, uint32 t_Filter, VkMemoryPropertyFlags t_Props);
 
         void CreateBuffer(VkDevice t_Device, VkPhysicalDevice t_PhysicalDevice, VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory);
 
@@ -38,8 +38,8 @@ namespace Fling
 
         void CreateVkImage(
 			VkDevice t_Dev,
-            UINT32 t_Width,
-            UINT32 t_Height,
+            uint32 t_Width,
+            uint32 t_Height,
             VkFormat t_Format,
             VkImageTiling t_Tiling,
             VkImageUsageFlags t_Useage,
@@ -53,11 +53,11 @@ namespace Fling
 
         void CreateVkImage(
 			VkDevice t_Dev,
-            UINT32 t_Width,
-            UINT32 t_Height,
-            UINT32 t_MipLevels,
-            UINT32 t_Depth,
-            UINT32 t_ArrayLayers,
+            uint32 t_Width,
+            uint32 t_Height,
+            uint32 t_MipLevels,
+            uint32 t_Depth,
+            uint32 t_ArrayLayers,
             VkFormat t_Format,
             VkImageTiling t_Tiling,
             VkImageUsageFlags t_Useage,
@@ -106,7 +106,7 @@ namespace Fling
 
         void CreateCommandBuffers(
             VkCommandBuffer* t_commandBuffer,
-            UINT32 t_commandBufferCount,
+            uint32 t_commandBufferCount,
             VkCommandPool& t_commandPool
         );
 
@@ -117,7 +117,7 @@ namespace Fling
         /**
          * @brief    Create a an image view for Vulkan with the given format
          */
-        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, UINT32 t_MipLevels = 1);
+        VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, uint32 t_MipLevels = 1);
 
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features);
 
@@ -126,7 +126,7 @@ namespace Fling
             VkFormat t_Format, 
             VkImageLayout t_oldLayout, 
             VkImageLayout t_NewLayout,
-            UINT32 t_MipLevels = 1
+            uint32 t_MipLevels = 1
         );
 
         /**
@@ -143,13 +143,13 @@ namespace Fling
     {
         VkMappedMemoryRange MappedMemoryRange();
 
-        VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType t_type, UINT32 t_descriptorCount);
+        VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType t_type, uint32 t_descriptorCount);
 
         VkPipelineVertexInputStateCreateInfo PiplineVertexInptStateCreateInfo();
 
         VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo(
             const std::vector<VkDescriptorPoolSize>& t_poolSizes,
-            UINT32 t_maxSets
+            uint32 t_maxSets
         );
 
         VkMemoryAllocateInfo MemoryAllocateInfo();
@@ -157,8 +157,8 @@ namespace Fling
         VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
             VkDescriptorType t_type,
             VkShaderStageFlags t_stageFlags,
-            UINT32 t_binding,
-            UINT32 t_descriptorCount = 1
+            uint32 t_binding,
+            uint32 t_descriptorCount = 1
         );
 
         VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(
@@ -175,15 +175,15 @@ namespace Fling
         VkWriteDescriptorSet WriteDescriptorSetUniform(
             Buffer* t_Buffer,
             VkDescriptorSet t_DstSet,
-            UINT32 t_Binding,
-            UINT32 t_Set = 0,
+            uint32 t_Binding,
+            uint32 t_Set = 0,
             VkDeviceSize t_Offset = 0);
 
         VkWriteDescriptorSet WriteDescriptorSetImage(
             Texture* t_Image,
             VkDescriptorSet t_DstSet,
-            UINT32 t_Binding,
-            UINT32 t_Set = 0,
+            uint32 t_Binding,
+            uint32 t_Set = 0,
             VkDeviceSize t_Offset = 0);
 
         VkSamplerCreateInfo SamplerCreateInfo();
@@ -193,7 +193,7 @@ namespace Fling
         VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(
             VkDescriptorPool t_descriptorPool, 
             const VkDescriptorSetLayout* t_pSetLayouts,
-            UINT32 t_descriptorSetCount
+            uint32 t_descriptorSetCount
         );
 
         VkDescriptorImageInfo DescriptorImageInfo(
@@ -205,20 +205,20 @@ namespace Fling
         VkWriteDescriptorSet WriteDescriptorSet(
             VkDescriptorSet t_dstSet,
             VkDescriptorType t_type,
-            UINT32 t_binding,
+            uint32 t_binding,
             VkDescriptorImageInfo* imageInfo,
-            UINT32 descriptorCount = 1
+            uint32 descriptorCount = 1
         );
 
         VkPushConstantRange PushConstantRange(
             VkShaderStageFlags t_stageFlags,
-            UINT32 t_size,
-            UINT32 t_offset
+            uint32 t_size,
+            uint32 t_offset
         );
 
         VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(
             const VkDescriptorSetLayout* t_pSetLayouts,
-            UINT32 t_setLayoutCount = 1
+            uint32 t_setLayoutCount = 1
         );
 
         VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo(
@@ -235,7 +235,7 @@ namespace Fling
         );
 
         VkPipelineColorBlendStateCreateInfo PipelineColorBlendStateCreateInfo(
-            UINT32 t_attachmentCount,
+            uint32 t_attachmentCount,
             const VkPipelineColorBlendAttachmentState* t_pAttachments
         );
 
@@ -279,8 +279,8 @@ namespace Fling
         );
 
         VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(
-            UINT32 t_viewportCount,
-            UINT32 t_scissorCount,
+            uint32 t_viewportCount,
+            uint32 t_scissorCount,
             VkPipelineViewportStateCreateFlags t_flags = 0
         );
 
@@ -301,16 +301,16 @@ namespace Fling
         );
 
         VkVertexInputBindingDescription VertexInputBindingDescription(
-            UINT32 t_binding, 
-            UINT32 t_stride,
+            uint32 t_binding, 
+            uint32 t_stride,
             VkVertexInputRate t_inputRate
         );
 
         VkVertexInputAttributeDescription VertexInputAttributeDescription(
-            UINT32 t_binding,
-            UINT32 t_location,
+            uint32 t_binding,
+            uint32 t_location,
             VkFormat t_format,
-            UINT32 t_offset
+            uint32 t_offset
         );
 
         VkViewport Viewport(

@@ -12,9 +12,9 @@ namespace Fling
 	*/
 	struct AttachmentCreateInfo
 	{
-		UINT32 Width = {};
-		UINT32 Height = {};
-		UINT32 LayerCount = {};
+		uint32 Width = {};
+		uint32 Height = {};
+		uint32 LayerCount = {};
 		VkFormat Format = {};
 		VkImageUsageFlags Usage = {};
 	};
@@ -67,10 +67,10 @@ namespace Fling
     class FrameBuffer
     {
     public: 
-        explicit FrameBuffer(const VkDevice& t_Dev, INT32 t_Width = 2048, INT32 t_Height = 2048);
+        explicit FrameBuffer(const VkDevice& t_Dev, int32 t_Width = 2048, int32 t_Height = 2048);
         ~FrameBuffer();
 
-		void SizeSize(INT32 w, INT32 h);
+		void SizeSize(int32 w, int32 h);
 		void Release();
 
 		VkSampler GetSamplerHandle() const { return m_Sampler; }
@@ -95,20 +95,20 @@ namespace Fling
 		/**
 		* @return	Index of the new attachment on the frame buffer
 		*/
-        UINT32 AddAttachment(AttachmentCreateInfo t_CreateInfo);
+        uint32 AddAttachment(AttachmentCreateInfo t_CreateInfo);
 
 		/**
 		 * @brief	Get the frame buffer attachment at a given index
 		 * @return	Nullptr if index is invalid
 		 */
-		FrameBufferAttachment* GetAttachmentAtIndex(UINT32 t_Index);
+		FrameBufferAttachment* GetAttachmentAtIndex(uint32 t_Index);
 
-		inline INT32 GetWidth() const { return m_Width; }
-		inline INT32 GetHeight() const { return m_Height; }
+		inline int32 GetWidth() const { return m_Width; }
+		inline int32 GetHeight() const { return m_Height; }
 
     private:
-        INT32 m_Width = 0;
-        INT32 m_Height = 0;
+		int32 m_Width = 0;
+		int32 m_Height = 0;
 		VkFramebuffer m_FrameBuffer = VK_NULL_HANDLE;
 		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;

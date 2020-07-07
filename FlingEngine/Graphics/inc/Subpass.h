@@ -34,7 +34,7 @@ namespace Fling
 
 		virtual void CreateGraphicsPipeline() = 0;
 
-		virtual void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) = 0;
+		virtual void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) = 0;
 
 		/** Cleanup any allocated resources that you may need a registry for */
 		virtual void CleanUp(entt::registry& t_reg) {}
@@ -50,13 +50,13 @@ namespace Fling
 		 * @brief	If a subpass has a command buffer that the final swap chain presentation is dependent on, 
 		 *			then add it this vector. The Deferred offscreen GBuffer is an example of this
 		 */
-		virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex, UINT32 t_CurrentFrameInFlight) {}
+		virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, uint32 t_ActiveFrameIndex, uint32 t_CurrentFrameInFlight) {}
 		
 		/**
 		* @brief	If a subpass has an additional command buffer to add to the final swap chain draw submission
 		*			but it is not dependent on it, then add it here. ImGUI is an example of this
 		*/
-		virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, UINT32 t_ActiveFrameIndex) {}
+		virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex) {}
 
 
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }

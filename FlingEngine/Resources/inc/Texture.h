@@ -17,10 +17,10 @@ namespace Fling
         explicit Texture(Guid t_ID);
         virtual ~Texture();
 
-		FORCEINLINE UINT32 GetWidth() const { return m_Width; }
-		FORCEINLINE UINT32 GetHeight() const { return m_Height; }
-		FORCEINLINE INT32 GetChannels() const { return m_Channels; }
-        FORCEINLINE UINT32 GetMipLevels() const { return m_MipLevels; }
+		FORCEINLINE uint32 GetWidth() const { return m_Width; }
+		FORCEINLINE uint32 GetHeight() const { return m_Height; }
+		FORCEINLINE int32 GetChannels() const { return m_Channels; }
+        FORCEINLINE uint32 GetMipLevels() const { return m_MipLevels; }
 
 		FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
 		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
@@ -30,9 +30,9 @@ namespace Fling
         /**
          * @brief   Get the Image Size object (width * height * 4)
          *          Multiply by 4 because the pixel is laid out row by row with 4 bytes per pixel
-         * @return INT32 
+         * @return int32 
          */
-        UINT64 GetImageSize() const { return m_Width * m_Height * 4; } 
+        uint64 GetImageSize() const { return m_Width * m_Height * 4; } 
 
         /**
          * @brief Get the Pixel Data object
@@ -65,15 +65,15 @@ namespace Fling
         void GenerateMipMaps(VkFormat imageFormat);
 
         /** Width of this image */
-		UINT32 m_Width = 0;
+		uint32 m_Width = 0;
 
         /** Height of this image */
-		UINT32 m_Height = 0;
+		uint32 m_Height = 0;
 
-        UINT32 m_MipLevels = 0;
+        uint32 m_MipLevels = 0;
 
         /** The color channels of this image */
-        INT32 m_Channels = 0;
+        int32 m_Channels = 0;
 
 		/** The Vulkan image data */
 		VkImage m_vVkImage;

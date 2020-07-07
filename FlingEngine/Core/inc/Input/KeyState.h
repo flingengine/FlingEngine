@@ -4,7 +4,7 @@
 
 namespace Fling
 {
-    enum class KeyState : UINT8
+    enum class KeyState : uint8
     {
         NONE,
         DOWN,

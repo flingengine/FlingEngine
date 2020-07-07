@@ -45,7 +45,7 @@ namespace Fling
     inline void MovingAverage<T, t_Size>::Push(T t_Element)
     {
         ++m_Count;
-        const UINT32 index = m_CurrentIndex++;
+        const uint32 index = m_CurrentIndex++;
         m_Buffer[index & (m_MaxSize - 1u)] = t_Element;
     }
 

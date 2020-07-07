@@ -142,7 +142,7 @@ namespace Fling
 
 	// FrameBuffer -----------------------------------
 
-	FrameBuffer::FrameBuffer(const VkDevice& t_Dev, INT32 t_Width, INT32 t_Height)
+	FrameBuffer::FrameBuffer(const VkDevice& t_Dev, int32 t_Width, int32 t_Height)
 		: m_Device(t_Dev)
 		, m_Width{t_Width}
 		, m_Height{t_Height}
@@ -154,7 +154,7 @@ namespace Fling
 		Release();
 	}
 
-	void FrameBuffer::SizeSize(INT32 w, INT32 h)
+	void FrameBuffer::SizeSize(int32 w, int32 h)
 	{
 		this->m_Width= w;
 		this->m_Height = h;		
@@ -206,7 +206,7 @@ namespace Fling
 		bool hasDepth = false;
 		bool hasColor = false;
 
-		UINT32 attachmentIndex = 0;
+		uint32 attachmentIndex = 0;
 
 		for (auto& attachment : m_Attachments)
 		{
@@ -316,14 +316,14 @@ namespace Fling
 		return vkCreateSampler(m_Device, &samplerInfo, nullptr, &m_Sampler);
 	}
 
-	UINT32 FrameBuffer::AddAttachment(AttachmentCreateInfo t_CreateInfo)
+	uint32 FrameBuffer::AddAttachment(AttachmentCreateInfo t_CreateInfo)
 	{
 		assert(m_Device);
 		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device));
-		return static_cast<UINT32>(m_Attachments.size() - 1);
+		return static_cast<uint32>(m_Attachments.size() - 1);
 	}
 	
-	FrameBufferAttachment* FrameBuffer::GetAttachmentAtIndex(UINT32 t_Index)
+	FrameBufferAttachment* FrameBuffer::GetAttachmentAtIndex(uint32 t_Index)
 	{
 		if (t_Index >= 0 && t_Index < m_Attachments.size())
 		{

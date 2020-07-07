@@ -94,7 +94,7 @@ namespace Fling
 		// Clean up any allocated descriptor sets
 	}
 
-	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		UpdateLightingUBO(t_reg, t_ActiveFrameInFlight);
 
@@ -144,7 +144,7 @@ namespace Fling
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		// If we have specified a specific pool then use that, otherwise use the one on the mesh
 		allocInfo.descriptorPool = t_Pool;
-		allocInfo.descriptorSetCount = static_cast<UINT32>(ImageCount);
+		allocInfo.descriptorSetCount = static_cast<uint32>(ImageCount);
 		allocInfo.pSetLayouts = layouts.data();
 
 		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, m_DescriptorSets.data()));
@@ -231,7 +231,7 @@ namespace Fling
 				),
 			};
 
-			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
 	}
 
@@ -290,12 +290,12 @@ namespace Fling
 #endif	// FLING_DEBUG
 	}
 
-	void GeometrySubpass::UpdateLightingUBO(entt::registry& t_Reg, UINT32 t_ActiveFrame)
+	void GeometrySubpass::UpdateLightingUBO(entt::registry& t_Reg, uint32 t_ActiveFrame)
 	{
 		auto PointLightView = t_Reg.view<PointLight, Transform>();
 		auto DirectionalLightView = t_Reg.view<DirectionalLight>();
 
-		UINT32 CurLightCount = 0;
+		uint32 CurLightCount = 0;
 		// Directional Lights ----------------
 		for (auto entity : DirectionalLightView)
 		{

@@ -79,12 +79,12 @@ namespace Fling
 		vkCmdBindPipeline(GetHandle(), t_BindPoint, t_Pipeline);
 	}
 
-	void CommandBuffer::SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports)
+	void CommandBuffer::SetViewport(uint32 first_viewport, const std::vector<VkViewport>& viewports)
 	{
 		vkCmdSetViewport(GetHandle(), first_viewport, to_u32(viewports.size()), viewports.data());
 	}
 
-	void CommandBuffer::SetScissor(UINT32 first_scissor, const std::vector<VkRect2D>& scissors)
+	void CommandBuffer::SetScissor(uint32 first_scissor, const std::vector<VkRect2D>& scissors)
 	{
 		vkCmdSetScissor(GetHandle(), first_scissor, to_u32(scissors.size()), scissors.data());
 	}

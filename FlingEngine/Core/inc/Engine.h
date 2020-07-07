@@ -43,14 +43,14 @@ namespace Fling
 		/**
 		 * @brief Run the engine (Startup, Tick until should stop, and shutdown)
 		 * 
-		 * @return UINT64 0 for success, otherwise an error has occured
+		 * @return uint64 0 for success, otherwise an error has occured
 		 */
 #if WITH_EDITOR
 		template<class T_GameType, class T_EditorType = Fling::BaseEditor>
-		FLING_API UINT64 Run();
+		FLING_API uint64 Run();
 #else
 		template<class T_GameType>
-		FLING_API UINT64 Run();
+		FLING_API uint64 Run();
 #endif
 
 	private:
@@ -90,10 +90,10 @@ namespace Fling
 
 #if WITH_EDITOR
 	template<class T_GameType, class T_EditorType>
-	FLING_API UINT64 Engine::Run()
+	FLING_API uint64 Engine::Run()
 #else
 	template<class T_GameType>
-	FLING_API UINT64 Engine::Run()
+	FLING_API uint64 Engine::Run()
 #endif
 
 	{

@@ -8,15 +8,15 @@
 #include <entt/entity/helper.hpp>
 
 // Integer typedefs for ease of use
-typedef uint8_t                 UINT8;
-typedef unsigned short          UINT16;
-typedef uint32_t                UINT32;
-typedef uint64_t                UINT64;
+typedef uint8_t                 uint8;
+typedef unsigned short          uint16;
+typedef uint32_t                uint32;
+typedef uint64_t                uint64;
 
-typedef int8_t                  INT8;
-typedef signed short            INT16;
-typedef int32_t                 INT32;
-typedef int64_t                 INT64;
+typedef int8_t                  int8;
+typedef signed short            int16;
+typedef int32_t                 int32;
+typedef int64_t                 int64;
 
 #define HS(str) entt::hashed_string { (str) }
 
@@ -34,14 +34,14 @@ namespace Fling
  * @return An @ref uint32_t representation of the same value
  */
 template <class T>
-UINT32 to_u32(T value)
+uint32 to_u32(T value)
 {
 	static_assert(std::is_arithmetic<T>::value, "T must be numeric");
 
-	if (static_cast<uintmax_t>(value) > static_cast<uintmax_t>(std::numeric_limits<UINT32>::max()))
+	if (static_cast<uintmax_t>(value) > static_cast<uintmax_t>(std::numeric_limits<uint32>::max()))
 	{
-		throw std::runtime_error("to_u32() failed, value is too big to be converted to UINT32");
+		throw std::runtime_error("to_u32() failed, value is too big to be converted to uint32");
 	}
 
-	return static_cast<UINT32>(value);
+	return static_cast<uint32>(value);
 }

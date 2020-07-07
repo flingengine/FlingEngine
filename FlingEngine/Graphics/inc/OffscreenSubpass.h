@@ -37,7 +37,7 @@ namespace Fling
 
 		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 
@@ -48,8 +48,8 @@ namespace Fling
 		void GatherPresentDependencies(
 			std::vector<CommandBuffer*>& t_CmdBuffs,
 			std::vector<VkSemaphore>& t_Deps,
-			UINT32 t_ActiveFrameIndex,
-			UINT32 t_CurrentFrameInFlight) override;
+			uint32 t_ActiveFrameIndex,
+			uint32 t_CurrentFrameInFlight) override;
 
 		void CleanUp(entt::registry& t_reg) override;
 
@@ -61,7 +61,7 @@ namespace Fling
 
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf);
 
-		void BuildOffscreenCommandBuffer(entt::registry& t_reg, UINT32 t_ActiveFrameInFlight);
+		void BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight);
 
 		// We need an offscreen semaphore for each possible frame in flight because the swap chain
 		// presentation will depend on this command buffer being complete

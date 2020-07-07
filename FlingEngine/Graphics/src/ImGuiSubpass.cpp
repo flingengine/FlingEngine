@@ -68,7 +68,7 @@ namespace Fling
 		vkDestroyDescriptorSetLayout(logicalDevice, m_descriptorSetLayout, nullptr);
 	}
 
-	void ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		ImGui::NewFrame();
 
@@ -116,8 +116,8 @@ namespace Fling
 
 		//Render commands 
 		ImDrawData* imDrawData = ImGui::GetDrawData();
-		UINT32 vertexOffset = 0;
-		UINT32 indexOffset = 0;
+		uint32 vertexOffset = 0;
+		uint32 indexOffset = 0;
 
 		if (imDrawData->CmdListsCount > 0)
 		{
@@ -135,17 +135,17 @@ namespace Fling
 				0,
 				VK_INDEX_TYPE_UINT16);
 
-			for (INT32 i = 0; i < imDrawData->CmdListsCount; ++i)
+			for (int32 i = 0; i < imDrawData->CmdListsCount; ++i)
 			{
 				const ImDrawList* cmd_list = imDrawData->CmdLists[i];
-				for (INT32 j = 0; j < cmd_list->CmdBuffer.Size; ++j)
+				for (int32 j = 0; j < cmd_list->CmdBuffer.Size; ++j)
 				{
 					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
 					VkRect2D scissorRect;
-					scissorRect.offset.x = std::max((INT32)(pcmd->ClipRect.x), 0);
-					scissorRect.offset.y = std::max((INT32)(pcmd->ClipRect.y), 0);
-					scissorRect.extent.width = (INT32)(pcmd->ClipRect.z - pcmd->ClipRect.x);
-					scissorRect.extent.height = (INT32)(pcmd->ClipRect.w - pcmd->ClipRect.y);
+					scissorRect.offset.x = std::max((int32)(pcmd->ClipRect.x), 0);
+					scissorRect.offset.y = std::max((int32)(pcmd->ClipRect.y), 0);
+					scissorRect.extent.width = (int32)(pcmd->ClipRect.z - pcmd->ClipRect.x);
+					scissorRect.extent.height = (int32)(pcmd->ClipRect.w - pcmd->ClipRect.y);
 					vkCmdSetScissor(t_commandBuffer, 0, 1, &scissorRect);
 					vkCmdDrawIndexed(t_commandBuffer, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
 					indexOffset += pcmd->ElemCount;
@@ -295,7 +295,7 @@ namespace Fling
 			Initializers::WriteDescriptorSet(m_descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &fontDescriptor),
 		};
 
-		vkUpdateDescriptorSets(logicalDevice, static_cast<UINT32>(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, nullptr);
+		vkUpdateDescriptorSets(logicalDevice, static_cast<uint32>(writeDescriptorSet.size()), writeDescriptorSet.data(), 0, nullptr);
 
 		//Pipeline cache --------------------------------------------------------
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};

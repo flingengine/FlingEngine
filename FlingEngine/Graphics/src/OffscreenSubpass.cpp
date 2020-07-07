@@ -37,7 +37,7 @@ namespace Fling
 
 		// Build offscreen semaphores -------
 		m_OffscreenSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
-		for (INT32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
+		for (int32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			m_OffscreenSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_Device->GetVkDevice());
 		}
@@ -87,7 +87,7 @@ namespace Fling
 	void OffscreenSubpass::Draw(
 		CommandBuffer& t_CmdBuf, 
 		VkFramebuffer t_PresentFrameBuf, 
-		UINT32 t_ActiveSwapImage, 
+		uint32 t_ActiveSwapImage, 
 		entt::registry& t_reg, 
 		float DeltaTime)
 	{
@@ -245,10 +245,10 @@ namespace Fling
 			// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 		};
 
-		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 	}
 
-	void OffscreenSubpass::BuildOffscreenCommandBuffer(entt::registry& t_reg, UINT32 t_ActiveFrameInFlight)
+	void OffscreenSubpass::BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight)
 	{
 
 	}
@@ -309,7 +309,7 @@ namespace Fling
 
 
 		// Create the descriptor pool for off screen things
-		UINT32 DescriptorCount = 2000 * m_SwapChain->GetImageViewCount();
+		uint32 DescriptorCount = 2000 * m_SwapChain->GetImageViewCount();
 
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
@@ -322,7 +322,7 @@ namespace Fling
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
+		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = to_u32(1000 * m_SwapChain->GetImageViewCount());
 
@@ -382,7 +382,7 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
 	}
 
-	void OffscreenSubpass::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex, UINT32 t_CurrentFrameInFlight)
+	void OffscreenSubpass::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, uint32 t_ActiveFrameIndex, uint32 t_CurrentFrameInFlight)
 	{
 		t_CmdBuffs.emplace_back(m_OffscreenCmdBufs[t_ActiveFrameIndex]);
 		t_Deps.emplace_back(m_OffscreenSemaphores[t_CurrentFrameInFlight]);

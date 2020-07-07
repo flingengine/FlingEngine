@@ -220,7 +220,7 @@ namespace Fling
             const bool bStartedSelected = (m_CompEditorEntityType == entity);
             
             std::ostringstream os;
-            os << "Entity " << static_cast<UINT64>(entity);
+            os << "Entity " << static_cast<uint64>(entity);
             std::string label = os.str();
 
             if (ImGui::Button(" - "))

@@ -26,7 +26,7 @@ namespace Fling
 
 		virtual ~ImGuiSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 
@@ -73,8 +73,8 @@ namespace Fling
 		/** Instance of the editor that we will get what commands to build from */
 		std::shared_ptr<Fling::BaseEditor> m_Editor;
 
-		INT32 m_vertexCount = 0;
-		INT32 m_indexCount = 0;
+		int32 m_vertexCount = 0;
+		int32 m_indexCount = 0;
 
 		VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
 	};

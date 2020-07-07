@@ -48,9 +48,9 @@ namespace Fling
 
 		void BindPipeline(VkPipelineBindPoint t_BindPoint, VkPipeline t_Pipeline);
 
-		void SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports);
+		void SetViewport(uint32 first_viewport, const std::vector<VkViewport>& viewports);
 
-		void SetScissor(UINT32 first_scissor, const std::vector<VkRect2D> &scissors);
+		void SetScissor(uint32 first_scissor, const std::vector<VkRect2D> &scissors);
 
 		void EndRenderPass();
 

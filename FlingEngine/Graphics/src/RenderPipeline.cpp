@@ -38,7 +38,7 @@ namespace Fling
 		m_Subpasses.clear();
 	}
 
-	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_Reg, float DeltaTime)
+	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_Reg, float DeltaTime)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -55,7 +55,7 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex, UINT32 t_CurrentFrameInFlight)
+	void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, uint32 t_ActiveFrameIndex, uint32 t_CurrentFrameInFlight)
 	{
 		for (const auto& subpass : m_Subpasses)
 		{
@@ -63,7 +63,7 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, UINT32 t_ActiveFrameIndex)
+	void RenderPipeline::GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex)
 	{
 		for (const auto& subpass : m_Subpasses)
 		{
@@ -82,8 +82,8 @@ namespace Fling
 	void RenderPipeline::CreateDescriptors(entt::registry& t_Reg)
 	{
 		// Create the descriptor pool for us to use -------
-		const UINT32 SwapImageCount = static_cast<UINT32>(m_SwapChain->GetImageCount());
-		UINT32 DescriptorCount = 1024;
+		const uint32 SwapImageCount = static_cast<uint32>(m_SwapChain->GetImageCount());
+		uint32 DescriptorCount = 1024;
 
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
@@ -96,7 +96,7 @@ namespace Fling
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
+		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = SwapImageCount;
 

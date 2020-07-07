@@ -189,7 +189,7 @@ namespace Fling
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		for (INT32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
+		for (int32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			m_PresentCompleteSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
 			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
@@ -200,7 +200,7 @@ namespace Fling
 		}
 	}
 
-	void VulkanApp::CreateGameWindow(const UINT32 t_width, const UINT32 t_height)
+	void VulkanApp::CreateGameWindow(const uint32 t_width, const uint32 t_height)
 	{
 		WindowProps Props = {};
 		Props.m_Height = t_width;
@@ -235,6 +235,11 @@ namespace Fling
 		Props.m_Title = Title;
 
 		m_CurrentWindow = FlingWindow::Create(Props);
+	}
+
+	void VulkanApp::OnWindowResized(int Width, int Height)
+	{
+		bNeedsResizing = true;
 	}
 
 	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
@@ -318,7 +323,7 @@ namespace Fling
 
 		// Aquire the active image index
 		VkResult iResult = m_SwapChain->AquireNextImage(m_PresentCompleteSemaphores[CurrentFrameIndex]);
-		UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
+		uint32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
 		vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
@@ -415,7 +420,7 @@ namespace Fling
 
 			// Signal that the dependent semaphores are done when this is complete
 			OffscreenSubmission.pSignalSemaphores = SemaphoresToWaitOn.data();
-			OffscreenSubmission.signalSemaphoreCount = (UINT32)SemaphoresToWaitOn.size();
+			OffscreenSubmission.signalSemaphoreCount = (uint32)SemaphoresToWaitOn.size();
 
 			// Mark the draw command buffer at this frame for submission
 			std::vector<VkCommandBuffer> submitCommandBuffers = {};
@@ -426,12 +431,12 @@ namespace Fling
 			}
 
 			OffscreenSubmission.pCommandBuffers = submitCommandBuffers.data();
-			OffscreenSubmission.commandBufferCount = (UINT32)submitCommandBuffers.size();
+			OffscreenSubmission.commandBufferCount = (uint32)submitCommandBuffers.size();
 			// Signal off screen semaphore when this is completed
 			VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &OffscreenSubmission, VK_NULL_HANDLE));
 
 			// Wait for dependent semaphores
-			FinalScreenSubmitInfo.waitSemaphoreCount = (UINT32)SemaphoresToWaitOn.size();
+			FinalScreenSubmitInfo.waitSemaphoreCount = (uint32)SemaphoresToWaitOn.size();
 			FinalScreenSubmitInfo.pWaitSemaphores = SemaphoresToWaitOn.data();
 		}
 		else
@@ -449,7 +454,7 @@ namespace Fling
 		}
 
 		FinalScreenSubmitInfo.pCommandBuffers = submitCommandBuffers.data();
-		FinalScreenSubmitInfo.commandBufferCount = (UINT32)submitCommandBuffers.size();
+		FinalScreenSubmitInfo.commandBufferCount = (uint32)submitCommandBuffers.size();
 
 		// Actually present the swap chain queue. This is always going to be the signal for the final semaphore
 		FinalScreenSubmitInfo.signalSemaphoreCount = 1;
@@ -484,14 +489,14 @@ namespace Fling
 		VkSurfaceCapabilitiesKHR t_Capabilies = {};
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice->GetVkPhysicalDevice(), m_Surface, &t_Capabilies);
 
-		if (t_Capabilies.currentExtent.width != std::numeric_limits<UINT32>::max())
+		if (t_Capabilies.currentExtent.width != std::numeric_limits<uint32>::max())
 		{
 			return t_Capabilies.currentExtent;
 		}
 		else
 		{
-			UINT32 width = m_CurrentWindow->GetWidth();
-			UINT32 height = m_CurrentWindow->GetHeight();
+			uint32 width = m_CurrentWindow->GetWidth();
+			uint32 height = m_CurrentWindow->GetHeight();
 
 			VkExtent2D actualExtent = { width, height };
 

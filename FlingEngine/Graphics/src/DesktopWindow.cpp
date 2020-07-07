@@ -2,6 +2,7 @@
 #include "DesktopWindow.h"
 #include "Texture.h"
 #include "FlingConfig.h"
+#include "VulkanApp.h"
 
 namespace Fling
 {
@@ -24,11 +25,12 @@ namespace Fling
 
 		m_Window = glfwCreateWindow(t_Props.m_Width, t_Props.m_Height, t_Props.m_Title.c_str(), nullptr, nullptr);
 
-		glfwSetFramebufferSizeCallback(m_Window, &FrameBufferResizeCallback);
+		glfwSetFramebufferSizeCallback(m_Window, &DesktopWindow::FrameBufferResizeCallback);
 	}
 
 	void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
 	{
+		VulkanApp::Get().OnWindowResized(t_Width, t_Height);
 	}
 
 	void DesktopWindow::CreateSurface(void* t_GraphicsInstance, void* t_SurfData)
@@ -72,7 +74,7 @@ namespace Fling
 		return false;
 	}
 
-	UINT32 DesktopWindow::GetWidth() const
+	uint32 DesktopWindow::GetWidth() const
 	{
 		int width, height;
 		glfwGetFramebufferSize(m_Window, &width, &height);
@@ -80,7 +82,7 @@ namespace Fling
 		return width;
 	}
 
-	UINT32 DesktopWindow::GetHeight() const
+	uint32 DesktopWindow::GetHeight() const
 	{
 		int width, height;
 		glfwGetFramebufferSize(m_Window, &width, &height);

@@ -101,6 +101,6 @@ TEST_CASE("Aligned Alloc", "[utils]")
 TEST_CASE("Circular Buffer", "[utils]")
 {
     // Circular buffer of char's 
-    Fling::CircularBuffer<INT32, 128> CircBuf {};
+    Fling::CircularBuffer<int32, 128> CircBuf {};
 
 }
