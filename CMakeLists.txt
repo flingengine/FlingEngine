@@ -141,7 +141,6 @@ include_directories( external/cereal/include )
 
 # Lua
 if( WITH_LUA_FLAG )
-    add_subdirectory( external/imgui )
     include_directories( external/sol2/include )
     include_directories( external/lua53/include )
     include_directories( external/lua53/lib )
