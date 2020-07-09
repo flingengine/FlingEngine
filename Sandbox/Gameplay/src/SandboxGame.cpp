@@ -25,9 +25,6 @@ namespace Sandbox
         // Lets create an entity! 
         F_LOG_TRACE("Sandbox Init!");
 
-        // Temp saving and load functions
-        Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
-
         // notify we want to quit when we press escape
         Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
 
@@ -264,11 +261,5 @@ namespace Sandbox
 		Transform& t0 = t_Reg.assign<Transform>(e0);
 		t0.SetPos(glm::vec3(pos, 0.0f, 0.0f));
 		F_LOG_TRACE("Spawn a sphere to the left!");
-	}
-
-    void Game::PrintFPS() const
-    {
-        float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
-        F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
 	}
 }	// namespace Sandbox

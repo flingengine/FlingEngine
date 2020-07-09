@@ -36,8 +36,6 @@ namespace Sandbox
 		/* Creates a 3D array of meshes */
 		void GenerateTestMeshes(entt::registry& t_Reg);
 
-		void PrintFPS() const;
-
 		void LightingTest(entt::registry& t_Reg);
 
 		/* Toggles the visibility of the cursor */
