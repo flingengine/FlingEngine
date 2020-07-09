@@ -34,7 +34,7 @@ namespace Fling
 		void CleanUp(entt::registry& t_reg);
 
 		/** Allows all subpasses to update once the swap chain resizes */
-		void OnSwapchainResized();
+		void OnSwapchainResized(entt::registry& t_reg);
 
 	private:
 

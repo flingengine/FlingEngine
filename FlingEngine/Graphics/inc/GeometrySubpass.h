@@ -83,6 +83,8 @@ namespace Fling
 		*/
 		void CreateGraphicsPipeline() override;
 
+		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
+
 	private:
 
 		void OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
@@ -93,6 +95,7 @@ namespace Fling
 		std::shared_ptr<Model> m_QuadModel;
 
 		VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
+		VkDescriptorPool m_DescPool = VK_NULL_HANDLE;
 
 		const FirstPersonCamera* m_Camera;
 

@@ -7,6 +7,7 @@ namespace Fling
 	// Attachment -------------------------------------
 	FrameBufferAttachment::FrameBufferAttachment(const AttachmentCreateInfo& t_Info, const VkDevice& t_Dev)
 		: m_Device(t_Dev)
+		, m_CreationInfo(t_Info)
 	{
 		assert(t_Dev);
 
@@ -155,6 +156,45 @@ namespace Fling
 		Release();
 	}
 
+	void FrameBuffer::ResizeAndRecreate(int32 w, int32 h)
+	{
+		m_Width = w;
+		m_Height = h;
+		// Track what stuff we currently have ------------------
+		std::vector<AttachmentCreateInfo> AttachmentCreation;
+
+		for(FrameBufferAttachment* Attachment : m_Attachments)
+		{
+			AttachmentCreation.push_back(Attachment->GetCreationInfo());
+		}
+
+		// Destroy the old stuff--------------------------------
+		for (FrameBufferAttachment* Attachment : m_Attachments)
+		{
+			if (Attachment)
+			{
+				delete Attachment;
+				Attachment = nullptr;
+			}
+		}
+		m_Attachments.clear();
+
+		if (m_RenderPass != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(m_Device->GetVkDevice(), m_RenderPass, nullptr);
+		}
+
+		// Create new stuff ----------------------------------------
+		for(AttachmentCreateInfo& creationInfo : AttachmentCreation)
+		{
+			creationInfo.Width = w;
+			creationInfo.Height = h;
+			AddAttachment(creationInfo);
+		}
+
+		VK_CHECK_RESULT(CreateRenderPass());
+	}
+
 	void FrameBuffer::Release()
 	{
 		assert(m_Device);
@@ -257,10 +297,10 @@ namespace Fling
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.pAttachments = attachmentDescriptions.data();
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+		renderPassInfo.attachmentCount = static_cast<uint32>(attachmentDescriptions.size());
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 2;
+		renderPassInfo.dependencyCount = static_cast<uint32>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
 		VK_CHECK_RESULT(vkCreateRenderPass(m_Device->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass));
 

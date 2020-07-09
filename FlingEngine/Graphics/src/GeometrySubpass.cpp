@@ -12,6 +12,7 @@
 #include "OffscreenSubpass.h"
 #include "FirstPersonCamera.h"
 #include "Components/Transform.h"
+#include "VulkanApp.h"
 
 namespace Fling
 {
@@ -39,7 +40,7 @@ namespace Fling
 		m_QuadModel = Model::Quad();
 
 		// Initializes the lighting UBO buffers  --------
-		static_assert (sizeof(LightingUbo) < VULKAN_UBO_SIZE, "UBO size must be within the Vulkan Spec!");
+		static_assert (sizeof(LightingUbo) < VULKAN_MAX_UBO_SIZE, "UBO size must be within the Vulkan Spec!");
 
 		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
@@ -136,19 +137,26 @@ namespace Fling
 	{
 		assert(m_OffscreenFrameBuf);
 
-		size_t ImageCount = m_SwapChain->GetImageCount();
-		m_DescriptorSets.resize(ImageCount);
+		// We only need to do the actual allocation of sets ONCE
+		if(m_DescPool == VK_NULL_HANDLE)
+		{
+			m_DescPool = t_Pool;
+		
+			size_t ImageCount = m_SwapChain->GetImageCount();
+			m_DescriptorSets.resize(ImageCount);
 
-		std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
-		VkDescriptorSetAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		// If we have specified a specific pool then use that, otherwise use the one on the mesh
-		allocInfo.descriptorPool = t_Pool;
-		allocInfo.descriptorSetCount = static_cast<uint32>(ImageCount);
-		allocInfo.pSetLayouts = layouts.data();
+			std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
+			VkDescriptorSetAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			// If we have specified a specific pool then use that, otherwise use the one on the mesh
+			allocInfo.descriptorPool = t_Pool;
+			allocInfo.descriptorSetCount = static_cast<uint32>(ImageCount);
+			allocInfo.pSetLayouts = layouts.data();
 
-		VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, m_DescriptorSets.data()));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, m_DescriptorSets.data()));
+		}
 
+		// Write to the sets
 		for (size_t i = 0; i < m_DescriptorSets.size(); ++i)
 		{
 			// Create the image info's for the write sets to reference
@@ -263,6 +271,20 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
 	}
 
+	void GeometrySubpass::OnSwapchainResized(entt::registry& t_reg)
+	{
+		//// Update the render pass to have the good swap chain size
+		//m_GlobalRenderPass = VulkanApp::Get().GetGlobalRenderPass();
+
+		//// Recreate graphics pipeline to have that new reference
+		//DestroyGraphicsPipeline();
+		//InitalizeGraphicsPipeline();
+		//CreateGraphicsPipeline();
+
+		//// Now create the descriptor sets, which are dependent on the newly updated offscreen frame buffer
+		//CreateDescriptorSets(m_DescPool, t_reg);
+	}
+
 	void GeometrySubpass::OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
 	{		
 		// Ensure that we have a transform component before adding a light
@@ -277,16 +299,17 @@ namespace Fling
 
 #if FLING_DEBUG
 		static std::string PointLightMesh = "Models/sphere.obj";
+		static std::string MaterialPath = "Materials/White.mat";
+
 		if (!t_Reg.has<MeshRenderer>(t_Ent))
 		{
-			t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh);
+			t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh, MaterialPath);
 		}
 
 		// Ensure that we have the proper point light mesh on for a nice little gizmo
 		MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
 		m.LoadModelFromPath(PointLightMesh);
-		m.LoadMaterialFromPath("Materials/Default.mat");
-
+		m.LoadMaterialFromPath(MaterialPath);
 #endif	// FLING_DEBUG
 	}
 

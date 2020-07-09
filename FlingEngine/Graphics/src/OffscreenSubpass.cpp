@@ -171,11 +171,6 @@ namespace Fling
 		OffscreenCmdBuf->End();
 	}
 
-	void OffscreenSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
-	{
-		
-	}
-
 	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
 	{
 		// Only allocate new descriptor sets if there are none
@@ -390,17 +385,13 @@ namespace Fling
 		}
 	}
 
-	void OffscreenSubpass::OnSwapchainResized()
+	void OffscreenSubpass::OnSwapchainResized(entt::registry& t_reg)
 	{
 		const VkExtent2D NewSize = m_SwapChain->GetExtents();
-		if(m_OffscreenFrameBuf)
+		if (m_OffscreenFrameBuf)
 		{
-			m_OffscreenFrameBuf->Resize(NewSize.width, NewSize.height);
+			m_OffscreenFrameBuf->ResizeAndRecreate(NewSize.width, NewSize.height);
 		}
-
-		// Rebuild frame buffer here because we got some new extents
-			// Which means it and all of it's attachments
-			// Which means each imange and image view
 	}
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)

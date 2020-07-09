@@ -15,7 +15,7 @@ namespace Fling
 	class GraphicsPipeline;
 
 	/**
-	* @breif	A subpass represents one part of a RenderPipeline. Each subpass should 
+	* @brief	A subpass represents one part of a RenderPipeline. Each subpass should 
 	*			can add attachments to the frame buffer, build it's own command buffers, 
 	*			and create its own descriptors. When overriding this class, add any additional
 	*			uniform buffers or bindings you may need into the child class. 
@@ -44,7 +44,7 @@ namespace Fling
 		*			Assumes that the frame buffer has been prepared with it's attachments already.
 		* @param t_FrameBuffer	The swap chain frame buffer
 		*/		
-		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) = 0;
+		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) {};
 		
 		/**
 		 * @brief	If a subpass has a command buffer that the final swap chain presentation is dependent on, 
@@ -59,12 +59,16 @@ namespace Fling
 		virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex) {}
 
 		/** Function that is called when the swap chain is resized. Put any logic that may depend on Swapchain extents */
-		virtual void OnSwapchainResized() {}
+		virtual void OnSwapchainResized(entt::registry& t_reg) {}
 
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
 		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }
 
 	protected:
+
+		void InitalizeGraphicsPipeline();
+
+		void DestroyGraphicsPipeline();
 
 		// Get default graphics Pipeline
 		const LogicalDevice* m_Device;

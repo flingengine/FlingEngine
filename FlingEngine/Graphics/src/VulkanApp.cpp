@@ -254,7 +254,7 @@ namespace Fling
 		bNeedsResizing = true;
 	}
 
-	void VulkanApp::RecreateFrameResourcesForResize()
+	void VulkanApp::RecreateFrameResourcesForResize(entt::registry& t_Reg)
 	{
 		F_LOG_TRACE("Resizing the window!");
 		m_CurrentWindow->WaitForNewWindowSize();
@@ -268,13 +268,7 @@ namespace Fling
 
 		for(RenderPipeline* Pipeline : m_RenderPipelines)
 		{
-			Pipeline->OnSwapchainResized();
-		}
-
-		// Set new camera aspect ratio
-		if(m_Camera)
-		{
-			m_Camera->SetAspectRatio(m_CurrentWindow->GetAspectRatio());
+			Pipeline->OnSwapchainResized(t_Reg);
 		}
 	}
 
@@ -534,7 +528,7 @@ namespace Fling
 		{
 			// If result is out of date then signal for resize
 			bNeedsResizing = false;
-			RecreateFrameResourcesForResize();
+			RecreateFrameResourcesForResize(t_Reg);
 		}
 		else if (iResult != VK_SUCCESS)
 		{

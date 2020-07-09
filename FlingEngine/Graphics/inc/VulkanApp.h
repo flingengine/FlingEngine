@@ -60,6 +60,7 @@ namespace Fling
 		inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
 		inline FirstPersonCamera* GetCamera() const { return m_Camera; }
+		inline VkRenderPass GetGlobalRenderPass() const { return m_RenderPass; }
 
 		/** Callback for when a window is resized and to what width and height */
 		void OnWindowResized(int Width, int Height);
@@ -87,7 +88,7 @@ namespace Fling
 		*/
 		void CreateGameWindow(const uint32 t_width, const uint32 t_height);
 
-		void RecreateFrameResourcesForResize();
+		void RecreateFrameResourcesForResize(entt::registry& t_Reg);
 
 		/** Returns the current extents needed to render based on the physical device and surface */
 		VkExtent2D ChooseSwapExtent();

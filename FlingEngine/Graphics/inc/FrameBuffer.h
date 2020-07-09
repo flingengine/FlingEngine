@@ -51,6 +51,7 @@ namespace Fling
 		inline VkSampleCountFlagBits GetSampleCount() const { return m_Samples; }
 		inline VkImageSubresourceRange GetSubresourceRange() const { return m_SubresourceRange; }
 		inline VkAttachmentDescription GetDescription() const { return m_Description; }
+		inline AttachmentCreateInfo GetCreationInfo() const { return m_CreationInfo; }
 
 	private:
 
@@ -64,6 +65,9 @@ namespace Fling
 		VkAttachmentDescription m_Description = {};
 
 		const VkDevice& m_Device;
+		/** Store this attachment's creation info so that we can gather it when we need to rebuild it
+		(i.e. when a window resizes) */
+		const AttachmentCreateInfo m_CreationInfo;
     };
 
 	/**
@@ -77,12 +81,12 @@ namespace Fling
         ~FrameBuffer();
 
 		/** Resizes the extents of this frame buffer and recreates all dependent attachments */
-		void Resize(int32 w, int32 h);
+		void ResizeAndRecreate(int32 w, int32 h);
 		void Release();
 
-		inline VkSampler GetSamplerHandle() const { return m_Sampler; }
-		inline VkFramebuffer GetHandle() const { return m_FrameBuffer; }
-		inline VkRenderPass GetRenderPassHandle() const { return m_RenderPass; }
+		VkSampler GetSamplerHandle() const { return m_Sampler; }
+		VkFramebuffer GetHandle() const { return m_FrameBuffer; }
+		VkRenderPass GetRenderPassHandle() const { return m_RenderPass; }
 
 		/**
 		* @brief	Create the default render pass of this frame buffer 

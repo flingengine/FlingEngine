@@ -39,8 +39,6 @@ namespace Fling
 
 		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override final;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override final;
-
 		void PrepareAttachments() override final;
 
 		void CreateGraphicsPipeline() override final;
@@ -53,7 +51,7 @@ namespace Fling
 
 		void CleanUp(entt::registry& t_reg) override final;
 
-		virtual void OnSwapchainResized() override final;
+		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
 
 	private:
 

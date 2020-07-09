@@ -18,30 +18,40 @@ namespace Fling
 		m_ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 		m_ClearValues[1].depthStencil = { 1.0f, ~0U };
 
+		InitalizeGraphicsPipeline();
+	}
+
+	void Subpass::InitalizeGraphicsPipeline()
+	{
 		// Initialize the layouts that this subpass will use for descriptors and pipeline creation
 		std::vector<Shader*> Shaders = { m_VertexShader.get(), m_FragShader.get() };
 
 		// Add entt callbacks for handling mesh renderers
 
-        //Might want to change this per subpass?
+		//Might want to change this per subpass?
 		m_GraphicsPipeline = new GraphicsPipeline(
-            Shaders, 
-            m_Device->GetVkDevice(),
-            VK_POLYGON_MODE_FILL,
-            GraphicsPipeline::Depth::ReadWrite,
-            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-            VK_CULL_MODE_FRONT_BIT,
-            VK_FRONT_FACE_COUNTER_CLOCKWISE);
+			Shaders,
+			m_Device->GetVkDevice(),
+			VK_POLYGON_MODE_FILL,
+			GraphicsPipeline::Depth::ReadWrite,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			VK_CULL_MODE_FRONT_BIT,
+			VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	}
 
-	Subpass::~Subpass()
+	void Subpass::DestroyGraphicsPipeline()
 	{
 		assert(m_Device);
-		
+
 		if (m_GraphicsPipeline)
 		{
 			delete m_GraphicsPipeline;
 			m_GraphicsPipeline = nullptr;
 		}
+	}
+
+	Subpass::~Subpass()
+	{
+		DestroyGraphicsPipeline();
 	}
 }

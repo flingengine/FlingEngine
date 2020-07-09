@@ -78,11 +78,11 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::OnSwapchainResized()
+	void RenderPipeline::OnSwapchainResized(entt::registry& t_reg)
 	{
 		for (const auto& Sub : m_Subpasses)
 		{
-			Sub->OnSwapchainResized();
+			Sub->OnSwapchainResized(t_reg);
 		}
 	}
 
