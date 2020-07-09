@@ -1,5 +1,3 @@
-#if WITH_LUA
-
 #pragma once
 #include "File.h"
 #include "Serilization.h"
@@ -18,7 +16,7 @@ namespace Fling
 		*
 		* @param t_FilePath		The path to the lua script file
 		*/
-		ScriptComponent(const std::string t_FilePath);
+		ScriptComponent(const std::string& t_FilePath);
 		
 		/** Default ctor for serialization */
 		ScriptComponent() = default;
@@ -75,5 +73,3 @@ namespace Fling
 		m_ScriptFile = File::Create(HS(ScriptPath.c_str())).get();
 	}
 }
-
-#endif	// WITH_LUA

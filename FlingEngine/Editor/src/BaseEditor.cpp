@@ -416,6 +416,23 @@ namespace Fling
                 ImGui::EndMenu();
             }
 
+            if (m_OwningWorld->IsReadyForPlay())
+            {
+				if (ImGui::Button("Play Game"))
+				{
+					// Tell the world that we should start the game logic
+					m_OwningWorld->RequestGameStart();
+				}
+            }
+            else if(m_OwningWorld->IsPlaying())
+            {
+				if (ImGui::Button("Stop Game"))
+				{
+					// Tell the world to stop game play logic
+					m_OwningWorld->RequestGameStop();
+				}
+            }
+
             ImGui::EndMenuBar();
         }
 

@@ -12,6 +12,7 @@ namespace Fling
 
 	void LuaManager::Shutdown()
 	{
+		m_LuaComponents.empty();
 	}
 
 	void LuaManager::RegisterScript(File* t_ScriptFile, entt::entity t_Ent)

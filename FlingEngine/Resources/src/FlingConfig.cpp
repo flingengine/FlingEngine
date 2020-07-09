@@ -34,9 +34,9 @@ namespace Fling
         return true;
     }
 
-    std::string FlingConfig::GetStringImpl(const std::string& t_Section, const std::string& t_Key) const
+    std::string FlingConfig::GetStringImpl(const std::string& t_Section, const std::string& t_Key, const std::string& t_Default) const
     {
-        return m_IniReader.Get(t_Section, t_Key, "UNKNOWN");
+        return m_IniReader.Get(t_Section, t_Key, t_Default);
     }
 
     int FlingConfig::GetIntImpl(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal/*=-1*/) const
