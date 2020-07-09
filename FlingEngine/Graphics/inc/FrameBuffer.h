@@ -7,6 +7,8 @@
 
 namespace Fling
 {
+	class LogicalDevice;
+
 	/**
 	* @brief Describes the attributes of an attachment to be created
 	*/
@@ -21,7 +23,7 @@ namespace Fling
 
     struct FrameBufferAttachment
     {
-		FrameBufferAttachment(AttachmentCreateInfo t_Info, const VkDevice& t_Dev);
+		FrameBufferAttachment(const AttachmentCreateInfo& t_Info, const VkDevice& t_Dev);
 
 		~FrameBufferAttachment();
 
@@ -64,18 +66,23 @@ namespace Fling
 		const VkDevice& m_Device;
     };
 
+	/**
+	* Wrapper for a VkFramebuffer and its dependent VkRenderPass. Each frame buffer can have
+	* a set of attachments
+	*/
     class FrameBuffer
     {
     public: 
-        explicit FrameBuffer(const VkDevice& t_Dev, int32 t_Width = 2048, int32 t_Height = 2048);
+        explicit FrameBuffer(const LogicalDevice* t_Dev, int32 t_Width = 2048, int32 t_Height = 2048);
         ~FrameBuffer();
 
-		void SizeSize(int32 w, int32 h);
+		/** Resizes the extents of this frame buffer and recreates all dependent attachments */
+		void Resize(int32 w, int32 h);
 		void Release();
 
-		VkSampler GetSamplerHandle() const { return m_Sampler; }
-		VkFramebuffer GetHandle() const { return m_FrameBuffer; }
-		VkRenderPass GetRenderPassHandle() const { return m_RenderPass; }
+		inline VkSampler GetSamplerHandle() const { return m_Sampler; }
+		inline VkFramebuffer GetHandle() const { return m_FrameBuffer; }
+		inline VkRenderPass GetRenderPassHandle() const { return m_RenderPass; }
 
 		/**
 		* @brief	Create the default render pass of this frame buffer 
@@ -99,7 +106,7 @@ namespace Fling
 
 		/**
 		 * @brief	Get the frame buffer attachment at a given index
-		 * @return	Nullptr if index is invalid
+		 * @return	nullptr if index is invalid
 		 */
 		FrameBufferAttachment* GetAttachmentAtIndex(uint32 t_Index);
 
@@ -109,10 +116,11 @@ namespace Fling
     private:
 		int32 m_Width = 0;
 		int32 m_Height = 0;
+
 		VkFramebuffer m_FrameBuffer = VK_NULL_HANDLE;
 		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
-		const VkDevice& m_Device;
+		const LogicalDevice* m_Device;
 
 		std::vector<FrameBufferAttachment*> m_Attachments;	
     };

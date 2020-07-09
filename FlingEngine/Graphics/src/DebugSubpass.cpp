@@ -37,7 +37,7 @@ namespace Fling
 		
 	}
 
-	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		// For every mesh bind it's model and descriptor set info
 		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Debug"_hs>>);

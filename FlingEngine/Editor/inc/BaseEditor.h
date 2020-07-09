@@ -41,6 +41,7 @@ namespace Fling
 		bool m_DisplayComponentEditor = true;
 		bool m_DisplayWorldOutline = true;
 		bool m_DisplayWindowOptions = false;
+        bool m_DisplayCameraOptions = false;
 
 		/** Component editor so that we can draw our component window */
 		entt::entity m_CompEditorEntityType = entt::null;
@@ -49,6 +50,8 @@ namespace Fling
 		virtual void DrawFileMenu();
 
 		void DrawGpuInfo();
+
+        void DrawCameraOptions();
 
         void DrawWorldOutline(entt::registry& t_Reg);
 

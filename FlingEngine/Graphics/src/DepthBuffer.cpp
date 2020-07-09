@@ -72,6 +72,9 @@ namespace Fling
 	void DepthBuffer::SetExtents(VkExtent2D t_Extents)
 	{
 		m_Extents = { t_Extents };
+		// If the extents have changed, than we are gonna need to recreate the image and view
+		Cleanup();
+		Create();
 	}
 
 	void DepthBuffer::CreateImage()

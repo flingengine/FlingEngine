@@ -29,6 +29,8 @@ namespace Fling
 			float GetRotationSpeed() const { return m_RotationSpeed; }
 			void SetRotationSpeed(float t_NewSpeed) { m_RotationSpeed = t_NewSpeed; }
 
+			void SetAspectRatio(float AspectRatio) { m_aspectRatio = AspectRatio; }
+
 			bool IsRotating() const { return m_IsRotating; }
 
         private:
@@ -37,12 +39,13 @@ namespace Fling
 			glm::vec3 m_right;
 			glm::vec3 m_worldUp;
 			glm::vec3 m_worldFront = { 0.f, 0.f, -1.0 };
-
-			float m_RotationSpeed = 20.0f;
 			bool m_IsRotating = false;
+			MousePos m_PrevMousePos;
+
+		PRIVATE_WITH_EDITOR:
+			float m_RotationSpeed = 20.0f;
 
 			const float MAX_PITCH = (glm::pi<float>() / 2.0f) - .017f; //subtract one degrees for gimbal lock
-			MousePos m_PrevMousePos;
 
             void UpdateViewMatrix();
             void UpdateProjectionMatrix();

@@ -41,7 +41,7 @@ namespace Fling
 		}
 	}
 
-	void DesktopWindow::RecreateSwapChain()
+	void DesktopWindow::WaitForNewWindowSize()
 	{
 		// If the window is minimized then wait for it to come to the foreground before displaying it again
 		// #TODO: Handle minimizing windows asynchronously or in a way that the renderer doesn't block

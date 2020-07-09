@@ -94,7 +94,7 @@ namespace Fling
 		// Clean up any allocated descriptor sets
 	}
 
-	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		UpdateLightingUBO(t_reg, t_ActiveFrameInFlight);
 

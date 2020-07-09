@@ -74,6 +74,7 @@ namespace Fling
 		glm::mat4 m_viewMatrix;
 		glm::mat4 m_projectionMatrix;
 
+	PROTECTED_WITH_EDITOR:
 		glm::vec3 m_position;
 		float m_speed; //padding 12 + 4 = 16
 		

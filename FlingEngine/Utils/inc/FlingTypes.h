@@ -31,7 +31,7 @@ namespace Fling
 /**
  * @brief Helper function to check size_t is correctly converted to uint32_t
  * @param value Value of type @ref size_t to convert
- * @return An @ref uint32_t representation of the same value
+ * @return An @ref uint32 representation of the same value
  */
 template <class T>
 uint32 to_u32(T value)
@@ -45,3 +45,26 @@ uint32 to_u32(T value)
 
 	return static_cast<uint32>(value);
 }
+
+// PRIVATE_WITH_EDITOR gives editor access to any properties while keeping encapsulation 
+// during gameplay and runtime games.
+#if WITH_EDITOR
+
+    #define PRIVATE_WITH_EDITOR friend class BaseEditor; private
+                                
+#else
+
+    #define PRIVATE_WITH_EDITOR private
+
+#endif
+
+
+#if WITH_EDITOR
+
+#define PROTECTED_WITH_EDITOR friend class BaseEditor; protected
+
+#else
+
+#define PROTECTED_WITH_EDITOR protected
+
+#endif

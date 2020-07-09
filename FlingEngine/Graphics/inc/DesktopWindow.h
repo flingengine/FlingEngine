@@ -24,8 +24,8 @@ namespace Fling
 		/** Tick the window (poll input from GLFW) */
 		virtual void Update() override;
 
-		/** Recreate the swap chain based on current window size with GLFW */
-		virtual void RecreateSwapChain() override;
+		/** BLocks until we get a new window size from GLFW */
+		virtual void WaitForNewWindowSize() override;
 
 		/**
 		* Check if this window should close

@@ -91,7 +91,7 @@ namespace Fling
 
 		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport();
 		VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
-		VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
+		m_PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
 		m_ImageFormat = SwapChainSurfaceFormat.format;
 
 		// Use one more than the minimum image count so that we don't have to wait for the 
@@ -129,14 +129,14 @@ namespace Fling
 		else
 		{
 			CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			CreateInfo.queueFamilyIndexCount = 0;		// Optional
-			CreateInfo.pQueueFamilyIndices = nullptr;	// Optional
+			CreateInfo.queueFamilyIndexCount = 0;
+			CreateInfo.pQueueFamilyIndices = nullptr;
 		}
 
 		// Transparency settings of this swap chain
 		CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
 		CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		CreateInfo.presentMode = PresentMode;
+		CreateInfo.presentMode = m_PresentMode;
 		CreateInfo.clipped = VK_TRUE;
 		CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 

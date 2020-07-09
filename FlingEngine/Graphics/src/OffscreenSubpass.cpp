@@ -11,8 +11,6 @@
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
 
-#define FRAME_BUF_DIM 2048
-
 namespace Fling
 {
 	OffscreenSubpass::OffscreenSubpass(
@@ -25,8 +23,6 @@ namespace Fling
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 		, m_Camera(t_Cam)
 	{
-		assert(m_Camera);
-
 		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
 
 		// Set the clear values for the G Buffer
@@ -86,15 +82,10 @@ namespace Fling
 
 	void OffscreenSubpass::Draw(
 		CommandBuffer& t_CmdBuf, 
-		VkFramebuffer t_PresentFrameBuf, 
 		uint32 t_ActiveSwapImage, 
 		entt::registry& t_reg, 
 		float DeltaTime)
 	{
-		// If the dirty stack has something in it then process that and rebuild cmd buffers
-
-		// Otherwise we don't need to build the offscreen cmd bufs every time
-
 		assert(m_GraphicsPipeline);
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveSwapImage];
@@ -128,9 +119,11 @@ namespace Fling
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
 		CurrentUBO.Projection[1][1] *= -1.0f;
-		CurrentUBO.View = m_Camera->GetViewMatrix();
+		CurrentUBO.View = m_Camera->GetViewMatrix();	
 
-		// For every mesh bind it's model and descriptor set info
+		// #TODO This is where a lot of the cost of our engine loop comes from
+		// We can improve this by doing some kind of dirty bit tracking to only
+		// update the UBO's on MeshRenders if they have changed
 		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Default"_hs>>);
 
 		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
@@ -154,14 +147,6 @@ namespace Fling
 				&CurrentUBO,
 				buf->GetSize()
 			);
-
-			// If the mesh has no descriptor sets, then build them
-			// #TODO Investigate a better way to do this, probably by just moving the 
-			// descriptors off of the mesh
-			if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
-			{
-				CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
-			}
 
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(
@@ -191,7 +176,7 @@ namespace Fling
 		
 	}
 
-	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf)
+	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
 	{
 		// Only allocate new descriptor sets if there are none
 		// Some may exist if entt decides to re-use the component
@@ -257,13 +242,15 @@ namespace Fling
 	{
 		assert(m_OffscreenFrameBuf == nullptr);
 
-		m_OffscreenFrameBuf = new FrameBuffer(m_Device->GetVkDevice(), FRAME_BUF_DIM, FRAME_BUF_DIM);
+		VkExtent2D Extents = m_SwapChain->GetExtents();
+
+		m_OffscreenFrameBuf = new FrameBuffer(m_Device, Extents.width, Extents.height);
 
 		AttachmentCreateInfo attachmentInfo = {};
 
 		// Four attachments (3 color, 1 depth)
-		attachmentInfo.Width = FRAME_BUF_DIM;
-		attachmentInfo.Height = FRAME_BUF_DIM;
+		attachmentInfo.Width = Extents.width;
+		attachmentInfo.Height = Extents.height;
 		attachmentInfo.LayerCount = 1;
 		attachmentInfo.Usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
@@ -307,11 +294,10 @@ namespace Fling
 		VK_CHECK_RESULT(m_OffscreenFrameBuf->CreateRenderPass());
 		F_LOG_TRACE("Offscreen render pass created...");
 
-
 		// Create the descriptor pool for off screen things
 		uint32 DescriptorCount = 2000 * m_SwapChain->GetImageViewCount();
 
-		std::vector<VkDescriptorPoolSize> poolSizes =
+		static std::vector<VkDescriptorPoolSize> poolSizes =
 		{
 			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 		DescriptorCount),
 			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 			DescriptorCount),
@@ -404,6 +390,19 @@ namespace Fling
 		}
 	}
 
+	void OffscreenSubpass::OnSwapchainResized()
+	{
+		const VkExtent2D NewSize = m_SwapChain->GetExtents();
+		if(m_OffscreenFrameBuf)
+		{
+			m_OffscreenFrameBuf->Resize(NewSize.width, NewSize.height);
+		}
+
+		// Rebuild frame buffer here because we got some new extents
+			// Which means it and all of it's attachments
+			// Which means each imange and image view
+	}
+
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
 		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Default)
@@ -422,8 +421,7 @@ namespace Fling
 		}
 		
 		// I would love to create some descriptor sets here		
-		assert(m_OffscreenFrameBuf);
-		CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
+		CreateMeshDescriptorSet(t_MeshRend);
 	}
 
 	void OffscreenSubpass::OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend)

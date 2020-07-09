@@ -33,6 +33,9 @@ namespace Fling
 		/** Clean up any allocated VK resources that may have been set in a sub pass and need the registry */
 		void CleanUp(entt::registry& t_reg);
 
+		/** Allows all subpasses to update once the swap chain resizes */
+		void OnSwapchainResized();
+
 	private:
 
 		/**

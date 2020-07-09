@@ -26,7 +26,7 @@ namespace Fling
 
 		virtual ~DebugSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 

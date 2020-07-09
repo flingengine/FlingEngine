@@ -72,6 +72,10 @@ namespace Fling
 		m_SwapChainClearVals[0].color = { 0.0f, 0.0f, 0.0f, 0.2F };
 		m_SwapChainClearVals[1].depthStencil = { 1.0f, ~0U };
 
+		// The command buffers should certainly be empty whenever we are creating them here
+		// This is a sanity check for when we are recreating the swap chain
+		assert(m_DrawCmdBuffers.size() == 0);
+
 		// Build command buffers (one for each swap chain image)
 		for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); ++i)
 		{
@@ -79,13 +83,21 @@ namespace Fling
 		}
 
 		// Build the depth stencil
-		m_DepthBuffer = new DepthBuffer(m_LogicalDevice, VK_SAMPLE_COUNT_1_BIT, m_SwapChain->GetExtents());
+		// The depth buffer can be not-null when we are recreating the swap chain
+		if(m_DepthBuffer == nullptr)
+		{
+			m_DepthBuffer = new DepthBuffer(m_LogicalDevice, VK_SAMPLE_COUNT_1_BIT, m_SwapChain->GetExtents());
+		}
+		else
+		{
+			m_DepthBuffer->SetExtents(m_SwapChain->GetExtents());
+		}
 		assert(m_DepthBuffer);
 
 		BuildGlobalRenderPass();
 
 		BuildSwapChainFrameBuffer();
-	}
+	}	
 
 	void VulkanApp::BuildGlobalRenderPass()
 	{
@@ -136,7 +148,7 @@ namespace Fling
 		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		renderPassInfo.attachmentCount = static_cast<uint32>(attachments.size());
 		renderPassInfo.pAttachments = attachments.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
@@ -155,7 +167,7 @@ namespace Fling
 
 		// Create frame buffers for every swap chain image
 		m_SwapChainFrameBuffers.resize(m_SwapChain->GetImageCount());
-		for (uint32_t i = 0; i < m_SwapChainFrameBuffers.size(); i++)
+		for (uint32 i = 0; i < m_SwapChainFrameBuffers.size(); i++)
 		{
 			VkImageView attachments[2];
 
@@ -240,6 +252,55 @@ namespace Fling
 	void VulkanApp::OnWindowResized(int Width, int Height)
 	{
 		bNeedsResizing = true;
+	}
+
+	void VulkanApp::RecreateFrameResourcesForResize()
+	{
+		F_LOG_TRACE("Resizing the window!");
+		m_CurrentWindow->WaitForNewWindowSize();
+		m_LogicalDevice->WaitForIdle();
+
+		CleanupSwapChainResources();
+
+		m_SwapChain->Recreate(ChooseSwapExtent());
+
+		BuildSwapChainResources();
+
+		for(RenderPipeline* Pipeline : m_RenderPipelines)
+		{
+			Pipeline->OnSwapchainResized();
+		}
+
+		// Set new camera aspect ratio
+		if(m_Camera)
+		{
+			m_Camera->SetAspectRatio(m_CurrentWindow->GetAspectRatio());
+		}
+	}
+
+	void VulkanApp::CleanupSwapChainResources()
+	{
+		// Global Render pass
+		vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
+
+		// Frame buffers
+		for (size_t i = 0; i < m_SwapChainFrameBuffers.size(); i++)
+		{
+			vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFrameBuffers[i], nullptr);
+		}
+
+		// Clean up command buffers and command pool -------------
+		for (CommandBuffer* CmdBuf : m_DrawCmdBuffers)
+		{
+			if (CmdBuf)
+			{
+				delete CmdBuf;
+				CmdBuf = nullptr;
+			}
+		}
+		m_DrawCmdBuffers.clear();
+
+		m_SwapChain->Cleanup();
 	}
 
 	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
@@ -469,9 +530,11 @@ namespace Fling
 		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), m_RenderFinishedSemaphores[CurrentFrameIndex]);
 		
 		// Check if the swap chain is out of date and needs to be rebuilt
-		if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR)
+		if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || bNeedsResizing)
 		{
-			// #TODO If result is out of date then signal for resize
+			// If result is out of date then signal for resize
+			bNeedsResizing = false;
+			RecreateFrameResourcesForResize();
 		}
 		else if (iResult != VK_SUCCESS)
 		{

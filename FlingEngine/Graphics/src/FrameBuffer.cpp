@@ -1,10 +1,11 @@
 #include "FrameBuffer.h"
 #include "GraphicsHelpers.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
 	// Attachment -------------------------------------
-	FrameBufferAttachment::FrameBufferAttachment(AttachmentCreateInfo t_Info, const VkDevice& t_Dev)
+	FrameBufferAttachment::FrameBufferAttachment(const AttachmentCreateInfo& t_Info, const VkDevice& t_Dev)
 		: m_Device(t_Dev)
 	{
 		assert(t_Dev);
@@ -142,7 +143,7 @@ namespace Fling
 
 	// FrameBuffer -----------------------------------
 
-	FrameBuffer::FrameBuffer(const VkDevice& t_Dev, int32 t_Width, int32 t_Height)
+	FrameBuffer::FrameBuffer(const LogicalDevice* t_Dev, int32 t_Width, int32 t_Height)
 		: m_Device(t_Dev)
 		, m_Width{t_Width}
 		, m_Height{t_Height}
@@ -154,40 +155,34 @@ namespace Fling
 		Release();
 	}
 
-	void FrameBuffer::SizeSize(int32 w, int32 h)
-	{
-		this->m_Width= w;
-		this->m_Height = h;		
-	}
-
 	void FrameBuffer::Release()
 	{
 		assert(m_Device);
 
-		for (auto& attachment : m_Attachments)
+		// Cleanup attachments
+		for (FrameBufferAttachment* Attachment : m_Attachments)
 		{
-			if (attachment)
+			if (Attachment)
 			{
-				delete attachment;
-				attachment = nullptr;
+				delete Attachment;
+				Attachment = nullptr;
 			}
 		}
-		// Cleanup attachments
 		m_Attachments.clear();
 
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			vkDestroySampler(m_Device, m_Sampler, nullptr);
+			vkDestroySampler(m_Device->GetVkDevice(), m_Sampler, nullptr);
 		}
 
 		if (m_RenderPass != VK_NULL_HANDLE)
 		{
-			vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
+			vkDestroyRenderPass(m_Device->GetVkDevice(), m_RenderPass, nullptr);
 		}
 
 		if (m_FrameBuffer != VK_NULL_HANDLE)
 		{
-			vkDestroyFramebuffer(m_Device, m_FrameBuffer, nullptr);
+			vkDestroyFramebuffer(m_Device->GetVkDevice(), m_FrameBuffer, nullptr);
 		}
 	}
 
@@ -267,7 +262,7 @@ namespace Fling
 		renderPassInfo.pSubpasses = &subpass;
 		renderPassInfo.dependencyCount = 2;
 		renderPassInfo.pDependencies = dependencies.data();
-		VK_CHECK_RESULT(vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_RenderPass));
+		VK_CHECK_RESULT(vkCreateRenderPass(m_Device->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass));
 
 		std::vector<VkImageView> attachmentViews;
 		for (auto& attachment : m_Attachments)
@@ -293,7 +288,7 @@ namespace Fling
 		framebufferInfo.width = m_Width;
 		framebufferInfo.height = m_Height;
 		framebufferInfo.layers = maxLayers;
-		VK_CHECK_RESULT(vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &m_FrameBuffer));
+		VK_CHECK_RESULT(vkCreateFramebuffer(m_Device->GetVkDevice(), &framebufferInfo, nullptr, &m_FrameBuffer));
 
 		return VK_SUCCESS;
 	}
@@ -313,13 +308,13 @@ namespace Fling
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 1.0f;
 		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		return vkCreateSampler(m_Device, &samplerInfo, nullptr, &m_Sampler);
+		return vkCreateSampler(m_Device->GetVkDevice(), &samplerInfo, nullptr, &m_Sampler);
 	}
 
 	uint32 FrameBuffer::AddAttachment(AttachmentCreateInfo t_CreateInfo)
 	{
-		assert(m_Device);
-		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device));
+		assert(m_Device && m_Attachments.size() + 1 < Fling::VULKAN_NUM_ATTACHMENTS);
+		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device->GetVkDevice()));
 		return static_cast<uint32>(m_Attachments.size() - 1);
 	}
 	

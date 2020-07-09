@@ -68,7 +68,7 @@ namespace Fling
 		vkDestroyDescriptorSetLayout(logicalDevice, m_descriptorSetLayout, nullptr);
 	}
 
-	void ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		ImGui::NewFrame();
 

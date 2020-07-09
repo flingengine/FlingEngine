@@ -19,9 +19,14 @@ namespace Fling
 
         MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
+        /** 
+        * Create a mesh renderer with the given material and model.
+        * If the material is null than it will load the default material
+        */
 		MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
 
-		~MeshRenderer();
+        // Cleanup is handled by the rendering systems
+		~MeshRenderer() = default;
 
         /** Pointer to the actual model  */
         Model* m_Model = nullptr;
@@ -45,9 +50,9 @@ namespace Fling
         template<class Archive>
         void load(Archive& t_Archive);
 
-        void LoadModelFromPath(const std::string t_MeshPath);
+        void LoadModelFromPath(const std::string& t_MeshPath);
 
-        void LoadMaterialFromPath(const std::string t_MatPath);
+        void LoadMaterialFromPath(const std::string& t_MatPath);
     };
 
     /** Serialization to an Archive */

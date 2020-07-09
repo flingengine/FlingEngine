@@ -48,7 +48,7 @@ namespace Fling
 		VK_CHECK_RESULT(vkBeginCommandBuffer(GetHandle(), &beginInfo));
 	}
 
-	void CommandBuffer::BeginRenderPass(FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales)
+	void CommandBuffer::BeginRenderPass(const FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales)
 	{
 		VkRenderPassBeginInfo begin_info{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		// Frame buf info

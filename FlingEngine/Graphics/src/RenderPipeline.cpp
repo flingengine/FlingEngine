@@ -47,7 +47,6 @@ namespace Fling
 			// Build the subpasses for the active frame in flight	
 			m_Subpasses[i]->Draw(
 				t_CmdBuf, 
-				t_PresentFrameBuf,
 				t_ActiveFrameInFlight, 
 				t_Reg,
 				DeltaTime
@@ -76,6 +75,14 @@ namespace Fling
 		for (const auto& Sub : m_Subpasses)
 		{
 			Sub->CleanUp(t_reg);
+		}
+	}
+
+	void RenderPipeline::OnSwapchainResized()
+	{
+		for (const auto& Sub : m_Subpasses)
+		{
+			Sub->OnSwapchainResized();
 		}
 	}
 

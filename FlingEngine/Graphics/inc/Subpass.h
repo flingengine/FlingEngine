@@ -34,7 +34,7 @@ namespace Fling
 
 		virtual void CreateGraphicsPipeline() = 0;
 
-		virtual void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) = 0;
+		virtual void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) = 0;
 
 		/** Cleanup any allocated resources that you may need a registry for */
 		virtual void CleanUp(entt::registry& t_reg) {}
@@ -58,6 +58,8 @@ namespace Fling
 		*/
 		virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex) {}
 
+		/** Function that is called when the swap chain is resized. Put any logic that may depend on Swapchain extents */
+		virtual void OnSwapchainResized() {}
 
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
 		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }

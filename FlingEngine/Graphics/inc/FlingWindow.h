@@ -11,7 +11,8 @@ namespace Fling
 	{
 		Fullscreen, 
 		Windowed, 
-		BorderlessWindowed 
+		BorderlessWindowed,
+		SIZE
 	};
 
 	/** Window creation data */
@@ -41,7 +42,7 @@ namespace Fling
 		virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) = 0;
 
 		/** Any work that this window needs to do for swap chain recreation */
-		virtual void RecreateSwapChain() = 0;
+		virtual void WaitForNewWindowSize() = 0;
 
 		/** The current width of this window */
 		virtual uint32 GetWidth() const = 0;

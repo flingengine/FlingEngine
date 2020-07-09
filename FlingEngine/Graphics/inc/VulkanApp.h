@@ -77,7 +77,7 @@ namespace Fling
 		void Prepare();
 
 		/**
-		* @breif	Create semaphores for available swap chain images and fences 
+		* @brief	Create semaphores for available swap chain images and fences 
 		*			for the current frame in flight
 		*/
 		void CreateFrameSyncResources();
@@ -86,6 +86,8 @@ namespace Fling
 		* @brief	Creates a window and preps the VkSurfaceKHR 
 		*/
 		void CreateGameWindow(const uint32 t_width, const uint32 t_height);
+
+		void RecreateFrameResourcesForResize();
 
 		/** Returns the current extents needed to render based on the physical device and surface */
 		VkExtent2D ChooseSwapExtent();
@@ -98,6 +100,8 @@ namespace Fling
 		 *			for it to use
 		 */
 		void BuildSwapChainResources();
+
+		void CleanupSwapChainResources();
 
 		void BuildGlobalRenderPass();
 
@@ -141,7 +145,7 @@ namespace Fling
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 		
 		/** The index of the current frame in flight. This is controlled with the in flight fences 
-		and is updated every Update of the vulkan app. */
+		and is updated every Update of the Vulkan app. */
 		size_t CurrentFrameIndex = 0;
 
 		// Command Buffer pool
