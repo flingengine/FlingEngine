@@ -20,12 +20,12 @@ namespace Fling
             MeshRenderer& t_MeshRend,
             VkCommandBuffer t_CommandBuffer,
             GraphicsPipeline* t_GraphicsPipeline,
-            UINT32 t_CommandBufferIndex);
+            uint32 t_CommandBufferIndex);
 
         void UpdateUniformBuffer(
             MeshRenderer& t_MeshRend,
             Transform& transform,
-            UINT32 t_CurrentImage,
+            uint32 t_CurrentImage,
             Camera* t_Camera);
 
     }

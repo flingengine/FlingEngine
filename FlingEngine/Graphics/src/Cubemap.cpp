@@ -63,7 +63,7 @@ namespace Fling
         vkDestroySampler(m_Device->GetVkDevice(), m_Sampler, nullptr);   
     }
 
-    void Cubemap::Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumFramesInFlight, Multisampler* t_Sampler)
+    void Cubemap::Init(Camera* t_Camera, uint32 t_CurrentImage, size_t t_NumFramesInFlight, Multisampler* t_Sampler)
     {
         // Initialize uniform buffers
         m_numsFrameInFlight = t_NumFramesInFlight;
@@ -491,7 +491,7 @@ namespace Fling
         }
     }
 
-    void Cubemap::UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix)
+    void Cubemap::UpdateUniformBuffer(uint32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix)
     {
         m_UboVS.Projection = t_ProjectionMatrix;
         m_UboVS.Projection[1][1] *= -1.0f;

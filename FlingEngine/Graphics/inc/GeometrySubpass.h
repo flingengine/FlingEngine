@@ -26,17 +26,17 @@ namespace Fling
 	struct DeferredLightSettings
 	{
 		/** Dir Lights */
-		static const UINT32 MaxDirectionalLights = 8;
+		static const uint32 MaxDirectionalLights = 8;
 
 		/** Point Lights */
-		static const UINT32 MaxPointLights = 128;
+		static const uint32 MaxPointLights = 128;
 	};
 
 	/** Uniform buffer for passing lights to our final screen pass */
 	struct LightingUbo
 	{
-		alignas(4) UINT32 DirLightCount = 0;
-		alignas(4) UINT32 PointLightCount = 0;
+		alignas(4) uint32 DirLightCount = 0;
+		alignas(4) uint32 PointLightCount = 0;
 
 		alignas(16) DirectionalLight DirLightBuffer[DeferredLightSettings::MaxDirectionalLights] = {};
 
@@ -74,7 +74,7 @@ namespace Fling
 
 		virtual ~GeometrySubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
 
 		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 
@@ -83,16 +83,19 @@ namespace Fling
 		*/
 		void CreateGraphicsPipeline() override;
 
+		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
+
 	private:
 
 		void OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
 
-		void UpdateLightingUBO(entt::registry& t_Reg, UINT32 t_ActiveFrame);
+		void UpdateLightingUBO(entt::registry& t_Reg, uint32 t_ActiveFrame);
 
 		// Global render pass for frame buffer writes
 		std::shared_ptr<Model> m_QuadModel;
 
 		VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
+		VkDescriptorPool m_DescPool = VK_NULL_HANDLE;
 
 		const FirstPersonCamera* m_Camera;
 

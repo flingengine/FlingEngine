@@ -62,9 +62,9 @@ namespace Fling
     //////////////////////////////////////////////////////////////////////////
     // Command line parsing
 
-    UINT32 FlingConfig::LoadCommandLineOpts(int argc, char* argv[])
+    uint32 FlingConfig::LoadCommandLineOpts(int argc, char* argv[])
     {
-        UINT32 ArgsLoaded = 0;
+        uint32 ArgsLoaded = 0;
         
         // TODO: Use regex to try and parse out if things are a key/val etc
 

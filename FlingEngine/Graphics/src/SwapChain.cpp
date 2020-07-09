@@ -64,7 +64,7 @@ namespace Fling
 
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysDevice, m_Surface, &Details.Capabilities);
 
-			UINT32 FormatCount = 0;
+			uint32 FormatCount = 0;
 			vkGetPhysicalDeviceSurfaceFormatsKHR(PhysDevice, m_Surface, &FormatCount, nullptr);
 			if (FormatCount != 0)
 			{
@@ -72,7 +72,7 @@ namespace Fling
 				vkGetPhysicalDeviceSurfaceFormatsKHR(PhysDevice, m_Surface, &FormatCount, Details.Formats.data());
 			}
 
-			UINT32 PresentModeCount = 0;
+			uint32 PresentModeCount = 0;
 			vkGetPhysicalDeviceSurfacePresentModesKHR(PhysDevice, m_Surface, &PresentModeCount, nullptr);
 
 			if (PresentModeCount != 0)
@@ -91,12 +91,12 @@ namespace Fling
 
 		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport();
 		VkSurfaceFormatKHR SwapChainSurfaceFormat = ChooseSwapChainSurfaceFormat(SwapChainSupport.Formats);
-		VkPresentModeKHR PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
+		m_PresentMode = ChooseSwapChainPresentMode(SwapChainSupport.PresentModes);
 		m_ImageFormat = SwapChainSurfaceFormat.format;
 
 		// Use one more than the minimum image count so that we don't have to wait for the 
 		// driver to finish some internal things before we start sending another image
-		UINT32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
+		uint32 ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
 
 		// Check that we don't exceed the max image count
 		if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
@@ -115,10 +115,10 @@ namespace Fling
 		CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 		// Specify the handling of multiple queue families
-		UINT32 GraphicsFam = m_Device->GetGraphicsFamily();
-		UINT32 PresentFam = m_Device->GetPresentFamily();
+		uint32 GraphicsFam = m_Device->GetGraphicsFamily();
+		uint32 PresentFam = m_Device->GetPresentFamily();
 
-		UINT32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
+		uint32 queueFamilyIndices[] = { GraphicsFam, PresentFam };
 
 		if (GraphicsFam != PresentFam)
 		{
@@ -129,14 +129,14 @@ namespace Fling
 		else
 		{
 			CreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			CreateInfo.queueFamilyIndexCount = 0;		// Optional
-			CreateInfo.pQueueFamilyIndices = nullptr;	// Optional
+			CreateInfo.queueFamilyIndexCount = 0;
+			CreateInfo.pQueueFamilyIndices = nullptr;
 		}
 
 		// Transparency settings of this swap chain
 		CreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
 		CreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		CreateInfo.presentMode = PresentMode;
+		CreateInfo.presentMode = m_PresentMode;
 		CreateInfo.clipped = VK_TRUE;
 		CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 

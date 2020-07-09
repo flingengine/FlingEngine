@@ -104,12 +104,12 @@ namespace Fling
 
     private:
 
-		static UINT32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32]);
+		static uint32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32]);
 
         /**
          * @brief Compiles this shader with SPRIV-Cross
          */
-        void ParseReflectionData(const UINT32* t_Code, UINT32 t_Size);
+        void ParseReflectionData(const uint32* t_Code, uint32 t_Size);
 
         /** Creates the shader modules  */
         VkResult CreateShaderModule(std::vector<char>& t_ShaderCode);
@@ -123,7 +123,7 @@ namespace Fling
         VkShaderModule m_Module = VK_NULL_HANDLE;
 
 		// Shader reflection data ----------
-		UINT32 m_ResourceMask {};
+		uint32 m_ResourceMask {};
 
 		/** The types of descriptors that are used by this shader */
 		VkDescriptorType m_ResourceTypes[32] {};
@@ -136,9 +136,9 @@ namespace Fling
 		bool m_UsesPushConstants = false;
 
 		// Sizes that can be used by a compute pipeline
-		UINT32 localSizeX {};
-		UINT32 localSizeY {};
-		UINT32 localSizeZ {};
+		uint32 localSizeX {};
+		uint32 localSizeY {};
+		uint32 localSizeZ {};
     };
     
 }   // namespace Fling

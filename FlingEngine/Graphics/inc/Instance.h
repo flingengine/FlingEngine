@@ -20,7 +20,7 @@ namespace Fling
 
         bool IsValidationEnabled() const { return m_EnableValidationLayers; } 
 
-        UINT32 EnabledValidationLayerCount() const { return static_cast<UINT32>(m_ValidationLayers.size()); }
+        uint32 EnabledValidationLayerCount() const { return static_cast<uint32>(m_ValidationLayers.size()); }
 
 		const std::vector<const char*>& GetEnabledValidationLayers() const { return m_ValidationLayers; }
 
@@ -35,7 +35,7 @@ namespace Fling
          * If this instance has validation layers enabled. This is read from the config file. 
          * Default to false if no config 
          */
-        UINT8 m_EnableValidationLayers : 1;
+        uint8 m_EnableValidationLayers : 1;
 
         /**
          * @brief Create the VkInstance of this object and application information

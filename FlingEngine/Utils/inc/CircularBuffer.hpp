@@ -25,11 +25,11 @@ namespace Fling
 
     private:
        
-		const UINT32 m_BufferSize;
+		const uint32 m_BufferSize;
 		
 		T m_Buffer [t_NumElms];
 
-		UINT32 m_AllocatedIndex = 0;
+		uint32 m_AllocatedIndex = 0;
     };
 
 	template<typename T, size_t t_NumElms>

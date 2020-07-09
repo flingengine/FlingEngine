@@ -39,9 +39,9 @@ namespace Fling
 
             ~Cubemap();
 
-            void Init(Camera* t_Camera, UINT32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);
+            void Init(Camera* t_Camera, uint32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);
 
-            void UpdateUniformBuffer(UINT32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
+            void UpdateUniformBuffer(uint32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
 
             void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer);
 
@@ -71,9 +71,9 @@ namespace Fling
             /**
              * @brief Get the Index Count object
              * 
-             * @return const UINT32 
+             * @return const uint32 
              */
-            UINT32 GetIndexCount() const { return m_Cube->GetIndexCount(); }
+            uint32 GetIndexCount() const { return m_Cube->GetIndexCount(); }
 
             VkIndexType GetIndexType() const { return m_Cube->GetIndexType(); }
 
@@ -118,8 +118,8 @@ namespace Fling
             VkDeviceSize m_ImageSize;
             VkDeviceSize m_LayerSize;
             VkFormat m_Format;
-            UINT32 m_NumChannels;
-            UINT32 m_MipLevels;
+            uint32 m_NumChannels;
+            uint32 m_MipLevels;
             size_t m_numsFrameInFlight;
 
             UboSkyboxVS m_UboVS;

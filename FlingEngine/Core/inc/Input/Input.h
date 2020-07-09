@@ -94,7 +94,7 @@ namespace Fling
 		 * @param t_Name 		The name of this key 
 		 * @param t_KeyCode 	The KeyCode that maps this key to the current platform
 		 */
-		static void AddKeyMap(const std::string& t_Name, UINT32 t_KeyCode)
+		static void AddKeyMap(const std::string& t_Name, uint32 t_KeyCode)
 		{
 			m_KeyMap.insert( KeyPair(t_Name, Fling::Key(t_Name, t_KeyCode)) );
 		}

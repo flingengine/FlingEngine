@@ -6,6 +6,7 @@
 
 #include <entt/entity/registry.hpp>
 #include <vector>
+#include <atomic>
 
 namespace Fling
 {
@@ -59,13 +60,17 @@ namespace Fling
 		inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
 		inline FirstPersonCamera* GetCamera() const { return m_Camera; }
+		inline VkRenderPass GetGlobalRenderPass() const { return m_RenderPass; }
+
+		/** Callback for when a window is resized and to what width and height */
+		void OnWindowResized(int Width, int Height);
 
 	protected:
 		void Init() override {}
 		void Shutdown() override {}
 
     private:
-		
+
 		/**
 		* @brief	Prepare logical, physical and swap chain devices. 
 		*			Prepares window based on the Fling Config
@@ -73,7 +78,7 @@ namespace Fling
 		void Prepare();
 
 		/**
-		* @breif	Create semaphores for available swap chain images and fences 
+		* @brief	Create semaphores for available swap chain images and fences 
 		*			for the current frame in flight
 		*/
 		void CreateFrameSyncResources();
@@ -81,7 +86,9 @@ namespace Fling
 		/**
 		* @brief	Creates a window and preps the VkSurfaceKHR 
 		*/
-		void CreateGameWindow(const UINT32 t_width, const UINT32 t_height);
+		void CreateGameWindow(const uint32 t_width, const uint32 t_height);
+
+		void RecreateFrameResourcesForResize(entt::registry& t_Reg);
 
 		/** Returns the current extents needed to render based on the physical device and surface */
 		VkExtent2D ChooseSwapExtent();
@@ -94,6 +101,8 @@ namespace Fling
 		 *			for it to use
 		 */
 		void BuildSwapChainResources();
+
+		void CleanupSwapChainResources();
 
 		void BuildGlobalRenderPass();
 
@@ -116,6 +125,12 @@ namespace Fling
 		/** The clear values that will be used when building the command buffer to run this subpass */
 		std::vector<VkClearValue> m_SwapChainClearVals = std::vector<VkClearValue>(2);
 
+		/** 
+		* Flag that when set to true, means that there is a pending resize of a window
+		* so we must recreate the necessary swap chain/frame buffer elements
+		*/
+		uint8 bNeedsResizing : 1;
+
 		// Stages that the swap chain needs to wait on in order to present
 		VkPipelineStageFlags m_WaitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -131,7 +146,7 @@ namespace Fling
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 		
 		/** The index of the current frame in flight. This is controlled with the in flight fences 
-		and is updated every Update of the vulkan app. */
+		and is updated every Update of the Vulkan app. */
 		size_t CurrentFrameIndex = 0;
 
 		// Command Buffer pool

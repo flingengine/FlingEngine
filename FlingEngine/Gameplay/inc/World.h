@@ -85,7 +85,7 @@ namespace Fling
 		Fling::Game* m_Game = nullptr;
 
 		/** Flag if the world should quit or not! */
-		UINT8 m_ShouldQuit = false;
+		uint8 m_ShouldQuit = false;
     };
 
 } // namespace Fling

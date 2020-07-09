@@ -4,18 +4,19 @@
 #include "BaseEditor.h"
 #include "VulkanApp.h"
 #include "PhyscialDevice.h"
+#include "FirstPersonCamera.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
-#include <sstream>
 #include "ImFileBrowser.hpp"
 #include "World.h"
 
 #include <stdio.h> 
 #include <string.h> 
+#include <sstream>
 
 namespace Fling
 {
@@ -205,6 +206,30 @@ namespace Fling
         {
             DrawWindowOptions();
         }
+
+        if(m_DisplayCameraOptions)
+        {
+            DrawCameraOptions();
+        }
+    }
+
+    void BaseEditor::DrawCameraOptions()
+    {
+		ImGui::Begin("Camera Options");
+
+        if(FirstPersonCamera* Cam = VulkanApp::Get().GetCamera())
+        {
+			ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+            ImGui::InputFloat("Aspect Ratio", &Cam->m_aspectRatio);
+			ImGui::InputFloat("NearPlane", &Cam->m_nearPlane);
+			ImGui::InputFloat("FarPlane", &Cam->m_farPlane);
+            ImGui::InputFloat("FOV", &Cam->m_fieldOfView);
+            ImGui::InputFloat("Gamma", &Cam->m_Gamma);
+            ImGui::InputFloat("Exposure", &Cam->m_Exposure);
+			ImGui::InputFloat("Speed", &Cam->m_speed);
+		}
+
+		ImGui::End();
     }
 
     void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
@@ -220,7 +245,7 @@ namespace Fling
             const bool bStartedSelected = (m_CompEditorEntityType == entity);
             
             std::ostringstream os;
-            os << "Entity " << static_cast<UINT64>(entity);
+            os << "Entity " << static_cast<uint64>(entity);
             std::string label = os.str();
 
             if (ImGui::Button(" - "))
@@ -273,6 +298,26 @@ namespace Fling
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
         // Dropdown for windowed, borderless, etc
+		static const char* WindowOpts[] = { "Fullscreen", "Windowed", "BorderlessWindowed" };
+        static const char* CurSelection = nullptr;
+
+		if (ImGui::BeginCombo("Window Mode", CurSelection))
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(WindowOpts); n++)
+            {
+				bool is_selected = (CurSelection == WindowOpts[n]); // You can store your selection however you want, outside or inside your objects
+				if (ImGui::Selectable(WindowOpts[n], is_selected))
+                {
+                    CurSelection = WindowOpts[n];
+                }
+				
+                if (is_selected)
+                {
+					ImGui::SetItemDefaultFocus();
+                }
+            }
+			ImGui::EndCombo();
+		}
 
         ImGui::End();
     }
@@ -358,6 +403,7 @@ namespace Fling
             if (ImGui::BeginMenu("Windows"))
             {
                 ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
+				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
                 ImGui::EndMenu();
             }
 
@@ -393,7 +439,7 @@ namespace Fling
         // File pop up to load the level file 
         F_LOG_TRACE("Save to file {}", t_FileName);
 
-        // Overload this to add custom componented
+        // Add template arguments here to add custom components to the level files
         m_OwningWorld->OutputLevelFile(t_FileName);
     }
 

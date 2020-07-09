@@ -26,7 +26,7 @@ namespace Fling
     {
         friend class Renderer;
     public:
-		enum class Type : UINT8
+		enum class Type : uint8
 		{
 			Default,
 			Cubemap,

@@ -72,6 +72,10 @@ namespace Fling
 		m_SwapChainClearVals[0].color = { 0.0f, 0.0f, 0.0f, 0.2F };
 		m_SwapChainClearVals[1].depthStencil = { 1.0f, ~0U };
 
+		// The command buffers should certainly be empty whenever we are creating them here
+		// This is a sanity check for when we are recreating the swap chain
+		assert(m_DrawCmdBuffers.size() == 0);
+
 		// Build command buffers (one for each swap chain image)
 		for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); ++i)
 		{
@@ -79,13 +83,21 @@ namespace Fling
 		}
 
 		// Build the depth stencil
-		m_DepthBuffer = new DepthBuffer(m_LogicalDevice, VK_SAMPLE_COUNT_1_BIT, m_SwapChain->GetExtents());
+		// The depth buffer can be not-null when we are recreating the swap chain
+		if(m_DepthBuffer == nullptr)
+		{
+			m_DepthBuffer = new DepthBuffer(m_LogicalDevice, VK_SAMPLE_COUNT_1_BIT, m_SwapChain->GetExtents());
+		}
+		else
+		{
+			m_DepthBuffer->SetExtents(m_SwapChain->GetExtents());
+		}
 		assert(m_DepthBuffer);
 
 		BuildGlobalRenderPass();
 
 		BuildSwapChainFrameBuffer();
-	}
+	}	
 
 	void VulkanApp::BuildGlobalRenderPass()
 	{
@@ -136,7 +148,7 @@ namespace Fling
 		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		renderPassInfo.attachmentCount = static_cast<uint32>(attachments.size());
 		renderPassInfo.pAttachments = attachments.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
@@ -155,7 +167,7 @@ namespace Fling
 
 		// Create frame buffers for every swap chain image
 		m_SwapChainFrameBuffers.resize(m_SwapChain->GetImageCount());
-		for (uint32_t i = 0; i < m_SwapChainFrameBuffers.size(); i++)
+		for (uint32 i = 0; i < m_SwapChainFrameBuffers.size(); i++)
 		{
 			VkImageView attachments[2];
 
@@ -189,7 +201,7 @@ namespace Fling
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		for (INT32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
+		for (int32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			m_PresentCompleteSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
 			m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
@@ -200,7 +212,7 @@ namespace Fling
 		}
 	}
 
-	void VulkanApp::CreateGameWindow(const UINT32 t_width, const UINT32 t_height)
+	void VulkanApp::CreateGameWindow(const uint32 t_width, const uint32 t_height)
 	{
 		WindowProps Props = {};
 		Props.m_Height = t_width;
@@ -235,6 +247,54 @@ namespace Fling
 		Props.m_Title = Title;
 
 		m_CurrentWindow = FlingWindow::Create(Props);
+	}
+
+	void VulkanApp::OnWindowResized(int Width, int Height)
+	{
+		bNeedsResizing = true;
+	}
+
+	void VulkanApp::RecreateFrameResourcesForResize(entt::registry& t_Reg)
+	{
+		F_LOG_TRACE("Resizing the window!");
+		m_CurrentWindow->WaitForNewWindowSize();
+		m_LogicalDevice->WaitForIdle();
+
+		CleanupSwapChainResources();
+
+		m_SwapChain->Recreate(ChooseSwapExtent());
+
+		BuildSwapChainResources();
+
+		for(RenderPipeline* Pipeline : m_RenderPipelines)
+		{
+			Pipeline->OnSwapchainResized(t_Reg);
+		}
+	}
+
+	void VulkanApp::CleanupSwapChainResources()
+	{
+		// Global Render pass
+		vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
+
+		// Frame buffers
+		for (size_t i = 0; i < m_SwapChainFrameBuffers.size(); i++)
+		{
+			vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_SwapChainFrameBuffers[i], nullptr);
+		}
+
+		// Clean up command buffers and command pool -------------
+		for (CommandBuffer* CmdBuf : m_DrawCmdBuffers)
+		{
+			if (CmdBuf)
+			{
+				delete CmdBuf;
+				CmdBuf = nullptr;
+			}
+		}
+		m_DrawCmdBuffers.clear();
+
+		m_SwapChain->Cleanup();
 	}
 
 	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
@@ -318,7 +378,7 @@ namespace Fling
 
 		// Aquire the active image index
 		VkResult iResult = m_SwapChain->AquireNextImage(m_PresentCompleteSemaphores[CurrentFrameIndex]);
-		UINT32  ImageIndex = m_SwapChain->GetActiveImageIndex();
+		uint32  ImageIndex = m_SwapChain->GetActiveImageIndex();
 
 		vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_InFlightFences[CurrentFrameIndex]);
 
@@ -415,7 +475,7 @@ namespace Fling
 
 			// Signal that the dependent semaphores are done when this is complete
 			OffscreenSubmission.pSignalSemaphores = SemaphoresToWaitOn.data();
-			OffscreenSubmission.signalSemaphoreCount = (UINT32)SemaphoresToWaitOn.size();
+			OffscreenSubmission.signalSemaphoreCount = (uint32)SemaphoresToWaitOn.size();
 
 			// Mark the draw command buffer at this frame for submission
 			std::vector<VkCommandBuffer> submitCommandBuffers = {};
@@ -426,12 +486,12 @@ namespace Fling
 			}
 
 			OffscreenSubmission.pCommandBuffers = submitCommandBuffers.data();
-			OffscreenSubmission.commandBufferCount = (UINT32)submitCommandBuffers.size();
+			OffscreenSubmission.commandBufferCount = (uint32)submitCommandBuffers.size();
 			// Signal off screen semaphore when this is completed
 			VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &OffscreenSubmission, VK_NULL_HANDLE));
 
 			// Wait for dependent semaphores
-			FinalScreenSubmitInfo.waitSemaphoreCount = (UINT32)SemaphoresToWaitOn.size();
+			FinalScreenSubmitInfo.waitSemaphoreCount = (uint32)SemaphoresToWaitOn.size();
 			FinalScreenSubmitInfo.pWaitSemaphores = SemaphoresToWaitOn.data();
 		}
 		else
@@ -449,7 +509,7 @@ namespace Fling
 		}
 
 		FinalScreenSubmitInfo.pCommandBuffers = submitCommandBuffers.data();
-		FinalScreenSubmitInfo.commandBufferCount = (UINT32)submitCommandBuffers.size();
+		FinalScreenSubmitInfo.commandBufferCount = (uint32)submitCommandBuffers.size();
 
 		// Actually present the swap chain queue. This is always going to be the signal for the final semaphore
 		FinalScreenSubmitInfo.signalSemaphoreCount = 1;
@@ -464,9 +524,11 @@ namespace Fling
 		iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), m_RenderFinishedSemaphores[CurrentFrameIndex]);
 		
 		// Check if the swap chain is out of date and needs to be rebuilt
-		if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR)
+		if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || bNeedsResizing)
 		{
-			// #TODO If result is out of date then signal for resize
+			// If result is out of date then signal for resize
+			bNeedsResizing = false;
+			RecreateFrameResourcesForResize(t_Reg);
 		}
 		else if (iResult != VK_SUCCESS)
 		{
@@ -484,14 +546,14 @@ namespace Fling
 		VkSurfaceCapabilitiesKHR t_Capabilies = {};
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice->GetVkPhysicalDevice(), m_Surface, &t_Capabilies);
 
-		if (t_Capabilies.currentExtent.width != std::numeric_limits<UINT32>::max())
+		if (t_Capabilies.currentExtent.width != std::numeric_limits<uint32>::max())
 		{
 			return t_Capabilies.currentExtent;
 		}
 		else
 		{
-			UINT32 width = m_CurrentWindow->GetWidth();
-			UINT32 height = m_CurrentWindow->GetHeight();
+			uint32 width = m_CurrentWindow->GetWidth();
+			uint32 height = m_CurrentWindow->GetHeight();
 
 			VkExtent2D actualExtent = { width, height };
 

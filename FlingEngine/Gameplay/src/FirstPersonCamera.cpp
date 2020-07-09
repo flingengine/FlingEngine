@@ -70,6 +70,7 @@ namespace Fling
 
 		float moveSpeed = m_speed * dt * (SlowModifier ? 0.4f : 1.0f);
 
+		// #TODO Handle input _correctly_ with callbacks from the input manager
 		//translation
 		//forward
 		if(Input::IsKeyHeld(KeyNames::FL_KEY_W))
@@ -134,6 +135,7 @@ namespace Fling
 		m_PrevMousePos = CurMousePos;
 		
 		UpdateCameraVectors();
+		UpdateProjectionMatrix();
 		UpdateViewMatrix();
     }
 

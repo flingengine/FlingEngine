@@ -42,15 +42,15 @@ namespace Fling
 		/** Begin recording for this command buffer */
 		void Begin(VkCommandBufferUsageFlagBits t_Usage = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
-		void BeginRenderPass(FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales);
+		void BeginRenderPass(const FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales);
 
 		void NextSubpass();
 
 		void BindPipeline(VkPipelineBindPoint t_BindPoint, VkPipeline t_Pipeline);
 
-		void SetViewport(UINT32 first_viewport, const std::vector<VkViewport>& viewports);
+		void SetViewport(uint32 first_viewport, const std::vector<VkViewport>& viewports);
 
-		void SetScissor(UINT32 first_scissor, const std::vector<VkRect2D> &scissors);
+		void SetScissor(uint32 first_scissor, const std::vector<VkRect2D> &scissors);
 
 		void EndRenderPass();
 

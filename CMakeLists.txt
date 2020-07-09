@@ -14,6 +14,8 @@ OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" O
 
 OPTION (WITH_LUA_FLAG "WITH_LUA_FLAG will enable or disable the ability to use Lua scripting in the engine" ON)
 
+OPTION ( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
+
 # We can't have the editor without ImGUI!
 IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     SET( WITH_EDITOR_FLAG OFF )
@@ -26,6 +28,7 @@ message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "WITH_LUA_FLAG=${WITH_LUA_FLAG}")
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
+message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
 
 # set the flags to 0 or 1 respectively for ImGUI and the Editor
 IF( WITH_IMGUI_FLAG )
@@ -80,6 +83,11 @@ if( MSVC )
 		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
     endif()
     
+    # Enable multiple processor compilation
+    if(ENABLE_MULTICORE)
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    endif()
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 

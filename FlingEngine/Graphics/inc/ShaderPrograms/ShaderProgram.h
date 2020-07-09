@@ -7,12 +7,9 @@
 
 #include <vector>
 
-#define DeferredStr			"Deferred"
-#define DeferredStr_CAP		"DEFERRED"
-
-
 namespace Fling
 {
+    // This class is deprecated, dont use it!
 	enum class ShaderProgramType
 	{
 		PBR = 0,
@@ -21,6 +18,7 @@ namespace Fling
 		MAX_COUNT			// Max count here so that we can iterate over the programs a bit easier in the editor later
 	};
 
+    // This class is deprecated, dont use it!
     class ShaderProgram
     {
     public:

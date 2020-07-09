@@ -164,14 +164,14 @@ namespace Sandbox
 
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 25;
+		int32 GridSize = 25;
 		
-		for (INT32 i = 0; i < GridSize; i++)
+		for (int32 i = 0; i < GridSize; i++)
 		{
 			std::string ModelPath = "Models/sphere.obj";
 			std::string MatPath = "Materials/DeferredBronzeMat.mat";
 
-			for (INT32 j = 0; j < GridSize; j++)
+			for (int32 j = 0; j < GridSize; j++)
 			{
 				entt::entity e0 = t_Reg.create();
 
