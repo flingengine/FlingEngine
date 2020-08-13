@@ -102,7 +102,7 @@ if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     message( STATUS "Added filesytem link!" )
 endif()
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" and NOT WIN32)
     set( LINK_LIBS ${LINK_LIBS} stdc++fs )
     message( STATUS "Added filesytem link (Clang)!" )
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
