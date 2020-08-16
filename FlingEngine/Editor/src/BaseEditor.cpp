@@ -9,7 +9,6 @@
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
-#include "ScriptComponent.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "ImFileBrowser.hpp"

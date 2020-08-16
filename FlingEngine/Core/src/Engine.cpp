@@ -4,10 +4,6 @@
 #include "File.h"
 #include "VulkanApp.h"
 
-#if WITH_LUA
-#include "LuaManager.h"
-#endif
-
 namespace Fling
 {
     void Engine::Startup()
@@ -18,13 +14,6 @@ namespace Fling
 		Timing::Get().Init();
         FlingConfig::Get().Init();
 		Input::Init();
-
-#if WITH_LUA
-		LuaManager::Get().Init(&g_Registry);
-		F_LOG_TRACE("Lua Enabled: TRUE");
-#else 
-		F_LOG_TRACE("Lua Enabled: FALSE");
-#endif
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
@@ -108,9 +97,6 @@ namespace Fling
 
 	void Engine::Shutdown()
 	{
-#if WITH_LUA
-		LuaManager::Get().Shutdown();
-#endif
 		// Cleanup game play stuff
 		if(m_World)
 		{

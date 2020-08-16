@@ -11,9 +11,6 @@
 #include "Random.h"
 // For getting some lighting info
 #include "GeometrySubpass.h"
-#if WITH_LUA
-#include "ScriptComponent.h"
-#endif
 #include "Mover.h"
 
 namespace Sandbox
@@ -42,23 +39,6 @@ namespace Sandbox
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
 		LightingTest(t_Reg);
-
-		// Load in a load script if we are currently running in a Lua config
-#if WITH_LUA
-		{
-			entt::entity e0 = t_Reg.create();
-			t_Reg.assign<Transform>(e0);
-			t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-			t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
-
-			entt::entity e1 = t_Reg.create();
-			t_Reg.assign<Transform>(e1);
-			t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
-			Transform& t0 = t_Reg.get<Transform>(e1);
-			t0.SetPos(glm::vec3(0, 3, 0));
-			t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
-		}
-#endif
 	}
 
     void Game::Update(entt::registry& t_Reg, float DeltaTime)
@@ -99,6 +79,12 @@ namespace Sandbox
 	void Game::OnStopGame(entt::registry& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox OnStopGame!");
+
+		auto RotateView = t_Reg.view<Transform, Rotator>();
+		t_Reg.destroy(RotateView.begin(), RotateView.end());
+		
+		auto MoverView = t_Reg.view<Transform, Mover>();
+		t_Reg.destroy(MoverView.begin(), MoverView.end());
 	}
 
 	void Game::Shutdown(entt::registry& t_Reg)

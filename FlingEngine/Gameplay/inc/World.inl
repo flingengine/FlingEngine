@@ -5,11 +5,10 @@
 #include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
-#include "ScriptComponent.h"
 
 // Definition of what world components we want to serialize to the disk when
 // saving and loading a scene
-#define WORLD_COMPONENTS Fling::Transform, MeshRenderer, DirectionalLight, PointLight, Fling::ScriptComponent
+#define WORLD_COMPONENTS Fling::Transform, MeshRenderer, DirectionalLight, PointLight
 
 namespace Fling
 {

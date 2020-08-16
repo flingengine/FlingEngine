@@ -1,10 +1,6 @@
 #include "pch.h"
 #include "World.h"
 
-#if WITH_LUA
-#include "LuaManager.h"
-#endif
-
 namespace Fling
 {
 	World::World(entt::registry& t_Reg, Fling::Game* t_Game)
@@ -50,10 +46,6 @@ namespace Fling
 
 		// Start game logic here like moving of objects, changing properties, etc
 		m_Game->OnStartGame(m_Registry);
-#if WITH_LUA
-		// Call the start functions on any Lua scripts
-		LuaManager::Get().Start();
-#endif
 		m_CurrentState = WorldState::Playing;
 	}
 
@@ -75,10 +67,6 @@ namespace Fling
 		{
 			// Once we are done with core updates, then call the game!
 			m_Game->Update(m_Registry, t_DeltaTime);
-
-#if WITH_LUA
-			LuaManager::Get().Tick(t_DeltaTime);
-#endif
 
 			// #TODO Update physics here
 		}

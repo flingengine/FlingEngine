@@ -18,8 +18,6 @@ environment:
   matrix:
   - DDEFINE_SHIPPING: 0
   - DDEFINE_SHIPPING: 1
-  - DWITH_LUA_FLAG: 0
-  - DWITH_LUA_FLAG: 1
 
 cache:
   - VulkanSDK.exe
