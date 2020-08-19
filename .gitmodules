@@ -15,13 +15,13 @@
 	url = https://github.com/flingengine/inih.git
 [submodule "external/entt"]
 	path = external/entt
-	url = https://github.com/skypjack/entt.git
+	url = https://github.com/flingengine/entt.git
 [submodule "external/json"]
 	path = external/json
 	url = https://github.com/flingengine/json.git
 [submodule "external/stb"]
 	path = external/stb
-	url = https://github.com/nothings/stb.git
+	url = https://github.com/flingengine/stb.git
 [submodule "external/tinyobjloader"]
 	path = external/tinyobjloader
 	url = https://github.com/flingengine/tinyobjloader.git
@@ -34,8 +34,7 @@
 
 [submodule "external/SPIRV-Cross"]
 	path = external/SPIRV-Cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross.git
-
+	url = https://github.com/flingengine/SPIRV-Cross.git
 
 [submodule "external/imgui_entt_entity_editor"]
 	path = external/imgui_entt_entity_editor
