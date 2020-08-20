@@ -7,6 +7,8 @@
 
 namespace Fling
 {
+	class World;
+
 	/**
 	 * @brief   The game class is mean to be overridden on a per-game instance.
 	 *          It provides an interface for users to add their own System calls
@@ -21,12 +23,15 @@ namespace Fling
 	public:
 		
 		/**
-		 * Called before the first Update tick. 
-		 */
+		* Initialization of a Game called by the world. This is a good place to bind
+		* any game input callbacks, or to Load any Lua scripts that need a "Start" method
+		*/
 		virtual void Init(entt::registry& t_Reg) = 0;
 
-		/* Called when the engine is shutting down */
-		virtual void Shutdown(entt::registry& t_Reg) = 0;
+		/**
+		* Called by the World when the game state should start.
+		*/
+		virtual void OnStartGame(entt::registry& t_Reg) = 0;
 
 		/**
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
@@ -34,12 +39,23 @@ namespace Fling
 		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
 
 		/**
+		* Called when the game should stop
+		*/
+		virtual void OnStopGame(entt::registry& t_Reg) = 0;
+
+		/** 
+		* Called by the world when the entire application is shutting down. Good spot to do 
+		* cleanup of any persistent data that you may have had throughout the game lifetime. 
+		*/
+		virtual void Shutdown(entt::registry& t_Reg) = 0;
+
+		/**
 		 * @brief 	Gets the owning world of this game. You can use the world to add entities to
 		 * 			the world. Asserts that world exists first
 		 * 
 		 * @return FORCEINLINE* GetWorld 
 		 */
-		FORCEINLINE class World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
+		FORCEINLINE World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
 
 		/**
 		 * @brief If true then this game wants to texit the application entirely.
@@ -50,14 +66,17 @@ namespace Fling
 
 	protected:
 
-		// You really should not be implementing the game's ctor
+		// You really should not be implementing the game's ctor because it 
+		// is not explicitly managed by the Engine's lifecycle
 		Game() = default;
 		virtual ~Game() = default;
 		
 		/** The world that updates this game. Set in the Engine::Startup */
-		class World* m_OwningWorld = nullptr;
+		World* m_OwningWorld = nullptr;
 
 		/** Change this value to true when the game is ready to exit the application entirely */
 		bool m_WantsToQuit = false;
+
+		// #TODO Camera class for the game
 	};
 }   // namespace Fling

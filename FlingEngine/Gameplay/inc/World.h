@@ -31,16 +31,22 @@ namespace Fling
         void Init();
 		
 		/**
+		 * @brief   Tick all active levels in the world and upates any Lua scripts that have Update functions
+		 *
+		 * @param t_DeltaTime   Time between previous frame and the current one.
+		 */
+		void Update(float t_DeltaTime);
+
+		/**
 		 * @brief Called just before destruction.
 		 */
         void Shutdown();
 
-        /**
-         * @brief   Tick all active levels in the world
-         * 
-         * @param t_DeltaTime   Time between previous frame and the current one. 
-         */
-        void Update(float t_DeltaTime);
+		/** If there is a valid game state than this world will start it */
+		void RequestGameStart();
+
+		/** Attempt to stop the game if it is running */
+		void RequestGameStop();
 
 		/**
 		 * @brief Check if the world wants to exit the program. 
@@ -76,7 +82,28 @@ namespace Fling
 
 		FORCEINLINE entt::registry& GetRegistry() const { return m_Registry; }
 
+		// The current state of the game, is it playing, stopped, paused, etc
+		enum class WorldState : uint8
+		{
+			NONE,			// The game has not been initalized yet. Starting state.
+			Initalized,		// True after the game has completed Initalization logic
+			Starting,		// True while the game is in it's "OnStartGame" logic
+			Playing,		// The game has started and is actively ticking
+			Paused,			// True either from the editor or via gameplay programmers
+			Quitting,		// True when the player has selected they want to quit the game
+			ShuttingDown,	// True when the game is in it's shutdown phase
+		};
+
+		inline bool IsPlaying() const { return m_CurrentState == WorldState::Playing; }
+		inline bool IsReadyForPlay() const { return m_CurrentState == WorldState::Initalized; }
+
+		inline bool IsPaused() const { return m_CurrentState == WorldState::Paused; }
+
+		inline WorldState GetState() const { return m_CurrentState; }
+
     private:
+
+		WorldState m_CurrentState = WorldState::NONE;
 		
 		/** The registry and represents all active entities in this world */
 		entt::registry& m_Registry;
@@ -85,7 +112,7 @@ namespace Fling
 		Fling::Game* m_Game = nullptr;
 
 		/** Flag if the world should quit or not! */
-		uint8 m_ShouldQuit = false;
+		uint8 m_ShouldQuit : 1;
     };
 
 } // namespace Fling

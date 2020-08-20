@@ -30,6 +30,13 @@ namespace Fling
 
 		BuildRenderPipelines(t_Conf, t_Reg, t_Editor);
 
+		// Set the window icon for this application
+		if (m_CurrentWindow)
+		{
+			std::string IconPath = FlingConfig::GetString("Game", "WindowIcon", "Icons/Fling_Logo.png");
+			m_CurrentWindow->SetWindowIcon(Guid { IconPath.c_str() });
+		}
+
 		F_LOG_TRACE("Vulkan App Init!");
 	}
 

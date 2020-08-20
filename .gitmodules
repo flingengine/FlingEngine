@@ -36,10 +36,6 @@
 	path = external/SPIRV-Cross
 	url = https://github.com/flingengine/SPIRV-Cross.git
 
-
 [submodule "external/imgui_entt_entity_editor"]
 	path = external/imgui_entt_entity_editor
 	url = https://github.com/flingengine/imgui_entt_entity_editor.git
-[submodule "external/sol2"]
-	path = external/sol2
-	url = https://github.com/flingengine/sol2.git

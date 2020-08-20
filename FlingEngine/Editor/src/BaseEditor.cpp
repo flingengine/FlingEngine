@@ -13,6 +13,7 @@
 #include "Lighting/PointLight.hpp"
 #include "ImFileBrowser.hpp"
 #include "World.h"
+#include "EditableComponent.h"
 
 #include <stdio.h> 
 #include <string.h> 
@@ -239,7 +240,7 @@ namespace Fling
 		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
 
-        auto view = t_Reg.view<Transform>();
+        auto view = t_Reg.view<EditableComponent>();
         for(entt::entity entity : view) 
         {
             const bool bStartedSelected = (m_CompEditorEntityType == entity);
@@ -290,10 +291,19 @@ namespace Fling
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), ImGuiCond_FirstUseEver);
 
 		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+
+        // Make sure that each entity has a transform so that they show up in the editor window
+        if(m_CompEditorEntityType != entt::null)
+        {
+            if(!t_Reg.has<EditableComponent>(m_CompEditorEntityType))
+            {
+				t_Reg.assign<EditableComponent>(m_CompEditorEntityType);
+            }
+        }
     }
 
     void BaseEditor::DrawWindowOptions()
-    {        
+    {
         ImGui::Begin("Window Options");
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
@@ -414,6 +424,23 @@ namespace Fling
                     m_DisplayWindowOptions = true;
                 }
                 ImGui::EndMenu();
+            }
+
+            if (m_OwningWorld->IsReadyForPlay())
+            {
+				if (ImGui::Button("Play Game"))
+				{
+					// Tell the world that we should start the game logic
+					m_OwningWorld->RequestGameStart();
+				}
+            }
+            else if(m_OwningWorld->IsPlaying())
+            {
+				if (ImGui::Button("Stop Game"))
+				{
+					// Tell the world to stop game play logic
+					m_OwningWorld->RequestGameStop();
+				}
             }
 
             ImGui::EndMenuBar();
