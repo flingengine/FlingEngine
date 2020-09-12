@@ -8,10 +8,10 @@ The Fling Engine aims to be a cross platform Vulkan game engine that will experi
 
 [![Build Status](https://travis-ci.com/flingengine/FlingEngine.svg?branch=master)](https://travis-ci.com/flingengine/FlingEngine)
 [![Build status](https://ci.appveyor.com/api/projects/status/3791w1nlc3usf5qx?svg=true)](https://ci.appveyor.com/project/BenjaFriend/flingengine)
-[![Gitter](https://badges.gitter.im/fling-engine/community.svg)](https://gitter.im/fling-engine/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
 [![GitHub license](https://img.shields.io/github/license/flingengine/FlingEngine)](https://github.com/flingengine/FlingEngine/blob/master/LICENSE)
 [![Work in progress badge](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)
+[![Discord Chat](https://img.shields.io/static/v1?logo=discord&label=Discord&message=Join%20and%20chat!&color=blueviolet&link=https://discord.gg/HUpX6ZE)](https://discord.gg/HUpX6ZE)
 
 # Getting Started
 
