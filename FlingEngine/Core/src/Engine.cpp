@@ -13,7 +13,7 @@ namespace Fling
 		Logger::Get().Init();
 		
 		CommandLine::Set(CommandLine::BuildFromArgs(argc, argv));
-		F_LOG_TRACE("Command line args: \t", CommandLine::Get());
+		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get());
 
 		ResourceManager::Get().Init();
 		Timing::Get().Init();
