@@ -41,10 +41,10 @@ namespace Fling
 		 */
 #if WITH_EDITOR
 		template<class T_GameType, class T_EditorType = Fling::BaseEditor>
-		FLING_API uint64 Run();
+		FLING_API uint64 Run(int argc, char* argv[]);
 #else
 		template<class T_GameType>
-		FLING_API uint64 Run();
+		FLING_API uint64 Run(int argc, char* argv[]);
 #endif
 
 	private:
@@ -52,7 +52,7 @@ namespace Fling
 		/// <summary>
 		/// Start any systems or subsystems that may be needed
 		/// </summary>
-		void Startup();
+		void Startup(int argc, char* argv[]);
 
 		/// <summary>
 		/// Initial tick for the engine frame
@@ -84,12 +84,11 @@ namespace Fling
 
 #if WITH_EDITOR
 	template<class T_GameType, class T_EditorType>
-	FLING_API uint64 Engine::Run()
+	FLING_API uint64 Engine::Run(int argc, char* argv[])
 #else
 	template<class T_GameType>
-	FLING_API uint64 Engine::Run()
+	FLING_API uint64 Engine::Run(int argc, char* argv[])
 #endif
-
 	{
 		static_assert(std::is_default_constructible<T_GameType>::value, "T_GameType requires default-constructible elements");
 		static_assert(std::is_base_of<Fling::Game, T_GameType>::value, "T_GameType must inherit from Fling::Game");
@@ -102,7 +101,7 @@ namespace Fling
 		static_assert(std::is_base_of<Fling::BaseEditor, T_EditorType>::value, "T_EditorType must inherit from Fling::BaseEditor");
 		m_Editor = std::make_shared<T_EditorType>();
 #endif
-		Startup();
+		Startup(argc, argv);
 
 		Tick();
 
