@@ -33,4 +33,12 @@ namespace Fling
 		
 		return false;
 	}
+
+	bool CommandLine::HasParam(const std::string& Param)
+	{
+		std::size_t found = CurrentCommandLine.find(Param);
+
+		return found != std::string::npos;
+	}
+
 } // namespace Fling
