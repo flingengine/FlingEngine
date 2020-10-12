@@ -3,14 +3,19 @@
 #include <cstdint>
 #include "File.h"
 #include "VulkanApp.h"
+#include "Misc/CommandLine.h"
 
 namespace Fling
 {
-    void Engine::Startup()
-	{
+    void Engine::Startup(int argc, char* argv[])
+	{	
 		Random::Init();
 		Logger::Get().Init();
-        ResourceManager::Get().Init();
+		
+		CommandLine::Set(CommandLine::BuildFromArgs(argc, argv));
+		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get());
+
+		ResourceManager::Get().Init();
 		Timing::Get().Init();
         FlingConfig::Get().Init();
 		Input::Init();

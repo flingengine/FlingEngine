@@ -17,10 +17,10 @@ int main(int argc, char* argv[])
 	{
 		// Run with editor and IMGUI
 #if WITH_EDITOR
-		Engine.Run<Sandbox::Game, Sandbox::SandboxEditor>();
+		Engine.Run<Sandbox::Game, Sandbox::SandboxEditor>(argc, argv);
 #else
 		// Just run with the game and No editor features.
-		Engine.Run<Sandbox::Game>();
+		Engine.Run<Sandbox::Game>(argc, argv);
 #endif
 	}
 	catch (const std::exception& e)
