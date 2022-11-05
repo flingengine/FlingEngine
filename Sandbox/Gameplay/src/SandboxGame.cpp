@@ -98,6 +98,15 @@ namespace Sandbox
 		m_WantsToQuit = true;
 	}
 
+	void Game::AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
+	{
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
+		Transform& t0 = t_Reg.assign<Transform>(e0);
+		t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
+		t0.SetScale(t_Scale);
+	}
+
     void Game::LightingTest(entt::registry& t_Reg)
     {
         
@@ -120,20 +129,9 @@ namespace Sandbox
             t0.SetPos(Fling::Random::GetRandomVec3(min, max));
         };
 
-		auto AddFloor = [&](
-			const std::string& t_Model,
-			const std::string& t_Mat,
-			const glm::vec3 t_Scale = glm::vec3(1.0f)
-			)
-		{
-			entt::entity e0 = t_Reg.create();
-			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-			Transform& t0 = t_Reg.assign<Transform>(e0);
-			t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
-			t0.SetScale(t_Scale);
-		};
+		
 
-		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
+		AddFloor(t_Reg, "Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
 
 		// Add a bunch of random light bois
 		for (size_t i = 0; i < DeferredLightSettings::MaxPointLights; i++)

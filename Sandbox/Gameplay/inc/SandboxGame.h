@@ -46,6 +46,8 @@ namespace Sandbox
 		bool m_DoRotations = false;
 		bool m_MovePointLights = false;
 
+		void AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
+
 		void ToggleRotation();
 
 		void OnTestSpawn();
