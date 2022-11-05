@@ -2,7 +2,7 @@ cmake_minimum_required ( VERSION 3.11.0 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
-project ( "FlingEngine" )
+project ( "FlingEngine" VERSION 1.0 )
 
 # Generated folder used for Cmake generated files
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
@@ -24,7 +24,6 @@ OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths t
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
 OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
-FLING_Compiler_Flag( Fling_Enable_Test WITH_ENABLE_TEST "A test flag by ben" ON )
 
 # We can't have the editor without ImGUI!
 IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )

@@ -4,11 +4,14 @@
 #include "File.h"
 #include "VulkanApp.h"
 #include "Misc/CommandLine.h"
+#include "Foundation.h"
 
 namespace Fling
 {
     void Engine::Startup(int argc, char* argv[])
 	{	
+		const bool b = FoundationClass::RunFoundationFunction();
+
 		Random::Init();
 		Logger::Get().Init();
 		
