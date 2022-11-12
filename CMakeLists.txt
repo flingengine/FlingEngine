@@ -2,16 +2,29 @@ cmake_minimum_required ( VERSION 3.11.0 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
-project ( "FlingEngine" )
+project ( "FlingEngine" VERSION 1.0 )
+
+# Generated folder used for Cmake generated files
+set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
+message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
+
+# Let us use our *.cmake files now
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
+
+# Include any .cmake macros here from the ./Cmake dir
+include(FlingEngineInc)
+include(MSVC_PCH)
+include(FlingCompilerFlag)
+include (InstallRequiredSystemLibraries)
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 
-# Option for seperate "shipping" config
-OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF ) # disabled by default
-
+# Option for the current build configuration. Note: going forward, we should use the FLING_Compiler_Flag macro
+OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF )
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
-OPTION ( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
+OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
 
 # We can't have the editor without ImGUI!
 IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
@@ -25,6 +38,7 @@ message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
 message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
+message( STATUS "FLING_ROOT_DIR=${FLING_ROOT_DIR}" )
 
 # set the flags to 0 or 1 respectively for ImGUI and the Editor
 IF( WITH_IMGUI_FLAG )
@@ -50,16 +64,6 @@ message( STATUS "-----------------------" )
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
-
-# Generated folder used for Cmake generated files
-set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
-message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
-include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
-include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
-
-message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 
 # Take care of warnings about strcpy
 if( MSVC )
