@@ -21,6 +21,7 @@ endif()
 
 set ( LINK_LIBS
 	"FlingEngine"
+    Foundation
 )
 
 # link pthread if we need to

@@ -16,6 +16,7 @@ message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 include(FlingEngineInc)
 include(MSVC_PCH)
 include(FlingCompilerFlag)
+include (InstallRequiredSystemLibraries)
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 
@@ -38,7 +39,6 @@ message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
 message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
 message( STATUS "FLING_ROOT_DIR=${FLING_ROOT_DIR}" )
-message( STATUS "Fling_Enable_Test=${Fling_Enable_Test}" )
 
 # set the flags to 0 or 1 respectively for ImGUI and the Editor
 IF( WITH_IMGUI_FLAG )

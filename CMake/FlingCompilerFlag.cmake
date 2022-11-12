@@ -1,8 +1,6 @@
 # Just a small macro that will make a CMake project option, and 
 # then add a #define associated to that set to the value of 0 or 1
 # depending on if the option is on or not
-
-
 MACRO( FLING_Compiler_Flag FlagName DefineName Description DefaultValue )
 
     OPTION( ${FlagName} ${Description} ${DefaultValue} ) 
@@ -15,9 +13,6 @@ MACRO( FLING_Compiler_Flag FlagName DefineName Description DefaultValue )
     else()
         add_compile_definitions( ${DefineName}=0)
         message( Status "${DefineName}=0" )  
-    endif()    
-
-    #target_compile_definitions(trie_io_test PRIVATE UNIT_TESTING=1 IO_TEST=1)
-
+    endif()
 
 ENDMACRO(FLING_Compiler_Flag)

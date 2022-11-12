@@ -7,10 +7,6 @@ project("Foundation" VERSION 0.1)
 
 message(status "-- The foundation library is being configured!! -- ")
 
-include_directories(
-	inc
-)
-
 # Find any C++ files here
 file( GLOB_RECURSE foundation_source_list
     *.cpp* src/*.h* src/*.hpp* *.h* *.inl
@@ -26,7 +22,9 @@ if( MSVC )
     endforeach()
 endif()
 
-# the "Shared" part here means that the library target is a DLL
+# Libraries will produce a shared .dll file, and a .lib file that has the actual
+# linking interface. If a module doesn't export any symbols (i.e. __declspec(dllexport)), then it won't 
+# produce a .lib and VS will error when building the game target
 add_library ( ${PROJECT_NAME} SHARED ${foundation_source_list} )
 
 # I think fix the include paths?
