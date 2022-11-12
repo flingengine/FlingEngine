@@ -12,7 +12,7 @@ namespace Fling
         : m_Instance(t_Instance)
     {		
 		// Enumerate available devices
-		UINT32 DeviceCount = 0;
+		uint32 DeviceCount = 0;
 		vkEnumeratePhysicalDevices(m_Instance->GetRawVkInstance(), &DeviceCount, nullptr);
 
 		if (DeviceCount == 0)
@@ -49,7 +49,7 @@ namespace Fling
 
 	const char* PhysicalDevice::GetDeviceType(VkPhysicalDeviceProperties t_Props)
 	{
-		switch (static_cast<UINT32>(t_Props.deviceType))
+		switch (static_cast<uint32>(t_Props.deviceType))
 		{
 		case 1:
 			return "Integrated";
@@ -104,7 +104,7 @@ namespace Fling
 		DeviceInfo << "\n\tVendor:" << GetDeviceVendor(m_DeviceProperties);
 		
 		// Versions
-		UINT32 supportedVersion[]
+		uint32 supportedVersion[]
 		{ 
 			VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), 
 			VK_VERSION_MINOR(m_DeviceProperties.apiVersion),
@@ -163,12 +163,12 @@ namespace Fling
 
 	VkPhysicalDevice PhysicalDevice::ChooseBestPhyscialDevice(std::vector<VkPhysicalDevice>& t_AvailableDevices)
 	{
-		std::multimap<INT32, VkPhysicalDevice> SortedDevices;
+		std::multimap<int32, VkPhysicalDevice> SortedDevices;
 
 		// Lambda for scoring a physical device 
 		auto ScoreDeviceLambda = [this](VkPhysicalDevice t_Device)
 		{
-			INT32 Score = 0;
+			int32 Score = 0;
 
 			// Get the extension support of this device
 			uint32_t ExtensionPropertyCount;
@@ -181,7 +181,7 @@ namespace Fling
 			{
 				bool ExtensionFound = false;
 
-				for (const VkExtensionProperties Extension : ExtensionProperties)
+				for (const VkExtensionProperties& Extension : ExtensionProperties)
 				{
 					if (strcmp(currentExtension, Extension.extensionName) == 0)
 					{

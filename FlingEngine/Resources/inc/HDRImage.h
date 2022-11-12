@@ -18,10 +18,10 @@ namespace Fling
         explicit HDRImage(Guid t_ID, LogicalDevice* t_dev, void* t_Data = nullptr);
         virtual ~HDRImage();
 
-        FORCEINLINE UINT32 GetWidth() const { return m_Width; }
-        FORCEINLINE UINT32 GetHeight() const { return m_Height; }
-        FORCEINLINE INT32 GetChannels() const { return m_Channels; }
-        FORCEINLINE UINT32 GetMipLevels() const { return m_MipLevels; }
+        FORCEINLINE uint32 GetWidth() const { return m_Width; }
+        FORCEINLINE uint32 GetHeight() const { return m_Height; }
+        FORCEINLINE int32 GetChannels() const { return m_Channels; }
+        FORCEINLINE uint32 GetMipLevels() const { return m_MipLevels; }
 
         FORCEINLINE const VkImage& GetVkImage() const { return m_Image; }
         FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
@@ -33,9 +33,9 @@ namespace Fling
          * @brief Get the Image Size object
          *        Multiply by 2 * 3 because there are 3 channels that are 2 bytes each
          *        Each channel is represented as a signed 16 (bit) float
-         * @return UINT64
+         * @return uint64
          */
-        UINT64 GetImageSize() const { return m_Width * m_Height * 6; }
+        uint64 GetImageSize() const { return m_Width * m_Height * 6; }
         /**
          * @brief Get the Pixel Data as signed floats
          * 
@@ -70,12 +70,12 @@ namespace Fling
 
         VkFormat m_Format = VK_FORMAT_R16G16B16_SFLOAT;
 
-        UINT32 m_Width = 0;
+        uint32 m_Width = 0;
 
-        UINT32 m_Height = 0;
+        uint32 m_Height = 0;
 
-        UINT32 m_MipLevels = 0;
+        uint32 m_MipLevels = 0;
 
-        INT32 m_Channels = 0;
+        int32 m_Channels = 0;
     };
 }

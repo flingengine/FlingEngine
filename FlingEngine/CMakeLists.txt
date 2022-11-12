@@ -1,4 +1,5 @@
-project( "FlingEngine" )
+
+project ( "FlingEngine" VERSION 1.0 )
 
 #### Setup Git version numbers ######
 execute_process(
@@ -61,15 +62,6 @@ else()
     message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
 endif()
 
-if( WITH_LUA_FLAG )
-	find_package(Lua53 REQUIRED)
-	if(LUA53_FOUND)
-		message(STATUS "Lua 5.3 found!")
-	else()
-		message(FATAL_ERROR "Lua 5.3 NOT FOUND! Stopping")
-	endif()
-endif()
-
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
     Vulkan::Vulkan  
@@ -84,27 +76,19 @@ set ( LINK_LIBS ${LINK_LIBS}
 )
 endif()
 
-if( WITH_LUA_FLAG )
-set ( LINK_LIBS ${LINK_LIBS}
-    ${LUA53_LIBRARIES}
-)
-endif()
-
 # link pthread if we need to
 if ( NOT WIN32 )
     set( LINK_LIBS ${LINK_LIBS} pthread )
     message( STATUS "Added pthread!" )
 endif()
 
-# we need to link filesystem on GCC 8+
-if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-    set( LINK_LIBS ${LINK_LIBS} stdc++fs )
-    message( STATUS "Added filesytem link!" )
-endif()
-
+# We need to link the std::filesystem on clang/GNU, but the windows version of 
+# Clang doesn't have this lib
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    if(NOT WIN32)
     set( LINK_LIBS ${LINK_LIBS} stdc++fs )
-    message( STATUS "Added filesytem link (Clang)!" )
+        message( STATUS "Added filesytem link (Clang)!" )
+    endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set( LINK_LIBS ${LINK_LIBS} stdc++fs )
     message( STATUS "Added filesytem link (GNU)!" )
@@ -134,6 +118,14 @@ if( MSVC )
         source_group( "${_group_path}" FILES "${_source}" )
     endforeach()
 endif()
+
+################# Add dynamic module directories ###################
+# TODO: Can't we do this recursively or something like that??
+add_subdirectory(Foundation)
+# Link against the Foundation module
+set( LINK_LIBS ${LINK_LIBS} Foundation )
+
+#find_package(Foundation REQUIRED)
 
 ################# Add library and link ######################
 

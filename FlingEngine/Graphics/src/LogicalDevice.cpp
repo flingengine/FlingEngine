@@ -17,16 +17,16 @@ namespace Fling
 
 	void LogicalDevice::CreateQueueIndecies()
 	{
-		UINT32 QueueFamilyCount = 0;
+		uint32 QueueFamilyCount = 0;
 		VkPhysicalDevice PhysDevice = m_PhysicalDevice->GetVkPhysicalDevice();
 		vkGetPhysicalDeviceQueueFamilyProperties(PhysDevice, &QueueFamilyCount, nullptr);
 		std::vector<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(PhysDevice, &QueueFamilyCount, QueueFamilies.data());
 
-		std::optional<UINT32> graphicsFamily;
-		std::optional<UINT32> presentFamily;
-		std::optional<UINT32> computeFamily;
-		std::optional<UINT32> transferFamily;
+		std::optional<uint32> graphicsFamily;
+		std::optional<uint32> presentFamily;
+		std::optional<uint32> computeFamily;
+		std::optional<uint32> transferFamily;
 
 		for (uint32_t i = 0; i < QueueFamilyCount; ++i)
 		{
@@ -78,13 +78,13 @@ namespace Fling
 
 	void LogicalDevice::CreateDevice()
     {
-        std::set<UINT32> UniqueQueueFamilies = { m_GraphicsFamily, m_PresentFamily };
+        std::set<uint32> UniqueQueueFamilies = { m_GraphicsFamily, m_PresentFamily };
 
         // Generate the CreatinInfo for each queue family 
 		std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
 
         float Priority = 1.0f;
-        for (const UINT32 fam : UniqueQueueFamilies)
+        for (const uint32 fam : UniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo QueueCreateInfo = {};
             QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -102,12 +102,12 @@ namespace Fling
         // Device creation 
         VkDeviceCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        CreateInfo.queueCreateInfoCount = static_cast<UINT32>(QueueCreateInfos.size());
+        CreateInfo.queueCreateInfoCount = static_cast<uint32>(QueueCreateInfos.size());
         CreateInfo.pQueueCreateInfos = QueueCreateInfos.data();
         CreateInfo.pEnabledFeatures = &DevicesFeatures;
 
         // Set the enabled extensions
-        CreateInfo.enabledExtensionCount = static_cast<UINT32>(m_Instance->GetEnabledExtensions().size());
+        CreateInfo.enabledExtensionCount = static_cast<uint32>(m_Instance->GetEnabledExtensions().size());
         CreateInfo.ppEnabledExtensionNames = m_Instance->GetEnabledExtensions().data();
 
         if( m_Instance->IsValidationEnabled() ) 

@@ -17,7 +17,7 @@ namespace Fling
 		LoadMaterialFromPath(t_MaterialPath);
 	}
 
-	MeshRenderer::MeshRenderer(Model* t_Model, Material* t_Mat)
+	MeshRenderer::MeshRenderer(Model* t_Model, Material* t_Mat /** = nullptr */)
 		:m_Model(t_Model)
 		, m_Material(t_Mat)
 	{
@@ -25,11 +25,6 @@ namespace Fling
 		{
 			LoadMaterialFromPath("Materials/Default.mat");
 		}
-	}
-
-	MeshRenderer::~MeshRenderer()
-	{
-		//Release();
 	}
 
 	void MeshRenderer::Release()
@@ -51,16 +46,16 @@ namespace Fling
 		return !(*this == other);
 	}
 
-	void MeshRenderer::LoadModelFromPath(const std::string t_MeshPath)
+	void MeshRenderer::LoadModelFromPath(const std::string& t_MeshPath)
 	{
 		// Load the model
-		m_Model = Model::Create(entt::hashed_string{ t_MeshPath.c_str() }).get();
+		m_Model = Model::Create(Guid{ t_MeshPath.c_str() }).get();
 		assert(m_Model);
 	}
 
-	void MeshRenderer::LoadMaterialFromPath(const std::string t_MatPath)
+	void MeshRenderer::LoadMaterialFromPath(const std::string& t_MatPath)
 	{
-		m_Material = Material::Create(entt::hashed_string{ t_MatPath.c_str() }).get();
+		m_Material = Material::Create(Guid{ t_MatPath.c_str() }).get();
 		assert(m_Material);
 	}
 }   // namespace Fling

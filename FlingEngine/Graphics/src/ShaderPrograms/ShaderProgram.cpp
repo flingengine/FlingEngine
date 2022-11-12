@@ -33,17 +33,9 @@ namespace Fling
 		}
 
 		// Parse string and return what type it is
-		if (t_Str == "PBR")
-		{
-			return ShaderProgramType::PBR;
-		}
-		else if (t_Str == "REFLECTION")
+		if (t_Str == "REFLECTION")
 		{
 			return ShaderProgramType::Reflection;
-		}
-		else if (t_Str == DeferredStr_CAP)
-		{
-			return ShaderProgramType::Deferred;
 		}
 		else
 		{

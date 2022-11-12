@@ -3,30 +3,34 @@
 #include <cstdint>
 #include "File.h"
 #include "VulkanApp.h"
+#include "Misc/CommandLine.h"
+#include "Foundation.h"
 
 namespace Fling
 {
-    void Engine::Startup()
-	{
+    void Engine::Startup(int argc, char* argv[])
+	{	
+		const bool b = FoundationClass::RunFoundationFunction();
+
 		Random::Init();
 		Logger::Get().Init();
-        ResourceManager::Get().Init();
+		
+		CommandLine::Set(CommandLine::BuildFromArgs(argc, argv));
+		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get());
+
+		ResourceManager::Get().Init();
 		Timing::Get().Init();
         FlingConfig::Get().Init();
 		Input::Init();
-
-#if WITH_LUA
-		LuaManager::Get().Init(&g_Registry);
-#endif
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
         F_LOG_TRACE("Fling Engine Logs dir:   \t{}", Fling::FlingPaths::EngineLogDir());
         F_LOG_TRACE("Fling Engine Config dir: \t{}", Fling::FlingPaths::EngineConfigDir());
 
-	#ifdef FLING_SHIPPING
-		F_LOG_TRACE("Fling Engine: Shipping");
-	#endif
+#ifdef FLING_SHIPPING
+		F_LOG_TRACE("Fling Engine Config: Shipping");
+#endif
 
         // Load command line args and any ini files
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
@@ -37,7 +41,6 @@ namespace Fling
 		}
 
 		VulkanApp::Get().Init(
-			//static_cast<PipelineFlags>(PipelineFlags::DEFERRED),
 			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
 			g_Registry,
 			m_Editor
@@ -54,6 +57,9 @@ namespace Fling
 #if WITH_EDITOR
 		m_Editor->m_OwningWorld = m_World;
 		m_Editor->m_Game = m_GameImpl;
+		F_LOG_TRACE("Fling Editor: Enabled");
+#else
+		F_LOG_TRACE("Fling Editor: Disabled");
 #endif
 
 		Input::PreUpdate();
@@ -63,7 +69,7 @@ namespace Fling
 	{
         float DeltaTime = 1.0f / 60.0f;
 		
-		assert(m_World && m_GameImpl);		// We HAVE to have a world
+		assert(m_World && m_GameImpl);		// We HAVE to have a world and a game
 		
 		VulkanApp& VkApp = VulkanApp::Get();
 		Timing& Timing = Timing::Get();
@@ -79,11 +85,12 @@ namespace Fling
 
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
-						
+			
 			Input::Poll();
 
+			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
-			
+
 			if(m_World->ShouldQuit())
 			{
 				F_LOG_TRACE("World should quit! Exiting engine loop...");
@@ -97,7 +104,7 @@ namespace Fling
 	}
 
 	void Engine::Shutdown()
-	{	
+	{
 		// Cleanup game play stuff
 		if(m_World)
 		{

@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -79,6 +80,8 @@ $(function() {
 <code>#include &quot;spdlog/sinks/basic_file_sink.h&quot;</code><br />
 <code>#include &quot;spdlog/async.h&quot;</code><br />
 <code>#include &quot;spdlog/sinks/stdout_color_sinks.h&quot;</code><br />
+<code>#include &quot;spdlog/fmt/fmt.h&quot;</code><br />
+<code>#include &quot;spdlog/fmt/ostr.h&quot;</code><br />
 </div>
 <p><a href="Logger_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -143,7 +146,8 @@ Macros</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">Logger::GetCurrentConsole()-&gt;error( __VA_ARGS__ ); \</div><div class="line">                               throw std::runtime_error( __VA_ARGS__ )</div></div><!-- fragment -->
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="classFling_1_1Logger.html#a213d4af1de4e026e2a0cebd500b383de">Fling::Logger::GetCurrentConsole</a>()-&gt;error( __VA_ARGS__ ); \</div><div class="line">                               throw std::runtime_error( __VA_ARGS__ )</div><div class="ttc" id="classFling_1_1Logger_html_a213d4af1de4e026e2a0cebd500b383de"><div class="ttname"><a href="classFling_1_1Logger.html#a213d4af1de4e026e2a0cebd500b383de">Fling::Logger::GetCurrentConsole</a></div><div class="ttdeci">static std::shared_ptr&lt; spdlog::logger &gt; GetCurrentConsole()</div><div class="ttdoc">Gets a reference to the current logging console </div><div class="ttdef"><b>Definition:</b> Logger.cpp:37</div></div>
+</div><!-- fragment -->
 <p>Log a message to the error console AND throw a runtime exception. </p>
 <p>Only use for fatal asserts! Left in in release builds! </p>
 

@@ -37,7 +37,7 @@ namespace Fling
 		
 	}
 
-	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
 		// For every mesh bind it's model and descriptor set info
 		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Debug"_hs>>);
@@ -128,13 +128,13 @@ namespace Fling
 			),
 		};
 
-		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 	}
 
 	void DebugSubpass::PrepareAttachments()
 	{
 		// Create the descriptor pool for off screen things
-		UINT32 DescriptorCount = 100 * m_SwapChain->GetImageViewCount();
+		uint32 DescriptorCount = 100 * m_SwapChain->GetImageViewCount();
 
 		std::vector<VkDescriptorPoolSize> poolSizes =
 		{
@@ -143,7 +143,7 @@ namespace Fling
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
+		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = to_u32(100 * m_SwapChain->GetImageViewCount());
 
@@ -185,8 +185,6 @@ namespace Fling
 		}
 
 		t_Reg.assign<entt::tag<"Debug"_hs >>(t_Ent);
-
-		VkDevice Device = m_Device->GetVkDevice();
 
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)

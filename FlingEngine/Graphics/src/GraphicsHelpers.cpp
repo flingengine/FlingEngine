@@ -8,13 +8,13 @@ namespace Fling
 {
     namespace GraphicsHelpers
     {
-        UINT32 FindMemoryType(VkPhysicalDevice t_PhysicalDevice, UINT32 t_Filter, VkMemoryPropertyFlags t_Props)
+        uint32 FindMemoryType(VkPhysicalDevice t_PhysicalDevice, uint32 t_Filter, VkMemoryPropertyFlags t_Props)
         {
             // #TODO Move this to the Physical device abstraction once we create it
             VkPhysicalDeviceMemoryProperties MemProperties;
             vkGetPhysicalDeviceMemoryProperties(t_PhysicalDevice, &MemProperties);
 
-            for (UINT32 i = 0; i < MemProperties.memoryTypeCount; ++i)
+            for (uint32 i = 0; i < MemProperties.memoryTypeCount; ++i)
             {
                 // Check if this filter bit flag is set and it matches our memory properties
                 if ((t_Filter & (1 << i)) && (MemProperties.memoryTypes[i].propertyFlags & t_Props) == t_Props)
@@ -109,8 +109,8 @@ namespace Fling
 
         void CreateVkImage(
 			VkDevice t_Dev,
-            UINT32 t_Width,
-            UINT32 t_Height,
+            uint32 t_Width,
+            uint32 t_Height,
             VkFormat t_Format, 
             VkImageTiling t_Tiling, 
             VkImageUsageFlags t_Useage, 
@@ -140,11 +140,11 @@ namespace Fling
 
         void CreateVkImage(
 			VkDevice t_Dev,
-            UINT32 t_Width, 
-            UINT32 t_Height, 
-            UINT32 t_MipLevels, 
-            UINT32 t_Depth, 
-            UINT32 t_ArrayLayers, 
+            uint32 t_Width, 
+            uint32 t_Height, 
+            uint32 t_MipLevels, 
+            uint32 t_Depth, 
+            uint32 t_ArrayLayers, 
             VkFormat t_Format, 
             VkImageTiling t_Tiling, 
             VkImageUsageFlags t_Useage, 
@@ -394,7 +394,7 @@ namespace Fling
             LogicalDevice* logicalDevice = VulkanApp::Get().GetLogicalDevice();
 
             VkCommandPoolCreateInfo commandPoolCreateInfo = {};
-            UINT32 GraphicsFamily = logicalDevice->GetGraphicsFamily();
+            uint32 GraphicsFamily = logicalDevice->GetGraphicsFamily();
             commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
             commandPoolCreateInfo.flags = t_flags;
             commandPoolCreateInfo.queueFamilyIndex = GraphicsFamily;
@@ -405,7 +405,7 @@ namespace Fling
             }
         }
 
-        void CreateCommandBuffers(VkCommandBuffer * t_commandBuffer, UINT32 t_commandBufferCount, VkCommandPool & t_commandPool)
+        void CreateCommandBuffers(VkCommandBuffer * t_commandBuffer, uint32 t_commandBufferCount, VkCommandPool & t_commandPool)
         {
 			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
 			assert(Dev);
@@ -443,7 +443,7 @@ namespace Fling
             VkFormat t_Format, 
             VkImageLayout t_oldLayout, 
             VkImageLayout t_NewLayout,
-            UINT32 t_MipLevels /* = 1 */
+            uint32 t_MipLevels /* = 1 */
         )
         {
             VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
@@ -532,7 +532,7 @@ namespace Fling
             VkImage t_Image, 
             VkFormat t_Format, 
             VkImageAspectFlags t_AspectFalgs, 
-            UINT32 t_MipLevels
+            uint32 t_MipLevels
         )
         {
 			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
@@ -594,7 +594,7 @@ namespace Fling
             VkShaderModuleCreateInfo CreateInfo = {};
             CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             CreateInfo.codeSize = t_ShaderCode->GetFileLength();
-            CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode->GetData());
+            CreateInfo.pCode = reinterpret_cast<const uint32*>(t_ShaderCode->GetData());
 
             VkShaderModule ShaderModule;
 
@@ -665,7 +665,7 @@ namespace Fling
             return pipelineVertexInputStateCreateInfo;
         }
 
-        VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType t_type, UINT32 t_descriptorCount)
+        VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType t_type, uint32 t_descriptorCount)
         {
             VkDescriptorPoolSize descriptorPoolSize = {};
             descriptorPoolSize.type = t_type;
@@ -675,7 +675,7 @@ namespace Fling
 
         VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo(
             const std::vector<VkDescriptorPoolSize>& t_poolSizes, 
-            UINT32 t_maxSets)
+            uint32 t_maxSets)
         {
             VkDescriptorPoolCreateInfo descriptorPoolInfo{};
             descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -695,7 +695,7 @@ namespace Fling
         VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
             VkDescriptorType t_type, 
             VkShaderStageFlags t_stageFlags, 
-            UINT32 t_binding, UINT32 t_descriptorCount)
+            uint32 t_binding, uint32 t_descriptorCount)
         {
             VkDescriptorSetLayoutBinding setLayoutBinding = {};
             setLayoutBinding.descriptorType = t_type;
@@ -714,7 +714,7 @@ namespace Fling
             return descriptorSetLayoutCreateInfo;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, uint32 t_Binding, uint32 t_Set, VkDeviceSize t_Offset)
         {
             VkWriteDescriptorSet uniformSet = {};
             uniformSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -728,7 +728,7 @@ namespace Fling
             return uniformSet;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSetImage(Texture* t_Image, VkDescriptorSet t_DstSet, UINT32 t_Binding, UINT32 t_Set, VkDeviceSize t_Offset)
+        VkWriteDescriptorSet WriteDescriptorSetImage(Texture* t_Image, VkDescriptorSet t_DstSet, uint32 t_Binding, uint32 t_Set, VkDeviceSize t_Offset)
         {
             VkDescriptorImageInfo* imageInfo = t_Image->GetDescriptorInfo();
             // Create sampler information
@@ -759,7 +759,7 @@ namespace Fling
             return imageViewCreateInfo;
         }
 
-        VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool t_descriptorPool, const VkDescriptorSetLayout * t_pSetLayouts, UINT32 t_descriptorSetCount)
+        VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool t_descriptorPool, const VkDescriptorSetLayout * t_pSetLayouts, uint32 t_descriptorSetCount)
         {
             VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
             descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -778,7 +778,7 @@ namespace Fling
             return descriptorImageInfo;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet t_dstSet, VkDescriptorType t_type, UINT32 t_binding, VkDescriptorImageInfo * imageInfo, UINT32 descriptorCount)
+        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet t_dstSet, VkDescriptorType t_type, uint32 t_binding, VkDescriptorImageInfo * imageInfo, uint32 descriptorCount)
         {
             VkWriteDescriptorSet writeDescriptorSet = {};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -790,7 +790,7 @@ namespace Fling
             return writeDescriptorSet;
         }
 
-        VkPushConstantRange PushConstantRange(VkShaderStageFlags t_stageFlags, UINT32 t_size, UINT32 t_offset)
+        VkPushConstantRange PushConstantRange(VkShaderStageFlags t_stageFlags, uint32 t_size, uint32 t_offset)
         {
             VkPushConstantRange pushConstantRange = {};
             pushConstantRange.stageFlags = t_stageFlags;
@@ -801,7 +801,7 @@ namespace Fling
 
         VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(
             const VkDescriptorSetLayout * t_pSetLayouts, 
-            UINT32 t_setLayoutCount)
+            uint32 t_setLayoutCount)
         {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -841,7 +841,7 @@ namespace Fling
         }
 
         VkPipelineColorBlendStateCreateInfo PipelineColorBlendStateCreateInfo(
-            UINT32 t_attachmentCount, 
+            uint32 t_attachmentCount, 
             const VkPipelineColorBlendAttachmentState * t_pAttachments)
         {
             VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
@@ -875,8 +875,8 @@ namespace Fling
         }
 
         VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(
-            UINT32 t_viewportCount, 
-            UINT32 t_scissorCount, 
+            uint32 t_viewportCount, 
+            uint32 t_scissorCount, 
             VkPipelineViewportStateCreateFlags t_flags)
         {
             VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
@@ -926,8 +926,8 @@ namespace Fling
         }
 
         VkVertexInputBindingDescription VertexInputBindingDescription(
-            UINT32 t_binding, 
-            UINT32 t_stride, 
+            uint32 t_binding, 
+            uint32 t_stride, 
             VkVertexInputRate t_inputRate)
         {
             VkVertexInputBindingDescription vInputBindDescription = {};
@@ -938,10 +938,10 @@ namespace Fling
         }
 
         VkVertexInputAttributeDescription VertexInputAttributeDescription(
-            UINT32 t_binding, 
-            UINT32 t_location, 
+            uint32 t_binding, 
+            uint32 t_location, 
             VkFormat t_format, 
-            UINT32 t_offset)
+            uint32 t_offset)
         {
             VkVertexInputAttributeDescription vInputAttribDescription = {};
             vInputAttribDescription.location = t_location;

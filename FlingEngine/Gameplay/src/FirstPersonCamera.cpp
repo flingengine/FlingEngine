@@ -70,6 +70,7 @@ namespace Fling
 
 		float moveSpeed = m_speed * dt * (SlowModifier ? 0.4f : 1.0f);
 
+		// #TODO Handle input _correctly_ with callbacks from the input manager
 		//translation
 		//forward
 		if(Input::IsKeyHeld(KeyNames::FL_KEY_W))
@@ -124,8 +125,8 @@ namespace Fling
 			float MouseDeltaX = m_PrevMousePos.X - CurMousePos.X;
 			float MouseDeltaY = CurMousePos.Y - m_PrevMousePos.Y;
 
-			m_rotation.x += RotSpeed * -MouseDeltaX;	
-			m_rotation.y += RotSpeed * MouseDeltaY;
+			m_rotation.x += RotSpeed * MouseDeltaX;
+			m_rotation.y += RotSpeed * -MouseDeltaY;
 
 			m_rotation.y = glm::clamp(m_rotation.y, -MAX_PITCH, MAX_PITCH);
 		}
@@ -134,6 +135,7 @@ namespace Fling
 		m_PrevMousePos = CurMousePos;
 		
 		UpdateCameraVectors();
+		UpdateProjectionMatrix();
 		UpdateViewMatrix();
     }
 

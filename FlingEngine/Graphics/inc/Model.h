@@ -30,7 +30,7 @@ namespace Fling
 		/**
 		 * @param	t_ID The GUID that represents a unique name for this model. It's up to the user to ensure uniqueness
 		 */
-		Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<UINT32> t_Indecies);
+		Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies);
 
 		~Model();
 
@@ -38,10 +38,10 @@ namespace Fling
 		FORCEINLINE Buffer* GetIndexBuffer() const { return m_IndexBuffer; }
 
 		FORCEINLINE const std::vector<Vertex>& GetVerts() const { return m_Verts; }
-		FORCEINLINE const std::vector<UINT32>& GetIndices() const { return m_Indices; }
+		FORCEINLINE const std::vector<uint32>& GetIndices() const { return m_Indices; }
 
-		FORCEINLINE UINT32 GetIndexCount() const { return static_cast<UINT32>(m_Indices.size()); }
-		FORCEINLINE UINT32 GetVertexCount() const { return static_cast<UINT32>(m_Verts.size()); }
+		FORCEINLINE uint32 GetIndexCount() const { return static_cast<uint32>(m_Indices.size()); }
+		FORCEINLINE uint32 GetVertexCount() const { return static_cast<uint32>(m_Verts.size()); }
 
 		constexpr static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
@@ -49,10 +49,10 @@ namespace Fling
 
 		void CreateBuffers();
 
-		static void CalculateVertexTangents(Vertex* verts, UINT32 numVerts, UINT32* indices, UINT32 numIndices);
+		static void CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices);
 
 		std::vector<Vertex> m_Verts;
-		std::vector<UINT32> m_Indices;
+		std::vector<uint32> m_Indices;
 
 		Buffer* m_VertexBuffer = nullptr;
 		Buffer* m_IndexBuffer = nullptr;

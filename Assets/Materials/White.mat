@@ -1,0 +1,10 @@
+{
+  "name": "Plain White",
+
+  "pipeline": "DEFAULT",
+
+  "albedo": "Textures/white_1x1.png",
+  "normal": "Textures/white_1x1.png",
+  "metal": "Textures/white_1x1.png",
+  "rough": "Textures/white_1x1.png"
+}

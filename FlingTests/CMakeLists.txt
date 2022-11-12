@@ -19,6 +19,7 @@ set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
 	Catch
 	"FlingEngine"
+    Foundation
 )
 
 # link pthread if we need to

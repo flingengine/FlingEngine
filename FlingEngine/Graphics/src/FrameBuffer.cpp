@@ -1,11 +1,13 @@
 #include "FrameBuffer.h"
 #include "GraphicsHelpers.h"
+#include "LogicalDevice.h"
 
 namespace Fling
 {
 	// Attachment -------------------------------------
-	FrameBufferAttachment::FrameBufferAttachment(AttachmentCreateInfo t_Info, const VkDevice& t_Dev)
+	FrameBufferAttachment::FrameBufferAttachment(const AttachmentCreateInfo& t_Info, const VkDevice& t_Dev)
 		: m_Device(t_Dev)
+		, m_CreationInfo(t_Info)
 	{
 		assert(t_Dev);
 
@@ -66,7 +68,7 @@ namespace Fling
 		m_Description = {};
 		m_Description.samples = VK_SAMPLE_COUNT_1_BIT;
 		m_Description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		m_Description.storeOp = (t_Info.Usage & VK_IMAGE_USAGE_SAMPLED_BIT) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		m_Description.storeOp = (t_Info.Usage & m_Usage) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		m_Description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		m_Description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		m_Description.format = t_Info.Format;
@@ -142,7 +144,7 @@ namespace Fling
 
 	// FrameBuffer -----------------------------------
 
-	FrameBuffer::FrameBuffer(const VkDevice& t_Dev, INT32 t_Width, INT32 t_Height)
+	FrameBuffer::FrameBuffer(const LogicalDevice* t_Dev, int32 t_Width, int32 t_Height)
 		: m_Device(t_Dev)
 		, m_Width{t_Width}
 		, m_Height{t_Height}
@@ -154,40 +156,73 @@ namespace Fling
 		Release();
 	}
 
-	void FrameBuffer::SizeSize(INT32 w, INT32 h)
+	void FrameBuffer::ResizeAndRecreate(int32 w, int32 h)
 	{
-		this->m_Width= w;
-		this->m_Height = h;		
+		m_Width = w;
+		m_Height = h;
+		// Track what stuff we currently have ------------------
+		std::vector<AttachmentCreateInfo> AttachmentCreation;
+
+		for(FrameBufferAttachment* Attachment : m_Attachments)
+		{
+			AttachmentCreation.push_back(Attachment->GetCreationInfo());
+		}
+
+		// Destroy the old stuff--------------------------------
+		for (FrameBufferAttachment* Attachment : m_Attachments)
+		{
+			if (Attachment)
+			{
+				delete Attachment;
+				Attachment = nullptr;
+			}
+		}
+		m_Attachments.clear();
+
+		if (m_RenderPass != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(m_Device->GetVkDevice(), m_RenderPass, nullptr);
+		}
+
+		// Create new stuff ----------------------------------------
+		for(AttachmentCreateInfo& creationInfo : AttachmentCreation)
+		{
+			creationInfo.Width = w;
+			creationInfo.Height = h;
+			AddAttachment(creationInfo);
+		}
+
+		VK_CHECK_RESULT(CreateRenderPass());
 	}
 
 	void FrameBuffer::Release()
 	{
 		assert(m_Device);
 
-		for (auto& attachment : m_Attachments)
+		// Cleanup attachments
+		for (FrameBufferAttachment* Attachment : m_Attachments)
 		{
-			if (attachment)
+			if (Attachment)
 			{
-				delete attachment;
-				attachment = nullptr;
+				delete Attachment;
+				Attachment = nullptr;
 			}
 		}
-		// Cleanup attachments
 		m_Attachments.clear();
 
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			vkDestroySampler(m_Device, m_Sampler, nullptr);
+			vkDestroySampler(m_Device->GetVkDevice(), m_Sampler, nullptr);
 		}
 
 		if (m_RenderPass != VK_NULL_HANDLE)
 		{
-			vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
+			vkDestroyRenderPass(m_Device->GetVkDevice(), m_RenderPass, nullptr);
 		}
 
 		if (m_FrameBuffer != VK_NULL_HANDLE)
 		{
-			vkDestroyFramebuffer(m_Device, m_FrameBuffer, nullptr);
+			vkDestroyFramebuffer(m_Device->GetVkDevice(), m_FrameBuffer, nullptr);
 		}
 	}
 
@@ -206,7 +241,7 @@ namespace Fling
 		bool hasDepth = false;
 		bool hasColor = false;
 
-		UINT32 attachmentIndex = 0;
+		uint32 attachmentIndex = 0;
 
 		for (auto& attachment : m_Attachments)
 		{
@@ -262,12 +297,12 @@ namespace Fling
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.pAttachments = attachmentDescriptions.data();
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+		renderPassInfo.attachmentCount = static_cast<uint32>(attachmentDescriptions.size());
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 2;
+		renderPassInfo.dependencyCount = static_cast<uint32>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
-		VK_CHECK_RESULT(vkCreateRenderPass(m_Device, &renderPassInfo, nullptr, &m_RenderPass));
+		VK_CHECK_RESULT(vkCreateRenderPass(m_Device->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass));
 
 		std::vector<VkImageView> attachmentViews;
 		for (auto& attachment : m_Attachments)
@@ -293,7 +328,7 @@ namespace Fling
 		framebufferInfo.width = m_Width;
 		framebufferInfo.height = m_Height;
 		framebufferInfo.layers = maxLayers;
-		VK_CHECK_RESULT(vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &m_FrameBuffer));
+		VK_CHECK_RESULT(vkCreateFramebuffer(m_Device->GetVkDevice(), &framebufferInfo, nullptr, &m_FrameBuffer));
 
 		return VK_SUCCESS;
 	}
@@ -313,17 +348,17 @@ namespace Fling
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 1.0f;
 		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		return vkCreateSampler(m_Device, &samplerInfo, nullptr, &m_Sampler);
+		return vkCreateSampler(m_Device->GetVkDevice(), &samplerInfo, nullptr, &m_Sampler);
 	}
 
-	UINT32 FrameBuffer::AddAttachment(AttachmentCreateInfo t_CreateInfo)
+	uint32 FrameBuffer::AddAttachment(AttachmentCreateInfo t_CreateInfo)
 	{
-		assert(m_Device);
-		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device));
-		return static_cast<UINT32>(m_Attachments.size() - 1);
+		assert(m_Device && m_Attachments.size() + 1 < Fling::VULKAN_NUM_ATTACHMENTS);
+		m_Attachments.push_back(new FrameBufferAttachment(t_CreateInfo, m_Device->GetVkDevice()));
+		return static_cast<uint32>(m_Attachments.size() - 1);
 	}
 	
-	FrameBufferAttachment* FrameBuffer::GetAttachmentAtIndex(UINT32 t_Index)
+	FrameBufferAttachment* FrameBuffer::GetAttachmentAtIndex(uint32 t_Index)
 	{
 		if (t_Index >= 0 && t_Index < m_Attachments.size())
 		{

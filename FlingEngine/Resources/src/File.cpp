@@ -1,8 +1,14 @@
 #include "pch.h"
 #include "File.h"
+#include "ResourceManager.h"
 
 namespace Fling
 {
+    std::shared_ptr<Fling::File> File::Create(Guid t_ID)
+    {
+		return ResourceManager::LoadResource<Fling::File>(t_ID);
+    }
+
     File::File(Guid t_ID)
         : Resource(t_ID)
     {

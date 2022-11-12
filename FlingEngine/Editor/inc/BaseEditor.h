@@ -3,7 +3,6 @@
 #include <imgui.h>
 #include <entt/entity/registry.hpp>
 #include "imgui_entt_entity_editor.hpp"
-#include "FileBrowser.h"
 
 namespace Fling
 {
@@ -42,6 +41,7 @@ namespace Fling
 		bool m_DisplayComponentEditor = true;
 		bool m_DisplayWorldOutline = true;
 		bool m_DisplayWindowOptions = false;
+        bool m_DisplayCameraOptions = false;
 
 		/** Component editor so that we can draw our component window */
 		entt::entity m_CompEditorEntityType = entt::null;
@@ -51,7 +51,12 @@ namespace Fling
 
 		void DrawGpuInfo();
 
+        void DrawCameraOptions();
+
         void DrawWorldOutline(entt::registry& t_Reg);
+
+        /** assumes that m_DisplayComponentEditor is true */
+		void DrawComponentEditor(entt::registry& t_Reg);
 
 		void DrawWindowOptions();
 

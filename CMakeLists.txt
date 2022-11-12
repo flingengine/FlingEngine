@@ -2,17 +2,29 @@ cmake_minimum_required ( VERSION 3.11.0 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
-project ( "FlingEngine" )
+project ( "FlingEngine" VERSION 1.0 )
+
+# Generated folder used for Cmake generated files
+set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
+message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
+
+# Let us use our *.cmake files now
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
+
+# Include any .cmake macros here from the ./Cmake dir
+include(FlingEngineInc)
+include(MSVC_PCH)
+include(FlingCompilerFlag)
+include (InstallRequiredSystemLibraries)
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 
-# Option for seperate "shipping" config
-OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF ) # disabled by default
-
+# Option for the current build configuration. Note: going forward, we should use the FLING_Compiler_Flag macro
+OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF )
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
-
-OPTION (WITH_LUA_FLAG "WITH_LUA_FLAG will enable or disable the ability to use Lua scripting in the engine" ON)
+OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
 
 # We can't have the editor without ImGUI!
 IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
@@ -24,8 +36,9 @@ message( STATUS "----- Build Config ----" )
 message( STATUS "Compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}" )
 message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
-message( STATUS "WITH_LUA_FLAG=${WITH_LUA_FLAG}")
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
+message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
+message( STATUS "FLING_ROOT_DIR=${FLING_ROOT_DIR}" )
 
 # set the flags to 0 or 1 respectively for ImGUI and the Editor
 IF( WITH_IMGUI_FLAG )
@@ -40,13 +53,6 @@ else()
     ADD_DEFINITIONS ( -DWITH_EDITOR=0 )
 endif()
 
-# set the lua flag to 0 or 1
-IF( WITH_LUA_FLAG )
-	ADD_DEFINITIONS ( -DWITH_LUA=1 )
-else()
-	ADD_DEFINITIONS ( -DWITH_LUA=0 )
-endif()
-
 IF( DEFINE_SHIPPING )
     message( STATUS "Build set to SHIPPING configuration!" )
     ADD_DEFINITIONS ( -DFLING_SHIPPING )
@@ -59,36 +65,25 @@ set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
 
-# Generated folder used for Cmake generated files
-set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
-message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
-include(FlingEngineInc) # Could be in /tests/CMakeLists.txt
-include(MSVC_PCH) # Could be in /tests/CMakeLists.txt
-
-if( WITH_LUA_FLAG )
-include(FindLua53)
-endif()
-
-message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
-
 # Take care of warnings about strcpy
 if( MSVC )
     add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 	if ( NOT DEFINED NOMINMAX )
 		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
-	endif()
+    endif()
+    
+    # Enable multiple processor compilation
+    if(ENABLE_MULTICORE)
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    endif()
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_definitions( -Wno-unused-private-field )
-    add_definitions( -Wno-exceptions )
-    #add_definitions( -shared ) 
+
     add_definitions( -fPIC )
 
 # Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    #add_definitions( -shared ) 
     add_definitions( -fPIC )
 endif()
 
@@ -109,6 +104,13 @@ set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory( external/SPIRV-Cross )
+# Make the folders look pretty in Visual Studio
+set_target_properties(spirv-cross-c PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-core PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-cpp PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-glsl PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-reflect PROPERTIES FOLDER SPIRV-Cross)
+set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
 
 # ImGUI 
 if( WITH_IMGUI_FLAG )
@@ -125,13 +127,6 @@ include_directories( external/json/single_include )
 include_directories( external/stb )
 include_directories( external/tinyobjloader )
 include_directories( external/cereal/include )
-
-# Lua
-if( WITH_LUA_FLAG )
-include_directories( external/sol2/include )
-include_directories( external/lua53/include )
-include_directories( external/lua53/lib )
-endif()
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )

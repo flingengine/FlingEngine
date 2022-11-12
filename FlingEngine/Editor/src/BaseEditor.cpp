@@ -4,18 +4,20 @@
 #include "BaseEditor.h"
 #include "VulkanApp.h"
 #include "PhyscialDevice.h"
+#include "FirstPersonCamera.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
-#include <sstream>
 #include "ImFileBrowser.hpp"
 #include "World.h"
+#include "EditableComponent.h"
 
 #include <stdio.h> 
 #include <string.h> 
+#include <sstream>
 
 namespace Fling
 {
@@ -108,8 +110,7 @@ namespace Fling
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    //t_Reg.assign<Fling::MeshRenderer>(t_Entity, "Models/cube.obj");
-                    auto& meshRender = t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
+                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
 
                     fileDialog.ClearSelected();
                 }
@@ -199,25 +200,73 @@ namespace Fling
 
         if(m_DisplayComponentEditor)
         {
-            m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+            DrawComponentEditor(t_Reg);
         }
 
         if (m_DisplayWindowOptions)
         {
             DrawWindowOptions();
         }
+
+        if(m_DisplayCameraOptions)
+        {
+            DrawCameraOptions();
+        }
+    }
+
+    void BaseEditor::DrawCameraOptions()
+    {
+		ImGui::Begin("Camera Options");
+
+        if(FirstPersonCamera* Cam = VulkanApp::Get().GetCamera())
+        {
+			ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+            ImGui::InputFloat("Aspect Ratio", &Cam->m_aspectRatio);
+			ImGui::InputFloat("NearPlane", &Cam->m_nearPlane);
+			ImGui::InputFloat("FarPlane", &Cam->m_farPlane);
+            ImGui::InputFloat("FOV", &Cam->m_fieldOfView);
+            ImGui::InputFloat("Gamma", &Cam->m_Gamma);
+            ImGui::InputFloat("Exposure", &Cam->m_Exposure);
+			ImGui::InputFloat("Speed", &Cam->m_speed);
+		}
+
+		ImGui::End();
     }
 
     void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
     {
         ImGui::Begin("World Outline");
 
-        auto view = t_Reg.view<Transform>();
-        for(auto entity: view) 
+		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
+
+        auto view = t_Reg.view<EditableComponent>();
+        for(entt::entity entity : view) 
         {
+            const bool bStartedSelected = (m_CompEditorEntityType == entity);
+            
             std::ostringstream os;
-            os << "Entity " << static_cast<UINT64>(entity);
+            os << "Entity " << static_cast<uint64>(entity);
             std::string label = os.str();
+
+            if (ImGui::Button(" - "))
+            {
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::Text("Hovered");
+                }
+
+                F_LOG_TRACE("Delete {}", label);
+                t_Reg.destroy(entity);
+            }
+
+            ImGui::SameLine();
+            
+            // If the entity is currently selected, then give it a different color in the editor
+            if(bStartedSelected)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
+            }
 
             // gets only the components that are going to be used ...
             if(ImGui::Button(label.c_str(), ImVec2( ImGui::GetWindowWidth(), 0.f ) ))
@@ -225,19 +274,60 @@ namespace Fling
                 // Select this eneity for the component editor
                 m_CompEditorEntityType = entity;
             }
+
+            if(bStartedSelected)
+            {
+                ImGui::PopStyleColor(1);
+            }
         }
 
         ImGui::End();
     }
 
+    void BaseEditor::DrawComponentEditor(entt::registry& t_Reg)
+    {
+		// Set the window options for the component editor
+		ImGui::SetNextWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), ImGuiCond_FirstUseEver);
+
+		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
+
+        // Make sure that each entity has a transform so that they show up in the editor window
+        if(m_CompEditorEntityType != entt::null)
+        {
+            if(!t_Reg.has<EditableComponent>(m_CompEditorEntityType))
+            {
+				t_Reg.assign<EditableComponent>(m_CompEditorEntityType);
+            }
+        }
+    }
+
     void BaseEditor::DrawWindowOptions()
     {
-        
         ImGui::Begin("Window Options");
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-        // Dropdown for windowed ,borderless, etc
+        // Dropdown for windowed, borderless, etc
+		static const char* WindowOpts[] = { "Fullscreen", "Windowed", "BorderlessWindowed" };
+        static const char* CurSelection = nullptr;
 
+		if (ImGui::BeginCombo("Window Mode", CurSelection))
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(WindowOpts); n++)
+            {
+				bool is_selected = (CurSelection == WindowOpts[n]); // You can store your selection however you want, outside or inside your objects
+				if (ImGui::Selectable(WindowOpts[n], is_selected))
+                {
+                    CurSelection = WindowOpts[n];
+                }
+				
+                if (is_selected)
+                {
+					ImGui::SetItemDefaultFocus();
+                }
+            }
+			ImGui::EndCombo();
+		}
 
         ImGui::End();
     }
@@ -323,6 +413,7 @@ namespace Fling
             if (ImGui::BeginMenu("Windows"))
             {
                 ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
+				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
                 ImGui::EndMenu();
             }
 
@@ -333,6 +424,23 @@ namespace Fling
                     m_DisplayWindowOptions = true;
                 }
                 ImGui::EndMenu();
+            }
+
+            if (m_OwningWorld->IsReadyForPlay())
+            {
+				if (ImGui::Button("Play Game"))
+				{
+					// Tell the world that we should start the game logic
+					m_OwningWorld->RequestGameStart();
+				}
+            }
+            else if(m_OwningWorld->IsPlaying())
+            {
+				if (ImGui::Button("Stop Game"))
+				{
+					// Tell the world to stop game play logic
+					m_OwningWorld->RequestGameStop();
+				}
             }
 
             ImGui::EndMenuBar();
@@ -358,7 +466,7 @@ namespace Fling
         // File pop up to load the level file 
         F_LOG_TRACE("Save to file {}", t_FileName);
 
-        // Overload this to add custom componented
+        // Add template arguments here to add custom components to the level files
         m_OwningWorld->OutputLevelFile(t_FileName);
     }
 

@@ -16,11 +16,11 @@ namespace Fling
         KeyState m_State;
 
         /** The key code that is mapped to this key to the current platform */
-        UINT32 m_KeyCode;
+        uint32 m_KeyCode;
 
     public:
 
-        explicit Key(const std::string& t_Name, UINT32 t_KeyCode)
+        explicit Key(const std::string& t_Name, uint32 t_KeyCode)
             : m_Name(t_Name)
 			, m_State(KeyState::UP)
 			, m_KeyCode(t_KeyCode)
@@ -31,7 +31,7 @@ namespace Fling
         /** Set the state of this key */
         void SetState(KeyState t_NewState){ m_State = t_NewState; }
         inline KeyState GetState () const { return m_State; }
-        inline UINT32 GetCode () const { return m_KeyCode; }
+        inline uint32 GetCode () const { return m_KeyCode; }
 
         inline const std::string& GetName() const { return m_Name; }
 

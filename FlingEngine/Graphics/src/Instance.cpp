@@ -49,7 +49,7 @@ namespace Fling
 		// Determine global validation layer count
 		if( m_EnableValidationLayers )
 		{
-			createInfo.enabledLayerCount = static_cast<UINT32>( m_ValidationLayers.size() );
+			createInfo.enabledLayerCount = static_cast<uint32>( m_ValidationLayers.size() );
 			createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 		}
 		else 
@@ -82,7 +82,7 @@ namespace Fling
 		// Get the list of available validation layers
 		// Validation layers are ways for us to choose what types of debugging
 		// features we want from the Vulkan SDK
-		UINT32 layerCount = 0;
+		uint32 layerCount = 0;
 		vkEnumerateInstanceLayerProperties( &layerCount, nullptr );
 
 		std::vector<VkLayerProperties> availableLayers( layerCount );
@@ -110,7 +110,7 @@ namespace Fling
 
     std::vector<const char*> Instance::GetRequiredExtensions()
 	{
-		UINT32 glfwExtensionCount = 0;
+		uint32 glfwExtensionCount = 0;
 		const char** glfwExtensions;
 		glfwExtensions = glfwGetRequiredInstanceExtensions( &glfwExtensionCount );
 

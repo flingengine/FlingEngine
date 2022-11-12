@@ -7,7 +7,7 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;	
-	class MeshRenderer;
+	struct MeshRenderer;
 	class Swapchain;
 	class FirstPersonCamera;
 
@@ -37,29 +37,31 @@ namespace Fling
 
 		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, UINT32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override final;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+		void PrepareAttachments() override final;
 
-		void PrepareAttachments() override;
-
-		void CreateGraphicsPipeline() override;
+		void CreateGraphicsPipeline() override final;
 
 		void GatherPresentDependencies(
 			std::vector<CommandBuffer*>& t_CmdBuffs,
 			std::vector<VkSemaphore>& t_Deps,
-			UINT32 t_ActiveFrameIndex,
-			UINT32 t_CurrentFrameInFlight) override;
+			uint32 t_ActiveFrameIndex,
+			uint32 t_CurrentFrameInFlight) override final;
 
-		void CleanUp(entt::registry& t_reg) override;
+		void CleanUp(entt::registry& t_reg) override final;
+
+		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
 
 	private:
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf);
+		void OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		void BuildOffscreenCommandBuffer(entt::registry& t_reg, UINT32 t_ActiveFrameInFlight);
+		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
+
+		void BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight);
 
 		// We need an offscreen semaphore for each possible frame in flight because the swap chain
 		// presentation will depend on this command buffer being complete

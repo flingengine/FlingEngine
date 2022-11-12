@@ -1,0 +1,53 @@
+# build version format
+version: '{build}'
+
+# Free accounts have a max of 1, but ask anyway.
+max_jobs: 4
+
+# Any VSVisual studio version we want
+image:
+- Visual Studio 2019
+- Visual Studio 2017
+
+configuration:
+- Debug
+- Release
+
+# Enviornment variable matrix
+environment:
+  matrix:
+  - DDEFINE_SHIPPING: 0
+  - DDEFINE_SHIPPING: 1
+
+cache:
+  - VulkanSDK.exe
+
+# We only care about x64 for right now
+platform:
+- x64
+
+# If we had a specific CMake version we wanted 
+# this is the place to add it
+install:
+# Vulkan SDK Setup
+  - echo Downloading Vulkan SDK platform=%PLATFORM% configuration=%CONFIGURATION%
+  - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.114.0/windows/VulkanSDK-1.1.114.0-Installer.exe?Human=true
+  - VulkanSDK.exe /S
+# Build Fling
+  - cmake --version
+  - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - git submodule update --init --recursive
+  - mkdir build
+  - cd build
+  - cmake .. -A %PLATFORM%  -DENABLE_MULTICORE=OFF
+  - dir
+  - echo Building platform=%PLATFORM% configuration=%CONFIGURATION%
+
+before_build:
+  - ps: $env:VULKAN_SDK="C:/VulkanSDK/1.1.114.0"
+
+build:
+  parallel: true                  # enable MSBuild parallel builds
+  project: build/FlingEngine.sln # path to Visual Studio solution or project
+  verbosity: normal                # quiet|minimal|normal|detailed

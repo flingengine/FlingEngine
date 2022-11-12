@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -63,11 +64,20 @@ $(function() {
 <div class="textblock">Here is a list of all struct and union fields with links to the structures/unions they belong to:</div>
 
 <h3><a id="index_p"></a>- p -</h3><ul>
+<li>ParseReflectionData()
+: <a class="el" href="classFling_1_1Shader.html#ae589a7ffa90f1983411f3d156136b06b">Fling::Shader</a>
+</li>
 <li>Patch
 : <a class="el" href="structFling_1_1Version.html#add16db00570d1cbca6fd4e45424f5bca">Fling::Version</a>
 </li>
 <li>PhysicalDevice()
 : <a class="el" href="classFling_1_1PhysicalDevice.html#a229fbc83199643674a23ea46b858dfc3">Fling::PhysicalDevice</a>
+</li>
+<li>PointLightBuffer
+: <a class="el" href="structFling_1_1LightingUbo.html#a4b34dd3c3be429e27334e8297cf2a937">Fling::LightingUbo</a>
+</li>
+<li>PointLightCount
+: <a class="el" href="structFling_1_1LightingUbo.html#ac684b428463f00074562de98eed5f97c">Fling::LightingUbo</a>
 </li>
 <li>Poll()
 : <a class="el" href="classFling_1_1Input.html#a907e3f9de6aee5396a1bb32fc157a99e">Fling::Input</a>
@@ -76,22 +86,57 @@ $(function() {
 : <a class="el" href="classFling_1_1Input.html#a7f04526cf8dd4bcb039e72b259a71c54">Fling::Input</a>
 </li>
 <li>Pos
-: <a class="el" href="structFling_1_1Vertex.html#aece3bee4d8d74248257875b525206bb6">Fling::Vertex</a>
+: <a class="el" href="structFling_1_1PointLight.html#a7133abf58c3b24f461b5ea95a69827dc">Fling::PointLight</a>
+, <a class="el" href="structFling_1_1Vertex.html#aece3bee4d8d74248257875b525206bb6">Fling::Vertex</a>
 </li>
 <li>PostLoad()
 : <a class="el" href="classFling_1_1Level.html#a8aa6f9eb28a1db457726c2802fda9461">Fling::Level</a>
 </li>
-<li>PrepShutdown()
-: <a class="el" href="classFling_1_1Renderer.html#a0e2c47f5839c09eb12cb46a652adffba">Fling::Renderer</a>
+<li>Prepare()
+: <a class="el" href="classFling_1_1VulkanApp.html#a2d77336f16e1dff7cf9ae9b4e95de687">Fling::VulkanApp</a>
+</li>
+<li>PrepareAttachments()
+: <a class="el" href="classFling_1_1DebugSubpass.html#a20ae8cc17d2d86204a3b4d93adab13b9">Fling::DebugSubpass</a>
+, <a class="el" href="classFling_1_1ImGuiSubpass.html#a6c719aaea6c8effe6e5bf2d0b05dff4b">Fling::ImGuiSubpass</a>
+, <a class="el" href="classFling_1_1OffscreenSubpass.html#a2d229bd652eb47cad89fea8eb5438f7e">Fling::OffscreenSubpass</a>
+, <a class="el" href="classFling_1_1Subpass.html#a7e81e83f77be5ec9642035bc1e769c5b">Fling::Subpass</a>
+</li>
+<li>PreparePipeline()
+: <a class="el" href="classFling_1_1Cubemap.html#a235a08466edd82d1e38dba73fe6954fd">Fling::Cubemap</a>
+</li>
+<li>PrepareResources()
+: <a class="el" href="classFling_1_1ImGuiSubpass.html#a531ca7480f081ac801460d5db5f8c942">Fling::ImGuiSubpass</a>
+</li>
+<li>PrepImGuiStyleSettings()
+: <a class="el" href="classFling_1_1ImGuiSubpass.html#ab04c06e28679a895dfcf857b2f177572">Fling::ImGuiSubpass</a>
 </li>
 <li>PresentModes
 : <a class="el" href="structFling_1_1SwapChainSupportDetails.html#a24b4d2503011256493c7a6773c8efe87">Fling::SwapChainSupportDetails</a>
 </li>
-<li>PreTick()
-: <a class="el" href="classFling_1_1World.html#a11a10e0e31adc2c941c96a77b1191dd1">Fling::World</a>
+<li>PreUpdate()
+: <a class="el" href="classFling_1_1Input.html#aecf4ff03ec2154bbcf0ee38819f83641">Fling::Input</a>
 </li>
-<li>Proj
-: <a class="el" href="structFling_1_1UniformBufferObject.html#a3011ffa7b05a4c8812ec4df2d15776e4">Fling::UniformBufferObject</a>
+<li>PreUpdateImpl()
+: <a class="el" href="classFling_1_1Input.html#a05e68a5bf97c91b06a4e28af37e4adb9">Fling::Input</a>
+</li>
+<li>PrintFPS()
+: <a class="el" href="classSandbox_1_1Game.html#aa011fe8d2d0dd9db9b2cb3634b5c2a2f">Sandbox::Game</a>
+</li>
+<li>Projection
+: <a class="el" href="structFling_1_1CameraInfoUbo.html#a2e128b05786d9e2466571fbb30c9419c">Fling::CameraInfoUbo</a>
+, <a class="el" href="structFling_1_1DebugSubpass_1_1DebugUBO.html#a4d25eee6f6a8b41a4efdd4a6aee0a882">Fling::DebugSubpass::DebugUBO</a>
+, <a class="el" href="structFling_1_1OffscreenUBO.html#a3a838562f7e1460d3ac3a080c8ffe725">Fling::OffscreenUBO</a>
+, <a class="el" href="structFling_1_1UboSkyboxVS.html#a2ef4d21b3fa487fed0ca7f28dada5926">Fling::UboSkyboxVS</a>
+, <a class="el" href="structFling_1_1UboVS.html#ac5e20ff0bb85d3c22ca7119868d4329d">Fling::UboVS</a>
+</li>
+<li>Push()
+: <a class="el" href="classFling_1_1MovingAverage.html#af91a3f6b75475cd21fd042d8a2bf31d4">Fling::MovingAverage&lt; T, t_Size &gt;</a>
+</li>
+<li>pushConstBlock
+: <a class="el" href="classFling_1_1ImGuiSubpass.html#add113a2c22bb492f1a8909a1224e0d97">Fling::ImGuiSubpass</a>
+</li>
+<li>pwd_
+: <a class="el" href="classImGui_1_1FileBrowser.html#a65c1720e19a98a59bf59a0a6755ac895">ImGui::FileBrowser</a>
 </li>
 </ul>
 </div><!-- contents -->

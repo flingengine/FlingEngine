@@ -34,9 +34,9 @@ namespace Fling
         return true;
     }
 
-    std::string FlingConfig::GetStringImpl(const std::string& t_Section, const std::string& t_Key) const
+    std::string FlingConfig::GetStringImpl(const std::string& t_Section, const std::string& t_Key, const std::string& t_Default) const
     {
-        return m_IniReader.Get(t_Section, t_Key, "UNKNOWN");
+        return m_IniReader.Get(t_Section, t_Key, t_Default);
     }
 
     int FlingConfig::GetIntImpl(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal/*=-1*/) const
@@ -62,9 +62,9 @@ namespace Fling
     //////////////////////////////////////////////////////////////////////////
     // Command line parsing
 
-    UINT32 FlingConfig::LoadCommandLineOpts(int argc, char* argv[])
+    uint32 FlingConfig::LoadCommandLineOpts(int argc, char* argv[])
     {
-        UINT32 ArgsLoaded = 0;
+        uint32 ArgsLoaded = 0;
         
         // TODO: Use regex to try and parse out if things are a key/val etc
 

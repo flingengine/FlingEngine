@@ -121,14 +121,14 @@ namespace Fling
         m_VertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
         m_VertexInputStateCreateInfo.pVertexBindingDescriptions = &BindingDescription;
-        m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<UINT32>(AttributeDescriptions.size());
+        m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32>(AttributeDescriptions.size());
         m_VertexInputStateCreateInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
 
 
         // Create graphics pipeline ------------------------
         m_PipelineCreateInfo = {};
         m_PipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        m_PipelineCreateInfo.stageCount = static_cast<UINT32>(shaderStages.size());
+        m_PipelineCreateInfo.stageCount = static_cast<uint32>(shaderStages.size());
         m_PipelineCreateInfo.pStages = shaderStages.data();
         m_PipelineCreateInfo.pVertexInputState = &m_VertexInputStateCreateInfo;
         m_PipelineCreateInfo.pInputAssemblyState = &m_InputAssemblyState;

@@ -11,8 +11,6 @@
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
 
-#define FRAME_BUF_DIM 2048
-
 namespace Fling
 {
 	OffscreenSubpass::OffscreenSubpass(
@@ -25,8 +23,6 @@ namespace Fling
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 		, m_Camera(t_Cam)
 	{
-		assert(m_Camera);
-
 		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
 
 		// Set the clear values for the G Buffer
@@ -37,7 +33,7 @@ namespace Fling
 
 		// Build offscreen semaphores -------
 		m_OffscreenSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
-		for (INT32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
+		for (int32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			m_OffscreenSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_Device->GetVkDevice());
 		}
@@ -86,15 +82,10 @@ namespace Fling
 
 	void OffscreenSubpass::Draw(
 		CommandBuffer& t_CmdBuf, 
-		VkFramebuffer t_PresentFrameBuf, 
-		UINT32 t_ActiveSwapImage, 
+		uint32 t_ActiveSwapImage, 
 		entt::registry& t_reg, 
 		float DeltaTime)
 	{
-		// If the dirty stack has something in it then process that and rebuild cmd buffers
-
-		// Otherwise we don't need to build the offscreen cmd bufs every time
-
 		assert(m_GraphicsPipeline);
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveSwapImage];
@@ -128,9 +119,11 @@ namespace Fling
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
 		CurrentUBO.Projection[1][1] *= -1.0f;
-		CurrentUBO.View = m_Camera->GetViewMatrix();
+		CurrentUBO.View = m_Camera->GetViewMatrix();	
 
-		// For every mesh bind it's model and descriptor set info
+		// #TODO This is where a lot of the cost of our engine loop comes from
+		// We can improve this by doing some kind of dirty bit tracking to only
+		// update the UBO's on MeshRenders if they have changed
 		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Default"_hs>>);
 
 		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
@@ -155,14 +148,6 @@ namespace Fling
 				buf->GetSize()
 			);
 
-			// If the mesh has no descriptor sets, then build them
-			// #TODO Investigate a better way to do this, probably by just moving the 
-			// descriptors off of the mesh
-			if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
-			{
-				CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
-			}
-
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(
 				OffscreenCmdBuf->GetHandle(),
@@ -186,12 +171,7 @@ namespace Fling
 		OffscreenCmdBuf->End();
 	}
 
-	void OffscreenSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
-	{
-		
-	}
-
-	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend, VkDescriptorPool t_Pool, FrameBuffer& t_FrameBuf)
+	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
 	{
 		// Only allocate new descriptor sets if there are none
 		// Some may exist if entt decides to re-use the component
@@ -245,10 +225,10 @@ namespace Fling
 			// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 		};
 
-		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<UINT32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 	}
 
-	void OffscreenSubpass::BuildOffscreenCommandBuffer(entt::registry& t_reg, UINT32 t_ActiveFrameInFlight)
+	void OffscreenSubpass::BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight)
 	{
 
 	}
@@ -257,13 +237,15 @@ namespace Fling
 	{
 		assert(m_OffscreenFrameBuf == nullptr);
 
-		m_OffscreenFrameBuf = new FrameBuffer(m_Device->GetVkDevice(), FRAME_BUF_DIM, FRAME_BUF_DIM);
+		VkExtent2D Extents = m_SwapChain->GetExtents();
+
+		m_OffscreenFrameBuf = new FrameBuffer(m_Device, Extents.width, Extents.height);
 
 		AttachmentCreateInfo attachmentInfo = {};
 
 		// Four attachments (3 color, 1 depth)
-		attachmentInfo.Width = FRAME_BUF_DIM;
-		attachmentInfo.Height = FRAME_BUF_DIM;
+		attachmentInfo.Width = Extents.width;
+		attachmentInfo.Height = Extents.height;
 		attachmentInfo.LayerCount = 1;
 		attachmentInfo.Usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
@@ -295,8 +277,8 @@ namespace Fling
 		const PhysicalDevice* PhysDevice = m_Device->GetPhysicalDevice();
 		assert(PhysDevice);
 
-		VkBool32 validDepthFormat = PhysDevice->GetSupportedDepthFormat(&attDepthFormat);
-		assert(validDepthFormat);
+		PhysDevice->GetSupportedDepthFormat(&attDepthFormat);
+		
 		// Attachment 3: Depth
 		attachmentInfo.Format = attDepthFormat;
 		attachmentInfo.Usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -307,11 +289,10 @@ namespace Fling
 		VK_CHECK_RESULT(m_OffscreenFrameBuf->CreateRenderPass());
 		F_LOG_TRACE("Offscreen render pass created...");
 
-
 		// Create the descriptor pool for off screen things
-		UINT32 DescriptorCount = 2000 * m_SwapChain->GetImageViewCount();
+		uint32 DescriptorCount = 2000 * m_SwapChain->GetImageViewCount();
 
-		std::vector<VkDescriptorPoolSize> poolSizes =
+		static std::vector<VkDescriptorPoolSize> poolSizes =
 		{
 			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 		DescriptorCount),
 			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 			DescriptorCount),
@@ -322,7 +303,7 @@ namespace Fling
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<UINT32>(poolSizes.size());
+		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = to_u32(1000 * m_SwapChain->GetImageViewCount());
 
@@ -382,7 +363,7 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(RenderPass, nullptr);
 	}
 
-	void OffscreenSubpass::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, UINT32 t_ActiveFrameIndex, UINT32 t_CurrentFrameInFlight)
+	void OffscreenSubpass::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, uint32 t_ActiveFrameIndex, uint32 t_CurrentFrameInFlight)
 	{
 		t_CmdBuffs.emplace_back(m_OffscreenCmdBufs[t_ActiveFrameIndex]);
 		t_Deps.emplace_back(m_OffscreenSemaphores[t_CurrentFrameInFlight]);
@@ -404,6 +385,15 @@ namespace Fling
 		}
 	}
 
+	void OffscreenSubpass::OnSwapchainResized(entt::registry& t_reg)
+	{
+		const VkExtent2D NewSize = m_SwapChain->GetExtents();
+		if (m_OffscreenFrameBuf)
+		{
+			m_OffscreenFrameBuf->ResizeAndRecreate(NewSize.width, NewSize.height);
+		}
+	}
+
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
 	{
 		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Default)
@@ -412,10 +402,6 @@ namespace Fling
 		}
 
 		t_Reg.assign<entt::tag<"Default"_hs >>(t_Ent);
-
-		// Initialize the mesh renderer to have a descriptor pool that it can use
-		size_t ImageCount = m_SwapChain->GetImageCount();
-		VkDevice Device = m_Device->GetVkDevice();
 
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)
@@ -426,7 +412,11 @@ namespace Fling
 		}
 		
 		// I would love to create some descriptor sets here		
-		assert(m_OffscreenFrameBuf);
-		CreateMeshDescriptorSet(t_MeshRend, VK_NULL_HANDLE, *m_OffscreenFrameBuf);
+		CreateMeshDescriptorSet(t_MeshRend);
+	}
+
+	void OffscreenSubpass::OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+		//t_MeshRend.Release();
 	}
 }   // namespace Fling

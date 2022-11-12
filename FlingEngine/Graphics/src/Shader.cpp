@@ -35,8 +35,8 @@ namespace Fling
 
 		assert(RawCode.size() % 4 == 0);
 
-		UINT32 size = static_cast<UINT32>(RawCode.size() / 4);
-		ParseReflectionData(reinterpret_cast<const UINT32*>(RawCode.data()), size);
+		uint32 size = static_cast<uint32>(RawCode.size() / 4);
+		ParseReflectionData(reinterpret_cast<const uint32*>(RawCode.data()), size);
     }
 
     Shader::~Shader()
@@ -49,7 +49,7 @@ namespace Fling
         VkShaderModuleCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         CreateInfo.codeSize = t_ShaderCode.size();
-        CreateInfo.pCode = reinterpret_cast<const UINT32*>(t_ShaderCode.data());
+        CreateInfo.pCode = reinterpret_cast<const uint32*>(t_ShaderCode.data());
 
         return vkCreateShaderModule(m_Device->GetVkDevice(), &CreateInfo, nullptr, &m_Module);
     }
@@ -100,20 +100,20 @@ namespace Fling
 		}
 	}	// namespace ParseHelpers
 
-    void Shader::ParseReflectionData(const UINT32* t_Code, UINT32 t_Size)
+    void Shader::ParseReflectionData(const uint32* t_Code, uint32 t_Size)
     {
 		assert(t_Code && t_Size > 0);
 		assert(t_Code[0] == SpvMagicNumber);
 
-		UINT32 idBound = t_Code[3];
+		uint32 idBound = t_Code[3];
 		std::vector<Id> ids(idBound);
-		const UINT32* insn = t_Code + 5;
+		const uint32* insn = t_Code + 5;
 
 		// Find out what types of bindings this shader has
 		while (insn != t_Code + t_Size)
 		{
-			UINT16 opcode = UINT16(insn[0]);
-			UINT16 wordCount = UINT16(insn[0] >> 16);
+			uint16 opcode = uint16(insn[0]);
+			uint16 wordCount = uint16(insn[0] >> 16);
 
 			switch (opcode)
 			{
@@ -125,7 +125,7 @@ namespace Fling
 			case SpvOpExecutionMode:
 			{
 				assert(wordCount >= 3);
-				UINT32 mode = insn[2];
+				uint32 mode = insn[2];
 
 				switch (mode)
 				{
@@ -141,7 +141,7 @@ namespace Fling
 			{
 				assert(wordCount >= 3);
 
-				UINT32 id = insn[1];
+				uint32 id = insn[1];
 				assert(id < idBound);
 
 				switch (insn[2])
@@ -163,7 +163,7 @@ namespace Fling
 			{
 				assert(wordCount >= 2);
 
-				UINT32 id = insn[1];
+				uint32 id = insn[1];
 				assert(id < idBound);
 
 				assert(ids[id].opcode == 0);
@@ -173,7 +173,7 @@ namespace Fling
 			{
 				assert(wordCount == 4);
 
-				UINT32 id = insn[1];
+				uint32 id = insn[1];
 				assert(id < idBound);
 
 				assert(ids[id].opcode == 0);
@@ -185,7 +185,7 @@ namespace Fling
 			{
 				assert(wordCount >= 4);
 
-				UINT32 id = insn[2];
+				uint32 id = insn[2];
 				assert(id < idBound);
 
 				assert(ids[id].opcode == 0);
@@ -244,13 +244,13 @@ namespace Fling
 		}
     }
 
-	UINT32 Shader::GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32])
+	uint32 Shader::GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32])
 	{
-		UINT32 ResourceMask = 0;
+		uint32 ResourceMask = 0;
 
 		for (const Shader* shader : t_Shaders)
 		{
-			for (UINT32 i = 0; i < 32; ++i)
+			for (uint32 i = 0; i < 32; ++i)
 			{
 				if (shader->m_ResourceMask & (1 << i))
 				{
@@ -284,9 +284,9 @@ namespace Fling
 		std::vector<VkDescriptorSetLayoutBinding> setBindings;
 
 		VkDescriptorType resourceTypes[32] = {};
-		UINT32 resourceMask = GatherResources(t_Shaders, resourceTypes);
+		uint32 resourceMask = GatherResources(t_Shaders, resourceTypes);
 
-		for (UINT32 i = 0; i < 32; ++i)
+		for (uint32 i = 0; i < 32; ++i)
 		{
 			if (resourceMask & (1 << i))
 			{
@@ -334,7 +334,7 @@ namespace Fling
 		if (t_PushConstantSize)
 		{
 			pushConstantRange.stageFlags = t_PushConstantStages;
-			pushConstantRange.size = UINT32(t_PushConstantSize);
+			pushConstantRange.size = uint32(t_PushConstantSize);
 
 			createInfo.pushConstantRangeCount = 1;
 			createInfo.pPushConstantRanges = &pushConstantRange;

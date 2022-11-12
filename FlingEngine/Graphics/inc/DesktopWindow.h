@@ -24,8 +24,8 @@ namespace Fling
 		/** Tick the window (poll input from GLFW) */
 		virtual void Update() override;
 
-		/** Recreate the swap chain based on current window size with GLFW */
-		virtual void RecreateSwapChain() override;
+		/** BLocks until we get a new window size from GLFW */
+		virtual void WaitForNewWindowSize() override;
 
 		/**
 		* Check if this window should close
@@ -34,11 +34,11 @@ namespace Fling
 		virtual int ShouldClose() override;
 
 		/** Is this window currently minimized? */
-		virtual bool IsMinimized() const override;
+		virtual bool IsMinimized() const override final;
 
-		virtual UINT32 GetWidth() const override;
+		virtual uint32 GetWidth() const override;
 
-		virtual UINT32 GetHeight() const override;
+		virtual uint32 GetHeight() const override;
 
 		virtual float GetAspectRatio() const override;
 

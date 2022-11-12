@@ -11,12 +11,7 @@
 #include "Random.h"
 // For getting some lighting info
 #include "GeometrySubpass.h"
-
 #include "Mover.h"
-
-#if WITH_LUA
-#include "LuaManager.h"
-#endif
 
 namespace Sandbox
 {
@@ -25,18 +20,7 @@ namespace Sandbox
     void Game::Init(entt::registry& t_Reg)
     {
         // Lets create an entity! 
-        F_LOG_TRACE("Sandbox Game Init!");
-
-#if WITH_EDITOR
-        F_LOG_TRACE("Enable Editor!");
-#endif
-
-#if WITH_LUA
-		F_LOG_TRACE("Enable Lua!");
-#endif
-
-        // Temp saving and load functions
-        Input::BindKeyPress<&Sandbox::Game::PrintFPS>(KeyNames::FL_KEY_1, *this);
+        F_LOG_TRACE("Sandbox Init!");
 
         // notify we want to quit when we press escape
         Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
@@ -48,33 +32,13 @@ namespace Sandbox
         Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
-
-		// Switch between window modes 
-		//Input::BindKeyPress<&Sandbox::Game::SetWindowFullscreen>(KeyNames::FL_KEY_2, *this);
-		//Input::BindKeyPress<&Sandbox::Game::SetWindowWindowed>(KeyNames::FL_KEY_3, *this);
-		//Input::BindKeyPress<&Sandbox::Game::SetWindowBorderlessWindowed>(KeyNames::FL_KEY_4, *this);
-
-#if WITH_LUA
-		Input::BindKeyPress<&Sandbox::Game::ToggleLua>(KeyNames::FL_KEY_L, *this);
-#endif
-
-        LightingTest(t_Reg);
-        //OnLoadInitated();
-        //GenerateTestMeshes(t_Reg);
-		//ScriptingTest(t_Reg);
-
-        SetWindowIcon();
     }
 
-    void Game::Shutdown(entt::registry& t_Reg)
-    {
-        F_LOG_TRACE("Sandbox Game Shutdown!");
-    }
-
-	void Game::OnQuitPressed()
+	void Game::OnStartGame(entt::registry& t_Reg)
 	{
-		F_LOG_TRACE("The Sandbox game wants to quit!");
-		m_WantsToQuit = true;
+		F_LOG_TRACE("Sandbox OnStartGame!");
+
+		LightingTest(t_Reg);
 	}
 
     void Game::Update(entt::registry& t_Reg, float DeltaTime)
@@ -84,7 +48,7 @@ namespace Sandbox
             glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
 
             // For each active mesh renderer
-            t_Reg.group<Transform>(entt::get<Rotator>).each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
+            t_Reg.view<Transform, Rotator>().each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
             {
                 const glm::vec3& curRot = t_Trans.GetRotation();
                 t_Trans.SetRotation(curRot + RotOffset);
@@ -110,32 +74,42 @@ namespace Sandbox
                 t_Trans.SetPos(newPos);
             });
         }
-
-#if WITH_LUA
-		if (m_RunLua)
-		{
-			LuaManager::Get().Tick(DeltaTime);
-		}
-#endif
     }
+
+	void Game::OnStopGame(entt::registry& t_Reg)
+	{
+		F_LOG_TRACE("Sandbox OnStopGame!");
+
+		auto RotateView = t_Reg.view<Transform, Rotator>();
+		t_Reg.destroy(RotateView.begin(), RotateView.end());
+		
+		auto MoverView = t_Reg.view<Transform, Mover>();
+		t_Reg.destroy(MoverView.begin(), MoverView.end());
+	}
+
+	void Game::Shutdown(entt::registry& t_Reg)
+	{
+		F_LOG_TRACE("Sandbox Shutdown!");
+	}
+
+	void Game::OnQuitPressed()
+	{
+		F_LOG_TRACE("The Sandbox game wants to quit!");
+		m_WantsToQuit = true;
+	}
+
+	void Game::AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
+	{
+		entt::entity e0 = t_Reg.create();
+		t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
+		Transform& t0 = t_Reg.assign<Transform>(e0);
+		t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
+		t0.SetScale(t_Scale);
+	}
 
     void Game::LightingTest(entt::registry& t_Reg)
     {
-        auto AddModel = [&](INT32 t_Itr, 
-			const std::string& t_Model,
-			const std::string& t_Mat, 
-			const glm::vec3 t_Scale = glm::vec3(1.0f), 
-			const glm::vec3 t_Rot = glm::vec3(0.0f))
-        {
-            entt::entity e0 = t_Reg.create();
-            t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-			t_Reg.assign<Rotator>(e0);
-            Transform& t0 = t_Reg.assign<Transform>(e0);
-            t0.SetPos(glm::vec3(-2.0f + (1.5f * (float)t_Itr), 0.0f, 0.0f));
-			t0.SetRotation(t_Rot);
-            t0.SetScale(t_Scale);
-        };
-
+        
         auto AddRandomPointLight = [&]()
         {
             entt::entity e0 = t_Reg.create();
@@ -155,20 +129,9 @@ namespace Sandbox
             t0.SetPos(Fling::Random::GetRandomVec3(min, max));
         };
 
-		auto AddFloor = [&](
-			const std::string& t_Model,
-			const std::string& t_Mat,
-			const glm::vec3 t_Scale = glm::vec3(1.0f)
-			)
-		{
-			entt::entity e0 = t_Reg.create();
-			t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-			Transform& t0 = t_Reg.assign<Transform>(e0);
-			t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
-			t0.SetScale(t_Scale);
-		};
+		
 
-		AddFloor("Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
+		AddFloor(t_Reg, "Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
 
 		// Add a bunch of random light bois
 		for (size_t i = 0; i < DeferredLightSettings::MaxPointLights; i++)
@@ -178,14 +141,14 @@ namespace Sandbox
 
 		// Spawn a little grid of spheres
 		float Spacing = 1.5f;
-		INT32 GridSize = 10;
-		glm::vec3 Center(0.0f);
-		for (size_t i = 0; i < GridSize; i++)
+		int32 GridSize = 25;
+		
+		for (int32 i = 0; i < GridSize; i++)
 		{
 			std::string ModelPath = "Models/sphere.obj";
 			std::string MatPath = "Materials/DeferredBronzeMat.mat";
 
-			for (size_t j = 0; j < GridSize; j++)
+			for (int32 j = 0; j < GridSize; j++)
 			{
 				entt::entity e0 = t_Reg.create();
 
@@ -243,30 +206,11 @@ namespace Sandbox
 				Transform& t0 = t_Reg.assign<Transform>(e0);
 
 				t0.SetPos(
-					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
+					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
 				);
 			}
 		}
     }
-
-	void Game::ScriptingTest(entt::registry& t_Reg)
-	{
-#if WITH_LUA
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<Transform>(e0);
-		t_Reg.assign<MeshRenderer>(e0, "Models/cube.obj");
-		ScriptComponent& script = t_Reg.assign<ScriptComponent>(e0, "Scripts/Test.lua");
-
-		entt::entity e1 = t_Reg.create();
-		t_Reg.assign<Transform>(e1);
-		t_Reg.assign<MeshRenderer>(e1, "Models/sphere.obj");
-		Transform& t0 = t_Reg.get<Transform>(e1);
-		t0.SetPos(glm::vec3(0, 3, 0));
-		ScriptComponent& script2 = t_Reg.assign<ScriptComponent>(e1, "Scripts/Test.lua");
-
-		LuaManager::Get().Start();
-#endif
-	}
 
     void Game::ToggleCursorVisibility()
     {
@@ -281,20 +225,6 @@ namespace Sandbox
     void Game::OnToggleMoveLights()
     {
         m_MovePointLights = !m_MovePointLights;
-    }
-
-	void Game::ToggleLua()
-	{
-		m_RunLua = !m_RunLua;
-	}
-
-    void Game::SetWindowIcon()
-    {
-        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-        if (CurrentWindow)
-        {
-            CurrentWindow->SetWindowIcon("Icons/Fling_Logo.png"_hs);
-        }
     }
 
     void Game::ToggleRotation()
@@ -315,38 +245,5 @@ namespace Sandbox
 		Transform& t0 = t_Reg.assign<Transform>(e0);
 		t0.SetPos(glm::vec3(pos, 0.0f, 0.0f));
 		F_LOG_TRACE("Spawn a sphere to the left!");
-	}
-
-    void Game::PrintFPS() const
-    {
-        float AvgFrameTime = Fling::Stats::Frames::GetAverageFrameTime();
-        F_LOG_TRACE("Frame time: {} FPS: {}", AvgFrameTime, (1.0f / AvgFrameTime));
-  }
-
-	void Game::SetWindowFullscreen()
-	{
-		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-		if (CurrentWindow)
-		{
-			CurrentWindow->SetWindowMode(WindowMode::Fullscreen);
-		}
-	}
-
-	void Game::SetWindowBorderlessWindowed()
-	{
-		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-		if (CurrentWindow)
-		{
-			CurrentWindow->SetWindowMode(WindowMode::BorderlessWindowed);
-		}
-	}
-
-	void Game::SetWindowWindowed()
-	{
-		FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-		if (CurrentWindow)
-		{
-			CurrentWindow->SetWindowMode(WindowMode::Windowed);
-		}
 	}
 }	// namespace Sandbox

@@ -14,7 +14,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
  //   VkDescriptorSetAllocateInfo allocInfo = {};
  //   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
  //   allocInfo.descriptorPool = VK_NULL_HANDLE;
- //   allocInfo.descriptorSetCount = static_cast<UINT32>(Images.size());
+ //   allocInfo.descriptorSetCount = static_cast<uint32>(Images.size());
  //   allocInfo.pSetLayouts = layouts.data();
 
  //   t_MeshRend.m_DescriptorSet.resize(Images.size());
@@ -51,7 +51,7 @@ void Fling::ShaderProgramReflections::CreateDescriptorSets(
  //       descriptorWrites.push_back(lightUniformSet);
  //       //descriptorWrites.push_back(skyboxImageSampelr);
 
- //       vkUpdateDescriptorSets(Device, static_cast<UINT32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+ //       vkUpdateDescriptorSets(Device, static_cast<uint32>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
  //   }
 }
 
@@ -64,7 +64,7 @@ void Fling::ShaderProgramReflections::BindCmdBuffer(
     MeshRenderer& t_MeshRend, 
     VkCommandBuffer t_CommandBuffer, 
     GraphicsPipeline* t_GraphicsPipeline, 
-    UINT32 t_CommandBufferIndex)
+    uint32 t_CommandBufferIndex)
 {
     //Fling::Model* Model = t_MeshRend.m_Model;
     //VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
@@ -89,11 +89,11 @@ void Fling::ShaderProgramReflections::BindCmdBuffer(
 void Fling::ShaderProgramReflections::UpdateUniformBuffer(
     MeshRenderer& t_MeshRend, 
     Transform& transform, 
-    UINT32 t_CurrentImage, 
+    uint32 t_CurrentImage, 
     Camera* t_Camera)
 {
-    Camera* camera = t_Camera;
-    Transform::CalculateWorldMatrix(transform);
+    //Camera* camera = t_Camera;
+    //Transform::CalculateWorldMatrix(transform);
 
     //// Calculate the world matrix based on the given transform
     //UboVS ubo = {};

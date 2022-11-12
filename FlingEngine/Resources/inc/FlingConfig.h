@@ -27,7 +27,7 @@ namespace Fling
         */
         bool LoadConfigFile(const std::string& t_File);
 
-		static std::string GetString(const std::string& t_Section, const std::string& t_Key) { return FlingConfig::Get().GetStringImpl(t_Section, t_Key); }
+		static std::string GetString(const std::string& t_Section, const std::string& t_Key, std::string t_Default = "INVALID") { return FlingConfig::Get().GetStringImpl(t_Section, t_Key, t_Default); }
 
 		static int GetInt(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) { return FlingConfig::Get().GetIntImpl(t_Section, t_Key); }
 
@@ -45,14 +45,14 @@ namespace Fling
         * @param argv   Command line args
         * @return Number of options loaded
         */
-        UINT32 LoadCommandLineOpts( int argc, char* argv[] );
+        uint32 LoadCommandLineOpts( int argc, char* argv[] );
         
     private:
 
         /** Ini config file reader */
         static INIReader m_IniReader;
 
-		std::string GetStringImpl(const std::string& t_Section, const std::string& t_Key) const;
+		std::string GetStringImpl(const std::string& t_Section, const std::string& t_Key, const std::string& t_Default) const;
 
 		int GetIntImpl(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) const;
 

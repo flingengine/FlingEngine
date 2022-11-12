@@ -28,8 +28,8 @@ namespace Fling
 		const PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
 		const Instance* GetInstance() const { return m_Instance; }
 
-		UINT32 GetGraphicsFamily() const { return m_GraphicsFamily; }
-		UINT32 GetPresentFamily() const { return m_PresentFamily; }
+		uint32 GetGraphicsFamily() const { return m_GraphicsFamily; }
+		uint32 GetPresentFamily() const { return m_PresentFamily; }
 
 		void WaitForIdle();
 
@@ -51,10 +51,10 @@ namespace Fling
 
 		/** Queue families */
 		VkQueueFlags m_SupportedQueues{};
-		UINT32 m_GraphicsFamily = 0;
-		UINT32 m_PresentFamily = 0;
-		UINT32 m_ComputeFamily = 0;
-		UINT32 m_TransferFamily = 0;
+		uint32 m_GraphicsFamily = 0;
+		uint32 m_PresentFamily = 0;
+		uint32 m_ComputeFamily = 0;
+		uint32 m_TransferFamily = 0;
 
 		/**
 		 * @brief	Get what queue Indecies/families this device should use

@@ -12,7 +12,7 @@ namespace Fling
 	 * @tparam T 		the type inside this circular buffer. Stack allocated
 	 * @tparam t_Size 	The max size of this buffer, must be a power of 2!
 	 */
-    template<typename T, size_t t_Size>
+    template<typename T, size_t t_NumElms>
     class CircularBuffer
     {
     public:
@@ -25,24 +25,24 @@ namespace Fling
 
     private:
        
-		const UINT32 m_BufferSize;
+		const uint32 m_BufferSize;
 		
-		T m_Buffer [t_Size];
+		T m_Buffer [t_NumElms];
 
-		UINT32 m_AllocatedIndex = 0;
+		uint32 m_AllocatedIndex = 0;
     };
 
-	template<typename T, size_t t_Size>
-	inline CircularBuffer<T, t_Size>::CircularBuffer()
-		: m_BufferSize(t_Size)
+	template<typename T, size_t t_NumElms>
+	inline CircularBuffer<T, t_NumElms>::CircularBuffer()
+		: m_BufferSize(t_NumElms)
 		, m_AllocatedIndex(0)
 		, m_Buffer{}
 	{
-		static_assert((t_Size != 0 && (t_Size & (t_Size-1)) == 0), "CircularBuffer::t_Size must be a power of 2!");
+		static_assert((t_NumElms != 0 && (t_NumElms & (t_NumElms-1)) == 0), "CircularBuffer::t_NumElms must be a power of 2!");
 	}
 
-	template<typename T, size_t t_Size>
-	inline T* CircularBuffer<T, t_Size>::GetItem()
+	template<typename T, size_t t_NumElms>
+	inline T* CircularBuffer<T, t_NumElms>::GetItem()
 	{
 		const uint32_t index = m_AllocatedIndex++;
 		// This bit shifting is the same as the % operator

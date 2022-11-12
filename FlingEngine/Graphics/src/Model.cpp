@@ -58,13 +58,13 @@ namespace Fling
 			}
 		}
 
-		//std::vector<UINT32> indexBuffer = { 0,1,2, 2,3,0 };
-		std::vector<UINT32> indexBuffer = { 2,3,0  ,0,1,2  };
+		//std::vector<uint32> indexBuffer = { 0,1,2, 2,3,0 };
+		std::vector<uint32> indexBuffer = { 2,3,0  ,0,1,2  };
 
-		/*for (UINT32 i = 0; i < 3; ++i)
+		/*for (uint32 i = 0; i < 3; ++i)
 		{
-			UINT32 indices[6] = { 0,1,2, 2,3,0 };
-			for (UINT32 index : indices)
+			uint32 indices[6] = { 0,1,2, 2,3,0 };
+			for (uint32 index : indices)
 			{
 				indexBuffer.push_back(i * 4 + index);
 			}
@@ -79,13 +79,13 @@ namespace Fling
 		LoadModel();
 	}
 
-	Model::Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<UINT32> t_Indecies)
+	Model::Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies)
 		: Resource(t_ID)
 	{
 		m_Verts = t_Verts;
 		m_Indices = t_Indecies;
 
-		CalculateVertexTangents(m_Verts.data(), static_cast<UINT32>(m_Verts.size()), m_Indices.data(), static_cast<UINT32>(m_Indices.size()));
+		CalculateVertexTangents(m_Verts.data(), static_cast<uint32>(m_Verts.size()), m_Indices.data(), static_cast<uint32>(m_Indices.size()));
 		CreateBuffers();
 	}
 
@@ -147,7 +147,7 @@ namespace Fling
 		}
 
 		// Calculate our tangent vectors for this model
-		CalculateVertexTangents(m_Verts.data(), static_cast<UINT32>(m_Verts.size()), m_Indices.data(), static_cast<UINT32>(m_Indices.size()));
+		CalculateVertexTangents(m_Verts.data(), static_cast<uint32>(m_Verts.size()), m_Indices.data(), static_cast<uint32>(m_Indices.size()));
 
 		CreateBuffers();
 	}
@@ -168,15 +168,15 @@ namespace Fling
 		Buffer::CopyBuffer(&IndexStagingBuffer, m_IndexBuffer, IndexBufferSize);
 	}
 
-	void Model::CalculateVertexTangents(Vertex* verts, UINT32 numVerts, UINT32* indices, UINT32 numIndices)
+	void Model::CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices)
 	{
 		// Calculate tangents one whole triangle at a time
 		for ( size_t i = 0; i < numVerts;)
 		{
 			// Grab indices and vertices of first triangle
-			UINT32 i1 = indices [ i++ ];
-			UINT32 i2 = indices [ i++ ];
-			UINT32 i3 = indices [ i++ ];
+			uint32 i1 = indices [ i++ ];
+			uint32 i2 = indices [ i++ ];
+			uint32 i3 = indices [ i++ ];
 			Vertex* v1 = &verts [ i1 ];
 			Vertex* v2 = &verts [ i2 ];
 			Vertex* v3 = &verts [ i3 ];

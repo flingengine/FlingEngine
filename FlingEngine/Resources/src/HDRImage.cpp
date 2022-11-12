@@ -47,10 +47,9 @@ namespace Fling
             0
         );
 
-        UINT32 HDRTexture;
-        m_Width = static_cast<UINT32>(Width);
-        m_Height = static_cast<UINT32>(Height);
-        m_MipLevels = static_cast<UINT32>(std::floor(std::log2(std::max(m_Width, m_Height)))) + 1;
+        m_Width = static_cast<uint32>(Width);
+        m_Height = static_cast<uint32>(Height);
+        m_MipLevels = static_cast<uint32>(std::floor(std::log2(std::max(m_Width, m_Height)))) + 1;
 
         if (m_PixelData)
         {
@@ -176,10 +175,10 @@ namespace Fling
         barrier.subresourceRange.layerCount = 1;
         barrier.subresourceRange.levelCount = 1;
 
-        INT32 mipWidth = m_Width;
-        INT32 mipHeight = m_Height;
+        int32 mipWidth = m_Width;
+        int32 mipHeight = m_Height;
 
-        for (UINT32 i = 1; i < m_MipLevels; i++)
+        for (uint32 i = 1; i < m_MipLevels; i++)
         {
             barrier.subresourceRange.baseMipLevel = i - 1;
             barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

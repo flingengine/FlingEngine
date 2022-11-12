@@ -10,6 +10,7 @@
 
 //#pragma clang diagnostic ignored "-Wold-style-cast"
 #pragma clang diagnostic ignored "-Wexceptions"
+#pragma clang diagnostic ignored "-Wunused-private-field"
 
 // GCC -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #elif defined(__GNUC__)
@@ -37,6 +38,7 @@
 
 //#pragma clang diagnostic ignored "-Wold-style-cast"
 #pragma clang diagnostic ignored "-Wexceptions"
+#pragma clang diagnostic ignored "-Wunused-private-field"
 
 // GCC -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #elif defined(__GNUC__)

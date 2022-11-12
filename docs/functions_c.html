@@ -20,6 +20,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="profile_64x64.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Fling Engine
    &#160;<span id="projectnumber">0.00.1</span>
@@ -63,8 +64,18 @@ $(function() {
 <div class="textblock">Here is a list of all struct and union fields with links to the structures/unions they belong to:</div>
 
 <h3><a id="index_c"></a>- c -</h3><ul>
+<li>CalculateVertexTangents()
+: <a class="el" href="classFling_1_1Model.html#abd5831fd867a113368d0fe933e5e2bfd">Fling::Model</a>
+</li>
+<li>CalculateWorldMatrix()
+: <a class="el" href="structFling_1_1Transform.html#a27258e17c08ee5f4066bf119504f44e4">Fling::Transform</a>
+</li>
 <li>Camera()
 : <a class="el" href="classFling_1_1Camera.html#a423ca36716b08eac173c61e5895f66c3">Fling::Camera</a>
+</li>
+<li>CamPos
+: <a class="el" href="structFling_1_1CameraInfoUbo.html#ae5ad424756af29edb646a858762cff3e">Fling::CameraInfoUbo</a>
+, <a class="el" href="structFling_1_1UboVS.html#abdf165d7dd28c8a816aa5628a5080a92">Fling::UboVS</a>
 </li>
 <li>Capabilities
 : <a class="el" href="structFling_1_1SwapChainSupportDetails.html#aeb1f3e7e33ea253173651943914e5b2b">Fling::SwapChainSupportDetails</a>
@@ -76,76 +87,113 @@ $(function() {
 : <a class="el" href="classFling_1_1PhysicalDevice.html#ab67a4cb1396308bd4b22c2798ef23f2b">Fling::PhysicalDevice</a>
 </li>
 <li>ChooseSwapChainPresentMode()
-: <a class="el" href="classFling_1_1Renderer.html#ad8d100784915f7467de83f2210118554">Fling::Renderer</a>
-, <a class="el" href="classFling_1_1Swapchain.html#a75c1f6a2334c5bc1068a0226a6eaaf2d">Fling::Swapchain</a>
+: <a class="el" href="classFling_1_1Swapchain.html#a75c1f6a2334c5bc1068a0226a6eaaf2d">Fling::Swapchain</a>
 </li>
 <li>ChooseSwapChainSurfaceFormat()
-: <a class="el" href="classFling_1_1Renderer.html#a8913058ed84c68407761d0113ace6c03">Fling::Renderer</a>
-, <a class="el" href="classFling_1_1Swapchain.html#a05b39b399bae4d0dce5a2a6482e38fe3">Fling::Swapchain</a>
+: <a class="el" href="classFling_1_1Swapchain.html#a05b39b399bae4d0dce5a2a6482e38fe3">Fling::Swapchain</a>
 </li>
 <li>ChooseSwapExtent()
-: <a class="el" href="classFling_1_1Renderer.html#a1920d755208a7945ffc72bb11ac6e2c9">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1VulkanApp.html#a6081ecd2c600c8ea950bcbae75fcbd56">Fling::VulkanApp</a>
+</li>
+<li>CircularBuffer()
+: <a class="el" href="classFling_1_1CircularBuffer.html#a9a439212ec679e03f383042aa5eb7d1d">Fling::CircularBuffer&lt; T, t_Size &gt;</a>
+</li>
+<li>CleanUp()
+: <a class="el" href="classFling_1_1DebugSubpass.html#a385523730b6e8ada33ecb618b6698b3f">Fling::DebugSubpass</a>
 </li>
 <li>Cleanup()
 : <a class="el" href="classFling_1_1DepthBuffer.html#a0ea3f117e513b85f4cdb970760a61af0">Fling::DepthBuffer</a>
-, <a class="el" href="classFling_1_1Swapchain.html#afc1c74a1e3ab8662a887daae550cdf6e">Fling::Swapchain</a>
 </li>
-<li>CleanupFrameResources()
-: <a class="el" href="classFling_1_1Renderer.html#a1b89b8d5170b63d26f7cd92aa644a1eb">Fling::Renderer</a>
+<li>CleanUp()
+: <a class="el" href="classFling_1_1ImGuiSubpass.html#ac80fca84d2803b55481dd4ce846b3ef0">Fling::ImGuiSubpass</a>
+, <a class="el" href="classFling_1_1OffscreenSubpass.html#a744ccae025620c773efcc2411889abda">Fling::OffscreenSubpass</a>
+, <a class="el" href="classFling_1_1RenderPipeline.html#a5a0de03a76561f0b4e0e36181928ee0e">Fling::RenderPipeline</a>
+, <a class="el" href="classFling_1_1Subpass.html#a76634fa6df7c825877203c0dd8c4a1f6">Fling::Subpass</a>
 </li>
-<li>CmdRender()
-: <a class="el" href="classFling_1_1Model.html#ab4d65220c7da6f7ff72079cf7e41ca96">Fling::Model</a>
+<li>Cleanup()
+: <a class="el" href="classFling_1_1Swapchain.html#afc1c74a1e3ab8662a887daae550cdf6e">Fling::Swapchain</a>
+</li>
+<li>ClearSelected()
+: <a class="el" href="classFling_1_1FileBrowser.html#a07608aeacdbb97b94227ff71eb105694">Fling::FileBrowser</a>
+, <a class="el" href="classImGui_1_1FileBrowser.html#aa81b5fda3569dd0aa056b4a276fe24a4">ImGui::FileBrowser</a>
+</li>
+<li>Close()
+: <a class="el" href="classImGui_1_1FileBrowser.html#a57ee1bc7d72a0f7c00136a0c83c5c29a">ImGui::FileBrowser</a>
+</li>
+<li>closeFlag_
+: <a class="el" href="classImGui_1_1FileBrowser.html#a386772fe46e5ce248c591e4235040eb2">ImGui::FileBrowser</a>
 </li>
 <li>Color
 : <a class="el" href="structFling_1_1Vertex.html#a6c68810b9874cbe6aa2e412abe904fd0">Fling::Vertex</a>
+</li>
+<li>CommandBuffer()
+: <a class="el" href="classFling_1_1CommandBuffer.html#aa9c94086e4ff9acbabcc999181c0417d">Fling::CommandBuffer</a>
+</li>
+<li>ConvertAbsolutePathToRelative()
+: <a class="el" href="structFling_1_1FlingPaths.html#a8e39b573d2a94c683261357e4b390760">Fling::FlingPaths</a>
 </li>
 <li>CopyBuffer()
 : <a class="el" href="classFling_1_1Buffer.html#af66e5c6de377cd4eef365d243149e0c3">Fling::Buffer</a>
 </li>
 <li>CopyBufferToImage()
-: <a class="el" href="classFling_1_1Image.html#ad6d2b09a95900d36a4a3335dc8b3e6a9">Fling::Image</a>
+: <a class="el" href="classFling_1_1HDRImage.html#a5a475ad1c6ae0163fd3fc896a92b17a0">Fling::HDRImage</a>
+, <a class="el" href="classFling_1_1Texture.html#ad621f195923b43c425df786808715c64">Fling::Texture</a>
 </li>
 <li>Create()
 : <a class="el" href="classFling_1_1DepthBuffer.html#a03ae1a528b3a2bc1519ce221298fcaa7">Fling::DepthBuffer</a>
+, <a class="el" href="classFling_1_1File.html#a7a4a02be7ff9d96c432478c6c260b4b3">Fling::File</a>
 , <a class="el" href="classFling_1_1FlingWindow.html#a17ce60abbff9584c7c2654e12c800390">Fling::FlingWindow</a>
+, <a class="el" href="classFling_1_1HDRImage.html#a41a1fcc2c08b2e9d0972cc5b349199e7">Fling::HDRImage</a>
+, <a class="el" href="classFling_1_1JsonFile.html#a43312fcd98d7147f231beed2687b8909">Fling::JsonFile</a>
+, <a class="el" href="classFling_1_1Material.html#a79122b0bf8d89f80ca9d9ba18cf934a8">Fling::Material</a>
 , <a class="el" href="classFling_1_1Model.html#a08ecb3df78feb74ef71f2bc127f30ebb">Fling::Model</a>
+, <a class="el" href="classFling_1_1Multisampler.html#abb7c0dc7ac00c2fd967a5a3dca17720d">Fling::Multisampler</a>
+, <a class="el" href="classFling_1_1Shader.html#a26a813dc41b444141da393a3afd6a635">Fling::Shader</a>
+, <a class="el" href="classFling_1_1Texture.html#aeacd439c7005f315a2d8ebeb027a35ef">Fling::Texture</a>
 </li>
-<li>CreateCommandBuffers()
-: <a class="el" href="classFling_1_1Renderer.html#a324262a6d4f0a52a653a364a4248615c">Fling::Renderer</a>
+<li>CreateAttributes()
+: <a class="el" href="classFling_1_1GraphicsPipeline.html#af5bbc24ed16aa4768198b10634f0d16b">Fling::GraphicsPipeline</a>
 </li>
-<li>CreateCommandPool()
-: <a class="el" href="classFling_1_1Renderer.html#ae9770dcdc8aea26d4439198ca62ef657">Fling::Renderer</a>
+<li>CreateBuffer()
+: <a class="el" href="classFling_1_1Buffer.html#a6647854e19d199005d19e38c32d54aa2">Fling::Buffer</a>
 </li>
-<li>CreateDebugUtilsMessengerEXT()
-: <a class="el" href="classFling_1_1Instance.html#ae3b93e1ca32787232d6b65afc4d51477">Fling::Instance</a>
+<li>CreateBuffers()
+: <a class="el" href="classFling_1_1Model.html#a340d964abd4477bee3fb1871d439e93f">Fling::Model</a>
 </li>
-<li>CreateDescriptorLayout()
-: <a class="el" href="classFling_1_1Renderer.html#a566aa4af96d10c9714a972a9c8837398">Fling::Renderer</a>
-</li>
-<li>CreateDescriptorPool()
-: <a class="el" href="classFling_1_1Renderer.html#a4d7cb712bb207a1cf0684b5618ce89e0">Fling::Renderer</a>
+<li>CreateDescriptors()
+: <a class="el" href="classFling_1_1RenderPipeline.html#a7ee48a6697c1e32cf18f0162aa62abd6">Fling::RenderPipeline</a>
 </li>
 <li>CreateDescriptorSets()
-: <a class="el" href="classFling_1_1Renderer.html#ad3ea88ad432e1a401c95d2ab617c045c">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1DebugSubpass.html#a307ac1384c56c16bb9e2088329ea835c">Fling::DebugSubpass</a>
+, <a class="el" href="classFling_1_1GeometrySubpass.html#a038fb8b150ffd24b6974e8ebbe0ca539">Fling::GeometrySubpass</a>
+, <a class="el" href="classFling_1_1ImGuiSubpass.html#a1df6a960d0bfdd30e945725adc4d3008">Fling::ImGuiSubpass</a>
+, <a class="el" href="classFling_1_1OffscreenSubpass.html#aa96adf47ae31b13eb6e32757ca7c8769">Fling::OffscreenSubpass</a>
+, <a class="el" href="classFling_1_1Subpass.html#a3041481902f8c9a0f5141cd86fa92e0b">Fling::Subpass</a>
 </li>
 <li>CreateDevice()
 : <a class="el" href="classFling_1_1LogicalDevice.html#ac8570e5599b24931851863ecff7596ab">Fling::LogicalDevice</a>
 </li>
-<li>CreateFrameBuffers()
-: <a class="el" href="classFling_1_1Renderer.html#a7576430a955a4e9e1753034458fe348c">Fling::Renderer</a>
+<li>CreateFrameSyncResources()
+: <a class="el" href="classFling_1_1VulkanApp.html#a3f2460a1872c47605d7c6f1b1d1197b5">Fling::VulkanApp</a>
 </li>
 <li>CreateGameWindow()
-: <a class="el" href="classFling_1_1Renderer.html#a626e15a5adc77e872cd024d11a7769a4">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1VulkanApp.html#a80f747541153ec3dea1c1aeec6ccb4e5">Fling::VulkanApp</a>
 </li>
 <li>CreateGraphicsPipeline()
-: <a class="el" href="classFling_1_1Renderer.html#a7d96f499a331ceefe333ffca4cf55a5a">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1DebugSubpass.html#a4daa3471d2bb95cbf82a92dc6ce2c286">Fling::DebugSubpass</a>
+, <a class="el" href="classFling_1_1GeometrySubpass.html#a41c8f87bc14a8df2a15942adcec00783">Fling::GeometrySubpass</a>
+, <a class="el" href="classFling_1_1GraphicsPipeline.html#af40420b727af0dda0bc113fb5872d7ee">Fling::GraphicsPipeline</a>
+, <a class="el" href="classFling_1_1ImGuiSubpass.html#ad0385662006c13913f40062da002a9e3">Fling::ImGuiSubpass</a>
+, <a class="el" href="classFling_1_1OffscreenSubpass.html#a190dd98df516d2407defd67f6863c3f9">Fling::OffscreenSubpass</a>
+, <a class="el" href="classFling_1_1Subpass.html#aaee43ca79caa35ff09b4839284b227e8">Fling::Subpass</a>
 </li>
 <li>CreateImage()
 : <a class="el" href="classFling_1_1DepthBuffer.html#af9d5eb12374349a5d3254e5ce05a500b">Fling::DepthBuffer</a>
 </li>
 <li>CreateImageView()
 : <a class="el" href="classFling_1_1DepthBuffer.html#abddb13edbd12ec2fc40731f7e8c85798">Fling::DepthBuffer</a>
-, <a class="el" href="classFling_1_1Image.html#a98818d64ca9083b3194ef371986e8e9c">Fling::Image</a>
+, <a class="el" href="classFling_1_1HDRImage.html#ad1381a402a8dd210a7ffe014573a51ee">Fling::HDRImage</a>
+, <a class="el" href="classFling_1_1Texture.html#a625f14eed90eff7010c3da13b095f5ce">Fling::Texture</a>
 </li>
 <li>CreateImageViews()
 : <a class="el" href="classFling_1_1Swapchain.html#a59f7c6132667c48d37f09a80c8f93932">Fling::Swapchain</a>
@@ -153,33 +201,44 @@ $(function() {
 <li>CreateInstance()
 : <a class="el" href="classFling_1_1Instance.html#ab358e9ecf0a9feec05d040dd4969ee42">Fling::Instance</a>
 </li>
+<li>CreateMeshDescriptorSet()
+: <a class="el" href="classFling_1_1DebugSubpass.html#afa990acd5af2f7ffa89546175cbff5e1">Fling::DebugSubpass</a>
+, <a class="el" href="classFling_1_1OffscreenSubpass.html#a42a95ff97c78c77749700dc1067df117">Fling::OffscreenSubpass</a>
+</li>
+<li>CreatePipelineLayout()
+: <a class="el" href="classFling_1_1Shader.html#acf1c93e0ea238e97df3411c4d94d5821">Fling::Shader</a>
+</li>
 <li>CreateQueueIndecies()
 : <a class="el" href="classFling_1_1LogicalDevice.html#a973ccbf8abb5f21872990fb5e0011b91">Fling::LogicalDevice</a>
 </li>
 <li>CreateRenderPass()
-: <a class="el" href="classFling_1_1Renderer.html#a4e465d1ec3dd9268c7c2976ecc49149b">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1FrameBuffer.html#a8cf72c1fd1a30760361f7dd37d729ad9">Fling::FrameBuffer</a>
 </li>
 <li>CreateResources()
 : <a class="el" href="classFling_1_1Swapchain.html#ab5f98360fa0f8aaacb669df7a9366202">Fling::Swapchain</a>
 </li>
+<li>CreateSampler()
+: <a class="el" href="classFling_1_1FrameBuffer.html#a0d56a70905b08682fbf4cbb22c867f1b">Fling::FrameBuffer</a>
+</li>
+<li>CreateSetLayout()
+: <a class="el" href="classFling_1_1Shader.html#a654ed47c837f5ed859dc93b79923ece3">Fling::Shader</a>
+</li>
 <li>CreateShaderModule()
-: <a class="el" href="classFling_1_1Renderer.html#ad0f4883969231489e7b2fcc152288e83">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1Shader.html#a3d830d4875c0e3b074b1458e4274bdda">Fling::Shader</a>
 </li>
 <li>CreateSurface()
 : <a class="el" href="classFling_1_1DesktopWindow.html#a92cb63eaf3b724d8673b927bd4457784">Fling::DesktopWindow</a>
 , <a class="el" href="classFling_1_1FlingWindow.html#aaa487c6784340cad5e4775399a5ca977">Fling::FlingWindow</a>
 </li>
-<li>CreateSyncObjects()
-: <a class="el" href="classFling_1_1Renderer.html#ac3a6d484ddd19e06533772664feeca4d">Fling::Renderer</a>
-</li>
 <li>CreateTextureSampler()
-: <a class="el" href="classFling_1_1Image.html#a4d94389ce47b8ed3c214ba78703f50af">Fling::Image</a>
+: <a class="el" href="classFling_1_1HDRImage.html#a22c7323753fdb3da286bcda5af9f4efb">Fling::HDRImage</a>
+, <a class="el" href="classFling_1_1Texture.html#a72c7879eb63acc227cf5d5fb60263d27">Fling::Texture</a>
 </li>
-<li>CreateUniformBuffers()
-: <a class="el" href="classFling_1_1Renderer.html#a8c407f4594706a41756da265e31f5558">Fling::Renderer</a>
+<li>Cubemap()
+: <a class="el" href="classFling_1_1Cubemap.html#a0cc7e017c3c22454c0cfe737db08c23b">Fling::Cubemap</a>
 </li>
 <li>CurrentFrameIndex
-: <a class="el" href="classFling_1_1Renderer.html#aa1ba055bc6a22ccbe1435085389805df">Fling::Renderer</a>
+: <a class="el" href="classFling_1_1VulkanApp.html#acb714d68625c98163014801f1cf44f52">Fling::VulkanApp</a>
 </li>
 </ul>
 </div><!-- contents -->
