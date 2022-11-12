@@ -6,8 +6,8 @@ max_jobs: 4
 
 # Any VSVisual studio version we want
 image:
+- Visual Studio 2022
 - Visual Studio 2019
-- Visual Studio 2017
 
 configuration:
 - Debug
@@ -31,7 +31,7 @@ platform:
 install:
 # Vulkan SDK Setup
   - echo Downloading Vulkan SDK platform=%PLATFORM% configuration=%CONFIGURATION%
-  - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.114.0/windows/VulkanSDK-1.1.114.0-Installer.exe?Human=true
+  - if not exist VulkanSDK.exe curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.3.211.0/windows/VulkanSDK-1.3.211.0-Installer.exe
   - VulkanSDK.exe /S
 # Build Fling
   - cmake --version
