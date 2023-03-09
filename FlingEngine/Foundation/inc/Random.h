@@ -3,10 +3,11 @@
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 #include "FlingMath.h"
+#include "FoundationAPI.h"
 
 namespace Fling
 {
-	class FLING_API Random
+	class FOUNDATION_API Random
 	{
 	public:
 
