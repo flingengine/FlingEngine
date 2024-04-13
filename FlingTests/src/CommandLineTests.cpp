@@ -10,11 +10,12 @@ TEST_CASE("Command Line", "[Command Line]")
 
 	SECTION("Ignores First Argument")
 	{
-		char* Args[] = 
+		const char* Args[] = 
 		{
 			"FlingEngine.exe",
 		};
-		int32 ArgCount = sizeof(Args) / sizeof(char*);
+
+		const int32 ArgCount = sizeof(Args) / sizeof(char*);
 		CommandLine::Set(CommandLine::BuildFromArgs(ArgCount, Args));
 
 		// The command line should always ignore the first argument, which is
@@ -25,7 +26,7 @@ TEST_CASE("Command Line", "[Command Line]")
 
 	SECTION("Bool Flag")
 	{
-		char* Args[] =
+		const char* Args[] =
 		{
 			"FlingEngine.exe",
 			"-test=918"

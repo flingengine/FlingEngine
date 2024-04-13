@@ -41,10 +41,10 @@ namespace Fling
 		 */
 #if WITH_EDITOR
 		template<class T_GameType, class T_EditorType = Fling::BaseEditor>
-		FLING_API uint64 Run(int argc, char* argv[]);
+		FLING_API uint64 Run(int argc, const char* argv[]);
 #else
 		template<class T_GameType>
-		FLING_API uint64 Run(int argc, char* argv[]);
+		FLING_API uint64 Run(int argc, const char* argv[]);
 #endif
 
 	private:
@@ -52,7 +52,7 @@ namespace Fling
 		/// <summary>
 		/// Start any systems or subsystems that may be needed
 		/// </summary>
-		void Startup(int argc, char* argv[]);
+		void Startup(int argc, const char* argv[]);
 
 		/// <summary>
 		/// Initial tick for the engine frame
@@ -84,10 +84,10 @@ namespace Fling
 
 #if WITH_EDITOR
 	template<class T_GameType, class T_EditorType>
-	FLING_API uint64 Engine::Run(int argc, char* argv[])
+	FLING_API uint64 Engine::Run(int argc, const char* argv[])
 #else
 	template<class T_GameType>
-	FLING_API uint64 Engine::Run(int argc, char* argv[])
+	FLING_API uint64 Engine::Run(int argc, const char* argv[])
 #endif
 	{
 		static_assert(std::is_default_constructible<T_GameType>::value, "T_GameType requires default-constructible elements");

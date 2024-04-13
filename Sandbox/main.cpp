@@ -9,7 +9,7 @@
 /**
 * Entry point for using the Fling Engine!
 */
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
 	Fling::Engine Engine = {};
     

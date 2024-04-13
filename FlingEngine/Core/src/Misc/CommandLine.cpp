@@ -10,7 +10,7 @@ namespace Fling
 		CurrentCommandLine = CmdLine;
 	}
 
-	std::string CommandLine::BuildFromArgs(int32 argc, char* argv[])
+	std::string CommandLine::BuildFromArgs(int32 argc, const char* argv[])
 	{
 		std::stringstream CmdStream;
 

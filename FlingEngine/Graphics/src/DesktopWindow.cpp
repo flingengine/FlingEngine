@@ -140,8 +140,8 @@ namespace Fling
             return;
         }
 
-        int windowedWidth = FlingConfig::GetInt("Windowed", "WindowWidth") ? FlingConfig::GetInt("Windowed", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH;
-        int windowedHeight = FlingConfig::GetInt("Windowed", "WindowHeight") ? FlingConfig::GetInt("Windowed", "WindowHeight") : FLING_DEFAULT_WINDOW_HEIGHT;
+        const int windowedWidth = FlingConfig::GetInt("Windowed", "WindowWidth") ? FlingConfig::GetInt("Windowed", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH;
+        const int windowedHeight = FlingConfig::GetInt("Windowed", "WindowHeight") ? FlingConfig::GetInt("Windowed", "WindowHeight") : FLING_DEFAULT_WINDOW_HEIGHT;
 
 		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
@@ -159,6 +159,8 @@ namespace Fling
             glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_FALSE);
             glfwSetWindowMonitor(m_Window, nullptr, 100, 100, windowedWidth, windowedHeight, 0);
 			break;
+		default:
+			break;	
 		}
 		m_WindowMode = t_WindowMode;
 

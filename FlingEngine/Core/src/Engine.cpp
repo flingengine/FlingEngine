@@ -8,10 +8,8 @@
 
 namespace Fling
 {
-    void Engine::Startup(int argc, char* argv[])
+    void Engine::Startup(int argc, const char* argv[])
 	{	
-		const bool b = FoundationClass::RunFoundationFunction();
-
 		Random::Init();
 		Logger::Get().Init();
 		

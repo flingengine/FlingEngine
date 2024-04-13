@@ -20,7 +20,7 @@ namespace Fling
         * Builds a string with a space in between each argument passed in via the command
         * except for the first argument (the application name)
         */
-        static std::string BuildFromArgs(int32 Argc, char* ArgV[]);
+        static std::string BuildFromArgs(int32 Argc, const char* ArgV[]);
 
         static bool Parse(const std::string& InKey);
         
