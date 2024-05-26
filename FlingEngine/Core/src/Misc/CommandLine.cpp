@@ -3,14 +3,16 @@
 
 namespace Fling
 {
-	std::string CommandLine::CurrentCommandLine;
-	
-	void CommandLine::Set(const std::string& CmdLine)
+	CommandLine& CommandLine::Get()
 	{
-		CurrentCommandLine = CmdLine;
+		// the command line is a singleton... you can only pass
+		// in one command line instance for the application's lifetime
+		static Fling::CommandLine Instance = {};
+
+		return Instance;
 	}
 
-	std::string CommandLine::BuildFromArgs(int32 argc, const char* argv[])
+	bool CommandLine::Init(const int32 argc, const char* argv[])
 	{
 		std::stringstream CmdStream;
 
@@ -25,20 +27,22 @@ namespace Fling
 				CmdStream << " ";
 			}
 		}
-		return CmdStream.str();
+		CurrentCommandLineData = CmdStream.str();
+
+		// As long as our command line is not empty, we should be fine...
+		// TODO: make sure our command line map is the same size as argc
+		return !CurrentCommandLineData.empty();
 	}
 
-	bool CommandLine::Parse(const std::string& InKey)
+	bool CommandLine::HasParam(const std::string_view Param) const
 	{
-		
-		return false;
-	}
-
-	bool CommandLine::HasParam(const std::string& Param)
-	{
-		std::size_t found = CurrentCommandLine.find(Param);
+		std::size_t found = CurrentCommandLineData.find(Param);
 
 		return found != std::string::npos;
 	}
 
+	std::string_view CommandLine::GetCommandLineData() const
+	{
+		return CurrentCommandLineData;
+	}
 } // namespace Fling

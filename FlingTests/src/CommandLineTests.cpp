@@ -3,6 +3,7 @@
 #include <catch2/catch_all.hpp>
 
 #include "Misc/CommandLine.h"
+#include <string_view>
 
 TEST_CASE("Command Line", "[Command Line]")
 {
@@ -15,13 +16,14 @@ TEST_CASE("Command Line", "[Command Line]")
 			"FlingEngine.exe",
 		};
 
-		const int32 ArgCount = sizeof(Args) / sizeof(char*);
-		CommandLine::Set(CommandLine::BuildFromArgs(ArgCount, Args));
+		constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
+		const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
+		REQUIRE(bWasInitalized);
 
 		// The command line should always ignore the first argument, which is
 		// the application name
-		const std::string& CurCmdLine = CommandLine::Get();
-		REQUIRE(CurCmdLine.length() == 0);
+		const std::string_view CurCmdLine = CommandLine::Get().GetCommandLineData();
+		REQUIRE(CurCmdLine.empty());
 	}
 
 	SECTION("Bool Flag")
@@ -31,10 +33,28 @@ TEST_CASE("Command Line", "[Command Line]")
 			"FlingEngine.exe",
 			"-test=918"
 		};
-		int32 ArgCount = sizeof(Args) / sizeof(char*);
-		CommandLine::Set(CommandLine::BuildFromArgs(ArgCount, Args));
+		constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
+		const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
+		REQUIRE(bWasInitalized);
 
-		const bool bHasFlag = CommandLine::HasParam("test");
+		const bool bHasFlag = CommandLine::Get().HasParam("test");
+		REQUIRE(bHasFlag);
+	}
+
+	SECTION("Integer Flag")
+	{
+		const char* Args[] =
+		{
+			"FlingEngine.exe",
+			"-numFlag=776",
+		};
+
+		// Set the command line
+		int32 ArgCount = sizeof(Args) / sizeof(char*);
+		const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
+		REQUIRE(bWasInitalized);
+
+		const bool bHasFlag = CommandLine::Get().HasParam("numFlag");
 		REQUIRE(bHasFlag);
 	}
 }

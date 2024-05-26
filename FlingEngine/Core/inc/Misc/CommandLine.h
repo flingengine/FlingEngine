@@ -1,7 +1,13 @@
 #pragma once
 
 #include <string> // string, stoi, to_string
+#include <string_view>  // std::string_view
 #include "FlingTypes.h"
+
+// TODO: I think that we may gain a lot if we just use
+// Boost. That certainly will have a better implementation then
+// I can whip up, and I think has config file options as well.
+// https://www.boost.org/doc/libs/1_85_0/doc/html/program_options.html
 
 namespace Fling
 {
@@ -12,28 +18,37 @@ namespace Fling
     class CommandLine
     {
     public:
-        
-        /** Sets the static command line */
-        static void Set(const std::string& CmdLine);
+        /**
+         * @return Instance of the current command line that the application was started with.
+         */
+        static CommandLine& Get();
 
         /** 
-        * Builds a string with a space in between each argument passed in via the command
-        * except for the first argument (the application name)
+        * Initalize the command line instance with the given application args.
+        * This will initalize the command line's internal data structure for keepting
+        * track of the data passed into the command line
+        *
+        * @paran ArgC   The number of command line arguements provided
+        * @param ArgV   The char values of those command line arguments
+        * @return True if successfully initalized
         */
-        static std::string BuildFromArgs(int32 Argc, const char* ArgV[]);
+        bool Init(const int32 Argc, const char* ArgV[]);
 
-        static bool Parse(const std::string& InKey);
-        
-        static const std::string& Get() { return CurrentCommandLine; }
+        /**
+         * Returns true if the given param had a value passed in via command line
+         * @param Param
+         * @return
+         */
+        [[nodiscard]] bool HasParam(const std::string_view Param) const;
 
-        /** Returns true if the given flag is set on the command line */
-        static bool HasFlag(const std::string& Flag);
-        
-        static bool HasParam(const std::string& Param);
+        std::string_view GetCommandLineData() const;
 
     private:
 
-        static std::string CurrentCommandLine;
+        std::string CurrentCommandLineData;
+
+        // TODO: A TMap of string_view's to some generic data container type
+        // which we can use for quick checking of flags.
         
     };
 }   // namespace Fling

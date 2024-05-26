@@ -12,9 +12,10 @@ namespace Fling
 	{	
 		Random::Init();
 		Logger::Get().Init();
-		
-		CommandLine::Set(CommandLine::BuildFromArgs(argc, argv));
-		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get());
+
+    	// Initalize the command line
+		const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);
+		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
 
 		ResourceManager::Get().Init();
 		Timing::Get().Init();
