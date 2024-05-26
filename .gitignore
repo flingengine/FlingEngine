@@ -34,6 +34,11 @@ bld/
 */Intermediate
 */Output
 
+# CLion cmake folders
+cmake-build-debug/
+cmake-build-release/
+
+
 #external/
 
 # Visual Studio 2015 cache/options directory
