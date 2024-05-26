@@ -107,16 +107,13 @@ namespace Fling
 		if(m_World)
 		{
 			m_World->Shutdown();
-
-			if (m_GameImpl)
-			{
-				delete m_GameImpl;
-				m_GameImpl = nullptr;
-			}
-
-			delete m_World;
-			m_World = nullptr;
 		}
+
+    	delete m_GameImpl;
+    	m_GameImpl = nullptr;
+
+    	delete m_World;
+    	m_World = nullptr;
 		
 		// Cleanup any resources
 		Input::Shutdown();

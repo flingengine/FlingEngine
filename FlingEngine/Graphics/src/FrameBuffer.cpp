@@ -171,11 +171,7 @@ namespace Fling
 		// Destroy the old stuff--------------------------------
 		for (FrameBufferAttachment* Attachment : m_Attachments)
 		{
-			if (Attachment)
-			{
-				delete Attachment;
-				Attachment = nullptr;
-			}
+			delete Attachment;
 		}
 		m_Attachments.clear();
 
@@ -202,11 +198,7 @@ namespace Fling
 		// Cleanup attachments
 		for (FrameBufferAttachment* Attachment : m_Attachments)
 		{
-			if (Attachment)
-			{
-				delete Attachment;
-				Attachment = nullptr;
-			}
+			delete Attachment;
 		}
 		m_Attachments.clear();
 

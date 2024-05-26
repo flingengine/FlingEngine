@@ -50,11 +50,8 @@ namespace Fling
             m_ImageMemory = nullptr;
         }
 
-        if (m_GraphicsPipeline)
-        {
-            delete m_GraphicsPipeline;
-            m_GraphicsPipeline = nullptr;
-        }
+        delete m_GraphicsPipeline;
+        m_GraphicsPipeline = nullptr;
 
         vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(m_Device->GetVkDevice(), m_DescriptorSetLayout, nullptr);

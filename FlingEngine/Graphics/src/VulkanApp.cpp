@@ -293,11 +293,7 @@ namespace Fling
 		// Clean up command buffers and command pool -------------
 		for (CommandBuffer* CmdBuf : m_DrawCmdBuffers)
 		{
-			if (CmdBuf)
-			{
-				delete CmdBuf;
-				CmdBuf = nullptr;
-			}
+			delete CmdBuf;
 		}
 		m_DrawCmdBuffers.clear();
 
@@ -586,9 +582,10 @@ namespace Fling
 			if (pipeline)
 			{
 				pipeline->CleanUp(t_Reg);
-				delete pipeline;
-				pipeline = nullptr;
 			}
+
+			delete pipeline;
+			pipeline = nullptr;
 		}
 		m_RenderPipelines.clear();
 
@@ -600,24 +597,15 @@ namespace Fling
 		vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_RenderPass, nullptr);
 
 		// Camera cleanup ------------
-		if (m_Camera)
-		{
-			delete m_Camera;
-			m_Camera = nullptr;
-		}
+		delete m_Camera;
+		m_Camera = nullptr;
 
 		// Destroy swap chain (created in Prepare) -----------
-		if (m_SwapChain)
-		{
-			delete m_SwapChain;
-			m_SwapChain = nullptr;
-		}
+		delete m_SwapChain;
+		m_SwapChain = nullptr;
 
-		if (m_DepthBuffer)
-		{
-			delete m_DepthBuffer;
-			m_DepthBuffer = nullptr;
-		}
+		delete m_DepthBuffer;
+		m_DepthBuffer = nullptr;
 
 		// #TODO Cleanup VMA allocator -------------
 
@@ -632,43 +620,29 @@ namespace Fling
 		// Clean up command buffers and command pool -------------
 		for (CommandBuffer* CmdBuf : m_DrawCmdBuffers)
 		{
-			if (CmdBuf)
-			{
-				delete CmdBuf;
-				CmdBuf = nullptr;
-			}
+			delete CmdBuf;
+			CmdBuf = nullptr;
 		}
 		m_DrawCmdBuffers.clear();
 
 		vkDestroyCommandPool(m_LogicalDevice->GetVkDevice(), m_CommandPool, nullptr);
 
 		// Clean up devices and surface (created in Prepare) --------------
-		if (m_LogicalDevice)
-		{
-			delete m_LogicalDevice;
-			m_LogicalDevice = nullptr;
-		}
+		delete m_LogicalDevice;
+		m_LogicalDevice = nullptr;
+
 
 		vkDestroySurfaceKHR(m_Instance->GetRawVkInstance(), m_Surface, nullptr);
 
-		if (m_PhysicalDevice)
-		{
-			delete m_PhysicalDevice;
-			m_PhysicalDevice = nullptr;
-		}
+		delete m_PhysicalDevice;
+		m_PhysicalDevice = nullptr;
 
-		if (m_Instance)
-		{
-			delete m_Instance;
-			m_Instance = nullptr;
-		}
+		delete m_Instance;
+		m_Instance = nullptr;
 
 		// Cleanup Window --------
-		if (m_CurrentWindow)
-		{
-			delete m_CurrentWindow;
-			m_CurrentWindow = nullptr;
-		}
+		delete m_CurrentWindow;
+		m_CurrentWindow = nullptr;
 
 		F_LOG_TRACE("Vulkan App Shutdown!");
 	}

@@ -79,11 +79,8 @@ namespace Fling
 		{
 			for (Buffer* buf : t_Vec)
 			{
-				if (buf)
-				{
-					delete buf;
-					buf = nullptr;
-				}
+				delete buf;
+				buf = nullptr;
 			}
 			t_Vec.clear();
 		};
