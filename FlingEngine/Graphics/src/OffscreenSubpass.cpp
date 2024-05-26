@@ -63,21 +63,15 @@ namespace Fling
 		// Clean up command buffers we used
 		for (CommandBuffer* CmdBuf : m_OffscreenCmdBufs)
 		{
-			if (CmdBuf)
-			{
-				delete CmdBuf;
-				CmdBuf = nullptr;
-			}
+			delete CmdBuf;
+			CmdBuf = nullptr;
 		}
 		m_OffscreenCmdBufs.clear();
 
 		vkDestroyCommandPool(m_Device->GetVkDevice(), m_CommandPool, nullptr);
 
-		if (m_OffscreenFrameBuf)
-		{
-			delete m_OffscreenFrameBuf;
-			m_OffscreenFrameBuf = nullptr;
-		}
+		delete m_OffscreenFrameBuf;
+		m_OffscreenFrameBuf = nullptr;
 	}
 
 	void OffscreenSubpass::Draw(

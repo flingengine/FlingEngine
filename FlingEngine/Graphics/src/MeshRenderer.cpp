@@ -29,11 +29,8 @@ namespace Fling
 
 	void MeshRenderer::Release()
 	{
-		if (m_UniformBuffer)
-		{
-			delete m_UniformBuffer;
-			m_UniformBuffer = nullptr;
-		}
+		delete m_UniformBuffer;
+		m_UniformBuffer = nullptr;
 	}
 
 	bool MeshRenderer::operator==(const MeshRenderer& other) const

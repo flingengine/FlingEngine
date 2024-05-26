@@ -43,11 +43,8 @@ namespace Fling
 	{
 		assert(m_Device);
 
-		if (m_GraphicsPipeline)
-		{
-			delete m_GraphicsPipeline;
-			m_GraphicsPipeline = nullptr;
-		}
+		delete m_GraphicsPipeline;
+		m_GraphicsPipeline = nullptr;
 	}
 
 	Subpass::~Subpass()
