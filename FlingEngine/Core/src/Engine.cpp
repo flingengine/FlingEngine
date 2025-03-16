@@ -15,6 +15,7 @@ namespace Fling
 
     	// Initalize the command line
 		const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);
+		F_LOG_TRACE("Command line initaliziation: {}\t", bSuccessfulCommandLineInit ? "successful" : "failed");
 		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
 
 		ResourceManager::Get().Init();

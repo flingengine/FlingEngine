@@ -14,6 +14,13 @@ namespace Fling
     /**
     * Holds onto the command line arguments passed to this application
     * Can be used to parse arguments into different types
+    * 
+    * The syntax for specifying a command line argument is a key-value pair with a "-".
+    * For example, to specify the "foo" option with a value of 7, you could use:
+    * 
+    *   -foo=7
+    * 
+    * on the command line. 
     */
     class CommandLine
     {
@@ -41,6 +48,18 @@ namespace Fling
          */
         [[nodiscard]] bool HasParam(const std::string_view Param) const;
 
+        /**
+         * Gets the value of the given param as the given type.
+         * 
+         * If the value as not specified on the command line, 
+         * then the given "Default" value will be returned.
+         */
+        template<typename T>
+        T& GetValueAs(const std::string_view Param, const T& Default) const;
+
+        // TODO: make this a std::string_view
+        const char* GetValueAsString(const std::string_view Param) const;
+
         std::string_view GetCommandLineData() const;
 
     private:
@@ -51,4 +70,17 @@ namespace Fling
         // which we can use for quick checking of flags.
         
     };
+
+    template<typename T>
+    T& CommandLine::GetValueAs(const std::string_view Param, const T& Default) const
+    {
+        const bool bWasOverriden = false;
+        if (bWasOverriden)
+        {
+            // return the value that you have overriden on command line            
+        }
+
+        // Otherwise, nothing was set on command line, so use the default value
+        return Default;
+    }
 }   // namespace Fling

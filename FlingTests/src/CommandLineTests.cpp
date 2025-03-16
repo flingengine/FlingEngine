@@ -26,12 +26,12 @@ TEST_CASE("Command Line", "[Command Line]")
 		REQUIRE(CurCmdLine.empty());
 	}
 
-	SECTION("Bool Flag")
+	SECTION("Bool Flag - true")
 	{
 		const char* Args[] =
 		{
 			"FlingEngine.exe",
-			"-test=918"
+			"-test=true"
 		};
 		constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
 		const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
