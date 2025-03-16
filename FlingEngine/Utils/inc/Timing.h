@@ -16,15 +16,15 @@ namespace Fling
 
 		virtual void Init() override;
 
-		/// <summary>
-		/// Update the time values of the timer. Should be done at the beginning
-		/// of every frame
-		/// </summary>
+		/**
+		* Update the time values of the timer. Should be done at the beginning
+		* of every frame
+		*/
 		void Update();
 
-		/// <summary>
-		/// Updates current frame timer
-		/// </summary>
+		/**
+		* Updates current frame timer
+		*/
 		void UpdateFps();
 
 		float FLING_API GetDeltaTime();
