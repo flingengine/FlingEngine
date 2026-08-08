@@ -38,6 +38,11 @@ bld/
 cmake-build-debug/
 cmake-build-release/
 
+# Local CI validation build folders / installed deps prefix
+build-gcc/
+build-clang/
+.deps/
+
 
 #external/
 

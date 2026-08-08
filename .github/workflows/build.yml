@@ -1,0 +1,112 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false   # one toolchain failing must not hide the others
+      matrix:
+        include:
+          - name: Linux GCC Release
+            os: ubuntu-22.04
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+            build_type: Release
+          - name: Linux Clang Release
+            os: ubuntu-22.04
+            compiler: clang
+            cc: clang
+            cxx: clang++
+            build_type: Release
+          - name: Windows MSVC Debug
+            os: windows-2022
+            compiler: msvc
+            build_type: Debug
+          - name: Windows MSVC Release
+            os: windows-2022
+            compiler: msvc
+            build_type: Release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # ---------- system dependencies ----------
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build pkg-config \
+            xorg-dev libx11-dev libwayland-dev libxkbcommon-dev libglu1-mesa-dev \
+            libvulkan-dev
+
+      - name: Install Vulkan SDK (Windows)
+        if: runner.os == 'Windows'
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          vulkan_version: 1.4.357.0
+          install_runtime: true
+          cache: true
+          stripdown: true
+
+      # ---------- Catch2 (needed by find_package(Catch2 3 REQUIRED)) ----------
+      - name: Build and install Catch2
+        shell: bash
+        run: |
+          cmake -S external/Catch2 -B external/Catch2/build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/.deps" \
+            -DBUILD_TESTING=OFF
+          cmake --build external/Catch2/build --config ${{ matrix.build_type }} --target install
+
+      # ---------- configure + build ----------
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DDEFINE_SHIPPING=OFF \
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/.deps"
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DDEFINE_SHIPPING=OFF `
+            -DENABLE_MULTICORE=ON `
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/.deps"
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      # ---------- run tests ----------
+      - name: Run FlingTests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p Logs
+          ./build/FlingTests/bin/FlingTests
+
+      - name: Run FlingTests (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          if not exist Logs mkdir Logs
+          build\FlingTests\bin\${{ matrix.build_type }}\FlingTests.exe
