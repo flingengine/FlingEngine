@@ -11,7 +11,6 @@ The Fling Engine aims to be a cross platform Vulkan game engine that will experi
 [![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
 [![GitHub license](https://img.shields.io/github/license/flingengine/FlingEngine)](https://github.com/flingengine/FlingEngine/blob/master/LICENSE)
 [![Work in progress badge](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)
-[![Discord Chat](https://img.shields.io/static/v1?logo=discord&label=Discord&message=Join%20and%20chat!&color=blueviolet&link=https://discord.gg/HUpX6ZE)](https://discord.gg/HUpX6ZE)
 
 # Getting Started
 
