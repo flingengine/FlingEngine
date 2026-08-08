@@ -6,9 +6,6 @@ The Fling Engine aims to be a cross platform Vulkan game engine that will experi
 * Multithreaded engine architecture
 * The Vulkan graphics API for real time rendering
 
-[![Build Status](https://travis-ci.com/flingengine/FlingEngine.svg?branch=master)](https://travis-ci.com/flingengine/FlingEngine)
-[![Build status](https://ci.appveyor.com/api/projects/status/3791w1nlc3usf5qx?svg=true)](https://ci.appveyor.com/project/BenjaFriend/flingengine)
-[![Open Source Helpers](https://www.codetriage.com/flingengine/flingengine/badges/users.svg)](https://www.codetriage.com/flingengine/flingengine)
 [![GitHub license](https://img.shields.io/github/license/flingengine/FlingEngine)](https://github.com/flingengine/FlingEngine/blob/master/LICENSE)
 [![Work in progress badge](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)](https://img.shields.io/badge/this%20is-a%20work%20in%20progress!-yellow)
 
