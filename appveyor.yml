@@ -34,6 +34,7 @@ install:
   - if not exist VulkanSDK-1.4.357.0.exe curl -L --silent --show-error --output VulkanSDK-1.4.357.0.exe https://sdk.lunarg.com/sdk/download/1.4.357.0/windows/vulkansdk-windows-X64-1.4.357.0.exe
   - ps: if ((Get-Item VulkanSDK-1.4.357.0.exe).Length -lt 50MB) { throw "Vulkan SDK download looks truncated/invalid - check https://vulkan.lunarg.com/sdk/home for the current SDK version and update appveyor.yml" }
   - VulkanSDK-1.4.357.0.exe --accept-licenses --default-answer --confirm-command install
+  - ps: $env:VULKAN_SDK="C:/VulkanSDK/1.4.357.0"
 # Build Fling
   - cmake --version
   - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
@@ -44,9 +45,6 @@ install:
   - cmake .. -A %PLATFORM%  -DENABLE_MULTICORE=OFF
   - dir
   - echo Building platform=%PLATFORM% configuration=%CONFIGURATION%
-
-before_build:
-  - ps: $env:VULKAN_SDK="C:/VulkanSDK/1.4.357.0"
 
 build:
   parallel: true                  # enable MSBuild parallel builds
