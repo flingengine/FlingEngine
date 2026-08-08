@@ -20,6 +20,12 @@ namespace Fling
 
 		FlingConfig::Get().Init();
 
+		if (CommandLine::Get().GetValueAs<bool>("WaitForDebugger", false))
+		{
+			F_LOG_TRACE("-WaitForDebugger was set, breaking into the debugger now");
+			F_DEBUG_BREAK();
+		}
+
 		ResourceManager::Get().Init();
 		Timing::Get().Init();        
 		Input::Init();
