@@ -40,6 +40,9 @@ install:
   - echo Generating platform=%PLATFORM% configuration=%CONFIGURATION%
   - cd %APPVEYOR_BUILD_FOLDER%
   - git submodule update --init --recursive
+  - echo Installing Catch2 testing library...
+  - cmake external/Catch2 -B external/Catch2/build -A %PLATFORM%
+  - cmake --build external/Catch2/build --config %CONFIGURATION% --target install
   - mkdir build
   - cd build
   - cmake .. -A %PLATFORM%  -DENABLE_MULTICORE=OFF
