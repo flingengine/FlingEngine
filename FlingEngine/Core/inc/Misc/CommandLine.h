@@ -2,7 +2,9 @@
 
 #include <string> // string, stoi, to_string
 #include <string_view>  // std::string_view
+#include <unordered_map>
 #include "FlingTypes.h"
+#include "Misc/StringUtils.h"
 
 // TODO: I think that we may gain a lot if we just use
 // Boost. That certainly will have a better implementation then
@@ -25,12 +27,15 @@ namespace Fling
     class CommandLine
     {
     public:
+        /** Maximum length, in characters, that a single command line argument may be. Any argument longer than this is ignored. */
+        static constexpr std::size_t MaxArgLength = 256;
+
         /**
          * @return Instance of the current command line that the application was started with.
          */
         static CommandLine& Get();
 
-        /** 
+        /**
         * Initalize the command line instance with the given application args.
         * This will initalize the command line's internal data structure for keepting
         * track of the data passed into the command line
@@ -50,37 +55,65 @@ namespace Fling
 
         /**
          * Gets the value of the given param as the given type.
-         * 
-         * If the value as not specified on the command line, 
+         *
+         * If the value as not specified on the command line,
          * then the given "Default" value will be returned.
          */
         template<typename T>
-        T& GetValueAs(const std::string_view Param, const T& Default) const;
+        T GetValueAs(const std::string_view Param, const T& Default) const;
 
         // TODO: make this a std::string_view
         const char* GetValueAsString(const std::string_view Param) const;
 
-        std::string_view GetCommandLineData() const;
+        [[nodiscard]] std::string_view GetCommandLineData() const;
+
+        /**
+         * Loads console variables from the "[ConsoleVariables]" section of an ini-style
+         * config file, following the same "Key=Value" syntax used on the command line
+         * (e.g. UE's ini config variables). Values loaded this way act as a fallback:
+         * if the same key was also passed directly on the command line, the command
+         * line value always takes precedence.
+         *
+         * @param FilePath   Path to the ini file to load
+         * @return True if the file was opened and parsed successfully
+         */
+        bool LoadConfigFile(const std::string& FilePath);
+
+        /**
+         * Same as LoadConfigFile, but parses the ini data directly out of the given
+         * string rather than from a file on disk. Exposed publicly so that this parsing
+         * logic can be unit tested without touching the file system.
+         *
+         * @param IniContent   Contents of an ini file to parse
+         * @return True if the content was parsed successfully
+         */
+        bool LoadConfigVarsFromString(const std::string_view IniContent);
 
     private:
 
+        /** Looks up a param, checking command line values before config file (ConsoleVariables) values. */
+        const std::string* FindValue(const std::string_view Param) const;
+
         std::string CurrentCommandLineData;
 
-        // TODO: A TMap of string_view's to some generic data container type
-        // which we can use for quick checking of flags.
-        
+        /** Key/value pairs parsed out of the command line, e.g. "-foo=7" becomes ParsedArgs["foo"] = "7" */
+        std::unordered_map<std::string, std::string> ParsedArgs;
+
+        /** Key/value pairs parsed out of a config file's "[ConsoleVariables]" section. Lower priority than ParsedArgs. */
+        std::unordered_map<std::string, std::string> ConfigArgs;
     };
 
     template<typename T>
-    T& CommandLine::GetValueAs(const std::string_view Param, const T& Default) const
+    T CommandLine::GetValueAs(const std::string_view Param, const T& Default) const
     {
-        const bool bWasOverriden = false;
-        if (bWasOverriden)
+        const std::string* Value = FindValue(Param);
+        if (Value == nullptr)
         {
-            // return the value that you have overriden on command line            
+            // Nothing was set on the command line or in a config file for this param,
+            // so use the default value
+            return Default;
         }
 
-        // Otherwise, nothing was set on command line, so use the default value
-        return Default;
+        return StringUtils::ParseAs<T>(*Value, Default);
     }
 }   // namespace Fling

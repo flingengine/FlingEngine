@@ -57,25 +57,6 @@ namespace Fling
     double FlingConfig::GetDoubleImpl(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal /*= 0.0*/) const
     {
         return m_IniReader.GetReal(t_Section, t_Key, t_DefaultVal);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    // Command line parsing
-
-    uint32 FlingConfig::LoadCommandLineOpts(int argc, char* argv[])
-    {
-        uint32 ArgsLoaded = 0;
-        
-        // TODO: Use regex to try and parse out if things are a key/val etc
-
-        for (int i = 0; i < argc; ++i)
-        {
-            // Parse out if this is a key or not
-            std::string value = argv[i];
-            (void)(value);
-        }
-
-        return ArgsLoaded;
-    }
+    }   
 
 }   // namespace Fling
