@@ -9,6 +9,7 @@
 #include "World.h"
 #include <nlohmann/json.hpp>
 #include <entt/entity/registry.hpp>
+#include <csignal>
 
 #include "MovingAverage.hpp"
 #include "Stats.h"
@@ -19,6 +20,20 @@
 #include "BaseEditor.h"
 
 #endif	// WITH_EDITOR
+
+/**
+ * Triggers a breakpoint at the call site, halting execution if a debugger is attached.
+ * Works across compilers/platforms so callers don't need their own #ifdef ladder.
+ */
+#if defined( _MSC_VER )
+	#define F_DEBUG_BREAK() __debugbreak()
+#elif defined( __clang__ )
+	#define F_DEBUG_BREAK() __builtin_debugtrap()
+#elif defined( __GNUC__ )
+	#define F_DEBUG_BREAK() raise( SIGTRAP )
+#else
+	#define F_DEBUG_BREAK()
+#endif
 
 namespace Fling
 {
