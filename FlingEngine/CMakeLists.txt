@@ -82,16 +82,20 @@ if ( NOT WIN32 )
     message( STATUS "Added pthread!" )
 endif()
 
-# We need to link the std::filesystem on clang/GNU, but the windows version of 
-# Clang doesn't have this lib
+# We need to link the std::filesystem on clang/GNU, but the windows version of
+# Clang doesn't have this lib. GCC >= 9 folds std::filesystem into libstdc++ itself,
+# so the standalone stdc++fs archive (which MinGW-w64/MSYS2 toolchains don't ship) is
+# only needed on older GCC.
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     if(NOT WIN32)
     set( LINK_LIBS ${LINK_LIBS} stdc++fs )
         message( STATUS "Added filesytem link (Clang)!" )
     endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    set( LINK_LIBS ${LINK_LIBS} stdc++fs )
-    message( STATUS "Added filesytem link (GNU)!" )
+    if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 )
+        set( LINK_LIBS ${LINK_LIBS} stdc++fs )
+        message( STATUS "Added filesytem link (GNU)!" )
+    endif()
 endif()
 
 message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )

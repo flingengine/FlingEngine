@@ -29,6 +29,9 @@
 	#define F_DEBUG_BREAK() __debugbreak()
 #elif defined( __clang__ )
 	#define F_DEBUG_BREAK() __builtin_debugtrap()
+#elif defined( __MINGW32__ )
+	// MinGW-w64 targets Windows, which has no SIGTRAP to raise()
+	#define F_DEBUG_BREAK() asm("int $3")
 #elif defined( __GNUC__ )
 	#define F_DEBUG_BREAK() raise( SIGTRAP )
 #else
