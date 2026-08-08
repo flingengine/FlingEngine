@@ -26,6 +26,17 @@
 
 #   define WIN32_LEAN_AND_MEAN
 
+// Windows.h will define it's own versions of min/max, which will make 
+// entt fail to compile with a bunch of templated std::min errors like: 
+//	
+//	error C2589: '(' : illegal token on right side of '::'
+//	error C2059 : syntax error : '::'
+// 
+// This just absolutely ensures that does not happen :) 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <Windows.h>
 #include <direct.h>
 

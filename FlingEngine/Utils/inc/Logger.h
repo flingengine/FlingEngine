@@ -26,14 +26,14 @@ namespace Fling
 
 		virtual void Init() override;
 
-		/// <summary>
-		/// Gets a reference to the current logging console
-		/// </summary>
-		/// <returns>Shader ptr to the current console</returns>
+		/**
+		* Gets a reference to the current logging console
+		* @return Shader ptr to the current console
+		*/
 		static std::shared_ptr<spdlog::logger> GetCurrentConsole();
 
 		/**
-		* @brief	Get the current async log file that is being written to
+		* @brief Get the current async log file that is being written to
 		*/
 		static std::shared_ptr<spdlog::logger> GetCurrentLogFile();
 

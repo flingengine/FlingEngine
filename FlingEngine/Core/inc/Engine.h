@@ -49,19 +49,19 @@ namespace Fling
 
 	private:
 
-		/// <summary>
-		/// Start any systems or subsystems that may be needed
-		/// </summary>
+		/**
+		 * Start any systems or subsystems that may be needed 
+		*/		
 		void Startup(int argc, const char* argv[]);
 
-		/// <summary>
-		/// Initial tick for the engine frame
-		/// </summary>
+		/**
+		* Initial tick for the engine frame
+		*/		
 		void Tick();
 
-		/// <summary>
-		/// Shutdown all engine systems and do any necessary cleanup
-		/// </summary>
+		/**
+		* Shutdown all engine systems and do any necessary cleanup
+		*/
 		void Shutdown();
 
 		/** Persistent world object that can be used to load levels, entities, etc */
