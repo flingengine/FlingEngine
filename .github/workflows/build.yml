@@ -25,6 +25,12 @@ jobs:
             cc: gcc
             cxx: g++
             build_type: Release
+          - name: Linux Clang Release
+            os: ubuntu-22.04
+            compiler: clang
+            cc: clang
+            cxx: clang++
+            build_type: Release
 
     steps:
       - uses: actions/checkout@v4
