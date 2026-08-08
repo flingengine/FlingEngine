@@ -6,8 +6,7 @@
 namespace Fling
 {
     /**
-    * Provide simple access to engine configuration options from an INI file
-    * #TODO Parse command line options as well
+    * Provide simple access to engine configuration options from an INI file.
     */
     class FlingConfig : public Singleton<FlingConfig>
     {
@@ -36,16 +35,6 @@ namespace Fling
 		static float GetFloat(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) { return FlingConfig::Get().GetFloatImpl(t_Section, t_Key); }
 
 		static double GetDouble(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) { return FlingConfig::Get().GetDoubleImpl(t_Section, t_Key); }
-
-        /**
-        * Load in the command line options and store them somewhere that is 
-        * globally accessible
-        * 
-        * @param argc   Argument count
-        * @param argv   Command line args
-        * @return Number of options loaded
-        */
-        uint32 LoadCommandLineOpts( int argc, char* argv[] );
         
     private:
 

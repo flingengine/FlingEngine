@@ -12,13 +12,16 @@ namespace Fling
 	{	
 		Random::Init();
 		Logger::Get().Init();
-		
-		CommandLine::Set(CommandLine::BuildFromArgs(argc, argv));
-		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get());
+
+    	// Initalize the command line
+		const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);
+		F_LOG_TRACE("Command line initaliziation: {}\t", bSuccessfulCommandLineInit ? "successful" : "failed");
+		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
+
+		FlingConfig::Get().Init();
 
 		ResourceManager::Get().Init();
-		Timing::Get().Init();
-        FlingConfig::Get().Init();
+		Timing::Get().Init();        
 		Input::Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
@@ -31,12 +34,18 @@ namespace Fling
 #endif
 
         // Load command line args and any ini files
-        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/EngineConf.ini");
+        const std::string EngineConfigPath = FlingPaths::EngineConfigDir() + "/EngineConf.ini";
+        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(EngineConfigPath);
 
 		if (!ConfigLoaded)
 		{
 			F_LOG_WARN("NO EngineConf.ini has been provided! This may result in unexpected behavior from Fling!");
 		}
+
+		// Let the command line consider the same ini's [ConsoleVariables] section as a
+		// fallback, so systems can query CommandLine::GetValueAs for values that were
+		// only set in the config file. Command line args passed directly still win.
+		CommandLine::Get().LoadConfigFile(EngineConfigPath);
 
 		VulkanApp::Get().Init(
 			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),

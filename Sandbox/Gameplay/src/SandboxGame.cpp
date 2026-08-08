@@ -13,6 +13,9 @@
 #include "GeometrySubpass.h"
 #include "Mover.h"
 
+// Test command line args
+#include "Misc/CommandLine.h"
+
 namespace Sandbox
 {
     using namespace Fling;
@@ -32,6 +35,18 @@ namespace Sandbox
         Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
         Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
 		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
+
+		{
+			using namespace Fling;
+			const CommandLine& CmdLineOpts = CommandLine::Get();
+			const bool bMyOption = CmdLineOpts.GetValueAs<bool>("BenTest", false);
+			F_LOG_TRACE("Sandbox:Ben Test : {}\t", bMyOption ? "true" : "false");
+
+			const double DoubleOpt = CmdLineOpts.GetValueAs<double>("TestDouble", -1.0);
+			F_LOG_TRACE("Sandbox:Ben Test : {}\t", DoubleOpt);
+		}
+
+		F_LOG_TRACE("Done cmd line testing");
     }
 
 	void Game::OnStartGame(entt::registry& t_Reg)

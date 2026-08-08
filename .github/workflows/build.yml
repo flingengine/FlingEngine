@@ -71,6 +71,8 @@ jobs:
           cmake -S external/Catch2 -B external/Catch2/build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/.deps" \
+            -DCMAKE_CXX_STANDARD=20 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
             -DBUILD_TESTING=OFF
           cmake --build external/Catch2/build --config ${{ matrix.build_type }} --target install
 
