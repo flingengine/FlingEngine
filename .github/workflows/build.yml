@@ -39,7 +39,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ninja-build pkg-config \
             xorg-dev libx11-dev libwayland-dev libglu1-mesa-dev \
-            libvulkan-dev vulkan-headers
+            libvulkan-dev
 
       # ---------- Catch2 (needed by find_package(Catch2 3 REQUIRED)) ----------
       - name: Build and install Catch2
