@@ -34,11 +34,13 @@ namespace Fling
 
     void FlingPaths::GetCurrentWorkingDir(char* t_OutBuf, size_t t_BufSize)
     {
+        // Normalize CWD to the directory that contains this executable.
+        // Shipping builds use relative paths (Config/, Assets/, Logs/), so
+        // loading must not depend on whichever directory the process was
+        // launched from (IDE vs shell vs CI).
 #if FLING_WINDOWS
         {
-            // Get the real, full path to this executable, end the string before
-            // the filename itself and then set that as the current directory
-            GetModuleFileName(0, t_OutBuf, t_BufSize);
+            GetModuleFileName(0, t_OutBuf, static_cast<DWORD>(t_BufSize));
             char* lastSlash = strrchr(t_OutBuf, '\\');
             if (lastSlash)
             {
@@ -48,19 +50,27 @@ namespace Fling
         }
 #elif FLING_LINUX
         {
-            if (getcwd(t_OutBuf, t_BufSize) != nullptr) 
+            const ssize_t Len = readlink("/proc/self/exe", t_OutBuf, t_BufSize - 1);
+            if (Len == -1)
             {
-                F_LOG_TRACE("Current working dir: {}\n", t_OutBuf);
-            }
-            else 
-            {
-                F_LOG_FATAL("getcwd() error");
+                F_LOG_FATAL("readlink(/proc/self/exe) error");
+                return;
             }
 
-            if (chdir(t_OutBuf) == -1) 
+            t_OutBuf[Len] = '\0';
+            char* lastSlash = strrchr(t_OutBuf, '/');
+            if (lastSlash)
             {
-                F_LOG_FATAL("chdir() error :");
+                *lastSlash = 0;
             }
+
+            if (chdir(t_OutBuf) == -1)
+            {
+                F_LOG_FATAL("chdir() error");
+                return;
+            }
+
+            F_LOG_TRACE("Current working dir: {}", t_OutBuf);
         }
 #endif	// FLING_LINUX
     }
