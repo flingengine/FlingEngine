@@ -61,3 +61,13 @@ add_executable( ${PROJECT_NAME} ${_source_list} )
 
 # Link Catch2 and everything else
 target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )
+
+# Shipping builds resolve EngineConfigDir() to a relative "Config" path, and
+# ResourceManager::Init() chdirs to the executable directory. Keep TestConf.ini
+# next to the binary so FlingTests pass regardless of launch CWD.
+add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${FLING_ROOT_DIR}/Config"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/Config"
+    COMMENT "Copying Config next to ${PROJECT_NAME}"
+)

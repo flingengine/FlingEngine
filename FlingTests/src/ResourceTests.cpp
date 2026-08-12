@@ -14,15 +14,13 @@ TEST_CASE("Engine Config File", "[resource]")
     using namespace Fling;
     // Logger HAS to be initalized first
     Logger::Get().Init();
+    // Sets CWD to the executable directory so relative shipping paths resolve
     ResourceManager::Get().Init();
     FlingConfig::Get().Init();
 
-    SECTION("Valid Config")
-    {
-        // Load a test config
-        bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/TestConf.ini");
-        REQUIRE(ConfigLoaded);
-    }
+    // Load once for all sections (Catch re-runs this block per SECTION)
+    bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/TestConf.ini");
+    REQUIRE(ConfigLoaded);
 
     SECTION("Read False Bool")
     {
