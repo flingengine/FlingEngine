@@ -8,7 +8,7 @@
 namespace Fling
 {
 	/**
-	 * @brief 	A model represents a 3D model (.obj files for now) with vertices
+	 * A model represents a 3D model (.obj files for now) with vertices
 	 * 			and indecies. A model has a vertex and index buffer and can be 
 	 * 			bound to a command buffer.
 	 */
@@ -22,7 +22,7 @@ namespace Fling
 		static std::shared_ptr<Fling::Model> Quad();
 
 		/**
-		 * @brief	Construct a new model object
+		 * Load a model from the asset path represented by t_ID.
 		 * @param t_ID              The GUID that represents the file path to this model
 		 */
 		Model(Guid t_ID);
@@ -58,7 +58,7 @@ namespace Fling
 		Buffer* m_IndexBuffer = nullptr;
 
 		/**
-		 * @brief	Load this model from Tiny Obj loader
+		 * Load this model from Tiny Obj loader
 		 */
 		void LoadModel();
 

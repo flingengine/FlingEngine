@@ -9,7 +9,7 @@ namespace Fling
     class World;
 
     /**
-     * @brief   A level contains active objects and provides the environment
+     * A level contains active objects and provides the environment
      *          for the player. You should only load a level through the world. 
      */
     class Level : public NonCopyable
@@ -23,7 +23,7 @@ namespace Fling
         ~Level();
 
         /**
-         * @brief   Update the BSP of actors and tick every active actor. 
+         * Update the BSP of actors and tick every active actor.
          * @see     World::Update
          * 
          * @param t_DeltaTime   Time between previous frame and the current one. 
@@ -31,12 +31,12 @@ namespace Fling
         void Update(float t_DeltaTime);
 
         /**
-         * @brief Unload the current level and all actors inside of it
+         * Unload the current level and all actors inside of it
          */
         void Unload();
 
         /**
-         * @brief Get the Owning World object of this level. 
+         * Get the Owning World object of this level.
          * 
          * @return World* 
          */
@@ -51,12 +51,12 @@ namespace Fling
         std::string m_LevelFileName = "UNLOADED";
 
         /**
-         * @brief Load the level based on the current file name! 
+         * Load the level based on the current file name!
          */
         void LoadLevel();
 
         /**
-         * @brief Any behavior that needs to happen after the level has been fully loaded.
+         * Any behavior that needs to happen after the level has been fully loaded.
          */
         void PostLoad();
 

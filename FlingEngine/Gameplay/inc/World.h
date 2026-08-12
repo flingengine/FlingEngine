@@ -25,20 +25,20 @@ namespace Fling
 		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
 
 		/**
-		* @brief	Initializes the world. Loads the StartLevel that is specified in the config.  
+		* Initializes the world. Loads the StartLevel that is specified in the config.
 		* @note		Keep explicit Init and Shutdown functions to make the startup order more readable
 		*/
         void Init();
 		
 		/**
-		 * @brief   Tick all active levels in the world and upates any Lua scripts that have Update functions
+		 * Tick all active levels in the world and upates any Lua scripts that have Update functions
 		 *
 		 * @param t_DeltaTime   Time between previous frame and the current one.
 		 */
 		void Update(float t_DeltaTime);
 
 		/**
-		 * @brief Called just before destruction.
+		 * Called just before destruction.
 		 */
         void Shutdown();
 
@@ -49,7 +49,7 @@ namespace Fling
 		void RequestGameStop();
 
 		/**
-		 * @brief Check if the world wants to exit the program. 
+		 * Check if the world wants to exit the program.
 		 * @see Engine::Tick 
 		 * 
 		 * @return True if the world has signaled for exit
@@ -57,7 +57,7 @@ namespace Fling
 		FORCEINLINE bool ShouldQuit() const { assert(m_Game); return m_ShouldQuit || m_Game->WantsToQuit(); }
 
 		/**
-		 * @brief 	Based on all current entities in the registry serialize that data to a JSON file
+		 * Based on all current entities in the registry serialize that data to a JSON file
 		 * 			This will write out some core engine components along with the specified custom 
 		 * 			game components.
 		 * 
@@ -69,7 +69,7 @@ namespace Fling
 		bool OutputLevelFile(const std::string& t_LevelToLoad);
 
 		/**
-		 * @brief 	Reset the current registry and load in new entities/components from a JSON file
+		 * Reset the current registry and load in new entities/components from a JSON file
 		 * 			This will read in some core engine components along with the specified custom 
 		 * 			game components.
 		 * 

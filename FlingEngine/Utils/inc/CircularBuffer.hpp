@@ -6,7 +6,7 @@ namespace Fling
 {
    
 	/**
-	 * @brief 	A simple circular buffer that will allow you get the next element in a buffer
+	 * A simple circular buffer that will allow you get the next element in a buffer
 	 *			It does not ensure that the item is not in use, but simply loops around.
 	 * 
 	 * @tparam T 		the type inside this circular buffer. Stack allocated

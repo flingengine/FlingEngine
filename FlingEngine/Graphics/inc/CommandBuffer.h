@@ -11,8 +11,7 @@ namespace Fling
 	// #TODO Resource binding state class definition
 
     /**
-     * @brief Encapsulates functionality of a Vulkan Command buffer
-     * 
+     * Encapsulates functionality of a Vulkan Command buffer
      */
     class CommandBuffer
     {

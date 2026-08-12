@@ -21,7 +21,7 @@ namespace Fling
 		}
 
 		/**
-		 * @brief	Gets the shader binding of a vertex
+		 * Gets the shader binding of a vertex
 		 */
         static VkVertexInputBindingDescription GetBindingDescription() 
         {

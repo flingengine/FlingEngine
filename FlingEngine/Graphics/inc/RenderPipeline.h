@@ -13,8 +13,7 @@ namespace Fling
 	struct MeshRenderer;
 
 	/**
-	* @brief	A render pipeline encapsulates the functionality of a 
-	* 
+	* A render pipeline encapsulates the functionality of a
 	*/
 	class RenderPipeline : public NonCopyable
 	{
@@ -39,7 +38,7 @@ namespace Fling
 	private:
 
 		/**
-		* @brief	Creates the descriptor pool and the descriptor sets for each sub pass to use
+		* Creates the descriptor pool and the descriptor sets for each sub pass to use
 		*/
 		void CreateDescriptors(entt::registry& t_Reg);
 

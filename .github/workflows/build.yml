@@ -163,3 +163,13 @@ jobs:
         run: |
           mkdir -p Logs
           ./build/FlingTests/bin/FlingTests.exe
+
+  # Doc-comment conventions for first-party sources (see docs/CodingStyle.md / issue #166).
+  # clang-format cannot enforce comment *content*; this script does.
+  comment-style:
+    name: Comment style
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check documentation comment style
+        run: python3 scripts/check_comment_style.py

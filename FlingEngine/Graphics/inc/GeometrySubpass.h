@@ -19,7 +19,7 @@ namespace Fling
 	class FirstPersonCamera;
 
 	/**
-	* @brief	Settings for the max directional lights and max point lights.
+	* Settings for the max directional lights and max point lights.
 	*			These settings are used 
 	* @todo		Ideally we would load these settings in from the game config file
 	*/
@@ -53,7 +53,7 @@ namespace Fling
 	};
 
 	/**
-	* @brief	The geometry subpass is in charge of sending the geometry portion of 
+	* The geometry subpass is in charge of sending the geometry portion of
 	*			the Deferred pipeline to the GPU. This includes frame buffer attachments for 
 	*			albedo, normals, and depth as well some actual mesh data via a Uniform buffer
 	*			Uses the Deferred shaders

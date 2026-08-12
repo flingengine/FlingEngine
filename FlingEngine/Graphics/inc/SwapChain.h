@@ -16,7 +16,7 @@ namespace Fling
 	class LogicalDevice;
 
     /**
-     * @brief	Represents a swap chain that can be used throughout the program
+     * Represents a swap chain that can be used throughout the program
      */
     class Swapchain
     {
@@ -31,13 +31,13 @@ namespace Fling
 		VkResult QueuePresent(const VkQueue& t_PresentQueue, const VkSemaphore& t_WaitSemaphore);
 
 		/**
-		 * @brief	Recreate this swap chain including image views, render passes, and command buffers.
+		 * Recreate this swap chain including image views, render passes, and command buffers.
 		 *			DOES NOT Clean up any resources. 
 		 */
 		void Recreate(const VkExtent2D& t_Extent);
 
 		/**
-		 * @brief Cleanup all swapchain resources
+		 * Cleanup all swapchain resources
 		 */
 		void Cleanup();
 
@@ -75,7 +75,7 @@ namespace Fling
 		std::vector<VkImageView> m_ImageViews;
 
 		/**
-		 * @brief	Create any swap chain resources (present mode, KGR swap chain)
+		 * Create any swap chain resources (present mode, KGR swap chain)
 		 */
 		void CreateResources();
 

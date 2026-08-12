@@ -5,7 +5,7 @@
 namespace Fling
 {
     /**
-     * @brief A moving average can be used to calculate things like FPS
+     * A moving average can be used to calculate things like FPS
      */
     template<typename T, size_t t_Size>
     class MovingAverage

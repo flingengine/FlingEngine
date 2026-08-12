@@ -8,7 +8,7 @@
 namespace Fling
 {
     /**
-    * @brief the properties of a PBR 
+    * the properties of a PBR
     */
     struct PBRTextures
     {
@@ -19,7 +19,7 @@ namespace Fling
     };
 
     /**
-    * @brief    A material represents what properties should be given to a set
+    * A material represents what properties should be given to a set
     *            of shaders. This is referenced by the MeshRednerer and Renderer::DrawFrame
     */
     class Material : public JsonFile

@@ -6,7 +6,7 @@
 namespace Fling
 {
     /**
-     * @brief   Simple representation of a directional light for Fling. Needs to be 16 bytes aligned
+     * Simple representation of a directional light for Fling. Needs to be 16 bytes aligned
      *          for Vulkan 
      */
     struct alignas(16) DirectionalLight

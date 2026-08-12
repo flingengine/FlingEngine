@@ -33,7 +33,7 @@ namespace Fling
 	class BaseEditor;
 
 	/**
-	* @brief	Core rendering functionality of the Fling Engine. Controls what Render pipelines 
+	* Core rendering functionality of the Fling Engine. Controls what Render pipelines
 	*			are available
 	*/
     class VulkanApp : public Singleton<VulkanApp>
@@ -51,7 +51,7 @@ namespace Fling
         ~VulkanApp() = default;
 
 		/**
-		* @brief	Updates all rendering buffers and sends commands to draw a frame
+		* Updates all rendering buffers and sends commands to draw a frame
 		*/
 		void Update(float DeltaTime, entt::registry& t_Reg);
 
@@ -72,19 +72,19 @@ namespace Fling
     private:
 
 		/**
-		* @brief	Prepare logical, physical and swap chain devices. 
+		* Prepare logical, physical and swap chain devices.
 		*			Prepares window based on the Fling Config
 		*/
 		void Prepare();
 
 		/**
-		* @brief	Create semaphores for available swap chain images and fences 
+		* Create semaphores for available swap chain images and fences
 		*			for the current frame in flight
 		*/
 		void CreateFrameSyncResources();
 
 		/**
-		* @brief	Creates a window and preps the VkSurfaceKHR 
+		* Creates a window and preps the VkSurfaceKHR
 		*/
 		void CreateGameWindow(const uint32 t_width, const uint32 t_height);
 
@@ -97,7 +97,7 @@ namespace Fling
 		void BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor);
 
 		/**
-		 * @brief	Build the frame buffers for each swap chain image along with the render pass
+		 * Build the frame buffers for each swap chain image along with the render pass
 		 *			for it to use
 		 */
 		void BuildSwapChainResources();

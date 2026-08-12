@@ -8,7 +8,7 @@
 namespace Fling
 {
 	/**
-	 * @brief	represents the current mouse position in screen space
+	 * represents the current mouse position in screen space
 	 */
 	struct MousePos
 	{
@@ -27,7 +27,7 @@ namespace Fling
 		static void Init() { m_Instance->InitImpl(); }
 		
 		/** 
-		* @brief	PreUpdate is called before polling of input, and after Init. Useful for 
+		* PreUpdate is called before polling of input, and after Init. Useful for
 		*			anything that needs to happen after Window creation.
 		*/
 		static void PreUpdate() { m_Instance->PreUpdateImpl(); };
@@ -43,7 +43,7 @@ namespace Fling
 		}
 
 		/**
-		 * @brief Update any input polling that needs to happen on this platform.
+		 * Update any input polling that needs to happen on this platform.
 		 */
 		static void Poll() { m_Instance->PollImpl();  }
 		
@@ -59,7 +59,7 @@ namespace Fling
 		static MousePos GetMousePos() { return m_Instance->GetMousePosImpl(); }
 		
 		/**
-		 * @brief Bind a callback function to when a key is pressed 
+		 * Bind a callback function to when a key is pressed
 		 * 
 		 * @tparam Candidate The function that you would like to bind
 		 * @param t_KeyName Key name to bind to 
@@ -89,7 +89,7 @@ namespace Fling
 		static Input* m_Instance;
 		
 		/**
-		 * @brief Add a key mapping to this platform. 
+		 * Add a key mapping to this platform.
 		 * 
 		 * @param t_Name 		The name of this key 
 		 * @param t_KeyCode 	The KeyCode that maps this key to the current platform

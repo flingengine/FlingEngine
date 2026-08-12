@@ -13,7 +13,7 @@ namespace Fling
     public:
 
         /**
-         * @brief Default Ctor for a buffer. Buffer is initialized to 0
+         * Default Ctor for a buffer. Buffer is initialized to 0
          */
         Buffer()
             : m_Size(0)
@@ -24,11 +24,11 @@ namespace Fling
         {
         }
 
-		/*! @brief copy constructor. */
+		/** Copy constructor. */
 		Buffer(const Buffer& t_Other);
 
         /**
-         * @brief Construct a new Buffer object
+         * Create a Vulkan buffer and optionally map initial data into it.
          * 
          * @param t_Size         Size of this buffer in bytes
          * @param t_Usage         Vk usage flags for this buffer 
@@ -43,7 +43,7 @@ namespace Fling
         );
 
         /**
-         * @brief Destroy the Buffer object, frees Vk memory and destroys buffer
+         * Free Vulkan memory and destroy the buffer.
          */
         ~Buffer();
 
@@ -59,7 +59,7 @@ namespace Fling
         FORCEINLINE VkDescriptorBufferInfo& GetDescriptor() { return m_Descriptor; }
 
         /**
-         * @brief Copy the contents of the source buffer to the destination buffer using a single command
+         * Copy the contents of the source buffer to the destination buffer using a single command
          * 
          * @param t_SrcBuffer     Source buffer data
          * @param t_DstBuffer     Destination buffer data
@@ -68,32 +68,31 @@ namespace Fling
         static void CopyBuffer(Buffer* t_SrcBuffer, Buffer* t_DstBuffer, VkDeviceSize t_Size);
 
         /**
-         * @brief Destroy the VK buffer object, frees vk memory. 
-         * 
+         * Free Vulkan memory and destroy the buffer handle.
          */
         void Release();
         
         /**
-         * @brief Check if this buffer's Vulkan assets are used.
+         * Check if this buffer's Vulkan assets are used.
          * 
          * @return true     memory is not null and the size is greater than 0
          */
         bool IsUsed() const { return m_BufferMemory != VK_NULL_HANDLE && m_Buffer != VK_NULL_HANDLE && m_Size; }
 
         /**
-         * @brief Map the memory of this buffer to the given data
+         * Map the memory of this buffer to the given data
          *
          * @param t_Data    Where to map this buffer's data to
          */
         VkResult MapMemory(VkDeviceSize t_Size = VK_WHOLE_SIZE, VkDeviceSize t_Offset = 0);
         
         /**
-         * @brief Unmap this buffers memory from the Vulkan device
+         * Unmap this buffers memory from the Vulkan device
          */
         void UnmapMemory();
         
         /**
-         * @brief Create a Buffer object
+         * Create a Buffer object
          * 
          * @param t_size device size
          * @param t_Usage buffer usage flag
@@ -109,7 +108,7 @@ namespace Fling
             const void* t_Data = nullptr);
             
         /**
-         * @brief Flush memory range to device 
+         * Flush memory range to device
          *
          * @param t_size Size of the memory range to flush to
          * @param t_offset offset from the beginning

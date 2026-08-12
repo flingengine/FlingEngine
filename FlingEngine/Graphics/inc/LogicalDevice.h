@@ -8,7 +8,7 @@ namespace Fling
 	class Instance;
 
     /**
-     * @brief A logical device represents the application view of the device
+     * A logical device represents the application view of the device
      */
     class LogicalDevice
     {
@@ -57,12 +57,12 @@ namespace Fling
 		uint32 m_TransferFamily = 0;
 
 		/**
-		 * @brief	Get what queue Indecies/families this device should use
+		 * Get what queue Indecies/families this device should use
 		 */
 		void CreateQueueIndecies();
 
         /**
-         * @brief Create the Vk resoruces for this logical device
+         * Create the Vk resoruces for this logical device
          */
         void CreateDevice();
     };

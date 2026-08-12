@@ -10,7 +10,7 @@ namespace Fling
 	class World;
 
 	/**
-	 * @brief   The game class is mean to be overridden on a per-game instance.
+	 * The game class is mean to be overridden on a per-game instance.
 	 *          It provides an interface for users to add their own System calls
 	 *          in the update, read, write, etc
 	 * @see World
@@ -50,17 +50,13 @@ namespace Fling
 		virtual void Shutdown(entt::registry& t_Reg) = 0;
 
 		/**
-		 * @brief 	Gets the owning world of this game. You can use the world to add entities to
+		 * Gets the owning world of this game. You can use the world to add entities to
 		 * 			the world. Asserts that world exists first
-		 * 
-		 * @return FORCEINLINE* GetWorld 
 		 */
 		FORCEINLINE World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
 
 		/**
-		 * @brief If true then this game wants to texit the application entirely.
-		 * 
-		 * @return FORCEINLINE WantsToQuit
+		 * If true then this game wants to texit the application entirely.
 		 */
 		FORCEINLINE bool WantsToQuit() const { return m_WantsToQuit; } 
 

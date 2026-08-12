@@ -9,18 +9,18 @@
 namespace Fling
 {
     /**
-     * @brief   Helpful for allocating/freeing objects of a certain
-     *          size which have to be created/destroeyed dynamically
-     * 
-     * @see     https://blog.molecular-matters.com/2012/09/17/memory-allocation-strategies-a-pool-allocator/
+     * Helpful for allocating/freeing objects of a certain size which have to be
+     * created/destroyed dynamically.
+     *
+     * @see https://blog.molecular-matters.com/2012/09/17/memory-allocation-strategies-a-pool-allocator/
      */
     class FLING_API FreeList
     {
     public:
 
         /**
-         * @brief Construct a new Free List object
-         * 
+         * Create a free list over the given memory region for fixed-size elements.
+         *
          * @param t_Start       Start of the memory block to use for this free list
          * @param t_End         End of the memory block to use for this free list
          * @param t_ElmSize     Size of an "element" that this list will be used for
@@ -31,14 +31,14 @@ namespace Fling
         FreeList(void* t_Start, void* t_End, size_t t_ElmSize, size_t t_Alignment = 8, size_t t_Offset = 0);
 
         /**
-         * @brief         Obtain a chunk of memory of the size and alignment that this list was created with
-         * 
-         * @return void*    nullptr if no memory available
+         * Obtain a chunk of memory of the size and alignment that this list was created with.
+         *
+         * @return Pointer to the block, or nullptr if none are available
          */
         inline void* Obtain() noexcept;
 
         /**
-         * @brief   Return a block of memory to the free list. Memory can be returned in any order
+         * Return a block of memory to the free list. Memory can be returned in any order.
          */
         inline void Return(void* t_Ptr);
 

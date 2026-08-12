@@ -17,7 +17,7 @@
 namespace Fling
 {
 	/**
-	 * @brief 	Singleton class that allows logging to the console as well as async to a file.
+	 * Singleton class that allows logging to the console as well as async to a file.
 	 * 			Use the defines to actually log strings out.  
 	 */
 	class Logger : public Singleton<Logger>
@@ -33,7 +33,7 @@ namespace Fling
 		static std::shared_ptr<spdlog::logger> GetCurrentConsole();
 
 		/**
-		* @brief Get the current async log file that is being written to
+		* Get the current async log file that is being written to
 		*/
 		static std::shared_ptr<spdlog::logger> GetCurrentLogFile();
 

@@ -29,7 +29,7 @@ namespace Fling
 }
 
 /**
- * @brief Helper function to check size_t is correctly converted to uint32_t
+ * Helper function to check size_t is correctly converted to uint32_t
  * @param value Value of type @ref size_t to convert
  * @return An @ref uint32 representation of the same value
  */

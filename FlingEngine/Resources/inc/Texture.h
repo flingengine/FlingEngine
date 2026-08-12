@@ -6,7 +6,7 @@
 namespace Fling
 {
     /**
-     * @brief   An image represents a 2D file that has data about each pixel in the image
+     * An image represents a 2D file that has data about each pixel in the image
      */
     class Texture : public Resource
     {
@@ -28,33 +28,33 @@ namespace Fling
 		FORCEINLINE VkDescriptorImageInfo* GetDescriptorInfo() { return &m_ImageInfo; }
         FORCEINLINE const VkFormat& GetVkImageFormat() const { return m_Format; }
         /**
-         * @brief   Get the Image Size object (width * height * 4)
+         * Get the Image Size object (width * height * 4)
          *          Multiply by 4 because the pixel is laid out row by row with 4 bytes per pixel
          * @return int32 
          */
         uint64 GetImageSize() const { return m_Width * m_Height * 4; } 
 
         /**
-         * @brief Get the Pixel Data object
+         * Get the Pixel Data object
          * 
          * @return stbi_uc* 
          */
         stbi_uc* GetPixelData() const { return m_PixelData; }
 
 		/**
-		* @brief	Release the Vulkan resources of this image 
+		* Release the Vulkan resources of this image
 		*/
 		void Release();
 
     private:
 
 		/**
-		* @brief	Loads the Vulkan resources needed for this image
+		* Loads the Vulkan resources needed for this image
 		*/
 		void LoadVulkanImage();
 
         /**
-         * @brief Create a Image View object that is needed to sample this image from the swap chain
+         * Create a Image View object that is needed to sample this image from the swap chain
          */
         void CreateImageView();
 

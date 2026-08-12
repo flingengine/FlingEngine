@@ -63,7 +63,7 @@ namespace Fling
 	class LogicalDevice;
 
     /**
-     * @brief   Class that represents what a shader is in the Fling engine.
+     * Class that represents what a shader is in the Fling engine.
      *          Performs shader reflection and provides some helper functionality
      *          for creating the Vk resources needed(descriptor sets, bindings, and locations)
      */
@@ -75,7 +75,7 @@ namespace Fling
 		static std::shared_ptr<Fling::Shader> Create(Guid t_ID, LogicalDevice* t_Dev);
 
         /**
-         * @brief Construct a new Shader object. Loads from disk and compiles the shader
+         * Load a shader from disk and compile it.
          * 
          * @param t_ID  The GUID that represents the file path to this file.
          */
@@ -84,7 +84,7 @@ namespace Fling
         ~Shader();
 
         /**
-         * @brief Create a Shader Module object
+         * Create a Shader Module object
          * 
          * @return VkShaderModule 
          */
@@ -107,7 +107,7 @@ namespace Fling
 		static uint32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32]);
 
         /**
-         * @brief Compiles this shader with SPRIV-Cross
+         * Compiles this shader with SPRIV-Cross
          */
         void ParseReflectionData(const uint32* t_Code, uint32 t_Size);
 
@@ -115,7 +115,7 @@ namespace Fling
         VkResult CreateShaderModule(std::vector<char>& t_ShaderCode);
 
         /**
-         * @brief Load the raw shader code in off-disk
+         * Load the raw shader code in off-disk
          */
         static std::vector<char> LoadRawBytes(const std::string& t_FilePath);
 

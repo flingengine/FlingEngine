@@ -115,7 +115,7 @@ namespace Fling
         VkShaderModule CreateShaderModule(std::shared_ptr<File> t_ShaderCode);
 
         /**
-         * @brief    Create a an image view for Vulkan with the given format
+         * Create a an image view for Vulkan with the given format
          */
         VkImageView CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, uint32 t_MipLevels = 1);
 
@@ -130,7 +130,7 @@ namespace Fling
         );
 
         /**
-         * @brief    Returns true if the given format has a stencil component 
+         * Returns true if the given format has a stencil component
          */
         bool HasStencilComponent(VkFormat t_format);
 
