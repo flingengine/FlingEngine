@@ -8,7 +8,7 @@ namespace Fling
 	class LogicalDevice;
 
     /**
-     * @brief   A multi-sampler will allow us to enable MSAA. Should be recreated with the swap chain
+     * A multi-sampler will allow us to enable MSAA. Should be recreated with the swap chain
      *          as it needs the most up to date extents
      */
     class Multisampler
@@ -16,12 +16,12 @@ namespace Fling
     public:
 
 		/**
-		* @brief	Creates a multi-sampler with the set sample count, but does not create it
+		* Creates a multi-sampler with the set sample count, but does not create it
 		*/
 		Multisampler(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
 
 		/**
-		* @brief	Initializes and creates this multi-sampler.
+		* Initializes and creates this multi-sampler.
 		* @param t_Extents		The extents of the current swap chain
 		* @param t_Format		The same image format as your swap chain
 		*/

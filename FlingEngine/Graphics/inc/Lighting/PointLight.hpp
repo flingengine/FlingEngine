@@ -6,15 +6,14 @@
 namespace Fling
 {
     /**
-     * @brief   Simple representation of a point light in Light Vox. The colors and position have
+     * Simple representation of a point light in Light Vox. The colors and position have
      *          to be glm::vec4's because of shader alignment things
      */
     struct alignas(16) PointLight
     {
     public:
         /**
-         * @brief Diffuse color of this point light, RBA on a scale of 0.0 to 1.0
-         * 
+         * Diffuse color of this point light, RBA on a scale of 0.0 to 1.0
          */
         glm::vec4 DiffuseColor { 1.0f };
 

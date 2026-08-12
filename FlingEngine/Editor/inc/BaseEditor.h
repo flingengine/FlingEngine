@@ -7,7 +7,7 @@
 namespace Fling
 {
     /**
-     * @brief The BaseEditor of the Fling Engine. Draw and add any game specifc Editor UI tools here
+     * The BaseEditor of the Fling Engine. Draw and add any game specifc Editor UI tools here
      */
     class BaseEditor
     {
@@ -21,7 +21,7 @@ namespace Fling
 		virtual void RegisterComponents(entt::registry& t_Reg);
 
         /**
-         * @brief Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
+         * Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
          */
         virtual void Draw(entt::registry& t_Reg, float DeltaTime);
 

@@ -73,9 +73,10 @@ Notice the `-DDEFINE_SHIPPING` option is set to `ON`. This sets a definiton that
 
 If you have any contributions or fixes that you want to contribute, then feel free to open 
 an issue or a pull request! I'm happy to talk about the project, so feel free to reach out
-to me on [Twitter](https://twitter.com/BenjaFriend?lang=en) or here on GitHub. Eventually a
-goal is to have some more specific PR templates/coding standards but for now that is not a 
-priority. 
+to me on [Twitter](https://twitter.com/BenjaFriend?lang=en) or here on GitHub.
+
+See [docs/CodingStyle.md](docs/CodingStyle.md) for documentation-comment conventions and
+how to run the comment-style check / clang-format. 
 
 ## Branching Strategy
 We use a pretty basic branching strategy. Make a feature branch off of `Main` for something like "add-support-for-x", and then that feature is done and tested create a pull request to get it into Main.

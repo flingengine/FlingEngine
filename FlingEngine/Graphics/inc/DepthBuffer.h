@@ -20,14 +20,14 @@ namespace Fling
 
 
 		/**
-		* @brief	Creates all VK resources. Assumes that they are null. Uses swap chain extents 
+		* Creates all VK resources. Assumes that they are null. Uses swap chain extents
 		*			Called on construction
 		*			@see Cleanup
 		*/
 		void Create();
 
 		/**
-		* @brief	Cleans up all Vulkan resources of this depth buffer. 
+		* Cleans up all Vulkan resources of this depth buffer.
 		*			Called automatically on destruction
 		*/
 		void Cleanup();

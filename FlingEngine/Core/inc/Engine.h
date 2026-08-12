@@ -41,7 +41,7 @@
 namespace Fling
 {
 	/**
-	 * @brief Core engine class of Fling. This is where the core update loop lives 
+	 * Core engine class of Fling. This is where the core update loop lives
 	 * along with all startup/shutdown ordering. 
 	 */
 	class Engine : public NonCopyable
@@ -53,7 +53,7 @@ namespace Fling
 		FLING_API ~Engine() = default;
 
 		/**
-		 * @brief Run the engine (Startup, Tick until should stop, and shutdown)
+		 * Run the engine (Startup, Tick until should stop, and shutdown)
 		 * 
 		 * @return uint64 0 for success, otherwise an error has occured
 		 */

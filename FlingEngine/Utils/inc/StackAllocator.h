@@ -9,36 +9,36 @@
 namespace Fling
 {
     /**
-     * @brief 
-     * 
+     * Stack (LIFO) allocator over a fixed memory region.
+     *
      * @see https://blog.molecular-matters.com/2012/08/27/memory-allocation-strategies-a-stack-like-lifo-allocator/
      */
     class StackAllocator
     {
     public:
         /**
-         * @brief Construct a new Stack Allocator object
-         * 
+         * Create a stack allocator over the memory between t_Start and t_End.
+         *
          * @param t_Start  Start of the memory block to use for this stack allocator
-         * @param t_End    End of the memory block to use for this stack allocator 
+         * @param t_End    End of the memory block to use for this stack allocator
          */
         StackAllocator(void* t_Start, void* t_End);
         ~StackAllocator();
 
         /**
-         * @brief 
-         * 
-         * @param t_Size        Size of the block of memory 
+         * Allocate a block from the top of the stack.
+         *
+         * @param t_Size        Size of the block of memory
          * @param t_Alignment   Alignment of the element (Default = 8)
          * @param t_Offset      Offset of the element (Default = 0)
-         * @return void*        Obtain a chunk of memory of the size, alignment, and offset (asserts when we exceed preallocated size) 
+         * @return Pointer to the allocated block (asserts when we exceed the preallocated size)
          */
         void* Allocate(size_t t_Size, size_t t_Alignment = 0, size_t t_Offset = 0);
 
         /**
-         * @brief Returns a block of memory to the stack in a LIFO manner 
-         * 
-         * @param t_Ptr 
+         * Return a block of memory to the stack in LIFO order.
+         *
+         * @param t_Ptr  Pointer previously returned by Allocate
          */
         void Free(void* t_Ptr);
 

@@ -10,7 +10,7 @@ namespace Fling
 	class LogicalDevice;
 
 	/**
-	* @brief Describes the attributes of an attachment to be created
+	* Describes the attributes of an attachment to be created
 	*/
 	struct AttachmentCreateInfo
 	{
@@ -30,17 +30,17 @@ namespace Fling
 		void Release();
 
 		/**
-		* @brief Returns true if the attachment has a depth component
+		* Returns true if the attachment has a depth component
 		*/
 		bool HasDepth();
 
 		/**
-		* @brief Returns true if the attachment has a stencil component
+		* Returns true if the attachment has a stencil component
 		*/
 		bool HasStencil();
 
 		/**
-		* @brief Returns true if the attachment is a depth and/or stencil attachment
+		* Returns true if the attachment is a depth and/or stencil attachment
 		*/
 		bool IsDepthStencil();
 
@@ -89,7 +89,7 @@ namespace Fling
 		VkRenderPass GetRenderPassHandle() const { return m_RenderPass; }
 
 		/**
-		* @brief	Create the default render pass of this frame buffer 
+		* Create the default render pass of this frame buffer
 		*			based on the given attachments it has. Should be called
 		*			AFTER adding attachments for proper uses. 
 		* 
@@ -98,7 +98,7 @@ namespace Fling
 		VkResult CreateRenderPass();
 
 		/**
-		* @brief	Create a sampler for sampling from any frame buffer attachments
+		* Create a sampler for sampling from any frame buffer attachments
 		* @return	VkResult for sampler creation
 		*/
 		VkResult CreateSampler(VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode adressMode);
@@ -109,7 +109,7 @@ namespace Fling
         uint32 AddAttachment(AttachmentCreateInfo t_CreateInfo);
 
 		/**
-		 * @brief	Get the frame buffer attachment at a given index
+		 * Get the frame buffer attachment at a given index
 		 * @return	nullptr if index is invalid
 		 */
 		FrameBufferAttachment* GetAttachmentAtIndex(uint32 t_Index);

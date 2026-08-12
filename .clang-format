@@ -1,0 +1,66 @@
+# FlingEngine clang-format configuration
+#
+# Apply to first-party sources only (FlingEngine/, Sandbox/, FlingTests/).
+# Do not run clang-format on external/ submodules.
+#
+# Note: clang-format can reflow and align comments, but it cannot enforce
+# documentation *content* (e.g. forbidding @brief). Use
+# scripts/check_comment_style.py for that — see docs/CodingStyle.md.
+
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++17
+
+# Indentation — the tree historically mixes tabs and spaces; prefer spaces
+# for new/edited code so formatting stays consistent going forward.
+UseTab: Never
+IndentWidth: 4
+TabWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: All
+IndentCaseLabels: false
+IndentPPDirectives: None
+
+# Pointers / references
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+# Line wrapping
+ColumnLimit: 120
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BinPackArguments: false
+BinPackParameters: false
+
+# Includes
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Comments — reflow long lines, but keep doc-comment semantics alone
+ReflowComments: true
+AlignTrailingComments: true
+
+# Misc
+FixNamespaceComments: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+Cpp11BracedListStyle: true

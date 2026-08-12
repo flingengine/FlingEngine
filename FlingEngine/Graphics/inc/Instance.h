@@ -6,7 +6,7 @@
 namespace Fling
 {
     /**
-     * @brief The instance is a representation of this application graphics instance in Vulkan
+     * The instance is a representation of this application graphics instance in Vulkan
      */
     class Instance : NonCopyable
     {
@@ -38,7 +38,7 @@ namespace Fling
         uint8 m_EnableValidationLayers : 1;
 
         /**
-         * @brief Create the VkInstance of this object and application information
+         * Create the VkInstance of this object and application information
          */
         void CreateInstance();
 

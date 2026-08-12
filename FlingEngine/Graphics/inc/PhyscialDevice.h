@@ -5,7 +5,7 @@
 namespace Fling
 {
     /**
-     * @brief A physical device represents the Vulkan physical device (the GPU) that 
+     * A physical device represents the Vulkan physical device (the GPU) that
      * we are currently using 
      */
     class PhysicalDevice
@@ -24,7 +24,7 @@ namespace Fling
         const VkPhysicalDeviceFeatures& GetDeivceFeatures() const { return m_DeviceFeatures; } 
 
         /**
-         * @brief Get a string representing the device vendor
+         * Get a string representing the device vendor
          * 
          * @param t_Props 
          * @return const char* 
@@ -37,7 +37,7 @@ namespace Fling
 		void LogPhysicalDeviceInfo();
 
         /**
-         * @brief Checks hte given format properties that are supported on this physical device
+         * Checks hte given format properties that are supported on this physical device
          */
         VkFormatProperties GetFormatProperties(VkFormat t_Form) const;
 

@@ -5,7 +5,7 @@
 namespace Fling
 {
     /**
-     * @brief Class that can have only one instance. 
+     * Class that can have only one instance.
      */
     template <class T>
     class Singleton

@@ -30,16 +30,12 @@ namespace Fling
 		float FLING_API GetDeltaTime();
 
 		/**
-		 * @brief Get the current time of the application (double)
-		 * 
-		 * @return double GetTime 
+		 * Get the current time of the application (double)
 		 */
 		double FLING_API GetTime() const;
 
 		/**
-		 * @brief Get the current time of the application (float)
-		 * 
-		 * @return float GetTimef 
+		 * Get the current time of the application (float)
 		 */
 		float FLING_API GetTimef() const
 		{
@@ -47,37 +43,27 @@ namespace Fling
 		}
 
 		/**
-		 * @brief Get the time that that frame has started
-		 * 
-		 * @return float GetFrameStartTime 
+		 * Get the time that that frame has started
 		 */
 		float FLING_API GetFrameStartTime() const { return m_frameStartTimef; }
 
 		/**
-		 * @brief Get the time that the application has started
-		 * 
-		 * @return double GetStartTime 
+		 * Get the time that the application has started
 		 */
 		double FLING_API GetStartTime() const { return m_startTime; }
 
 		/**
-		 * @brief Get the time since that application has started (i.e. time running)
-		 * 
-		 * @return float GetTimeSinceStart 
+		 * Get the time since that application has started (i.e. time running)
 		 */
 		float FLING_API GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
 
 		/**
-		 * @brief Get fps count
-		 *
-		 * @return int GetFrameCount
+		 * Get fps count
 		 */
 		int FLING_API GetFrameCount() const { return m_fpsFrameCount; }
 
 		/**
-		 * @brief Get current frame time
-		 *
-		 * @return float GetFrameTime
+		 * Get current frame time
 		 */
 		float FLING_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
 

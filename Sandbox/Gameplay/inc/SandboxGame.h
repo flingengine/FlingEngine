@@ -5,7 +5,7 @@
 namespace Sandbox
 {
 	/**
-	 * @brief Custom game class that will have control of it's gameplay systems.
+	 * Custom game class that will have control of it's gameplay systems.
 	 */
 	class Game : public Fling::Game
 	{
@@ -13,7 +13,7 @@ namespace Sandbox
 		void Init(entt::registry& t_Reg) override final;
 
 		/**
-		 * @brief 	Called before the first gameplay loop tick.
+		 * Called before the first gameplay loop tick.
 		 * 			Do any initalization for custom gameplay systems here.
 		 */
 		void OnStartGame(entt::registry& t_Reg) override final;
@@ -29,7 +29,7 @@ namespace Sandbox
 		void Shutdown(entt::registry& t_Reg) override final;
 
 		/**
-		 * @brief Callback for when the user has given input that shows they want to exit
+		 * Callback for when the user has given input that shows they want to exit
 		 */
 		void OnQuitPressed();
 

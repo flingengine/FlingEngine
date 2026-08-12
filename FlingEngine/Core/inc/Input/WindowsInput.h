@@ -27,7 +27,7 @@ namespace Fling
 		virtual bool IsMouseDownImpl(const std::string& t_KeyName) override;
 
 		/**
-		 * @brief Get the mouse position in screen space
+		 * Get the mouse position in screen space
 		 * 
 		 * @return MousePos 
 		 */

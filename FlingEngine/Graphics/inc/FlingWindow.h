@@ -63,7 +63,7 @@ namespace Fling
 		virtual bool GetMouseVisible() = 0;
 
 		/** 
-		* @brief		Set this window's icon.
+		* Set this window's icon.
 		* @param t_ID	the GUID of the window icon
 		*/
 		virtual void SetWindowIcon(Guid t_ID) = 0;

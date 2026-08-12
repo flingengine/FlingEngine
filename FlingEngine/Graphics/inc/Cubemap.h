@@ -48,30 +48,28 @@ namespace Fling
             std::unique_ptr<GraphicsPipeline> GetGraphicsPipeline() const { return std::unique_ptr<GraphicsPipeline>(m_GraphicsPipeline); }
 
             /**
-             * @brief Get the Descriptor Sets object
+             * Get the Descriptor Sets object
              * 
              * @return const VkDescriptorSet> 
              */
             VkDescriptorSet& GetDescriptorSet() { return m_DescriptorSet; }
 
             /**
-             * @brief Get the Vertex Buffer object
+             * Get the Vertex Buffer object
              * 
              * @return const Buffer* 
              */
             Buffer* GetVertexBuffer() const { return m_Cube->GetVertexBuffer(); }
 
             /**
-             * @brief Get the Index Buffer object
+             * Get the Index Buffer object
              * 
              * @return const Buffer* 
              */
             Buffer* GetIndexBuffer() const { return m_Cube->GetIndexBuffer(); }
 
             /**
-             * @brief Get the Index Count object
-             * 
-             * @return const uint32 
+             * Get the Index Count object
              */
             uint32 GetIndexCount() const { return m_Cube->GetIndexCount(); }
 

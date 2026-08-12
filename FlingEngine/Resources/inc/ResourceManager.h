@@ -11,7 +11,7 @@
 namespace Fling
 {
 	/**
-	 * @brief The resource manager handles loading of files off disk. Every Resource type
+	 * The resource manager handles loading of files off disk. Every Resource type
 	 * has a Guid. This Guid functions as both the file path (relative to the ASSETS directory)
 	 * as well as a hashed string for easy passing around of information. Each resource is only 
 	 * ever loaded into memory ONCE.
@@ -38,7 +38,7 @@ namespace Fling
 		std::shared_ptr<T> GetResourceOfType(Guid_Handle t_ID) const;
 
 		/**
-		 * @brief Get the already loaded resouce with this Guid. Returns nullptr if not loaded yet. 
+		 * Get the already loaded resouce with this Guid. Returns nullptr if not loaded yet.
 		 * 
 		 * @param t_ID 	Guid of the resource (a hashed string handle)
 		 * @return std::shared_ptr<Resource> Pointer to the resource

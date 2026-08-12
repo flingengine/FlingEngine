@@ -5,7 +5,7 @@
 namespace Sandbox
 {
     /**
-     * @brief Owns the drawing of any UI elements for the Sandbox game.
+     * Owns the drawing of any UI elements for the Sandbox game.
      */
     class SandboxUI
     {
@@ -14,7 +14,7 @@ namespace Sandbox
         ~SandboxUI() = default;
 
         /**
-         * @brief Draw the sandbox game ImGui UI elements
+         * Draw the sandbox game ImGui UI elements
          */
         void NewFrame(entt::registry& t_Reg); 
     };
