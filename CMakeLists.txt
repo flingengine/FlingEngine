@@ -80,6 +80,11 @@ if( MSVC )
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
     endif()
+
+    # spdlog 1.17+ bundles fmt v12, which requires UTF-8 source encoding on MSVC.
+    # See https://github.com/fmtlib/fmt/pull/4159
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 # GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
