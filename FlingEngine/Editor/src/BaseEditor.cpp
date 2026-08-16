@@ -8,6 +8,7 @@
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
+#include "Components/Name.hpp"
 #include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
@@ -18,6 +19,7 @@
 #include <stdio.h> 
 #include <string.h> 
 #include <sstream>
+#include <vector>
 
 namespace Fling
 {
@@ -240,46 +242,70 @@ namespace Fling
 		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
 		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
 
-        auto view = t_Reg.view<EditableComponent>();
-        for(entt::entity entity : view) 
-        {
-            const bool bStartedSelected = (m_CompEditorEntityType == entity);
-            
-            std::ostringstream os;
-            os << "Entity " << static_cast<uint64>(entity);
-            std::string label = os.str();
+		std::vector<entt::entity> entities;
+		t_Reg.each([&](entt::entity entity)
+		{
+			entities.push_back(entity);
+		});
 
-            if (ImGui::Button(" - "))
-            {
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::Text("Hovered");
-                }
+		entt::entity entityToDestroy = entt::null;
+		for (entt::entity entity : entities)
+		{
+			if (!t_Reg.valid(entity))
+			{
+				continue;
+			}
 
-                F_LOG_TRACE("Delete {}", label);
-                t_Reg.destroy(entity);
-            }
+			const bool bStartedSelected = (m_CompEditorEntityType == entity);
 
-            ImGui::SameLine();
-            
-            // If the entity is currently selected, then give it a different color in the editor
-            if(bStartedSelected)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
-            }
+			std::string label;
+			if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.empty())
+			{
+				label = t_Reg.get<NameComponent>(entity).Name;
+			}
+			else
+			{
+				std::ostringstream os;
+				os << "Entity " << static_cast<uint64>(entity);
+				label = os.str();
+			}
 
-            // gets only the components that are going to be used ...
-            if(ImGui::Button(label.c_str(), ImVec2( ImGui::GetWindowWidth(), 0.f ) ))
-            {
-                // Select this eneity for the component editor
-                m_CompEditorEntityType = entity;
-            }
+			ImGui::PushID(static_cast<int>(entity));
 
-            if(bStartedSelected)
-            {
-                ImGui::PopStyleColor(1);
-            }
-        }
+			if (ImGui::Button(" - "))
+			{
+				F_LOG_TRACE("Delete {}", label);
+				entityToDestroy = entity;
+			}
+
+			ImGui::SameLine();
+
+			if (bStartedSelected)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
+			}
+
+			if (ImGui::Button(label.c_str(), ImVec2(ImGui::GetWindowWidth(), 0.f)))
+			{
+				m_CompEditorEntityType = entity;
+			}
+
+			if (bStartedSelected)
+			{
+				ImGui::PopStyleColor(1);
+			}
+
+			ImGui::PopID();
+		}
+
+		if (entityToDestroy != entt::null)
+		{
+			if (m_CompEditorEntityType == entityToDestroy)
+			{
+				m_CompEditorEntityType = entt::null;
+			}
+			t_Reg.destroy(entityToDestroy);
+		}
 
         ImGui::End();
     }

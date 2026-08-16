@@ -218,21 +218,34 @@ namespace Fling
 			NameComponent& nameComp = m_Registry.assign<NameComponent>(entity);
 			nameComp.Name = name;
 
-			for (const std::string& key : entityJson.Keys())
+			auto LoadNamedComponent = [&](const std::string& key)
 			{
-				if (IsReservedEntityKey(key))
+				if (IsReservedEntityKey(key) || !entityJson.Contains(key))
 				{
-					continue;
+					return;
 				}
 
 				const ComponentTypeInfo* info = typeRegistry.Find(key);
 				if (!info || !info->load)
 				{
 					F_LOG_WARN("Unknown component '{}' on entity '{}', skipping", key, name);
-					continue;
+					return;
 				}
 
 				info->load(m_Registry, entity, entityJson.Get(key));
+			};
+
+			// nlohmann objects iterate keys alphabetically, so MeshRenderer would
+			// otherwise construct before Transform. Load pose first so renderer
+			// hooks and later components see the authored transform.
+			LoadNamedComponent("Transform");
+			for (const std::string& key : entityJson.Keys())
+			{
+				if (key == "Transform")
+				{
+					continue;
+				}
+				LoadNamedComponent(key);
 			}
 		}
 

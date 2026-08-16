@@ -118,9 +118,12 @@ namespace Fling
 		// #TODO This is where a lot of the cost of our engine loop comes from
 		// We can improve this by doing some kind of dirty bit tracking to only
 		// update the UBO's on MeshRenders if they have changed
-		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Default"_hs>>);
+		//
+		// Use a view, not an owning group. group<Transform>(MeshRenderer, ...) packs
+		// Transform and can swap it out from under assign<Transform>() references.
+		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<"Default"_hs>>();
 
-		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)

@@ -10,8 +10,9 @@
 namespace Fling
 {
 	/**
-	 * Engine JSON document wrapper. Implementation is hidden so public headers
-	 * never include nlohmann/json.hpp.
+	 * Engine JSON document wrapper.
+	 * 
+	 * Just a wrapper for nlohmann/json.hpp right now.
 	 */
 	class Json
 	{

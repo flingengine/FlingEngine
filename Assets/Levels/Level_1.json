@@ -26,6 +26,18 @@
                 "direction": [1.0, -1.0, -0.5, 1.0],
                 "intensity": 1.0
             }
+        },
+        {
+            "name": "Sphere",
+            "Transform": {
+                "position": [8.0, 0.5, 0.0],
+                "rotation": [0.0, 0.0, 0.0],
+                "scale": [1.0, 1.0, 1.0]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/sphere.obj",
+                "material": "Materials/DeferredBronzeMat.mat"
+            }
         }
     ]
 }

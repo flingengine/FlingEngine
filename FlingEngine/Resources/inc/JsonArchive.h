@@ -24,8 +24,10 @@ namespace Fling
 #define FLING_FIELD(Member) ::Fling::MakeNVP(#Member, Member)
 
 	/**
-	 * Bidirectional JSON archive. Components implement one Serialize() used for
-	 * both saving and loading, similar to Unreal's FArchive.
+	 * Bidirectional JSON archive. 
+	 * 
+	 * TODO: Make a base class archive to use for binary serialization as well, 
+	 * thus opening us up to "cooked" level files :) 
 	 */
 	class JsonArchive
 	{

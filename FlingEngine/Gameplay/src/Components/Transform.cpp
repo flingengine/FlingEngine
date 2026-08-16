@@ -65,5 +65,10 @@ namespace Fling
 		Ar << MakeNVP("position", m_Pos);
 		Ar << MakeNVP("rotation", m_Rotation);
 		Ar << MakeNVP("scale", m_Scale);
+
+		if (Ar.IsLoading())
+		{
+			CalculateWorldMatrix(*this);
+		}
 	}
 }   // namespace Fling
