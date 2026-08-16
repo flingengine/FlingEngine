@@ -8,18 +8,15 @@
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
-#include "Components/Name.hpp"
 #include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "ImFileBrowser.hpp"
 #include "World.h"
-#include "EditableComponent.h"
+#include "ComponentTypeRegistry.h"
 
-#include <stdio.h> 
-#include <string.h> 
-#include <sstream>
-#include <vector>
+#include <stdio.h>
+#include <string.h>
 
 namespace Fling
 {
@@ -88,7 +85,7 @@ namespace Fling
                 {
                     MaterialName = t_MeshRend.m_Material->GetGuidString();
                 }
-                
+
                 const char* m = MaterialName.c_str();
                 ImGui::LabelText("Material", m, "%s");
 
@@ -108,11 +105,14 @@ namespace Fling
                 fileDialog.Display();
                 if(fileDialog.HasSelected())
                 {
-                    std::string ModelName = t_MeshRend.m_Model->GetGuidString();
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
+                    // Update the material in place. Going through registry.replace<MeshRenderer>()
+                    // here would construct a brand new component and drop its m_UniformBuffer/
+                    // m_DescriptorSet (only OnMeshRendererAdded, hooked to on_construct, sets
+                    // those up) -- the next frame's render pass would then dereference a null
+                    // uniform buffer for this entity.
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, ModelName, SelectedAsset);
 
                     fileDialog.ClearSelected();
                 }
@@ -145,40 +145,40 @@ namespace Fling
 
     void BaseEditor::RegisterComponents(entt::registry& t_Reg)
     {
-        m_ComponentEditor.registerTrivial<Fling::Transform>(t_Reg, "Transform");
-        m_ComponentEditor.registerComponentWidgetFn(
-            t_Reg.type<Fling::Transform>(),
-            [](entt::registry& reg, auto e) 
+        (void)t_Reg;
+
+        // Transform, NameComponent, MeshRenderer, DirectionalLight, and PointLight are
+        // already known to ComponentTypeRegistry (RegisterGameplayComponents /
+        // RegisterGraphicsComponents); we're just attaching an ImGui draw callback for
+        // each so EntityEditorPanel can render them.
+        ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
+
+        Registry.SetEditorWidget("Transform",
+            [](entt::registry& reg, entt::entity e)
             {
                 auto& t = reg.get<Fling::Transform>(e);
                 Widgets::Transform(t);
             }
         );
 
-        m_ComponentEditor.registerTrivial<Fling::PointLight>(t_Reg, "PointLight");
-        m_ComponentEditor.registerComponentWidgetFn(
-            t_Reg.type<Fling::PointLight>(),
-            [](entt::registry& reg, auto e) 
+        Registry.SetEditorWidget("PointLight",
+            [](entt::registry& reg, entt::entity e)
             {
                 auto& t = reg.get<Fling::PointLight>(e);
                 Widgets::PointLight(t);
             }
         );
 
-        m_ComponentEditor.registerTrivial<Fling::DirectionalLight>(t_Reg, "Directional Light");
-        m_ComponentEditor.registerComponentWidgetFn(
-            t_Reg.type<Fling::DirectionalLight>(),
-            [](entt::registry& reg, auto e) 
+        Registry.SetEditorWidget("DirectionalLight",
+            [](entt::registry& reg, entt::entity e)
             {
                 auto& t = reg.get<Fling::DirectionalLight>(e);
                 Widgets::DirectionalLight(t);
             }
         );
 
-        m_ComponentEditor.registerTrivial<Fling::MeshRenderer>(t_Reg, "Mesh Renderer");
-        m_ComponentEditor.registerComponentWidgetFn(
-            t_Reg.type<Fling::MeshRenderer>(),
-            [](entt::registry& reg, auto e)
+        Registry.SetEditorWidget("MeshRenderer",
+            [](entt::registry& reg, entt::entity e)
             {
                 auto& t = reg.get<Fling::MeshRenderer>(e);
                 Widgets::MeshRenderer(t, reg, e);
@@ -187,7 +187,7 @@ namespace Fling
     }
 
     void BaseEditor::Draw(entt::registry& t_Reg, float DeltaTime)
-    {        
+    {
         DrawFileMenu();
 
         if (m_DisplayGPUInfo)
@@ -202,7 +202,7 @@ namespace Fling
 
         if(m_DisplayComponentEditor)
         {
-            DrawComponentEditor(t_Reg);
+            DrawEntityEditor(t_Reg);
         }
 
         if (m_DisplayWindowOptions)
@@ -237,95 +237,14 @@ namespace Fling
 
     void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
     {
-        ImGui::Begin("World Outline");
-
-		ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
-		ImGui::SetWindowPos(ImVec2(0.0f, 30.0f), ImGuiCond_FirstUseEver);
-
-		std::vector<entt::entity> entities;
-		t_Reg.each([&](entt::entity entity)
-		{
-			entities.push_back(entity);
-		});
-
-		entt::entity entityToDestroy = entt::null;
-		for (entt::entity entity : entities)
-		{
-			if (!t_Reg.valid(entity))
-			{
-				continue;
-			}
-
-			const bool bStartedSelected = (m_CompEditorEntityType == entity);
-
-			std::string label;
-			if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.empty())
-			{
-				label = t_Reg.get<NameComponent>(entity).Name;
-			}
-			else
-			{
-				std::ostringstream os;
-				os << "Entity " << static_cast<uint64>(entity);
-				label = os.str();
-			}
-
-			ImGui::PushID(static_cast<int>(entity));
-
-			if (ImGui::Button(" - "))
-			{
-				F_LOG_TRACE("Delete {}", label);
-				entityToDestroy = entity;
-			}
-
-			ImGui::SameLine();
-
-			if (bStartedSelected)
-			{
-				ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
-			}
-
-			if (ImGui::Button(label.c_str(), ImVec2(ImGui::GetWindowWidth(), 0.f)))
-			{
-				m_CompEditorEntityType = entity;
-			}
-
-			if (bStartedSelected)
-			{
-				ImGui::PopStyleColor(1);
-			}
-
-			ImGui::PopID();
-		}
-
-		if (entityToDestroy != entt::null)
-		{
-			if (m_CompEditorEntityType == entityToDestroy)
-			{
-				m_CompEditorEntityType = entt::null;
-			}
-			t_Reg.destroy(entityToDestroy);
-		}
-
-        ImGui::End();
+        m_WorldOutline.Draw(t_Reg);
     }
 
-    void BaseEditor::DrawComponentEditor(entt::registry& t_Reg)
+    void BaseEditor::DrawEntityEditor(entt::registry& t_Reg)
     {
-		// Set the window options for the component editor
-		ImGui::SetNextWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 30.0f), ImGuiCond_FirstUseEver);
-
-		m_ComponentEditor.renderImGui(t_Reg, m_CompEditorEntityType);
-
-        // Make sure that each entity has a transform so that they show up in the editor window
-        if(m_CompEditorEntityType != entt::null)
-        {
-            if(!t_Reg.has<EditableComponent>(m_CompEditorEntityType))
-            {
-				t_Reg.assign<EditableComponent>(m_CompEditorEntityType);
-            }
-        }
+        // Spawn the entity editor for whatever is currently selected in the outline
+        m_EntityEditor.SetTargetEntity(m_WorldOutline.GetSelectedEntity());
+        m_EntityEditor.Draw(t_Reg);
     }
 
     void BaseEditor::DrawWindowOptions()
@@ -346,7 +265,7 @@ namespace Fling
                 {
                     CurSelection = WindowOpts[n];
                 }
-				
+
                 if (is_selected)
                 {
 					ImGui::SetItemDefaultFocus();
@@ -367,7 +286,7 @@ namespace Fling
             ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_MenuBar |
-            ImGuiWindowFlags_NoTitleBar | 
+            ImGuiWindowFlags_NoTitleBar |
             ImGuiWindowFlags_NoBackground;
 
         bool isOpen = true;
@@ -489,13 +408,13 @@ namespace Fling
     {
         assert(m_OwningWorld);
 
-        // File pop up to load the level file 
+        // File pop up to load the level file
         F_LOG_TRACE("Save to file {}", t_FileName);
 
         m_OwningWorld->OutputLevelFile(t_FileName);
     }
 
-    void BaseEditor::DrawGpuInfo() 
+    void BaseEditor::DrawGpuInfo()
     {
         Timing& Timing = Timing::Get();
         ImGui::Begin("GPU Info");

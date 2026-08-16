@@ -56,6 +56,18 @@ namespace Fling
 		}
 	}
 
+	void ComponentTypeRegistry::SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity))
+	{
+		const auto it = m_NameToIndex.find(name);
+		if (it == m_NameToIndex.end())
+		{
+			F_LOG_WARN("ComponentTypeRegistry::SetEditorWidget('{}') called before the type was registered", name);
+			return;
+		}
+
+		m_Types[it->second].drawEditorWidget = fn;
+	}
+
 	void ComponentTypeRegistry::RunExternalRegistrars()
 	{
 		if (m_Sealed)
