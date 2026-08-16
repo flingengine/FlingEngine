@@ -15,6 +15,9 @@ namespace Fling
 		T& Value;
 	};
 
+	/**
+	 * Makes a Name Value Pair (NVP) which can be used to serialize as a JSON key/value.
+	 */
 	template<typename T>
 	NamedRef<T> MakeNVP(const char* name, T& value)
 	{
