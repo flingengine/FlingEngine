@@ -22,13 +22,13 @@ headers, X11/Wayland dev libs) — see the root [README.md](../README.md) for th
 
 ## Day-to-day builds
 
-Three convenience scripts reconfigure CMake for a given mode (they do **not**
-build — build separately):
+Reconfigure `build/` for the mode you want (this does **not** build — build
+separately), e.g.:
 
 ```bash
-./build-debug.sh      # -DCMAKE_BUILD_TYPE=Debug
-./build-release.sh    # -DCMAKE_BUILD_TYPE=Release
-./build-shipping.sh   # -DCMAKE_BUILD_TYPE=Release -DDEFINE_SHIPPING=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug                                # debug
+cmake -B build -DCMAKE_BUILD_TYPE=Release                              # release
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DDEFINE_SHIPPING=ON         # shipping
 ```
 
 Then build with your generator, e.g.:
@@ -36,6 +36,11 @@ Then build with your generator, e.g.:
 ```bash
 cmake --build build --parallel
 ```
+
+There used to be `build-debug.sh`/`build-release.sh`/`build-shipping.sh` wrapper
+scripts for the commands above; they were removed since CI and IDE tooling
+(VS Code's cmake-tools extension) never used them and they only added an
+indirection layer over a couple of CMake flags.
 
 ## `DEFINE_SHIPPING`
 

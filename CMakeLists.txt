@@ -120,9 +120,18 @@ set_target_properties(spirv-cross-glsl PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-reflect PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
 
-# ImGUI 
+# ImGUI
+# Built directly here (rather than via the submodule's own CMakeLists.txt) so that
+# the submodule can stay pinned to an unmodified upstream ocornut/imgui tag.
 if( WITH_IMGUI_FLAG )
-    add_subdirectory( external/imgui )
+    add_library( ImGui STATIC
+        external/imgui/imgui.cpp
+        external/imgui/imgui_demo.cpp
+        external/imgui/imgui_draw.cpp
+        external/imgui/imgui_tables.cpp
+        external/imgui/imgui_widgets.cpp )
+    target_include_directories( ImGui PUBLIC external/imgui )
+
     include_directories( external/imgui )
     include_directories( external/imgui_entt_entity_editor )
 endif()
