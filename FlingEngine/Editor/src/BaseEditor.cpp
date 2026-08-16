@@ -466,7 +466,6 @@ namespace Fling
         // File pop up to load the level file 
         F_LOG_TRACE("Save to file {}", t_FileName);
 
-        // Add template arguments here to add custom components to the level files
         m_OwningWorld->OutputLevelFile(t_FileName);
     }
 

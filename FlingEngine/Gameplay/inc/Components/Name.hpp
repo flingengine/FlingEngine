@@ -1,5 +1,7 @@
 #pragma once
 
+#include "JsonArchive.h"
+
 #include <string>
 
 namespace Fling
@@ -8,12 +10,9 @@ namespace Fling
 	{
 		std::string Name;
 
-		template<class Archive>
-        void serialize(Archive & t_Archive)
-        {
-            t_Archive( 
-                cereal::make_nvp("Name", Name)
-            ); 
-        }
+		void Serialize(JsonArchive& Ar)
+		{
+			Ar << MakeNVP("Name", Name);
+		}
 	};
-}   // namespace Fling
+}	// namespace Fling

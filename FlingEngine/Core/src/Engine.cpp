@@ -5,6 +5,8 @@
 #include "VulkanApp.h"
 #include "Misc/CommandLine.h"
 #include "Foundation.h"
+#include "ComponentTypeRegistry.h"
+#include "RegisterGraphicsComponents.h"
 
 namespace Fling
 {
@@ -58,6 +60,9 @@ namespace Fling
 			g_Registry,
 			m_Editor
 		);
+
+		RegisterGameplayComponents();
+		RegisterGraphicsComponents();
 		
 		// Set the editor if we need to
 #if WITH_EDITOR

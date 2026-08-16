@@ -3,8 +3,6 @@
 #include "pch.h"
 #include "SandboxEditor.h"
 #include "World.h"
-#include "Mover.h"
-
 #include "VulkanApp.h"
 #include "FirstPersonCamera.h"
 
@@ -41,7 +39,7 @@ namespace Sandbox
 	{
 		F_LOG_TRACE("Load file {}", t_FileName);
 
-		m_OwningWorld->LoadLevelFile<Mover, Rotator>(t_FileName);
+		m_OwningWorld->LoadLevelFile(t_FileName);
 	}
 
 	void SandboxEditor::OnSaveLevel(std::string t_FileName)
@@ -49,7 +47,7 @@ namespace Sandbox
 		// File pop up to load the level file 
 		F_LOG_TRACE("Save to file {}", t_FileName);
 
-		m_OwningWorld->OutputLevelFile<Mover, Rotator>(t_FileName);
+		m_OwningWorld->OutputLevelFile(t_FileName);
 	}
 }   // namespace Sandbox
 

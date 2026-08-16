@@ -34,7 +34,7 @@ namespace Fling
         try
         {
             // Load Shaders -------------
-            std::string PipelineName = m_JsonData.value("pipeline", "DEFAULT");
+            std::string PipelineName = m_JsonData.GetString("pipeline", "DEFAULT");
 			m_Type = GetTypeFromStr(PipelineName);
 
 			if (m_Type != Material::Type::Default)
@@ -44,19 +44,19 @@ namespace Fling
 
             // Load Textures -------------
             // Albedo
-            const std::string& AlbedoPath = m_JsonData["albedo"];
+            const std::string AlbedoPath = m_JsonData.GetString("albedo");
             m_Textures.m_AlbedoTexture = Texture::Create(HS(AlbedoPath.c_str())).get();
 
             // Normal
-            const std::string& NormalPath = m_JsonData["normal"];
+            const std::string NormalPath = m_JsonData.GetString("normal");
             m_Textures.m_NormalTexture = Texture::Create(HS(NormalPath.c_str())).get();
 
             // Metal
-            const std::string& MetalPath = m_JsonData["metal"];
+            const std::string MetalPath = m_JsonData.GetString("metal");
             m_Textures.m_MetalTexture = Texture::Create(HS(MetalPath.c_str())).get();
 
             // Rough
-            const std::string& RoughPath = m_JsonData["rough"];
+            const std::string RoughPath = m_JsonData.GetString("rough");
             m_Textures.m_RoughnessTexture = Texture::Create(HS(RoughPath.c_str())).get();
         }
         catch (std::exception& e)

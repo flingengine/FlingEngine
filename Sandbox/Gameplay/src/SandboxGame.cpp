@@ -12,6 +12,7 @@
 // For getting some lighting info
 #include "GeometrySubpass.h"
 #include "Mover.h"
+#include "ComponentTypeRegistry.h"
 
 // Test command line args
 #include "Misc/CommandLine.h"
@@ -48,6 +49,12 @@ namespace Sandbox
 
 		F_LOG_TRACE("Done cmd line testing");
     }
+
+	void Game::RegisterComponents()
+	{
+		Fling::ComponentTypeRegistry::Get().Register<Mover>("Mover");
+		Fling::ComponentTypeRegistry::Get().Register<Rotator>("Rotator");
+	}
 
 	void Game::OnStartGame(entt::registry& t_Reg)
 	{
