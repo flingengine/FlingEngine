@@ -11,7 +11,7 @@
 	VkResult res = (f);																\
 	if (res != VK_SUCCESS)															\
 	{																				\
-		F_LOG_ERROR("VkResult is {} in {} at line {}", res, __FILE__, __LINE__);	\
+		F_LOG_ERROR("VkResult is {} in {} at line {}", static_cast<int>(res), __FILE__, __LINE__);	\
 		assert(res == VK_SUCCESS);													\
 	}																				\
 }
