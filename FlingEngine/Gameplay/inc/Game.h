@@ -29,6 +29,12 @@ namespace Fling
 		virtual void Init(entt::registry& t_Reg) = 0;
 
 		/**
+		 * Register game-specific serializable components. Called from World::Init
+		 * before Seal() and before the StartLevel is loaded.
+		 */
+		virtual void RegisterComponents() {}
+
+		/**
 		* Called by the World when the game state should start.
 		*/
 		virtual void OnStartGame(entt::registry& t_Reg) = 0;

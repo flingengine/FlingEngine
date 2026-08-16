@@ -11,7 +11,6 @@
 #include "FlingConfig.h"
 #include "NonCopyable.hpp"
 #include "World.h"
-#include <nlohmann/json.hpp>
 #include "FirstPersonCamera.h"
 #include "FlingWindow.h"
 #include "Vertex.h"

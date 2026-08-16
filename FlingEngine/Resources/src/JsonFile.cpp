@@ -10,45 +10,22 @@ namespace Fling
 	}
 
 	JsonFile::JsonFile(Guid t_ID)
-        : Resource(t_ID)
-    {
-        LoadJsonFile();
-    }
+		: Resource(t_ID)
+	{
+		LoadJsonFile();
+	}
 
 	void JsonFile::Write()
 	{
 		const std::string FilePath = GetFilepathReleativeToAssets();
-
-		std::ofstream OutStream(FilePath);
-		if (OutStream.is_open())
+		if (m_JsonData.SaveToFile(FilePath))
 		{
-			OutStream << std::setw(4) << m_JsonData << std::endl;
-            F_LOG_TRACE("Successfully Wrote JSON file {}", FilePath);
+			F_LOG_TRACE("Successfully Wrote JSON file {}", FilePath);
 		}
-        else
-        {
-            F_LOG_ERROR("Failed to write JSON file {}", FilePath);
-        }
-
-		OutStream.close();
 	}
 
 	void JsonFile::LoadJsonFile()
-    {
-        const std::string FilePath = GetFilepathReleativeToAssets();
-        std::ifstream ifs(FilePath.c_str());
-
-        if (ifs.is_open())
-        {
-            // Store the info in the scene file in the JSON object
-            ifs >> m_JsonData;
-        }
-        else
-        {
-            F_LOG_ERROR( "Failed to load JSON File: {}", FilePath);
-        }
-
-        ifs.close();
-
-    }
-} // namespace Fling
+	{
+		m_JsonData.LoadFromFile(GetFilepathReleativeToAssets());
+	}
+}	// namespace Fling

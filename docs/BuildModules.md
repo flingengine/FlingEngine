@@ -156,8 +156,8 @@ sees Editor. SandboxEditor links `Fling::EditorStack`.
 | Module | Folder after moves | Public deps | Third-party |
 |--------|--------------------|-------------|-------------|
 | **Core** | `FlingEngine/Core` (includes former Utils + Platform) | none | glm, spdlog, entt (public INTERFACE) |
-| **Resources** | `FlingEngine/Resources` | Core | nlohmann json, inih, cereal, stb as needed (public/private per header use) |
-| **Gameplay** | `FlingEngine/Gameplay` | Core, Resources | entt, cereal |
+| **Resources** | `FlingEngine/Resources` | Core | nlohmann json (private, via `Fling::Json`), inih, stb as needed |
+| **Gameplay** | `FlingEngine/Gameplay` | Core, Resources | entt |
 | **Graphics** | `FlingEngine/Graphics` | Core, Resources, Gameplay | Vulkan, glfw, SPIRV-Cross, tinyobjloader (**private**) |
 | **Engine** | `FlingEngine/Engine` once split out of Core sources | Gameplay, Graphics | — |
 | **Editor** | `FlingEngine/Editor` | Gameplay, Graphics | ImGui (**private**) |
@@ -202,9 +202,10 @@ The Physics example only works if Gameplay does **not** depend on Graphics.
 - Graphics may include Gameplay headers (`Transform`, `Camera`).
 - Gameplay must **not** include `MeshRenderer.h` or Vulkan.
 
-Today `World.inl` does the opposite: it `#include`s `MeshRenderer` and light
-types so cereal can snapshot `WORLD_COMPONENTS`. That include is the main
-Gameplay → Graphics cycle and has to move (see Phase 2).
+Today World iterates `ComponentTypeRegistry` at runtime. Graphics registers
+`MeshRenderer` and lights via `RegisterGraphicsComponents()`; Gameplay World
+must **not** include `MeshRenderer.h` or light headers. That include was the
+main Gameplay → Graphics cycle (see Phase 2).
 
 ## Per-module API macros
 
@@ -302,10 +303,11 @@ the normal case.
 
 These will fail as soon as Graphics is no longer on Gameplay’s include path:
 
-1. **`World.inl` → MeshRenderer / lights**  
-   World serializes a **caller-provided** component list. Gameplay must not
-   include `MeshRenderer.h` or light headers. Sandbox (game and editor) and/or
-   Engine pass graphics types into `LoadLevelFile` / `OutputLevelFile`.
+1. **World → MeshRenderer / lights**  
+   World no longer takes a caller-provided Graphics type list. Graphics
+   registers its types via `RegisterGraphicsComponents()`. Gameplay World
+   iterates the runtime `ComponentTypeRegistry` and must not include
+   `MeshRenderer.h`.
 
 2. **`PlatformLinux.h` / `PlatformWindows.h` → `DesktopWindow.h`**  
    Platform headers must not pull the windowing backend. Window types stay in
@@ -367,7 +369,8 @@ Work stays on `feature/169-engine-modules`. Each phase should leave
 ### Phase 2 — Resources, then Gameplay
 
 - Resources module; monolith links it.
-- Gameplay module; **break `World.inl` graphics includes** before splitting.
+- Gameplay module; **World must not include MeshRenderer.h** (graphics types
+  register through `RegisterGraphicsComponents()`) before splitting.
 - Confirm a throwaway target that links only Core+Gameplay cannot `#include`
   `VulkanApp.h` (compile-fail test is the isolation test).
 

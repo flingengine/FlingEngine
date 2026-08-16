@@ -55,4 +55,31 @@ namespace Fling
 		m_Material = Material::Create(Guid{ t_MatPath.c_str() }).get();
 		assert(m_Material);
 	}
+
+	void MeshRenderer::Serialize(JsonArchive& Ar)
+	{
+		std::string meshPath;
+		std::string materialPath;
+
+		if (Ar.IsSaving())
+		{
+			meshPath = m_Model ? m_Model->GetGuidString() : "";
+			materialPath = m_Material ? m_Material->GetGuidString() : "";
+		}
+
+		Ar << MakeNVP("mesh", meshPath);
+		Ar << MakeNVP("material", materialPath);
+
+		if (Ar.IsLoading())
+		{
+			if (!meshPath.empty())
+			{
+				LoadModelFromPath(meshPath);
+			}
+			if (!materialPath.empty())
+			{
+				LoadMaterialFromPath(materialPath);
+			}
+		}
+	}
 }   // namespace Fling
