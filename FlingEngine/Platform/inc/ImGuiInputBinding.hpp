@@ -49,6 +49,46 @@ namespace Fling
 			glfwSetClipboardString((GLFWwindow*)user_data, text);
 		}
 
+			// Maps a raw FL_KEYCODE_* key code to the ImGuiKey enum required by the
+		// enum required by the modern (1.87+) io.AddKeyEvent() input API.
+		static ImGuiKey ImGui_ImplGlfw_KeyToImGuiKey(int key)
+		{
+			switch (key)
+			{
+			case FL_KEYCODE_TAB: return ImGuiKey_Tab;
+			case FL_KEYCODE_LEFT: return ImGuiKey_LeftArrow;
+			case FL_KEYCODE_RIGHT: return ImGuiKey_RightArrow;
+			case FL_KEYCODE_UP: return ImGuiKey_UpArrow;
+			case FL_KEYCODE_DOWN: return ImGuiKey_DownArrow;
+			case FL_KEYCODE_PAGE_UP: return ImGuiKey_PageUp;
+			case FL_KEYCODE_PAGE_DOWN: return ImGuiKey_PageDown;
+			case FL_KEYCODE_HOME: return ImGuiKey_Home;
+			case FL_KEYCODE_END: return ImGuiKey_End;
+			case FL_KEYCODE_INSERT: return ImGuiKey_Insert;
+			case FL_KEYCODE_DELETE: return ImGuiKey_Delete;
+			case FL_KEYCODE_BACKSPACE: return ImGuiKey_Backspace;
+			case FL_KEYCODE_SPACE: return ImGuiKey_Space;
+			case FL_KEYCODE_ENTER: return ImGuiKey_Enter;
+			case FL_KEYCODE_ESCAPE: return ImGuiKey_Escape;
+			case FL_KEYCODE_KP_ENTER: return ImGuiKey_KeypadEnter;
+			case FL_KEYCODE_LEFT_CONTROL: return ImGuiKey_LeftCtrl;
+			case FL_KEYCODE_RIGHT_CONTROL: return ImGuiKey_RightCtrl;
+			case FL_KEYCODE_LEFT_SHIFT: return ImGuiKey_LeftShift;
+			case FL_KEYCODE_RIGHT_SHIFT: return ImGuiKey_RightShift;
+			case FL_KEYCODE_LEFT_ALT: return ImGuiKey_LeftAlt;
+			case FL_KEYCODE_RIGHT_ALT: return ImGuiKey_RightAlt;
+			case FL_KEYCODE_LEFT_SUPER: return ImGuiKey_LeftSuper;
+			case FL_KEYCODE_RIGHT_SUPER: return ImGuiKey_RightSuper;
+			case FL_KEYCODE_A: return ImGuiKey_A;
+			case FL_KEYCODE_C: return ImGuiKey_C;
+			case FL_KEYCODE_V: return ImGuiKey_V;
+			case FL_KEYCODE_X: return ImGuiKey_X;
+			case FL_KEYCODE_Y: return ImGuiKey_Y;
+			case FL_KEYCODE_Z: return ImGuiKey_Z;
+			default: return ImGuiKey_None;
+			}
+		}
+
 		void ImGui_ImplGlfw_MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 		{
 			if (g_PrevUserCallbackMousebutton != NULL)
@@ -82,17 +122,17 @@ namespace Fling
 			if (g_PrevUserCallbackKey != NULL)
 				g_PrevUserCallbackKey(window, key, scancode, action, mods);
 
-			ImGuiIO& io = ImGui::GetIO();
-			if (action == GLFW_PRESS)
-				io.KeysDown[key] = true;
-			if (action == GLFW_RELEASE)
-				io.KeysDown[key] = false;
+			if (action != GLFW_PRESS && action != GLFW_RELEASE)
+				return;
 
-			// Modifiers are not reliable across systems
-			io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-			io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-			io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-			io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+			ImGuiIO& io = ImGui::GetIO();
+			io.AddKeyEvent(ImGuiMod_Ctrl, (mods & GLFW_MOD_CONTROL) != 0);
+			io.AddKeyEvent(ImGuiMod_Shift, (mods & GLFW_MOD_SHIFT) != 0);
+			io.AddKeyEvent(ImGuiMod_Alt, (mods & GLFW_MOD_ALT) != 0);
+			io.AddKeyEvent(ImGuiMod_Super, (mods & GLFW_MOD_SUPER) != 0);
+
+			ImGuiKey ImGuiKeyCode = ImGui_ImplGlfw_KeyToImGuiKey(key);
+			io.AddKeyEvent(ImGuiKeyCode, action == GLFW_PRESS);
 		}
 
 		void SetImGuiCallbacks()
@@ -107,29 +147,6 @@ namespace Fling
 			io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
 			io.BackendPlatformName = "imgui_impl_glfw";
 
-			io.KeyMap[ImGuiKey_Tab] = FL_KEYCODE_TAB;
-			io.KeyMap[ImGuiKey_LeftArrow] = FL_KEYCODE_LEFT;
-			io.KeyMap[ImGuiKey_RightArrow] = FL_KEYCODE_RIGHT;
-			io.KeyMap[ImGuiKey_UpArrow] = FL_KEYCODE_UP;
-			io.KeyMap[ImGuiKey_DownArrow] = FL_KEYCODE_DOWN;
-			io.KeyMap[ImGuiKey_PageUp] = FL_KEYCODE_PAGE_UP;
-			io.KeyMap[ImGuiKey_PageDown] = FL_KEYCODE_PAGE_DOWN;
-			io.KeyMap[ImGuiKey_Home] = FL_KEYCODE_HOME;
-			io.KeyMap[ImGuiKey_End] = FL_KEYCODE_END;
-			io.KeyMap[ImGuiKey_Insert] = FL_KEYCODE_INSERT;
-			io.KeyMap[ImGuiKey_Delete] = FL_KEYCODE_DELETE;
-			io.KeyMap[ImGuiKey_Backspace] = FL_KEYCODE_BACKSPACE;
-			io.KeyMap[ImGuiKey_Space] = FL_KEYCODE_SPACE;
-			io.KeyMap[ImGuiKey_Enter] = FL_KEYCODE_ENTER;
-			io.KeyMap[ImGuiKey_Escape] = FL_KEYCODE_ESCAPE;
-			io.KeyMap[ImGuiKey_KeyPadEnter] = FL_KEYCODE_KP_ENTER;
-			io.KeyMap[ImGuiKey_A] = FL_KEYCODE_A;
-			io.KeyMap[ImGuiKey_C] = FL_KEYCODE_C;
-			io.KeyMap[ImGuiKey_V] = FL_KEYCODE_V;
-			io.KeyMap[ImGuiKey_X] = FL_KEYCODE_X;
-			io.KeyMap[ImGuiKey_Y] = FL_KEYCODE_Y;
-			io.KeyMap[ImGuiKey_Z] = FL_KEYCODE_Z;
-
 			DesktopWindow* DesktopWin = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 
 			assert(DesktopWin);
@@ -138,11 +155,6 @@ namespace Fling
 			io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;
 			io.ClipboardUserData = DesktopWin;
 
-#if FLING_WINDOWS
-			io.ImeWindowHandle = (void*)glfwGetWin32Window(DesktopWin->GetGlfwWindow());
-#elif FLING_LINUX
-			io.ImeWindowHandle = (void*)glfwGetX11Window(DesktopWin->GetGlfwWindow());
-#endif
 			// Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
 			g_PrevUserCallbackMousebutton = nullptr;
 			g_PrevUserCallbackScroll = nullptr;

@@ -49,6 +49,38 @@ Running either one of these scripts will simply get all submodules and external 
 that the engine uses and create a folder called `build`. The `build` folder will have your
 platform specific build files (Visual Studio, Makefiles, etc). 
 
+### Quick start: clone, build, and run the Sandbox
+
+Once the system dependencies and Vulkan SDK above are installed, here's the full path
+from a fresh clone to a running game, on Linux/macOS:
+
+```bash
+# 1. Pull submodules, install Catch2 locally, and configure CMake into `build/`
+./Init.sh
+
+# 2. Build the Sandbox target
+cmake --build build --target Sandbox --parallel
+
+# 3. Run it
+./build/Sandbox/bin/Sandbox
+```
+
+On Windows, the equivalent is:
+
+```bat
+:: 1. Pull submodules and configure CMake into `build/`
+Init.bat
+
+:: 2. Build the Sandbox target
+cmake --build build --target Sandbox --config Debug
+
+:: 3. Run it (path includes the build config)
+build\Sandbox\bin\Debug\Sandbox.exe
+```
+
+See [`Skills/building.md`](Skills/building.md) for switching build types (Debug/Release/
+shipping) and other day-to-day build details.
+
 #### Packaging a project
 
 For ease of development and iteration the file paths to Assets (shaders, textures, models, etc) are all 

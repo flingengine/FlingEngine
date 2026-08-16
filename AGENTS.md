@@ -15,8 +15,9 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 - First time in a fresh clone: `./Init.sh` (Linux) / `Init.bat` (Windows). This pulls
   git submodules, builds/installs Catch2 locally, and configures CMake into `build/`.
-- Day to day: `./build-debug.sh`, `./build-release.sh`, or `./build-shipping.sh`, then
-  build with your generator (e.g. `cmake --build build --parallel`).
+- Day to day: reconfigure `build/` for the mode you want, e.g.
+  `cmake -B build -DCMAKE_BUILD_TYPE=Debug`, then build with your generator
+  (e.g. `cmake --build build --parallel`).
 - `-DDEFINE_SHIPPING=ON` strips dev-only code gated behind `#ifdef FLING_SHIPPING`.
 - Full detail: [`Skills/building.md`](Skills/building.md).
 
