@@ -20,6 +20,9 @@ include (InstallRequiredSystemLibraries)
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 
+# Catch2 is installed locally by Init.sh (not system-wide) so find_package can locate it without sudo
+list( APPEND CMAKE_PREFIX_PATH "${FLING_ROOT_DIR}/external/Catch2/install" )
+
 # Option for the current build configuration. Note: going forward, we should use the FLING_Compiler_Flag macro
 OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF )
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )

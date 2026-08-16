@@ -4,6 +4,7 @@
 [submodule "external/Catch2"]
 	path = external/Catch2
 	url = https://github.com/flingengine/Catch2.git
+	ignore = dirty
 [submodule "external/glm"]
 	path = external/glm
 	url = https://github.com/flingengine/glm.git
