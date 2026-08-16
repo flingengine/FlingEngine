@@ -45,6 +45,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   Resources, Editor) are documented in [`docs/BuildModules.md`](docs/BuildModules.md) —
   read it before restructuring includes or CMake targets, it records locked decisions.
 - Orientation for where things live today: [`Skills/architecture.md`](Skills/architecture.md).
+- Adding a new CMake module (folder + `fling_add_module`, with a UI example):
+  [`Skills/adding-modules.md`](Skills/adding-modules.md).
 
 ## Contribution conventions
 

@@ -9,11 +9,12 @@ several things that look like cleanups are explicitly deferred or ruled out ther
 ## Today
 
 - `FlingEngine/` — the engine, currently one CMake library (`FlingEngine`) built
-  from almost every source file under this tree via glob. Subfolders already hint
-  at future module boundaries (`Core`, `Graphics`, `Gameplay`, `Resources`, `Utils`,
-  `Platform`, `Editor`, `Foundation`) but CMake/includes still treat it as one target
-  — `FLING_ENGINE_INC()` adds every engine `inc/` dir to consumers, so folder
-  location doesn't currently enforce isolation.
+  from almost every source file under this tree via glob. Subfolders are
+  `Core` (includes former Utils + Platform), `Graphics`, `Gameplay`,
+  `Resources`, and `Editor`. CMake/includes still treat it as one target —
+  `FLING_ENGINE_INC()` adds every engine `inc/` dir to consumers, so folder
+  location doesn't currently enforce isolation. `fling_add_module()` lives in
+  `CMake/FlingModule.cmake` but is not yet used for a real shared module.
 - `Sandbox/` — the sample game + editor, one executable today (editor support is
   toggled by a project-wide `WITH_EDITOR` define, which `docs/BuildModules.md`
   plans to remove in favor of two separate executables).
@@ -37,5 +38,5 @@ several things that look like cleanups are explicitly deferred or ruled out ther
   it describes instead.
 - Don't add a new module folder or CMake target without reading the "Locked
   decisions" section of `docs/BuildModules.md` first — several plausible-looking
-  approaches (per-module PCH, merging Foundation into something else, git
-  submodules per system) are explicitly rejected there.
+  approaches (per-module PCH, git submodules per system) are explicitly rejected there.
+  The how-to (including a UI module example) is [`adding-modules.md`](adding-modules.md).
