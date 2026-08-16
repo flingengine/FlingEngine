@@ -4,7 +4,6 @@
 #include "File.h"
 #include "VulkanApp.h"
 #include "Misc/CommandLine.h"
-#include "Foundation.h"
 #include "ComponentTypeRegistry.h"
 #include "RegisterGraphicsComponents.h"
 

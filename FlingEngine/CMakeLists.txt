@@ -123,14 +123,6 @@ if( MSVC )
     endforeach()
 endif()
 
-################# Add dynamic module directories ###################
-# TODO: Can't we do this recursively or something like that??
-add_subdirectory(Foundation)
-# Link against the Foundation module
-set( LINK_LIBS ${LINK_LIBS} Foundation )
-
-#find_package(Foundation REQUIRED)
-
 ################# Add library and link ######################
 
 add_library ( ${PROJECT_NAME} ${_source_list} )
