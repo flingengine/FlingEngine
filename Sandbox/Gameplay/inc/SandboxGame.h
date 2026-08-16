@@ -12,6 +12,8 @@ namespace Sandbox
 
 		void Init(entt::registry& t_Reg) override final;
 
+		void RegisterComponents() override final;
+
 		/**
 		 * Called before the first gameplay loop tick.
 		 * 			Do any initalization for custom gameplay systems here.

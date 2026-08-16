@@ -59,4 +59,16 @@ namespace Fling
     {
         m_Rotation = t_Rot;
     }
+
+	void Transform::Serialize(JsonArchive& Ar)
+	{
+		Ar << MakeNVP("position", m_Pos);
+		Ar << MakeNVP("rotation", m_Rotation);
+		Ar << MakeNVP("scale", m_Scale);
+
+		if (Ar.IsLoading())
+		{
+			CalculateWorldMatrix(*this);
+		}
+	}
 }   // namespace Fling

@@ -12,6 +12,7 @@
 // For getting some lighting info
 #include "GeometrySubpass.h"
 #include "Mover.h"
+#include "ComponentTypeRegistry.h"
 
 // Test command line args
 #include "Misc/CommandLine.h"
@@ -48,6 +49,12 @@ namespace Sandbox
 
 		F_LOG_TRACE("Done cmd line testing");
     }
+
+	void Game::RegisterComponents()
+	{
+		Fling::ComponentTypeRegistry::Get().Register<Mover>("Mover");
+		Fling::ComponentTypeRegistry::Get().Register<Rotator>("Rotator");
+	}
 
 	void Game::OnStartGame(entt::registry& t_Reg)
 	{
@@ -128,20 +135,21 @@ namespace Sandbox
         auto AddRandomPointLight = [&]()
         {
             entt::entity e0 = t_Reg.create();
-            PointLight& Light = t_Reg.assign<PointLight>(e0);
-            Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
-            Mover& m0 = t_Reg.assign<Mover>(e0);
 
-            // The min and max bounds of our little demo
             glm::vec3 min = { -15.0f, 0.2f, 15.0f };
 			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
+			const glm::vec3 startPos = Fling::Random::GetRandomVec3(min, max);
+
+			// PointLight on_construct adds Transform if missing, so set pose after.
+            PointLight& Light = t_Reg.assign<PointLight>(e0);
+			Transform& t0 = t_Reg.get<Transform>(e0);
+			t0.SetPos(startPos);
+            Mover& m0 = t_Reg.assign<Mover>(e0);
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
             
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
             Light.Intensity = 5.0f;
             Light.Range = 3.0f;
-
-            t0.SetPos(Fling::Random::GetRandomVec3(min, max));
         };
 
 		
@@ -165,9 +173,6 @@ namespace Sandbox
 
 			for (int32 j = 0; j < GridSize; j++)
 			{
-				entt::entity e0 = t_Reg.create();
-
-				// Set the material -----------------
 				if (j == 0)
 				{
 					MatPath = "Materials/Damascus.mat";
@@ -193,7 +198,6 @@ namespace Sandbox
 					MatPath = "Materials/DeferredBronzeMat.mat";
 				}
 
-				// Set the model -------------
 				if (i == 1)
 				{
 					ModelPath = "Models/cube.obj";
@@ -215,11 +219,10 @@ namespace Sandbox
 					ModelPath = "Models/sphere.obj";
 				}
 
+				entt::entity e0 = t_Reg.create();
 				t_Reg.assign<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
-
 				t_Reg.assign<Rotator>(e0);
 				Transform& t0 = t_Reg.assign<Transform>(e0);
-
 				t0.SetPos(
 					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
 				);

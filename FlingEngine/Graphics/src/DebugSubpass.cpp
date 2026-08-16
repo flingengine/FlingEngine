@@ -39,15 +39,16 @@ namespace Fling
 
 	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
 	{
-		// For every mesh bind it's model and descriptor set info
-		auto RenderGroup = t_reg.group<Transform>(entt::get<MeshRenderer, entt::tag<"Debug"_hs>>);
+		// For every mesh bind it's model and descriptor set info.
+		// View instead of owning group so assign<Transform>() references stay valid.
+		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<"Debug"_hs>>();
 
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
 		m_Ubo.Projection[1][1] *= -1.0f;
 		VkDeviceSize offsets[1] = { 0 };
 
-		RenderGroup.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)
