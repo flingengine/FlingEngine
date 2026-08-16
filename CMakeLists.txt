@@ -14,6 +14,7 @@ message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 
 # Include any .cmake macros here from the ./Cmake dir
 include(FlingEngineInc)
+include(FlingModule)
 include(MSVC_PCH)
 include(FlingCompilerFlag)
 include (InstallRequiredSystemLibraries)

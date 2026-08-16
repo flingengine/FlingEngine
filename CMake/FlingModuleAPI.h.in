@@ -1,0 +1,11 @@
+#pragma once
+
+#include "FlingLibExports.h"
+
+#if defined(FLING_@MODULE_UPPER@_STATIC)
+#	define @MODULE_UPPER@_API
+#elif defined(FLING_@MODULE_UPPER@_BUILD)
+#	define @MODULE_UPPER@_API FLING_LIB_EXPORT
+#else
+#	define @MODULE_UPPER@_API FLING_LIB_IMPORT
+#endif
