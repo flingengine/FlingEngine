@@ -3,6 +3,7 @@
 #include "JsonArchive.h"
 
 #include <entt/entity/registry.hpp>
+#include <deque>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -16,6 +17,18 @@ namespace Fling
 		void (*save)(const entt::registry&, entt::entity, Json& out) = nullptr;
 		void (*load)(entt::registry&, entt::entity, const Json& in) = nullptr;
 		bool (*has)(const entt::registry&, entt::entity) = nullptr;
+
+		/** Default-constructs and assigns this component type to an entity. */
+		void (*create)(entt::registry&, entt::entity) = nullptr;
+
+		/** Removes this component type from an entity. */
+		void (*destroy)(entt::registry&, entt::entity) = nullptr;
+
+		/**
+		 * Optional ImGui draw callback for editor tooling. Left null for types
+		 * that don't register one via ComponentTypeRegistry::SetEditorWidget.
+		 */
+		void (*drawEditorWidget)(entt::registry&, entt::entity) = nullptr;
 	};
 
 	/**
@@ -48,6 +61,13 @@ namespace Fling
 		/** Store an external registrar to run from World::Init. Asserts/logs if sealed. */
 		void AddRegistrar(IComponentRegistrar* registrar);
 
+		/**
+		 * Attach an ImGui draw callback to an already-registered component type, so
+		 * editor tooling can render it without the registry knowing about ImGui
+		 * itself. No-op (with a warning) if the name hasn't been registered.
+		 */
+		void SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity));
+
 		/** Invoke every registrar added via AddRegistrar. */
 		void RunExternalRegistrars();
 
@@ -73,7 +93,12 @@ namespace Fling
 		void AddType(const char* name, ComponentTypeInfo info);
 
 		std::vector<ComponentTypeInfo> m_Types;
-		std::vector<std::string> m_NameStorage;
+
+		// A deque (not vector) so that growing it never relocates existing
+		// elements, which would dangle the const char* pointers ComponentTypeInfo
+		// entries hold into these strings via .c_str().
+		std::deque<std::string> m_NameStorage;
+
 		std::unordered_map<std::string, std::size_t> m_NameToIndex;
 		std::vector<IComponentRegistrar*> m_Registrars;
 		bool m_Sealed = false;
@@ -119,6 +144,14 @@ namespace Fling
 			{
 				reg.assign<T>(e, std::move(comp));
 			}
+		};
+		info.create = [](entt::registry& reg, entt::entity e)
+		{
+			reg.assign<T>(e);
+		};
+		info.destroy = [](entt::registry& reg, entt::entity e)
+		{
+			reg.remove<T>(e);
 		};
 
 		AddType(name, std::move(info));

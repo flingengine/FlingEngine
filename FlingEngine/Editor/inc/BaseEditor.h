@@ -2,7 +2,8 @@
 
 #include <imgui.h>
 #include <entt/entity/registry.hpp>
-#include "imgui_entt_entity_editor.hpp"
+#include "WorldOutlinePanel.h"
+#include "EntityEditorPanel.h"
 
 namespace Fling
 {
@@ -25,9 +26,9 @@ namespace Fling
          */
         virtual void Draw(entt::registry& t_Reg, float DeltaTime);
 
-        // #TODO: Init and shutdown functions 
+        // #TODO: Init and shutdown functions
 
-    protected: 
+    protected:
 
         virtual void OnLoadLevel(std::string t_FileName);
 
@@ -43,9 +44,11 @@ namespace Fling
 		bool m_DisplayWindowOptions = false;
         bool m_DisplayCameraOptions = false;
 
-		/** Component editor so that we can draw our component window */
-		entt::entity m_CompEditorEntityType = entt::null;
-		MM::ImGuiEntityEditor<entt::registry> m_ComponentEditor;
+		/** Lists entities in the world and tracks which one is selected */
+		WorldOutlinePanel m_WorldOutline;
+
+		/** Inspects the entity currently selected in m_WorldOutline */
+		EntityEditorPanel m_EntityEditor;
 
 		virtual void DrawFileMenu();
 
@@ -56,7 +59,7 @@ namespace Fling
         void DrawWorldOutline(entt::registry& t_Reg);
 
         /** assumes that m_DisplayComponentEditor is true */
-		void DrawComponentEditor(entt::registry& t_Reg);
+		void DrawEntityEditor(entt::registry& t_Reg);
 
 		void DrawWindowOptions();
 

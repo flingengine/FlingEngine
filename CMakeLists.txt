@@ -134,7 +134,6 @@ if( WITH_IMGUI_FLAG )
     target_include_directories( ImGui PUBLIC external/imgui )
 
     include_directories( external/imgui )
-    include_directories( external/imgui_entt_entity_editor )
 endif()
 
 include_directories( external/glm )
