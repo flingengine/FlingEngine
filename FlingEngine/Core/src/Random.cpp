@@ -4,11 +4,19 @@
 namespace Fling
 {
 	bool Random::bIsInitalized = false;
+	std::mt19937 Random::s_Engine;
 
 	bool Random::Init()
 	{
-		/* initialize random seed */
-		srand( static_cast<unsigned int>( time( NULL ) ) );
+		// Seed once from a real entropy source; every call afterwards just
+		// advances the mt19937 state, which is cheap (no per-call syscalls).
+		std::random_device seedSource;
+		return Init( seedSource() );
+	}
+
+	bool Random::Init( uint32 t_Seed )
+	{
+		s_Engine.seed( t_Seed );
 
 		bIsInitalized = true;
 		return bIsInitalized;
@@ -18,14 +26,16 @@ namespace Fling
 	{
 		assert( t_max > 0 && bIsInitalized );
 		// value from 0 to max;
-		return rand() % t_max;
+		std::uniform_int_distribution<int> dist( 0, t_max - 1 );
+		return dist( s_Engine );
 	}
 
 	const int Random::RandomBetween( const int t_min, const int t_max )
 	{
 		assert( bIsInitalized );
-		// Range from minx to max
-		return rand() % t_max + t_min;
+		// Range from min to max, inclusive
+		std::uniform_int_distribution<int> dist( t_min, t_max );
+		return dist( s_Engine );
 	}
 
 	glm::vec3 Random::GetRandomVec3(const glm::vec3 t_Min, const glm::vec3 t_Max)
@@ -39,6 +49,7 @@ namespace Fling
 
 	float Random::GetRandomFloat(float t_Min, float t_Max)
 	{
-		return (static_cast<float>(rand()) / static_cast<float>(static_cast<float>(RAND_MAX) / (t_Max - t_Min))) + t_Min;
+		std::uniform_real_distribution<float> dist( t_Min, t_Max );
+		return dist( s_Engine );
 	}
 }	// namespace Fling
