@@ -34,7 +34,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DDEFINE_SHIPPING=ON         # shippin
 Then build with your generator, e.g.:
 
 ```bash
-cmake --build build --parallel
+cmake --build build --parallel $(nproc)   # $(nproc) uses all available CPU cores
 ```
 
 There used to be `build-debug.sh`/`build-release.sh`/`build-shipping.sh` wrapper

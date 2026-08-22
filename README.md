@@ -26,8 +26,8 @@ sudo apt-get update
 sudo apt-get install doxygen
 sudo apt-get install -y libglm-dev libxcb-dri3-0 libxcb-present0
 sudo apt-get install -y libpciaccess0 libpng-dev libxcb-keysyms1-dev
-sudo apt-get install -y libxcb-dri3-dev libx11-dev libmirclient-dev
-sudo apt-get install -y libwayland-dev libxrandr-dev
+sudo apt-get install -y libxcb-dri3-dev libx11-dev
+sudo apt-get install -y libwayland-dev libxkbcommon-dev libxrandr-dev
 sudo apt-get install -y libglfw3-dev
 sudo apt-get install -y xorg-dev
 ```
@@ -37,6 +37,13 @@ Obviously this project is build using Vulkan, so you will need to install it bef
 or running the program. 
 
 You can download the SDK from the LunarG website [here](https://www.lunarg.com/vulkan-sdk/). 
+
+On Ubuntu/Debian you can alternatively install the headers, loader, and validation layers from
+the system package manager instead of the LunarG SDK — this is enough for `find_package(Vulkan)`
+in CMake to succeed:
+```
+sudo apt-get install -y libvulkan-dev vulkan-tools vulkan-validationlayers spirv-tools glslang-tools
+```
 
 If you are having trouble with the Vulkan SDK then check out some of these resources: 
 * [Vulkan Verify Install](https://vulkan.lunarg.com/doc/view/1.1.106.0/windows/getting_started.html#user-content-verify-the-installation)
@@ -59,7 +66,8 @@ from a fresh clone to a running game, on Linux/macOS:
 ./Init.sh
 
 # 2. Build the Sandbox target
-cmake --build build --target Sandbox --parallel
+# --parallel $(nproc) tells the build to use all of your CPU cores at once
+cmake --build build --target Sandbox --parallel $(nproc)
 
 # 3. Run it
 ./build/Sandbox/bin/Sandbox
