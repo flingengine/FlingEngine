@@ -21,7 +21,6 @@ touching CMake targets, `FLING_ENGINE_INC()`, or cross-folder includes.
 - `FlingTests/` — Catch2 tests, links the full `FlingEngine` library. See
   [`testing.md`](testing.md).
 - `external/` — vendored third-party dependencies (submodules). Never modified.
-- `docs/` — the `Fling-Engine-logo/` image used by the root README.
 - `scripts/` — repo tooling (`check_comment_style.py`, the one-time
   `migrate_doxygen_comments.py` migration).
 - `CMake/` — CMake helper modules (e.g. `FlingEngineInc.cmake`).
