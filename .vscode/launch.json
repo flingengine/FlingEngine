@@ -1,0 +1,53 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Sandbox",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Sandbox/bin/Sandbox",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Sandbox",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}\\build\\Sandbox\\bin\\${command:cmake.buildType}\\Sandbox.exe"
+            }
+        },
+        {
+            "name": "Debug FlingTests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/FlingTests/bin/FlingTests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build FlingTests",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\FlingTests.exe"
+            }
+        }
+    ]
+}

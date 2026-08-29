@@ -34,3 +34,7 @@ if command -v claude >/dev/null 2>&1; then
 		esac
 	fi
 fi
+
+echo
+echo Done! Open FlingEngine.code-workspace in VS Code to build/run/debug
+echo the FlingEngine, Sandbox, and FlingTests targets from the Run and Debug menu.

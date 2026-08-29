@@ -1,0 +1,28 @@
+{
+    "buildType": {
+        "default": "debug",
+        "description": "The CMake build type",
+        "choices": {
+            "debug": {
+                "short": "Debug",
+                "long": "Full debug info, no optimizations",
+                "buildType": "Debug"
+            },
+            "release": {
+                "short": "Release",
+                "long": "Optimized, no debug info",
+                "buildType": "Release"
+            },
+            "relwithdebinfo": {
+                "short": "RelWithDebInfo",
+                "long": "Optimized, with debug info",
+                "buildType": "RelWithDebInfo"
+            },
+            "minsizerel": {
+                "short": "MinSizeRel",
+                "long": "Optimized for smallest size",
+                "buildType": "MinSizeRel"
+            }
+        }
+    }
+}
