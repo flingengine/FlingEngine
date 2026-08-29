@@ -24,3 +24,7 @@ git submodule update --init --recursive
 :: Run cmake to generate the local x64 files in the build folder
 ::cd "../.."
 cmake . -A x64 -B build
+
+echo.
+echo Done! Open FlingEngine.code-workspace in VS Code to build/run/debug
+echo the FlingEngine, Sandbox, and FlingTests targets from the Run and Debug menu.

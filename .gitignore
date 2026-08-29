@@ -8,6 +8,7 @@
 *.sln.docstates
 *.zip
 *.code-workspace
+!FlingEngine.code-workspace
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -300,4 +301,11 @@ CTestTestfile.cmake
 _deps
 
 ## VSCode
-**/.vscode
+# Track our checked-in workspace config (settings/tasks/launch/extensions);
+# ignore everything else VSCode writes into .vscode/ (e.g. per-user overrides, ipch).
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/cmake-variants.json

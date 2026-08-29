@@ -1,0 +1,61 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["-S", ".", "-B", "build"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Build FlingEngine",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "FlingEngine", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build Sandbox",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "Sandbox", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build FlingTests",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "FlingTests", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build All",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Run FlingTests",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/FlingTests/bin/FlingTests",
+            "windows": {
+                "command": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\FlingTests.exe"
+            },
+            "dependsOn": "Build FlingTests",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
