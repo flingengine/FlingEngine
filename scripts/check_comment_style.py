@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Check that first-party C++ sources follow the FlingEngine doc-comment style
-(see docs/CodingStyle.md and issue #166).
+(see Skills/coding-style.md and issue #166).
 
 Fails if any of these legacy patterns remain:
   - @brief tags (prefer a plain description line)

@@ -5,7 +5,7 @@
 #
 # Note: clang-format can reflow and align comments, but it cannot enforce
 # documentation *content* (e.g. forbidding @brief). Use
-# scripts/check_comment_style.py for that — see docs/CodingStyle.md.
+# scripts/check_comment_style.py for that — see Skills/coding-style.md.
 
 BasedOnStyle: LLVM
 Language: Cpp

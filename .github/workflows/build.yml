@@ -164,7 +164,7 @@ jobs:
           mkdir -p Logs
           ./build/FlingTests/bin/FlingTests.exe
 
-  # Doc-comment conventions for first-party sources (see docs/CodingStyle.md / issue #166).
+  # Doc-comment conventions for first-party sources (see Skills/coding-style.md / issue #166).
   # clang-format cannot enforce comment *content*; this script does.
   comment-style:
     name: Comment style

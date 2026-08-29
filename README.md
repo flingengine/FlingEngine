@@ -118,7 +118,7 @@ Notice the `-DDEFINE_SHIPPING` option is set to `ON`. This sets a definiton that
 #endif
 ```
 
-See [docs/CodingStyle.md](docs/CodingStyle.md) for documentation-comment conventions and
+See [Skills/coding-style.md](Skills/coding-style.md) for documentation-comment conventions and
 how to run the comment-style check / clang-format. 
 
 ## AI coding assistants

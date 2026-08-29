@@ -1,10 +1,10 @@
 # Architecture / where things live
 
-This is orientation for today's layout, not a design doc. For the in-progress
-module split (Core/Resources/Gameplay/Graphics/Editor as separate CMake targets)
-and its locked decisions, read [`docs/BuildModules.md`](../docs/BuildModules.md)
-before touching CMake targets, `FLING_ENGINE_INC()`, or cross-folder includes —
-several things that look like cleanups are explicitly deferred or ruled out there.
+This is orientation for today's layout, not a design doc. The engine is
+mid-way through an in-progress module split (Core/Resources/Gameplay/Graphics/Editor
+as separate CMake targets) — the rules below hold regardless of how far that
+split has progressed. Read [`adding-modules.md`](adding-modules.md) before
+touching CMake targets, `FLING_ENGINE_INC()`, or cross-folder includes.
 
 ## Today
 
@@ -16,13 +16,12 @@ several things that look like cleanups are explicitly deferred or ruled out ther
   location doesn't currently enforce isolation. `fling_add_module()` lives in
   `CMake/FlingModule.cmake` but is not yet used for a real shared module.
 - `Sandbox/` — the sample game + editor, one executable today (editor support is
-  toggled by a project-wide `WITH_EDITOR` define, which `docs/BuildModules.md`
-  plans to remove in favor of two separate executables).
+  toggled by a project-wide `WITH_EDITOR` define; a planned follow-up splits
+  this into two separate executables).
 - `FlingTests/` — Catch2 tests, links the full `FlingEngine` library. See
   [`testing.md`](testing.md).
 - `external/` — vendored third-party dependencies (submodules). Never modified.
-- `docs/` — human-facing docs: `docs/CodingStyle.md`, `docs/BuildModules.md`, and
-  the `Fling-Engine-logo/` image used by the root README.
+- `docs/` — the `Fling-Engine-logo/` image used by the root README.
 - `scripts/` — repo tooling (`check_comment_style.py`, the one-time
   `migrate_doxygen_comments.py` migration).
 - `CMake/` — CMake helper modules (e.g. `FlingEngineInc.cmake`).
@@ -32,10 +31,9 @@ several things that look like cleanups are explicitly deferred or ruled out ther
 - Gameplay code (`Transform`, `Camera`, `World`, `Game`) must not include Graphics
   headers (`MeshRenderer.h`, Vulkan-facing types). Graphics may include Gameplay.
 - Editor is a leaf: `Engine` and `Graphics` must not include `BaseEditor` or any
-  Editor header. If you find yourself adding such an include, that's the bug
-  `docs/BuildModules.md` calls out explicitly — look for the debug-UI hook pattern
-  it describes instead.
-- Don't add a new module folder or CMake target without reading the "Locked
-  decisions" section of `docs/BuildModules.md` first — several plausible-looking
-  approaches (per-module PCH, git submodules per system) are explicitly rejected there.
-  The how-to (including a UI module example) is [`adding-modules.md`](adding-modules.md).
+  Editor header. If you find yourself adding such an include, that's a bug —
+  look for the debug-UI hook pattern instead of a direct include.
+- Don't add a new module folder or CMake target on a whim — per-module PCH and
+  git submodules per engine system have already been considered and rejected
+  for this project. The how-to (including a UI module example) is
+  [`adding-modules.md`](adding-modules.md).

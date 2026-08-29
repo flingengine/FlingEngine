@@ -1,8 +1,9 @@
 # Adding an engine module
 
-Canonical design and locked decisions: [`docs/BuildModules.md`](../docs/BuildModules.md).
-This file is the how-to. Do not invent a second pattern (extra globs in the root
-CMakeLists, a hand-rolled `*_API` header, or edits under `external/`).
+This file is the how-to for the in-progress module split described in
+[`architecture.md`](architecture.md). Do not invent a second pattern (extra
+globs in the root CMakeLists, a hand-rolled `*_API` header, or edits under
+`external/`).
 
 `fling_add_module()` lives in [`CMake/FlingModule.cmake`](../CMake/FlingModule.cmake).
 Until `FlingEngine/CMakeLists.txt` `add_subdirectory`s each module, the engine is
