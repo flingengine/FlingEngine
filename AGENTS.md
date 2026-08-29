@@ -30,21 +30,19 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 ## Coding style
 
-- Canonical style doc: [`docs/CodingStyle.md`](docs/CodingStyle.md) — documentation
+- Style doc: [`Skills/coding-style.md`](Skills/coding-style.md) — documentation
   comment conventions (no `@brief`, no `/*!`), enforced by
   `python3 scripts/check_comment_style.py`.
 - Layout/formatting is enforced by `.clang-format` at the repo root (run
   `clang-format`, not manual formatting judgment).
 - Applies to first-party code only (`FlingEngine/`, `Sandbox/`, `FlingTests/`).
   **Never edit code under `external/`** — it's vendored third-party code.
-- AI-assistant-focused summary and common pitfalls: [`Skills/coding-style.md`](Skills/coding-style.md).
 
 ## Architecture / module layout
 
-- Current folder layout and the in-progress module split (Core, Graphics, Gameplay,
-  Resources, Editor) are documented in [`docs/BuildModules.md`](docs/BuildModules.md) —
-  read it before restructuring includes or CMake targets, it records locked decisions.
-- Orientation for where things live today: [`Skills/architecture.md`](Skills/architecture.md).
+- Orientation for where things live today, and the in-progress module split
+  (Core, Graphics, Gameplay, Resources, Editor): [`Skills/architecture.md`](Skills/architecture.md) —
+  read it before restructuring includes or CMake targets.
 - Adding a new CMake module (folder + `fling_add_module`, with a UI example):
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
 

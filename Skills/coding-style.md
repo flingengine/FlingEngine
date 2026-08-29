@@ -1,7 +1,6 @@
 # Coding Style
 
-The canonical reference is [`docs/CodingStyle.md`](../docs/CodingStyle.md) — read
-that first. This file is a quick-reference summary plus the pitfalls an AI assistant
+Conventions for first-party Fling Engine C++, plus the pitfalls an AI assistant
 is most likely to hit.
 
 Scope: first-party code only — `FlingEngine/`, `Sandbox/`, `FlingTests/`.
@@ -49,8 +48,7 @@ Trivial members/accessors can use a one-line `/** ... */`.
 ## Naming / conventions to preserve
 
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are
-  intentional, even across the module split described in
-  [`docs/BuildModules.md`](../docs/BuildModules.md). Don't "fix" these to
-  path-qualified includes.
+  intentional, even across the in-progress module split described in
+  [`architecture.md`](architecture.md). Don't "fix" these to path-qualified includes.
 - `pch.h` is being deleted per the module-split plan — don't add new `#include "pch.h"`
   to public headers, and don't rely on it as a kitchen-sink include.
