@@ -59,3 +59,9 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 `CLAUDE.md` at the repo root imports this file directly (`@AGENTS.md`), so there is
 nothing Claude-specific to duplicate here.
+
+This repo ships a committed `.claude/settings.json` that registers the
+[flingengine/skills-marketplace](https://github.com/flingengine/skills-marketplace)
+marketplace and enables its `fling-engine` plugin (build/test/coding-style/module-
+architecture skills). Opening this repo in Claude Code and trusting the folder will
+offer to install it automatically — no manual `/plugin marketplace add` needed.

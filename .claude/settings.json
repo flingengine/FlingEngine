@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "fling-engine-skills": {
+      "source": {
+        "source": "github",
+        "repo": "flingengine/skills-marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "fling-engine@fling-engine-skills": true
+  }
+}
