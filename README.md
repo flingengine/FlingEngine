@@ -18,12 +18,10 @@ This project requires CMake 3.13 or higher, you can install it [here](https://cm
 
 ## For Linux
 This project uses GLFW, so you will need to install those libraries to your machine.
-GLFW also depends on having Doxygen, so you may want to have that as well.
 
 Ubuntu:
 ```
 sudo apt-get update
-sudo apt-get install doxygen
 sudo apt-get install -y libglm-dev libxcb-dri3-0 libxcb-present0
 sudo apt-get install -y libpciaccess0 libpng-dev libxcb-keysyms1-dev
 sudo apt-get install -y libxcb-dri3-dev libx11-dev

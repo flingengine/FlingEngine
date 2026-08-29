@@ -21,9 +21,8 @@ several things that look like cleanups are explicitly deferred or ruled out ther
 - `FlingTests/` — Catch2 tests, links the full `FlingEngine` library. See
   [`testing.md`](testing.md).
 - `external/` — vendored third-party dependencies (submodules). Never modified.
-- `docs/` — human-facing docs; `docs/CodingStyle.md` and `docs/BuildModules.md`
-  are the two that matter for day-to-day work. (Most other files in `docs/` are
-  generated Doxygen HTML output, not hand-maintained.)
+- `docs/` — human-facing docs: `docs/CodingStyle.md`, `docs/BuildModules.md`, and
+  the `Fling-Engine-logo/` image used by the root README.
 - `scripts/` — repo tooling (`check_comment_style.py`, the one-time
   `migrate_doxygen_comments.py` migration).
 - `CMake/` — CMake helper modules (e.g. `FlingEngineInc.cmake`).
