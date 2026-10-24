@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Platform.h"	// FLING_API def
+#include "CoreAPI.h"
 
 namespace Fling
 {
 	/**
 	 * Class that removes the copy operator and constructor. Leaves move 
 	 */
-	class FLING_API NonCopyable
+	class CORE_API NonCopyable
 	{
 	protected:
 		NonCopyable() = default;

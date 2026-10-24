@@ -9,13 +9,19 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 
 ## Today
 
-- `FlingEngine/` — the engine, currently one CMake library (`FlingEngine`) built
-  from almost every source file under this tree via glob. Subfolders are
-  `Core` (includes former Utils + Platform), `Graphics`, `Gameplay`,
-  `Resources`, and `Editor`. CMake/includes still treat it as one target —
-  the `FlingEngine` target exposes every engine `inc/` dir as a `PUBLIC` include
-  path, so folder location doesn't currently enforce isolation. `fling_add_module()`
-  lives in `CMake/FlingModule.cmake` but is not yet used for a real module.
+- `FlingEngine/Core` — the `Core` module (`Fling::Core`, built with
+  `fling_add_module()`): platform macros, logging, math, memory, timing,
+  `FlingPaths`, and the platform-independent `Input` class. Core includes and
+  links no other engine module, and its own include path enforces that.
+  `WITH_IMGUI`, `WITH_EDITOR`, and `FLING_SHIPPING` are PUBLIC definitions on
+  Core, so every target sees them.
+- The rest of `FlingEngine/` (`Engine`, `Graphics`, `Gameplay`, `Resources`,
+  `Editor`) is still one CMake library (`FlingEngine`) built by glob. It links
+  `Fling::Core` and exposes the other folders' `inc/` dirs as `PUBLIC` include
+  paths, so folder location does not enforce isolation between them yet.
+  `Engine/` holds `Engine.h`/`Engine.cpp`/`FlingEngine.h`. The GLFW input
+  backends (`LinuxInput`, `WindowsInput`, keycodes) live in `Graphics/`, next to
+  the window.
 - `Sandbox/` — the sample game + editor, one executable today (editor support is
   toggled by a project-wide `WITH_EDITOR` define; a planned follow-up splits
   this into two separate executables).

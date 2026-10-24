@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "FlingExports.h"
+#include "CoreAPI.h"
 
 namespace Fling
 {
@@ -14,7 +15,7 @@ namespace Fling
      *
      * @see https://blog.molecular-matters.com/2012/09/17/memory-allocation-strategies-a-pool-allocator/
      */
-    class FLING_API FreeList
+    class CORE_API FreeList
     {
     public:
 
