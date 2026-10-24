@@ -11,12 +11,6 @@ namespace Fling
 	{
 	}
 
-	Multisampler::Multisampler(VkExtent2D t_Extents, VkFormat t_Format, VkSampleCountFlagBits t_SampleCount /* = VK_SAMPLE_COUNT_1_BIT */)
-        : m_SampleCountBits(t_SampleCount)
-    {
-        Create(t_Extents, t_Format);
-    }
-
     void Multisampler::Create(VkExtent2D t_Extents, VkFormat t_Format)
     {
 		// t_Format should the same format as the swap chain

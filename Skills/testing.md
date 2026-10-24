@@ -39,6 +39,6 @@ writes runtime logs there.
 ## CI
 
 Every PR runs `FlingTests` on Linux (GCC + Clang) and Windows (MSVC Debug/Release +
-MinGW64) via `.github/workflows/build.yml`. A test that only passes on one platform
+MSYS2 UCRT64) via `.github/workflows/build.yml`. A test that only passes on one platform
 is not done — check for platform-specific assumptions (path separators, endianness,
 float precision) before considering a new test finished.

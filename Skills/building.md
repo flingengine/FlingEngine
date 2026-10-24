@@ -62,4 +62,4 @@ reconfiguring) to relative, so a shipped executable is portable.
 
 `.github/workflows/build.yml` is the ground truth for exactly what gets built and
 with which flags across Linux GCC, Linux Clang, Windows MSVC (Debug + Release), and
-Windows MinGW64 — check it if a build works locally but fails in CI, or vice versa.
+Windows MSYS2 UCRT64 (MinGW-w64 GCC) — check it if a build works locally but fails in CI, or vice versa.

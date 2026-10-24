@@ -101,7 +101,7 @@ ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
 
 # Include external libraries
 add_subdirectory( external/glfw )
-include_directories( external/glfw/include )
+include_directories( SYSTEM external/glfw/include )
 
 # SPIRV-Cross
 add_definitions( -DSPIRV_CROSS_SHARED=OFF )
@@ -121,6 +121,20 @@ set_target_properties(spirv-cross-glsl PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-reflect PROPERTIES FOLDER SPIRV-Cross)
 set_target_properties(spirv-cross-util PROPERTIES FOLDER SPIRV-Cross)
 
+# Treat SPIRV-Cross headers as system headers for everything that links it, so
+# warnings inside them don't show up in our own builds. The spirv.h/spirv.hpp
+# headers trip MSVC C4065 (switch with only a 'default' label) - also mute that
+# one inside SPIRV-Cross's own targets, since we never edit external/.
+foreach( _spirv_target spirv-cross-c spirv-cross-core spirv-cross-cpp spirv-cross-glsl spirv-cross-reflect spirv-cross-util )
+    get_target_property( _spirv_inc ${_spirv_target} INTERFACE_INCLUDE_DIRECTORIES )
+    if( _spirv_inc )
+        set_target_properties( ${_spirv_target} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_spirv_inc}" )
+    endif()
+    if( MSVC )
+        target_compile_options( ${_spirv_target} PRIVATE /wd4065 )
+    endif()
+endforeach()
+
 # ImGUI
 # Built directly here (rather than via the submodule's own CMakeLists.txt) so that
 # the submodule can stay pinned to an unmodified upstream ocornut/imgui tag.
@@ -131,19 +145,22 @@ if( WITH_IMGUI_FLAG )
         external/imgui/imgui_draw.cpp
         external/imgui/imgui_tables.cpp
         external/imgui/imgui_widgets.cpp )
-    target_include_directories( ImGui PUBLIC external/imgui )
+    target_include_directories( ImGui SYSTEM PUBLIC external/imgui )
 
-    include_directories( external/imgui )
+    include_directories( SYSTEM external/imgui )
 endif()
 
-include_directories( external/glm )
-include_directories( external/spdlog/include )
-include_directories( external/inih )
-include_directories( external/entt/src )
-include_directories( external/json/single_include )
-include_directories( external/stb )
-include_directories( external/tinyobjloader )
-include_directories( external/cereal/include )
+# Vendored headers are added as SYSTEM includes so that warnings inside them
+# (e.g. Clang's -Wdeprecated-literal-operator in EnTT and nlohmann/json) don't
+# show up in our builds. Warnings in first-party code are unaffected.
+include_directories( SYSTEM external/glm )
+include_directories( SYSTEM external/spdlog/include )
+include_directories( SYSTEM external/inih )
+include_directories( SYSTEM external/entt/src )
+include_directories( SYSTEM external/json/single_include )
+include_directories( SYSTEM external/stb )
+include_directories( SYSTEM external/tinyobjloader )
+include_directories( SYSTEM external/cereal/include )
 
 # Add the engine and tests
 add_subdirectory ( "FlingEngine" )
