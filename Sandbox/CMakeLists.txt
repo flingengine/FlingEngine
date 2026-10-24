@@ -1,33 +1,12 @@
 project( "Sandbox" )
 
 
-################### Engine Setup ###########
-set( ENGINE_DIR ../FlingEngine/ )
-FLING_ENGINE_INC( ${ENGINE_DIR} )
-
-include_directories(
-	Gameplay/inc
-)
-
-# Editor
-if( WITH_EDITOR_FLAG )
-    include_directories(
-        Editor/inc
-    )
-endif()
-
 ##################### Linking #################
 
 
 set ( LINK_LIBS
 	"FlingEngine"
 )
-
-# link pthread if we need to
-if ( NOT WIN32 )
-    set( LINK_LIBS ${LINK_LIBS} pthread )
-    message( STATUS "Added pthread!" )
-endif()
 
 message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
@@ -40,25 +19,29 @@ endif()
 
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
 
-### Setup visual studio source groups / filters ###
+# Previously applied to every engine consumer by FLING_ENGINE_INC()
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    add_compile_options( -Wno-class-memaccess )
+endif()
+
+### Source files (VS filters are set up by fling_configure_target) ###
 file( GLOB_RECURSE _source_list
     *.cpp* src/*.h* src/*.hpp* *.h* *.inl
 )
-
-# Make visual studio look purdy
-if( MSVC )
-    foreach( _source IN ITEMS ${_source_list} )
-    	get_filename_component( _source_path "${_source}" PATH )
-        string( REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}" )
-        string( REPLACE "/" "\\" _group_path "${_group_path}" )
-        source_group( "${_group_path}" FILES "${_source}" )
-    endforeach()
-endif()
 
 ################# Add Exe and link ######################
 
 # Link our normal libraries and create an executeable 
 add_executable( ${PROJECT_NAME} ${_source_list} )
+fling_configure_target( ${PROJECT_NAME} )
+fling_set_bin_output( ${PROJECT_NAME} )
+
+target_include_directories( ${PROJECT_NAME} PRIVATE Gameplay/inc )
+
+# Editor
+if( WITH_EDITOR_FLAG )
+    target_include_directories( ${PROJECT_NAME} PRIVATE Editor/inc )
+endif()
 
 # Link libs
-target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )
+target_link_libraries( ${PROJECT_NAME} PRIVATE ${LINK_LIBS} )
