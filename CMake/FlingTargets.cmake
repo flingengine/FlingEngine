@@ -16,7 +16,26 @@ function(fling_source_groups TARGET)
 	endforeach()
 endfunction()
 
-# Language standard, platform defines, and VS filters for a first-party target.
+# Warning level for first-party code. Third-party headers come in as SYSTEM
+# includes (see FlingExternals.cmake), so these only apply to our own sources.
+function(fling_set_warnings TARGET)
+	if(MSVC)
+		target_compile_options(${TARGET} PRIVATE /W3)
+	else()
+		target_compile_options(${TARGET} PRIVATE
+			-Wall
+			-Wno-reorder
+			-Wno-unknown-pragmas
+			-Wno-multichar
+			-Wno-missing-braces
+		)
+		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			target_compile_options(${TARGET} PRIVATE -Wno-class-memaccess)
+		endif()
+	endif()
+endfunction()
+
+# Language standard, warnings, platform defines, and VS filters for a first-party target.
 function(fling_configure_target TARGET)
 	# TODO: switch to 20 once the warning cleanup lands; FLING_ENGINE_INC() was
 	# silently forcing 17 on first-party code and the jump needs its own change.
@@ -30,6 +49,8 @@ function(fling_configure_target TARGET)
 		# NOMINMAX: Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
 		target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
 	endif()
+
+	fling_set_warnings(${TARGET})
 
 	fling_source_groups(${TARGET})
 endfunction()

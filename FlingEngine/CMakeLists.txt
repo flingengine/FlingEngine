@@ -17,19 +17,6 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# Take care of warnings about strcpy
-if( MSVC )
-    add_definitions( -D_CRT_SECURE_NO_WARNINGS )
-# GCC
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-
-    add_definitions( -Wno-class-memaccess )
-
-# Clang
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-
-endif()
-
 
 message( STATUS "Generated git file is : ${GENERATED_INC_FOLDER}/GitVersion.h" )
 
@@ -99,15 +86,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
-
-################# Complier Options ############
-if( MSVC )
-    set ( MY_COMPILER_FLAGS "/W3" )
-else()
-    set ( MY_COMPILER_FLAGS "-Wall -Wno-reorder -Wno-unknown-pragmas -Wno-multichar -Wno-missing-braces" )
-endif()
-
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
 
 ### Source files (VS filters are set up by fling_configure_target) ###
 file( GLOB_RECURSE _source_list
