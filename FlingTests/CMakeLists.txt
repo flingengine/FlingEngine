@@ -2,12 +2,9 @@ project( "FlingTests" )
 
 ##################### Linking #################
 
-# Prepare "Catch" library for other executables
+# Only reached when FLING_BUILD_TESTS is ON (see the root CMakeLists.txt)
 find_package(Catch2 3 REQUIRED)
-
-#set( CATCH_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/../external/Catch2/single_include )
-#add_library ( Catch INTERFACE )
-#target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
+include(Catch)
 
 set ( LINK_LIBS
     glfw ${GLFW_LIBRARIES}
@@ -40,4 +37,12 @@ add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD
         "${FLING_ROOT_DIR}/Config"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/Config"
     COMMENT "Copying Config next to ${PROJECT_NAME}"
+)
+
+# Register each TEST_CASE with CTest (ctest --test-dir build). PRE_TEST lists the
+# tests when ctest runs instead of running the binary at build time. Tests run
+# from the repo root, the same as CI, so the engine writes to ./Logs.
+catch_discover_tests( ${PROJECT_NAME}
+    DISCOVERY_MODE PRE_TEST
+    WORKING_DIRECTORY "${FLING_ROOT_DIR}"
 )

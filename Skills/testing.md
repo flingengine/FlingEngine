@@ -7,8 +7,19 @@ code, not just isolated units.
 
 ## Running tests
 
-Build the `FlingTests` target as part of a normal build, then run the resulting
-binary directly:
+`FlingTests` is only built when the `FLING_BUILD_TESTS` CMake option is ON. It is
+ON by default, except for shipping builds (see [`building.md`](building.md)).
+
+Build the `FlingTests` target as part of a normal build, then run all tests
+with CTest:
+
+```bash
+ctest --test-dir build                         # Linux / single-config generators
+ctest --test-dir build -C <Debug|Release>      # Visual Studio
+```
+
+Each Catch2 `TEST_CASE` is a separate CTest test, and they run from the repo
+root. You can also run the binary directly:
 
 ```bash
 # Linux
@@ -21,8 +32,8 @@ build\FlingTests\bin\<Debug|Release>\FlingTests.exe
 Catch2's CLI flags work as usual, e.g. `./build/FlingTests/bin/FlingTests "[tag]"`
 to filter, or `--list-tests` to see everything.
 
-`Logs/` should exist before running (CI does `mkdir -p Logs` first) — the engine
-writes runtime logs there.
+The engine writes runtime logs to `Logs/` and creates the folder if it is
+missing.
 
 ## Adding a new test
 

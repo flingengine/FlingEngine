@@ -19,11 +19,16 @@ include(FlingTargets)
 include(FlingModule)
 include (InstallRequiredSystemLibraries)
 
-# Catch2 is installed locally by Init.sh (not system-wide) so find_package can locate it without sudo
-list( APPEND CMAKE_PREFIX_PATH "${FLING_ROOT_DIR}/external/Catch2/install" )
-
 # Option for the current build configuration
 OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF )
+
+# Tests are off by default for shipping builds and when Fling is added to another project
+if( PROJECT_IS_TOP_LEVEL AND NOT DEFINE_SHIPPING )
+    set( _fling_tests_default ON )
+else()
+    set( _fling_tests_default OFF )
+endif()
+OPTION( FLING_BUILD_TESTS "Build the FlingTests target (requires Catch2 3)" ${_fling_tests_default} )
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
 OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
@@ -40,6 +45,7 @@ message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
 message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
+message( STATUS "FLING_BUILD_TESTS=${FLING_BUILD_TESTS}" )
 message( STATUS "FLING_ROOT_DIR=${FLING_ROOT_DIR}" )
 
 # WITH_IMGUI / WITH_EDITOR / FLING_SHIPPING are set on the FlingEngine target
@@ -125,9 +131,16 @@ endif()
 # Header-only libraries (FlingExt::glm, FlingExt::spdlog, ...)
 include(FlingExternals)
 
-# Add the engine and tests
+# Add the engine
 add_subdirectory ( "FlingEngine" )
-add_subdirectory ( "FlingTests" )
+
+# Tests are optional, so a build without them does not need Catch2
+if( FLING_BUILD_TESTS )
+    # Catch2 is installed locally by Init.sh (not system-wide) so find_package can locate it without sudo
+    list( APPEND CMAKE_PREFIX_PATH "${FLING_ROOT_DIR}/external/Catch2/install" )
+    enable_testing()
+    add_subdirectory ( "FlingTests" )
+endif()
 
 # Add a subdirectory that uses the FlingEngine and produces an executeable
 add_subdirectory ( "Sandbox" )
