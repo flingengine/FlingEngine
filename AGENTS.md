@@ -42,7 +42,7 @@ platform setup (Vulkan SDK, GLFW, etc.).
 ## Architecture / module layout
 
 - Orientation for where things live today, and the in-progress module split
-  (Core, Graphics, Gameplay, Resources, Editor): [`Skills/architecture.md`](Skills/architecture.md) —
+  (Core, Resources, Engine, Graphics, Application, Editor): [`Skills/architecture.md`](Skills/architecture.md) —
   read it before restructuring includes or CMake targets.
 - Adding a new CMake module (folder + `fling_add_module`, with a UI example):
   [`Skills/adding-modules.md`](Skills/adding-modules.md).

@@ -4,7 +4,7 @@ project ( "FlingEngine" VERSION 1.0 )
 # Modules split out of the monolith so far (see Skills/module-split-plan.md)
 add_subdirectory( Core )
 add_subdirectory( Resources )
-add_subdirectory( Gameplay )
+add_subdirectory( Engine )
 
 ##################### Linking #################
 
@@ -26,7 +26,7 @@ set ( LINK_LIBS
     spirv-cross-reflect
     Fling::Core
     Fling::Resources
-    Fling::Gameplay
+    Fling::Engine
     FlingExt::stb
     FlingExt::tinyobjloader
 )
@@ -59,8 +59,13 @@ message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 file( GLOB_RECURSE _source_list
     *.cpp* src/*.h* src/*.hpp* *.h* *.inl
 )
-# Module folders build as their own targets
-list( FILTER _source_list EXCLUDE REGEX "^${CMAKE_CURRENT_SOURCE_DIR}/(Core|Resources|Gameplay)/" )
+# Any folder with its own CMakeLists.txt is a module (fling_add_module) and
+# builds as its own target, so leave it out of this library
+file( GLOB _module_lists "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt" )
+foreach( _module_list IN LISTS _module_lists )
+    get_filename_component( _module_dir "${_module_list}" DIRECTORY )
+    list( FILTER _source_list EXCLUDE REGEX "^${_module_dir}/" )
+endforeach()
 
 ################# Add library and link ######################
 
@@ -70,7 +75,7 @@ fling_configure_target( ${PROJECT_NAME} )
 # Make sure the compiler can find include files for our Engine library
 target_include_directories( ${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/Engine/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Application/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/Graphics/inc
 )
 

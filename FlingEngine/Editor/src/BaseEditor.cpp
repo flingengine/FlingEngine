@@ -150,7 +150,7 @@ namespace Fling
         (void)t_Reg;
 
         // Transform, NameComponent, MeshRenderer, DirectionalLight, and PointLight are
-        // already known to ComponentTypeRegistry (RegisterGameplayComponents /
+        // already known to ComponentTypeRegistry (RegisterEngineComponents /
         // RegisterGraphicsComponents); we're just attaching an ImGui draw callback for
         // each so EntityEditorPanel can render them.
         ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();

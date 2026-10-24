@@ -11,11 +11,11 @@ rules that it establishes into [`Skills/`](../Skills/).
 
 - `Sandbox/main.cpp` and `Sandbox/Editor/src/SandboxEditor.cpp` use
   `#if WITH_EDITOR`. `Engine::Run<Game, Editor>` changes its template signature
-  on `WITH_EDITOR` (`FlingEngine/Engine/inc/Engine.h`). Every new project must
+  on `WITH_EDITOR` (`FlingEngine/Application/inc/Engine.h`). Every new project must
   copy these checks into its own code.
 - A project is one CMake target. Game code and editor code build into the same
   executable.
-- `FlingEngine/Resources/src/FlingAssetPaths.cpp.in` puts absolute paths
+- `FlingEngine/Core/src/FlingAssetPaths.cpp.in` puts absolute paths
   (`@FLING_ROOT_DIR@/Assets`, `/Config`, `/Logs`) into the binary. If you move
   or rename the folder, the binary breaks until you rebuild. Engine assets and
   project assets are in the same folder.
@@ -141,13 +141,14 @@ A new `CMake/FlingGame.cmake` adds `fling_add_game(<Name> ...)`. It reads
 | Target | Contents |
 |--------|----------|
 | `<Name>Runtime` | STATIC library of `Source/Game` |
-| `<Name>Game` | Engine `main` + `<Name>Runtime` + `Fling::GameStack` |
-| `<Name>Editor` | Engine `main` + `<Name>Runtime` + `Source/Editor` + `Fling::EditorStack`. Only when `FLING_BUILD_EDITOR` is ON (replaces `WITH_EDITOR_FLAG`) |
-| `<Name>Server` | Engine `main` + `<Name>Runtime` + a stack without Graphics |
+| `<Name>Game` | Application `main` + `<Name>Runtime` + `Fling::GameStack` |
+| `<Name>Editor` | Application `main` + `<Name>Runtime` + `Source/Editor` + `Fling::EditorStack`. Only when `FLING_BUILD_EDITOR` is ON (replaces `WITH_EDITOR_FLAG`) |
+| `<Name>Server` | Application `main` + `<Name>Runtime` + a stack without Graphics |
 
 - The engine supplies `main()`. The user does not write it.
-- `<Name>Server` needs Gameplay to not depend on Graphics (module-split
-  Phase 2 isolation). Until then, use `<Name>Game --null-render --server`.
+- `<Name>Server` needs the Engine module to not depend on Graphics (module-split
+  Phase 2 isolation, now done and tested). It also needs the Application layer
+  to start without Graphics. Until then, use `<Name>Game --null-render --server`.
 - To rename the targets, edit `name` and reconfigure.
 
 ### Runtime paths
