@@ -139,8 +139,8 @@ namespace Sandbox
         {
             entt::entity e0 = t_Reg.create();
 
-            glm::vec3 min = { -15.0f, 0.2f, 15.0f };
-			glm::vec3 max = { 15.0f, 1.0f, -15.0f };
+            glm::vec3 min = { -15.0f, 0.2f, -15.0f };
+			glm::vec3 max = { 15.0f, 1.0f, 15.0f };
 			const glm::vec3 startPos = Fling::Random::GetRandomVec3(min, max);
 
 			// PointLight on_construct adds Transform if missing, so set pose after.
