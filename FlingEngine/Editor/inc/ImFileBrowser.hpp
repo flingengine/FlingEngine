@@ -127,6 +127,20 @@ namespace ImGui
     };
 } // namespace ImGui
 
+namespace ImGuiFileBrowserDetail
+{
+    // path::u8string() returns std::u8string since C++20, but ImGui takes UTF-8 as plain char strings
+    inline std::string ToUtf8String(const std::filesystem::path &p)
+    {
+#if defined(__cpp_char8_t)
+        const std::u8string s = p.u8string();
+        return std::string(s.begin(), s.end());
+#else
+        return p.u8string();
+#endif
+    }
+} // namespace ImGuiFileBrowserDetail
+
 inline ImGui::FileBrowser::FileBrowser(ImGuiFileBrowserFlags flags)
     : flags_(flags),
       openFlag_(false), closeFlag_(false), isOpened_(false), ok_(false),
@@ -281,7 +295,7 @@ inline void ImGui::FileBrowser::Display()
         PushID(secIdx);
         if(secIdx > 0)
             SameLine();
-        if(SmallButton(sec.u8string().c_str()))
+        if(SmallButton(ImGuiFileBrowserDetail::ToUtf8String(sec).c_str()))
             newPwdLastSecIdx = secIdx;
         PopID();
         ++secIdx;
@@ -504,7 +518,7 @@ inline void ImGui::FileBrowser::SetPwdUncatched(const std::filesystem::path &pwd
 
         rcd.extension = p.path().filename().extension().string();
 
-        rcd.showName = (rcd.isDir ? "[D] " : "[F] ") + p.path().filename().u8string();
+        rcd.showName = (rcd.isDir ? "[D] " : "[F] ") + ImGuiFileBrowserDetail::ToUtf8String(p.path().filename());
         fileRecords_.push_back(rcd);
     }
 

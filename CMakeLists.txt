@@ -50,7 +50,7 @@ IF( DEFINE_SHIPPING )
 ENDIF( DEFINE_SHIPPING )
 message( STATUS "-----------------------" )
 
-# Default for third-party targets; first-party targets set their own standard in fling_configure_target()
+# Default for third-party targets; first-party targets also get it from fling_configure_target()
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )

@@ -37,10 +37,8 @@ endfunction()
 
 # Language standard, warnings, platform defines, and VS filters for a first-party target.
 function(fling_configure_target TARGET)
-	# TODO: switch to 20 once the warning cleanup lands; FLING_ENGINE_INC() was
-	# silently forcing 17 on first-party code and the jump needs its own change.
 	set_target_properties(${TARGET} PROPERTIES
-		CXX_STANDARD 17
+		CXX_STANDARD 20
 		CXX_STANDARD_REQUIRED ON
 		CXX_EXTENSIONS OFF
 	)
