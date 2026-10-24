@@ -9,13 +9,29 @@ Run once per fresh clone (or after `external/` submodule updates):
 Init.bat     # Windows
 ```
 
-This does three things:
+Both are thin wrappers around one platform-agnostic CMake script,
+[`scripts/init.cmake`](../scripts/init.cmake) (run with `cmake -P`), so the setup
+logic lives in one place. CI runs the same script to install Catch2. It does three
+things, stopping at the first failure:
 
 1. `git submodule update --init --recursive` — pulls all vendored deps under `external/`.
-2. Builds and installs Catch2 locally to `external/Catch2/install` (no `sudo` needed;
-   `find_package(Catch2 3 REQUIRED)` in `FlingTests/CMakeLists.txt` needs this when
-   `FLING_BUILD_TESTS` is ON).
+2. Builds and installs Catch2 locally to `external/Catch2/install`, in both Debug and
+   Release (no `sudo` needed; `find_package(Catch2 3 REQUIRED)` in
+   `FlingTests/CMakeLists.txt` needs this when `FLING_BUILD_TESTS` is ON).
 3. Configures CMake into `build/` with default settings.
+
+Arguments to `Init.sh` / `Init.bat` are passed through to the `build/` configure
+(e.g. `./Init.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug`). Arguments of the form
+`-DFLING_INIT_<OPTION>=<value>` are options for the script itself:
+
+| Option | Effect |
+| --- | --- |
+| `FLING_INIT_CONFIGS` | Catch2 configs to build (default `Debug;Release`) |
+| `FLING_INIT_SKIP_SUBMODULES=ON` | Skip step 1 |
+| `FLING_INIT_SKIP_TESTS=ON` | Skip step 2 and configure with `FLING_BUILD_TESTS=OFF` |
+| `FLING_INIT_SKIP_CONFIGURE=ON` | Skip step 3 |
+
+Change setup steps in `scripts/init.cmake`, not in the wrappers.
 
 Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022. CMake stops with an
 error on older GCC or Clang: the vendored EnTT 3.1 hangs at runtime on them in

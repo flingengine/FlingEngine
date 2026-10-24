@@ -1,30 +1,18 @@
-:: Fling Engine initalize script
-:: Download any third party libs/API's and build them so that 
-:: the devs can get to work faster! 
+:: Fling Engine first-time setup. All of the logic lives in scripts/init.cmake
+:: (shared with Init.sh); any args are passed through to it, e.g.
+::   Init.bat -G Ninja -DCMAKE_BUILD_TYPE=Debug
 
-@echo off 
+@echo off
+setlocal
 
-echo   =======================================================================
-echo ================= Fling Engine initalize script ============================
-echo   =======================================================================
+where cmake >nul 2>nul
+if errorlevel 1 (
+	echo cmake was not found on PATH. Install CMake 3.21 or newer and run this again. 1>&2
+	exit /b 1
+)
 
-:: Create the build folders if they are not created already
-if not exist "build" mkdir build
-
-:: Clone any external libararies or other things that we are using 
-git submodule update --init --recursive
-
-:: Build GLFW in release and debug so that we can actually use it
-
-::cd "external/glfw"
-::cmake . -A x64
-::cmake --build . --target ALL_BUILD --config Release
-::cmake --build . --target ALL_BUILD --config Debug
-
-:: Run cmake to generate the local x64 files in the build folder
-::cd "../.."
-cmake . -A x64 -B build
-
-echo.
-echo Done! Open FlingEngine.code-workspace in VS Code to build/run/debug
-echo the engine, Sandbox, and per-module test executables from the Run and Debug menu.
+pushd "%~dp0"
+cmake -P scripts\init.cmake -- %*
+set FLING_INIT_ERROR=%ERRORLEVEL%
+popd
+exit /b %FLING_INIT_ERROR%

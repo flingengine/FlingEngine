@@ -90,31 +90,26 @@ jobs:
             mingw-w64-ucrt-x86_64-vulkan-devel
 
       # ---------- Catch2 (needed by find_package(Catch2 3 REQUIRED)) ----------
-      # Visual Studio is a multi-config generator and ignores CMAKE_BUILD_TYPE
-      # (passing it just causes a "manually-specified variables" CMake warning)
+      # Same script as Init.sh / Init.bat, so CI keeps it working. It installs to
+      # external/Catch2/install, where the root CMakeLists.txt already looks.
+      # Checkout already pulled the submodules.
       - name: Build and install Catch2
         if: matrix.compiler != 'mingw' && !matrix.shipping
         shell: bash
         run: |
-          cmake -S external/Catch2 -B external/Catch2/build \
-            ${{ matrix.compiler != 'msvc' && format('-DCMAKE_BUILD_TYPE={0}', matrix.build_type) || '' }} \
-            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/.deps" \
-            -DCMAKE_CXX_STANDARD=20 \
-            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-            -DBUILD_TESTING=OFF
-          cmake --build external/Catch2/build --config ${{ matrix.build_type }} --target install
+          cmake -DFLING_INIT_CONFIGS=${{ matrix.build_type }} \
+            -DFLING_INIT_SKIP_SUBMODULES=ON -DFLING_INIT_SKIP_CONFIGURE=ON \
+            -P scripts/init.cmake
 
       - name: Build and install Catch2 (UCRT64)
         if: matrix.compiler == 'mingw'
         shell: msys2 {0}
+        env:
+          CMAKE_GENERATOR: Ninja
         run: |
-          cmake -S external/Catch2 -B external/Catch2/build -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/.deps" \
-            -DCMAKE_CXX_STANDARD=20 \
-            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-            -DBUILD_TESTING=OFF
-          cmake --build external/Catch2/build --target install
+          cmake -DFLING_INIT_CONFIGS=${{ matrix.build_type }} \
+            -DFLING_INIT_SKIP_SUBMODULES=ON -DFLING_INIT_SKIP_CONFIGURE=ON \
+            -P scripts/init.cmake
 
       # ---------- configure + build ----------
       - name: Configure (Linux)
@@ -126,16 +121,14 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DDEFINE_SHIPPING=${{ matrix.shipping && 'ON' || 'OFF' }} \
-            ${{ matrix.shipping && '-DCMAKE_DISABLE_FIND_PACKAGE_Catch2=ON' || '' }} \
-            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/.deps"
+            ${{ matrix.shipping && '-DCMAKE_DISABLE_FIND_PACKAGE_Catch2=ON' || '' }}
 
       - name: Configure (Windows)
         if: runner.os == 'Windows' && matrix.compiler != 'mingw'
         run: |
           cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
             -DDEFINE_SHIPPING=OFF `
-            -DENABLE_MULTICORE=ON `
-            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/.deps"
+            -DENABLE_MULTICORE=ON
 
       - name: Configure (UCRT64)
         if: matrix.compiler == 'mingw'
@@ -143,8 +136,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DDEFINE_SHIPPING=OFF \
-            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/.deps"
+            -DDEFINE_SHIPPING=OFF
 
       - name: Build
         if: matrix.compiler != 'mingw'

@@ -55,9 +55,11 @@ If you are having trouble with the Vulkan SDK then check out some of these resou
 ## `Init.bat` and `Init.sh`
 After installing the SDK, you can simply run one of the provided scripts. 
 
-Running either one of these scripts will simply get all submodules and external libraries
-that the engine uses and create a folder called `build`. The `build` folder will have your
-platform specific build files (Visual Studio, Makefiles, etc). 
+Both scripts run the same thing, [`scripts/init.cmake`](scripts/init.cmake): they get all
+submodules and external libraries that the engine uses, install Catch2 locally for the tests,
+and create a folder called `build`. The `build` folder will have your platform specific build
+files (Visual Studio, Makefiles, etc). Any arguments are passed through to the `build`
+configure, e.g. `./Init.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug`. 
 
 ### Quick start: clone, build, and run the Sandbox
 
@@ -79,7 +81,7 @@ cmake --build build --target Sandbox --parallel $(nproc)
 On Windows, the equivalent is:
 
 ```bat
-:: 1. Pull submodules and configure CMake into `build/`
+:: 1. Pull submodules, install Catch2 locally, and configure CMake into `build/`
 Init.bat
 
 :: 2. Build the Sandbox target
