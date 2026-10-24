@@ -1,4 +1,9 @@
 {
+  "enabledPlugins": {
+    "fling-engine@fling-engine-skills": true,
+    "gameplay-architecture@fling-engine-skills": true,
+    "rollback-netcode@fling-engine-skills": true
+  },
   "extraKnownMarketplaces": {
     "fling-engine-skills": {
       "source": {
@@ -6,8 +11,5 @@
         "repo": "flingengine/skills-marketplace"
       }
     }
-  },
-  "enabledPlugins": {
-    "fling-engine@fling-engine-skills": true
   }
 }

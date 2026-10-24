@@ -60,6 +60,11 @@ nothing Claude-specific to duplicate here.
 
 This repo ships a committed `.claude/settings.json` that registers the
 [flingengine/skills-marketplace](https://github.com/flingengine/skills-marketplace)
-marketplace and enables its `fling-engine` plugin (build/test/coding-style/module-
-architecture skills). Opening this repo in Claude Code and trusting the folder will
-offer to install it automatically — no manual `/plugin marketplace add` needed.
+marketplace and enables three of its plugins:
+
+- `fling-engine` — build/test/coding-style/module-architecture skills.
+- `gameplay-architecture` — strict (Overwatch-style) ECS design skill.
+- `rollback-netcode` — rollback / client-side prediction netcode expert agent.
+
+Opening this repo in Claude Code and trusting the folder will offer to install them
+automatically — no manual `/plugin marketplace add` needed.
