@@ -2,12 +2,14 @@
 
 #include "FlingTypes.h"
 
-namespace Fling {
+namespace Fling
+{
     /**
      * Caps for deferred directional and point lights.
      * Sandbox uses MaxPointLights when it spawns the light grid.
      */
-    struct DeferredLightSettings {
+    struct DeferredLightSettings
+    {
         /** Dir Lights */
         static const uint32 MaxDirectionalLights = 8;
 

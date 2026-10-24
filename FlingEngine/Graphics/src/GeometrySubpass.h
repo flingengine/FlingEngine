@@ -9,7 +9,8 @@
 #include <memory>
 #include <vector>
 
-namespace Fling {
+namespace Fling
+{
     class CommandBuffer;
     class LogicalDevice;
     class FrameBuffer;
@@ -21,7 +22,8 @@ namespace Fling {
     class FirstPersonCamera;
 
     /** Uniform buffer for passing lights to our final screen pass */
-    struct LightingUbo {
+    struct LightingUbo
+    {
         alignas(4) uint32 DirLightCount = 0;
         alignas(4) uint32 PointLightCount = 0;
 
@@ -30,7 +32,8 @@ namespace Fling {
         alignas(16) PointLight PointLightBuffer[DeferredLightSettings::MaxPointLights] = {};
     };
 
-    struct CameraInfoUbo {
+    struct CameraInfoUbo
+    {
         glm::mat4 Projection;
         glm::mat4 ModelView;
         glm::vec4 CamPos = {};
@@ -44,7 +47,8 @@ namespace Fling {
      *			albedo, normals, and depth as well some actual mesh data via a Uniform buffer
      *			Uses the Deferred shaders
      */
-    class GeometrySubpass : public Subpass {
+    class GeometrySubpass : public Subpass
+    {
     public:
         GeometrySubpass(const LogicalDevice* t_Dev,
                         const Swapchain* t_Swap,

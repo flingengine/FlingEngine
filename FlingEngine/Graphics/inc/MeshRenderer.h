@@ -5,12 +5,14 @@
 #include <entt/entity/registry.hpp>
 #include <string>
 
-namespace Fling {
+namespace Fling
+{
     class Model;
     class Material;
     class Buffer;
 
-    struct MeshRenderer {
+    struct MeshRenderer
+    {
         /**
          * GPU descriptor for this mesh. Defined in the Graphics module so this
          * header does not name a Vulkan handle.

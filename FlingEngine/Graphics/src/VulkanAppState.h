@@ -5,8 +5,10 @@
 
 #include <vector>
 
-namespace Fling {
-    struct VulkanApp::State {
+namespace Fling
+{
+    struct VulkanApp::State
+    {
         VkRenderPass m_RenderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> m_SwapChainFrameBuffers;
         std::vector<VkClearValue> m_SwapChainClearVals = std::vector<VkClearValue>(2);

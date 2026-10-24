@@ -8,9 +8,11 @@
 #include <string>
 #include <vector>
 
-namespace Fling {
+namespace Fling
+{
     /** Configuration that can determine what render pipelines will be added to this application */
-    enum PipelineFlags {
+    enum PipelineFlags
+    {
         DEFERRED = (1u << 0),
         REFLECTIONS = (1u << 1),
         IMGUI = (1u << 2),
@@ -34,7 +36,8 @@ namespace Fling {
      * Core rendering functionality of the Fling Engine. Controls what Render pipelines
      * are available
      */
-    class VulkanApp : public Singleton<VulkanApp> {
+    class VulkanApp : public Singleton<VulkanApp>
+    {
     public:
         /**
          * Vulkan objects owned by this app. The complete type is private to the
