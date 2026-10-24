@@ -100,6 +100,7 @@ namespace Fling
 		return &m_Types[it->second];
 	}
 
+#ifdef FLING_WITH_TEST_HOOKS
 	void ComponentTypeRegistry::ResetForTests()
 	{
 		m_Types.clear();
@@ -108,6 +109,7 @@ namespace Fling
 		m_Registrars.clear();
 		m_Sealed = false;
 	}
+#endif
 
 	void RegisterGameplayComponents()
 	{

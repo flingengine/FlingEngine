@@ -381,6 +381,7 @@ namespace Fling
 	{
 		// Prepare the frame for submission by waiting for the swap chain
 		m_CurrentWindow->Update();
+		m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetWidth()), static_cast<float>(m_CurrentWindow->GetHeight()));
 		m_Camera->Update(DeltaTime);
 
 		// Aquire the active image index
