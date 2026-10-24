@@ -32,6 +32,9 @@ namespace Fling
 
 			void SetAspectRatio(float AspectRatio) { m_aspectRatio = AspectRatio; }
 
+			/** Set the size of the view in pixels. Mouse movement is divided by this size. */
+			void SetViewportSize(float t_Width, float t_Height) { m_ViewportWidth = t_Width; m_ViewportHeight = t_Height; }
+
 			bool IsRotating() const { return m_IsRotating; }
 
         private:
@@ -42,6 +45,8 @@ namespace Fling
 			glm::vec3 m_worldFront = { 0.f, 0.f, -1.0 };
 			bool m_IsRotating = false;
 			MousePos m_PrevMousePos;
+			float m_ViewportWidth = 1.0f;
+			float m_ViewportHeight = 1.0f;
 
 		PRIVATE_WITH_EDITOR:
 			float m_RotationSpeed = 20.0f;

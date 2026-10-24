@@ -3,6 +3,8 @@ project ( "FlingEngine" VERSION 1.0 )
 
 # Modules split out of the monolith so far (see Skills/module-split-plan.md)
 add_subdirectory( Core )
+add_subdirectory( Resources )
+add_subdirectory( Gameplay )
 
 ##################### Linking #################
 
@@ -23,8 +25,8 @@ set ( LINK_LIBS
     spirv-cross-cpp
     spirv-cross-reflect
     Fling::Core
-    FlingExt::inih
-    FlingExt::json
+    Fling::Resources
+    Fling::Gameplay
     FlingExt::stb
     FlingExt::tinyobjloader
 )
@@ -58,7 +60,7 @@ file( GLOB_RECURSE _source_list
     *.cpp* src/*.h* src/*.hpp* *.h* *.inl
 )
 # Module folders build as their own targets
-list( FILTER _source_list EXCLUDE REGEX "^${CMAKE_CURRENT_SOURCE_DIR}/Core/" )
+list( FILTER _source_list EXCLUDE REGEX "^${CMAKE_CURRENT_SOURCE_DIR}/(Core|Resources|Gameplay)/" )
 
 ################# Add library and link ######################
 
@@ -70,8 +72,6 @@ target_include_directories( ${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/Engine/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/Graphics/inc
-    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/inc
-    ${CMAKE_CURRENT_SOURCE_DIR}/Gameplay/inc
 )
 
 if( WITH_EDITOR_FLAG )

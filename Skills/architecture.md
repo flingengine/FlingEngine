@@ -15,10 +15,16 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   links no other engine module, and its own include path enforces that.
   `WITH_IMGUI`, `WITH_EDITOR`, and `FLING_SHIPPING` are PUBLIC definitions on
   Core, so every target sees them.
-- The rest of `FlingEngine/` (`Engine`, `Graphics`, `Gameplay`, `Resources`,
-  `Editor`) is still one CMake library (`FlingEngine`) built by glob. It links
-  `Fling::Core` and exposes the other folders' `inc/` dirs as `PUBLIC` include
-  paths, so folder location does not enforce isolation between them yet.
+- `FlingEngine/Resources` — the `Resources` module (depends on Core): config
+  files, JSON, file loading, `ResourceManager`. GPU resources (`Texture`,
+  `HDRImage`) live in Graphics.
+- `FlingEngine/Gameplay` — the `Gameplay` module (depends on Core and
+  Resources): `World`, `Level`, `Game`, cameras, `Transform`, and the component
+  type registry. It cannot include Graphics, Editor, or Engine headers.
+- The rest of `FlingEngine/` (`Engine`, `Graphics`, `Editor`) is still one
+  CMake library (`FlingEngine`) built by glob. It links the modules above and
+  exposes its folders' `inc/` dirs as `PUBLIC` include paths, so those three
+  folders are not isolated from each other yet.
   `Engine/` holds `Engine.h`/`Engine.cpp`/`FlingEngine.h`. The GLFW input
   backends (`LinuxInput`, `WindowsInput`, keycodes) live in `Graphics/`, next to
   the window.

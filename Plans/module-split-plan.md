@@ -112,18 +112,24 @@ building and passing on every CI platform.
   header-only template and is not marked. With static modules (locked decision
   5) `CORE_API` is empty; proving the exports work waits for `SHARED`.
 
-### Phase 2: Resources, then Gameplay
+### Phase 2: Resources, then Gameplay (done on branch `chore/resources-module`)
 
-- Split out Resources, then Gameplay. The monolith links both.
-- `Texture.h` and `HDRImage.h` in Resources use Vulkan types
-  (`#include "FlingVulkan.h"`). Move the Vulkan parts to Graphics, or Resources
-  cannot be split out without a Vulkan dependency.
-- `World` must not include `MeshRenderer.h` or light headers. Graphics types
-  register through `RegisterGraphicsComponents()`.
-- Add an isolation test: a throwaway target that links only Core and Gameplay
-  must fail to compile `#include "VulkanApp.h"`.
-- Put `ComponentTypeRegistry::ResetForTests()` behind the test-hooks define
-  (see [Tests](#tests)) when Gameplay becomes its own target.
+- Resources (`PUBLIC_DEPS Core`) and Gameplay (`PUBLIC_DEPS Core Resources`)
+  are `fling_add_module()` targets. The monolith links both and excludes their
+  folders from its glob.
+- `Texture` and `HDRImage` moved from Resources to Graphics: they are Vulkan
+  images, and only Graphics uses them. nlohmann/json is a PRIVATE dependency
+  of Resources (`Json` hides it behind a pimpl).
+- `FirstPersonCamera` no longer asks `VulkanApp` for the window size.
+  `VulkanApp` calls `SetViewportSize()` on it each frame, before `Update()`.
+- `World` already did not include `MeshRenderer.h`; Graphics registers its
+  types through `RegisterGraphicsComponents()`.
+- Isolation tests in `FlingTests/CMakeLists.txt` (`fling_add_isolation_test`):
+  each module's own headers compile when only that module is linked, and Core
+  cannot see Resources, Resources cannot see Gameplay, Gameplay cannot see
+  Graphics. See [Tests](#tests).
+- `ComponentTypeRegistry::ResetForTests()` is behind `FLING_WITH_TEST_HOOKS`,
+  which Gameplay defines only when `FLING_BUILD_TESTS` is ON.
 
 ### Phase 3: Graphics, Editor, Engine, and two Sandbox executables
 
@@ -131,10 +137,13 @@ building and passing on every CI platform.
 - Replace the `BaseEditor` dependency in `Engine::Run`, `VulkanApp::Init`, and
   `ImGuiSubpass` with an editor-free debug-UI hook.
 - Editor is always its own target and only editor executables link it.
-- Move `Engine.h`, `Engine.cpp`, and `FlingEngine.h` to `FlingEngine/Engine/`.
-- Split Sandbox into `SandboxRuntime` (shared gameplay code, OBJECT or STATIC),
-  `SandboxGame`, and `SandboxEditor`. Do not glob all of `Sandbox/` into one
-  target.
+- `Engine.h`, `Engine.cpp`, and `FlingEngine.h` already moved to
+  `FlingEngine/Engine/` in Phase 1. Make Engine a module.
+- Split Sandbox into a game target and an editor target. The project model
+  plan ([`project-model.md`](project-model.md), phase P2)
+  replaces this item with `fling_add_game()`, which makes `<Name>Game` and
+  `<Name>Editor` targets for any project. Follow that design instead of a
+  Sandbox-only split.
 - Remove the project-wide `WITH_EDITOR` define from Engine's API. Note that
   `WITH_EDITOR_FLAG=OFF` does not build today: `Engine.cpp` uses `m_Editor`
   outside `#if WITH_EDITOR`, and the `Editor/` sources are always compiled. A CMake
@@ -158,6 +167,11 @@ Done in Phase 0.5:
 
 - `FLING_BUILD_TESTS` controls whether `FlingTests` exists.
 - `ctest --test-dir build` runs each Catch2 `TEST_CASE` as a CTest test.
+- Test-only engine code (`ComponentTypeRegistry::ResetForTests()`) is behind
+  `FLING_WITH_TEST_HOOKS`, set on the owning module only when
+  `FLING_BUILD_TESTS` is ON (Phase 2).
+- Module isolation tests (`fling_add_isolation_test` in
+  `FlingTests/CMakeLists.txt`) run under CTest (Phase 2).
 - CI runs `ctest` (with `--no-tests=error`, so a broken test registration
   fails the job) instead of per-platform binary paths.
 - CI has a Linux shipping job that builds with `FLING_BUILD_TESTS` at its
@@ -166,13 +180,6 @@ Done in Phase 0.5:
 
 Still to do:
 
-- **Compile out test hooks.** Engine code that exists only for tests (today
-  only `ComponentTypeRegistry::ResetForTests()`) goes behind a
-  `FLING_WITH_TEST_HOOKS` define. While the engine is one library, that
-  define must be set on the whole `FlingEngine` target, so it can be at most
-  "on when `FLING_BUILD_TESTS` is on". After the split, set it only on the
-  module that owns the hook, or build a separate test variant of that module
-  for FlingTests to link.
 - **Per-module test targets.** When modules exist, consider one test
   executable per module (`CoreTests`, `GameplayTests`, ...) that links only that
   module. This proves isolation and keeps test relinks small. A module's tests

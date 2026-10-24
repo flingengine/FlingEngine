@@ -47,6 +47,18 @@ missing.
 - Prefer testing first-party engine code (`FlingEngine/`). Do not add tests that
   exercise `external/` internals directly.
 
+## Module isolation tests
+
+`FlingTests/CMakeLists.txt` also adds CTest tests named `Isolation: ...`
+(`fling_add_isolation_test`). Each builds a one-line program that includes one
+header and links one module. A `VISIBLE` test passes when it compiles. A
+`HIDDEN` test passes only when the compiler reports that the header is not
+found. When you split out a new module, add a test that its headers compile
+alone and a test that it cannot see a module it must not depend on.
+
+These tests build targets, so run them after a normal build. They are part of
+`ctest --test-dir build`.
+
 ## CI
 
 Every PR runs the tests with CTest on Linux (GCC + Clang) and Windows (MSVC

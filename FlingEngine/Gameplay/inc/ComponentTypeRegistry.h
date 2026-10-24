@@ -78,11 +78,13 @@ namespace Fling
 		const ComponentTypeInfo* Find(const std::string& name) const;
 		const std::vector<ComponentTypeInfo>& All() const { return m_Types; }
 
+#ifdef FLING_WITH_TEST_HOOKS
 		/**
 		 * Test-only: clear types, registrars, and the seal latch so Catch2 cases
 		 * can share the process-global singleton.
 		 */
 		void ResetForTests();
+#endif
 
 	private:
 		ComponentTypeRegistry() = default;

@@ -16,6 +16,8 @@ set ( LINK_LIBS
 file( GLOB_RECURSE _source_list
     *.cpp* src/*.h* src/*.hpp* *.h* *.inl
 )
+# Isolation/ sources build as separate targets (see fling_add_isolation_test below)
+list( FILTER _source_list EXCLUDE REGEX "^${CMAKE_CURRENT_SOURCE_DIR}/Isolation/" )
 
 ################# Add Exe and link ######################
 
@@ -46,3 +48,37 @@ catch_discover_tests( ${PROJECT_NAME}
     DISCOVERY_MODE PRE_TEST
     WORKING_DIRECTORY "${FLING_ROOT_DIR}"
 )
+
+# Module isolation tests. Each one builds IsolationCheck.cpp with one header,
+# linked against one module only:
+#   VISIBLE: the header must compile (proves the module's public headers are
+#            enough on their own).
+#   HIDDEN:  the build must fail because the header is not found (proves the
+#            module cannot reach a module it does not depend on).
+function( fling_add_isolation_test NAME MODULE HEADER EXPECT )
+    set( _target "Isolation_${NAME}" )
+    add_executable( ${_target} EXCLUDE_FROM_ALL Isolation/IsolationCheck.cpp )
+    target_link_libraries( ${_target} PRIVATE ${MODULE} )
+    target_compile_definitions( ${_target} PRIVATE "FLING_ISOLATION_HEADER=\"${HEADER}\"" )
+    fling_configure_target( ${_target} )
+    set_target_properties( ${_target} PROPERTIES FOLDER "FlingTests/Isolation" )
+
+    add_test( NAME "Isolation: ${NAME}"
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target ${_target} --config $<CONFIG>
+    )
+    if( EXPECT STREQUAL "HIDDEN" )
+        # Pass only on a "header not found" error (GCC, Clang, MSVC wording),
+        # not on any build error: the failed command line also names the header.
+        string( REPLACE "." "\\." _h "${HEADER}" )
+        set_tests_properties( "Isolation: ${NAME}" PROPERTIES PASS_REGULAR_EXPRESSION
+            "${_h}: No such file or directory;'${_h}' file not found;Cannot open include file: '${_h}'"
+        )
+    endif()
+endfunction()
+
+fling_add_isolation_test( CoreHeaders              Fling::Core      "Logger.h"          VISIBLE )
+fling_add_isolation_test( CoreCannotSeeResources   Fling::Core      "ResourceManager.h" HIDDEN )
+fling_add_isolation_test( ResourcesHeaders         Fling::Resources "ResourceManager.h" VISIBLE )
+fling_add_isolation_test( ResourcesCannotSeeGameplay Fling::Resources "World.h"         HIDDEN )
+fling_add_isolation_test( GameplayHeaders          Fling::Gameplay  "World.h"           VISIBLE )
+fling_add_isolation_test( GameplayCannotSeeGraphics Fling::Gameplay "VulkanApp.h"       HIDDEN )
