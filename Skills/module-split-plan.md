@@ -69,7 +69,7 @@ building and passing on every CI platform.
 - `Utils/` and `Platform/` moved into `Core/`. `ImGuiInputBinding.hpp` moved
   to Graphics. The Foundation stub is deleted.
 
-### Phase 0.5: CMake cleanup (branch `chore/cmake-phase0`)
+### Phase 0.5: CMake cleanup (done, #206)
 
 - `FLING_ENGINE_INC()` removed. Settings are per target through
   `fling_configure_target()`, with one shared warning set
