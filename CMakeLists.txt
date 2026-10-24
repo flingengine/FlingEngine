@@ -39,6 +39,18 @@ IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     message( FATAL_ERROR    "WITH_EDITOR_FLAG cannot be enabled because WITH_IMGUI_FLAG is OFF!" )
 endif()
 
+# EnTT 3.1 (external/entt) compares entities with entt::null through an operator==
+# that calls itself forever under C++20 rewritten comparisons, unless the compiler
+# implements P2468 (GCC 13, Clang 16). Older compilers build the engine, but any
+# `entity == entt::null` then hangs at runtime, so stop here instead.
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
+    message( FATAL_ERROR "Fling Engine needs GCC 13 or newer (found ${CMAKE_CXX_COMPILER_VERSION}). "
+        "In C++20 mode it resolves EnTT 3.1's entt::null comparison to itself, which hangs." )
+elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16 )
+    message( FATAL_ERROR "Fling Engine needs Clang 16 or newer (found ${CMAKE_CXX_COMPILER_VERSION}). "
+        "In C++20 mode it resolves EnTT 3.1's entt::null comparison to itself, which hangs." )
+endif()
+
 message( STATUS "----- Build Config ----" )
 message( STATUS "Compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}" )
 message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )

@@ -13,8 +13,13 @@ The Fling Engine aims to be a cross platform Vulkan game engine that will experi
 
 There are a few basic steps to compiling Fling on your platform. 
 
-## [CMake 3.13](https://cmake.org/download/) or higher!
-This project requires CMake 3.13 or higher, you can install it [here](https://cmake.org/download/).
+## [CMake 3.21](https://cmake.org/download/) or higher!
+This project requires CMake 3.21 or higher, you can install it [here](https://cmake.org/download/).
+
+## A C++20 compiler
+GCC 13 or newer, Clang 16 or newer, or Visual Studio 2022. Older GCC and Clang are
+rejected at configure time (see [`Skills/building.md`](Skills/building.md) for why).
+On Ubuntu 22.04, install `g++-13` and configure with `CC=gcc-13 CXX=g++-13`.
 
 ## For Linux
 This project uses GLFW, so you will need to install those libraries to your machine.

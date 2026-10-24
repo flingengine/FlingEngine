@@ -77,7 +77,9 @@ building and passing on every CI platform.
 - Header-only libraries are `FlingExt::*` INTERFACE targets with SYSTEM
   includes. There are no global `include_directories()` or
   `add_definitions()` calls.
-- All first-party code builds as C++20.
+- All first-party code builds as C++20. This needs GCC 13+ or Clang 16+, which
+  CMake checks: EnTT 3.1 hangs on older compilers in C++20 mode. An EnTT
+  upgrade would remove that limit.
 - `fling_add_module()` builds STATIC by default (locked decision 5).
 - `FLING_BUILD_TESTS` option. It is OFF by default for shipping builds and
   when Fling is not the top-level project, and Catch2 is only needed when it is

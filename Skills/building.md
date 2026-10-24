@@ -17,6 +17,11 @@ This does three things:
    `FLING_BUILD_TESTS` is ON).
 3. Configures CMake into `build/` with default settings.
 
+Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022. CMake stops with an
+error on older GCC or Clang: the vendored EnTT 3.1 hangs at runtime on them in
+C++20 mode (its `entt::null` comparison calls itself forever). On Ubuntu 22.04,
+install `g++-13` or newer and configure with `CC=gcc-13 CXX=g++-13`.
+
 Linux also needs system packages before this will configure cleanly (GLFW, Vulkan
 headers, X11/Wayland dev libs) — see the root [README.md](../README.md) for the
 `apt-get` list, or `.github/workflows/build.yml` for the CI package list.

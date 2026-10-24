@@ -20,13 +20,13 @@ jobs:
       matrix:
         include:
           - name: Linux GCC Release
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             cc: gcc
             cxx: g++
             build_type: Release
           - name: Linux Clang Release
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: clang
             cc: clang
             cxx: clang++
@@ -34,7 +34,7 @@ jobs:
           # Shipping turns FLING_BUILD_TESTS off by default. This job does not
           # install Catch2, to prove that a shipping build does not need it.
           - name: Linux GCC Shipping
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             compiler: gcc
             cc: gcc
             cxx: g++
@@ -157,22 +157,23 @@ jobs:
 
       # ---------- run tests ----------
       # --no-tests=error fails the job if no tests are registered with CTest.
+      # --timeout fails a hung test instead of letting the job run for hours.
       # -C is needed by Visual Studio (multi-config) and ignored by Ninja.
       - name: Run tests
         if: matrix.compiler != 'mingw' && !matrix.shipping
         shell: bash
-        run: ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure --no-tests=error
+        run: ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure --no-tests=error --timeout 300
 
       - name: Run tests (UCRT64)
         if: matrix.compiler == 'mingw'
         shell: msys2 {0}
-        run: ctest --test-dir build --output-on-failure --no-tests=error
+        run: ctest --test-dir build --output-on-failure --no-tests=error --timeout 300
 
   # Doc-comment conventions for first-party sources (see Skills/coding-style.md / issue #166).
   # clang-format cannot enforce comment *content*; this script does.
   comment-style:
     name: Comment style
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - name: Check documentation comment style
