@@ -94,6 +94,21 @@ dev-only paths:
 It also switches Asset paths from absolute (convenient for iterating without
 reconfiguring) to relative, so a shipped executable is portable.
 
+## `WITH_CRASH_HANDLER_FLAG`
+
+ON by default. It builds `CrashHandler` (Core), which `--unattended` uses to
+stop crash dialogs and to print a stack trace (see
+[`testing.md`](testing.md#headless-runs)). It has no cost until a crash: it
+installs once at startup, and only with `--unattended`.
+
+Configure with `-DWITH_CRASH_HANDLER_FLAG=OFF` to compile it out, for example
+when a shipping title has its own crash reporter that must own the
+unhandled-exception filter and signal handlers. Then `CrashHandler` functions do
+nothing, Core does not link `dbghelp` on Windows, the `Unattended crash: ...`
+tests are not added, and `--unattended` logs a warning that a crash can open a
+dialog. Code reads the setting as `WITH_CRASH_HANDLER` (0 or 1), a PUBLIC
+definition on Core.
+
 ## `FLING_BUILD_TESTS`
 
 Controls whether the per-module Catch2 executables exist (`CoreTests`,

@@ -140,7 +140,8 @@ code 3.
 `CrashProbe`, which installs `CrashHandler::InstallUnattended` and then aborts,
 fails an assert, writes to a null pointer, or throws. The test passes only if the
 process exits with code 2 and prints a stack trace. A modal dialog makes the test
-time out.
+time out. These tests exist only when `WITH_CRASH_HANDLER_FLAG` is ON (see
+[`building.md`](building.md#with_crash_handler_flag)).
 
 ## CI
 

@@ -14,7 +14,7 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   `FlingPaths`, the platform-independent `Input` class, and launch support
   (`LaunchOptions`, `ExitCode`, `CrashHandler`). Core includes and
   links no other engine module, and its own include path enforces that.
-  `WITH_IMGUI`, `WITH_EDITOR`, and `FLING_SHIPPING` are PUBLIC definitions on
+  `WITH_IMGUI`, `WITH_EDITOR`, `WITH_CRASH_HANDLER`, and `FLING_SHIPPING` are PUBLIC definitions on
   Core, so every target sees them.
 - `FlingEngine/Resources` — the `Resources` module (depends on Core): config
   files, JSON, file loading, `ResourceManager`. GPU resources (`Texture`,

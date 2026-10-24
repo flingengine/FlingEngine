@@ -38,6 +38,11 @@ namespace Fling
 		F_LOG_TRACE("Command line initaliziation: {}\t", bSuccessfulCommandLineInit ? "successful" : "failed");
 		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
 
+		if (m_Options.Unattended && !CrashHandler::IsAvailable())
+		{
+			F_LOG_WARN("--unattended: this build has no crash handler (WITH_CRASH_HANDLER_FLAG=OFF). A crash can open a dialog.");
+		}
+
 		if (!bLaunchOptionsValid)
 		{
 			F_LOG_ERROR("Bad launch arguments: {}", LaunchOptionsError);

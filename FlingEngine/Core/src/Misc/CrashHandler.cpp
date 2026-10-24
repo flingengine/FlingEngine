@@ -1,4 +1,8 @@
 #include "Misc/CrashHandler.h"
+
+// Configured out with WITH_CRASH_HANDLER_FLAG=OFF: the header then has empty inline functions
+#if WITH_CRASH_HANDLER
+
 #include "ExitCode.h"
 #include "Platform.h"
 
@@ -161,3 +165,5 @@ namespace Fling {
         std::fflush(t_File);
     }
 } // namespace Fling
+
+#endif // WITH_CRASH_HANDLER

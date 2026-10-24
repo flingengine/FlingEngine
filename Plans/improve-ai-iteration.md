@@ -247,7 +247,7 @@ Done. The rules that it establishes are in
 
 - `--null-render`, `--unattended`, `--frames N`, `--seed S`, and
   `--log-format json` are parsed by `LaunchOptions` (Core). `ExitCode` (Core)
-  has the exit codes. `CrashHandler` (Core) has the unattended crash handling.
+  has the exit codes. `CrashHandler` (Core) has the unattended crash handling. `WITH_CRASH_HANDLER_FLAG=OFF` compiles it out.
 - `Engine::Tick` no longer needs `VulkanApp`. Under `--null-render`,
   `VulkanApp::Init` is not called, ticks use a fixed 1/60 s delta, and the loop
   does not wait on real time. `--null-render` skips Graphics at runtime only.
