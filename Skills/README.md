@@ -11,4 +11,3 @@ detail on a given topic. These files are meant to be read on demand, not all at 
 | [`coding-style.md`](coding-style.md) | Doc-comment conventions, formatting, what not to touch |
 | [`architecture.md`](architecture.md) | Current folder/module layout, where new code belongs |
 | [`adding-modules.md`](adding-modules.md) | How to add a new engine module (`fling_add_module`, UI example) |
-| [`module-split-plan.md`](module-split-plan.md) | Phased plan for splitting the engine into modules (issue #169) |
