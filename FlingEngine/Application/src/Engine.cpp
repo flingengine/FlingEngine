@@ -1,8 +1,11 @@
 #include "Engine.h"
 #include <cstdint>
+#include <cstdio>
+#include <random>
 #include "File.h"
 #include "VulkanApp.h"
 #include "Misc/CommandLine.h"
+#include "Misc/CrashHandler.h"
 #include "ComponentTypeRegistry.h"
 #include "RegisterGraphicsComponents.h"
 #include "FlingPaths.h"
@@ -12,15 +15,41 @@
 
 namespace Fling
 {
-    void Engine::Startup(int argc, const char* argv[])
-	{	
-		Random::Init();
-		Logger::Get().Init();
+    ExitCode Engine::Startup(int argc, const char* argv[])
+	{
+		m_StartTime = std::chrono::steady_clock::now();
 
     	// Initalize the command line
 		const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);
+
+		// Read the launch flags before anything else starts: they decide the log
+		// format, and whether a crash may open a dialog
+		std::string LaunchOptionsError;
+		const bool bLaunchOptionsValid = LaunchOptions::Parse(CommandLine::Get(), m_Options, LaunchOptionsError);
+
+		if (m_Options.Unattended)
+		{
+			CrashHandler::InstallUnattended();
+		}
+
+		Logger::SetFormat(m_Options.Format);
+		Logger::Get().Init();
+
 		F_LOG_TRACE("Command line initaliziation: {}\t", bSuccessfulCommandLineInit ? "successful" : "failed");
 		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
+
+		if (!bLaunchOptionsValid)
+		{
+			F_LOG_ERROR("Bad launch arguments: {}", LaunchOptionsError);
+			return ExitCode::BadArguments;
+		}
+
+		// Log the seed, so that --seed can repeat a run that used a random one
+		m_Seed = m_Options.HasSeed ? m_Options.Seed : std::random_device{}();
+		Random::Init(m_Seed);
+		F_LOG_TRACE("Random seed: {}", m_Seed);
+
+		m_SystemsStarted = true;
 
 		FlingConfig::Get().Init();
 
@@ -31,7 +60,7 @@ namespace Fling
 		}
 
 		ResourceManager::Get().Init();
-		Timing::Get().Init();        
+		Timing::Get().Init();
 		Input::Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
@@ -57,11 +86,22 @@ namespace Fling
 		// only set in the config file. Command line args passed directly still win.
 		CommandLine::Get().LoadConfigFile(EngineConfigPath);
 
-		VulkanApp::Get().Init(
-			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
-			g_Registry,
-			m_DebugUI
-		);
+		if (m_Options.NullRender)
+		{
+			// No window, no swapchain, and no GPU device. Graphics resources keep their
+			// CPU data only (see VulkanApp::HasDevice). The developer UI draws with
+			// ImGui in the renderer, so it cannot run either.
+			F_LOG_TRACE("Fling render: null (--null-render)");
+			m_DebugUI.reset();
+		}
+		else
+		{
+			VulkanApp::Get().Init(
+				static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
+				g_Registry,
+				m_DebugUI
+			);
+		}
 
 		RegisterEngineComponents();
 		RegisterGraphicsComponents();
@@ -81,48 +121,86 @@ namespace Fling
 			F_LOG_TRACE("Fling debug UI: Disabled");
 		}
 
-		Input::PreUpdate();
+		if (!m_Options.NullRender)
+		{
+			Input::PreUpdate();
+		}
+
+		return ExitCode::Success;
 	}
 
 	void Engine::Tick()
 	{
-        float DeltaTime = 1.0f / 60.0f;
-		
 		assert(m_World && m_GameImpl);		// We HAVE to have a world and a game
-		
-		VulkanApp& VkApp = VulkanApp::Get();
+
 		Timing& Timing = Timing::Get();
 
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
-		while(!VkApp.GetCurrentWindow()->ShouldClose())
+		// The developer UI starts the game with its "Play" button. With no developer
+		// UI (a game build, or --null-render), the game starts now.
+		if (!m_DebugUI)
+		{
+			m_World->RequestGameStart();
+		}
+
+		const float NullRenderDeltaTime = 1.0f / static_cast<float>(LaunchOptions::NullRenderTickRate);
+
+		while(ShouldTick())
 		{
             // Update timing
             Timing.Update();
-            DeltaTime = Timing.GetDeltaTime();
+
+			// Under --null-render each tick has the same delta and the loop never waits
+			// on real time, so a run is as fast as the CPU allows
+            const float DeltaTime = m_Options.NullRender ? NullRenderDeltaTime : Timing.GetDeltaTime();
 
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
-			
-			Input::Poll();
+
+			// There are no input devices without a window
+			if (!m_Options.NullRender)
+			{
+				Input::Poll();
+			}
 
 			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
+			++m_TicksRun;
 
 			if(m_World->ShouldQuit())
 			{
 				F_LOG_TRACE("World should quit! Exiting engine loop...");
 				break;
 			}
-			
-			VkApp.Update(DeltaTime, g_Registry);
+
+			if (!m_Options.NullRender)
+			{
+				VulkanApp::Get().Update(DeltaTime, g_Registry);
+			}
 
 			Timing.UpdateFps();
 		}
 	}
 
-	void Engine::Shutdown()
+	bool Engine::ShouldTick() const
+	{
+		if (m_Options.Frames > 0 && m_TicksRun >= m_Options.Frames)
+		{
+			F_LOG_TRACE("Ran {} ticks (--frames). Exiting engine loop...", m_TicksRun);
+			return false;
+		}
+
+		if (!m_Options.NullRender && VulkanApp::Get().GetCurrentWindow()->ShouldClose())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	ExitCode Engine::Shutdown(ExitCode t_Code)
 	{
 		// Cleanup game play stuff
 		if(m_World)
@@ -135,15 +213,51 @@ namespace Fling
 
     	delete m_World;
     	m_World = nullptr;
-		
+
 		// Cleanup any resources
-		Input::Shutdown();
-        ResourceManager::Get().Shutdown();
-		Logger::Get().Shutdown();
-        FlingConfig::Get().Shutdown();
-		Timing::Get().Shutdown();
-		VulkanApp::Get().Shutdown(g_Registry);
+		if (m_SystemsStarted)
+		{
+			Input::Shutdown();
+			ResourceManager::Get().Shutdown();
+			FlingConfig::Get().Shutdown();
+			Timing::Get().Shutdown();
+
+			if (!m_Options.NullRender)
+			{
+				VulkanApp::Get().Shutdown(g_Registry);
+			}
+		}
 
 		g_Registry.reset();
+
+		PrintExitSummary(t_Code);
+
+		// Last, so that every system above can still log while it shuts down
+		Logger::Get().Shutdown();
+
+		return t_Code;
 	}
-}
+
+	void Engine::PrintExitSummary(ExitCode t_Code) const
+	{
+		const double WallSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - m_StartTime).count();
+		const char* Render = m_Options.NullRender ? "null" : "vulkan";
+
+		if (m_Options.Format == LogFormat::Json)
+		{
+			std::printf(
+				"{\"event\":\"exit\",\"code\":%d,\"ticks\":%llu,\"seed\":%u,\"render\":\"%s\",\"wallSeconds\":%.3f}\n",
+				ToInt(t_Code), static_cast<unsigned long long>(m_TicksRun), m_Seed, Render, WallSeconds
+			);
+		}
+		else
+		{
+			std::printf(
+				"Fling exit: code=%d ticks=%llu seed=%u render=%s wall=%.3fs\n",
+				ToInt(t_Code), static_cast<unsigned long long>(m_TicksRun), m_Seed, Render, WallSeconds
+			);
+		}
+
+		std::fflush(stdout);
+	}
+}	// namespace Fling

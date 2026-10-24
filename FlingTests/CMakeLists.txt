@@ -101,3 +101,21 @@ fling_add_isolation_test( ApplicationCannotSeeEditor Fling::Application "BaseEdi
 if( WITH_EDITOR_FLAG )
 	fling_add_isolation_test( EditorHeaders        Fling::Editor    "BaseEditor.h"      VISIBLE )
 endif()
+
+# Unattended crash tests. CrashProbe crashes on purpose after
+# CrashHandler::InstallUnattended. Each test passes only if the process exits
+# with code 2 and prints a stack trace. A modal dialog makes the test time out.
+add_executable( CrashProbe CrashProbe/CrashProbe.cpp )
+fling_configure_target( CrashProbe )
+fling_set_bin_output( CrashProbe )
+target_link_libraries( CrashProbe PRIVATE Fling::Core )
+
+foreach( _mode abort assert segv throw )
+	add_test( NAME "Unattended crash: ${_mode}"
+		COMMAND ${CMAKE_COMMAND}
+			-DPROBE=$<TARGET_FILE:CrashProbe>
+			-DMODE=${_mode}
+			-P "${CMAKE_CURRENT_SOURCE_DIR}/CrashProbe/ExpectCrash.cmake"
+	)
+	set_tests_properties( "Unattended crash: ${_mode}" PROPERTIES TIMEOUT 90 )
+endforeach()

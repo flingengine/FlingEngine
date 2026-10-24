@@ -3,6 +3,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include "ResourceManager.h"
+#include "VulkanApp.h"
 #include "Logger.h"
 
 namespace Fling
@@ -154,6 +155,12 @@ namespace Fling
 
 	void Model::CreateBuffers()
 	{
+		// Under --null-render there is no GPU device. Keep the CPU vertex and index data only.
+		if (!VulkanApp::Get().HasDevice())
+		{
+			return;
+		}
+
 		// Create vertex buffer
 		VkDeviceSize VertBufferSize = sizeof(m_Verts[0]) * m_Verts.size();
 		// We use a staging buffer to get to a more optimial memory layout for the GPU

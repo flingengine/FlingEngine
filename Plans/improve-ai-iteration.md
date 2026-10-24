@@ -240,6 +240,30 @@ Phases A to C do not need the EnTT replacement. They give agents crash
 reproduction and gameplay tests without a window. Phases D and E work best on
 top of the reflection in `ecs-plan.md`.
 
+### Phase A status
+
+Done. The rules that it establishes are in
+[`Skills/testing.md`](../Skills/testing.md#headless-runs).
+
+- `--null-render`, `--unattended`, `--frames N`, `--seed S`, and
+  `--log-format json` are parsed by `LaunchOptions` (Core). `ExitCode` (Core)
+  has the exit codes. `CrashHandler` (Core) has the unattended crash handling.
+- `Engine::Tick` no longer needs `VulkanApp`. Under `--null-render`,
+  `VulkanApp::Init` is not called, ticks use a fixed 1/60 s delta, and the loop
+  does not wait on real time. `--null-render` skips Graphics at runtime only.
+  Graphics is still linked. A `<Name>Server` target that does not link Graphics
+  is P5 in `project-model.md`.
+- Graphics resources keep CPU data only when `VulkanApp::HasDevice()` is false.
+- With no developer UI (a game build, or `--null-render`), the game starts at
+  once. Before this change, only the editor's Play button started it.
+- `--seed` seeds the global `Random`. The per-world RNG comes with T3 in
+  `improve-time.md`. The tick clocks (`FixedTickClock`) come with T1 and T2.
+- JSON logs go to the existing `Logs/` folder (`fling_log.jsonl`), not to
+  `Saved/Logs/`. Move them when `project-model.md` adds `Saved/`.
+- `--dump-state` is not done. It needs the state hash from phase C.
+- CTest runs the Sandbox headless and runs `CrashProbe` to check that each kind
+  of crash exits with code 2, with a stack trace and no dialog.
+
 ## Open questions
 
 - Where does `TickInput` live: Core (with `Input`) or Engine (with

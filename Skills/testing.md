@@ -8,7 +8,7 @@ Graphics relinks `ApplicationTests` and leaves `CoreTests` alone.
 
 | Executable | Links | What it covers |
 | --- | --- | --- |
-| `CoreTests` | `Fling::Core` | `FlingTests/Core/` — string utils, command line, timing, random, logger, allocators, circular buffer |
+| `CoreTests` | `Fling::Core` | `FlingTests/Core/` — string utils, command line, launch options, timing, random, logger, allocators, circular buffer |
 | `ResourcesTests` | `Fling::Resources` | `FlingTests/Resources/` — `ResourceManager` / `FlingConfig`, `Json`, `JsonArchive` |
 | `EngineTests` | `Fling::Engine` | `FlingTests/Engine/` — `ComponentTypeRegistry`, world save/load, `Transform` / entt views |
 | `PhysicsTests` | `Fling::Physics` | `FlingTests/Physics/` — `Physics::Step` |
@@ -91,6 +91,56 @@ alone and a test that it cannot see a module it must not depend on.
 These tests build targets, so run them after a normal build. They are part of
 `ctest --test-dir build`. They are separate from the per-module Catch2
 executables and are not duplicated there.
+
+## Headless runs
+
+The game binary runs with no window and no GPU. CI and agents use this to run
+the game on machines that have no display and no Vulkan device:
+
+```bash
+./build/Sandbox/bin/Sandbox --null-render --unattended --frames 120 --seed 1
+```
+
+| Flag | What it does |
+| --- | --- |
+| `--null-render` | No window, no swapchain, no GPU work. Ticks use a fixed delta of 1/60 s and do not wait on real time. There is no developer UI, so the game starts at once |
+| `--unattended` | No modal dialogs. A crash, a failed assert, or an uncaught exception prints a stack trace to stderr and exits with code 2 |
+| `--frames N` | Run N ticks, then exit. With no `--frames`, a `--null-render` run continues until the game quits |
+| `--seed S` | Seed the random number generator. Each run logs its seed, so you can repeat a run |
+| `--log-format json` | JSON lines on the console and in `Logs/fling_log.jsonl` |
+
+A flag takes its value as `--frames 120` or `--frames=120`. The flags are parsed
+by `LaunchOptions::Parse` (`FlingEngine/Core/inc/LaunchOptions.h`).
+
+Exit codes (`Fling::ExitCode` in `ExitCode.h`): `0` success, `1` scenario or
+assertion failure, `2` crash or fatal error, `3` bad arguments or bad content.
+At exit the engine prints one summary line to stdout, for example
+`Fling exit: code=0 ticks=120 seed=1 render=null wall=0.031s` (a JSON object with
+`--log-format json`).
+
+Rules for code that can run under `--null-render`:
+
+- Do not call `VulkanApp` from gameplay code. Under `--null-render`,
+  `VulkanApp::Init` is not called, so `GetCurrentWindow()` and `GetCamera()` are
+  null.
+- A Graphics resource that makes GPU objects checks `VulkanApp::Get().HasDevice()`
+  first and keeps its CPU data only when there is no device (see `Model` and
+  `Texture`).
+- Do not depend on a renderer hook to add components. For example, the renderer
+  adds a `Transform` to a new `PointLight`, but under `--null-render` there is no
+  renderer. Use `get_or_assign`.
+
+`Sandbox/CMakeLists.txt` adds CTest tests (`Sandbox: ...`) that run the game
+headless, check the JSON exit summary, and check that a bad argument exits with
+code 3.
+
+## Unattended crash tests
+
+`FlingTests/CMakeLists.txt` adds `Unattended crash: <mode>` tests. Each runs
+`CrashProbe`, which installs `CrashHandler::InstallUnattended` and then aborts,
+fails an assert, writes to a null pointer, or throws. The test passes only if the
+process exits with code 2 and prints a stack trace. A modal dialog makes the test
+time out.
 
 ## CI
 
