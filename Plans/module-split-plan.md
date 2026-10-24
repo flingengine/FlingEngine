@@ -58,7 +58,7 @@ Core  →  Resources  →  Engine  →  Graphics  →  Application
 | **Core** | none | glm, spdlog, entt, cereal |
 | **Resources** | Core | inih (public), json (private) |
 | **Engine** | Core, Resources | entt |
-| **Graphics** | Core, Resources, Engine | Vulkan, glfw, SPIRV-Cross, stb, tinyobjloader (private) |
+| **Graphics** | Core, Resources, Engine | Vulkan, glfw, SPIRV-Cross, stb (private), tinyobjloader (private) |
 | **Application** | Engine, Graphics | none |
 | **Editor** | Engine, Graphics | ImGui (private) |
 | **Gameplay modules** (later) | Engine | none of Graphics |
@@ -177,6 +177,10 @@ The `Gameplay` module named here is now the `Engine` module (Phase 2.5).
   ImGui is a PRIVATE dependency of Graphics.
 - Isolation tests: Graphics cannot see Application or Editor, Application cannot
   see Editor, and each module's headers compile on their own.
+- Vulkan, GLFW, SPIRV-Cross, and stb are PRIVATE_LIBS of Graphics. Public
+  headers no longer include them: `FlingVulkan.h`, `DesktopWindow.h`,
+  `Shader.h`, and `Texture.h` live under `Graphics/src`. `FlingWindow` remains
+  the window type gameplay includes.
 
 Moved to the project model plan ([`project-model.md`](project-model.md),
 phase P2), not done here:
@@ -184,14 +188,6 @@ phase P2), not done here:
 - Separate `SandboxGame` / `SandboxEditor` targets (`fling_add_game()`).
 - Removing `WITH_EDITOR` entirely (Sandbox `main()`, and `PRIVATE_WITH_EDITOR` in
   `FlingTypes.h`, which is an always-on `friend class BaseEditor;` today).
-
-Still to do:
-
-- **Vulkan, GLFW, SPIRV-Cross, and stb are PUBLIC dependencies of Graphics.**
-  Graphics headers expose their types (`FlingVulkan.h`, `DesktopWindow.h`,
-  `Shader.h`, `Texture.h`), so Editor and Application see them. Making them
-  private needs those headers to stop exposing the types. The project model
-  plan's window abstraction (phase P4) is a natural place to start.
 
 ### Phase 4: Prove the Physics story (done)
 

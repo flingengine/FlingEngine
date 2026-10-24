@@ -6,6 +6,10 @@
 #include "GraphicsHelpers.h"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
+#include "MeshRendererGpu.h"
+#include "Model.h"
+#include "Material.h"
+#include "GraphicsPipeline.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 #include "FirstPersonCamera.h"
@@ -72,7 +76,7 @@ namespace Fling
 			// If the mesh has no descriptor sets, then build them
 			// #TODO Investigate a better way to do this, probably by just moving the 
 			// descriptors off of the mesh
-			if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
+			if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
 			{
 				CreateMeshDescriptorSet(t_MeshRend);
 			}
@@ -84,7 +88,7 @@ namespace Fling
 				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
 				1,
-				&t_MeshRend.m_DescriptorSet,
+				&MeshRendererDescriptorSet(t_MeshRend),
 				0,
 				nullptr);
 
@@ -107,7 +111,7 @@ namespace Fling
 	{
 		// Only allocate new descriptor sets if there are none
 		// Some may exist if entt decides to re-use the component
-		if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
+		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
 		{
 			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
 			VkDescriptorSetAllocateInfo allocInfo = {};
@@ -117,7 +121,7 @@ namespace Fling
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layout;
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_MeshRend.m_DescriptorSet));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &MeshRendererDescriptorSet(t_MeshRend)));
 		}
 
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets =
@@ -125,7 +129,7 @@ namespace Fling
 			// 0: UBO
 			Initializers::WriteDescriptorSetUniform(
 				t_MeshRend.m_UniformBuffer,
-				t_MeshRend.m_DescriptorSet,
+				MeshRendererDescriptorSet(t_MeshRend),
 				0
 			),
 		};
