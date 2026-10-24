@@ -140,7 +140,7 @@ building and passing on every CI platform.
 - `Engine.h`, `Engine.cpp`, and `FlingEngine.h` already moved to
   `FlingEngine/Engine/` in Phase 1. Make Engine a module.
 - Split Sandbox into a game target and an editor target. The project model
-  plan ([`Plans/project-model.md`](../Plans/project-model.md), phase P2)
+  plan ([`project-model.md`](project-model.md), phase P2)
   replaces this item with `fling_add_game()`, which makes `<Name>Game` and
   `<Name>Editor` targets for any project. Follow that design instead of a
   Sandbox-only split.
