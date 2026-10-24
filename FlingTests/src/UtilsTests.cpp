@@ -2,7 +2,6 @@
 #define CATCH_CONFIG_ENABLE_BENCHMARKING
 #include <catch2/catch_all.hpp>
 
-#include "pch.h"
 
 #include "Engine.h"
 #include "Singleton.hpp"

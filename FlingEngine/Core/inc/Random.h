@@ -4,6 +4,7 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "FlingWarnings.h"
+#include "Platform.h"
 
 namespace Fling
 {

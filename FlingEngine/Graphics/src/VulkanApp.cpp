@@ -17,6 +17,10 @@
 #include "GraphicsHelpers.h"
 #include "DepthBuffer.h"
 #include "BaseEditor.h"
+#include "Logger.h"
+#include "Version.h"
+#include "BuildConfig.h"
+#include "GitVersion.h"
 
 namespace Fling
 {

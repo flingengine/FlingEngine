@@ -1,6 +1,5 @@
 #if WITH_EDITOR
 
-#include "pch.h"
 #include "BaseEditor.h"
 #include "VulkanApp.h"
 #include "PhyscialDevice.h"
@@ -17,6 +16,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "FlingPaths.h"
+#include "Logger.h"
+#include "Timing.h"
 
 namespace Fling
 {

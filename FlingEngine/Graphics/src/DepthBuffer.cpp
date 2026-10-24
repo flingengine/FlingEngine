@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "DepthBuffer.h"
 #include "GraphicsHelpers.h"
 #include "LogicalDevice.h"

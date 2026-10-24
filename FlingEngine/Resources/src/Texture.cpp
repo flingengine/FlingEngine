@@ -1,4 +1,3 @@
-#include "pch.h"
 
 // Define the STB library image implementation here. Make sure 
 // this is ONLY in this file 
@@ -13,6 +12,7 @@
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
 #include "Buffer.h"
+#include "Logger.h"
 
 namespace Fling
 {

@@ -1,5 +1,6 @@
 #include "FlingEngine.h"
 #include "SandboxGame.h"
+#include <iostream>
 
 #if WITH_EDITOR
 

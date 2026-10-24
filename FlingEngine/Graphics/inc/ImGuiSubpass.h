@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Subpass.h"
+#include "FlingMath.h"
 
 namespace Fling
 {

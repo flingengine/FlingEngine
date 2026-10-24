@@ -3,8 +3,9 @@
 // A basic timing class that was taken from: this multiplayer book:
 // https://github.com/BenjaFriend/MultiplayerBook/blob/master/Chapter%208/RoboCatAction/RoboCat/Src/Timing.cpp
 
-#include "pch.h"
 #include <chrono>
+#include "Platform.h"
+#include "Singleton.hpp"
 
 namespace Fling
 {

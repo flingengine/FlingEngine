@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "EntityEditorPanel.h"
 
 #include "ComponentTypeRegistry.h"
@@ -9,6 +8,7 @@
 
 #include <cstring>
 #include <vector>
+#include "FlingTypes.h"
 
 namespace Fling
 {

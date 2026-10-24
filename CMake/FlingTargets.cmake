@@ -28,6 +28,7 @@ function(fling_set_warnings TARGET)
 			-Wno-unknown-pragmas
 			-Wno-multichar
 			-Wno-missing-braces
+			-Wundef		# '#if FLING_LINUX' before Platform.h is included silently evaluates to 0
 		)
 		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			target_compile_options(${TARGET} PRIVATE -Wno-class-memaccess)

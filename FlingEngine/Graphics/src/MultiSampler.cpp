@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "MultiSampler.h"
 #include "GraphicsHelpers.h"
 #include "LogicalDevice.h"

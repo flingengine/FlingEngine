@@ -1,6 +1,7 @@
-#include "pch.h"
 #include "PhyscialDevice.h"
 #include "Instance.h"
+#include "Logger.h"
+#include <map>
 
 // @note
 // Referenced the Acid Engine for some of the vendor numbers and scoring technique: 

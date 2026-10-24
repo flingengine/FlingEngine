@@ -1,8 +1,8 @@
-#include "pch.h"
 #include "GraphicsHelpers.h"
 #include "VulkanApp.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
+#include "Logger.h"
 
 namespace Fling
 {

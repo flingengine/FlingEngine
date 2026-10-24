@@ -1,8 +1,8 @@
-#include "pch.h"
 
 #include "VulkanApp.h"
 #include "FirstPersonCamera.h"
 #include "FlingMath.h"
+#include "FlingWindow.h"
 
 namespace Fling 
 {

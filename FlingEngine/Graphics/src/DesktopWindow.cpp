@@ -1,8 +1,9 @@
-#include "pch.h"
 #include "DesktopWindow.h"
 #include "Texture.h"
 #include "FlingConfig.h"
 #include "VulkanApp.h"
+#include "Logger.h"
+#include "BuildConfig.h"
 
 namespace Fling
 {

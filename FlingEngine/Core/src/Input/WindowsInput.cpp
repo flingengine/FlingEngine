@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "Platform.h"
 
 #if FLING_WINDOWS
 
@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include "DesktopWindow.h"
 #include "ImGuiInputBinding.hpp"
+#include "Logger.h"
 
 namespace Fling
 {

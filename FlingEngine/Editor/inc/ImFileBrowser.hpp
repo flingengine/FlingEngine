@@ -9,6 +9,9 @@
 #include <memory>
 #include <string>
 
+#include <imgui.h>
+#include <cstring>
+
 #ifndef IMGUI_VERSION
 #   error "include imgui.h before this header"
 #endif

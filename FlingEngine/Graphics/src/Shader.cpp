@@ -1,7 +1,7 @@
-#include "pch.h"
 #include "Shader.h"
 #include "ResourceManager.h"
 #include "LogicalDevice.h"
+#include "Logger.h"
 
 namespace Fling
 {

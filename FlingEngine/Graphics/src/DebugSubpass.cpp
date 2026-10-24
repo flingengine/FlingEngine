@@ -10,6 +10,7 @@
 #include "UniformBufferObject.h"
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
+#include "Logger.h"
 
 #define FRAME_BUF_DIM 2048
 

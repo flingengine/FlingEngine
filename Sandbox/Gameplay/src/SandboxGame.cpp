@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "SandboxGame.h"
 #include "World.h"
 #include "Components/Name.hpp"
@@ -16,6 +15,10 @@
 
 // Test command line args
 #include "Misc/CommandLine.h"
+#include "FlingWindow.h"
+#include "Input/Input.h"
+#include "Input/Key.h"
+#include "Logger.h"
 
 namespace Sandbox
 {

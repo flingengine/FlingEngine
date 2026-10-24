@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingExports.h"
+#include <type_traits>
 
 namespace Fling
 {

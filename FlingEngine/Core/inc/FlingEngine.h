@@ -1,7 +1,6 @@
 #pragma once
 
 
-#include "pch.h"
 #include "Engine.h"
 #include "Platform.h"
 #include "Logger.h"

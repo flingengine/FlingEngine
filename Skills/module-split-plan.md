@@ -93,9 +93,10 @@ building and passing on every CI platform.
   `Core/` except `Engine.h`, `Engine.cpp`, and `FlingEngine.h`, which stay in
   the monolith until Phase 3.
 - The rest of the engine stays one library that links `Fling::Core`.
-- Remove `pch.h` (58 files include it today). Each file includes only the
-  headers it uses. Move `F_ENABLE_LOGGING` and the window-size defaults to a
-  Core config header.
+- Remove `pch.h`. Each file includes only the headers it uses.
+  `F_ENABLE_LOGGING` and the window-size defaults move to `BuildConfig.h`.
+  `Platform.h` stops including `DesktopWindow.h` and the input headers.
+  (Done on branch `chore/remove-pch`.)
 - Replace the include of `ImGuiInputBinding.hpp` from Core's input code with a
   hook that Graphics registers, so that Core has no ImGui dependency.
 - Mark cross-module types with `CORE_API`.
@@ -103,6 +104,9 @@ building and passing on every CI platform.
 ### Phase 2: Resources, then Gameplay
 
 - Split out Resources, then Gameplay. The monolith links both.
+- `Texture.h` and `HDRImage.h` in Resources use Vulkan types
+  (`#include "FlingVulkan.h"`). Move the Vulkan parts to Graphics, or Resources
+  cannot be split out without a Vulkan dependency.
 - `World` must not include `MeshRenderer.h` or light headers. Graphics types
   register through `RegisterGraphicsComponents()`.
 - Add an isolation test: a throwaway target that links only Core and Gameplay
@@ -120,7 +124,9 @@ building and passing on every CI platform.
 - Split Sandbox into `SandboxRuntime` (shared gameplay code, OBJECT or STATIC),
   `SandboxGame`, and `SandboxEditor`. Do not glob all of `Sandbox/` into one
   target.
-- Remove the project-wide `WITH_EDITOR` define from Engine's API. A CMake
+- Remove the project-wide `WITH_EDITOR` define from Engine's API. Note that
+  `WITH_EDITOR_FLAG=OFF` does not build today: `Engine.cpp` uses `m_Editor`
+  outside `#if WITH_EDITOR`, and the `Editor/` sources are always compiled. A CMake
   option can still control whether the `SandboxEditor` target exists.
 - FlingTests link only the modules they test (`Fling::GameStack` unless a test
   needs Editor).

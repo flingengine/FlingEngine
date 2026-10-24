@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "Platform.h"
 
 #if FLING_LINUX
 
@@ -9,6 +9,8 @@
 #include "VulkanApp.h"
 #include <GLFW/glfw3.h>
 #include "ImGuiInputBinding.hpp"
+#include "Logger.h"
+#include "DesktopWindow.h"
 
 namespace Fling
 {

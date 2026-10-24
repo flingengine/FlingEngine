@@ -1,9 +1,9 @@
-#include "pch.h"
 #include "Json.h"
 
 #include <fstream>
 
 #include "FlingWarnings.h"
+#include "Logger.h"
 
 // nlohmann/json v3.7 includes <ciso646>, which libstdc++ flags with a #warning under C++20
 F_WARNING_PUSH

@@ -1,5 +1,6 @@
 #pragma once
 #include "Camera.h"
+#include "Input/Input.h"
 
 namespace Fling 
 {

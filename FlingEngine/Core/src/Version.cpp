@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Version.h"
 namespace Fling
 {

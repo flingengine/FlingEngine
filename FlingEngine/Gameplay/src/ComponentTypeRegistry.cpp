@@ -1,7 +1,7 @@
-#include "pch.h"
 #include "ComponentTypeRegistry.h"
 #include "Components/Transform.h"
 #include "Components/Name.hpp"
+#include "Logger.h"
 
 namespace Fling
 {

@@ -1,6 +1,7 @@
 #pragma once
-#include "pch.h"
 #include "GitVersion.h"
+#include "Platform.h"
+#include <string>
 
 namespace Fling
 {

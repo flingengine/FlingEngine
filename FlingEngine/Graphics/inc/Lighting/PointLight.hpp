@@ -2,6 +2,7 @@
 
 #include "FlingMath.h"
 #include "JsonArchive.h"
+#include "Platform.h"
 
 namespace Fling
 {

@@ -5,6 +5,7 @@
 #include "PhyscialDevice.h"
 #include "HDRImage.h"
 #include "VulkanApp.h"
+#include "Logger.h"
 
 namespace Fling
 {

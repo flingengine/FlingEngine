@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "MeshRenderer.h"
 
 #include <entt/entity/helper.hpp>

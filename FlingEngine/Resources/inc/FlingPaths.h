@@ -1,6 +1,8 @@
 #pragma once
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "Platform.h"
+#include <string>
 
 /** 
  * @see FlingAssetPaths.cpp.in

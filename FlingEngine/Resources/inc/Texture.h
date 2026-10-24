@@ -2,6 +2,7 @@
 
 #include "Resource.h"
 #include "stb_image.h"
+#include "FlingVulkan.h"
 
 namespace Fling
 {

@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "RegisterGraphicsComponents.h"
 #include "ComponentTypeRegistry.h"
 #include "MeshRenderer.h"

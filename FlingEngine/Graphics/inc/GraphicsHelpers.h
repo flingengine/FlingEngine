@@ -5,6 +5,7 @@
 #include "File.h"
 #include "Texture.h"
 #include "Buffer.h"
+#include "Logger.h"
 
 #define VK_CHECK_RESULT(f)															\
 {																					\
