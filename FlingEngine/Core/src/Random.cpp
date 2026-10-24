@@ -1,5 +1,7 @@
 #include "Random.h"
 
+#include <algorithm>
+
 namespace Fling
 {
 	namespace
@@ -20,14 +22,20 @@ namespace Fling
 
 		int RandomBetweenImpl(std::mt19937& t_Engine, const int t_min, const int t_max)
 		{
-			// Range from min to max, inclusive
-			std::uniform_int_distribution<int> dist(t_min, t_max);
+			// Range from min to max, inclusive. The caller can give the
+			// bounds in either order. The standard distribution needs
+			// min <= max, so sort the bounds first.
+			const auto [lo, hi] = std::minmax(t_min, t_max);
+			std::uniform_int_distribution<int> dist(lo, hi);
 			return dist(t_Engine);
 		}
 
 		float GetRandomFloatImpl(std::mt19937& t_Engine, float t_Min, float t_Max)
 		{
-			std::uniform_real_distribution<float> dist(t_Min, t_Max);
+			// The caller can give the bounds in either order. The standard
+			// distribution needs min <= max, so sort the bounds first.
+			const auto [lo, hi] = std::minmax(t_Min, t_Max);
+			std::uniform_real_distribution<float> dist(lo, hi);
 			return dist(t_Engine);
 		}
 

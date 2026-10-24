@@ -110,6 +110,38 @@ TEST_CASE("Random", "[utils]") {
             REQUIRE(value.z <= max.z);
         }
     }
+
+    SECTION("Reversed bounds are accepted and swapped") {
+        Random::Init(42u);
+        for (int i = 0; i < 1000; ++i) {
+            const int intValue = Random::RandomBetween(15, 5);
+            REQUIRE(intValue >= 5);
+            REQUIRE(intValue <= 15);
+
+            const float floatValue = Random::GetRandomFloat(1.0f, -1.0f);
+            REQUIRE(floatValue >= -1.0f);
+            REQUIRE(floatValue <= 1.0f);
+        }
+
+        // Only the z bounds are reversed. This matches the Sandbox bug.
+        const glm::vec3 min(-15.0f, 0.2f, 15.0f);
+        const glm::vec3 max(15.0f, 1.0f, -15.0f);
+        for (int i = 0; i < 100; ++i) {
+            const glm::vec3 value = Random::GetRandomVec3(min, max);
+            REQUIRE(value.x >= -15.0f);
+            REQUIRE(value.x <= 15.0f);
+            REQUIRE(value.y >= 0.2f);
+            REQUIRE(value.y <= 1.0f);
+            REQUIRE(value.z >= -15.0f);
+            REQUIRE(value.z <= 15.0f);
+        }
+    }
+
+    SECTION("Equal bounds give that value") {
+        Random::Init(42u);
+        REQUIRE(Random::RandomBetween(7, 7) == 7);
+        REQUIRE(Random::GetRandomFloat(2.5f, 2.5f) == 2.5f);
+    }
 }
 
 TEST_CASE("RandomStream", "[utils]") {

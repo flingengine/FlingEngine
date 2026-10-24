@@ -65,6 +65,9 @@ namespace Fling
 		 * t_max. The number can be equal to t_min. The number can be
 		 * equal to t_max.
 		 *
+		 * You can give the bounds in either order. If t_min is more than
+		 * t_max, this method swaps them.
+		 *
 		 * @param t_min This is the lowest possible value.
 		 * @param t_max This is the highest possible value.
 		 */
@@ -73,6 +76,9 @@ namespace Fling
 		/**
 		 * This method gives a random decimal number. The number is greater
 		 * than or equal to t_Min. The number is less than t_Max.
+		 *
+		 * You can give the bounds in either order. If t_Min is more than
+		 * t_Max, this method swaps them.
 		 */
 		float GetRandomFloat(float t_Min, float t_Max);
 
@@ -81,6 +87,9 @@ namespace Fling
 		 * vec3 value (x, y, z) is a separate random number. Each number is
 		 * more than or equal to the related component of t_Min. Each
 		 * number is less than the related component of t_Max.
+		 *
+		 * You can give the bounds of each component in either order. This
+		 * method swaps the bounds of a component if they are reversed.
 		 */
 		glm::vec3 GetRandomVec3(const glm::vec3 t_Min, const glm::vec3 t_Max);
 
@@ -138,6 +147,7 @@ namespace Fling
 
 		/**
 		 * Generate a random int in [t_min, t_max]: inclusive of both bounds.
+		 * You can give the bounds in either order.
 		 *
 		 * @param t_min Inclusive lower bound
 		 * @param t_max Inclusive upper bound
@@ -149,13 +159,14 @@ namespace Fling
 
 		/**
 		 * Generate a random vec3 with each component independently sampled
-		 * from [t_Min, t_Max): inclusive of t_Min, exclusive of t_Max.
+		 * from [t_Min, t_Max): inclusive of t_Min, exclusive of t_Max. You
+		 * can give the bounds of each component in either order.
 		 */
 		static glm::vec3 GetRandomVec3(const glm::vec3 t_Min, const glm::vec3 t_Max);
 
 		/**
 		 * Generate a random float in [t_Min, t_Max): inclusive of t_Min,
-		 * exclusive of t_Max.
+		 * exclusive of t_Max. You can give the bounds in either order.
 		 */
 		static float GetRandomFloat(float t_Min, float t_Max);
 
