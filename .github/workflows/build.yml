@@ -161,6 +161,53 @@ jobs:
         shell: msys2 {0}
         run: ctest --test-dir build --output-on-failure --no-tests=error --timeout 300
 
+  # Runs the first-time setup the way a new contributor would: Init.sh / Init.bat
+  # on a clone without submodules, then a build and the tests. The build job
+  # above configures by hand, so this is what keeps the wrappers working.
+  fresh-clone:
+    name: Fresh clone (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux Init.sh
+            os: ubuntu-24.04
+          - name: Windows Init.bat
+            os: windows-2022
+    steps:
+      # No submodules: pulling them is part of what Init does
+      - uses: actions/checkout@v5
+
+      # Same container as scripts/fresh-clone-test/Dockerfile describes for local use
+      - name: Init.sh, build, and test in a clean container
+        if: runner.os == 'Linux'
+        run: |
+          docker build -t fling-fresh-clone scripts/fresh-clone-test
+          docker run --rm -v "$PWD:/src:ro" fling-fresh-clone
+
+      - name: Install Vulkan SDK
+        if: runner.os == 'Windows'
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          vulkan_version: 1.4.357.0
+          install_runtime: true
+          cache: true
+          stripdown: true
+
+      - name: Init.bat
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: Init.bat
+
+      - name: Build
+        if: runner.os == 'Windows'
+        run: cmake --build build --config Debug --parallel
+
+      - name: Run tests
+        if: runner.os == 'Windows'
+        run: ctest --test-dir build -C Debug --output-on-failure --no-tests=error --timeout 300
+
   # Doc-comment conventions for first-party sources (see Skills/coding-style.md / issue #166).
   # clang-format cannot enforce comment *content*; this script does.
   comment-style:

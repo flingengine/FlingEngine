@@ -33,6 +33,19 @@ Arguments to `Init.sh` / `Init.bat` are passed through to the `build/` configure
 
 Change setup steps in `scripts/init.cmake`, not in the wrappers.
 
+### Testing a fresh clone
+
+The `fresh-clone` CI job runs `Init.sh` (in a clean Ubuntu container) and `Init.bat`
+on a checkout without submodules, then builds and runs the tests. To run the Linux
+one locally with Docker or Podman, from the repo root:
+
+```bash
+docker build -t fling-fresh-clone scripts/fresh-clone-test
+docker run --rm -v "$PWD:/src:ro" fling-fresh-clone
+```
+
+It clones the checked-out branch of your repo, so only committed changes are tested.
+
 Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022. CMake stops with an
 error on older GCC or Clang: the vendored EnTT 3.1 hangs at runtime on them in
 C++20 mode (its `entt::null` comparison calls itself forever). On Ubuntu 22.04,
