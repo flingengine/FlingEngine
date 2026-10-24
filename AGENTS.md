@@ -45,6 +45,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   read it before restructuring includes or CMake targets.
 - Adding a new CMake module (folder + `fling_add_module`, with a UI example):
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
+- Phased plan for the module split, including what is done and what is next:
+  [`Skills/module-split-plan.md`](Skills/module-split-plan.md).
 
 ## Contribution conventions
 
