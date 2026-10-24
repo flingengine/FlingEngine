@@ -96,9 +96,11 @@ shipping) and other day-to-day build details.
 
 After running `Init.bat`/`Init.sh`, open [`FlingEngine.code-workspace`](FlingEngine.code-workspace)
 in VS Code (install the recommended `CMake Tools` and `C/C++` extensions if prompted). The
-`Run and Debug` panel has ready-made configurations — **Debug Sandbox** and **Debug FlingTests** —
-that build the right target and launch it under the debugger. `Ctrl+Shift+B` builds all three
-targets (`FlingEngine`, `Sandbox`, `FlingTests`); per-target build tasks are also available via
+`Run and Debug` panel has ready-made configurations — **Debug Sandbox** and **Debug CoreTests**,
+**Debug ResourcesTests**, **Debug EngineTests**, **Debug PhysicsTests**, and **Debug ApplicationTests** —
+that build the right target and launch it under the debugger. `Ctrl+Shift+B` runs **Build All**
+(the engine, Sandbox, and the test executables). The **Run CTest** task runs every Catch2 case
+and the isolation tests; per-target build tasks are also available via
 `Tasks: Run Task`. Click the build-type entry in the bottom status bar (or run `CMake: Select
 Variant`) to switch between Debug, Release, RelWithDebInfo, and MinSizeRel — no need to
 re-run `Init.bat`/`Init.sh`; the extension reconfigures automatically.

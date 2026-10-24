@@ -371,7 +371,7 @@ Play-in-editor through world clone · undo/redo · hierarchy and outliner tree �
 - `FlingEngine/Graphics/src/OffscreenSubpass.cpp`, `GeometrySubpass.cpp`, `VulkanApp.cpp`, `RenderPipeline.cpp`, `inc/Subpass.h`, `inc/MeshRenderer.h`, `src/RegisterGraphicsComponents.cpp`
 - `FlingEngine/Editor/src/BaseEditor.cpp`, `EntityEditorPanel.cpp`, `WorldOutlinePanel.cpp`
 - `Sandbox/Gameplay/src/SandboxGame.cpp`, `inc/Mover.h`
-- `FlingTests/src/JsonSerializationTests.cpp`, plus new `FlingTests/src/Ecs*Tests.cpp`
+- `FlingTests/Engine/JsonSerializationTests.cpp`, `FlingTests/Resources/JsonSerializationTests.cpp`, plus new `FlingTests/Engine/Ecs*Tests.cpp`
 - `CMake/FlingExternals.cmake`, `FlingEngine/CMakeLists.txt`, `CMake/FlingTargets.cmake`
 
 ## Verification (each phase)

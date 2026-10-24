@@ -27,4 +27,4 @@ cmake . -A x64 -B build
 
 echo.
 echo Done! Open FlingEngine.code-workspace in VS Code to build/run/debug
-echo the FlingEngine, Sandbox, and FlingTests targets from the Run and Debug menu.
+echo the engine, Sandbox, and per-module test executables from the Run and Debug menu.

@@ -25,10 +25,42 @@
             "problemMatcher": ["$gcc", "$msCompile"]
         },
         {
-            "label": "Build FlingTests",
+            "label": "Build CoreTests",
             "type": "shell",
             "command": "cmake",
-            "args": ["--build", "build", "--target", "FlingTests", "--config", "${command:cmake.buildType}", "--parallel"],
+            "args": ["--build", "build", "--target", "CoreTests", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build ResourcesTests",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "ResourcesTests", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build EngineTests",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "EngineTests", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build PhysicsTests",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "PhysicsTests", "--config", "${command:cmake.buildType}", "--parallel"],
+            "group": "build",
+            "problemMatcher": ["$gcc", "$msCompile"]
+        },
+        {
+            "label": "Build ApplicationTests",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "ApplicationTests", "--config", "${command:cmake.buildType}", "--parallel"],
             "group": "build",
             "problemMatcher": ["$gcc", "$msCompile"]
         },
@@ -44,13 +76,21 @@
             "problemMatcher": ["$gcc", "$msCompile"]
         },
         {
-            "label": "Run FlingTests",
+            "label": "Run CTest",
             "type": "shell",
-            "command": "${workspaceFolder}/build/FlingTests/bin/FlingTests",
+            "command": "ctest",
+            "args": ["--test-dir", "build", "--output-on-failure", "--no-tests=error"],
             "windows": {
-                "command": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\FlingTests.exe"
+                "args": ["--test-dir", "build", "-C", "${command:cmake.buildType}", "--output-on-failure", "--no-tests=error"]
             },
-            "dependsOn": "Build FlingTests",
+            "dependsOn": [
+                "Build CoreTests",
+                "Build ResourcesTests",
+                "Build EngineTests",
+                "Build PhysicsTests",
+                "Build ApplicationTests"
+            ],
+            "dependsOrder": "sequence",
             "group": {
                 "kind": "test",
                 "isDefault": true
