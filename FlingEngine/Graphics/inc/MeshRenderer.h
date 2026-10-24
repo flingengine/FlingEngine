@@ -1,54 +1,72 @@
 #pragma once
 
 #include "JsonArchive.h"
-#include "Material.h"
-#include "Model.h"
-#include "Buffer.h"
 
 #include <entt/entity/registry.hpp>
 #include <string>
 
 namespace Fling
 {
-	struct MeshRenderer
-	{
-		/** Default constructor. */
-		MeshRenderer() = default;
+    class Model;
+    class Material;
+    class Buffer;
 
-		/** Load a mesh renderer with the default material */
-		MeshRenderer(const std::string& t_MeshPath);
+    struct MeshRenderer
+    {
+        /**
+         * GPU descriptor for this mesh. Defined in the Graphics module so this
+         * header does not name a Vulkan handle.
+         */
+        struct GpuState;
 
-		MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
+        /** Default constructor. */
+        MeshRenderer();
 
-		/**
-		* Create a mesh renderer with the given material and model.
-		* If the material is null than it will load the default material
-		*/
-		MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
+        /** Load a mesh renderer with the default material */
+        MeshRenderer(const std::string& t_MeshPath);
 
-		// Cleanup is handled by the rendering systems
-		~MeshRenderer() = default;
+        MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
-		/** Pointer to the actual model  */
-		Model* m_Model = nullptr;
+        /**
+         * Create a mesh renderer with the given material and model.
+         * If the material is null than it will load the default material
+         */
+        MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
 
-		/** Pointer to the material that this mesh renderer uses */
-		Material* m_Material = nullptr;
+        MeshRenderer(const MeshRenderer& t_Other);
+        MeshRenderer& operator=(const MeshRenderer& t_Other);
+        MeshRenderer(MeshRenderer&& t_Other) noexcept;
+        MeshRenderer& operator=(MeshRenderer&& t_Other) noexcept;
 
-		/** We need a uniform buffer per-swap chain image */
-		Buffer* m_UniformBuffer = nullptr;
+        ~MeshRenderer();
 
-		VkDescriptorSet m_DescriptorSet  = VK_NULL_HANDLE;
+        /** Pointer to the actual model  */
+        Model* m_Model = nullptr;
 
-		void Release();
+        /** Pointer to the material that this mesh renderer uses */
+        Material* m_Material = nullptr;
 
-		bool operator==(const MeshRenderer& other) const;
-		bool operator!=(const MeshRenderer& other) const;
+        /** We need a uniform buffer per-swap chain image */
+        Buffer* m_UniformBuffer = nullptr;
 
-		void Serialize(JsonArchive& Ar);
+        /** Descriptor set for this mesh. Null until the renderer allocates it. */
+        GpuState* m_GpuState = nullptr;
 
-		void LoadModelFromPath(const std::string& t_MeshPath);
+        void Release();
 
-		void LoadMaterialFromPath(const std::string& t_MatPath);
-	};
-}	// namespace Fling
+        bool operator==(const MeshRenderer& other) const;
+        bool operator!=(const MeshRenderer& other) const;
+
+        void Serialize(JsonArchive& Ar);
+
+        void LoadModelFromPath(const std::string& t_MeshPath);
+
+        void LoadMaterialFromPath(const std::string& t_MatPath);
+
+        /** Asset path of the assigned model, or an empty string when none is set. */
+        std::string GetModelGuidString() const;
+
+        /** Asset path of the assigned material, or an empty string when none is set. */
+        std::string GetMaterialGuidString() const;
+    };
+} // namespace Fling

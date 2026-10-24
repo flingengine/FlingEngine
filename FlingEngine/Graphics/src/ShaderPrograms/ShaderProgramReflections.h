@@ -7,6 +7,8 @@
 
 namespace Fling
 {
+    class GraphicsPipeline;
+
     namespace ShaderProgramReflections
     {
         void CreateDescriptorSets(

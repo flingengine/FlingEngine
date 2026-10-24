@@ -10,16 +10,15 @@ fling_add_module(Graphics
 		Core
 		Resources
 		Engine
-	# Public headers expose these types (FlingVulkan.h, DesktopWindow.h,
-	# Shader.h, Texture.h), so they cannot be private yet
-	PUBLIC_LIBS
+	# Public headers do not include Vulkan, GLFW, SPIRV-Cross, or stb.
+	# tinyobjloader and ImGui stay private as well.
+	PRIVATE_LIBS
 		Vulkan::Vulkan
 		glfw
 		spirv-cross-core
 		spirv-cross-cpp
 		spirv-cross-reflect
 		FlingExt::stb
-	PRIVATE_LIBS
 		FlingExt::tinyobjloader
 )
 

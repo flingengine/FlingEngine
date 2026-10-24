@@ -2,7 +2,6 @@
 
 #include "BaseEditor.h"
 #include "VulkanApp.h"
-#include "PhyscialDevice.h"
 #include "FirstPersonCamera.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
@@ -52,7 +51,7 @@ namespace Fling
                 std::string ModelName = "None";
                 if (t_MeshRend.m_Model)
                 {
-                    ModelName = t_MeshRend.m_Model->GetGuidString();
+                    ModelName = t_MeshRend.GetModelGuidString();
                 }
 
                 ImGui::LabelText("Model", ModelName.c_str(), "%s");
@@ -85,7 +84,7 @@ namespace Fling
                 std::string MaterialName = "None";
                 if (t_MeshRend.m_Material)
                 {
-                    MaterialName = t_MeshRend.m_Material->GetGuidString();
+                    MaterialName = t_MeshRend.GetMaterialGuidString();
                 }
 
                 const char* m = MaterialName.c_str();
@@ -110,8 +109,8 @@ namespace Fling
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     // Update the material in place. Going through registry.replace<MeshRenderer>()
-                    // here would construct a brand new component and drop its m_UniformBuffer/
-                    // m_DescriptorSet (only OnMeshRendererAdded, hooked to on_construct, sets
+                    // here would construct a brand new component and drop its m_UniformBuffer
+                    // and descriptor set (only OnMeshRendererAdded, hooked to on_construct, sets
                     // those up) -- the next frame's render pass would then dereference a null
                     // uniform buffer for this entity.
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
@@ -430,10 +429,8 @@ namespace Fling
 
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-		PhysicalDevice* PhysDev = VulkanApp::Get().GetPhysicalDevice();
-		assert(PhysDev);
-        VkPhysicalDeviceProperties props = PhysDev->GetDeviceProps();
-        ImGui::Text("Device: %s", props.deviceName);
+		const std::string DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
+        ImGui::Text("Device: %s", DeviceName.c_str());
 
         // Update fps graph
         std::rotate(fpsGraph.begin(), fpsGraph.begin() + 1, fpsGraph.end());

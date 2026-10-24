@@ -6,6 +6,10 @@
 #include "GraphicsHelpers.h"
 #include "Components/Transform.h"
 #include "MeshRenderer.h"
+#include "MeshRendererGpu.h"
+#include "Model.h"
+#include "Material.h"
+#include "GraphicsPipeline.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 #include "FirstPersonCamera.h"
@@ -153,7 +157,7 @@ namespace Fling
 				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
 				1,
-				&t_MeshRend.m_DescriptorSet,
+				&MeshRendererDescriptorSet(t_MeshRend),
 				0,
 				nullptr);
 
@@ -173,7 +177,7 @@ namespace Fling
 	{
 		// Only allocate new descriptor sets if there are none
 		// Some may exist if entt decides to re-use the component
-		if (t_MeshRend.m_DescriptorSet == VK_NULL_HANDLE)
+		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
 		{
 			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
 			VkDescriptorSetAllocateInfo allocInfo = {};
@@ -183,7 +187,7 @@ namespace Fling
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layout;
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_MeshRend.m_DescriptorSet));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &MeshRendererDescriptorSet(t_MeshRend)));
 		}
 
 		// Ensure that we have a material to try and sample from
@@ -197,28 +201,28 @@ namespace Fling
 			// 0: UBO
 			Initializers::WriteDescriptorSetUniform(
 				t_MeshRend.m_UniformBuffer,
-				t_MeshRend.m_DescriptorSet,
+				MeshRendererDescriptorSet(t_MeshRend),
 				0
 			),
 			// 1: Color map 
 			Initializers::WriteDescriptorSetImage(
 				t_MeshRend.m_Material->GetPBRTextures().m_AlbedoTexture,
-				t_MeshRend.m_DescriptorSet,
+				MeshRendererDescriptorSet(t_MeshRend),
 				1),
 			// 2: Normal map
 			Initializers::WriteDescriptorSetImage(
 				t_MeshRend.m_Material->GetPBRTextures().m_NormalTexture,
-				t_MeshRend.m_DescriptorSet,
+				MeshRendererDescriptorSet(t_MeshRend),
 				2),
 			// 3: Metal map
 			Initializers::WriteDescriptorSetImage(
 				t_MeshRend.m_Material->GetPBRTextures().m_MetalTexture,
-				t_MeshRend.m_DescriptorSet,
+				MeshRendererDescriptorSet(t_MeshRend),
 				3),
 			// 4: Roughness map
 			Initializers::WriteDescriptorSetImage(
 				t_MeshRend.m_Material->GetPBRTextures().m_RoughnessTexture,
-				t_MeshRend.m_DescriptorSet,
+				MeshRendererDescriptorSet(t_MeshRend),
 				4)
 			// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 		};

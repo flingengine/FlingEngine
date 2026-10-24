@@ -5,6 +5,7 @@
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
 #include "MeshRenderer.h"
+#include "GraphicsPipeline.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 #include "Model.h"
