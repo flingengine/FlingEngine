@@ -39,7 +39,7 @@ jobs:
             os: windows-2022
             compiler: msvc
             build_type: Release
-          - name: Windows MSYS2 MinGW64 Release
+          - name: Windows MSYS2 UCRT64 Release
             os: windows-2022
             compiler: mingw
             build_type: Release
@@ -68,17 +68,17 @@ jobs:
           cache: true
           stripdown: true
 
-      - name: Setup MSYS2 (MinGW64)
+      - name: Setup MSYS2 (UCRT64)
         if: matrix.compiler == 'mingw'
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
           install: >-
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-vulkan-devel
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-vulkan-devel
 
       # ---------- Catch2 (needed by find_package(Catch2 3 REQUIRED)) ----------
       # Visual Studio is a multi-config generator and ignores CMAKE_BUILD_TYPE
@@ -95,7 +95,7 @@ jobs:
             -DBUILD_TESTING=OFF
           cmake --build external/Catch2/build --config ${{ matrix.build_type }} --target install
 
-      - name: Build and install Catch2 (MinGW64)
+      - name: Build and install Catch2 (UCRT64)
         if: matrix.compiler == 'mingw'
         shell: msys2 {0}
         run: |
@@ -127,7 +127,7 @@ jobs:
             -DENABLE_MULTICORE=ON `
             -DCMAKE_PREFIX_PATH="${{ github.workspace }}/.deps"
 
-      - name: Configure (MinGW64)
+      - name: Configure (UCRT64)
         if: matrix.compiler == 'mingw'
         shell: msys2 {0}
         run: |
@@ -140,7 +140,7 @@ jobs:
         if: matrix.compiler != 'mingw'
         run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
-      - name: Build (MinGW64)
+      - name: Build (UCRT64)
         if: matrix.compiler == 'mingw'
         shell: msys2 {0}
         run: cmake --build build --parallel
@@ -159,7 +159,7 @@ jobs:
           if not exist Logs mkdir Logs
           build\FlingTests\bin\${{ matrix.build_type }}\FlingTests.exe
 
-      - name: Run FlingTests (MinGW64)
+      - name: Run FlingTests (UCRT64)
         if: matrix.compiler == 'mingw'
         shell: msys2 {0}
         run: |

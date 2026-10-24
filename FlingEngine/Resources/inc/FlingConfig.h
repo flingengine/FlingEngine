@@ -1,7 +1,14 @@
 #pragma once
 
 #include "Singleton.hpp"
+#include "FlingWarnings.h"
+
+// inih's header-only parser uses a deliberately bounded strncpy. SYSTEM includes
+// don't hide it because GCC reports it after inlining into our own code (seen on MinGW).
+F_WARNING_PUSH
+F_GCC_DISABLE_WARNING("-Wstringop-truncation")
 #include "INIReader.h"
+F_WARNING_POP
 
 namespace Fling
 {
