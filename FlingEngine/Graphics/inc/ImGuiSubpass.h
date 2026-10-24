@@ -4,80 +4,79 @@
 #include "FlingMath.h"
 #include <memory>
 
-namespace Fling
-{
-	class CommandBuffer;
-	class LogicalDevice;
-	class Swapchain;
-	class IDebugUI;
-	class FlingWindow;
+namespace Fling {
+    class CommandBuffer;
+    class LogicalDevice;
+    class Swapchain;
+    class IDebugUI;
+    class FlingWindow;
 
-	class ImGuiSubpass : public Subpass
-	{
-	public:
-		ImGuiSubpass(
-			const LogicalDevice* t_Dev,
-			const Swapchain* t_Swap,
-			entt::registry& t_reg,
-			FlingWindow* t_Window,
-			VkRenderPass t_GlobalRenderPass,
-			std::shared_ptr<Fling::IDebugUI> t_DebugUI,
-			std::shared_ptr<Fling::Shader> t_Vert,
-			std::shared_ptr<Fling::Shader> t_Frag
-		);
+    class ImGuiSubpass : public Subpass {
+    public:
+        ImGuiSubpass(const LogicalDevice* t_Dev,
+                     const Swapchain* t_Swap,
+                     entt::registry& t_reg,
+                     FlingWindow* t_Window,
+                     VkRenderPass t_GlobalRenderPass,
+                     std::shared_ptr<Fling::IDebugUI> t_DebugUI,
+                     std::shared_ptr<Fling::Shader> t_Vert,
+                     std::shared_ptr<Fling::Shader> t_Frag);
 
-		virtual ~ImGuiSubpass();
+        virtual ~ImGuiSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+        void
+        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+        void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
 
-		void PrepareAttachments() override;
+        void PrepareAttachments() override;
 
-		void CreateGraphicsPipeline() override;
+        void CreateGraphicsPipeline() override;
 
-		void CleanUp(entt::registry& t_reg) override;
+        void CleanUp(entt::registry& t_reg) override;
 
-	private:
+        void OnSwapchainResized(entt::registry& t_reg) override;
 
-		void PrepImGuiStyleSettings();
+    private:
+        void PrepImGuiStyleSettings();
 
-		void PrepareResources();
+        void CreateUiPipeline();
 
-		void BuildCommandBuffer(VkCommandBuffer t_commandBuffer);
+        void PrepareResources();
 
-		void UpdateUniforms();
+        void BuildCommandBuffer(VkCommandBuffer t_commandBuffer);
 
-		struct PushConstBlock
-		{
-			glm::vec2 scale;
-			glm::vec2 translate;
-		} pushConstBlock;
+        void UpdateUniforms();
 
-		std::unique_ptr<class Buffer> m_vertexBuffer;
-		std::unique_ptr<class Buffer> m_indexBuffer;
+        struct PushConstBlock {
+            glm::vec2 scale;
+            glm::vec2 translate;
+        } pushConstBlock;
 
-		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
-		VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
-		VkPipelineCache m_pipelineCache  = VK_NULL_HANDLE;
-		VkPipelineLayout m_pipelineLayout  = VK_NULL_HANDLE;
-		VkPipeline m_pipeLine = VK_NULL_HANDLE;
+        std::unique_ptr<class Buffer> m_vertexBuffer;
+        std::unique_ptr<class Buffer> m_indexBuffer;
 
-		VkDescriptorSet m_descriptorSet;
+        VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
+        VkPipelineCache m_pipelineCache = VK_NULL_HANDLE;
+        VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
+        VkPipeline m_pipeLine = VK_NULL_HANDLE;
 
-		FlingWindow* m_Window = nullptr;
+        VkDescriptorSet m_descriptorSet;
 
-		VkDeviceMemory m_fontMemory = VK_NULL_HANDLE;
-		VkImage m_fontImage = VK_NULL_HANDLE;
-		VkImageView m_fontImageView = VK_NULL_HANDLE;
-		VkSampler m_sampler = VK_NULL_HANDLE;
+        FlingWindow* m_Window = nullptr;
 
-		/** Instance of the editor that we will get what commands to build from */
-		std::shared_ptr<Fling::IDebugUI> m_DebugUI;
+        VkDeviceMemory m_fontMemory = VK_NULL_HANDLE;
+        VkImage m_fontImage = VK_NULL_HANDLE;
+        VkImageView m_fontImageView = VK_NULL_HANDLE;
+        VkSampler m_sampler = VK_NULL_HANDLE;
 
-		int32 m_vertexCount = 0;
-		int32 m_indexCount = 0;
+        /** Instance of the editor that we will get what commands to build from */
+        std::shared_ptr<Fling::IDebugUI> m_DebugUI;
 
-		VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
-	};
-}   // namespace Fling
+        int32 m_vertexCount = 0;
+        int32 m_indexCount = 0;
+
+        VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
+    };
+} // namespace Fling

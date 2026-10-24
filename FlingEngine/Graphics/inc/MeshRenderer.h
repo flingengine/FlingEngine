@@ -8,47 +8,56 @@
 #include <entt/entity/registry.hpp>
 #include <string>
 
-namespace Fling
-{
-	struct MeshRenderer
-	{
-		/** Default constructor. */
-		MeshRenderer() = default;
+namespace Fling {
+    struct MeshRenderer {
+        /** Default constructor. */
+        MeshRenderer() = default;
 
-		/** Load a mesh renderer with the default material */
-		MeshRenderer(const std::string& t_MeshPath);
+        /** Load a mesh renderer with the default material */
+        MeshRenderer(const std::string& t_MeshPath);
 
-		MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
+        MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
 
-		/**
-		* Create a mesh renderer with the given material and model.
-		* If the material is null than it will load the default material
-		*/
-		MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
+        /**
+         * Create a mesh renderer with the given material and model.
+         * If the material is null than it will load the default material
+         */
+        MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
 
-		// Cleanup is handled by the rendering systems
-		~MeshRenderer() = default;
+        /**
+         * Copy the model and the material only. The copy does not own the uniform buffer.
+         */
+        MeshRenderer(const MeshRenderer& t_Other);
+        MeshRenderer& operator=(const MeshRenderer& t_Other);
 
-		/** Pointer to the actual model  */
-		Model* m_Model = nullptr;
+        MeshRenderer(MeshRenderer&& t_Other) noexcept;
+        MeshRenderer& operator=(MeshRenderer&& t_Other) noexcept;
 
-		/** Pointer to the material that this mesh renderer uses */
-		Material* m_Material = nullptr;
+        /**
+         * Free the uniform buffer. The model and the material stay with the resource manager.
+         */
+        ~MeshRenderer();
 
-		/** We need a uniform buffer per-swap chain image */
-		Buffer* m_UniformBuffer = nullptr;
+        /** Pointer to the actual model  */
+        Model* m_Model = nullptr;
 
-		VkDescriptorSet m_DescriptorSet  = VK_NULL_HANDLE;
+        /** Pointer to the material that this mesh renderer uses */
+        Material* m_Material = nullptr;
 
-		void Release();
+        /** We need a uniform buffer per-swap chain image */
+        Buffer* m_UniformBuffer = nullptr;
 
-		bool operator==(const MeshRenderer& other) const;
-		bool operator!=(const MeshRenderer& other) const;
+        VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
 
-		void Serialize(JsonArchive& Ar);
+        void Release();
 
-		void LoadModelFromPath(const std::string& t_MeshPath);
+        bool operator==(const MeshRenderer& other) const;
+        bool operator!=(const MeshRenderer& other) const;
 
-		void LoadMaterialFromPath(const std::string& t_MatPath);
-	};
-}	// namespace Fling
+        void Serialize(JsonArchive& Ar);
+
+        void LoadModelFromPath(const std::string& t_MeshPath);
+
+        void LoadMaterialFromPath(const std::string& t_MatPath);
+    };
+} // namespace Fling

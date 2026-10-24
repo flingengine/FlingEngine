@@ -5,80 +5,72 @@
 #include <memory>
 #include <vector>
 
-namespace Fling
-{
-	class CommandBuffer;
-	class LogicalDevice;
-	class FrameBuffer;	
-	struct MeshRenderer;
-	class Swapchain;
-	class FirstPersonCamera;
+namespace Fling {
+    class CommandBuffer;
+    class LogicalDevice;
+    class FrameBuffer;
+    struct MeshRenderer;
+    class Swapchain;
+    class FirstPersonCamera;
 
-	/** UBO for mesh data */
-	struct alignas(16) OffscreenUBO
-	{
-		glm::mat4 Projection;
-		glm::mat4 Model;
-		glm::mat4 View;
-		glm::vec3 ObjPos;
-	};
+    /** UBO for mesh data */
+    struct alignas(16) OffscreenUBO {
+        glm::mat4 Projection;
+        glm::mat4 Model;
+        glm::mat4 View;
+        glm::vec3 ObjPos;
+    };
 
-	// Uses the MRT shaders (mulitple render targets)
-	class OffscreenSubpass : public Subpass
-	{
-	public:
-		OffscreenSubpass(
-			const LogicalDevice* t_Dev,
-			const Swapchain* t_Swap,
-			entt::registry& t_reg,
-			FirstPersonCamera* t_Cam,
-			std::shared_ptr<Fling::Shader> t_Vert,
-			std::shared_ptr<Fling::Shader> t_Frag
-		);
+    // Uses the MRT shaders (mulitple render targets)
+    class OffscreenSubpass : public Subpass {
+    public:
+        OffscreenSubpass(const LogicalDevice* t_Dev,
+                         const Swapchain* t_Swap,
+                         entt::registry& t_reg,
+                         FirstPersonCamera* t_Cam,
+                         std::shared_ptr<Fling::Shader> t_Vert,
+                         std::shared_ptr<Fling::Shader> t_Frag);
 
-		virtual ~OffscreenSubpass();
+        virtual ~OffscreenSubpass();
 
-		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
+        FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override final;
+        void
+        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override final;
 
-		void PrepareAttachments() override final;
+        void PrepareAttachments() override final;
 
-		void CreateGraphicsPipeline() override final;
+        void CreateGraphicsPipeline() override final;
 
-		void GatherPresentDependencies(
-			std::vector<CommandBuffer*>& t_CmdBuffs,
-			std::vector<VkSemaphore>& t_Deps,
-			uint32 t_ActiveFrameIndex,
-			uint32 t_CurrentFrameInFlight) override final;
+        void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs,
+                                       std::vector<VkSemaphore>& t_Deps,
+                                       uint32 t_ActiveFrameIndex,
+                                       uint32 t_CurrentFrameInFlight) override final;
 
-		void CleanUp(entt::registry& t_reg) override final;
+        void CleanUp(entt::registry& t_reg) override final;
 
-		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
+        virtual void OnSwapchainResized(entt::registry& t_reg) override final;
 
-	private:
+    private:
+        void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+        void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
 
-		void OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+        void BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight);
 
-		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
+        // We need an offscreen semaphore for each possible frame in flight because the swap chain
+        // presentation will depend on this command buffer being complete
+        std::vector<VkSemaphore> m_OffscreenSemaphores;
 
-		void BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight);
+        VkCommandPool m_CommandPool = VK_NULL_HANDLE;
 
-		// We need an offscreen semaphore for each possible frame in flight because the swap chain
-		// presentation will depend on this command buffer being complete
-		std::vector<VkSemaphore> m_OffscreenSemaphores;
+        // Offscreen command buffers for populating the GBuffer
+        std::vector<CommandBuffer*> m_OffscreenCmdBufs;
 
-		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+        FrameBuffer* m_OffscreenFrameBuf = nullptr;
 
-		// Offscreen command buffers for populating the GBuffer
-		std::vector<CommandBuffer*> m_OffscreenCmdBufs;
+        const FirstPersonCamera* m_Camera;
 
-		FrameBuffer* m_OffscreenFrameBuf = nullptr;
-
-		const FirstPersonCamera* m_Camera;
-
-		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-	};
-}   // namespace Fling
+        VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+    };
+} // namespace Fling

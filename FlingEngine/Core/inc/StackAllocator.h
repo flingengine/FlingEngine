@@ -1,20 +1,18 @@
 #pragma once
 
-#include <stdlib.h>     // size_t
-#include <cstddef>		// std::ptrdiff_t
+#include <stdlib.h> // size_t
+#include <cstddef>  // std::ptrdiff_t
 #include <assert.h>
 
 #include "Memory.h"
 
-namespace Fling
-{
+namespace Fling {
     /**
      * Stack (LIFO) allocator over a fixed memory region.
      *
      * @see https://blog.molecular-matters.com/2012/08/27/memory-allocation-strategies-a-stack-like-lifo-allocator/
      */
-    class StackAllocator
-    {
+    class StackAllocator {
     public:
         /**
          * Create a stack allocator over the memory between t_Start and t_End.
@@ -33,7 +31,7 @@ namespace Fling
          * @param t_Offset      Offset of the element (Default = 0)
          * @return Pointer to the allocated block (asserts when we exceed the preallocated size)
          */
-        void* Allocate(size_t t_Size, size_t t_Alignment = 0, size_t t_Offset = 0);
+        void* Allocate(size_t t_Size, size_t t_Alignment = 8, size_t t_Offset = 0);
 
         /**
          * Return a block of memory to the stack in LIFO order.
@@ -47,4 +45,4 @@ namespace Fling
         char* m_End = nullptr;
         char* m_Current = nullptr;
     };
-}
+} // namespace Fling

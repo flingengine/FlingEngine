@@ -9,6 +9,7 @@
 #include "Memory.h"
 #include "CircularBuffer.hpp"
 
+#include <cstdint>
 #include <vector>
 
 TEST_CASE("Timing", "[utils]") {
@@ -270,8 +271,11 @@ TEST_CASE("Stack Allocator", "[utils]") {
     char buf[1024] = {};
 
     StackAllocator stackAllocator(buf, buf + 1024);
-    // @TODO The stack allocator is broken and it seems to be rooted in
-    // the AlignPointer method on linux. That's a relatively large problem
+    void* block = stackAllocator.Allocate(32, 8);
+    REQUIRE(block != nullptr);
+    REQUIRE(reinterpret_cast<uintptr_t>(block) % 8 == 0);
+
+    stackAllocator.Free(block);
 }
 
 TEST_CASE("Aligned Alloc", "[utils]") {
