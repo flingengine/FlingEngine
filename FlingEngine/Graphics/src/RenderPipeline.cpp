@@ -5,6 +5,7 @@
 #include "SwapChain.h"
 #include "FrameBuffer.h"
 #include "MeshRenderer.h"
+#include "Logger.h"
 
 namespace Fling
 {

@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "Engine.h"
 #include <cstdint>
 #include "File.h"
@@ -6,6 +5,10 @@
 #include "Misc/CommandLine.h"
 #include "ComponentTypeRegistry.h"
 #include "RegisterGraphicsComponents.h"
+#include "FlingPaths.h"
+#include "FlingWindow.h"
+#include "Input/Input.h"
+#include "Random.h"
 
 namespace Fling
 {

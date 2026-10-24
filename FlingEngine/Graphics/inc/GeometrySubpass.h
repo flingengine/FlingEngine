@@ -5,6 +5,8 @@
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "Lighting/Lighting.hpp"
+#include <memory>
+#include <vector>
 
 namespace Fling
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseEditor.h"
+#include <string>
 
 namespace Sandbox
 {

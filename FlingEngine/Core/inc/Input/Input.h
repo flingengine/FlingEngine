@@ -4,6 +4,8 @@
 #include "Input/Key.h"
 #include <entt/signal/delegate.hpp>
 #include <entt/signal/sigh.hpp>
+#include <map>
+#include <string>
 
 namespace Fling
 {

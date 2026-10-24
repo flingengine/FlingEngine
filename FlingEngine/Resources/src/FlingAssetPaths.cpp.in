@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "FlingPaths.h"
 
 namespace Fling

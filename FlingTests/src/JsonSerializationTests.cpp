@@ -1,6 +1,5 @@
 #include <catch2/catch_all.hpp>
 
-#include "pch.h"
 #include "Json.h"
 #include "JsonArchive.h"
 #include "ComponentTypeRegistry.h"
@@ -12,6 +11,7 @@
 
 #include <cstdio>
 #include <string>
+#include "Logger.h"
 
 namespace
 {

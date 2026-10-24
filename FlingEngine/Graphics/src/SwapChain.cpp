@@ -1,8 +1,8 @@
-#include "pch.h"
 #include "SwapChain.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
 #include "FlingWindow.h"
+#include "Logger.h"
 
 namespace Fling
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Input/Input.h"
+#include <string>
 
 #if FLING_WINDOWS
 

@@ -1,7 +1,9 @@
-#include "pch.h"
 #include "LogicalDevice.h"
 #include "Instance.h"
 #include "PhyscialDevice.h"
+#include "Logger.h"
+#include <optional>
+#include <set>
 
 namespace Fling
 {

@@ -6,6 +6,7 @@
 #include "Buffer.h"
 
 #include <entt/entity/registry.hpp>
+#include <string>
 
 namespace Fling
 {

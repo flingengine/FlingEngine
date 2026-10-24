@@ -5,6 +5,8 @@
 
 #include <entt/entity/registry.hpp>
 #include <entt/entity/helper.hpp>
+#include <memory>
+#include <vector>
 
 namespace Fling
 {

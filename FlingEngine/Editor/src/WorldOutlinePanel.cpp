@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "WorldOutlinePanel.h"
 
 #include "Components/Name.hpp"
@@ -7,6 +6,8 @@
 
 #include <sstream>
 #include <vector>
+#include "FlingTypes.h"
+#include "Logger.h"
 
 namespace Fling
 {

@@ -2,6 +2,7 @@
 
 #include "FlingVulkan.h"
 #include "FlingExports.h"
+#include "Platform.h"
 
 namespace Fling
 {

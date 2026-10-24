@@ -1,8 +1,8 @@
-#include "pch.h"
 #include "CommandBuffer.h"
 #include "LogicalDevice.h"
 #include "GraphicsHelpers.h"
 #include "FrameBuffer.h"
+#include "Logger.h"
 
 namespace Fling
 {

@@ -4,6 +4,8 @@
 
 #include "Buffer.h"
 #include "Vertex.h"
+#include <memory>
+#include <vector>
 
 namespace Fling
 {

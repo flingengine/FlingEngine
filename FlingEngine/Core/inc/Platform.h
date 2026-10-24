@@ -11,7 +11,7 @@
 
 #include "PlatformWindows.h"
 
-#elif __APPLE__							
+#elif defined(__APPLE__)							
 
 #define FLING_APPLE			1
 #define FLING_WINDOWS		0	
@@ -19,7 +19,7 @@
 
 #error Fling does not support Apple... does it?
 
-#elif __linux__							
+#elif defined(__linux__)							
 
 #define FLING_APPLE			0
 #define FLING_WINDOWS		0	

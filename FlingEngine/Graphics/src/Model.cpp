@@ -1,9 +1,9 @@
-#include "pch.h"
 #include "Model.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include "ResourceManager.h"
+#include "Logger.h"
 
 namespace Fling
 {

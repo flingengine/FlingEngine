@@ -6,6 +6,8 @@
 #include "ResourceManager.h"
 #include "GraphicsHelpers.h"
 #include "Buffer.h"
+#include "Logger.h"
+#include <cmath>
 
 namespace Fling
 {

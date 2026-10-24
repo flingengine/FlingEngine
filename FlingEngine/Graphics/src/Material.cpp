@@ -1,7 +1,7 @@
-#include "pch.h"
 #include "Material.h"
 #include "ResourceManager.h"
 #include <unordered_map>
+#include "Logger.h"
 
 namespace Fling
 {    
