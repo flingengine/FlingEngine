@@ -1,89 +1,25 @@
-
-project ( "FlingEngine" VERSION 1.0 )
-
-# Modules split out of the monolith so far (see Skills/module-split-plan.md)
+# Engine modules, added bottom-up so each module's dependencies exist first.
+# See Plans/module-split-plan.md for the module graph.
 add_subdirectory( Core )
 add_subdirectory( Resources )
 add_subdirectory( Engine )
+add_subdirectory( Physics )
+add_subdirectory( Graphics )
+add_subdirectory( Application )
 
-##################### Linking #################
-
-### Find Vulkan
-find_package(Vulkan REQUIRED)
-
-## Ensure we have Vulkan
-if(Vulkan_FOUND)
-    message(STATUS "Vulkan found!" )
-else()
-    message(FATAL_ERROR "Vulkan NOT FOUND! Stopping" )
-endif()
-
-set ( LINK_LIBS
-    glfw ${GLFW_LIBRARIES}
-    Vulkan::Vulkan  
-    spirv-cross-core 
-    spirv-cross-cpp
-    spirv-cross-reflect
-    Fling::Core
-    Fling::Resources
-    Fling::Engine
-    FlingExt::stb
-    FlingExt::tinyobjloader
-)
-
-IF( WITH_IMGUI_FLAG )
-set ( LINK_LIBS ${LINK_LIBS}
-    ImGui ${IMGUI_LIBRARIES}
-)
-endif()
-
-# We need to link the std::filesystem on clang/GNU, but the windows version of
-# Clang doesn't have this lib. GCC >= 9 folds std::filesystem into libstdc++ itself,
-# so the standalone stdc++fs archive (which MinGW-w64/MSYS2 toolchains don't ship) is
-# only needed on older GCC.
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    if(NOT WIN32)
-    set( LINK_LIBS ${LINK_LIBS} stdc++fs )
-        message( STATUS "Added filesytem link (Clang)!" )
-    endif()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 )
-        set( LINK_LIBS ${LINK_LIBS} stdc++fs )
-        message( STATUS "Added filesytem link (GNU)!" )
-    endif()
-endif()
-
-message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
-
-### Source files (VS filters are set up by fling_configure_target) ###
-file( GLOB_RECURSE _source_list
-    *.cpp* src/*.h* src/*.hpp* *.h* *.inl
-)
-# Any folder with its own CMakeLists.txt is a module (fling_add_module) and
-# builds as its own target, so leave it out of this library
-file( GLOB _module_lists "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt" )
-foreach( _module_list IN LISTS _module_lists )
-    get_filename_component( _module_dir "${_module_list}" DIRECTORY )
-    list( FILTER _source_list EXCLUDE REGEX "^${_module_dir}/" )
-endforeach()
-
-################# Add library and link ######################
-
-add_library ( ${PROJECT_NAME} ${_source_list} )
-fling_configure_target( ${PROJECT_NAME} )
-
-# Make sure the compiler can find include files for our Engine library
-target_include_directories( ${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/Application/inc
-    ${CMAKE_CURRENT_SOURCE_DIR}/Graphics/inc
-)
-
+# Editor is a leaf. Only editor applications link it.
 if( WITH_EDITOR_FLAG )
-    target_include_directories( ${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Editor/inc )
+    add_subdirectory( Editor )
 endif()
 
-# Feature flags (WITH_IMGUI, WITH_EDITOR, FLING_SHIPPING) come from Fling::Core
+# What a game links: everything except the editor
+add_library( FlingGameStack INTERFACE )
+add_library( Fling::GameStack ALIAS FlingGameStack )
+target_link_libraries( FlingGameStack INTERFACE Fling::Application )
 
-# link against the libs that the engine needs
-target_link_libraries( ${PROJECT_NAME} PUBLIC ${LINK_LIBS} )
+# What an editor links: the game stack plus the editor
+if( WITH_EDITOR_FLAG )
+    add_library( FlingEditorStack INTERFACE )
+    add_library( Fling::EditorStack ALIAS FlingEditorStack )
+    target_link_libraries( FlingEditorStack INTERFACE Fling::GameStack Fling::Editor )
+endif()

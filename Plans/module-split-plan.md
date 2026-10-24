@@ -20,10 +20,10 @@ Do not re-open these while you implement the plan.
    names (`#include "Logger.h"`, not `Core/Logger.h`).
 3. **CMake generates each module's `<Name>API.h`** (for example `GRAPHICS_API`)
    from `CMake/FlingModuleAPI.h.in`. Do not check these files into git.
-4. **Sandbox becomes two executables in one configure: `SandboxGame` and
-   `SandboxEditor`.** `SandboxGame` does not compile or link any Editor code.
-   Thus the Engine module, Graphics, and Application must not include or link
-   Editor.
+4. **Games and editors are separate executables in one configure** (for
+   Sandbox: `SandboxGame` and `SandboxEditor`, made by the project model plan's
+   `fling_add_game()`). The game does not compile or link any Editor code. Thus
+   the Engine module, Graphics, and Application must not include or link Editor.
 5. **Modules are static libraries by default.** `SHARED` is opt-in. Shared
    modules wait until `Singleton<T>::Get()` is defined in the module that owns
    each singleton, not in the header. If not, each shared library gets its own
@@ -148,39 +148,58 @@ The `Gameplay` module named here is now the `Engine` module (Phase 2.5).
 - `FlingEngine/Gameplay/` is now `FlingEngine/Engine/`, the `Engine` module
   (`Fling::Engine`, `ENGINE_API`). See locked decision 8.
 - The old `FlingEngine/Engine/` (`Engine.h`, `Engine.cpp`, `FlingEngine.h`) is
-  now `FlingEngine/Application/`. It is still part of the monolith library.
+  now `FlingEngine/Application/`.
 - `RegisterGameplayComponents()` is now `RegisterEngineComponents()`.
 - The class `Fling::Engine` (`Engine::Run`) keeps its name for now. Renaming it
   changes every game's `main()`, so do it with the project model plan's
   `FLING_IMPLEMENT_GAME` work (phase P2).
 
-### Phase 3: Graphics, Editor, Application, and game/editor targets
+### Phase 3: Graphics, Editor, and Application modules (done, branch `chore/finish-module-split`)
 
-- Graphics module. Vulkan, glfw, and SPIRV-Cross are private link deps.
-- Replace the `BaseEditor` dependency in `Engine::Run`, `VulkanApp::Init`, and
-  `ImGuiSubpass` with an editor-free debug-UI hook.
-- Editor is always its own target and only editor executables link it.
-- Make Application a module (`FlingEngine/Application/`: `Engine.h`,
-  `Engine.cpp`, `FlingEngine.h`).
-- Split Sandbox into a game target and an editor target. The project model
-  plan ([`project-model.md`](project-model.md), phase P2)
-  replaces this item with `fling_add_game()`, which makes `<Name>Game` and
-  `<Name>Editor` targets for any project. Follow that design instead of a
-  Sandbox-only split.
-- Remove the project-wide `WITH_EDITOR` define from the Application API
-  (`Engine::Run`). Note that
-  `WITH_EDITOR_FLAG=OFF` does not build today: `Engine.cpp` uses `m_Editor`
-  outside `#if WITH_EDITOR`, and the `Editor/` sources are always compiled. A CMake
-  option can still control whether the `SandboxEditor` target exists.
-- FlingTests link only the modules they test (`Fling::GameStack` unless a test
-  needs Editor).
+- Graphics (`PUBLIC_DEPS Core Resources Engine`), Editor
+  (`PUBLIC_DEPS Engine Graphics`), and Application
+  (`PUBLIC_DEPS Engine Graphics`) are `fling_add_module()` targets. The old
+  `FlingEngine` library is gone: every folder under `FlingEngine/` is a module.
+- `Fling::GameStack` (everything except Editor) and `Fling::EditorStack`
+  (`GameStack` + Editor) are the INTERFACE targets that Sandbox and FlingTests
+  link.
+- Editor-free debug-UI hook: `IDebugUI` (`Graphics/inc/IDebugUI.h`) has
+  `Init(registry, world, game)` and `Draw(registry, dt)`. `VulkanApp::Init` and
+  `ImGuiSubpass` take an `IDebugUI`. `BaseEditor` implements it; its `Init`
+  replaces the `friend class Engine` access that set the world and game.
+- `Engine::Run<Game>()` and `Engine::Run<Game, DebugUI>()` are two overloads.
+  `Engine.h` has no `WITH_EDITOR` and does not include `BaseEditor.h`. Only
+  Sandbox's `main()` still checks `WITH_EDITOR`, to pick the overload.
+- Editor is a leaf. It is added only when `WITH_EDITOR_FLAG` is ON, and only
+  editor builds link it. Sandbox compiles its `Editor/` sources only then.
+  `WITH_EDITOR_FLAG=OFF` (and `WITH_IMGUI_FLAG=OFF`) build and run again.
+- `ImGuiInputBinding.hpp` moved from `Graphics/inc` to `Graphics/src`, so
+  ImGui is a PRIVATE dependency of Graphics.
+- Isolation tests: Graphics cannot see Application or Editor, Application cannot
+  see Editor, and each module's headers compile on their own.
 
-### Phase 4: Prove the Physics story
+Moved to the project model plan ([`project-model.md`](project-model.md),
+phase P2), not done here:
 
-- Add a stub Physics module that includes `FlingMath.h` and `Transform.h` and
-  does not link Graphics.
-- Optional: a `try_compile` check that Graphics headers are not reachable from
-  Physics.
+- Separate `SandboxGame` / `SandboxEditor` targets (`fling_add_game()`).
+- Removing `WITH_EDITOR` entirely (Sandbox `main()`, and `PRIVATE_WITH_EDITOR` in
+  `FlingTypes.h`, which is an always-on `friend class BaseEditor;` today).
+
+Still to do:
+
+- **Vulkan, GLFW, SPIRV-Cross, and stb are PUBLIC dependencies of Graphics.**
+  Graphics headers expose their types (`FlingVulkan.h`, `DesktopWindow.h`,
+  `Shader.h`, `Texture.h`), so Editor and Application see them. Making them
+  private needs those headers to stop exposing the types. The project model
+  plan's window abstraction (phase P4) is a natural place to start.
+
+### Phase 4: Prove the Physics story (done)
+
+- `FlingEngine/Physics` (`PUBLIC_DEPS Core Engine`) is a stub module: a
+  `RigidBody` component and `Physics::Step()`, which moves each `Transform` by
+  its velocity. It is not called from the engine loop yet.
+- `PhysicsTests.cpp` tests `Physics::Step()`. The isolation test
+  `PhysicsCannotSeeGraphics` proves that Graphics headers are not reachable.
 
 ## Tests
 
@@ -204,18 +223,19 @@ Done in Phase 0.5:
 
 Still to do:
 
-- **Per-module test targets.** When modules exist, consider one test
-  executable per module (`CoreTests`, `EngineTests`, ...) that links only that
-  module. This proves isolation and keeps test relinks small. A module's tests
-  live next to it or under `FlingTests/<Module>/`. Decide when Phase 2 starts.
+- **Per-module test targets.** Consider one test executable per module
+  (`CoreTests`, `EngineTests`, ...) that links only that module, to keep test
+  relinks small. The isolation tests already prove the module boundaries, so
+  this is optional.
 
 ## Success criteria
 
 - A new module is one `fling_add_module()` call plus a folder. You do not edit
   a monolith glob.
-- `SandboxGame` does not compile or link any Editor sources. `SandboxEditor`
-  runs the deferred demo with the editor UI. `SandboxGame` runs it without the
-  editor UI.
+- A build with the editor off does not compile or link any Editor sources and
+  runs the deferred demo without the editor UI. A build with the editor on runs
+  it with the editor UI. (Separate `SandboxGame` and `SandboxEditor` targets in
+  one configure come with the project model plan.)
 - Physics (stub) compiles against Core and Engine without Vulkan on its
   include path or link line.
 - FlingTests pass. A shipping build with tests OFF contains no test hooks and

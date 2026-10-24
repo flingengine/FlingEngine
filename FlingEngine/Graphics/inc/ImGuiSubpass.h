@@ -9,7 +9,7 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class Swapchain;
-	class BaseEditor;
+	class IDebugUI;
 	class FlingWindow;
 
 	class ImGuiSubpass : public Subpass
@@ -21,7 +21,7 @@ namespace Fling
 			entt::registry& t_reg,
 			FlingWindow* t_Window,
 			VkRenderPass t_GlobalRenderPass,
-			std::shared_ptr<Fling::BaseEditor> t_Editor,
+			std::shared_ptr<Fling::IDebugUI> t_DebugUI,
 			std::shared_ptr<Fling::Shader> t_Vert,
 			std::shared_ptr<Fling::Shader> t_Frag
 		);
@@ -73,7 +73,7 @@ namespace Fling
 		VkSampler m_sampler = VK_NULL_HANDLE;
 
 		/** Instance of the editor that we will get what commands to build from */
-		std::shared_ptr<Fling::BaseEditor> m_Editor;
+		std::shared_ptr<Fling::IDebugUI> m_DebugUI;
 
 		int32 m_vertexCount = 0;
 		int32 m_indexCount = 0;

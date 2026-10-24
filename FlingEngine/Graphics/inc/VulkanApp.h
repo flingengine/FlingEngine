@@ -31,7 +31,7 @@ namespace Fling
 	class CommandBuffer;
 	class FirstPersonCamera;
 	class DepthBuffer;
-	class BaseEditor;
+	class IDebugUI;
 
 	/**
 	* Core rendering functionality of the Fling Engine. Controls what Render pipelines
@@ -41,7 +41,7 @@ namespace Fling
     {
     public:
 
-		void Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor);
+		void Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
 		void Shutdown(entt::registry& t_Reg);
 
 		/** 
@@ -95,7 +95,7 @@ namespace Fling
 		VkExtent2D ChooseSwapExtent();
 
 		/** Builds any render pipelines with their specific set of sub passes and shaders */
-		void BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor);
+		void BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
 
 		/**
 		 * Build the frame buffers for each swap chain image along with the render pass

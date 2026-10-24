@@ -7,7 +7,8 @@ detail lives under [`Skills/`](Skills/) and is linked from the relevant section 
 ## What this project is
 
 Fling Engine is a cross-platform Vulkan game engine in C++, currently built as one
-CMake project with a `FlingEngine` library, a `Sandbox` game/editor, and a `FlingTests`
+CMake project with engine modules under `FlingEngine/` (Core, Resources, Engine, Graphics,
+Application, Editor, ...), a `Sandbox` game/editor, and a `FlingTests`
 Catch2 test target. See the root [README.md](README.md) for the project pitch and
 platform setup (Vulkan SDK, GLFW, etc.).
 

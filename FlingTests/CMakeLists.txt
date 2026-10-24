@@ -7,9 +7,9 @@ find_package(Catch2 3 REQUIRED)
 include(Catch)
 
 set ( LINK_LIBS
-    glfw ${GLFW_LIBRARIES}
 	Catch2::Catch2WithMain
-	"FlingEngine"
+	Fling::GameStack
+	Fling::Physics
 )
 
 ### Source files (VS filters are set up by fling_configure_target) ###
@@ -83,3 +83,13 @@ fling_add_isolation_test( ResourcesCannotSeeEngine Fling::Resources "World.h"   
 fling_add_isolation_test( EngineHeaders            Fling::Engine    "World.h"           VISIBLE )
 fling_add_isolation_test( EngineCannotSeeGraphics  Fling::Engine   "VulkanApp.h"       HIDDEN )
 fling_add_isolation_test( EngineCannotSeeApplication Fling::Engine "FlingEngine.h"     HIDDEN )
+fling_add_isolation_test( PhysicsHeaders           Fling::Physics   "Physics.h"         VISIBLE )
+fling_add_isolation_test( PhysicsCannotSeeGraphics Fling::Physics   "VulkanApp.h"       HIDDEN )
+fling_add_isolation_test( GraphicsHeaders          Fling::Graphics  "VulkanApp.h"       VISIBLE )
+fling_add_isolation_test( GraphicsCannotSeeApplication Fling::Graphics "FlingEngine.h"  HIDDEN )
+fling_add_isolation_test( GraphicsCannotSeeEditor  Fling::Graphics  "BaseEditor.h"      HIDDEN )
+fling_add_isolation_test( ApplicationHeaders       Fling::Application "FlingEngine.h"   VISIBLE )
+fling_add_isolation_test( ApplicationCannotSeeEditor Fling::Application "BaseEditor.h"  HIDDEN )
+if( WITH_EDITOR_FLAG )
+    fling_add_isolation_test( EditorHeaders        Fling::Editor    "BaseEditor.h"      VISIBLE )
+endif()

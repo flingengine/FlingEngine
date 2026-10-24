@@ -13,13 +13,9 @@
 #include "MovingAverage.hpp"
 #include "Stats.h"
 #include "Game.h"
-
-#if WITH_EDITOR
-
-#include "BaseEditor.h"
+#include "IDebugUI.h"
 #include <memory>
-
-#endif	// WITH_EDITOR
+#include <type_traits>
 
 /**
  * Triggers a breakpoint at the call site, halting execution if a debugger is attached.
@@ -57,13 +53,17 @@ namespace Fling
 		 * 
 		 * @return uint64 0 for success, otherwise an error has occured
 		 */
-#if WITH_EDITOR
-		template<class T_GameType, class T_EditorType = Fling::BaseEditor>
-		FLING_API uint64 Run(int argc, const char* argv[]);
-#else
 		template<class T_GameType>
-		FLING_API uint64 Run(int argc, const char* argv[]);
-#endif
+		uint64 Run(int argc, const char* argv[]);
+
+		/**
+		 * Run the engine with developer UI (for example an editor that derives from
+		 * Fling::BaseEditor) drawn every frame.
+		 *
+		 * @return uint64 0 for success, otherwise an error has occured
+		 */
+		template<class T_GameType, class T_DebugUIType>
+		uint64 Run(int argc, const char* argv[]);
 
 	private:
 
@@ -91,34 +91,30 @@ namespace Fling
 		/** The implementation of the game that this engine is running. @see Fling::Game */
 		Fling::Game* m_GameImpl = nullptr;
 
-#if WITH_EDITOR
-
-		/** Overrideable editor class for Drawing with ImGUI. Drawn in Renderer::DrawFrame */
-		std::shared_ptr<Fling::BaseEditor> m_Editor;
-
-#endif
+		/** Optional developer UI (for example the editor). Drawn in the ImGui subpass. */
+		std::shared_ptr<Fling::IDebugUI> m_DebugUI;
 	};
 
 
-#if WITH_EDITOR
-	template<class T_GameType, class T_EditorType>
-	FLING_API uint64 Engine::Run(int argc, const char* argv[])
-#else
+	template<class T_GameType, class T_DebugUIType>
+	uint64 Engine::Run(int argc, const char* argv[])
+	{
+		static_assert(std::is_default_constructible<T_DebugUIType>::value, "T_DebugUIType requires default-constructible elements");
+		static_assert(std::is_base_of<Fling::IDebugUI, T_DebugUIType>::value, "T_DebugUIType must inherit from Fling::IDebugUI");
+		m_DebugUI = std::make_shared<T_DebugUIType>();
+
+		return Run<T_GameType>(argc, argv);
+	}
+
 	template<class T_GameType>
-	FLING_API uint64 Engine::Run(int argc, const char* argv[])
-#endif
+	uint64 Engine::Run(int argc, const char* argv[])
 	{
 		static_assert(std::is_default_constructible<T_GameType>::value, "T_GameType requires default-constructible elements");
 		static_assert(std::is_base_of<Fling::Game, T_GameType>::value, "T_GameType must inherit from Fling::Game");
 
 		// #TODO Use a pool allocator for new
 		m_GameImpl = new T_GameType();
-		
-#if WITH_EDITOR
-		static_assert(std::is_default_constructible<T_EditorType>::value, "T_EditorType requires default-constructible elements");
-		static_assert(std::is_base_of<Fling::BaseEditor, T_EditorType>::value, "T_EditorType must inherit from Fling::BaseEditor");
-		m_Editor = std::make_shared<T_EditorType>();
-#endif
+
 		Startup(argc, argv);
 
 		Tick();

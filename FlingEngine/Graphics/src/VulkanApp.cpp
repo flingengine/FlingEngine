@@ -16,7 +16,6 @@
 #include "FirstPersonCamera.h"
 #include "GraphicsHelpers.h"
 #include "DepthBuffer.h"
-#include "BaseEditor.h"
 #include "Logger.h"
 #include "Version.h"
 #include "BuildConfig.h"
@@ -24,7 +23,7 @@
 
 namespace Fling
 {
-	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
+	void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
 	{
 		Singleton<VulkanApp>::Init();
 
@@ -32,7 +31,7 @@ namespace Fling
 
 		// #TODO Build VMA allocator
 
-		BuildRenderPipelines(t_Conf, t_Reg, t_Editor);
+		BuildRenderPipelines(t_Conf, t_Reg, t_DebugUI);
 
 		// Set the window icon for this application
 		if (m_CurrentWindow)
@@ -304,7 +303,7 @@ namespace Fling
 		m_SwapChain->Cleanup();
 	}
 
-	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::BaseEditor> t_Editor)
+	void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
 	{
 		if (t_Conf & PipelineFlags::DEFERRED)
 		{
@@ -365,7 +364,7 @@ namespace Fling
 			std::shared_ptr<Fling::Shader> ImGuiVert = Shader::Create(HS("Shaders/imgui/ui.vert.spv"), m_LogicalDevice);
 			std::shared_ptr<Fling::Shader> ImGuiFrag = Shader::Create(HS("Shaders/imgui/ui.frag.spv"), m_LogicalDevice);
 			Subpasses.emplace_back(std::make_unique<ImGuiSubpass>(
-				m_LogicalDevice, m_SwapChain, t_Reg, m_CurrentWindow, m_RenderPass, t_Editor, ImGuiVert, ImGuiFrag)
+				m_LogicalDevice, m_SwapChain, t_Reg, m_CurrentWindow, m_RenderPass, t_DebugUI, ImGuiVert, ImGuiFrag)
 			);
 
 			m_RenderPipelines.emplace_back(
