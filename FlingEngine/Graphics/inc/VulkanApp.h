@@ -1,163 +1,151 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "FlingVulkan.h"
 #include "Singleton.hpp"
 
 #include <entt/entity/registry.hpp>
-#include <vector>
-#include <atomic>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace Fling
 {
-	/** Configuration that can determine what render pipelines will be added to this application */
-	enum PipelineFlags
-	{
-		DEFERRED 		= (1u << 0),
-		REFLECTIONS 	= (1u << 1),
-		IMGUI 			= (1u << 2),
-		CUBEMAP 		= (1u << 3),
-		DEBUG			= (1u << 4),
-		ALL = 0xff
-	};
+    /** Configuration that can determine what render pipelines will be added to this application */
+    enum PipelineFlags
+    {
+        DEFERRED = (1u << 0),
+        REFLECTIONS = (1u << 1),
+        IMGUI = (1u << 2),
+        CUBEMAP = (1u << 3),
+        DEBUG = (1u << 4),
+        ALL = 0xff
+    };
 
-	class Instance;
-	class LogicalDevice;
-	class PhysicalDevice;
-	class Swapchain;
-	class FlingWindow;
-	class RenderPipeline;
-	class CommandBuffer;
-	class FirstPersonCamera;
-	class DepthBuffer;
-	class IDebugUI;
+    class Instance;
+    class LogicalDevice;
+    class PhysicalDevice;
+    class Swapchain;
+    class FlingWindow;
+    class RenderPipeline;
+    class CommandBuffer;
+    class FirstPersonCamera;
+    class DepthBuffer;
+    class IDebugUI;
 
-	/**
-	* Core rendering functionality of the Fling Engine. Controls what Render pipelines
-	*			are available
-	*/
+    /**
+     * Core rendering functionality of the Fling Engine. Controls what Render pipelines
+     * are available
+     */
     class VulkanApp : public Singleton<VulkanApp>
     {
     public:
+        /**
+         * Vulkan objects owned by this app. The complete type is private to the
+         * Graphics module, so this header does not include Vulkan.
+         */
+        struct State;
 
-		void Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
-		void Shutdown(entt::registry& t_Reg);
+        void Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+        void Shutdown(entt::registry& t_Reg);
 
-		/** 
-		* Specify default constructible so that we have more explicit 
-		* control with Init and Shutdown 
-		*/
-        VulkanApp() = default;
-        ~VulkanApp() = default;
+        /**
+         * Specify default constructible so that we have more explicit
+         * control with Init and Shutdown
+         */
+        VulkanApp();
+        ~VulkanApp();
 
-		/**
-		* Updates all rendering buffers and sends commands to draw a frame
-		*/
-		void Update(float DeltaTime, entt::registry& t_Reg);
+        /**
+         * Updates all rendering buffers and sends commands to draw a frame
+         */
+        void Update(float DeltaTime, entt::registry& t_Reg);
 
-		inline FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
-		inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
-		inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
-		inline const VkCommandPool GetCommandPool() const { return m_CommandPool; }
-		inline FirstPersonCamera* GetCamera() const { return m_Camera; }
-		inline VkRenderPass GetGlobalRenderPass() const { return m_RenderPass; }
+        inline FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
+        inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
+        inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+        inline FirstPersonCamera* GetCamera() const { return m_Camera; }
 
-		/** Callback for when a window is resized and to what width and height */
-		void OnWindowResized(int Width, int Height);
+        /** Name reported by the active physical device, or empty when none is selected. */
+        std::string GetPhysicalDeviceName() const;
 
-	protected:
-		void Init() override {}
-		void Shutdown() override {}
+        /** Vulkan state. Only Graphics translation units can see the members. */
+        State& GetState();
+        const State& GetState() const;
+
+        /** Callback for when a window is resized and to what width and height */
+        void OnWindowResized(int Width, int Height);
+
+    protected:
+        void Init() override {}
+        void Shutdown() override {}
 
     private:
+        /**
+         * Prepare logical, physical and swap chain devices.
+         * Prepares window based on the Fling Config
+         */
+        void Prepare();
 
-		/**
-		* Prepare logical, physical and swap chain devices.
-		*			Prepares window based on the Fling Config
-		*/
-		void Prepare();
+        /**
+         * Create semaphores for available swap chain images and fences
+         * for the current frame in flight
+         */
+        void CreateFrameSyncResources();
 
-		/**
-		* Create semaphores for available swap chain images and fences
-		*			for the current frame in flight
-		*/
-		void CreateFrameSyncResources();
+        /**
+         * Creates a window and preps the surface
+         */
+        void CreateGameWindow(const uint32 t_width, const uint32 t_height);
 
-		/**
-		* Creates a window and preps the VkSurfaceKHR
-		*/
-		void CreateGameWindow(const uint32 t_width, const uint32 t_height);
+        void RecreateFrameResourcesForResize(entt::registry& t_Reg);
 
-		void RecreateFrameResourcesForResize(entt::registry& t_Reg);
+        /** Builds any render pipelines with their specific set of sub passes and shaders */
+        void
+        BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
 
-		/** Returns the current extents needed to render based on the physical device and surface */
-		VkExtent2D ChooseSwapExtent();
+        /**
+         * Build the frame buffers for each swap chain image along with the render pass
+         * for it to use
+         */
+        void BuildSwapChainResources();
 
-		/** Builds any render pipelines with their specific set of sub passes and shaders */
-		void BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+        void CleanupSwapChainResources();
 
-		/**
-		 * Build the frame buffers for each swap chain image along with the render pass
-		 *			for it to use
-		 */
-		void BuildSwapChainResources();
+        void BuildGlobalRenderPass();
 
-		void CleanupSwapChainResources();
+        void BuildSwapChainFrameBuffer();
 
-		void BuildGlobalRenderPass();
+        /** Vulkan Devices that need to get created. @see VulkanApp::Prepare */
+        Instance* m_Instance = nullptr;
+        LogicalDevice* m_LogicalDevice = nullptr;
+        PhysicalDevice* m_PhysicalDevice = nullptr;
+        FlingWindow* m_CurrentWindow = nullptr;
 
-		void BuildSwapChainFrameBuffer();
+        // Swap chain related stuff ---------------------------------------------------------------------
+        Swapchain* m_SwapChain = nullptr;
+        // Depth buffer acts as a container for our swap chain depth attachment
+        DepthBuffer* m_DepthBuffer = nullptr;
 
-		/** Vulkan Devices that need to get created. @See VulkanApp::Prepare */
-		Instance* m_Instance = nullptr;
-		LogicalDevice* m_LogicalDevice = nullptr;
-		PhysicalDevice* m_PhysicalDevice = nullptr;
-		FlingWindow* m_CurrentWindow = nullptr;
-		
-		// Swap chain related stuff ---------------------------------------------------------------------
-		Swapchain* m_SwapChain = nullptr;
-		// Depth buffer acts as a container for our swap chain depth attachment
-		DepthBuffer* m_DepthBuffer = nullptr;
-		// Global render pass for frame buffer usage
-		VkRenderPass m_RenderPass = VK_NULL_HANDLE;
-		// List of available frame buffers (same as number of swap chain images)
-		std::vector<VkFramebuffer> m_SwapChainFrameBuffers;
-		/** The clear values that will be used when building the command buffer to run this subpass */
-		std::vector<VkClearValue> m_SwapChainClearVals = std::vector<VkClearValue>(2);
+        /**
+         * Flag that when set to true, means that there is a pending resize of a window
+         * so we must recreate the necessary swap chain/frame buffer elements
+         */
+        uint8 bNeedsResizing : 1;
 
-		/** 
-		* Flag that when set to true, means that there is a pending resize of a window
-		* so we must recreate the necessary swap chain/frame buffer elements
-		*/
-		uint8 bNeedsResizing : 1;
+        /** Keep a vector of command buffers that we want to use so that we can have one for each active frame */
+        std::vector<CommandBuffer*> m_DrawCmdBuffers;
 
-		// Stages that the swap chain needs to wait on in order to present
-		VkPipelineStageFlags m_WaitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        /**
+         * The index of the current frame in flight. This is controlled with the in flight fences
+         * and is updated every Update of the Vulkan app.
+         */
+        size_t CurrentFrameIndex = 0;
 
-		/** Keep a vector of command buffers that we want to use so that we can have one for each active frame */
-		std::vector<CommandBuffer*> m_DrawCmdBuffers;
+        std::vector<RenderPipeline*> m_RenderPipelines;
 
-		/** Synchronization primitives for drawing the frame. @see VulkanApp::CreateFrameSyncResources */
-		std::vector<VkSemaphore> m_PresentCompleteSemaphores;
-		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-		std::vector<VkFence> m_InFlightFences;
+        /** The Vulkan app will specify the current camera and be limited to one for now */
+        FirstPersonCamera* m_Camera = nullptr;
 
-		/** Handle to the surface extension used to interact with the windows system */
-		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
-		
-		/** The index of the current frame in flight. This is controlled with the in flight fences 
-		and is updated every Update of the Vulkan app. */
-		size_t CurrentFrameIndex = 0;
-
-		// Command Buffer pool
-		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
-
-		std::vector<RenderPipeline*> m_RenderPipelines;
-
-		/** The Vulkan app will specify the current camera and be limited to one for now */
-		FirstPersonCamera* m_Camera = nullptr;
-
-		// #TODO VMA Allocator
+        std::unique_ptr<State> m_State;
     };
-}   // namespace Fling
+} // namespace Fling

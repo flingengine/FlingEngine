@@ -20,6 +20,7 @@
 #include "FlingWindow.h"
 #include "Logger.h"
 #include "VulkanApp.h"
+#include "VulkanAppState.h"
 
 namespace Fling {
     ImGuiSubpass::ImGuiSubpass(const LogicalDevice* t_Dev,
@@ -284,7 +285,7 @@ namespace Fling {
     void ImGuiSubpass::OnSwapchainResized(entt::registry& t_reg) {
         (void)t_reg;
 
-        m_GlobalRenderPass = VulkanApp::Get().GetGlobalRenderPass();
+        m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
         if (m_pipeLine != VK_NULL_HANDLE) {
             vkDestroyPipeline(m_Device->GetVkDevice(), m_pipeLine, nullptr);
             m_pipeLine = VK_NULL_HANDLE;

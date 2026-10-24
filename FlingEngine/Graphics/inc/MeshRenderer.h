@@ -1,17 +1,26 @@
 #pragma once
 
 #include "JsonArchive.h"
-#include "Material.h"
-#include "Model.h"
-#include "Buffer.h"
 
 #include <entt/entity/registry.hpp>
 #include <string>
 
-namespace Fling {
-    struct MeshRenderer {
+namespace Fling
+{
+    class Model;
+    class Material;
+    class Buffer;
+
+    struct MeshRenderer
+    {
+        /**
+         * GPU descriptor for this mesh. Defined in the Graphics module so this
+         * header does not name a Vulkan handle.
+         */
+        struct GpuState;
+
         /** Default constructor. */
-        MeshRenderer() = default;
+        MeshRenderer();
 
         /** Load a mesh renderer with the default material */
         MeshRenderer(const std::string& t_MeshPath);
@@ -47,7 +56,8 @@ namespace Fling {
         /** We need a uniform buffer per-swap chain image */
         Buffer* m_UniformBuffer = nullptr;
 
-        VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
+        /** Descriptor set for this mesh. Null until the renderer allocates it. */
+        GpuState* m_GpuState = nullptr;
 
         void Release();
 
@@ -59,5 +69,11 @@ namespace Fling {
         void LoadModelFromPath(const std::string& t_MeshPath);
 
         void LoadMaterialFromPath(const std::string& t_MatPath);
+
+        /** Asset path of the assigned model, or an empty string when none is set. */
+        std::string GetModelGuidString() const;
+
+        /** Asset path of the assigned material, or an empty string when none is set. */
+        std::string GetMaterialGuidString() const;
     };
 } // namespace Fling

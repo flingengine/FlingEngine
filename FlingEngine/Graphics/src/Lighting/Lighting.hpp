@@ -2,8 +2,8 @@
 
 #include "FlingTypes.h"
 #include "Buffer.h"
-#include "DirectionalLight.hpp"
-#include "PointLight.hpp"
+#include "Lighting/DirectionalLight.hpp"
+#include "Lighting/PointLight.hpp"
 #include <vector>
 
 namespace Fling

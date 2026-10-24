@@ -1,5 +1,6 @@
 #include "GraphicsHelpers.h"
 #include "VulkanApp.h"
+#include "VulkanAppState.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
 #include "Logger.h"
@@ -67,7 +68,7 @@ namespace Fling
 			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
 			assert(Dev);
             VkDevice Device = Dev->GetVkDevice();
-            const VkCommandPool& CommandPool = VulkanApp::Get().GetCommandPool();
+            const VkCommandPool CommandPool = VulkanApp::Get().GetState().m_CommandPool;
 
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -91,7 +92,7 @@ namespace Fling
 			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
 			assert(Dev);
             VkDevice Device = Dev->GetVkDevice();
-            VkCommandPool CmdPool = VulkanApp::Get().GetCommandPool();
+            VkCommandPool CmdPool = VulkanApp::Get().GetState().m_CommandPool;
             VkQueue GraphicsQueue = Dev->GetGraphicsQueue();
 
             vkEndCommandBuffer(t_CommandBuffer);

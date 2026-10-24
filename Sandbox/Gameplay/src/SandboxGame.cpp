@@ -9,7 +9,7 @@
 #include "Lighting/PointLight.hpp"
 #include "Random.h"
 // For getting some lighting info
-#include "GeometrySubpass.h"
+#include "Lighting/DeferredLightSettings.h"
 #include "Mover.h"
 #include "ComponentTypeRegistry.h"
 
