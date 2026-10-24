@@ -1,4 +1,5 @@
 #include "Timing.h"
+#include <cmath>
 
 namespace Fling
 {

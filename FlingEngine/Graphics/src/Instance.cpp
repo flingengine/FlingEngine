@@ -1,7 +1,8 @@
-#include "pch.h"
 #include "Instance.h"
 #include "FlingConfig.h"
 #include <GLFW/glfw3.h>
+#include "Logger.h"
+#include "Version.h"
 
 namespace Fling
 {

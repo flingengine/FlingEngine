@@ -1,14 +1,16 @@
 #pragma once
 
 #include "Input/Input.h"
+#include <string>
 
-#if FLING_LINUX
-
-#include "LinuxKeycodes.h"
+#if FLING_WINDOWS
 
 namespace Fling
 {
-	class LinuxInput : public Input
+	/**
+	* Windows specific input implementation
+	*/
+	class WindowsInput : public Input
 	{
 	protected:
 
@@ -17,14 +19,14 @@ namespace Fling
 		virtual void ShutdownImpl() override;
 
 		virtual void InitKeyMap() override;
-
+		
 		virtual void PollImpl() override;
 
 		virtual bool IsKeyDownImpl(const std::string& t_KeyName) override;
 		virtual bool IsKeyHelpImpl(const std::string& t_KeyName) override;
 		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) override;
 		virtual bool IsMouseDownImpl(const std::string& t_KeyName) override;
-		
+
 		/**
 		 * Get the mouse position in screen space
 		 * 
@@ -34,4 +36,4 @@ namespace Fling
 	};
 } // namespace Fling
 
-#endif	// FLING_LINUX
+#endif	// FLING_WINDOWS

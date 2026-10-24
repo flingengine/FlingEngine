@@ -4,6 +4,8 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "FlingWarnings.h"
+#include "Platform.h"
+#include "CoreAPI.h"
 
 namespace Fling
 {
@@ -15,7 +17,7 @@ namespace Fling
 	 * Do not call the methods of one RandomStream object from more than one
 	 * thread at the same time.
 	 */
-	class FLING_API RandomStream
+	class CORE_API RandomStream
 	{
 	public:
 
@@ -105,7 +107,7 @@ namespace Fling
 	 * random numbers on a worker thread, make your own RandomStream
 	 * object.
 	 */
-	class FLING_API Random
+	class CORE_API Random
 	{
 	public:
 

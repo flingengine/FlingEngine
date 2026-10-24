@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Platform.h"
+#include "BuildConfig.h"
 #include "Singleton.hpp"
 
 #define SPDLOG_TRACE_ON
@@ -13,6 +14,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/fmt/ostr.h"
+#include <memory>
 
 namespace Fling
 {

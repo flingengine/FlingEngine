@@ -1,6 +1,9 @@
 #pragma once
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "Platform.h"
+#include <string>
+#include "CoreAPI.h"
 
 /** 
  * @see FlingAssetPaths.cpp.in
@@ -8,7 +11,7 @@
 namespace Fling
 {
     /** Static set of useful engine paths and directories */
-    struct FLING_API FlingPaths
+    struct CORE_API FlingPaths
     {
         /** Returns directory where engine config files are kept */
         static const std::string& EngineConfigDir();

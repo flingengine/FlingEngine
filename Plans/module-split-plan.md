@@ -69,7 +69,7 @@ building and passing on every CI platform.
 - `Utils/` and `Platform/` moved into `Core/`. `ImGuiInputBinding.hpp` moved
   to Graphics. The Foundation stub is deleted.
 
-### Phase 0.5: CMake cleanup (branch `chore/cmake-phase0`)
+### Phase 0.5: CMake cleanup (done, #206)
 
 - `FLING_ENGINE_INC()` removed. Settings are per target through
   `fling_configure_target()`, with one shared warning set
@@ -89,20 +89,35 @@ building and passing on every CI platform.
 
 ### Phase 1: Core as a real module
 
-- Core becomes a `fling_add_module(Core)` target. It contains everything under
-  `Core/` except `Engine.h`, `Engine.cpp`, and `FlingEngine.h`, which stay in
-  the monolith until Phase 3.
-- The rest of the engine stays one library that links `Fling::Core`.
-- Remove `pch.h` (58 files include it today). Each file includes only the
-  headers it uses. Move `F_ENABLE_LOGGING` and the window-size defaults to a
-  Core config header.
-- Replace the include of `ImGuiInputBinding.hpp` from Core's input code with a
-  hook that Graphics registers, so that Core has no ImGui dependency.
-- Mark cross-module types with `CORE_API`.
+- Remove `pch.h`. Each file includes only the headers it uses.
+  `F_ENABLE_LOGGING` and the window-size defaults move to `BuildConfig.h`.
+  `Platform.h` stops including `DesktopWindow.h` and the input headers.
+  (Done on branch `chore/remove-pch`.)
+- Core is a `fling_add_module(Core)` target (`FlingEngine/Core/CMakeLists.txt`).
+  The rest of the engine stays one library that links `Fling::Core`, with
+  `Core/` excluded from its glob. (Done on branch `chore/core-module`.)
+  To get there:
+  - `Engine.h`, `Engine.cpp`, and `FlingEngine.h` moved to
+    `FlingEngine/Engine/` now instead of in Phase 3.
+  - `FlingPaths` (and the generated `FlingAssetPaths.cpp`) moved from Resources
+    to Core, because `Logger` needs the log directory.
+  - The GLFW input backends (`LinuxInput`, `WindowsInput`, keycodes) moved to
+    Graphics, next to `DesktopWindow`. The abstract `Input` class (key maps,
+    bindings) stays in Core. This replaces the planned ImGui hook: Core has no
+    GLFW, ImGui, or Vulkan code to hook.
+  - `GitVersion.h` is generated into Core's build dir.
+  - `WITH_IMGUI`, `WITH_EDITOR`, and `FLING_SHIPPING` are PUBLIC definitions on
+    Core.
+- Core types use `CORE_API` instead of `FLING_API`. `Singleton<T>` is a
+  header-only template and is not marked. With static modules (locked decision
+  5) `CORE_API` is empty; proving the exports work waits for `SHARED`.
 
 ### Phase 2: Resources, then Gameplay
 
 - Split out Resources, then Gameplay. The monolith links both.
+- `Texture.h` and `HDRImage.h` in Resources use Vulkan types
+  (`#include "FlingVulkan.h"`). Move the Vulkan parts to Graphics, or Resources
+  cannot be split out without a Vulkan dependency.
 - `World` must not include `MeshRenderer.h` or light headers. Graphics types
   register through `RegisterGraphicsComponents()`.
 - Add an isolation test: a throwaway target that links only Core and Gameplay
@@ -120,7 +135,9 @@ building and passing on every CI platform.
 - Split Sandbox into `SandboxRuntime` (shared gameplay code, OBJECT or STATIC),
   `SandboxGame`, and `SandboxEditor`. Do not glob all of `Sandbox/` into one
   target.
-- Remove the project-wide `WITH_EDITOR` define from Engine's API. A CMake
+- Remove the project-wide `WITH_EDITOR` define from Engine's API. Note that
+  `WITH_EDITOR_FLAG=OFF` does not build today: `Engine.cpp` uses `m_Editor`
+  outside `#if WITH_EDITOR`, and the `Editor/` sources are always compiled. A CMake
   option can still control whether the `SandboxEditor` target exists.
 - FlingTests link only the modules they test (`Fling::GameStack` unless a test
   needs Editor).

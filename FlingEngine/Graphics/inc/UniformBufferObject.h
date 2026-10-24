@@ -1,8 +1,8 @@
 #pragma once
 
-#include "pch.h"
 
 #include "Buffer.h"
+#include "FlingMath.h"
 
 namespace Fling
 {

@@ -1,7 +1,7 @@
 #if WITH_EDITOR
 
-#include "pch.h"
 #include "FileBrowser.h"
+#include "FlingPaths.h"
 
 namespace Fling
 {

@@ -3,6 +3,8 @@
 #include "Subpass.h"
 #include "NonCopyable.hpp"
 #include <entt/entity/registry.hpp>
+#include <memory>
+#include <vector>
 
 namespace Fling
 {

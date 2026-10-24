@@ -10,6 +10,8 @@
 #include "FlingExports.h"
 #include <fstream>
 #include <vector>
+#include <memory>
+#include <string>
 
 namespace Fling
 {

@@ -17,6 +17,7 @@
 #if WITH_EDITOR
 
 #include "BaseEditor.h"
+#include <memory>
 
 #endif	// WITH_EDITOR
 

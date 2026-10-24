@@ -2,6 +2,9 @@
 
 #include "FlingVulkan.h"
 #include "NonCopyable.hpp"
+#include "FlingTypes.h"
+#include <vector>
+#include "Platform.h"
 
 namespace Fling
 {

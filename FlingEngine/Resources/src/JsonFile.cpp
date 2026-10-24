@@ -1,6 +1,6 @@
-#include "pch.h"
 #include "JsonFile.h"
 #include "ResourceManager.h"
+#include "Logger.h"
 
 namespace Fling
 {

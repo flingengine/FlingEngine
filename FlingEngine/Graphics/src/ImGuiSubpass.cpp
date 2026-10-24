@@ -14,6 +14,8 @@
 
 #include <imgui.h>
 #include <algorithm>
+#include "FlingWindow.h"
+#include "Logger.h"
 
 namespace Fling
 {

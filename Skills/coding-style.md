@@ -50,5 +50,10 @@ Trivial members/accessors can use a one-line `/** ... */`.
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are
   intentional, even across the in-progress module split described in
   [`architecture.md`](architecture.md). Don't "fix" these to path-qualified includes.
-- `pch.h` is being deleted per the module-split plan — don't add new `#include "pch.h"`
-  to public headers, and don't rely on it as a kitchen-sink include.
+- There is no `pch.h` or other catch-all include. Each header compiles on its own,
+  and each file includes the headers it uses.
+- Include `Platform.h` before you test `FLING_WINDOWS`, `FLING_LINUX`, or
+  `FLING_DEBUG` with `#if`. If you do not, the macro is undefined and the block is
+  silently compiled out. GCC and Clang builds use `-Wundef` to catch this.
+- `Platform.h` defines platform macros only. Include `DesktopWindow.h`,
+  `Input/Input.h`, and the keycode headers directly where you use them.

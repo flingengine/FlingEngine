@@ -1,10 +1,10 @@
 #if WITH_EDITOR
 
-#include "pch.h"
 #include "SandboxEditor.h"
 #include "World.h"
 #include "VulkanApp.h"
 #include "FirstPersonCamera.h"
+#include "Logger.h"
 
 namespace Sandbox
 {

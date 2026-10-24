@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "FlingTypes.h"
+#include "Platform.h"
 
 namespace Fling
 {

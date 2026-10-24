@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FlingExports.h"
+#include <type_traits>
 
 namespace Fling
 {
@@ -17,9 +17,9 @@ namespace Fling
         // Have separate virtual init and shutdown functions so that we 
         // can control the creation order
 
-        FLING_API virtual void Init() {}
+        virtual void Init() {}
 
-        FLING_API virtual void Shutdown() {}
+        virtual void Shutdown() {}
 
     protected:
 

@@ -1,42 +1,44 @@
-#include "pch.h"
+#include "Platform.h"
 
-#if FLING_LINUX
+#if FLING_WINDOWS
 
-#include "Input/LinuxInput.h"
-
-// Oof on this renderer dependency
-// #TODO: Figure something else that's better for this
+#include "Input/WindowsInput.h"
 #include "VulkanApp.h"
+
+// Glfw -------------------
 #include <GLFW/glfw3.h>
+#include "DesktopWindow.h"
 #include "ImGuiInputBinding.hpp"
+#include "Logger.h"
 
 namespace Fling
 {
-	Input* Input::m_Instance = new LinuxInput();
+	Input* Input::m_Instance = new WindowsInput();
 	Input::KeyMap Input::m_KeyMap;
 	Input::KeyDownMap Input::m_KeyDownMap;
-	
-	void LinuxInput::InitImpl()
+
+	void WindowsInput::InitImpl()
 	{
-		// Any setup for GLFW inputs
+		// Any specific input binds that may be needed
 		InitKeyMap();
 	}
 
-	void LinuxInput::PreUpdateImpl()
+	void WindowsInput::PreUpdateImpl()
 	{
 #if WITH_IMGUI
 		InternalImGui::SetImGuiCallbacks();
 #endif
 	}
 
-	void LinuxInput::ShutdownImpl()
+	void WindowsInput::ShutdownImpl()
 	{
 		// Cleanup any listeners or things like that in the future
 	}
 
-	void LinuxInput::InitKeyMap()
+	void WindowsInput::InitKeyMap()
 	{
-		F_LOG_TRACE("Linux Input map!");
+		F_LOG_TRACE("Windows Input map!");
+
 		/* The unknown key */
 		AddKeyMap(KeyNames::FL_KEY_UNKNOWN, FL_KEYCODE_UNKNOWN);
 
@@ -151,7 +153,7 @@ namespace Fling
 		AddKeyMap(KeyNames::FL_MOUSE_BUTTON_8, FL_MOUSE_BUTTON_CODE_8);
 	}
 
-	void LinuxInput::PollImpl()
+	void WindowsInput::PollImpl()
 	{
 		for(const auto& InputMapping : m_KeyDownMap)
 		{
@@ -178,23 +180,23 @@ namespace Fling
 		io.MouseDown[1] = Input::IsMouseDown(KeyNames::FL_MOUSE_BUTTON_2);
 #endif
 	}
-	
-	bool LinuxInput::IsKeyDownImpl(const std::string& t_KeyName)
+
+	bool WindowsInput::IsKeyDownImpl(const std::string& t_KeyName)
 	{
 		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
 		{
 			// Check the old state of this input!
 			Key& CurKey = m_KeyMap.at(t_KeyName);
-
+			
 			int State = glfwGetKey(Window->GetGlfwWindow(), CurKey.GetCode());
 			// If the current key was up last time we looked and is 
-			if ((State == GLFW_PRESS || State == GLFW_REPEAT) && CurKey.IsUp())
+			if((State == GLFW_PRESS || State == GLFW_REPEAT) && CurKey.IsUp())
 			{
 				CurKey.SetState(KeyState::DOWN);
 				return true;
 			}
-			else if (State == GLFW_RELEASE)
+			else if(State == GLFW_RELEASE)
 			{
 				CurKey.SetState(KeyState::UP);
 			}
@@ -203,7 +205,7 @@ namespace Fling
 		return false;
 	}
 
-	bool LinuxInput::IsKeyHelpImpl(const std::string& t_KeyName)
+	bool WindowsInput::IsKeyHelpImpl(const std::string& t_KeyName)
 	{
 		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
@@ -227,7 +229,7 @@ namespace Fling
 		return false;
 	}
 
-	bool LinuxInput::IsMouseButtonPressedImpl(const std::string& t_KeyName)
+	bool WindowsInput::IsMouseButtonPressedImpl(const std::string& t_KeyName)
 	{
 		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
@@ -250,7 +252,7 @@ namespace Fling
 		return false;
 	}
 
-	bool LinuxInput::IsMouseDownImpl(const std::string& t_KeyName)
+	bool WindowsInput::IsMouseDownImpl(const std::string& t_KeyName)
 	{
 		DesktopWindow* Window = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
 		if (Window)
@@ -264,7 +266,7 @@ namespace Fling
 		return false;
 	}
 
-	MousePos LinuxInput::GetMousePosImpl()
+	MousePos WindowsInput::GetMousePosImpl()
 	{
 		MousePos CurPos = {};
 
@@ -284,4 +286,4 @@ namespace Fling
 
 } // namespace Fling
 
-#endif	// FLING_LINUX
+#endif	// FLING_WINDOWS

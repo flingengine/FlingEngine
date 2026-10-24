@@ -1,5 +1,6 @@
 #pragma once
 #include "FlingMath.h"
+#include "FlingTypes.h"
 
 namespace Fling
 {

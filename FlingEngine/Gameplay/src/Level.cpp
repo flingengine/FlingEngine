@@ -1,6 +1,6 @@
-#include "pch.h"
 #include "Level.h"
 #include "World.h"
+#include "Logger.h"
 
 namespace Fling
 {

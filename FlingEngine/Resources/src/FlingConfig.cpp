@@ -1,5 +1,5 @@
-#include "pch.h"
 #include "FlingConfig.h"
+#include "Logger.h"
 
 namespace Fling
 {

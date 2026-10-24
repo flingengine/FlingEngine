@@ -1,15 +1,22 @@
 #pragma once
 
+#include "Platform.h"
 
 #if WITH_IMGUI
 #include <imgui.h>
+#include "DesktopWindow.h"  // GLFW with GLFW_INCLUDE_VULKAN, before glfw3native.h
+#include "VulkanApp.h"
 
 #if FLING_WINDOWS
+
+#include "Input/WindowsKeycodes.h"
 
 #undef APIENTRY
 #define GLFW_EXPOSE_NATIVE_WIN32
 
 #elif FLING_LINUX
+
+#include "Input/LinuxKeycodes.h"
 
 #define GLFW_EXPOSE_NATIVE_X11
 

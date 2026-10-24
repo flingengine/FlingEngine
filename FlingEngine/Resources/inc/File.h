@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <vector>
+#include <memory>
 
 namespace Fling
 {

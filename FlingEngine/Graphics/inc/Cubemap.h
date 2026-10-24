@@ -12,6 +12,8 @@
 #include "Camera.h"
 #include "GraphicsPipeline.h"
 #include "MultiSampler.h"
+#include <memory>
+#include <vector>
 
 namespace Fling
 {

@@ -1,6 +1,6 @@
-#include "pch.h"
 #include "File.h"
 #include "ResourceManager.h"
+#include "Logger.h"
 
 namespace Fling
 {
