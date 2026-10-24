@@ -3,8 +3,8 @@
 Working plan for [issue #169](https://github.com/flingengine/FlingEngine/issues/169):
 split the monolithic `FlingEngine` library into build modules, similar to
 Unreal's `*.Build.cs` files, so that (for example) a Physics module can use math
-and gameplay types without the Vulkan pipeline on its include path or link
-line.
+and world types (`Transform`) without the Vulkan pipeline on its include path or
+link line.
 
 This replaces the earlier `docs/BuildModules.md`, which you can still read with
 `git show dfdb2bc^:docs/BuildModules.md`. For where code lives today, see
@@ -22,7 +22,8 @@ Do not re-open these while you implement the plan.
    from `CMake/FlingModuleAPI.h.in`. Do not check these files into git.
 4. **Sandbox becomes two executables in one configure: `SandboxGame` and
    `SandboxEditor`.** `SandboxGame` does not compile or link any Editor code.
-   Thus Engine and Graphics must not include or link Editor.
+   Thus the Engine module, Graphics, and Application must not include or link
+   Editor.
 5. **Modules are static libraries by default.** `SHARED` is opt-in. Shared
    modules wait until `Singleton<T>::Get()` is defined in the module that owns
    each singleton, not in the header. If not, each shared library gets its own
@@ -32,6 +33,12 @@ Do not re-open these while you implement the plan.
 7. **Tests are an optional target.** No engine or game target depends on
    `FlingTests` or Catch2, and test-only engine code is compiled out of
    builds that do not need it (see [Tests](#tests)).
+8. **Module names.** `Engine` is the foundational world layer: `World`,
+   `Level`, the `Game` base class, `Transform`, cameras, and the component type
+   registry. `Application` is the top-level startup layer (`Engine::Run`, the
+   main loop) that boots a game client, server, test, or editor application.
+   `Gameplay` is reserved for actual gameplay systems (AI, abilities, ...),
+   which are their own modules on top of Engine and never depend on Graphics.
 
 ## Module graph
 
@@ -39,24 +46,26 @@ The dependencies must be a DAG. `fling_add_module()` stops the configure if
 there is a cycle.
 
 ```
-Core  →  Resources  →  Gameplay  →  Graphics  →  Engine
-                           │
-                           ├── Physics (later; no Graphics)
-                           └── Editor (leaf; editor executables only)
+Core  →  Resources  →  Engine  →  Graphics  →  Application
+                         │
+                         ├── Gameplay modules (later: AI, abilities, ...; no Graphics)
+                         ├── Physics (later; no Graphics)
+                         └── Editor (leaf; editor applications only)
 ```
 
 | Module | Public deps | Third-party |
 |--------|-------------|-------------|
-| **Core** | none | glm, spdlog, entt |
-| **Resources** | Core | json, inih, stb (private where possible) |
-| **Gameplay** | Core, Resources | entt |
-| **Graphics** | Core, Resources, Gameplay | Vulkan, glfw, SPIRV-Cross, tinyobjloader (private) |
-| **Engine** | Gameplay, Graphics | none |
-| **Editor** | Gameplay, Graphics | ImGui (private) |
-| **Physics** (later) | Core, Gameplay | none of Graphics |
+| **Core** | none | glm, spdlog, entt, cereal |
+| **Resources** | Core | inih (public), json (private) |
+| **Engine** | Core, Resources | entt |
+| **Graphics** | Core, Resources, Engine | Vulkan, glfw, SPIRV-Cross, stb, tinyobjloader (private) |
+| **Application** | Engine, Graphics | none |
+| **Editor** | Engine, Graphics | ImGui (private) |
+| **Gameplay modules** (later) | Engine | none of Graphics |
+| **Physics** (later) | Core, Engine | none of Graphics |
 
 There are two INTERFACE umbrella targets: `Fling::GameStack` (Core through
-Engine) and `Fling::EditorStack` (`GameStack` + Editor).
+Application) and `Fling::EditorStack` (`GameStack` + Editor).
 
 ## Phases
 
@@ -98,7 +107,8 @@ building and passing on every CI platform.
   `Core/` excluded from its glob. (Done on branch `chore/core-module`.)
   To get there:
   - `Engine.h`, `Engine.cpp`, and `FlingEngine.h` moved to
-    `FlingEngine/Engine/` now instead of in Phase 3.
+    `FlingEngine/Engine/` now instead of in Phase 3. (That folder is now
+    `FlingEngine/Application/`; see Phase 2.5.)
   - `FlingPaths` (and the generated `FlingAssetPaths.cpp`) moved from Resources
     to Core, because `Logger` needs the log directory.
   - The GLFW input backends (`LinuxInput`, `WindowsInput`, keycodes) moved to
@@ -112,7 +122,9 @@ building and passing on every CI platform.
   header-only template and is not marked. With static modules (locked decision
   5) `CORE_API` is empty; proving the exports work waits for `SHARED`.
 
-### Phase 2: Resources, then Gameplay (done on branch `chore/resources-module`)
+### Phase 2: Resources, then Gameplay (done, #210)
+
+The `Gameplay` module named here is now the `Engine` module (Phase 2.5).
 
 - Resources (`PUBLIC_DEPS Core`) and Gameplay (`PUBLIC_DEPS Core Resources`)
   are `fling_add_module()` targets. The monolith links both and excludes their
@@ -131,20 +143,32 @@ building and passing on every CI platform.
 - `ComponentTypeRegistry::ResetForTests()` is behind `FLING_WITH_TEST_HOOKS`,
   which Gameplay defines only when `FLING_BUILD_TESTS` is ON.
 
-### Phase 3: Graphics, Editor, Engine, and two Sandbox executables
+### Phase 2.5: Rename Gameplay to Engine, and Engine to Application (branch `chore/engine-application-rename`)
+
+- `FlingEngine/Gameplay/` is now `FlingEngine/Engine/`, the `Engine` module
+  (`Fling::Engine`, `ENGINE_API`). See locked decision 8.
+- The old `FlingEngine/Engine/` (`Engine.h`, `Engine.cpp`, `FlingEngine.h`) is
+  now `FlingEngine/Application/`. It is still part of the monolith library.
+- `RegisterGameplayComponents()` is now `RegisterEngineComponents()`.
+- The class `Fling::Engine` (`Engine::Run`) keeps its name for now. Renaming it
+  changes every game's `main()`, so do it with the project model plan's
+  `FLING_IMPLEMENT_GAME` work (phase P2).
+
+### Phase 3: Graphics, Editor, Application, and game/editor targets
 
 - Graphics module. Vulkan, glfw, and SPIRV-Cross are private link deps.
 - Replace the `BaseEditor` dependency in `Engine::Run`, `VulkanApp::Init`, and
   `ImGuiSubpass` with an editor-free debug-UI hook.
 - Editor is always its own target and only editor executables link it.
-- `Engine.h`, `Engine.cpp`, and `FlingEngine.h` already moved to
-  `FlingEngine/Engine/` in Phase 1. Make Engine a module.
+- Make Application a module (`FlingEngine/Application/`: `Engine.h`,
+  `Engine.cpp`, `FlingEngine.h`).
 - Split Sandbox into a game target and an editor target. The project model
   plan ([`project-model.md`](project-model.md), phase P2)
   replaces this item with `fling_add_game()`, which makes `<Name>Game` and
   `<Name>Editor` targets for any project. Follow that design instead of a
   Sandbox-only split.
-- Remove the project-wide `WITH_EDITOR` define from Engine's API. Note that
+- Remove the project-wide `WITH_EDITOR` define from the Application API
+  (`Engine::Run`). Note that
   `WITH_EDITOR_FLAG=OFF` does not build today: `Engine.cpp` uses `m_Editor`
   outside `#if WITH_EDITOR`, and the `Editor/` sources are always compiled. A CMake
   option can still control whether the `SandboxEditor` target exists.
@@ -181,7 +205,7 @@ Done in Phase 0.5:
 Still to do:
 
 - **Per-module test targets.** When modules exist, consider one test
-  executable per module (`CoreTests`, `GameplayTests`, ...) that links only that
+  executable per module (`CoreTests`, `EngineTests`, ...) that links only that
   module. This proves isolation and keeps test relinks small. A module's tests
   live next to it or under `FlingTests/<Module>/`. Decide when Phase 2 starts.
 
@@ -192,7 +216,7 @@ Still to do:
 - `SandboxGame` does not compile or link any Editor sources. `SandboxEditor`
   runs the deferred demo with the editor UI. `SandboxGame` runs it without the
   editor UI.
-- Physics (stub) compiles against Core and Gameplay without Vulkan on its
+- Physics (stub) compiles against Core and Engine without Vulkan on its
   include path or link line.
 - FlingTests pass. A shipping build with tests OFF contains no test hooks and
   does not need Catch2.

@@ -6,11 +6,10 @@ globs in the root CMakeLists, a hand-rolled `*_API` header, or edits under
 `external/`).
 
 `fling_add_module()` lives in [`CMake/FlingModule.cmake`](../CMake/FlingModule.cmake).
-Until `FlingEngine/CMakeLists.txt` `add_subdirectory`s each module, the engine is
-still one static library and new folders are picked up by the monolith glob.
-Do **not** add a `fling_add_module` target that compiles the same sources as
-`FlingEngine` — that double-builds. Use this recipe once modules are separate
-targets (or when you are the change that splits them).
+Core, Resources, and Engine are modules built this way. Graphics, Editor, and
+Application are still compiled into the `FlingEngine` library by a glob. That
+glob skips every folder under `FlingEngine/` that has its own `CMakeLists.txt`,
+so a new module's sources are never built twice.
 
 ## What you add
 
@@ -24,11 +23,17 @@ A module is:
 5. `target_link_libraries(Consumer PRIVATE Fling::ModuleName)` on anything that
    should see that module's headers.
 
-You do not list `.cpp` files by hand. You do not edit the old engine-wide glob.
+You do not list `.cpp` files by hand. You do not edit the old engine-wide glob:
+adding the folder's `CMakeLists.txt` removes it from that glob.
+
+Also add isolation tests for the new module (see
+[`testing.md`](testing.md#module-isolation-tests)): one that its headers compile
+with only the module linked, and one that it cannot see a module it must not
+depend on.
 
 ## Example: a `UI` module
 
-In-game HUD / widgets. Publicly needs Core and Gameplay (types, `Transform`).
+In-game HUD / widgets. Publicly needs Core and Engine (types, `Transform`).
 Privately needs Graphics and ImGui to draw. A physics-only tool would not link
 `Fling::UI` and would not see `UISystem.h`.
 
@@ -48,7 +53,7 @@ via `target_link_libraries`, not from renaming headers to `UI/UISystem.h`.
 
 ```cmake
 fling_add_module(UI
-    PUBLIC_DEPS  Core Gameplay
+    PUBLIC_DEPS  Core Engine
     PRIVATE_DEPS Graphics
     PRIVATE_LIBS ImGui
 )
@@ -66,18 +71,18 @@ dir on UI's **public** include path. Do not check `UIAPI.h` into git.
 
 ### 3. Register it bottom-up
 
-In `FlingEngine/CMakeLists.txt`, add UI **after** Core, Gameplay, and Graphics.
+In `FlingEngine/CMakeLists.txt`, add UI **after** Core, Engine, and Graphics.
 A dependency cycle is a configure error.
 
 ```cmake
 add_subdirectory(Core)
 add_subdirectory(Resources)
-add_subdirectory(Gameplay)
+add_subdirectory(Engine)
 add_subdirectory(Graphics)
 add_subdirectory(UI)
 ```
 
-If Sandbox or Engine should use UI, link the alias — do not `include_directories`
+If Sandbox or Application should use UI, link the alias — do not `include_directories`
 the UI folder:
 
 ```cmake
@@ -139,6 +144,6 @@ compile. That is the isolation test.
 - [ ] Public headers include `<Name>API.h` and use `<NAME>_API` on exported types.
 - [ ] Consumers `target_link_libraries(... Fling::<Name>)`. No new
       `include_directories()` for engine headers.
-- [ ] Gameplay still does not include Graphics headers. Editor stays a leaf
-      (Engine/Graphics do not include Editor). See [`architecture.md`](architecture.md).
+- [ ] Engine still does not include Graphics headers. Editor stays a leaf
+      (Application/Graphics do not include Editor). See [`architecture.md`](architecture.md).
 - [ ] Nothing under `external/` is modified.

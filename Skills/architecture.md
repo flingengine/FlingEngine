@@ -1,8 +1,8 @@
 # Architecture / where things live
 
 This is orientation for today's layout, not a design doc. The engine is
-mid-way through an in-progress module split (Core/Resources/Gameplay/Graphics/Editor
-as separate CMake targets) — the rules below hold regardless of how far that
+mid-way through an in-progress module split (Core/Resources/Engine/Graphics/
+Application/Editor as separate CMake targets) — the rules below hold regardless of how far that
 split has progressed. Read [`adding-modules.md`](adding-modules.md) before
 touching CMake targets or cross-folder includes. The phases of the split are in
 [`Plans/module-split-plan.md`](../Plans/module-split-plan.md).
@@ -18,14 +18,19 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 - `FlingEngine/Resources` — the `Resources` module (depends on Core): config
   files, JSON, file loading, `ResourceManager`. GPU resources (`Texture`,
   `HDRImage`) live in Graphics.
-- `FlingEngine/Gameplay` — the `Gameplay` module (depends on Core and
-  Resources): `World`, `Level`, `Game`, cameras, `Transform`, and the component
-  type registry. It cannot include Graphics, Editor, or Engine headers.
-- The rest of `FlingEngine/` (`Engine`, `Graphics`, `Editor`) is still one
+- `FlingEngine/Engine` — the `Engine` module (depends on Core and Resources):
+  the foundational world layer. `World`, `Level`, the `Game` base class,
+  cameras, `Transform`, and the component type registry. It cannot include
+  Graphics, Editor, or Application headers. Actual gameplay systems (AI,
+  abilities, ...) do not go here: they get their own modules that depend on
+  Engine. The name `Gameplay` is reserved for those.
+- The rest of `FlingEngine/` (`Application`, `Graphics`, `Editor`) is still one
   CMake library (`FlingEngine`) built by glob. It links the modules above and
   exposes its folders' `inc/` dirs as `PUBLIC` include paths, so those three
   folders are not isolated from each other yet.
-  `Engine/` holds `Engine.h`/`Engine.cpp`/`FlingEngine.h`. The GLFW input
+  `Application/` is the top-level startup layer: `Engine.h`/`Engine.cpp`
+  (`Engine::Run`, the main loop) and `FlingEngine.h`. It boots a game client,
+  server, test, or editor application. The GLFW input
   backends (`LinuxInput`, `WindowsInput`, keycodes) live in `Graphics/`, next to
   the window.
 - `Sandbox/` — the sample game + editor, one executable today (editor support is
@@ -44,9 +49,10 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 
 ## Rules that hold regardless of the module-split's progress
 
-- Gameplay code (`Transform`, `Camera`, `World`, `Game`) must not include Graphics
-  headers (`MeshRenderer.h`, Vulkan-facing types). Graphics may include Gameplay.
-- Editor is a leaf: `Engine` and `Graphics` must not include `BaseEditor` or any
+- The Engine module (`Transform`, `Camera`, `World`, `Game`) must not include
+  Graphics headers (`MeshRenderer.h`, Vulkan-facing types). Graphics may include
+  Engine. Gameplay modules (AI, abilities, ...) depend on Engine, never on Graphics.
+- Editor is a leaf: Application and Graphics must not include `BaseEditor` or any
   Editor header. If you find yourself adding such an include, that's a bug —
   look for the debug-UI hook pattern instead of a direct include.
 - Don't add a new module folder or CMake target on a whim — per-module PCH and

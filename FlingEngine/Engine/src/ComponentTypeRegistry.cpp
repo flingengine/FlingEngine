@@ -111,7 +111,7 @@ namespace Fling
 	}
 #endif
 
-	void RegisterGameplayComponents()
+	void RegisterEngineComponents()
 	{
 		ComponentTypeRegistry& registry = ComponentTypeRegistry::Get();
 		registry.Register<Transform>("Transform");

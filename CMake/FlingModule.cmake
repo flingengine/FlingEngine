@@ -4,7 +4,7 @@
 #
 #   fling_add_module(Physics
 #       PUBLIC_DEPS  Core
-#       PRIVATE_DEPS Gameplay
+#       PRIVATE_DEPS Engine
 #   )
 #
 # Public deps propagate include dirs and link libs to consumers.

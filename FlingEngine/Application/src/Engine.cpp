@@ -63,7 +63,7 @@ namespace Fling
 			m_Editor
 		);
 
-		RegisterGameplayComponents();
+		RegisterEngineComponents();
 		RegisterGraphicsComponents();
 		
 		// Set the editor if we need to

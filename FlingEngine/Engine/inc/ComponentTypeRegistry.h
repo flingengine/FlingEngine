@@ -107,7 +107,7 @@ namespace Fling
 	};
 
 	/** Registers Transform and NameComponent. Called from Engine::Startup. */
-	void RegisterGameplayComponents();
+	void RegisterEngineComponents();
 
 	template<typename T>
 	bool ComponentTypeRegistry::Register(const char* name)
