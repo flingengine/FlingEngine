@@ -82,6 +82,8 @@ building and passing on every CI platform.
 - `FLING_BUILD_TESTS` option. It is OFF by default for shipping builds and
   when Fling is not the top-level project, and Catch2 is only needed when it is
   ON. Tests are registered with CTest through `catch_discover_tests()`.
+- CI runs the tests with CTest, and a Linux shipping job builds without
+  Catch2.
 
 ### Phase 1: Core as a real module
 
@@ -137,6 +139,11 @@ Done in Phase 0.5:
 
 - `FLING_BUILD_TESTS` controls whether `FlingTests` exists.
 - `ctest --test-dir build` runs each Catch2 `TEST_CASE` as a CTest test.
+- CI runs `ctest` (with `--no-tests=error`, so a broken test registration
+  fails the job) instead of per-platform binary paths.
+- CI has a Linux shipping job that builds with `FLING_BUILD_TESTS` at its
+  default (OFF) and with Catch2 disabled, to prove that a shipping build does
+  not need it.
 
 Still to do:
 
@@ -151,12 +158,6 @@ Still to do:
   executable per module (`CoreTests`, `GameplayTests`, ...) that links only that
   module. This proves isolation and keeps test relinks small. A module's tests
   live next to it or under `FlingTests/<Module>/`. Decide when Phase 2 starts.
-- **CI uses CTest.** Change `.github/workflows/build.yml` to run
-  `ctest --test-dir build -C <config> --output-on-failure` instead of the
-  per-platform binary paths.
-- **CI builds a shipping configuration** with `FLING_BUILD_TESTS` at its
-  default (OFF), to prove that a shipping build configures and builds without
-  Catch2.
 
 ## Success criteria
 

@@ -24,8 +24,9 @@ platform setup (Vulkan SDK, GLFW, etc.).
 ## Tests
 
 - Tests use Catch2 3, target `FlingTests`, source under `FlingTests/src`.
-- Run the built binary directly, e.g. `./build/FlingTests/bin/FlingTests` on Linux
-  (see `.github/workflows/build.yml` for the exact per-platform paths).
+- Run them with CTest, e.g. `ctest --test-dir build` (add `-C <Debug|Release>` for
+  Visual Studio), or run `./build/FlingTests/bin/FlingTests` directly on Linux.
+  The `FLING_BUILD_TESTS` CMake option controls whether the target exists.
 - Full detail, including how to add a new test file: [`Skills/testing.md`](Skills/testing.md).
 
 ## Coding style
