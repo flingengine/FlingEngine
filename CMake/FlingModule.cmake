@@ -8,8 +8,10 @@
 #   )
 #
 # Public deps propagate include dirs and link libs to consumers.
-# Private deps do not. Modules are SHARED by default; pass STATIC for a
-# static library (API macros become empty).
+# Private deps do not. Modules are STATIC by default (API macros become
+# empty); pass SHARED for a shared library. Shared modules are opt-in until
+# Singleton<T>::Get() is defined in its owning module rather than the header,
+# otherwise each shared library gets its own copy of every engine singleton.
 #
 # Generated ${NAME}API.h (e.g. GraphicsAPI.h / GRAPHICS_API) is written to
 # that module's build dir and is PUBLIC, so only linkers of the module see it.
@@ -21,7 +23,7 @@ set(FLING_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "Path to first-pa
 
 function(fling_add_module NAME)
 	cmake_parse_arguments(MODULE
-		"STATIC"
+		"SHARED"
 		""
 		"PUBLIC_DEPS;PRIVATE_DEPS;PUBLIC_LIBS;PRIVATE_LIBS"
 		${ARGN}
@@ -70,10 +72,10 @@ function(fling_add_module NAME)
 		message(FATAL_ERROR "fling_add_module(${NAME}): no sources under ${_module_dir}/inc or src")
 	endif()
 
-	if(MODULE_STATIC)
-		add_library(${NAME} STATIC ${_module_sources})
-	else()
+	if(MODULE_SHARED)
 		add_library(${NAME} SHARED ${_module_sources})
+	else()
+		add_library(${NAME} STATIC ${_module_sources})
 	endif()
 
 	add_library(Fling::${NAME} ALIAS ${NAME})
@@ -95,7 +97,7 @@ function(fling_add_module NAME)
 	)
 
 	target_compile_definitions(${NAME} PRIVATE "FLING_${MODULE_UPPER}_BUILD=1")
-	if(MODULE_STATIC)
+	if(NOT MODULE_SHARED)
 		target_compile_definitions(${NAME} PUBLIC "FLING_${MODULE_UPPER}_STATIC=1")
 	endif()
 
@@ -132,12 +134,5 @@ function(fling_add_module NAME)
 		VISIBILITY_INLINES_HIDDEN ON
 	)
 
-	if(MSVC)
-		foreach(_source IN ITEMS ${_module_sources})
-			get_filename_component(_source_path "${_source}" PATH)
-			string(REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}")
-			string(REPLACE "/" "\\" _group_path "${_group_path}")
-			source_group("${_group_path}" FILES "${_source}")
-		endforeach()
-	endif()
+	fling_configure_target(${NAME})
 endfunction()

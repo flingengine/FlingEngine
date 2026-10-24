@@ -59,7 +59,7 @@ fling_add_module(UI
 | `PUBLIC_DEPS` | Fling modules whose headers consumers of UI may also include |
 | `PRIVATE_DEPS` | Fling modules UI uses internally; not pushed onto UI's consumers' include path |
 | `PUBLIC_LIBS` / `PRIVATE_LIBS` | Third-party CMake targets (glfw, ImGui, Vulkan::Vulkan, …) |
-| `STATIC` | Optional. Default is a shared library |
+| `SHARED` | Optional. Default is a static library; shared modules wait on `Singleton<T>::Get()` moving out of its header (each shared library would otherwise get its own singleton instances) |
 
 CMake generates `UIAPI.h` (macro `UI_API`) into the UI build dir and puts that
 dir on UI's **public** include path. Do not check `UIAPI.h` into git.

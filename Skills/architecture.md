@@ -4,7 +4,8 @@ This is orientation for today's layout, not a design doc. The engine is
 mid-way through an in-progress module split (Core/Resources/Gameplay/Graphics/Editor
 as separate CMake targets) — the rules below hold regardless of how far that
 split has progressed. Read [`adding-modules.md`](adding-modules.md) before
-touching CMake targets, `FLING_ENGINE_INC()`, or cross-folder includes.
+touching CMake targets or cross-folder includes. The phases of the split are in
+[`module-split-plan.md`](module-split-plan.md).
 
 ## Today
 
@@ -12,9 +13,9 @@ touching CMake targets, `FLING_ENGINE_INC()`, or cross-folder includes.
   from almost every source file under this tree via glob. Subfolders are
   `Core` (includes former Utils + Platform), `Graphics`, `Gameplay`,
   `Resources`, and `Editor`. CMake/includes still treat it as one target —
-  `FLING_ENGINE_INC()` adds every engine `inc/` dir to consumers, so folder
-  location doesn't currently enforce isolation. `fling_add_module()` lives in
-  `CMake/FlingModule.cmake` but is not yet used for a real shared module.
+  the `FlingEngine` target exposes every engine `inc/` dir as a `PUBLIC` include
+  path, so folder location doesn't currently enforce isolation. `fling_add_module()`
+  lives in `CMake/FlingModule.cmake` but is not yet used for a real module.
 - `Sandbox/` — the sample game + editor, one executable today (editor support is
   toggled by a project-wide `WITH_EDITOR` define; a planned follow-up splits
   this into two separate executables).
@@ -23,7 +24,11 @@ touching CMake targets, `FLING_ENGINE_INC()`, or cross-folder includes.
 - `external/` — vendored third-party dependencies (submodules). Never modified.
 - `scripts/` — repo tooling (`check_comment_style.py`, the one-time
   `migrate_doxygen_comments.py` migration).
-- `CMake/` — CMake helper modules (e.g. `FlingEngineInc.cmake`).
+- `CMake/` — CMake helper modules: `FlingModule.cmake` (`fling_add_module`),
+  `FlingTargets.cmake` (`fling_configure_target` and friends, shared settings
+  for every first-party target), `FlingExternals.cmake` (`FlingExt::*` targets
+  for header-only third-party libraries — link these instead of adding
+  `include_directories()`).
 
 ## Rules that hold regardless of the module-split's progress
 

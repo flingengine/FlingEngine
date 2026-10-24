@@ -2,7 +2,15 @@
 #include "Json.h"
 
 #include <fstream>
+
+#include "FlingWarnings.h"
+
+// nlohmann/json v3.7 includes <ciso646>, which libstdc++ flags with a #warning under C++20
+F_WARNING_PUSH
+F_CLANG_DISABLE_WARNING("-W#warnings")
+F_GCC_DISABLE_WARNING("-Wcpp")
 #include <nlohmann/json.hpp>
+F_WARNING_POP
 
 namespace Fling
 {

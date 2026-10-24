@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.11.0 )
+cmake_minimum_required ( VERSION 3.21 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
@@ -8,24 +8,27 @@ project ( "FlingEngine" VERSION 1.0 )
 set( GENERATED_INC_FOLDER ${CMAKE_BINARY_DIR}/Generated )
 message( STATUS "Generated dir: ${GENERATED_INC_FOLDER}" )
 
+set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
+
 # Let us use our *.cmake files now
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
 message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 
 # Include any .cmake macros here from the ./Cmake dir
-include(FlingEngineInc)
+include(FlingTargets)
 include(FlingModule)
-include(MSVC_PCH)
-include(FlingCompilerFlag)
 include (InstallRequiredSystemLibraries)
 
-set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
-
-# Catch2 is installed locally by Init.sh (not system-wide) so find_package can locate it without sudo
-list( APPEND CMAKE_PREFIX_PATH "${FLING_ROOT_DIR}/external/Catch2/install" )
-
-# Option for the current build configuration. Note: going forward, we should use the FLING_Compiler_Flag macro
+# Option for the current build configuration
 OPTION( DEFINE_SHIPPING "DEFINE_SHIPPING configuration will change asset paths to be relative." OFF )
+
+# Tests are off by default for shipping builds and when Fling is added to another project
+if( PROJECT_IS_TOP_LEVEL AND NOT DEFINE_SHIPPING )
+    set( _fling_tests_default ON )
+else()
+    set( _fling_tests_default OFF )
+endif()
+OPTION( FLING_BUILD_TESTS "Build the FlingTests target (requires Catch2 3)" ${_fling_tests_default} )
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
 OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
@@ -36,78 +39,64 @@ IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     message( FATAL_ERROR    "WITH_EDITOR_FLAG cannot be enabled because WITH_IMGUI_FLAG is OFF!" )
 endif()
 
+# EnTT 3.1 (external/entt) compares entities with entt::null through an operator==
+# that calls itself forever under C++20 rewritten comparisons, unless the compiler
+# implements P2468 (GCC 13, Clang 16). Older compilers build the engine, but any
+# `entity == entt::null` then hangs at runtime, so stop here instead.
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
+    message( FATAL_ERROR "Fling Engine needs GCC 13 or newer (found ${CMAKE_CXX_COMPILER_VERSION}). "
+        "In C++20 mode it resolves EnTT 3.1's entt::null comparison to itself, which hangs." )
+elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16 )
+    message( FATAL_ERROR "Fling Engine needs Clang 16 or newer (found ${CMAKE_CXX_COMPILER_VERSION}). "
+        "In C++20 mode it resolves EnTT 3.1's entt::null comparison to itself, which hangs." )
+endif()
+
 message( STATUS "----- Build Config ----" )
 message( STATUS "Compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}" )
 message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
 message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
+message( STATUS "FLING_BUILD_TESTS=${FLING_BUILD_TESTS}" )
 message( STATUS "FLING_ROOT_DIR=${FLING_ROOT_DIR}" )
 
-# set the flags to 0 or 1 respectively for ImGUI and the Editor
-IF( WITH_IMGUI_FLAG )
-    ADD_DEFINITIONS ( -DWITH_IMGUI=1 )
-else()
-    ADD_DEFINITIONS ( -DWITH_IMGUI=0 )
-endif()
-
-IF( WITH_EDITOR_FLAG )
-    ADD_DEFINITIONS ( -DWITH_EDITOR=1 )
-else()
-    ADD_DEFINITIONS ( -DWITH_EDITOR=0 )
-endif()
-
+# WITH_IMGUI / WITH_EDITOR / FLING_SHIPPING are set on the FlingEngine target
+# (and propagate to its consumers) in FlingEngine/CMakeLists.txt.
 IF( DEFINE_SHIPPING )
     message( STATUS "Build set to SHIPPING configuration!" )
-    ADD_DEFINITIONS ( -DFLING_SHIPPING )
     SET( CMAKE_BUILD_TYPE Release )
 ENDIF( DEFINE_SHIPPING )
 message( STATUS "-----------------------" )
 
-# C++17 standard
+# Default for third-party targets; first-party targets also get it from fling_configure_target()
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
 
-# Take care of warnings about strcpy
+set( CMAKE_POSITION_INDEPENDENT_CODE ON )
+set_property( GLOBAL PROPERTY USE_FOLDERS ON )
+
 if( MSVC )
-    add_definitions( -D_CRT_SECURE_NO_WARNINGS )
-	if ( NOT DEFINED NOMINMAX )
-		add_definitions( -DNOMINMAX )	# Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
-    endif()
-    
     # Enable multiple processor compilation
     if(ENABLE_MULTICORE)
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+        add_compile_options( /MP )
     endif()
 
     # spdlog 1.17+ bundles fmt v12, which requires UTF-8 source encoding on MSVC.
     # See https://github.com/fmtlib/fmt/pull/4159
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-# GCC
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-
-    add_definitions( -fPIC )
-
-# Clang
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_definitions( -fPIC )
+    add_compile_options( /utf-8 )
 endif()
 
-# This is needed for Clang support of glm::hash
-ADD_DEFINITIONS( -DGLM_FORCE_CXX17 )
+find_package( Threads REQUIRED )
 
 # Include external libraries
 add_subdirectory( external/glfw )
-include_directories( SYSTEM external/glfw/include )
+
+# Consumers see GLFW's headers as system headers, so warnings inside them don't show up in our builds
+get_target_property( _glfw_inc glfw INTERFACE_INCLUDE_DIRECTORIES )
+set_target_properties( glfw PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_glfw_inc}" )
 
 # SPIRV-Cross
-add_definitions( -DSPIRV_CROSS_SHARED=OFF )
-add_definitions( -DSPIRV_CROSS_STATIC=OFF )
-add_definitions( -DSPIRV_CROSS_CLI=OFF )
-
 set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
 set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
@@ -146,25 +135,24 @@ if( WITH_IMGUI_FLAG )
         external/imgui/imgui_tables.cpp
         external/imgui/imgui_widgets.cpp )
     target_include_directories( ImGui SYSTEM PUBLIC external/imgui )
-
-    include_directories( SYSTEM external/imgui )
+    if( MSVC )
+        target_compile_definitions( ImGui PRIVATE _CRT_SECURE_NO_WARNINGS )
+    endif()
 endif()
 
-# Vendored headers are added as SYSTEM includes so that warnings inside them
-# (e.g. Clang's -Wdeprecated-literal-operator in EnTT and nlohmann/json) don't
-# show up in our builds. Warnings in first-party code are unaffected.
-include_directories( SYSTEM external/glm )
-include_directories( SYSTEM external/spdlog/include )
-include_directories( SYSTEM external/inih )
-include_directories( SYSTEM external/entt/src )
-include_directories( SYSTEM external/json/single_include )
-include_directories( SYSTEM external/stb )
-include_directories( SYSTEM external/tinyobjloader )
-include_directories( SYSTEM external/cereal/include )
+# Header-only libraries (FlingExt::glm, FlingExt::spdlog, ...)
+include(FlingExternals)
 
-# Add the engine and tests
+# Add the engine
 add_subdirectory ( "FlingEngine" )
-add_subdirectory ( "FlingTests" )
+
+# Tests are optional, so a build without them does not need Catch2
+if( FLING_BUILD_TESTS )
+    # Catch2 is installed locally by Init.sh (not system-wide) so find_package can locate it without sudo
+    list( APPEND CMAKE_PREFIX_PATH "${FLING_ROOT_DIR}/external/Catch2/install" )
+    enable_testing()
+    add_subdirectory ( "FlingTests" )
+endif()
 
 # Add a subdirectory that uses the FlingEngine and produces an executeable
 add_subdirectory ( "Sandbox" )

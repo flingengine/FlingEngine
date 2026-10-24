@@ -17,21 +17,8 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# Take care of warnings about strcpy
-if( MSVC )
-    add_definitions( -D_CRT_SECURE_NO_WARNINGS )
-# GCC
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
-    add_definitions( -Wno-class-memaccess )
-
-# Clang
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-
-endif()
-
-
-message( STATUS "Generated git file is : ${EngineDir}Core/inc/GitVersion_TEMPLATE.h" )
+message( STATUS "Generated git file is : ${GENERATED_INC_FOLDER}/GitVersion.h" )
 
 # Configure my generated files from cmake 
 configure_file(
@@ -46,9 +33,6 @@ configure_file(
     Resources/src/FlingAssetPaths.cpp.in
     ${GENERATED_INC_FOLDER}/FlingAssetPaths.cpp
 )
-
-# Include the Fling Engine source files that we may need
-FLING_ENGINE_INC("")
 
 ##################### Linking #################
 
@@ -68,18 +52,21 @@ set ( LINK_LIBS
     spirv-cross-core 
     spirv-cross-cpp
     spirv-cross-reflect
+    Threads::Threads
+    FlingExt::glm
+    FlingExt::spdlog
+    FlingExt::inih
+    FlingExt::entt
+    FlingExt::json
+    FlingExt::stb
+    FlingExt::tinyobjloader
+    FlingExt::cereal
 )
 
 IF( WITH_IMGUI_FLAG )
 set ( LINK_LIBS ${LINK_LIBS}
     ImGui ${IMGUI_LIBRARIES}
 )
-endif()
-
-# link pthread if we need to
-if ( NOT WIN32 )
-    set( LINK_LIBS ${LINK_LIBS} pthread )
-    message( STATUS "Added pthread!" )
 endif()
 
 # We need to link the std::filesystem on clang/GNU, but the windows version of
@@ -100,35 +87,36 @@ endif()
 
 message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
-################# Complier Options ############
-if( MSVC )
-    set ( MY_COMPILER_FLAGS "/W3" )
-else()
-    set ( MY_COMPILER_FLAGS "-Wall -Wno-reorder -Wno-unknown-pragmas -Wno-multichar -Wno-missing-braces" )
-endif()
-
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MY_COMPILER_FLAGS}" )
-
-### Setup visual studio source groups / filters ###
+### Source files (VS filters are set up by fling_configure_target) ###
 file( GLOB_RECURSE _source_list
     *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h ${GENERATED_INC_FOLDER}/*.cpp *.inl
 )
 
-if( MSVC )
-    foreach( _source IN ITEMS ${_source_list} )
-    	get_filename_component( _source_path "${_source}" PATH )
-        string( REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}" )
-        string( REPLACE "/" "\\" _group_path "${_group_path}" )
-        source_group( "${_group_path}" FILES "${_source}" )
-    endforeach()
-endif()
-
 ################# Add library and link ######################
 
 add_library ( ${PROJECT_NAME} ${_source_list} )
+fling_configure_target( ${PROJECT_NAME} )
 
 # Make sure the compiler can find include files for our Engine library
-target_include_directories (${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SPIRV_CROSS_INCLUDE_DIR})
+target_include_directories( ${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Graphics/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Gameplay/inc
+    ${GENERATED_INC_FOLDER}     # Generated include files that cmake will handle (i.e. GitVersion)
+)
+
+if( WITH_EDITOR_FLAG )
+    target_include_directories( ${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Editor/inc )
+endif()
+
+# Feature flags are read from engine headers, so consumers need them too
+target_compile_definitions( ${PROJECT_NAME} PUBLIC
+    WITH_IMGUI=$<BOOL:${WITH_IMGUI_FLAG}>
+    WITH_EDITOR=$<BOOL:${WITH_EDITOR_FLAG}>
+    $<$<BOOL:${DEFINE_SHIPPING}>:FLING_SHIPPING>
+)
 
 # link against the libs that the engine needs
-target_link_libraries( ${PROJECT_NAME} LINK_PUBLIC ${LINK_LIBS} )
+target_link_libraries( ${PROJECT_NAME} PUBLIC ${LINK_LIBS} )

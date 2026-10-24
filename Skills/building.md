@@ -13,8 +13,14 @@ This does three things:
 
 1. `git submodule update --init --recursive` — pulls all vendored deps under `external/`.
 2. Builds and installs Catch2 locally to `external/Catch2/install` (no `sudo` needed;
-   `find_package(Catch2 3 REQUIRED)` in `FlingTests/CMakeLists.txt` needs this).
+   `find_package(Catch2 3 REQUIRED)` in `FlingTests/CMakeLists.txt` needs this when
+   `FLING_BUILD_TESTS` is ON).
 3. Configures CMake into `build/` with default settings.
+
+Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022. CMake stops with an
+error on older GCC or Clang: the vendored EnTT 3.1 hangs at runtime on them in
+C++20 mode (its `entt::null` comparison calls itself forever). On Ubuntu 22.04,
+install `g++-13` or newer and configure with `CC=gcc-13 CXX=g++-13`.
 
 Linux also needs system packages before this will configure cleanly (GLFW, Vulkan
 headers, X11/Wayland dev libs) — see the root [README.md](../README.md) for the
@@ -29,6 +35,7 @@ separately), e.g.:
 cmake -B build -DCMAKE_BUILD_TYPE=Debug                                # debug
 cmake -B build -DCMAKE_BUILD_TYPE=Release                              # release
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DDEFINE_SHIPPING=ON         # shipping
+cmake -B build -DFLING_BUILD_TESTS=OFF                                 # no FlingTests, no Catch2 needed
 ```
 
 Then build with your generator, e.g.:
@@ -57,6 +64,16 @@ dev-only paths:
 
 It also switches Asset paths from absolute (convenient for iterating without
 reconfiguring) to relative, so a shipped executable is portable.
+
+## `FLING_BUILD_TESTS`
+
+Controls whether the `FlingTests` target exists at all. When OFF, CMake does not
+look for Catch2. It defaults to ON, except for shipping builds
+(`DEFINE_SHIPPING=ON`) and when Fling is added to another project with
+`add_subdirectory()`. Pass `-DFLING_BUILD_TESTS=ON` to test a shipping build.
+
+Like any CMake option, the value is cached in `build/` after the first configure:
+switching `DEFINE_SHIPPING` on an existing build dir does not change it.
 
 ## CI reference
 

@@ -112,7 +112,7 @@ namespace Fling
         m_Format = image->GetVkImageFormat();
 
         std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
-        stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_SHARING_MODE_EXCLUSIVE, true);
+        stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, true);
         stagingBuffer->MapMemory();
 
         float* pixelDst = (float*)(stagingBuffer->m_MappedMem);
@@ -269,7 +269,7 @@ namespace Fling
 
 
         std::unique_ptr<Buffer> stagingBuffer = std::make_unique<Buffer>();
-        stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_SHARING_MODE_EXCLUSIVE, true);
+        stagingBuffer->CreateBuffer(m_ImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, true);
         stagingBuffer->MapMemory();
 
         stbi_uc* pixelDst = (stbi_uc*)(stagingBuffer->m_MappedMem);
