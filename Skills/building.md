@@ -35,7 +35,7 @@ separately), e.g.:
 cmake -B build -DCMAKE_BUILD_TYPE=Debug                                # debug
 cmake -B build -DCMAKE_BUILD_TYPE=Release                              # release
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DDEFINE_SHIPPING=ON         # shipping
-cmake -B build -DFLING_BUILD_TESTS=OFF                                 # no FlingTests, no Catch2 needed
+cmake -B build -DFLING_BUILD_TESTS=OFF                                 # no test executables, no Catch2 needed
 ```
 
 Then build with your generator, e.g.:
@@ -67,10 +67,13 @@ reconfiguring) to relative, so a shipped executable is portable.
 
 ## `FLING_BUILD_TESTS`
 
-Controls whether the `FlingTests` target exists at all. When OFF, CMake does not
-look for Catch2. It defaults to ON, except for shipping builds
-(`DEFINE_SHIPPING=ON`) and when Fling is added to another project with
-`add_subdirectory()`. Pass `-DFLING_BUILD_TESTS=ON` to test a shipping build.
+Controls whether the per-module Catch2 executables exist (`CoreTests`,
+`ResourcesTests`, `EngineTests`, `PhysicsTests`, `ApplicationTests`). When OFF,
+CMake does not look for Catch2 and does not add `FlingTests/`. It defaults to ON,
+except for shipping builds (`DEFINE_SHIPPING=ON`) and when Fling is added to
+another project with `add_subdirectory()`. Pass `-DFLING_BUILD_TESTS=ON` to test
+a shipping build. Run them with `ctest --test-dir build` (see
+[`testing.md`](testing.md)).
 
 Like any CMake option, the value is cached in `build/` after the first configure:
 switching `DEFINE_SHIPPING` on an existing build dir does not change it.

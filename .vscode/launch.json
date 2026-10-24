@@ -26,10 +26,10 @@
             }
         },
         {
-            "name": "Debug FlingTests",
+            "name": "Debug CoreTests",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/FlingTests/bin/FlingTests",
+            "program": "${workspaceFolder}/build/FlingTests/bin/CoreTests",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -43,10 +43,106 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build FlingTests",
+            "preLaunchTask": "Build CoreTests",
             "windows": {
                 "type": "cppvsdbg",
-                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\FlingTests.exe"
+                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\CoreTests.exe"
+            }
+        },
+        {
+            "name": "Debug ResourcesTests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/FlingTests/bin/ResourcesTests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build ResourcesTests",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\ResourcesTests.exe"
+            }
+        },
+        {
+            "name": "Debug EngineTests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/FlingTests/bin/EngineTests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build EngineTests",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\EngineTests.exe"
+            }
+        },
+        {
+            "name": "Debug PhysicsTests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/FlingTests/bin/PhysicsTests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build PhysicsTests",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\PhysicsTests.exe"
+            }
+        },
+        {
+            "name": "Debug ApplicationTests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/FlingTests/bin/ApplicationTests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build ApplicationTests",
+            "windows": {
+                "type": "cppvsdbg",
+                "program": "${workspaceFolder}\\build\\FlingTests\\bin\\${command:cmake.buildType}\\ApplicationTests.exe"
             }
         }
     ]

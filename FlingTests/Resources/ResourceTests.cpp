@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#define CATCH_CONFIG_ENABLE_BENCHMARKING
 #include <catch2/catch_all.hpp>
 
 #include "Singleton.hpp"
@@ -10,8 +8,7 @@
 
 // @see TestConf.ini
 
-TEST_CASE("Engine Config File", "[resource]")
-{
+TEST_CASE("Engine Config File", "[resource]") {
     using namespace Fling;
     // Logger HAS to be initalized first
     Logger::Get().Init();
@@ -23,36 +20,30 @@ TEST_CASE("Engine Config File", "[resource]")
     bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(FlingPaths::EngineConfigDir() + "/TestConf.ini");
     REQUIRE(ConfigLoaded);
 
-    SECTION("Read False Bool")
-    {
+    SECTION("Read False Bool") {
         bool FalseFlag = FlingConfig::Get().GetBool("TestRead", "falseFlag");
         REQUIRE_FALSE(FalseFlag);
     }
 
-    SECTION("Read True Bool")
-    {
+    SECTION("Read True Bool") {
         bool TrueFlag = FlingConfig::Get().GetBool("TestRead", "trueFlag");
         REQUIRE(TrueFlag);
     }
 
-    SECTION("Positive Num Test")
-    {
+    SECTION("Positive Num Test") {
         int Num = FlingConfig::Get().GetInt("TestRead", "NumberTest");
         REQUIRE(Num == 42);
     }
 
-    SECTION("Negative Num Test")
-    {
+    SECTION("Negative Num Test") {
         int Num = FlingConfig::Get().GetInt("TestRead", "NegNumTest");
         REQUIRE(Num == -77);
     }
 
-    SECTION("String Test")
-    {
+    SECTION("String Test") {
         std::string Words = FlingConfig::Get().GetString("TestRead", "Words");
         REQUIRE(Words == "Billy Bob Joe");
     }
-
 
     ResourceManager::Get().Shutdown();
     Logger::Get().Shutdown();

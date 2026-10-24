@@ -45,8 +45,10 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   off. Its `main()` picks `Engine::Run<Game, Editor>` or `Engine::Run<Game>`
   with `WITH_EDITOR`. Separate game and editor targets come with
   [`Plans/project-model.md`](../Plans/project-model.md).
-- `FlingTests/` — Catch2 tests, link `Fling::GameStack` and `Fling::Physics`.
-  See [`testing.md`](testing.md).
+- `FlingTests/` — Catch2 tests, one executable per module that owns tests
+  (`CoreTests`, `ResourcesTests`, `EngineTests`, `PhysicsTests`,
+  `ApplicationTests`). Each links only `Fling::<Module>`. Graphics and Editor
+  have none. See [`testing.md`](testing.md).
 - `external/` — vendored third-party dependencies (submodules). Never modified.
 - `scripts/` — repo tooling (`check_comment_style.py`, the one-time
   `migrate_doxygen_comments.py` migration).
