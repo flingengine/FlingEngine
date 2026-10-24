@@ -1,0 +1,106 @@
+# Fling Engine first-time setup, shared by Init.sh and Init.bat.
+#
+# Run from anywhere with:
+#   cmake [-D<option>=<value>...] -P scripts/init.cmake [-- <args>...]
+#
+# Steps:
+#   1. Pull git submodules
+#   2. Build and install Catch2 to external/Catch2/install (where the root
+#      CMakeLists.txt looks for it), so the test executables can find it
+#   3. Configure CMake into build/
+#
+# Options (as -D before -P, or as -DFLING_INIT_...=... after --):
+#   FLING_INIT_CONFIGS          Catch2 configs to build (default "Debug;Release")
+#   FLING_INIT_SKIP_SUBMODULES  ON skips step 1 (e.g. CI already checked them out)
+#   FLING_INIT_SKIP_TESTS       ON skips step 2 and configures with FLING_BUILD_TESTS=OFF
+#   FLING_INIT_SKIP_CONFIGURE   ON skips step 3
+#
+# Any other args after -- are passed to the build/ configure, e.g.
+#   ./Init.sh -G Ninja -DCMAKE_BUILD_TYPE=Debug
+
+cmake_minimum_required( VERSION 3.21 )
+
+get_filename_component( FLING_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE )
+
+# Split args after -- into FLING_INIT_ options and args for the build/ configure
+set( _configure_args "" )
+set( _past_separator OFF )
+math( EXPR _last_arg "${CMAKE_ARGC} - 1" )
+foreach( _i RANGE ${_last_arg} )
+	set( _arg "${CMAKE_ARGV${_i}}" )
+	if( NOT _past_separator )
+		if( _arg STREQUAL "--" )
+			set( _past_separator ON )
+		endif()
+	elseif( _arg MATCHES "^-D(FLING_INIT_[A-Z_]+)=(.*)$" )
+		set( ${CMAKE_MATCH_1} "${CMAKE_MATCH_2}" )
+	else()
+		list( APPEND _configure_args "${_arg}" )
+	endif()
+endforeach()
+
+if( NOT DEFINED FLING_INIT_CONFIGS )
+	set( FLING_INIT_CONFIGS "Debug;Release" )
+endif()
+
+# Runs a command from the repo root, echoing it first and stopping on failure
+function( fling_init_run )
+	list( JOIN ARGN " " _pretty )
+	message( STATUS "> ${_pretty}" )
+	execute_process(
+		COMMAND ${ARGN}
+		WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+		COMMAND_ERROR_IS_FATAL ANY
+	)
+endfunction()
+
+message( "======================== Fling Engine init ========================" )
+
+# ---------- 1. Submodules ----------
+if( FLING_INIT_SKIP_SUBMODULES )
+	message( "-- Skipping submodules (FLING_INIT_SKIP_SUBMODULES)" )
+else()
+	message( "-- Initializing submodules..." )
+	find_program( GIT_EXECUTABLE git )
+	if( NOT GIT_EXECUTABLE )
+		message( FATAL_ERROR "git was not found on PATH. Install git and run this again." )
+	endif()
+	fling_init_run( "${GIT_EXECUTABLE}" submodule update --init --recursive )
+endif()
+
+# ---------- 2. Catch2 ----------
+if( FLING_INIT_SKIP_TESTS )
+	message( "-- Skipping Catch2 (FLING_INIT_SKIP_TESTS)" )
+	list( APPEND _configure_args "-DFLING_BUILD_TESTS=OFF" )
+else()
+	set( _catch2_src "${FLING_ROOT_DIR}/external/Catch2" )
+	set( _catch2_prefix "${_catch2_src}/install" )
+	# One build dir per config works for single-config (Make/Ninja) and multi-config
+	# (Visual Studio) generators alike. Debug libs get a "d" postfix, so every config
+	# can share one install prefix.
+	foreach( _config IN LISTS FLING_INIT_CONFIGS )
+		message( "-- Installing Catch2 (${_config})..." )
+		set( _catch2_build "${_catch2_src}/build-${_config}" )
+		# --no-warn-unused-cli: multi-config generators ignore CMAKE_BUILD_TYPE
+		fling_init_run( "${CMAKE_COMMAND}" -S "${_catch2_src}" -B "${_catch2_build}"
+			--no-warn-unused-cli
+			"-DCMAKE_BUILD_TYPE=${_config}"
+			"-DCMAKE_INSTALL_PREFIX=${_catch2_prefix}"
+			-DCMAKE_CXX_STANDARD=20
+			-DCMAKE_CXX_STANDARD_REQUIRED=ON
+			-DBUILD_TESTING=OFF
+		)
+		fling_init_run( "${CMAKE_COMMAND}" --build "${_catch2_build}" --config ${_config} --target install --parallel )
+	endforeach()
+endif()
+
+# ---------- 3. Configure build/ ----------
+if( FLING_INIT_SKIP_CONFIGURE )
+	message( "-- Skipping build/ configure (FLING_INIT_SKIP_CONFIGURE)" )
+else()
+	message( "-- Configuring build/..." )
+	fling_init_run( "${CMAKE_COMMAND}" -S "${FLING_ROOT_DIR}" -B "${FLING_ROOT_DIR}/build" ${_configure_args} )
+	message( "" )
+	message( "Done! Open FlingEngine.code-workspace in VS Code to build/run/debug" )
+	message( "the engine, Sandbox, and per-module test executables from the Run and Debug menu." )
+endif()

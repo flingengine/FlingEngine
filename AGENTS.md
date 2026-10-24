@@ -14,8 +14,10 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 ## Build
 
-- First time in a fresh clone: `./Init.sh` (Linux) / `Init.bat` (Windows). This pulls
-  git submodules, builds/installs Catch2 locally, and configures CMake into `build/`.
+- First time in a fresh clone: `./Init.sh` (Linux) / `Init.bat` (Windows). Both are
+  thin wrappers around `scripts/init.cmake`, which pulls git submodules, builds/installs
+  Catch2 locally, and configures CMake into `build/`. Change setup logic there, not in
+  the wrappers.
 - Day to day: reconfigure `build/` for the mode you want, e.g.
   `cmake -B build -DCMAKE_BUILD_TYPE=Debug`, then build with your generator
   (e.g. `cmake --build build --parallel`).

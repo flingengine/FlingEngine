@@ -144,7 +144,7 @@ add_subdirectory ( "FlingEngine" )
 
 # Tests are optional, so a build without them does not need Catch2
 if( FLING_BUILD_TESTS )
-    # Catch2 is installed locally by Init.sh (not system-wide) so find_package can locate it without sudo
+    # Catch2 is installed locally by scripts/init.cmake (not system-wide) so find_package can locate it without sudo
     list( APPEND CMAKE_PREFIX_PATH "${FLING_ROOT_DIR}/external/Catch2/install" )
     enable_testing()
     add_subdirectory ( "FlingTests" )
