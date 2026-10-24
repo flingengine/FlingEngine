@@ -3,6 +3,7 @@
 #include <random>
 #include "FlingMath.h"
 #include "FlingTypes.h"
+#include "FlingWarnings.h"
 
 namespace Fling
 {
@@ -88,7 +89,12 @@ namespace Fling
 		 * separate from the engine of every other RandomStream object. It
 		 * is separate from the engine of the Random class.
 		 */
+		// MSVC C4251: std::mt19937 has no dll-interface. It's a header-only
+		// template that clients instantiate themselves, so this is benign.
+		F_WARNING_PUSH
+		F_MSVC_DISABLE_WARNING(4251)
 		std::mt19937 m_Engine;
+		F_WARNING_POP
 	};
 
 	/**

@@ -20,13 +20,6 @@ namespace Fling
 		*/
 		Multisampler(LogicalDevice* t_Dev, VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
 
-		/**
-		* Initializes and creates this multi-sampler.
-		* @param t_Extents		The extents of the current swap chain
-		* @param t_Format		The same image format as your swap chain
-		*/
-        Multisampler(VkExtent2D t_Extents, VkFormat t_Format, VkSampleCountFlagBits t_SampleCount = VK_SAMPLE_COUNT_1_BIT);
-
         ~Multisampler();
 
         FORCEINLINE VkSampleCountFlagBits GetSampleCountFlagBits() const { return m_SampleCountBits; }
@@ -45,6 +38,6 @@ namespace Fling
 
 		/** The max sample count allowed on this device. Calculated in PhysicalDevice ctor */
         VkSampleCountFlagBits m_SampleCountBits = VK_SAMPLE_COUNT_1_BIT;
-		const LogicalDevice* m_Device;
+		const LogicalDevice* m_Device = nullptr;
     }; 
 }   // namespace Fling

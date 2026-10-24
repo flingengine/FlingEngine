@@ -28,7 +28,7 @@ namespace Fling
         * creation and destruction of them is maintained. Use Init and Shutdown to
         * handle initializing of singletons.
         */
-        explicit Singleton<T>() = default;
+        explicit Singleton() = default;
 
     };
 
