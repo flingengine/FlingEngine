@@ -33,11 +33,18 @@ namespace Fling
          */
         MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
 
+        /**
+         * Copy the model and the material only. The copy does not own the uniform buffer.
+         */
         MeshRenderer(const MeshRenderer& t_Other);
         MeshRenderer& operator=(const MeshRenderer& t_Other);
+
         MeshRenderer(MeshRenderer&& t_Other) noexcept;
         MeshRenderer& operator=(MeshRenderer&& t_Other) noexcept;
 
+        /**
+         * Free the uniform buffer. The model and the material stay with the resource manager.
+         */
         ~MeshRenderer();
 
         /** Pointer to the actual model  */

@@ -8,8 +8,8 @@ detail lives under [`Skills/`](Skills/) and is linked from the relevant section 
 
 Fling Engine is a cross-platform Vulkan game engine in C++, currently built as one
 CMake project with engine modules under `FlingEngine/` (Core, Resources, Engine, Graphics,
-Application, Editor, ...), a `Sandbox` game/editor, and a `FlingTests`
-Catch2 test target. See the root [README.md](README.md) for the project pitch and
+Application, Editor, ...), a `Sandbox` game/editor, and per-module Catch2
+test executables under `FlingTests/`. See the root [README.md](README.md) for the project pitch and
 platform setup (Vulkan SDK, GLFW, etc.).
 
 ## Build
@@ -24,10 +24,14 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 ## Tests
 
-- Tests use Catch2 3, target `FlingTests`, source under `FlingTests/src`.
+- Tests use Catch2 3. Each module that owns tests has an executable
+  (`CoreTests`, `ResourcesTests`, `EngineTests`, `PhysicsTests`,
+  `ApplicationTests`) built from `FlingTests/<Module>/`. Each links only that module.
 - Run them with CTest, e.g. `ctest --test-dir build` (add `-C <Debug|Release>` for
-  Visual Studio), or run `./build/FlingTests/bin/FlingTests` directly on Linux.
-  The `FLING_BUILD_TESTS` CMake option controls whether the target exists.
+  Visual Studio). That runs every `TEST_CASE` plus the isolation tests. On Linux
+  one executable is `./build/FlingTests/bin/<Module>Tests` (for example
+  `./build/FlingTests/bin/CoreTests`). The `FLING_BUILD_TESTS` CMake option
+  controls whether these executables exist.
 - Full detail, including how to add a new test file: [`Skills/testing.md`](Skills/testing.md).
 
 ## Coding style
@@ -64,7 +68,7 @@ into `Skills/`.
 
 - Branching: feature branches off `main`, PR back into `main` when done and tested.
 - CI (`.github/workflows/build.yml`) builds on Linux (GCC/Clang) and Windows
-  (MSVC/MinGW) and runs `FlingTests` plus the comment-style check on every PR —
+  (MSVC/MinGW) and runs the per-module Catch2 tests via CTest plus the comment-style check on every PR —
   make sure changes pass locally first.
 
 ## For Claude Code specifically

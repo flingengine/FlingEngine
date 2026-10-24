@@ -38,9 +38,13 @@ namespace Fling
 
 		void CleanUp(entt::registry& t_reg) override;
 
+		void OnSwapchainResized(entt::registry& t_reg) override;
+
 	private:
 
 		void PrepImGuiStyleSettings();
+
+		void CreateUiPipeline();
 
 		void PrepareResources();
 

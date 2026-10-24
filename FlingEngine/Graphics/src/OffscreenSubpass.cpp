@@ -393,7 +393,11 @@ namespace Fling
 		if (m_OffscreenFrameBuf)
 		{
 			m_OffscreenFrameBuf->ResizeAndRecreate(NewSize.width, NewSize.height);
+			// The offscreen render pass is new. Rebuild the pipeline that uses it.
+			CreateGraphicsPipeline();
 		}
+
+		(void)t_reg;
 	}
 
 	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
@@ -415,10 +419,5 @@ namespace Fling
 		
 		// I would love to create some descriptor sets here		
 		CreateMeshDescriptorSet(t_MeshRend);
-	}
-
-	void OffscreenSubpass::OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend)
-	{
-		//t_MeshRend.Release();
 	}
 }   // namespace Fling

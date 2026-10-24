@@ -344,12 +344,14 @@ namespace Fling
     {
         // Global Render pass
         vkDestroyRenderPass(m_LogicalDevice->GetVkDevice(), m_State->m_RenderPass, nullptr);
+        m_State->m_RenderPass = VK_NULL_HANDLE;
 
         // Frame buffers
         for (size_t i = 0; i < m_State->m_SwapChainFrameBuffers.size(); i++)
         {
             vkDestroyFramebuffer(m_LogicalDevice->GetVkDevice(), m_State->m_SwapChainFrameBuffers[i], nullptr);
         }
+        m_State->m_SwapChainFrameBuffers.clear();
 
         // Clean up command buffers and command pool -------------
         for (CommandBuffer* CmdBuf : m_DrawCmdBuffers)
@@ -462,14 +464,17 @@ namespace Fling
         VkResult iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
         uint32 ImageIndex = m_SwapChain->GetActiveImageIndex();
 
-        vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_State->m_InFlightFences[CurrentFrameIndex]);
-
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
             F_LOG_WARN("Swap chain out of date! ");
+            bNeedsResizing = false;
+            RecreateFrameResourcesForResize(t_Reg);
             return;
         }
-        else if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
+
+        vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_State->m_InFlightFences[CurrentFrameIndex]);
+
+        if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
         {
             F_LOG_FATAL("Failed to acquire swap chain image!");
         }

@@ -60,8 +60,6 @@ namespace Fling
 
 		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
 
-		void OnMeshRendererDestroyed(entt::registry& t_Reg, MeshRenderer& t_MeshRend);
-
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
 
 		void BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight);

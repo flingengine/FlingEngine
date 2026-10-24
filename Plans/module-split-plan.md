@@ -30,8 +30,8 @@ Do not re-open these while you implement the plan.
    copy of `Logger`, `ResourceManager`, `VulkanApp`, and so on.
 6. **No precompiled headers.** `pch.h` is not a real PCH and is deleted in
    Phase 1.
-7. **Tests are an optional target.** No engine or game target depends on
-   `FlingTests` or Catch2, and test-only engine code is compiled out of
+7. **Tests are optional.** No engine or game target depends on the test
+   executables or Catch2, and test-only engine code is compiled out of
    builds that do not need it (see [Tests](#tests)).
 8. **Module names.** `Engine` is the foundational world layer: `World`,
    `Level`, the `Game` base class, `Transform`, cameras, and the component type
@@ -69,8 +69,8 @@ Application) and `Fling::EditorStack` (`GameStack` + Editor).
 
 ## Phases
 
-Each phase must leave Sandbox (both executables, after Phase 3) and FlingTests
-building and passing on every CI platform.
+Each phase must leave Sandbox (both executables, after Phase 3) and the
+per-module test executables building and passing on every CI platform.
 
 ### Phase 0: Infrastructure and Core tree (done)
 
@@ -161,8 +161,8 @@ The `Gameplay` module named here is now the `Engine` module (Phase 2.5).
   (`PUBLIC_DEPS Engine Graphics`) are `fling_add_module()` targets. The old
   `FlingEngine` library is gone: every folder under `FlingEngine/` is a module.
 - `Fling::GameStack` (everything except Editor) and `Fling::EditorStack`
-  (`GameStack` + Editor) are the INTERFACE targets that Sandbox and FlingTests
-  link.
+  (`GameStack` + Editor) are the INTERFACE targets that Sandbox links. The
+  per-module test executables link one module each (see [Tests](#tests)).
 - Editor-free debug-UI hook: `IDebugUI` (`Graphics/inc/IDebugUI.h`) has
   `Init(registry, world, game)` and `Draw(registry, dt)`. `VulkanApp::Init` and
   `ImGuiSubpass` take an `IDebugUI`. `BaseEditor` implements it; its `Init`
@@ -194,8 +194,9 @@ phase P2), not done here:
 - `FlingEngine/Physics` (`PUBLIC_DEPS Core Engine`) is a stub module: a
   `RigidBody` component and `Physics::Step()`, which moves each `Transform` by
   its velocity. It is not called from the engine loop yet.
-- `PhysicsTests.cpp` tests `Physics::Step()`. The isolation test
-  `PhysicsCannotSeeGraphics` proves that Graphics headers are not reachable.
+- `FlingTests/Physics/PhysicsTests.cpp` (`PhysicsTests`) tests `Physics::Step()`.
+  The isolation test `PhysicsCannotSeeGraphics` proves that Graphics headers
+  are not reachable.
 
 ## Tests
 
@@ -204,25 +205,31 @@ need tests contain no test code and do not need Catch2.
 
 Done in Phase 0.5:
 
-- `FLING_BUILD_TESTS` controls whether `FlingTests` exists.
+- `FLING_BUILD_TESTS` controls whether the test executables are added.
 - `ctest --test-dir build` runs each Catch2 `TEST_CASE` as a CTest test.
 - Test-only engine code (`ComponentTypeRegistry::ResetForTests()`) is behind
   `FLING_WITH_TEST_HOOKS`, set on the owning module only when
   `FLING_BUILD_TESTS` is ON (Phase 2).
 - Module isolation tests (`fling_add_isolation_test` in
-  `FlingTests/CMakeLists.txt`) run under CTest (Phase 2).
+  `FlingTests/CMakeLists.txt`) run under CTest (Phase 2). They stay as they
+  are: one header, one module, separate from the Catch2 executables.
 - CI runs `ctest` (with `--no-tests=error`, so a broken test registration
   fails the job) instead of per-platform binary paths.
 - CI has a Linux shipping job that builds with `FLING_BUILD_TESTS` at its
   default (OFF) and with Catch2 disabled, to prove that a shipping build does
   not need it.
 
-Still to do:
+Per-module executables (done):
 
-- **Per-module test targets.** Consider one test executable per module
-  (`CoreTests`, `EngineTests`, ...) that links only that module, to keep test
-  relinks small. The isolation tests already prove the module boundaries, so
-  this is optional.
+- `CoreTests`, `ResourcesTests`, `EngineTests`, `PhysicsTests`, and
+  `ApplicationTests`. Each links Catch2 (`Catch2::Catch2WithMain`) and only
+  `Fling::<Module>`. Public dependencies of that module come along
+  transitively, so a Graphics change does not relink `CoreTests`.
+- Graphics and Editor have no test executable. They have no real tests.
+- `ctest --test-dir build` runs every `TEST_CASE` from those executables and
+  the isolation tests. Sources live in `FlingTests/<Module>/*.cpp`, picked up
+  by `fling_add_module_tests` (`CONFIGURE_DEPENDS`). An empty glob adds no
+  target.
 
 ## Success criteria
 
@@ -234,8 +241,8 @@ Still to do:
   one configure come with the project model plan.)
 - Physics (stub) compiles against Core and Engine without Vulkan on its
   include path or link line.
-- FlingTests pass. A shipping build with tests OFF contains no test hooks and
-  does not need Catch2.
+- The per-module test executables pass. A shipping build with tests OFF
+  contains no test hooks and does not need Catch2.
 
 ## Non-goals
 

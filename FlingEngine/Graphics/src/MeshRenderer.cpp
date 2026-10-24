@@ -13,34 +13,17 @@ namespace Fling
     MeshRenderer::MeshRenderer(const MeshRenderer& t_Other)
         : m_Model(t_Other.m_Model),
           m_Material(t_Other.m_Material),
-          m_UniformBuffer(t_Other.m_UniformBuffer),
-          m_GpuState(t_Other.m_GpuState ? new GpuState(*t_Other.m_GpuState) : nullptr)
+          m_UniformBuffer(nullptr),
+          m_GpuState(nullptr)
     {
     }
 
     MeshRenderer& MeshRenderer::operator=(const MeshRenderer& t_Other)
     {
-        if (this == &t_Other)
+        if (this != &t_Other)
         {
-            return *this;
-        }
-
-        m_Model = t_Other.m_Model;
-        m_Material = t_Other.m_Material;
-        m_UniformBuffer = t_Other.m_UniformBuffer;
-
-        if (t_Other.m_GpuState != nullptr)
-        {
-            if (m_GpuState == nullptr)
-            {
-                m_GpuState = new GpuState();
-            }
-            *m_GpuState = *t_Other.m_GpuState;
-        }
-        else
-        {
-            delete m_GpuState;
-            m_GpuState = nullptr;
+            m_Model = t_Other.m_Model;
+            m_Material = t_Other.m_Material;
         }
         return *this;
     }
@@ -51,29 +34,37 @@ namespace Fling
           m_UniformBuffer(t_Other.m_UniformBuffer),
           m_GpuState(t_Other.m_GpuState)
     {
+        t_Other.m_Model = nullptr;
+        t_Other.m_Material = nullptr;
+        t_Other.m_UniformBuffer = nullptr;
         t_Other.m_GpuState = nullptr;
     }
 
     MeshRenderer& MeshRenderer::operator=(MeshRenderer&& t_Other) noexcept
     {
-        if (this == &t_Other)
+        if (this != &t_Other)
         {
-            return *this;
-        }
+            m_Model = t_Other.m_Model;
+            m_Material = t_Other.m_Material;
 
-        delete m_GpuState;
-        m_Model = t_Other.m_Model;
-        m_Material = t_Other.m_Material;
-        m_UniformBuffer = t_Other.m_UniformBuffer;
-        m_GpuState = t_Other.m_GpuState;
-        t_Other.m_GpuState = nullptr;
+            if (t_Other.m_UniformBuffer != nullptr)
+            {
+                Release();
+                m_UniformBuffer = t_Other.m_UniformBuffer;
+                m_GpuState = t_Other.m_GpuState;
+                t_Other.m_UniformBuffer = nullptr;
+                t_Other.m_GpuState = nullptr;
+            }
+
+            t_Other.m_Model = nullptr;
+            t_Other.m_Material = nullptr;
+        }
         return *this;
     }
 
     MeshRenderer::~MeshRenderer()
     {
-        delete m_GpuState;
-        m_GpuState = nullptr;
+        Release();
     }
 
     std::string MeshRenderer::GetModelGuidString() const
@@ -118,6 +109,8 @@ namespace Fling
     {
         delete m_UniformBuffer;
         m_UniformBuffer = nullptr;
+        delete m_GpuState;
+        m_GpuState = nullptr;
     }
 
     bool MeshRenderer::operator==(const MeshRenderer& other) const

@@ -14,6 +14,7 @@
 #include "FirstPersonCamera.h"
 #include "Components/Transform.h"
 #include "VulkanApp.h"
+#include "VulkanAppState.h"
 
 namespace Fling
 {
@@ -271,16 +272,13 @@ namespace Fling
 
 	void GeometrySubpass::OnSwapchainResized(entt::registry& t_reg)
 	{
-		//// Update the render pass to have the good swap chain size
-		//m_GlobalRenderPass = VulkanApp::Get().GetGlobalRenderPass();
+		m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
+		CreateGraphicsPipeline();
 
-		//// Recreate graphics pipeline to have that new reference
-		//DestroyGraphicsPipeline();
-		//InitalizeGraphicsPipeline();
-		//CreateGraphicsPipeline();
-
-		//// Now create the descriptor sets, which are dependent on the newly updated offscreen frame buffer
-		//CreateDescriptorSets(m_DescPool, t_reg);
+		if (m_DescPool != VK_NULL_HANDLE)
+		{
+			CreateDescriptorSets(m_DescPool, t_reg);
+		}
 	}
 
 	void GeometrySubpass::OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
