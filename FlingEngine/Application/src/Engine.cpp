@@ -60,27 +60,26 @@ namespace Fling
 		VulkanApp::Get().Init(
 			static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
 			g_Registry,
-			m_Editor
+			m_DebugUI
 		);
 
 		RegisterEngineComponents();
 		RegisterGraphicsComponents();
-		
-		// Set the editor if we need to
-#if WITH_EDITOR
-		m_Editor->RegisterComponents(g_Registry);
-#endif
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
-		
-#if WITH_EDITOR
-		m_Editor->m_OwningWorld = m_World;
-		m_Editor->m_Game = m_GameImpl;
-		F_LOG_TRACE("Fling Editor: Enabled");
-#else
-		F_LOG_TRACE("Fling Editor: Disabled");
-#endif
+
+		// Before World::Init() seals the component type registry, so developer UI
+		// (the editor) can still attach to component types
+		if (m_DebugUI)
+		{
+			m_DebugUI->Init(g_Registry, m_World, m_GameImpl);
+			F_LOG_TRACE("Fling debug UI: Enabled");
+		}
+		else
+		{
+			F_LOG_TRACE("Fling debug UI: Disabled");
+		}
 
 		Input::PreUpdate();
 	}

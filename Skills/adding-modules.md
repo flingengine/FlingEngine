@@ -6,10 +6,8 @@ globs in the root CMakeLists, a hand-rolled `*_API` header, or edits under
 `external/`).
 
 `fling_add_module()` lives in [`CMake/FlingModule.cmake`](../CMake/FlingModule.cmake).
-Core, Resources, and Engine are modules built this way. Graphics, Editor, and
-Application are still compiled into the `FlingEngine` library by a glob. That
-glob skips every folder under `FlingEngine/` that has its own `CMakeLists.txt`,
-so a new module's sources are never built twice.
+Every folder under `FlingEngine/` is a module built this way: Core, Resources,
+Engine, Physics, Graphics, Application, and Editor.
 
 ## What you add
 
@@ -23,8 +21,8 @@ A module is:
 5. `target_link_libraries(Consumer PRIVATE Fling::ModuleName)` on anything that
    should see that module's headers.
 
-You do not list `.cpp` files by hand. You do not edit the old engine-wide glob:
-adding the folder's `CMakeLists.txt` removes it from that glob.
+You do not list `.cpp` files by hand. If games should get the module by
+default, add it to `Fling::GameStack` in `FlingEngine/CMakeLists.txt`.
 
 Also add isolation tests for the new module (see
 [`testing.md`](testing.md#module-isolation-tests)): one that its headers compile

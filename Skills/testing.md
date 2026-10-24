@@ -2,7 +2,7 @@
 
 Fling Engine uses [Catch2 3](https://github.com/catchorg/Catch2) for first-party
 tests. The test target is `FlingTests`, built from `FlingTests/src`, and links the
-full `FlingEngine` library, so tests can exercise real engine
+whole engine except the editor (`Fling::GameStack`, plus `Fling::Physics`), so tests can exercise real engine
 code, not just isolated units.
 
 ## Running tests

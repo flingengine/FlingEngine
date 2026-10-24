@@ -2,6 +2,7 @@
 
 #include <imgui.h>
 #include <entt/entity/registry.hpp>
+#include "IDebugUI.h"
 #include "WorldOutlinePanel.h"
 #include "EntityEditorPanel.h"
 #include <array>
@@ -12,13 +13,14 @@ namespace Fling
     /**
      * The BaseEditor of the Fling Engine. Draw and add any game specifc Editor UI tools here
      */
-    class BaseEditor
+    class BaseEditor : public IDebugUI
     {
-        friend class Engine;
-
     public:
         BaseEditor() = default;
         virtual ~BaseEditor() = default;
+
+        /** Keeps the world and game, then calls RegisterComponents(). */
+        void Init(entt::registry& t_Reg, World* t_World, Game* t_Game) override;
 
 		/** Register  */
 		virtual void RegisterComponents(entt::registry& t_Reg);
@@ -26,7 +28,7 @@ namespace Fling
         /**
          * Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
          */
-        virtual void Draw(entt::registry& t_Reg, float DeltaTime);
+        void Draw(entt::registry& t_Reg, float DeltaTime) override;
 
         // #TODO: Init and shutdown functions
 

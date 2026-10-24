@@ -145,6 +145,13 @@ namespace Fling
         }
     }
 
+    void BaseEditor::Init(entt::registry& t_Reg, World* t_World, Game* t_Game)
+    {
+        m_OwningWorld = t_World;
+        m_Game = t_Game;
+        RegisterComponents(t_Reg);
+    }
+
     void BaseEditor::RegisterComponents(entt::registry& t_Reg)
     {
         (void)t_Reg;

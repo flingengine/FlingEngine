@@ -1,3 +1,6 @@
+// Only built with ImGui. VulkanApp creates this subpass only when WITH_IMGUI is on.
+#if WITH_IMGUI
+
 #include "ImGuiSubpass.h"
 #include "FrameBuffer.h"
 #include "CommandBuffer.h"
@@ -10,7 +13,7 @@
 #include "UniformBufferObject.h"
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
-#include "BaseEditor.h"
+#include "IDebugUI.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -25,12 +28,12 @@ namespace Fling
 		entt::registry& t_reg,
 		FlingWindow* t_Window,
 		VkRenderPass t_GlobalRenderPass,
-		std::shared_ptr<Fling::BaseEditor> t_Editor,
+		std::shared_ptr<Fling::IDebugUI> t_DebugUI,
 		std::shared_ptr<Fling::Shader> t_Vert,
 		std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 		, m_Window(t_Window)
-		, m_Editor(t_Editor)
+		, m_DebugUI(t_DebugUI)
 		, m_GlobalRenderPass(t_GlobalRenderPass)
 	{
 		assert(m_Window);
@@ -74,9 +77,9 @@ namespace Fling
 	{
 		ImGui::NewFrame();
 
-		if (m_Editor)
+		if (m_DebugUI)
 		{
-			m_Editor->Draw(t_reg, DeltaTime);
+			m_DebugUI->Draw(t_reg, DeltaTime);
 		}
 
 		ImGui::Render();
@@ -490,3 +493,5 @@ namespace Fling
 		m_indexBuffer->Flush(VK_WHOLE_SIZE, 0);
 	}
 }   // namespace Fling
+
+#endif	// WITH_IMGUI

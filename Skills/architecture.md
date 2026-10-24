@@ -24,20 +24,29 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   Graphics, Editor, or Application headers. Actual gameplay systems (AI,
   abilities, ...) do not go here: they get their own modules that depend on
   Engine. The name `Gameplay` is reserved for those.
-- The rest of `FlingEngine/` (`Application`, `Graphics`, `Editor`) is still one
-  CMake library (`FlingEngine`) built by glob. It links the modules above and
-  exposes its folders' `inc/` dirs as `PUBLIC` include paths, so those three
-  folders are not isolated from each other yet.
-  `Application/` is the top-level startup layer: `Engine.h`/`Engine.cpp`
+- `FlingEngine/Physics` — the `Physics` module (depends on Core and Engine). A
+  stub today. It cannot include Graphics headers.
+- `FlingEngine/Graphics` — the `Graphics` module (depends on Core, Resources, and
+  Engine): the Vulkan renderer, window, GPU resources, render components
+  (`MeshRenderer`, lights), and the GLFW input backends (`LinuxInput`,
+  `WindowsInput`, keycodes). Developer UI plugs in through `IDebugUI`, so
+  Graphics never includes Editor headers.
+- `FlingEngine/Application` — the `Application` module (depends on Engine and
+  Graphics): the top-level startup layer. `Engine.h`/`Engine.cpp`
   (`Engine::Run`, the main loop) and `FlingEngine.h`. It boots a game client,
-  server, test, or editor application. The GLFW input
-  backends (`LinuxInput`, `WindowsInput`, keycodes) live in `Graphics/`, next to
-  the window.
-- `Sandbox/` — the sample game + editor, one executable today (editor support is
-  toggled by a project-wide `WITH_EDITOR` define; a planned follow-up splits
-  this into two separate executables).
-- `FlingTests/` — Catch2 tests, links the full `FlingEngine` library. See
-  [`testing.md`](testing.md).
+  server, test, or editor application. Only a game's `main()` includes it.
+- `FlingEngine/Editor` — the `Editor` module (depends on Engine and Graphics):
+  `BaseEditor` and its panels. A leaf: built only when `WITH_EDITOR_FLAG` is ON,
+  and only editor builds link it.
+- Games link `Fling::GameStack` (every module except Editor). Editors link
+  `Fling::EditorStack` (`GameStack` + Editor).
+- `Sandbox/` — the sample game + editor, one executable today. It links
+  `Fling::EditorStack` when the editor is on and `Fling::GameStack` when it is
+  off. Its `main()` picks `Engine::Run<Game, Editor>` or `Engine::Run<Game>`
+  with `WITH_EDITOR`. Separate game and editor targets come with
+  [`Plans/project-model.md`](../Plans/project-model.md).
+- `FlingTests/` — Catch2 tests, link `Fling::GameStack` and `Fling::Physics`.
+  See [`testing.md`](testing.md).
 - `external/` — vendored third-party dependencies (submodules). Never modified.
 - `scripts/` — repo tooling (`check_comment_style.py`, the one-time
   `migrate_doxygen_comments.py` migration).
