@@ -89,17 +89,28 @@ building and passing on every CI platform.
 
 ### Phase 1: Core as a real module
 
-- Core becomes a `fling_add_module(Core)` target. It contains everything under
-  `Core/` except `Engine.h`, `Engine.cpp`, and `FlingEngine.h`, which stay in
-  the monolith until Phase 3.
-- The rest of the engine stays one library that links `Fling::Core`.
 - Remove `pch.h`. Each file includes only the headers it uses.
   `F_ENABLE_LOGGING` and the window-size defaults move to `BuildConfig.h`.
   `Platform.h` stops including `DesktopWindow.h` and the input headers.
   (Done on branch `chore/remove-pch`.)
-- Replace the include of `ImGuiInputBinding.hpp` from Core's input code with a
-  hook that Graphics registers, so that Core has no ImGui dependency.
-- Mark cross-module types with `CORE_API`.
+- Core is a `fling_add_module(Core)` target (`FlingEngine/Core/CMakeLists.txt`).
+  The rest of the engine stays one library that links `Fling::Core`, with
+  `Core/` excluded from its glob. (Done on branch `chore/core-module`.)
+  To get there:
+  - `Engine.h`, `Engine.cpp`, and `FlingEngine.h` moved to
+    `FlingEngine/Engine/` now instead of in Phase 3.
+  - `FlingPaths` (and the generated `FlingAssetPaths.cpp`) moved from Resources
+    to Core, because `Logger` needs the log directory.
+  - The GLFW input backends (`LinuxInput`, `WindowsInput`, keycodes) moved to
+    Graphics, next to `DesktopWindow`. The abstract `Input` class (key maps,
+    bindings) stays in Core. This replaces the planned ImGui hook: Core has no
+    GLFW, ImGui, or Vulkan code to hook.
+  - `GitVersion.h` is generated into Core's build dir.
+  - `WITH_IMGUI`, `WITH_EDITOR`, and `FLING_SHIPPING` are PUBLIC definitions on
+    Core.
+- Core types use `CORE_API` instead of `FLING_API`. `Singleton<T>` is a
+  header-only template and is not marked. With static modules (locked decision
+  5) `CORE_API` is empty; proving the exports work waits for `SHARED`.
 
 ### Phase 2: Resources, then Gameplay
 

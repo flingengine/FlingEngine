@@ -6,6 +6,7 @@
 #include <chrono>
 #include "Platform.h"
 #include "Singleton.hpp"
+#include "CoreAPI.h"
 
 namespace Fling
 {
@@ -28,17 +29,17 @@ namespace Fling
 		*/
 		void UpdateFps();
 
-		float FLING_API GetDeltaTime();
+		float CORE_API GetDeltaTime();
 
 		/**
 		 * Get the current time of the application (double)
 		 */
-		double FLING_API GetTime() const;
+		double CORE_API GetTime() const;
 
 		/**
 		 * Get the current time of the application (float)
 		 */
-		float FLING_API GetTimef() const
+		float CORE_API GetTimef() const
 		{
 			return static_cast<float>( GetTime() );
 		}
@@ -46,27 +47,27 @@ namespace Fling
 		/**
 		 * Get the time that that frame has started
 		 */
-		float FLING_API GetFrameStartTime() const { return m_frameStartTimef; }
+		float CORE_API GetFrameStartTime() const { return m_frameStartTimef; }
 
 		/**
 		 * Get the time that the application has started
 		 */
-		double FLING_API GetStartTime() const { return m_startTime; }
+		double CORE_API GetStartTime() const { return m_startTime; }
 
 		/**
 		 * Get the time since that application has started (i.e. time running)
 		 */
-		float FLING_API GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
+		float CORE_API GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
 
 		/**
 		 * Get fps count
 		 */
-		int FLING_API GetFrameCount() const { return m_fpsFrameCount; }
+		int CORE_API GetFrameCount() const { return m_fpsFrameCount; }
 
 		/**
 		 * Get current frame time
 		 */
-		float FLING_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
+		float CORE_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
 
 	private:
 

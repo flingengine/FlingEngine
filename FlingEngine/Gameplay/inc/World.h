@@ -9,6 +9,7 @@
 #include <string>
 
 #include <entt/entity/registry.hpp>
+#include "Platform.h"
 
 namespace Fling
 {

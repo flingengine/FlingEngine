@@ -1,38 +1,8 @@
 
 project ( "FlingEngine" VERSION 1.0 )
 
-#### Setup Git version numbers ######
-execute_process(
-    COMMAND git rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-# Get the latest abbreviated commit hash of the working branch
-execute_process(
-    COMMAND git log -1 --format=%h
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_COMMIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-
-message( STATUS "Generated git file is : ${GENERATED_INC_FOLDER}/GitVersion.h" )
-
-# Configure my generated files from cmake 
-configure_file(
-    Core/inc/GitVersion_TEMPLATE.h.in
-    ${GENERATED_INC_FOLDER}/GitVersion.h
-)
-
-set ( FLING_ENGINE_SOURCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" )
-
-# Generate the asset path stuff 
-configure_file(
-    Resources/src/FlingAssetPaths.cpp.in
-    ${GENERATED_INC_FOLDER}/FlingAssetPaths.cpp
-)
+# Modules split out of the monolith so far (see Skills/module-split-plan.md)
+add_subdirectory( Core )
 
 ##################### Linking #################
 
@@ -52,15 +22,11 @@ set ( LINK_LIBS
     spirv-cross-core 
     spirv-cross-cpp
     spirv-cross-reflect
-    Threads::Threads
-    FlingExt::glm
-    FlingExt::spdlog
+    Fling::Core
     FlingExt::inih
-    FlingExt::entt
     FlingExt::json
     FlingExt::stb
     FlingExt::tinyobjloader
-    FlingExt::cereal
 )
 
 IF( WITH_IMGUI_FLAG )
@@ -89,8 +55,10 @@ message( STATUS "LINK_LIBS is : " ${LINK_LIBS} )
 
 ### Source files (VS filters are set up by fling_configure_target) ###
 file( GLOB_RECURSE _source_list
-    *.cpp* src/*.h* src/*.hpp* *.h* ${GENERATED_INC_FOLDER}/*.h ${GENERATED_INC_FOLDER}/*.cpp *.inl
+    *.cpp* src/*.h* src/*.hpp* *.h* *.inl
 )
+# Module folders build as their own targets
+list( FILTER _source_list EXCLUDE REGEX "^${CMAKE_CURRENT_SOURCE_DIR}/Core/" )
 
 ################# Add library and link ######################
 
@@ -100,23 +68,17 @@ fling_configure_target( ${PROJECT_NAME} )
 # Make sure the compiler can find include files for our Engine library
 target_include_directories( ${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Engine/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/Graphics/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/Resources/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/Gameplay/inc
-    ${GENERATED_INC_FOLDER}     # Generated include files that cmake will handle (i.e. GitVersion)
 )
 
 if( WITH_EDITOR_FLAG )
     target_include_directories( ${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Editor/inc )
 endif()
 
-# Feature flags are read from engine headers, so consumers need them too
-target_compile_definitions( ${PROJECT_NAME} PUBLIC
-    WITH_IMGUI=$<BOOL:${WITH_IMGUI_FLAG}>
-    WITH_EDITOR=$<BOOL:${WITH_EDITOR_FLAG}>
-    $<$<BOOL:${DEFINE_SHIPPING}>:FLING_SHIPPING>
-)
+# Feature flags (WITH_IMGUI, WITH_EDITOR, FLING_SHIPPING) come from Fling::Core
 
 # link against the libs that the engine needs
 target_link_libraries( ${PROJECT_NAME} PUBLIC ${LINK_LIBS} )
