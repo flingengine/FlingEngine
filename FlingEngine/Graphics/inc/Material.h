@@ -4,6 +4,9 @@
 #include "Texture.h"
 #include "JsonFile.h"
 #include "ShaderPrograms/ShaderProgram.h"
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 namespace Fling
 {

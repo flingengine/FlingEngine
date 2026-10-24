@@ -2,6 +2,7 @@
 
 #include "Platform.h"
 #include "FlingTypes.h"
+#include <string>
 
 namespace Fling
 {

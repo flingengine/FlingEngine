@@ -4,6 +4,7 @@
 #include "Buffer.h"
 #include "DirectionalLight.hpp"
 #include "PointLight.hpp"
+#include <vector>
 
 namespace Fling
 {

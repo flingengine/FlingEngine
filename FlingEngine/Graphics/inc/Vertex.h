@@ -2,6 +2,7 @@
 
 #include "FlingVulkan.h"
 #include "FlingMath.h"
+#include <array>
 
 namespace Fling
 {

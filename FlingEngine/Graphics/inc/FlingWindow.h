@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "NonCopyable.hpp"
+#include <string>
 
 namespace Fling
 {

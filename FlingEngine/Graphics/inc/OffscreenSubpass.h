@@ -2,6 +2,8 @@
 
 #include "Subpass.h"
 #include "FlingMath.h"
+#include <memory>
+#include <vector>
 
 namespace Fling
 {

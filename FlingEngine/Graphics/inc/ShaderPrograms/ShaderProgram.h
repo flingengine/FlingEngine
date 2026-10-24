@@ -6,6 +6,8 @@
 #include "MultiSampler.h"
 
 #include <vector>
+#include <memory>
+#include <string>
 
 namespace Fling
 {

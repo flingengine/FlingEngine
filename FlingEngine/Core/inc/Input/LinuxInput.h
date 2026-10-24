@@ -5,6 +5,7 @@
 #if FLING_LINUX
 
 #include "LinuxKeycodes.h"
+#include <string>
 
 namespace Fling
 {

@@ -2,6 +2,7 @@
 
 #include "Game.h"
 #include "FlingMath.h"
+#include <string>
 
 namespace Sandbox
 {

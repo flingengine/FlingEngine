@@ -4,6 +4,8 @@
 #include <entt/entity/registry.hpp>
 #include "WorldOutlinePanel.h"
 #include "EntityEditorPanel.h"
+#include <array>
+#include <string>
 
 namespace Fling
 {

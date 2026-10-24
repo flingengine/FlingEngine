@@ -3,6 +3,7 @@
 #include "Shader.h"
 #include "Vertex.h"
 #include "MultiSampler.h"
+#include <vector>
 
 namespace Fling
 {
