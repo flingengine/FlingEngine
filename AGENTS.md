@@ -65,6 +65,14 @@ into `Skills/`.
 - How game projects use the engine (project descriptor, Game/Editor/Server
   targets, headless runs, project tooling):
   [`Plans/project-model.md`](Plans/project-model.md).
+- How agents and scripts run, test, and edit the engine (headless deterministic
+  runs, input record and replay, scenario tests, command layer, CLI/Python/MCP):
+  [`Plans/improve-ai-iteration.md`](Plans/improve-ai-iteration.md).
+- Timing API and fixed-tick loop (SimTick, tick sources, frame publishing for
+  render interpolation and rollback): [`Plans/improve-time.md`](Plans/improve-time.md).
+- Input events, the input thread, and per-tick input (timestamped event ring,
+  readers, gamepad polling, input contexts, render-side look):
+  [`Plans/improve-input.md`](Plans/improve-input.md).
 
 ## Contribution conventions
 

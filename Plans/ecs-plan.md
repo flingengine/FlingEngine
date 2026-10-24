@@ -25,7 +25,7 @@ This document covers both parts: the ideal design (Part 1) and the migration tha
 ## 1.1 Rules of engagement (Overwatch, enforced in review)
 
 1. **Components have state and no functions. Systems have functions and no state.** A component is a plain struct. Allowed extras: small accessors, plus lifetime hooks declared in its type registration (not on the struct). (Ford 01:00, 03:35)
-2. **System state lives in singleton components**, reached through the world and never through a global. Examples: `SingletonInput`, `SingletonTime`, `SingletonContactQueue`. (11:47)
+2. **System state lives in singleton components**, reached through the world and never through a global. Examples: `InputState`, `SimTime`, `ContactQueue`. (11:47) Type names have no `Singleton` prefix; the registration and `world.Singleton<T>()` already say what the type is.
 3. **Systems never call systems.** Shared behavior goes in `*Util` free functions. Many call sites → reads few components, no side effects. Many side effects → few call sites. (14:55, 16:32)
 4. **Defer big side effects.** Callers push to a queue singleton. One resolver system drains it at one point in the frame. (18:10, 20:35)
 5. **Explicit tuples with read/write access.** The scheduler reads them to order systems and, later, to run them in parallel. (43:27)
@@ -160,12 +160,12 @@ public:
         decl.RunIn(Fling::WorldMode::Play);
         decl.Write<Fling::Transform>();
         decl.Read<Mover>();
-        decl.Read<Fling::SingletonTime>();
+        decl.Read<Fling::SimTime>();
     }
 
     void Update(Fling::SystemContext& ctx) const override
     {
-        const float dt = ctx.Singleton<const Fling::SingletonTime>().FixedDelta;
+        const float dt = ctx.Singleton<const Fling::SimTime>().FixedDelta();
 
         for (auto [entity, transform, mover] : ctx.Query<Fling::Transform, const Mover>())
         {
@@ -233,7 +233,7 @@ enum class Phase : uint8_t
     Simulation,
     ResolveDeferred,
     PostSimulation,
-    PresentationPrep,
+    Extract,
     Editor,
     Count
 };
@@ -287,9 +287,8 @@ private:
 
 struct SchedulerConfig
 {
-    float FixedStep = 1.0f / 60.0f;
-    /** Caps the simulation while-loop so a long hitch cannot spiral. */
-    int MaxStepsPerFrame = 8;
+    /** The tick rate at startup. The tick clock owns pacing (see improve-time.md). */
+    TickRate Rate;
 };
 
 class Scheduler
@@ -304,16 +303,14 @@ public:
         SchedulerConfig config,
         std::vector<ScheduleError>& errors);
 
-    /** One frame: loads, Input, an optional resim, the fixed step, then presentation. */
-    void RunFrame(World& world, float frameDt);
+    /** One frame: loads, an optional resim, the due ticks, then extract and editor. */
+    void RunFrame(World& world, TickClock& clock, int64 nowNs);
 
     const Schedule& GetSchedule() const { return m_Schedule; }
 
 private:
     Schedule m_Schedule;
-    float m_FixedStep = 1.0f / 60.0f;
-    int m_MaxStepsPerFrame = 8;
-    float m_Accumulator = 0.0f;
+    int64 m_LastFrameNs = 0;
 };
 ```
 
@@ -327,7 +324,7 @@ private:
 | A `Write<X>`, B `Write<X>` | error when their `RunIn` masks overlap, unless one names the other with `After` or `Before` |
 | `After` / `Before` | that edge replaces the inferred one between those two systems |
 
-`SingletonTime` is reserved. `RunFrame` writes it. A system that `Write`s it is a build error. Systems only `Read` it. Two writers of any other component are an error when their `RunIn` masks overlap and neither orders the other. The same component written from two different phases is allowed, because the phase order already sequences those writes.
+`SimTime` and `RealFrameTime` are reserved. `RunFrame` writes them. A system that `Write`s either one is a build error. Systems only `Read` them. A system in `Simulation` or `ResolveDeferred` that declares `Read<RealFrameTime>` is also a build error, so the sim cannot depend on frame time (see [`improve-time.md`](improve-time.md)). Two writers of any other component are an error when their `RunIn` masks overlap and neither orders the other. The same component written from two different phases is allowed, because the phase order already sequences those writes.
 
 `Build` then runs Kahn's algorithm per phase:
 
@@ -349,47 +346,45 @@ The engine owns one `World`. Edit and play are a mode on it. Pressing Play store
 `RunFrame` is the whole tick. Phases stay the schedule from `Declare`. Games do not add phases.
 
 ```cpp
-void Scheduler::RunFrame(World& world, float frameDt)
+void Scheduler::RunFrame(World& world, TickClock& clock, int64 nowNs)
 {
-    SingletonTime& time = world.Singleton<SingletonTime>();
-    time.FrameDelta = frameDt;
-    time.FixedDelta = m_FixedStep;
+    SimTime& time = world.Singleton<SimTime>();
+    RealFrameTime& frameTime = world.Singleton<RealFrameTime>();
+    frameTime.RealDelta = float(nowNs - m_LastFrameNs) / 1e9f;
+    ++frameTime.Frame;
+    m_LastFrameNs = nowNs;
 
     world.ApplyCompletedLoads();
-    RunPhase(world, Phase::Input, SimPass::Live);
 
     if (ResimRequest request = world.TakeResim())
     {
         RestorePredicted(world, request);
-        for (CommandFrame frame : request.Replay)
+        for (const TickCommands& commands : request.Replay)
         {
-            world.BindReplayInput(frame);
+            world.BindReplayInput(commands);
             RunPhase(world, Phase::Simulation, SimPass::Resim);
             RunPhase(world, Phase::ResolveDeferred, SimPass::Resim);
         }
     }
 
-    if (world.Mode() == WorldMode::Play && !world.Paused())
+    // Pause, time scale, step requests, and the hitch clamp live in the clock.
+    const uint32 ticks = (world.Mode() == WorldMode::Play) ? clock.TicksDue(time.Tick) : 0;
+    for (uint32 i = 0; i < ticks; ++i)
     {
-        m_Accumulator += frameDt;
-        int steps = 0;
-        while (m_Accumulator >= m_FixedStep && steps < m_MaxStepsPerFrame)
-        {
-            time.Accumulator = m_Accumulator;
-            RunPhase(world, Phase::Simulation, SimPass::Live);
-            RunPhase(world, Phase::ResolveDeferred, SimPass::Live);
-            m_Accumulator -= m_FixedStep;
-            ++steps;
-        }
-
-        if (steps == m_MaxStepsPerFrame)
-        {
-            m_Accumulator = std::min(m_Accumulator, m_FixedStep);
-        }
+        // Builds this tick's TickInput from timestamped input events (see improve-time.md).
+        world.BindTickInput(time.Tick, clock.Presentation());
+        RunPhase(world, Phase::Input, SimPass::Live);
+        RunPhase(world, Phase::Simulation, SimPass::Live);
+        RunPhase(world, Phase::ResolveDeferred, SimPass::Live);
+        ++time.Tick;
     }
 
     RunPhase(world, Phase::PostSimulation, SimPass::Live);
-    RunPhase(world, Phase::PresentationPrep, SimPass::Live);
+    if (ticks > 0)
+    {
+        // Writes a RenderSnapshot of the last live tick to the SnapshotRing.
+        RunPhase(world, Phase::Extract, SimPass::Live);
+    }
     RunPhase(world, Phase::Editor, SimPass::Live);
 }
 
@@ -421,22 +416,22 @@ void Scheduler::RunPhase(World& world, Phase phase, SimPass pass)
 }
 ```
 
-`ReplayOnResim` defaults off. A system that must replay opts in with `decl.ReplayOnResim()`. `Input`, `PostSimulation`, `PresentationPrep`, and `Editor` are only called as `Live`, so they run once, after any replay and after the fixed step. Pausing skips the accumulator and still presents. `ApplyCompletedLoads` spends a budget of main-thread time turning finished streaming descriptions into `Commands` on this world. Workers never create entities.
+`ReplayOnResim` defaults off. A system that must replay opts in with `decl.ReplayOnResim()`. `Input`, `PostSimulation`, `Extract`, and `Editor` are only called as `Live`. `Input` runs once per live tick. The other three run once per frame, after any replay and after the due ticks. When the game is paused, the tick clock returns 0 ticks: nothing new is extracted, and the renderer keeps drawing the latest snapshots. `ApplyCompletedLoads` spends a budget of main-thread time turning finished streaming descriptions into `Commands` on this world. Workers never create entities.
 
 A query captures the chunk count and the last chunk's row count when it starts, so an entity spawned during the query is invisible to that query and visible to every later system.
 
 | Phase | When | What moves here |
 |---|---|---|
-| `Input` | Once per frame, before the accumulator and before a resim | `InputSystem` polls the OS and writes the one `SingletonInput`. Game preprocessors read it here. |
-| `Simulation` | Each fixed step, and each replayed command frame | Gameplay, movement, AI. On a resim pass only systems that opted in run, and they query the prediction set. |
-| `ResolveDeferred` | After each of those steps | Queue consumers, then that phase's `Commands` flush. Damage, audio, and VFX consumers leave `ReplayOnResim` off. |
-| `PostSimulation` | Once per frame, after resim and the fixed step | `TransformSystem` (hierarchy to `LocalToWorld`), interpolation. |
-| `PresentationPrep` | Once per frame | The last ECS writes the renderer will read. Proxy and UBO extraction move out of the subpasses. |
+| `Input` | Once per live tick, before that tick's `Simulation`. Not on a resim | `InputSystem` reads the tick's `TickInput` (built from timestamped input events) and writes `InputState`. Game preprocessors (dead zones, action mapping) read it here. |
+| `Simulation` | Each live tick, and each replayed `TickCommands` | Gameplay, movement, AI. On a resim pass only systems that opted in run, and they query the prediction set. |
+| `ResolveDeferred` | After each of those ticks | Queue consumers, then that phase's `Commands` flush. Damage, audio, and VFX consumers leave `ReplayOnResim` off. |
+| `PostSimulation` | Once per frame, after resim and the due ticks | `TransformSystem` (hierarchy to `LocalToWorld`). Interpolation is not here: the renderer does it from two snapshots (see `improve-time.md`). |
+| `Extract` | Once per frame, only when at least one tick ran | Writes a `RenderSnapshot` of the last live tick to the `SnapshotRing`. Proxy and UBO extraction move out of the subpasses. The renderer reads only the ring. |
 | `Editor` | Once per frame, editor builds only | Queued editor edits, at a sync point before `VulkanApp::Update`. |
 
 ### `Engine::Tick`
 
-Registration happens once, before the loop. Today's `Input::Poll()`, `World::Update`, and `Game::Update` go away. `RunFrame` owns the poll, the load budget, the resim, and the fixed step. The renderer runs after it and reads this world.
+Registration happens once, before the loop. Today's `Input::Poll()`, `World::Update`, `Game::Update`, and `Timing` go away. `RunFrame` owns the load budget, the resim, and the due ticks. The input producer writes timestamped events that `RunFrame` reads per tick. The renderer runs after it and reads only the `SnapshotRing`.
 
 ```cpp
 void Engine::Startup(int argc, const char* argv[])
@@ -460,35 +455,34 @@ void Engine::Startup(int argc, const char* argv[])
 
 void Engine::Tick()
 {
-    VulkanApp& vkApp = VulkanApp::Get();
-    Timing& timing = Timing::Get();
-
-    while (!vkApp.GetCurrentWindow()->ShouldClose())
+    // Window open, ticks left (--frames N), or not quit. Works without a window.
+    while (m_Runner->ShouldContinue(*m_World))
     {
-        timing.Update();
-        const float frameDt = timing.GetDeltaTime();
-        Stats::Frames::TickStats(frameDt);
+        // One thread today: poll the OS here. Later the input thread does this.
+        m_InputProducer->PollOnCallerThread();
 
-        m_World->RunFrame(frameDt);
+        m_World->RunFrame(*m_TickClock, PlatformTime::NowNanoseconds());
 
         if (m_World->ShouldQuit())
         {
             break;
         }
 
-        vkApp.Update(frameDt, *m_World);
-        timing.UpdateFps();
+        if (m_Renderer)   // null under --null-render
+        {
+            m_Renderer->Render(m_Snapshots, m_InputEvents);
+        }
     }
 }
 ```
 
-`RegisterLinkedModules` is generated per target from the modules that target links. `InputSystem` is the writer of `SingletonInput`. `SystemContext::RequestQuit()` sets the flag `Tick` reads after the frame.
+`RegisterLinkedModules` is generated per target from the modules that target links. `InputSystem` is the writer of `InputState`. `SystemContext::RequestQuit()` sets the flag `Tick` reads after the frame.
 
 ### Resimulation
 
 Resim is those two phases in the middle of `RunFrame`, not a later redesign and not a second world. The default network model is server-authoritative prediction (Ford, GDC 2017, netcode half): the client runs ahead, and on a mismatch restores predicted state and replays inputs. A peer-to-peer game (GGPO, NetherRealm) uses the same pass and puts every gameplay entity in the set.
 
-`BindReplayInput` points the replayed frame at that command's recorded input. The `Input` phase does not run again, so the OS is not polled per replayed frame. `PostSimulation` and `PresentationPrep` run once, after the replay and the new live step, so the renderer sees the corrected state. Consumers that play audio, spawn VFX, or apply damage do not set `ReplayOnResim`. Predicted gameplay reads scenery in this world. It does not rewrite it.
+`BindReplayInput` points the replayed tick at that tick's recorded `TickCommands`. The `Input` phase does not run again, so no input events are read for a replayed tick. `PostSimulation` and `Extract` run once, after the replay and the new live step, so the renderer sees the corrected state. Consumers that play audio, spawn VFX, or apply damage do not set `ReplayOnResim`. Predicted gameplay reads scenery in this world. It does not rewrite it.
 
 The prediction set is the entities that carry predicted state, not a distance test:
 
@@ -510,7 +504,7 @@ A fighting game that must be bit-exact puts every gameplay entity in the set and
 ## 1.7 Renderer integration (proxy components)
 
 - Subpasses take a **read-only** `const World&` (or the extracted render data) and never mutate it.
-- `MeshRenderer` (authoring) gets a `GpuMeshProxy` (transient) from a `PresentationPrep` system that runs on `Query<Read<MeshRenderer>, Without<GpuMeshProxy>>`. This is ordinary ECS, not a construct signal. Its `OnRemove` hook releases the UBO and descriptor set, which **fixes the leak**.
+- `MeshRenderer` (authoring) gets a `GpuMeshProxy` (transient) from an `Extract` system that runs on `Query<Read<MeshRenderer>, Without<GpuMeshProxy>>`. This is ordinary ECS, not a construct signal. Its `OnRemove` hook releases the UBO and descriptor set, which **fixes the leak**.
 - `PointLight` needs a `Transform` because of `.Requires<Transform>()` in its registration. The editor and the loader add the required component. Light position is extracted into the lighting UBO by a system. `PointLight::Pos` leaves the component.
 - The debug gizmo mesh for lights comes from an editor-only extraction system, not from adding a `MeshRenderer` inside a hook.
 
@@ -543,8 +537,8 @@ Archetype storage is fastest to iterate, but it has a known weakness: when many 
 | What the entity *is*, set at spawn or by a prefab, rarely changed (`Transform`, `Health`, `MeshRenderer`) | **Table** component (default) | Fastest iteration; structural changes are rare |
 | A state flag that flips often (`Grounded`, `Stunned`, `Selected`, `Visible`) | **Enableable** component | Flipping a bit costs nothing and doesn't move the entity. Queries skip disabled rows (`With<Stunned>` checks the bit) |
 | Present on few entities and added/removed often (`StatusEffectStack`, `AiTarget`, `Burning`) | **Sparse** component (`.Storage(Sparse)`) | O(1) add/remove that doesn't move the entity and doesn't create archetypes |
-| "X happened this frame" (damage, hit, spawn request, sound cue) | **Not a component.** A queue in a singleton (`ModifyHealthQueue`, `SingletonContactQueue`) | Ford's deferment rule. Components used as events are the main cause of archetype churn |
-| State owned by one system that others read (`SingletonInput`, `SingletonCamera`) | **Singleton** component | Rule 2 |
+| "X happened this frame" (damage, hit, spawn request, sound cue) | **Not a component.** A queue in a singleton (`ModifyHealthQueue`, `ContactQueue`) | Ford's deferment rule. Components used as events are the main cause of archetype churn |
+| State owned by one system that others read (`InputState`, `CameraState`) | **Singleton** component | Rule 2 |
 | A specialist subsystem's internals (GPU buffers, physics body, audio voice) | **Proxy** component holding a handle | Rule 6, the "iceberg" |
 
 The storage kind is `type.Storage(...)` on the builder. Changing it later does not affect any system code, because queries look the same for all three kinds.
@@ -589,7 +583,7 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 
 ### Phase A — Remove the EnTT usage that is not ECS (small, low risk)
 - Add `Fling::HashedString` (constexpr FNV-1a, same algorithm as EnTT 3.1) in Core. Make `Guid`/`Guid_Handle`/`HS()`/`_hs` use it (`Core/inc/FlingTypes.h`). Callers in Resources and Graphics don't change.
-- Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `SingletonInput`).
+- Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `InputState`).
 - Remove `<entt/...>` from `FlingTypes.h`. Delete the dead cereal include `Core/inc/Serilization.h` and the `FlingExt::cereal` link.
 - After this phase, EnTT appears only in ECS code.
 
@@ -607,12 +601,12 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 
 ### Phase D — `Scheduler`, systems, and the tick loop
 - Add `Fling::System`, `SystemDecl`, `SystemContext`, `Schedule`, and `Scheduler` (§1.5). `modules.System<T>()` records each system. `Scheduler::Build` orders them. `--validate-schedule` plus `fling_validate_schedule()` (POST_BUILD) fails the build on a cycle, a write/write conflict, or an unknown `After` name. Add the batched `Commands` flush (§1.10).
-- `Engine::Tick` calls `world.RunFrame(dt)` (§1.5). That frame polls input, applies completed loads, replays a resim when one is pending, then runs the fixed step. It stops calling `Game::Update`. Move Sandbox's Rotator and Mover logic into registered systems. `Game` keeps start/stop and quit.
-- Add `SingletonTime` and `SingletonInput` (from the `Input` key maps), plus `SpawnQueue` and `ResolveSpawnSystem` for `OnTestSpawn`.
+- `Engine::Tick` calls `world.RunFrame(tickClock, now)` (§1.5). That frame applies completed loads, replays a resim when one is pending, then runs the due ticks, each with its own `TickInput`. The tick clock and the time types come from [`improve-time.md`](improve-time.md). It stops calling `Game::Update`. Move Sandbox's Rotator and Mover logic into registered systems. `Game` keeps start/stop and quit.
+- Add `SimTime`, `RealFrameTime`, and `InputState` (from the `Input` key maps), plus `SpawnQueue` and `ResolveSpawnSystem` for `OnTestSpawn`.
 - Add `TransformSystem` (computes the world matrix out of the renderer). `Transform` loses its methods, which move to `TransformUtil`.
 
 ### Phase E — Renderer to proxy components
-- Subpasses become read-only. `PresentationPrep` systems handle mesh proxy creation, UBO updates (filtered by `Changed<Transform>`), and the light UBO.
+- Subpasses become read-only. `Extract` systems handle mesh proxy creation and write the `RenderSnapshot` (transforms filtered by `Changed<Transform>`, light data). The renderer updates its UBOs from the `SnapshotRing`, not from the world.
 - Remove both `on_construct` connections. `OnRemove` hooks release the GPU resources (fixes the leak). The editor moves to queued edits in the `Editor` phase.
 - Add a test that destroys an entity with a `MeshRenderer` and checks that the proxy pool released its slot.
 
