@@ -72,6 +72,8 @@ function( fling_add_isolation_test NAME MODULE HEADER EXPECT )
 	add_test( NAME "Isolation: ${NAME}"
 		COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target ${_target} --config $<CONFIG>
 	)
+	# Each test runs cmake --build on this build tree. Do not run two at the same time.
+	set_tests_properties( "Isolation: ${NAME}" PROPERTIES RESOURCE_LOCK "fling-engine-build" )
 	if( EXPECT STREQUAL "HIDDEN" )
 		# Pass only on a "header not found" error (GCC, Clang, MSVC wording),
 		# not on any build error: the failed command line also names the header.
