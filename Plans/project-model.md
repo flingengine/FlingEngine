@@ -11,7 +11,7 @@ rules that it establishes into [`Skills/`](../Skills/).
 
 - `Sandbox/main.cpp` and `Sandbox/Editor/src/SandboxEditor.cpp` use
   `#if WITH_EDITOR`. `Engine::Run<Game, Editor>` changes its template signature
-  on `WITH_EDITOR` (`FlingEngine/Core/inc/Engine.h`). Every new project must
+  on `WITH_EDITOR` (`FlingEngine/Engine/inc/Engine.h`). Every new project must
   copy these checks into its own code.
 - A project is one CMake target. Game code and editor code build into the same
   executable.

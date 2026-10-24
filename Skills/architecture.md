@@ -5,7 +5,7 @@ mid-way through an in-progress module split (Core/Resources/Gameplay/Graphics/Ed
 as separate CMake targets) — the rules below hold regardless of how far that
 split has progressed. Read [`adding-modules.md`](adding-modules.md) before
 touching CMake targets or cross-folder includes. The phases of the split are in
-[`module-split-plan.md`](module-split-plan.md).
+[`Plans/module-split-plan.md`](../Plans/module-split-plan.md).
 
 ## Today
 

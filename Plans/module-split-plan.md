@@ -8,8 +8,8 @@ line.
 
 This replaces the earlier `docs/BuildModules.md`, which you can still read with
 `git show dfdb2bc^:docs/BuildModules.md`. For where code lives today, see
-[`architecture.md`](architecture.md). For the `fling_add_module()` recipe, see
-[`adding-modules.md`](adding-modules.md).
+[`architecture.md`](../Skills/architecture.md). For the `fling_add_module()` recipe, see
+[`adding-modules.md`](../Skills/adding-modules.md).
 
 ## Locked decisions
 

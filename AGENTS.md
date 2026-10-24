@@ -46,8 +46,18 @@ platform setup (Vulkan SDK, GLFW, etc.).
   read it before restructuring includes or CMake targets.
 - Adding a new CMake module (folder + `fling_add_module`, with a UI example):
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
+
+## Plans
+
+[`Plans/`](Plans/) holds in-progress design docs. [`Skills/`](Skills/) holds only
+established standards. When a plan's phase is done, move the rules it establishes
+into `Skills/`.
+
 - Phased plan for the module split, including what is done and what is next:
-  [`Skills/module-split-plan.md`](Skills/module-split-plan.md).
+  [`Plans/module-split-plan.md`](Plans/module-split-plan.md).
+- How game projects use the engine (project descriptor, Game/Editor/Server
+  targets, headless runs, project tooling):
+  [`Plans/project-model.md`](Plans/project-model.md).
 
 ## Contribution conventions
 
