@@ -86,6 +86,9 @@ into `Skills/`.
 ## Contribution conventions
 
 - Branching: feature branches off `main`, PR back into `main` when done and tested.
+- Third-party code or data (a library in `external/`, a data file such as
+  `Config/gamecontrollerdb.txt`): add it, with its license, to
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 - CI (`.github/workflows/build.yml`) builds on Linux (GCC/Clang) and Windows
   (MSVC/MinGW) and runs the per-module Catch2 tests via CTest plus the comment-style check on every PR —
   make sure changes pass locally first.

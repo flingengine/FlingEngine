@@ -141,6 +141,12 @@ We use a pretty basic branching strategy. Make a feature branch off of `Main` fo
 
 We will create stable "Release" branches and tag them accordingly with stable versions of the build. 
 
+### Thanks and third-party notices
+
+Fling Engine uses many open source libraries, and the community game controller
+database [SDL_GameControllerDB](https://github.com/mdqinc/SDL_GameControllerDB).
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists each one, with its license.
+
 ### Cool Resources
 
 Some great resources are the 
