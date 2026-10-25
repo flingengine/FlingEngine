@@ -21,7 +21,8 @@ NamespaceIndentation: All
 IndentCaseLabels: false
 IndentPPDirectives: None
 
-# Braces. The opening brace goes on the next line.
+# Braces — always on their own line (Allman): namespaces, classes, structs,
+# enums, functions, control statements, lambdas, and try/catch.
 BreakBeforeBraces: Allman
 
 # Pointers / references

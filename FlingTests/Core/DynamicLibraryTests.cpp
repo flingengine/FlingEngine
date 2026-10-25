@@ -236,9 +236,15 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         WriteTempBytes(Path);
 
         std::string Error;
-        Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(WideToUtf8(Path), &Error);
-        REQUIRE_FALSE(static_cast<bool>(Library));
+        Fling::DynamicLibrary Signed = Fling::DynamicLibrary::OpenSigned(WideToUtf8(Path), &Error);
+        REQUIRE_FALSE(static_cast<bool>(Signed));
         REQUIRE(Error.find("not signed") != std::string::npos);
+
+        std::string OpenError;
+        Fling::DynamicLibrary Unchecked = Fling::DynamicLibrary::Open(WideToUtf8(Path), &OpenError);
+        REQUIRE_FALSE(static_cast<bool>(Unchecked));
+        REQUIRE(OpenError.find("not signed") == std::string::npos);
+        REQUIRE(OpenError.find("not trusted") == std::string::npos);
     }
 
     SECTION("A bare name does not search the current directory")
@@ -258,13 +264,21 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         REQUIRE(SetCurrentDirectoryW(Dir.c_str()));
 
         std::string Error;
-        Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(WideToUtf8(Bare), &Error);
+        Fling::DynamicLibrary Library = Fling::DynamicLibrary::OpenSigned(WideToUtf8(Bare), &Error);
         REQUIRE_FALSE(static_cast<bool>(Library));
         REQUIRE(Error.find("not signed") == std::string::npos);
     }
 #endif
 
 #if FLING_LINUX
+    SECTION("OpenSigned calls Open")
+    {
+        std::string Error = "stale";
+        Fling::DynamicLibrary Library = Fling::DynamicLibrary::OpenSigned(LibraryName, &Error);
+        REQUIRE(Error.empty());
+        CallLoadedSymbol(Library);
+    }
+
     SECTION("An absolute path to a text file fails")
     {
         const std::string Path = "/tmp/fling_dynlib_" + std::to_string(static_cast<long>(::getpid())) + ".txt";

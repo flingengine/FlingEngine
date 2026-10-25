@@ -32,6 +32,8 @@ build-debug/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+# Runtime output: input recordings and other saved data
+Saved/
 */bin/
 */Intermediate
 */Output

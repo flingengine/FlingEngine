@@ -94,6 +94,13 @@ dev-only paths:
 It also switches Asset paths from absolute (convenient for iterating without
 reconfiguring) to relative, so a shipped executable is portable.
 
+It also turns off `WITH_INPUT_RECORDING` (a PUBLIC definition on Core, 0 or 1).
+Shipping builds then have no input recording or playback: no `InputRecorder`,
+`InputPlayback` or recording file code, no "Recording + Playback" editor section,
+and `--record-input` / `--replay-input` exit with code 3. A shipped game cannot be
+driven by an input file. Guard code that uses them with `#if WITH_INPUT_RECORDING`.
+`VirtualInputDeviceInterface` stays, because only code can make one.
+
 ## `WITH_CRASH_HANDLER_FLAG`
 
 ON by default. It builds `CrashHandler` (Core), which `--unattended` uses to

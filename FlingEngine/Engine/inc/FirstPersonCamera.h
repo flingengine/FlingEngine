@@ -44,12 +44,18 @@ namespace Fling
 			glm::vec3 m_worldUp;
 			glm::vec3 m_worldFront = { 0.f, 0.f, -1.0 };
 			bool m_IsRotating = false;
-			MousePos m_PrevMousePos;
+			/** The last normalized cursor position. */
+			glm::vec2 m_PrevMousePos = glm::vec2(0.0f);
+			/** True if m_PrevMousePos was read from a pointer device. */
+			bool m_HasPrevMousePos = false;
 			float m_ViewportWidth = 1.0f;
 			float m_ViewportHeight = 1.0f;
 
 		PRIVATE_WITH_EDITOR:
 			float m_RotationSpeed = 20.0f;
+
+			/** Gamepad look speed at full stick tilt, in radians per second. */
+			float m_GamepadLookSpeed = 2.5f;
 
 			const float MAX_PITCH = (glm::pi<float>() / 2.0f) - .017f; //subtract one degrees for gimbal lock
 

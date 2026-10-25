@@ -11,16 +11,14 @@ namespace Fling
     /**
      * Load and unload one shared library.
      *
-     * This is the only Fling type that calls LoadLibraryEx or dlopen.
+     * This is the only Fling type that calls LoadLibrary or dlopen.
      * Move a DynamicLibrary. Do not copy it.
      *
-     * On Windows, check the Authenticode signature before the load.
-     * A valid signature is embedded or catalog.
-     * Resolve a bare name in System32, then in the executable directory.
-     * Windows does not search the current directory or PATH.
-     * An explicit path contains a slash, a backslash, or a drive prefix.
-     * Verify and load that path only.
-     * Linux calls dlopen. Linux does not check a signature.
+     * Open loads a library with the platform search path.
+     * It does not check a signature. Use it for game modules and plugins.
+     * OpenSigned is the strict open. On Windows it checks Authenticode
+     * before the load. Linux has no Authenticode check, so OpenSigned
+     * calls Open there.
      */
     class CORE_API DynamicLibrary
     {
@@ -41,10 +39,21 @@ namespace Fling
          *
          * An empty object means that the load failed. When t_Error is not
          * null, write the platform message there on failure. Clear t_Error
-         * on success. On Windows, a missing file sets
-         * "The shared library was not found".
+         * on success.
          */
         static DynamicLibrary Open(std::string_view t_Name, std::string* t_Error = nullptr);
+
+        /**
+         * Open t_Name only when Windows trusts its Authenticode signature.
+         *
+         * A valid signature is embedded or catalog. A bare name is resolved
+         * in System32, then in the executable directory. The current
+         * directory and PATH are not searched. An explicit path contains a
+         * slash, a backslash, or a drive prefix. That path is verified and
+         * loaded alone. A missing file sets "The shared library was not found".
+         * On Linux this calls Open.
+         */
+        static DynamicLibrary OpenSigned(std::string_view t_Name, std::string* t_Error = nullptr);
 
         /**
          * Open the first library in t_Names that loads.

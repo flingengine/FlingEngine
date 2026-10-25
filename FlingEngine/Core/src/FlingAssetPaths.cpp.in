@@ -56,4 +56,24 @@ namespace Fling
     #endif
         return SourceDir;
     }
+    const std::string& FlingPaths::ProjectDir()
+    {
+    #ifdef FLING_SHIPPING
+        static std::string ProjectPath = "";
+    #else
+        static std::string ProjectPath = "@FLING_ROOT_DIR@";
+    #endif
+        return ProjectPath;
+    }
+
+    const std::string& FlingPaths::ProjectSavedDir()
+    {
+    #ifdef FLING_SHIPPING
+        static std::string SavedPath = "Saved";
+    #else
+        static std::string SavedPath = ProjectDir() + "/Saved";
+    #endif
+        return SavedPath;
+    }
+
 }   // Fling

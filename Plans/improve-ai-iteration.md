@@ -99,7 +99,10 @@ Script / RPC ─┘
   triggers) and the **resolved** actions and axes. Recording only the resolved
   actions would make dead-zone and response-curve code impossible to replay or
   tune.
-- `--record-input <file>` writes the `TickInput` stream. `--replay-input
+- The raw message log exists now: `--record-input <file>` and `--replay-input
+  <file>` write and read a JSON Lines event log (`Skills/input-playback.md`).
+  The `TickInput` log is still to do.
+- `--record-input <file>` will also write the `TickInput` stream. `--replay-input
   <file>` reads it back. The file has a version field and the tick rate.
 - A `VirtualInputDevice` takes frames from a replay file or from the command
   layer. It lives in Core or Engine, not in Graphics, so it works with
@@ -230,7 +233,7 @@ on every CI platform.
 | Phase | Work | Depends on |
 |-------|------|------------|
 | **A** | `--null-render`, `--unattended`, `--frames`, `--seed`, exit codes, JSON logs. Separate the main loop from `VkApp` | Overlaps P4 in `project-model.md` |
-| **B** | `TickInput`, `VirtualInputDevice`, record and replay. Pure-function dead-zone and curve code with Catch2 tests | A. Lines up with `InputState` in `ecs-plan.md` |
+| **B** | `TickInput`, `VirtualInputDevice`, record and replay (raw event log done, `TickInput` log to do). Pure-function dead-zone and curve code with Catch2 tests | A. Lines up with `InputState` in `ecs-plan.md` |
 | **C** | Scenario runner, state hash, CTest registration. `Skills/agent-workflow.md` | A, B |
 | **D** | `--dump-schema`, `fling validate`, saves that round-trip with stable entity IDs | Reflection and stable IDs from `ecs-plan.md` |
 | **E** | Command layer, JSON-RPC, Python package and CLI. Editor panels use commands, with undo and redo | D |
@@ -273,7 +276,8 @@ Done. The rules that it establishes are in
 - Where does `TickInput` live: Core (with `Input`) or Engine (with
   `InputState`)?
 - Format of input recordings: JSON lines (easy to read and edit) or binary
-  (small)? JSON lines with optional compression is the current preference.
+  (small)? JSON lines with optional compression is the current preference. The raw event
+  log now uses JSON Lines (`Skills/input-playback.md`). `TickInput` logs remain open.
 - Which fields go into the state hash? Some components (render handles, caches)
   must be left out.
 - Does `--null-render` skip the Graphics module at link time (the `<Name>Server`

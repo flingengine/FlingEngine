@@ -85,7 +85,7 @@ namespace
         }
         if (Message.empty())
         {
-            Message = "LoadLibraryExW failed (code " + std::to_string(t_Code) + ")";
+            Message = "The shared library failed to load (code " + std::to_string(t_Code) + ")";
         }
         return Message;
     }
@@ -345,6 +345,54 @@ namespace Fling
             return {};
         }
 
+        // LoadLibraryW does not open a dialog when the DLL is missing.
+        HMODULE Handle = LoadLibraryW(WideName.c_str());
+        if (Handle == nullptr)
+        {
+            WriteError(t_Error, WindowsErrorMessage(GetLastError()));
+            return {};
+        }
+
+        DynamicLibrary Library;
+        Library.m_Handle = static_cast<void*>(Handle);
+        ClearError(t_Error);
+        return Library;
+
+#elif FLING_LINUX
+        const std::string Name(t_Name);
+        dlerror();
+        void* Handle = dlopen(Name.c_str(), RTLD_NOW | RTLD_LOCAL);
+        if (Handle == nullptr)
+        {
+            WriteError(t_Error, LinuxErrorMessage());
+            return {};
+        }
+
+        DynamicLibrary Library;
+        Library.m_Handle = Handle;
+        ClearError(t_Error);
+        return Library;
+#endif
+    }
+
+    DynamicLibrary DynamicLibrary::OpenSigned(std::string_view t_Name, std::string* t_Error)
+    {
+#if FLING_LINUX
+        return Open(t_Name, t_Error);
+#elif FLING_WINDOWS
+        if (t_Name.empty())
+        {
+            WriteError(t_Error, "The shared library name is empty");
+            return {};
+        }
+
+        const std::wstring WideName = Utf8ToWide(t_Name);
+        if (WideName.empty())
+        {
+            WriteError(t_Error, "The shared library name is not valid UTF-8");
+            return {};
+        }
+
         std::wstring Path;
         if (IsExplicitPath(WideName))
         {
@@ -423,21 +471,6 @@ namespace Fling
 
         DynamicLibrary Library;
         Library.m_Handle = static_cast<void*>(Handle);
-        ClearError(t_Error);
-        return Library;
-
-#elif FLING_LINUX
-        const std::string Name(t_Name);
-        dlerror();
-        void* Handle = dlopen(Name.c_str(), RTLD_NOW | RTLD_LOCAL);
-        if (Handle == nullptr)
-        {
-            WriteError(t_Error, LinuxErrorMessage());
-            return {};
-        }
-
-        DynamicLibrary Library;
-        Library.m_Handle = Handle;
         ClearError(t_Error);
         return Library;
 #endif

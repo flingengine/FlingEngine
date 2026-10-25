@@ -222,6 +222,8 @@ namespace Fling
         {
             DrawCameraOptions();
         }
+
+        m_InputDevices.Draw(t_Reg);
     }
 
     void BaseEditor::DrawCameraOptions()
@@ -367,6 +369,7 @@ namespace Fling
             {
                 ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
 				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
+				ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
                 ImGui::EndMenu();
             }
 

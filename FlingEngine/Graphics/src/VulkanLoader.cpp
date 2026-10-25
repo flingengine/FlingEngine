@@ -88,7 +88,7 @@ namespace Fling
     bool VulkanLoader::LoadLoader(std::string* t_Error)
     {
 #if FLING_WINDOWS
-        DynamicLibrary Library = DynamicLibrary::Open("vulkan-1.dll", t_Error);
+        DynamicLibrary Library = DynamicLibrary::OpenSigned("vulkan-1.dll", t_Error);
 #elif FLING_LINUX
         const std::string_view Names[] = {"libvulkan.so.1", "libvulkan.so"};
         DynamicLibrary Library = DynamicLibrary::OpenFirst(Names, t_Error);
@@ -121,9 +121,21 @@ namespace Fling
 #undef FLING_VK_GLOBAL
 #undef FLING_VK_GLOBAL_OPTIONAL
 
-#define FLING_VK_GLOBAL(name) RequireProc(#name, name);
+        const char* Missing = nullptr;
+#define FLING_VK_GLOBAL(name)                                                                                          \
+    if (Missing == nullptr && name == nullptr)                                                                         \
+    {                                                                                                                  \
+        Missing = #name;                                                                                               \
+    }
 #include "VulkanFunctions.inl"
 #undef FLING_VK_GLOBAL
+
+        if (Missing != nullptr)
+        {
+            const std::string Message = std::string("Required Vulkan function is null: ") + Missing;
+            UnloadLoader();
+            FatalVulkan(Message);
+        }
 
         return true;
     }

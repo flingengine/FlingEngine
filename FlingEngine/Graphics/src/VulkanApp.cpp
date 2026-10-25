@@ -30,7 +30,10 @@ namespace
 {
     [[noreturn]] void StopForMissingVulkan(const std::string& t_Detail)
     {
-        const char* Message = "Vulkan runtime not found: install a GPU driver with Vulkan support";
+        const bool Untrusted =
+            t_Detail.find("not signed") != std::string::npos || t_Detail.find("not trusted") != std::string::npos;
+        const char* Message = Untrusted ? "Vulkan loader was found, but its signature is not trusted"
+                                        : "Vulkan runtime not found: install a GPU driver with Vulkan support";
         if (const auto Console = Fling::Logger::GetCurrentConsole())
         {
             if (!t_Detail.empty())

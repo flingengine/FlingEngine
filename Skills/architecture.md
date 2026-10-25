@@ -13,9 +13,10 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   `fling_add_module()`): platform macros, logging, math, memory, timing,
   `FlingPaths`, the platform-independent `Input` class, launch support
   (`LaunchOptions`, `ExitCode`, `CrashHandler`), and `DynamicLibrary`.
-  `DynamicLibrary` is the only code that calls `LoadLibraryEx` or `dlopen`.
-  On Windows it checks the Authenticode signature before the load and resolves
-  a bare name in System32, then the executable directory.
+  `DynamicLibrary` is the only code that calls `LoadLibrary` or `dlopen`.
+  `Open` does not check a signature. `OpenSigned` checks Authenticode on
+  Windows and resolves a bare name in System32, then the executable directory.
+  Linux `OpenSigned` calls `Open`.
   Core includes and links no other engine module, and it does not depend on
   Vulkan. Its include path enforces that.
   `WITH_IMGUI`, `WITH_EDITOR`, `WITH_CRASH_HANDLER`, and `FLING_SHIPPING` are PUBLIC definitions on

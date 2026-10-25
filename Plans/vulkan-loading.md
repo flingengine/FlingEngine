@@ -109,16 +109,17 @@ hand-kept list becomes a problem.
 
 ### 3. Loader
 
-`Fling::DynamicLibrary` (Core) is the only code that calls `LoadLibraryEx` or
+`Fling::DynamicLibrary` (Core) is the only code that calls `LoadLibrary` or
 `dlopen`. Graphics does not call `LoadLibrary`, `LoadLibraryEx`, `dlopen`,
 `GetProcAddress`, or `dlsym`.
 
-`DynamicLibrary` is move-only. `Open` loads one file name. `OpenFirst` tries
-each name and returns the first library that opens. `Symbol` returns an
-address, or null when the library is closed or the symbol is missing. `Close`
-unloads the library and is safe to call twice.
+`DynamicLibrary` is move-only. `Open` loads one file name with the platform
+search path and does not check a signature. Game modules and plugins use
+`Open`. `OpenFirst` tries each name with `Open` and returns the first library
+that opens. `Symbol` returns an address, or null when the library is closed or
+the symbol is missing. `Close` unloads the library and is safe to call twice.
 
-On Windows, `Open` calls `WinVerifyTrust` with
+`OpenSigned` is opt-in. On Windows it calls `WinVerifyTrust` with
 `WINTRUST_ACTION_GENERIC_VERIFY_V2` before it maps the file. The check uses
 `WTD_UI_NONE`, `WTD_REVOKE_NONE`, and
 `WTD_SAFER_FLAG | WTD_CACHE_ONLY_URL_RETRIEVAL`. Startup shows no UI and does
@@ -126,30 +127,31 @@ not use the network. `ERROR_SUCCESS` means the signature is valid. That covers
 an embedded signature and a catalog signature, so `kernel32.dll` still loads.
 `TRUST_E_NOSIGNATURE`, `TRUST_E_SUBJECT_FORM_UNKNOWN`, and
 `TRUST_E_PROVIDER_UNKNOWN` report "The shared library is not signed". Any other
-failure reports "The shared library signature is not trusted".
+failure reports "The shared library signature is not trusted". The check runs
+before the load, so it does not close a swap of the file in that gap.
 
-A bare Windows name is resolved in System32 (`GetSystemDirectoryW`), then in
-the directory of the executable (`GetModuleFileNameW`). The current directory
-and `PATH` are not searched. When a candidate file exists and the signature
-check fails, `Open` returns that failure and does not try the next directory.
-A name that contains a slash, a backslash, or a drive prefix is an explicit
-path. `Open` resolves it with `GetFullPathNameW`, verifies that file, and does
-not search. The load uses `LoadLibraryExW` on the absolute path that passed
-the check, with
-`LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32`. A missing
-file reports "The shared library was not found". The name is UTF-8 and the
-Win32 calls take UTF-16. A missing DLL does not open a dialog. `Symbol` uses
-`GetProcAddress`. `Close` uses `FreeLibrary`.
+A bare Windows name passed to `OpenSigned` is resolved in System32
+(`GetSystemDirectoryW`), then in the directory of the executable
+(`GetModuleFileNameW`). The current directory and `PATH` are not searched.
+When a candidate file exists and the signature check fails, `OpenSigned`
+returns that failure and does not try the next directory. A name that contains
+a slash, a backslash, or a drive prefix is an explicit path. `OpenSigned`
+resolves it with `GetFullPathNameW`, verifies that file, and does not search.
+The load uses `LoadLibraryExW` on the absolute path that passed the check,
+with `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32`. A
+missing file reports "The shared library was not found". The name is UTF-8
+and the Win32 calls take UTF-16. A missing DLL does not open a dialog.
+`Symbol` uses `GetProcAddress`. `Close` uses `FreeLibrary`.
 
 On Linux, `Open` uses `dlopen(name, RTLD_NOW | RTLD_LOCAL)`. Linux does not
-check a signature. `Symbol` uses `dlsym` and `Close` uses `dlclose`. There is
-no flag parameter. macOS is not a target.
+check a signature, so `OpenSigned` calls `Open`. `Symbol` uses `dlsym` and
+`Close` uses `dlclose`. macOS is not a target.
 
 `VulkanLoader` (Graphics, private) uses that type:
 
 | Step | Called from | Does |
 | --- | --- | --- |
-| `LoadLoader()` | Start of `VulkanApp::Init`, before GLFW | Linux: `OpenFirst` of `libvulkan.so.1`, then `libvulkan.so`. Windows: `Open("vulkan-1.dll")`. `SymbolAs` reads `vkGetInstanceProcAddr` from the library, then the global commands are loaded. Returns false when the library or that symbol is missing |
+| `LoadLoader()` | Start of `VulkanApp::Init`, before GLFW | Linux: `OpenFirst` of `libvulkan.so.1`, then `libvulkan.so`. Windows: `OpenSigned("vulkan-1.dll")`. `SymbolAs` reads `vkGetInstanceProcAddr` from the library, then the global commands are loaded. Returns false when the library or that symbol is missing. A null required global command closes the library before the process stops |
 | `LoadInstance(VkInstance)` | After `vkCreateInstance` (`Instance.cpp`) | Instance commands, from `vkGetInstanceProcAddr` |
 | `LoadDevice(VkDevice)` | After `vkCreateDevice` (`LogicalDevice.cpp`) | Device commands, from `vkGetDeviceProcAddr` |
 | `UnloadLoader()` | End of `VulkanApp::Shutdown`, after `vkDestroyInstance` | Sets every Vulkan function pointer to null, then `Close()` |
@@ -158,10 +160,12 @@ no flag parameter. macOS is not a target.
 replaced by calling `vkGetInstanceProcAddr` on itself. Vulkan 1.0 and 1.1
 loaders do not return that pointer.
 
-When `LoadLoader()` fails, `VulkanApp::Init` logs
-"Vulkan runtime not found: install a GPU driver with Vulkan support" and
-throws. `main` catches that and returns `ExitCode::Crash` (2). There is no
-message box. Under `--null-render`, `VulkanApp::Init` is not called, so
+When `LoadLoader()` fails because the library is missing, `VulkanApp::Init`
+logs "Vulkan runtime not found: install a GPU driver with Vulkan support" and
+throws. When the file is found and the signature is not trusted, the log line
+is "Vulkan loader was found, but its signature is not trusted". `main` catches
+that and returns `ExitCode::Crash` (2). There is no message box. Under
+`--null-render`, `VulkanApp::Init` is not called, so
 `DynamicLibrary::Open` is not called.
 
 ### 4. GLFW
