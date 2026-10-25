@@ -27,6 +27,16 @@ namespace Fling
         return AssetPath;
     }
 
+    const std::string& FlingPaths::CompiledShaderDir()
+    {
+    #ifdef FLING_SHIPPING
+        static std::string ShaderPath = "Shaders";
+    #else
+        static std::string ShaderPath = "@FLING_SHADER_OUTPUT_DIR@";
+    #endif
+        return ShaderPath;
+    }
+
     const std::string& FlingPaths::EngineLogDir()
     {
     #ifdef FLING_SHIPPING

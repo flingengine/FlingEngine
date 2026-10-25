@@ -66,7 +66,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ninja-build pkg-config \
             xorg-dev libx11-dev libwayland-dev libxkbcommon-dev libglu1-mesa-dev \
-            libvulkan-dev
+            libvulkan-dev glslang-tools
 
       - name: Install Vulkan SDK (Windows)
         if: runner.os == 'Windows' && matrix.compiler != 'mingw'
@@ -88,6 +88,7 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-vulkan-devel
+            mingw-w64-ucrt-x86_64-glslang
 
       # ---------- Catch2 (needed by find_package(Catch2 3 REQUIRED)) ----------
       # Same script as Init.sh / Init.bat, so CI keeps it working. It installs to
