@@ -70,3 +70,11 @@ TEST_CASE("Input device type and capability names", "[Input]")
     REQUIRE(ToString(InputDeviceCapabilities::None) == "None");
     REQUIRE(ToString(InputDeviceCapabilities::Keys | InputDeviceCapabilities::Haptics) == "Keys, Haptics");
 }
+
+TEST_CASE("DescribeInputMessage shows simulated messages once", "[Input][Message]")
+{
+    Fling::InputMessage Message;
+    Message.Simulated = true;
+    CHECK(Fling::DescribeInputMessage(Message, "Pad", 0).find("[simulated]") != std::string::npos);
+    CHECK(Fling::DescribeInputMessage(Message, "Pad (Simulated)", 0).find("[simulated]") == std::string::npos);
+}

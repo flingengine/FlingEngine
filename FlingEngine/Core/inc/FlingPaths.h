@@ -28,6 +28,18 @@ namespace Fling
         /** Returns directory where the engine source files are kept */
         static const std::string& EngineSourceDir();
 
+        /** The project root. Relative project paths start here. Empty in shipping builds (the working directory). */
+        static const std::string& ProjectDir();
+
+        /**
+         * The project's Saved folder, for files the engine writes at runtime (input
+         * recordings, caches). It is not in source control.
+         */
+        static const std::string& ProjectSavedDir();
+
+        /** An absolute path is returned as it is. A relative path is made relative to ProjectDir. */
+        static std::string ResolveProjectPath(const std::string& t_Path);
+
         /**
          * Convert a full absolute path to one relative to the engine assets directory.
          */

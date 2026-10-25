@@ -9,6 +9,8 @@ fling_add_module(Core
 		FlingExt::spdlog
 		FlingExt::entt
 		FlingExt::cereal
+	PRIVATE_LIBS
+		FlingExt::json	# Input recording files are JSON Lines, hidden in InputRecording.cpp
 )
 
 # Feature flags are read from Core headers (FlingTypes.h) and from every module

@@ -585,7 +585,9 @@ Rules for this:
 
 - **Event log** (raw `InputMessage`s with timestamps): good for finding bugs in
   the `TickInput` builder, the render-side look, and UI. Playback is in real
-  time, so it is not exact.
+  time, so it is not exact. **Done:** `InputRecorder`, `InputPlayback`, the
+  `.input.jsonl` format, `--record-input` and `--replay-input`, and the editor
+  UI. See `Skills/input-playback.md`.
 - **`TickInput` log**: exact. This is what scenario tests and the state hash
   use. It includes context changes and UI commands (through `TickCommands`).
 - The recorder is one more reader. Recording can be turned on at any time.
@@ -658,7 +660,7 @@ on every CI platform.
 |-------|------|------------|
 | **I1** | **In progress.** Device layer (`InputDevice`, `InputDeviceFactory`, `InputDeviceId`), `InputKey`, `InputMessage` (with scancodes, `KeyRepeat`, `Char`, integer mouse counts), `InputMessageQueue` with copying `Read`, `InputMessageHandler`, `InputMessageProcessor` with its own `InputDeviceStates`. `GlfwInputDeviceInterface` with callbacks replaces `WindowsInput` and `LinuxInput`. `VirtualInputDeviceInterface`. The old static `Input` is removed, with no shim. One thread. See [Phase I1 status](#phase-i1-status) | `PlatformTime` from `improve-time.md` T1 (not yet; `InputNowNs()` is used) |
 | **I2** | `TickInput` builder with edge counts and the tick assignment rules (late arrival, hitch, pause). `InputState` | `improve-time.md` T3 |
-| **I3** | Event log and `TickInput` log record and replay (`VirtualInputDeviceInterface` exists from I1) | I2. Phase B in `improve-ai-iteration.md` |
+| **I3** | Event log and `TickInput` log record and replay (`VirtualInputDeviceInterface` exists from I1). Event log record and replay is done (`Skills/input-playback.md`). The `TickInput` log is still to do | I2. Phase B in `improve-ai-iteration.md` |
 | **I4** | Gamepad support, polled by deadline at `input.poll_hz`. Raw mouse motion and cursor capture requests | I1 |
 | **I5** | Input context stack, with ImGui capture flags. UI commands into `TickCommands`. Systems read `InputState`. ImGui and the editor get their own reader | I2, `ecs-plan.md` systems |
 | **Later** | Main thread becomes the input thread. Render-side late look and UI hover. Local player slots. Chords and input buffers. Rumble. A Raw Input or GameInput backend if timestamps need to be better | Game and render threads from `improve-time.md` |

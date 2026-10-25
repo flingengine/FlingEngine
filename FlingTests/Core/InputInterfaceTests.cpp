@@ -4,6 +4,7 @@
 #include "Input/VirtualInputDeviceInterface.h"
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace
 {
@@ -353,4 +354,68 @@ TEST_CASE("Virtual input interface", "[Input]")
         Handler->PollInterfaces(InputNowNs());
         REQUIRE(Handler->GetLatestSequence() == Before);
     }
+}
+
+TEST_CASE("Devices and messages of a virtual interface are simulated", "[Input][Interface]")
+{
+    const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
+    const std::shared_ptr<TestInterface> Hardware = std::make_shared<TestInterface>();
+    const std::shared_ptr<VirtualInputDeviceInterface> Virtual = std::make_shared<VirtualInputDeviceInterface>();
+    Handler->AddInterface(Hardware);
+    Handler->AddInterface(Virtual);
+    CHECK_FALSE(Hardware->IsSimulated());
+    CHECK(Virtual->IsSimulated());
+
+    const InputDeviceId HardwareId = Hardware->MakeDevice("pad0");
+    InputDeviceInfo Info;
+    Info.Type = InputDeviceType::Gamepad;
+    Info.HardwarePath = "pad0";
+    const InputDeviceId VirtualId = Virtual->CreateDevice(Info);
+    CHECK(HardwareId != VirtualId);
+    CHECK_FALSE(Handler->GetDeviceFactory().Find(HardwareId)->IsSimulated());
+    CHECK(Handler->GetDeviceFactory().Find(VirtualId)->IsSimulated());
+
+    InputMessageProcessor Processor = Handler->CreateProcessor();
+
+    // The handler sets the flag from the device. A message cannot claim to be hardware
+    InputMessage FromVirtual;
+    FromVirtual.Device = VirtualId;
+    FromVirtual.Type = InputMessageType::KeyDown;
+    FromVirtual.Key = Keys::GamepadFaceBottom;
+    FromVirtual.Simulated = false;
+    Virtual->Queue(FromVirtual);
+    Handler->PollInterfaces(InputNowNs());
+
+    InputMessage FromHardware = FromVirtual;
+    FromHardware.Device = HardwareId;
+    FromHardware.Simulated = true;
+    Handler->HandleMessage(FromHardware);
+
+    InputMessage Read[2];
+    REQUIRE(Processor.Read(Read, 2) == 2);
+    CHECK(Read[0].Device == VirtualId);
+    CHECK(Read[0].Simulated);
+    CHECK(Read[1].Device == HardwareId);
+    CHECK_FALSE(Read[1].Simulated);
+    CHECK(DescribeInputMessage(Read[0], "Pad", 0).find("[simulated]") != std::string::npos);
+    CHECK(DescribeInputMessage(Read[1], "Pad", 0).find("[simulated]") == std::string::npos);
+}
+
+TEST_CASE("Virtual devices have (Simulated) at the end of their name", "[Input][Interface]")
+{
+    const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
+    const std::shared_ptr<VirtualInputDeviceInterface> Virtual = std::make_shared<VirtualInputDeviceInterface>();
+    Handler->AddInterface(Virtual);
+
+    InputDeviceInfo Info;
+    Info.Type = InputDeviceType::Gamepad;
+    Info.DisplayName = "Xbox Controller";
+    const InputDeviceId Pad = Virtual->CreateDevice(Info);
+    CHECK(Handler->GetDeviceFactory().Find(Pad)->GetInfo().DisplayName == "Xbox Controller (Simulated)");
+
+    // A name that has the suffix already does not get it again
+    Info.DisplayName = "Keyboard (Simulated)";
+    Info.Type = InputDeviceType::Keyboard;
+    const InputDeviceId Keyboard = Virtual->CreateDevice(Info);
+    CHECK(Handler->GetDeviceFactory().Find(Keyboard)->GetInfo().DisplayName == "Keyboard (Simulated)");
 }

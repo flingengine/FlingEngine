@@ -51,14 +51,17 @@ namespace Fling
         char Buffer[192];
         const double Seconds = static_cast<double>(t_Message.TimeNs - t_StartNs) / 1e9;
         const std::string Device(t_DeviceName.empty() ? std::string_view("Device") : t_DeviceName);
+        // Virtual devices have "(Simulated)" in their name already
+        const bool ShowSimulatedTag = t_Message.Simulated && Device.find("(Simulated)") == std::string::npos;
 
         int Length = std::snprintf(Buffer,
                                    sizeof(Buffer),
-                                   "#%llu t=%.6fs %s(%u) %s",
+                                   "#%llu t=%.6fs %s(%u)%s %s",
                                    static_cast<unsigned long long>(t_Message.Sequence),
                                    Seconds,
                                    Device.c_str(),
                                    static_cast<unsigned>(t_Message.Device.Value),
+                                   ShowSimulatedTag ? " [simulated]" : "",
                                    ToString(t_Message.Type));
         std::string Result;
         AppendPrinted(Result, Buffer, sizeof(Buffer), Length);

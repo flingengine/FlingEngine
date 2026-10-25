@@ -73,6 +73,12 @@ namespace Fling
 
         float WheelX = 0.0f;
         float WheelY = 0.0f;
+
+        /**
+         * True if the message comes from a simulated device (playback, tests, scripts).
+         * InputMessageHandler sets it from the device, so an interface cannot change it.
+         */
+        bool Simulated = false;
     };
 
     /** How much InputMessageHandler logs. Set it with --log-input or Input::SetLogLevel. */

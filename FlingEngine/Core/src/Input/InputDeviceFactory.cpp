@@ -42,6 +42,7 @@ namespace Fling
             }
             Device->m_Owner = t_Owner.GetInterfaceId();
             Device->m_Info = t_Info;
+            Device->m_Simulated = t_Owner.IsSimulated();
             Device->m_Connected = true;
             SendConnectionMessage(m_Handler, Device->m_Id, true);
             m_Handler.QueueDeviceEvent(Device->m_Id, true);
@@ -53,6 +54,7 @@ namespace Fling
         Rec.InterfaceName = InterfaceName;
         Rec.Device = std::make_shared<InputDevice>(Id, t_Info, t_Owner.GetInterfaceId(), m_Handler.weak_from_this());
         Rec.Device->m_Connected = true;
+        Rec.Device->m_Simulated = t_Owner.IsSimulated();
         const std::shared_ptr<InputDevice> Device = Rec.Device;
         m_Devices.emplace(Id, std::move(Rec));
         SendConnectionMessage(m_Handler, Id, true);

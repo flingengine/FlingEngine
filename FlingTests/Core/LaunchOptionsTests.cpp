@@ -93,6 +93,32 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--seed"));
     }
 
+    SECTION("Replay and record input paths")
+    {
+        REQUIRE(ParseArgs({"--replay-input", "a.input.jsonl", "--record-input=b.input.jsonl"}, Options, Error));
+        REQUIRE(Options.ReplayInput == "a.input.jsonl");
+        REQUIRE(Options.RecordInput == "b.input.jsonl");
+    }
+
+    SECTION("Input paths default to empty")
+    {
+        REQUIRE(ParseArgs({}, Options, Error));
+        REQUIRE(Options.ReplayInput.empty());
+        REQUIRE(Options.RecordInput.empty());
+    }
+
+    SECTION("Replay input with no value")
+    {
+        REQUIRE_FALSE(ParseArgs({"--replay-input"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--replay-input needs a file path"));
+    }
+
+    SECTION("Record input with an empty value")
+    {
+        REQUIRE_FALSE(ParseArgs({"--record-input="}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--record-input needs a file path"));
+    }
+
     SECTION("Unknown log format")
     {
         REQUIRE_FALSE(ParseArgs({"--log-format", "xml"}, Options, Error));

@@ -30,6 +30,8 @@ namespace Fling
      *   --log-format json   Write logs as JSON lines
      *   --log-input [all]   Log each input message. "all" also logs mouse movement.
      *                       Device connects and disconnects are always logged
+     *   --replay-input F    Play the input messages in file F from the first tick
+     *   --record-input F    Record the input messages, and save them to file F at exit
      */
     struct LaunchOptions
     {
@@ -51,6 +53,12 @@ namespace Fling
         LogFormat Format = LogFormat::Text;
 
         InputLogLevel InputLog = InputLogLevel::Off;
+
+        /** The input file to play (--replay-input). Empty means no replay. */
+        std::string ReplayInput;
+
+        /** The file to save an input recording to (--record-input). Empty means no recording. */
+        std::string RecordInput;
 
         /**
          * Read the launch flags from a command line. Flags that are not given keep

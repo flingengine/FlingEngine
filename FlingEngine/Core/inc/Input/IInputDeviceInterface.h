@@ -26,6 +26,12 @@ namespace Fling
         virtual const char* GetName() const = 0;
 
         /**
+         * True if code makes this interface's input (playback, tests, scripts), not a
+         * physical device. Its devices and their messages are marked as simulated.
+         */
+        virtual bool IsSimulated() const { return false; }
+
+        /**
          * Called once, when the interface is added. Create the devices that already exist
          * here. Keep t_Handler as a std::weak_ptr: the interface must not keep the handler
          * alive.

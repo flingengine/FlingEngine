@@ -9,6 +9,8 @@
 #include "Input/InputKeyState.h"
 #include "Input/InputMessageHandler.h"
 #include "Input/InputMessageProcessor.h"
+#include "Input/InputPlayback.h"
+#include "Input/InputRecorder.h"
 #include <limits>
 #include <memory>
 #include <optional>
@@ -64,8 +66,13 @@ namespace Fling
 
         void NotifyWindowDestroyed(WindowHandle t_Window);
 
-        /** Poll every interface (this pumps platform events), then fire deferred device events. */
-        void Poll();
+        /**
+         * Advance input playback, poll every interface (this pumps platform events), fire
+         * deferred device events, then let the recorder read the new messages.
+         *
+         * @param t_DeltaSeconds    The frame time. It moves the playback and recording clocks
+         */
+        void Poll(float t_DeltaSeconds = 0.0f);
 
         /**
          * Consume input for the game, up to t_UntilNs. If the game processor fell behind
@@ -134,6 +141,12 @@ namespace Fling
 
         const InputMessageProcessor& GetGameProcessor() const { return *m_GameProcessor; }
 
+        /** Records the message stream to a file. Only call this after Init. */
+        InputRecorder& GetRecorder() { return *m_Recorder; }
+
+        /** Plays an input file through the "Playback" interface. Only call this after Init. */
+        InputPlayback& GetPlayback() { return *m_Playback; }
+
         /** The handler, or null before Init. Keep a std::weak_ptr if you store it. */
         const std::shared_ptr<InputMessageHandler>& GetHandler() const { return m_Handler; }
 
@@ -141,6 +154,10 @@ namespace Fling
         std::shared_ptr<InputMessageHandler> m_Handler;
 
         std::optional<InputMessageProcessor> m_GameProcessor;
+
+        std::unique_ptr<InputRecorder> m_Recorder;
+
+        std::unique_ptr<InputPlayback> m_Playback;
 
         /** True if the key belongs to a device that UI owns now. */
         bool IsCaptured(InputKey t_Key) const;

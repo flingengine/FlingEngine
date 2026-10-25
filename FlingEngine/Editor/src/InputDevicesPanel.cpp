@@ -1,11 +1,15 @@
 #include "InputDevicesPanel.h"
 
+#include "FlingPaths.h"
 #include "Input/Input.h"
 
 #include <imgui.h>
 
 #include <algorithm>
+#include <ctime>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -50,6 +54,31 @@ namespace Fling
             }
             return "-";
         }
+
+        /** A new file path for a recording, named with the local time. */
+        std::string MakeRecordingPath()
+        {
+            const std::time_t Now = std::time(nullptr);
+            std::tm LocalTime = {};
+#if defined(_WIN32)
+            localtime_s(&LocalTime, &Now);
+#else
+            localtime_r(&Now, &LocalTime);
+#endif
+            std::ostringstream Name;
+            Name << FlingPaths::ProjectSavedDir() << "/InputRecordings/Recording_"
+                 << std::put_time(&LocalTime, "%Y-%m-%d_%H-%M-%S") << ".input.jsonl";
+            return Name.str();
+        }
+
+        /** A progress bar that goes down from full to empty, for a countdown. */
+        void DrawCountdownBar(const char* t_Text, float t_Remaining, float t_Total)
+        {
+            const float Fraction = t_Total > 0.0f ? std::clamp(t_Remaining / t_Total, 0.0f, 1.0f) : 0.0f;
+            char Overlay[64];
+            std::snprintf(Overlay, sizeof(Overlay), "%s %.1f s", t_Text, t_Remaining);
+            ImGui::ProgressBar(Fraction, ImVec2(-1.0f, 0.0f), Overlay);
+        }
     } // namespace
 
     void InputDevicesPanel::Draw(entt::registry& t_Reg)
@@ -61,7 +90,7 @@ namespace Fling
 
         if (ImGui::Begin("Input Devices", &m_ShowWindow))
         {
-            ImGui::SetWindowSize(ImVec2(560.0f, 480.0f), ImGuiCond_FirstUseEver);
+            ImGui::SetWindowSize(ImVec2(560.0f, 720.0f), ImGuiCond_FirstUseEver);
 
             if (!Input::Get().IsInitialized())
             {
@@ -72,6 +101,14 @@ namespace Fling
                 DrawLogLevelButton();
                 DrawSummary();
                 ImGui::Separator();
+                if (ImGui::CollapsingHeader("Recording + Playback", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    DrawRecording();
+                    ImGui::Separator();
+                    DrawPlayback();
+                    ImGui::Separator();
+                    DrawRecordingLog();
+                }
                 DrawInterfaces();
                 DrawDevices();
             }
@@ -117,6 +154,252 @@ namespace Fling
         ImGui::Text("Window: %s", Window.IsValid() ? "set" : "none (headless)");
     }
 
+    void InputDevicesPanel::DrawRecording()
+    {
+        InputRecorder& Recorder = Input::Get().GetRecorder();
+        const InputRecorderState State = Recorder.GetState();
+
+        if (State == InputRecorderState::Recording && !m_WasRecording)
+        {
+            m_SelectRecordingTab = true;
+        }
+        m_WasRecording = State == InputRecorderState::Recording;
+
+        ImGui::TextUnformatted("Recording");
+
+        if (State == InputRecorderState::Idle)
+        {
+            ImGui::SetNextItemWidth(120.0f);
+            ImGui::InputFloat("Start delay (s)##Record", &m_RecordDelay, 0.5f, 1.0f, "%.1f");
+            m_RecordDelay = std::max(m_RecordDelay, 0.0f);
+            ImGui::SetNextItemWidth(120.0f);
+            ImGui::InputFloat("Record for (s)##Record", &m_RecordDuration, 1.0f, 5.0f, "%.1f");
+            m_RecordDuration = std::max(m_RecordDuration, 0.0f);
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("0 records until you press Stop.");
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("(0 = until stopped)");
+
+            if (ImGui::Button("Start recording"))
+            {
+                Recorder.Start(MakeRecordingPath(), m_RecordDelay, m_RecordDuration);
+            }
+        }
+        else if (State == InputRecorderState::Countdown)
+        {
+            DrawCountdownBar("Recording starts in", Recorder.GetCountdownRemaining(), Recorder.GetCountdownTotal());
+            if (ImGui::Button("Cancel##Record"))
+            {
+                Recorder.Stop();
+            }
+        }
+        else
+        {
+            const float Elapsed = Recorder.GetElapsed();
+            const float Duration = Recorder.GetDuration();
+            if (Duration > 0.0f)
+            {
+                char Overlay[64];
+                std::snprintf(Overlay, sizeof(Overlay), "Recording %.1f / %.1f s", Elapsed, Duration);
+                ImGui::ProgressBar(std::clamp(1.0f - Elapsed / Duration, 0.0f, 1.0f), ImVec2(-1.0f, 0.0f), Overlay);
+            }
+            else
+            {
+                ImGui::Text("Recording %.1f s (until stopped)", Elapsed);
+            }
+            ImGui::Text("Messages: %zu", Recorder.GetMessageCount());
+            if (ImGui::Button("Stop recording"))
+            {
+                // The click on this button is not part of the recording
+                Recorder.Stop(true);
+            }
+        }
+
+        if (!Recorder.GetLastSavedPath().empty())
+        {
+            ImGui::TextWrapped("Last recording: %s", Recorder.GetLastSavedPath().c_str());
+        }
+        if (!Recorder.GetLastError().empty())
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", Recorder.GetLastError().c_str());
+        }
+    }
+
+    void InputDevicesPanel::DrawPlayback()
+    {
+        InputRecorder& Recorder = Input::Get().GetRecorder();
+        InputPlayback& Playback = Input::Get().GetPlayback();
+        const InputPlaybackState State = Playback.GetState();
+
+        // A new recording fills the path only when no file is selected
+        if (Recorder.GetSaveCount() != m_SeenSaveCount)
+        {
+            if (m_PlaybackPath.empty())
+            {
+                m_PlaybackPath = Recorder.GetLastSavedPath();
+            }
+            m_SeenSaveCount = Recorder.GetSaveCount();
+        }
+
+        if (State == InputPlaybackState::Playing && !m_WasPlaying)
+        {
+            m_SelectPlaybackTab = true;
+        }
+        m_WasPlaying = State == InputPlaybackState::Playing;
+
+        ImGui::TextUnformatted("Playback");
+
+        if (State == InputPlaybackState::Idle)
+        {
+            char Buffer[1024] = {};
+            m_PlaybackPath.copy(Buffer, sizeof(Buffer) - 1);
+            ImGui::SetNextItemWidth(-90.0f);
+            if (ImGui::InputText("##PlaybackPath", Buffer, sizeof(Buffer)))
+            {
+                m_PlaybackPath = Buffer;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Browse..."))
+            {
+                const std::string Start =
+                    m_PlaybackPath.empty() ? FlingPaths::ProjectSavedDir() + "/InputRecordings" : m_PlaybackPath;
+                m_FileBrowser.Open(FlingPaths::ResolveProjectPath(Start), ".jsonl");
+            }
+
+            ImGui::SetNextItemWidth(120.0f);
+            ImGui::InputFloat("Start delay (s)##Play", &m_PlaybackDelay, 0.5f, 1.0f, "%.1f");
+            m_PlaybackDelay = std::max(m_PlaybackDelay, 0.0f);
+
+            ImGui::BeginDisabled(m_PlaybackPath.empty());
+            if (ImGui::Button("Play"))
+            {
+                m_PlaybackError.clear();
+                Playback.Start(FlingPaths::ResolveProjectPath(m_PlaybackPath), m_PlaybackDelay, m_PlaybackError);
+            }
+            ImGui::EndDisabled();
+            if (!m_PlaybackError.empty())
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", m_PlaybackError.c_str());
+            }
+        }
+        else if (State == InputPlaybackState::Countdown)
+        {
+            DrawCountdownBar("Playback starts in", Playback.GetCountdownRemaining(), Playback.GetCountdownTotal());
+            if (ImGui::Button("Cancel##Play"))
+            {
+                Playback.Stop();
+            }
+        }
+        else
+        {
+            const double Length = Playback.GetLength();
+            char Overlay[96];
+            std::snprintf(Overlay,
+                          sizeof(Overlay),
+                          "%.1f / %.1f s  (%zu / %zu messages)",
+                          Playback.GetTime(),
+                          Length,
+                          Playback.GetSentCount(),
+                          Playback.GetMessageCount());
+            const float Fraction =
+                Length > 0.0 ? static_cast<float>(std::clamp(Playback.GetTime() / Length, 0.0, 1.0)) : 0.0f;
+            ImGui::ProgressBar(Fraction, ImVec2(-1.0f, 0.0f), Overlay);
+            if (ImGui::Button("Stop##Play"))
+            {
+                Playback.Stop();
+            }
+        }
+
+        std::string Picked;
+        if (m_FileBrowser.Draw("Select an input recording", Picked))
+        {
+            m_PlaybackPath = Picked;
+            m_PlaybackError.clear();
+        }
+    }
+
+    void InputDevicesPanel::DrawRecordingLog()
+    {
+        ImGui::Checkbox("Hide mouse movement", &m_HideMouseMove);
+
+        if (!ImGui::BeginTabBar("InputLogs"))
+        {
+            return;
+        }
+
+        ImGuiTabItemFlags RecordingFlags = ImGuiTabItemFlags_None;
+        if (m_SelectRecordingTab)
+        {
+            RecordingFlags |= ImGuiTabItemFlags_SetSelected;
+            m_SelectRecordingTab = false;
+        }
+        if (ImGui::BeginTabItem("Recording log", nullptr, RecordingFlags))
+        {
+            DrawLogView("RecordingLog", Input::Get().GetRecorder().GetLog(), m_SeenRecordingTotal);
+            ImGui::EndTabItem();
+        }
+
+        ImGuiTabItemFlags PlaybackFlags = ImGuiTabItemFlags_None;
+        if (m_SelectPlaybackTab)
+        {
+            PlaybackFlags |= ImGuiTabItemFlags_SetSelected;
+            m_SelectPlaybackTab = false;
+        }
+        if (ImGui::BeginTabItem("Playback log", nullptr, PlaybackFlags))
+        {
+            DrawLogView("PlaybackLog", Input::Get().GetPlayback().GetLog(), m_SeenPlaybackTotal);
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    void InputDevicesPanel::DrawLogView(const char* t_Id, InputEventLog& t_Log, uint64& t_SeenTotal)
+    {
+        if (ImGui::Button("Clear"))
+        {
+            t_Log.Clear();
+        }
+
+        if (ImGui::BeginChild(t_Id, ImVec2(0.0f, 180.0f), ImGuiChildFlags_Borders))
+        {
+            const std::deque<std::string>& Lines = t_Log.GetLines();
+            const bool WasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
+
+            if (m_HideMouseMove)
+            {
+                for (const std::string& Line : Lines)
+                {
+                    if (Line.find("MouseMove") == std::string::npos)
+                    {
+                        ImGui::TextUnformatted(Line.c_str());
+                    }
+                }
+            }
+            else
+            {
+                ImGuiListClipper Clipper;
+                Clipper.Begin(static_cast<int>(Lines.size()));
+                while (Clipper.Step())
+                {
+                    for (int Index = Clipper.DisplayStart; Index < Clipper.DisplayEnd; ++Index)
+                    {
+                        ImGui::TextUnformatted(Lines[static_cast<size_t>(Index)].c_str());
+                    }
+                }
+            }
+
+            if (t_Log.GetTotalAdded() != t_SeenTotal && WasAtBottom)
+            {
+                ImGui::SetScrollHereY(1.0f);
+            }
+            t_SeenTotal = t_Log.GetTotalAdded();
+        }
+        ImGui::EndChild();
+    }
+
     void InputDevicesPanel::DrawInterfaces()
     {
         const std::shared_ptr<InputMessageHandler>& Handler = Input::Get().GetHandler();
@@ -150,7 +433,8 @@ namespace Fling
             }
 
             const std::string Label = std::string(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) +
-                                      ", " + std::to_string(Owned) + " devices)";
+                                      ", " + std::to_string(Owned) + " devices" +
+                                      (Interface->IsSimulated() ? ", simulated" : "") + ")";
             if (ImGui::TreeNodeEx(Label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 if (Owned == 0)
@@ -189,13 +473,14 @@ namespace Fling
 
         const ImGuiTableFlags Flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable |
                                       ImGuiTableFlags_SizingFixedFit;
-        if (!ImGui::BeginTable("InputDevices", 5, Flags))
+        if (!ImGui::BeginTable("InputDevices", 6, Flags))
         {
             return;
         }
         ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("ID");
         ImGui::TableSetupColumn("Type");
+        ImGui::TableSetupColumn("Source");
         ImGui::TableSetupColumn("Status");
         ImGui::TableSetupColumn("Interface");
         ImGui::TableHeadersRow();
@@ -219,6 +504,19 @@ namespace Fling
             ImGui::TableSetColumnIndex(2);
             ImGui::TextUnformatted(ToString(Device->GetInfo().Type));
             ImGui::TableSetColumnIndex(3);
+            if (Device->IsSimulated())
+            {
+                ImGui::TextColored(ImVec4(0.95f, 0.75f, 0.3f, 1.0f), "Simulated");
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Code makes this device's input: playback, a test, or a script.");
+                }
+            }
+            else
+            {
+                ImGui::TextUnformatted("Hardware");
+            }
+            ImGui::TableSetColumnIndex(4);
             if (Device->IsConnected())
             {
                 ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "Connected");
@@ -227,7 +525,7 @@ namespace Fling
             {
                 ImGui::TextDisabled("Disconnected");
             }
-            ImGui::TableSetColumnIndex(4);
+            ImGui::TableSetColumnIndex(5);
             ImGui::TextUnformatted(OwnerName(*Device).c_str());
 
             if (Open)

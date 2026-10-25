@@ -40,6 +40,9 @@ namespace Fling
 
         bool IsConnected() const { return m_Connected; }
 
+        /** True if code makes this device's input (see IInputDeviceInterface::IsSimulated). */
+        bool IsSimulated() const { return m_Simulated; }
+
         /** The window this device sends input for, if any (mouse and keyboard). */
         WindowHandle GetWindow() const { return m_Window; }
 
@@ -82,5 +85,7 @@ namespace Fling
         WindowHandle m_Window;
 
         bool m_Connected = false;
+
+        bool m_Simulated = false;
     };
 } // namespace Fling

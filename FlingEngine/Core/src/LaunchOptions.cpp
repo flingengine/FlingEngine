@@ -15,6 +15,29 @@ namespace Fling
         constexpr std::string_view SeedFlag = "seed";
         constexpr std::string_view LogFormatFlag = "log-format";
         constexpr std::string_view LogInputFlag = "log-input";
+        constexpr std::string_view ReplayInputFlag = "replay-input";
+        constexpr std::string_view RecordInputFlag = "record-input";
+
+        /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
+        bool ReadPath(const CommandLine& t_CmdLine, std::string_view t_Flag, std::string& t_Out, std::string& t_OutError)
+        {
+            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (Value == nullptr)
+            {
+                return true;
+            }
+
+            const std::string_view Str = Value;
+            // A flag with no value has the value "true"
+            if (Str.empty() || Str == "true")
+            {
+                t_OutError = "--" + std::string(t_Flag) + " needs a file path";
+                return false;
+            }
+
+            t_Out = std::string(Str);
+            return true;
+        }
 
         /** Read a bool flag. A flag with no value is "true". */
         bool ReadBool(const CommandLine& t_CmdLine, std::string_view t_Flag, bool& t_Out, std::string& t_OutError)
@@ -137,6 +160,16 @@ namespace Fling
                 t_OutError = "--log-input must be events, all, or off, not '" + std::string(Str) + "'";
                 return false;
             }
+        }
+
+        if (!ReadPath(t_CmdLine, ReplayInputFlag, t_Out.ReplayInput, t_OutError))
+        {
+            return false;
+        }
+
+        if (!ReadPath(t_CmdLine, RecordInputFlag, t_Out.RecordInput, t_OutError))
+        {
+            return false;
         }
 
         return true;

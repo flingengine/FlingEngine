@@ -93,6 +93,28 @@ namespace Fling
 		// only set in the config file. Command line args passed directly still win.
 		CommandLine::Get().LoadConfigFile(EngineConfigPath);
 
+		// Start input replay and recording before the world exists. A file that cannot
+		// be read then exits with code 3, and Shutdown has no world to stop.
+		if (!m_Options.ReplayInput.empty())
+		{
+			const std::string ReplayPath = FlingPaths::ResolveProjectPath(m_Options.ReplayInput);
+			std::string ReplayError;
+			if (!Input::Get().GetPlayback().Start(ReplayPath, 0.0f, ReplayError))
+			{
+				F_LOG_ERROR("Cannot replay input: {}", ReplayError);
+				return ExitCode::BadArguments;
+			}
+			const InputPlayback& Playback = Input::Get().GetPlayback();
+			F_LOG_TRACE("Replaying input from {} ({} messages, {:.2f} s)", ReplayPath, Playback.GetMessageCount(), Playback.GetLength());
+		}
+
+		if (!m_Options.RecordInput.empty())
+		{
+			const std::string RecordPath = FlingPaths::ResolveProjectPath(m_Options.RecordInput);
+			Input::Get().GetRecorder().Start(RecordPath, 0.0f, 0.0f);
+			F_LOG_TRACE("Recording input to {}", RecordPath);
+		}
+
 		if (m_Options.NullRender)
 		{
 			// No window, no swapchain, and no GPU device. Graphics resources keep their
@@ -170,8 +192,10 @@ namespace Fling
             Stats::Frames::TickStats(DeltaTime);
 
 			// Poll pumps the platform events (GLFW) when there is a window, so it comes before
-			// anything that reads the window state. Under --null-render there are no devices.
-			Input::Get().Poll();
+			// anything that reads the window state. Under --null-render there are no window
+			// devices. DeltaTime moves the input recorder and playback clocks, so a
+			// --null-render replay is the same every time.
+			Input::Get().Poll(DeltaTime);
 
 			// The game sees the input up to now, and the same input for the whole tick
 			Input::Get().BeginTick();
@@ -230,6 +254,21 @@ namespace Fling
 		// Cleanup any resources
 		if (m_SystemsStarted)
 		{
+			Input::Get().GetPlayback().Stop();
+			InputRecorder& Recorder = Input::Get().GetRecorder();
+			if (Recorder.IsActive())
+			{
+				const std::string RecordPath = Recorder.GetPath();
+				if (Recorder.Stop())
+				{
+					F_LOG_TRACE("Saved input recording to {}", RecordPath);
+				}
+				else
+				{
+					F_LOG_ERROR("Cannot save input recording to {}: {}", RecordPath, Recorder.GetLastError());
+				}
+			}
+
 			if (m_GlfwInputId.IsValid())
 			{
 				// The window is still alive here (VulkanApp::Shutdown is below)

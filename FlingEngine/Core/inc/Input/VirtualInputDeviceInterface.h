@@ -5,6 +5,7 @@
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputMessage.h"
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace Fling
@@ -22,7 +23,18 @@ namespace Fling
     public:
         static constexpr const char* InterfaceName = "Virtual";
 
-        const char* GetName() const override { return InterfaceName; }
+        /** CreateDevice adds this to the end of each device's display name. */
+        static constexpr const char* SimulatedNameSuffix = " (Simulated)";
+
+        /**
+         * @param t_Name    The interface name. It is part of each device's identity, so two
+         *                  interfaces with different names never share device IDs
+         */
+        explicit VirtualInputDeviceInterface(std::string t_Name = InterfaceName) : m_Name(std::move(t_Name)) {}
+
+        const char* GetName() const override { return m_Name.c_str(); }
+
+        bool IsSimulated() const override { return true; }
 
         void Init(const std::shared_ptr<InputMessageHandler>& t_Handler) override;
 
@@ -33,7 +45,8 @@ namespace Fling
 
         /**
          * Make a virtual device, or connect again a device with the same identity. Only
-         * call this after the interface is added to a handler.
+         * call this after the interface is added to a handler. " (Simulated)" is added to
+         * the end of the display name, if it is not there yet.
          */
         InputDeviceId CreateDevice(const InputDeviceInfo& t_Info);
 
@@ -53,6 +66,8 @@ namespace Fling
         const std::vector<InputDeviceId>& GetDevices() const { return m_Devices; }
 
     private:
+        std::string m_Name;
+
         std::weak_ptr<InputMessageHandler> m_Handler;
 
         std::vector<InputDeviceId> m_Devices;

@@ -237,6 +237,8 @@ namespace Fling
         t_Message.TimeNs = std::max(t_Message.TimeNs, m_LastTimeNs);
         m_LastTimeNs = t_Message.TimeNs;
         t_Message.Sequence = ++m_LastSequence;
+        const std::shared_ptr<InputDevice> Device = m_Factory.Find(t_Message.Device);
+        t_Message.Simulated = Device != nullptr && Device->IsSimulated();
         m_LatestState.Apply(t_Message);
         m_Queue->Push(t_Message);
 

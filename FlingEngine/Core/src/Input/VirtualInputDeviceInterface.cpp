@@ -1,6 +1,7 @@
 #include "Input/VirtualInputDeviceInterface.h"
 #include "Input/InputMessageHandler.h"
 #include <algorithm>
+#include <string_view>
 
 namespace Fling
 {
@@ -55,7 +56,18 @@ namespace Fling
         {
             return InputDeviceId{};
         }
-        const InputDeviceId Id = Handler->GetDeviceFactory().CreateDevice(t_Info, *this)->GetId();
+        // The name shows that the device is not hardware. A device from a recording of a
+        // playback already has the suffix, so it is not added twice
+        InputDeviceInfo Info = t_Info;
+        const std::string_view Suffix = SimulatedNameSuffix;
+        const bool HasSuffix =
+            Info.DisplayName.size() >= Suffix.size() &&
+            Info.DisplayName.compare(Info.DisplayName.size() - Suffix.size(), Suffix.size(), Suffix) == 0;
+        if (!HasSuffix)
+        {
+            Info.DisplayName += Suffix;
+        }
+        const InputDeviceId Id = Handler->GetDeviceFactory().CreateDevice(Info, *this)->GetId();
         if (std::find(m_Devices.begin(), m_Devices.end(), Id) == m_Devices.end())
         {
             m_Devices.push_back(Id);

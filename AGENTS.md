@@ -38,6 +38,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   `Sandbox --null-render --unattended --frames 120 --seed 1`. It exits with
   `0` success, `1` failure, `2` crash, or `3` bad arguments. Use `--unattended` for
   every run with no human present, so that a crash cannot open a dialog.
+- Drive a headless run with `--replay-input <file>`. Agents can write their own
+  `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).
 - Full detail, including how to add a new test file: [`Skills/testing.md`](Skills/testing.md).
 
 ## Coding style
