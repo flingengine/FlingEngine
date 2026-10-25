@@ -22,7 +22,8 @@
 #endif // NOMINMAX
 
 // The names match the C API, so call sites stay vkCreateBuffer(...).
-extern "C" {
+extern "C"
+{
 #define FLING_VK_GLOBAL(name) extern PFN_##name name;
 #define FLING_VK_GLOBAL_OPTIONAL(name) extern PFN_##name name;
 #define FLING_VK_INSTANCE(name) extern PFN_##name name;
@@ -40,7 +41,8 @@ extern "C" {
 
 // Some Vulkan constant definitions
 // Grabbed these from Granite: https://github.com/Themaister/Granite/blob/master/vulkan/shader.cpp
-namespace Fling {
+namespace Fling
+{
     static const unsigned VULKAN_NUM_DESCRIPTOR_SETS = 4;
     static const unsigned VULKAN_NUM_BINDINGS = 16;
     static const unsigned VULKAN_NUM_ATTACHMENTS = 8;
@@ -50,7 +52,8 @@ namespace Fling {
     static const unsigned VULKAN_MAX_UBO_SIZE = 16 * 1024;
     static const unsigned VULKAN_NUM_SPEC_CONSTANTS = 8;
 
-    namespace VkConfig {
+    namespace VkConfig
+    {
         static const int MAX_FRAMES_IN_FLIGHT = 2;
     }
 

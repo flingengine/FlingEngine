@@ -6,64 +6,63 @@
 #include "FlingVulkan.h"
 
 #ifndef GLFW_INCLUDE_VULKAN
-#	define GLFW_INCLUDE_VULKAN
+#define GLFW_INCLUDE_VULKAN
 #endif
 #include <GLFW/glfw3.h>
 
 namespace Fling
 {
-	/**
-	* Base class that represents a window to the Fling Engine using GLFW
-	*/
-	class DesktopWindow : public FlingWindow
-	{
-	public:
+    /**
+     * Base class that represents a window to the Fling Engine using GLFW
+     */
+    class DesktopWindow : public FlingWindow
+    {
+    public:
+        DesktopWindow(const WindowProps& t_Props);
+        virtual ~DesktopWindow();
 
-		DesktopWindow(const WindowProps& t_Props);
-		virtual ~DesktopWindow();
+        virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) override;
 
-		virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) override;
+        /** Tick the window (poll input from GLFW) */
+        virtual void Update() override;
 
-		/** Tick the window (poll input from GLFW) */
-		virtual void Update() override;
+        /** BLocks until we get a new window size from GLFW */
+        virtual void WaitForNewWindowSize() override;
 
-		/** BLocks until we get a new window size from GLFW */
-		virtual void WaitForNewWindowSize() override;
+        /**
+         * Check if this window should close
+         * @return	0 if the window should not close, non-zero if it should.
+         */
+        virtual int ShouldClose() override;
 
-		/**
-		* Check if this window should close
-		* @return	0 if the window should not close, non-zero if it should.
-		*/
-		virtual int ShouldClose() override;
+        /** Is this window currently minimized? */
+        virtual bool IsMinimized() const override final;
 
-		/** Is this window currently minimized? */
-		virtual bool IsMinimized() const override final;
+        virtual uint32 GetWidth() const override;
 
-		virtual uint32 GetWidth() const override;
+        virtual uint32 GetHeight() const override;
 
-		virtual uint32 GetHeight() const override;
+        virtual float GetAspectRatio() const override;
 
-		virtual float GetAspectRatio() const override;
+        virtual void SetMouseVisible(bool t_IsVisible) override;
 
-		virtual void SetMouseVisible(bool t_IsVisible) override;
+        virtual bool GetMouseVisible() override;
 
-		virtual bool GetMouseVisible() override;
+        /**
+         * Set this window's icon.
+         * @param t_ID	the GUID of the window icon
+         */
+        void SetWindowIcon(Guid t_ID) override;
 
-		/** 
-		* Set this window's icon.
-		* @param t_ID	the GUID of the window icon
-		*/
-		void SetWindowIcon(Guid t_ID) override;
+        /** get the current GLFW window */
+        GLFWwindow* GetGlfwWindow() const { return m_Window; }
 
-		/** get the current GLFW window */
-		GLFWwindow* GetGlfwWindow() const { return m_Window; }
+        virtual void SetWindowMode(WindowMode t_WindowMode) override;
+        virtual WindowMode GetWindowMode() override;
 
-		virtual void SetWindowMode(WindowMode t_WindowMode) override;
-		virtual WindowMode GetWindowMode() override;
-	private:
+    private:
+        GLFWwindow* m_Window = nullptr;
 
-		GLFWwindow* m_Window = nullptr;
-
-		static void FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height);
-	};
-}   // namespace Fling
+        static void FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height);
+    };
+} // namespace Fling

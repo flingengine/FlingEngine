@@ -21,6 +21,9 @@ NamespaceIndentation: All
 IndentCaseLabels: false
 IndentPPDirectives: None
 
+# Braces. The opening brace goes on the next line.
+BreakBeforeBraces: Allman
+
 # Pointers / references
 PointerAlignment: Left
 ReferenceAlignment: Left

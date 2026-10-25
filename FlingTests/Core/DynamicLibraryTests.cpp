@@ -13,7 +13,8 @@
 #include <unistd.h>
 #endif
 
-namespace {
+namespace
+{
 #if FLING_LINUX
     constexpr const char* LibraryName = "libc.so.6";
     constexpr const char* SymbolName = "strlen";
@@ -24,7 +25,8 @@ namespace {
 #error DynamicLibrary tests support Windows and Linux only
 #endif
 
-    void CallLoadedSymbol(const Fling::DynamicLibrary& t_Library) {
+    void CallLoadedSymbol(const Fling::DynamicLibrary& t_Library)
+    {
         REQUIRE(static_cast<bool>(t_Library));
         REQUIRE(t_Library.Symbol(SymbolName) != nullptr);
 
@@ -40,8 +42,10 @@ namespace {
     }
 
 #if FLING_WINDOWS
-    std::string WideToUtf8(std::wstring_view t_Text) {
-        if (t_Text.empty()) {
+    std::string WideToUtf8(std::wstring_view t_Text)
+    {
+        if (t_Text.empty())
+        {
             return {};
         }
         const int Size = static_cast<int>(t_Text.size());
@@ -52,7 +56,8 @@ namespace {
         return Text;
     }
 
-    std::wstring TempDirectory() {
+    std::wstring TempDirectory()
+    {
         wchar_t Buffer[MAX_PATH] = {};
         const DWORD Length = GetTempPathW(MAX_PATH, Buffer);
         REQUIRE(Length > 0);
@@ -60,7 +65,8 @@ namespace {
         return std::wstring(Buffer, Length);
     }
 
-    void WriteTempBytes(const std::wstring& t_Path) {
+    void WriteTempBytes(const std::wstring& t_Path)
+    {
         const HANDLE File =
             CreateFileW(t_Path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         REQUIRE(File != INVALID_HANDLE_VALUE);
@@ -73,7 +79,8 @@ namespace {
     }
 
     /** Delete one file when this guard leaves scope. */
-    class DeleteFileGuard {
+    class DeleteFileGuard
+    {
     public:
         explicit DeleteFileGuard(std::wstring t_Path) : m_Path(std::move(t_Path)) {}
 
@@ -87,7 +94,8 @@ namespace {
     };
 
     /** Delete one empty directory when this guard leaves scope. */
-    class DeleteDirectoryGuard {
+    class DeleteDirectoryGuard
+    {
     public:
         explicit DeleteDirectoryGuard(std::wstring t_Path) : m_Path(std::move(t_Path)) {}
 
@@ -104,24 +112,30 @@ namespace {
      * Restore the process current directory when this guard leaves scope.
      * A failed REQUIRE still runs the destructor.
      */
-    class CurrentDirectoryGuard {
+    class CurrentDirectoryGuard
+    {
     public:
-        CurrentDirectoryGuard() {
+        CurrentDirectoryGuard()
+        {
             const DWORD Needed = GetCurrentDirectoryW(0, nullptr);
-            if (Needed == 0) {
+            if (Needed == 0)
+            {
                 return;
             }
             m_Previous.resize(Needed);
             const DWORD Written = GetCurrentDirectoryW(Needed, m_Previous.data());
-            if (Written == 0 || Written >= Needed) {
+            if (Written == 0 || Written >= Needed)
+            {
                 m_Previous.clear();
                 return;
             }
             m_Previous.resize(Written);
         }
 
-        ~CurrentDirectoryGuard() {
-            if (!m_Previous.empty()) {
+        ~CurrentDirectoryGuard()
+        {
+            if (!m_Previous.empty())
+            {
                 SetCurrentDirectoryW(m_Previous.c_str());
             }
         }
@@ -138,8 +152,10 @@ namespace {
 #endif
 } // namespace
 
-TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
-    SECTION("Open and call a symbol") {
+TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
+{
+    SECTION("Open and call a symbol")
+    {
         std::string Error = "stale";
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(LibraryName, &Error);
         REQUIRE(Error.empty());
@@ -148,7 +164,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         REQUIRE(static_cast<bool>(Library));
     }
 
-    SECTION("A missing library returns an empty object and an error") {
+    SECTION("A missing library returns an empty object and an error")
+    {
         std::string Error;
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open("fling_no_such_library_42", &Error);
         REQUIRE_FALSE(static_cast<bool>(Library));
@@ -159,7 +176,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         REQUIRE_FALSE(static_cast<bool>(NoError));
     }
 
-    SECTION("OpenFirst skips a bad name") {
+    SECTION("OpenFirst skips a bad name")
+    {
         const std::string_view Names[] = {"fling_no_such_library_42", LibraryName};
         std::string Error = "stale";
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::OpenFirst(Names, &Error);
@@ -167,7 +185,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         CallLoadedSymbol(Library);
     }
 
-    SECTION("Move leaves the source empty") {
+    SECTION("Move leaves the source empty")
+    {
         Fling::DynamicLibrary Source = Fling::DynamicLibrary::Open(LibraryName);
         REQUIRE(static_cast<bool>(Source));
 
@@ -184,7 +203,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         REQUIRE(Dest.Symbol(SymbolName) == nullptr);
     }
 
-    SECTION("Close then Symbol returns null") {
+    SECTION("Close then Symbol returns null")
+    {
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(LibraryName);
         CallLoadedSymbol(Library);
         Library.Close();
@@ -194,7 +214,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         REQUIRE(Library.Symbol(SymbolName) == nullptr);
     }
 
-    SECTION("Destructor unloads a moved library") {
+    SECTION("Destructor unloads a moved library")
+    {
         Fling::DynamicLibrary Outer = Fling::DynamicLibrary::Open(LibraryName);
         REQUIRE(static_cast<bool>(Outer));
         {
@@ -207,7 +228,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
     }
 
 #if FLING_WINDOWS
-    SECTION("An unsigned absolute path is rejected") {
+    SECTION("An unsigned absolute path is rejected")
+    {
         const std::wstring Path =
             TempDirectory() + L"fling_unsigned_" + std::to_wstring(GetCurrentProcessId()) + L".dll";
         const DeleteFileGuard RemoveFile(Path);
@@ -219,7 +241,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         REQUIRE(Error.find("not signed") != std::string::npos);
     }
 
-    SECTION("A bare name does not search the current directory") {
+    SECTION("A bare name does not search the current directory")
+    {
         const DWORD ProcessId = GetCurrentProcessId();
         const std::wstring Dir = TempDirectory() + L"fling_dynlib_cwd_" + std::to_wstring(ProcessId);
         const BOOL Created = CreateDirectoryW(Dir.c_str(), nullptr);
@@ -242,9 +265,11 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
 #endif
 
 #if FLING_LINUX
-    SECTION("An absolute path to a text file fails") {
+    SECTION("An absolute path to a text file fails")
+    {
         const std::string Path = "/tmp/fling_dynlib_" + std::to_string(static_cast<long>(::getpid())) + ".txt";
-        struct RemoveFile {
+        struct RemoveFile
+        {
             std::string Path;
             ~RemoveFile() { std::remove(Path.c_str()); }
         } const Guard{Path};

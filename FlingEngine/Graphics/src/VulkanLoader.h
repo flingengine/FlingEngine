@@ -4,14 +4,16 @@
 
 #include <string>
 
-namespace Fling {
+namespace Fling
+{
     /**
      * Load the Vulkan loader library and the Vulkan function pointers.
      *
      * Graphics calls these methods. It does not call LoadLibrary, dlopen,
      * GetProcAddress, or dlsym.
      */
-    class VulkanLoader {
+    class VulkanLoader
+    {
     public:
         /**
          * Open the Vulkan loader and load the global commands.

@@ -8,7 +8,8 @@
 #include <string>
 #include <string_view>
 
-extern "C" {
+extern "C"
+{
 #define FLING_VK_GLOBAL(name) PFN_##name name = nullptr;
 #define FLING_VK_GLOBAL_OPTIONAL(name) PFN_##name name = nullptr;
 #define FLING_VK_INSTANCE(name) PFN_##name name = nullptr;
@@ -24,55 +25,68 @@ extern "C" {
 #undef FLING_VK_DEVICE_OPTIONAL
 }
 
-namespace {
+namespace
+{
     Fling::DynamicLibrary g_Loader;
 
-    [[noreturn]] void FatalVulkan(const std::string& t_Message) {
-        if (const auto Console = Fling::Logger::GetCurrentConsole()) {
+    [[noreturn]] void FatalVulkan(const std::string& t_Message)
+    {
+        if (const auto Console = Fling::Logger::GetCurrentConsole())
+        {
             Console->error(t_Message);
             Console->flush();
         }
-        if (const auto File = Fling::Logger::GetCurrentLogFile()) {
+        if (const auto File = Fling::Logger::GetCurrentLogFile())
+        {
             File->error(t_Message);
         }
         throw std::runtime_error(t_Message);
     }
 
     template <typename T_Fn>
-    void LoadGlobal(const char* t_Name, T_Fn& t_Out) {
+    void LoadGlobal(const char* t_Name, T_Fn& t_Out)
+    {
         // Vulkan 1.0 and 1.1 do not return this pointer from itself.
         // DynamicLibrary::Symbol already stored the export.
-        if (std::string_view(t_Name) == "vkGetInstanceProcAddr") {
+        if (std::string_view(t_Name) == "vkGetInstanceProcAddr")
+        {
             return;
         }
         t_Out = reinterpret_cast<T_Fn>(vkGetInstanceProcAddr(nullptr, t_Name));
     }
 
     template <typename T_Fn>
-    void LoadInstanceProc(VkInstance t_Instance, const char* t_Name, T_Fn& t_Out) {
+    void LoadInstanceProc(VkInstance t_Instance, const char* t_Name, T_Fn& t_Out)
+    {
         t_Out = reinterpret_cast<T_Fn>(vkGetInstanceProcAddr(t_Instance, t_Name));
     }
 
     template <typename T_Fn>
-    void LoadDeviceProc(VkDevice t_Device, const char* t_Name, T_Fn& t_Out) {
+    void LoadDeviceProc(VkDevice t_Device, const char* t_Name, T_Fn& t_Out)
+    {
         t_Out = reinterpret_cast<T_Fn>(vkGetDeviceProcAddr(t_Device, t_Name));
     }
 
     template <typename T_Fn>
-    void RequireProc(const char* t_Name, const T_Fn& t_Fn) {
-        if (t_Fn == nullptr) {
+    void RequireProc(const char* t_Name, const T_Fn& t_Fn)
+    {
+        if (t_Fn == nullptr)
+        {
             FatalVulkan(std::string("Required Vulkan function is null: ") + t_Name);
         }
     }
 
     template <typename T_Fn>
-    void ClearProc(T_Fn& t_Fn) {
+    void ClearProc(T_Fn& t_Fn)
+    {
         t_Fn = nullptr;
     }
 } // namespace
 
-namespace Fling {
-    bool VulkanLoader::LoadLoader(std::string* t_Error) {
+namespace Fling
+{
+    bool VulkanLoader::LoadLoader(std::string* t_Error)
+    {
 #if FLING_WINDOWS
         DynamicLibrary Library = DynamicLibrary::Open("vulkan-1.dll", t_Error);
 #elif FLING_LINUX
@@ -81,14 +95,17 @@ namespace Fling {
 #else
 #error VulkanLoader supports Windows and Linux only
 #endif
-        if (!Library) {
+        if (!Library)
+        {
             return false;
         }
 
         const PFN_vkGetInstanceProcAddr GetInstanceProcAddr =
             Library.SymbolAs<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-        if (GetInstanceProcAddr == nullptr) {
-            if (t_Error != nullptr) {
+        if (GetInstanceProcAddr == nullptr)
+        {
+            if (t_Error != nullptr)
+            {
                 *t_Error = "vkGetInstanceProcAddr is missing from the Vulkan loader";
             }
             Library.Close();
@@ -111,7 +128,8 @@ namespace Fling {
         return true;
     }
 
-    void VulkanLoader::LoadInstance(VkInstance t_Instance) {
+    void VulkanLoader::LoadInstance(VkInstance t_Instance)
+    {
 #define FLING_VK_INSTANCE(name) LoadInstanceProc(t_Instance, #name, name);
 #define FLING_VK_INSTANCE_OPTIONAL(name) LoadInstanceProc(t_Instance, #name, name);
 #include "VulkanFunctions.inl"
@@ -123,8 +141,10 @@ namespace Fling {
 #undef FLING_VK_INSTANCE
     }
 
-    void VulkanLoader::LoadDevice(VkDevice t_Device) {
-        if (vkGetDeviceProcAddr == nullptr) {
+    void VulkanLoader::LoadDevice(VkDevice t_Device)
+    {
+        if (vkGetDeviceProcAddr == nullptr)
+        {
             FatalVulkan("Required Vulkan function is null: vkGetDeviceProcAddr");
         }
 
@@ -139,7 +159,8 @@ namespace Fling {
 #undef FLING_VK_DEVICE
     }
 
-    void VulkanLoader::UnloadLoader() {
+    void VulkanLoader::UnloadLoader()
+    {
 #define FLING_VK_GLOBAL(name) ClearProc(name);
 #define FLING_VK_GLOBAL_OPTIONAL(name) ClearProc(name);
 #define FLING_VK_INSTANCE(name) ClearProc(name);

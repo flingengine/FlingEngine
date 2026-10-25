@@ -6,7 +6,8 @@
 #include <string>
 #include <string_view>
 
-namespace Fling {
+namespace Fling
+{
     /**
      * Load and unload one shared library.
      *
@@ -21,7 +22,8 @@ namespace Fling {
      * Verify and load that path only.
      * Linux calls dlopen. Linux does not check a signature.
      */
-    class CORE_API DynamicLibrary {
+    class CORE_API DynamicLibrary
+    {
     public:
         DynamicLibrary() = default;
 
@@ -66,7 +68,8 @@ namespace Fling {
          * Return null when the library is closed or the symbol is missing.
          */
         template <typename T_Fn>
-        T_Fn SymbolAs(std::string_view t_Name) const {
+        T_Fn SymbolAs(std::string_view t_Name) const
+        {
             return reinterpret_cast<T_Fn>(Symbol(t_Name));
         }
 
