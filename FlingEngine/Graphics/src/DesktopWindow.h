@@ -21,7 +21,7 @@ namespace Fling
 
 		virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) override;
 
-		/** Tick the window (poll input from GLFW) */
+		/** Tick the window. GLFW events are pumped by GlfwInputDeviceInterface::Poll, not here. */
 		virtual void Update() override;
 
 		/** BLocks until we get a new window size from GLFW */

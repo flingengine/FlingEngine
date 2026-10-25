@@ -21,6 +21,7 @@
 #include "Logger.h"
 #include "VulkanApp.h"
 #include "VulkanAppState.h"
+#include "ImGuiInputBinding.hpp"
 
 namespace Fling {
     ImGuiSubpass::ImGuiSubpass(const LogicalDevice* t_Dev,
@@ -47,6 +48,9 @@ namespace Fling {
             ImGui::CreateContext();
         }
 
+        // Chain ImGui's GLFW callbacks onto the window
+        InternalImGui::SetImGuiCallbacks(m_Window);
+
         PrepareResources();
 
         PrepImGuiStyleSettings();
@@ -72,7 +76,10 @@ namespace Fling {
 
     void
     ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) {
+        InternalImGui::UpdateImGuiIO(m_Window);
+
         ImGui::NewFrame();
+        InternalImGui::UpdateInputCapture();
 
         if (m_DebugUI) {
             m_DebugUI->Draw(t_reg, DeltaTime);

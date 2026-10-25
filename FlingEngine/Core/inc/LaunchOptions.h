@@ -1,13 +1,16 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Input/InputMessage.h"
 #include <string>
 
-namespace Fling {
+namespace Fling
+{
     class CommandLine;
 
     /** The format of log lines on the console and in the log file. */
-    enum class LogFormat : uint8 {
+    enum class LogFormat : uint8
+    {
         /** Human-readable text lines. */
         Text,
 
@@ -25,8 +28,11 @@ namespace Fling {
      *   --frames N          Run N ticks, then exit
      *   --seed S            Seed the random number generator
      *   --log-format json   Write logs as JSON lines
+     *   --log-input [all]   Log each input message. "all" also logs mouse movement.
+     *                       Device connects and disconnects are always logged
      */
-    struct LaunchOptions {
+    struct LaunchOptions
+    {
         /** The tick rate of a --null-render run, in ticks per second. */
         static constexpr uint32 NullRenderTickRate = 60;
 
@@ -43,6 +49,8 @@ namespace Fling {
         uint32 Seed = 0;
 
         LogFormat Format = LogFormat::Text;
+
+        InputLogLevel InputLog = InputLogLevel::Off;
 
         /**
          * Read the launch flags from a command line. Flags that are not given keep

@@ -62,7 +62,7 @@ namespace Fling
 
 	void DesktopWindow::Update()
 	{
-		glfwPollEvents();
+		// Nothing to do. GlfwInputDeviceInterface::Poll pumps the GLFW events.
 	}
 
 	int DesktopWindow::ShouldClose()

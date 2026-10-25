@@ -11,6 +11,7 @@
 #include "FlingPaths.h"
 #include "FlingWindow.h"
 #include "Input/Input.h"
+#include "Input/GlfwInput.h"
 #include "Random.h"
 
 namespace Fling
@@ -66,7 +67,8 @@ namespace Fling
 
 		ResourceManager::Get().Init();
 		Timing::Get().Init();
-		Input::Init();
+		Input::Get().SetLogLevel(m_Options.InputLog);
+		Input::Get().Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
@@ -128,7 +130,10 @@ namespace Fling
 
 		if (!m_Options.NullRender)
 		{
-			Input::PreUpdate();
+			// The window exists now. Its events are pumped by the GLFW input interface
+			m_InputWindow = GetInputWindowHandle(VulkanApp::Get().GetCurrentWindow());
+			m_GlfwInputId = Input::Get().AddInterface(CreateGlfwInputDeviceInterface());
+			Input::Get().NotifyWindowCreated(m_InputWindow);
 		}
 
 		return ExitCode::Success;
@@ -164,15 +169,18 @@ namespace Fling
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
 
-			// There are no input devices without a window
-			if (!m_Options.NullRender)
-			{
-				Input::Poll();
-			}
+			// Poll pumps the platform events (GLFW) when there is a window, so it comes before
+			// anything that reads the window state. Under --null-render there are no devices.
+			Input::Get().Poll();
+
+			// The game sees the input up to now, and the same input for the whole tick
+			Input::Get().BeginTick();
 
 			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
 			++m_TicksRun;
+
+			Input::Get().EndTick();
 
 			if(m_World->ShouldQuit())
 			{
@@ -222,7 +230,15 @@ namespace Fling
 		// Cleanup any resources
 		if (m_SystemsStarted)
 		{
-			Input::Shutdown();
+			if (m_GlfwInputId.IsValid())
+			{
+				// The window is still alive here (VulkanApp::Shutdown is below)
+				Input::Get().NotifyWindowDestroyed(m_InputWindow);
+				Input::Get().RemoveInterface(m_GlfwInputId);
+				m_GlfwInputId = InputInterfaceId{};
+				m_InputWindow = WindowHandle{};
+			}
+			Input::Get().Shutdown();
 			ResourceManager::Get().Shutdown();
 			FlingConfig::Get().Shutdown();
 			Timing::Get().Shutdown();

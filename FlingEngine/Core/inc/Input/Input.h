@@ -1,123 +1,154 @@
 #pragma once
 
-#include "NonCopyable.hpp"
-#include "Input/Key.h"
-#include <entt/signal/delegate.hpp>
-#include <entt/signal/sigh.hpp>
-#include <map>
-#include <string>
+#include "FlingTypes.h"
+#include "Singleton.hpp"
+#include "Input/IInputDeviceInterface.h"
+#include "Input/InputDevice.h"
+#include "Input/InputDeviceTypes.h"
+#include "Input/InputKey.h"
+#include "Input/InputKeyState.h"
+#include "Input/InputMessageHandler.h"
+#include "Input/InputMessageProcessor.h"
+#include <limits>
+#include <memory>
+#include <optional>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace Fling
 {
-	/**
-	 * represents the current mouse position in screen space
-	 */
-	struct MousePos
-	{
-		float X;
-		float Y;
-	};
+    /**
+     * The input system for game code. It owns the InputMessageHandler and the game's
+     * InputMessageProcessor. The key queries (IsHeld, WasPressed, ...) read the game
+     * processor's state, which changes only in BeginTick, so every system in a tick sees
+     * the same input.
+     *
+     * Each frame the engine calls, in order: Poll, BeginTick, the game update, EndTick.
+     * Other consumers (render, editor, recorder) make their own processor with
+     * CreateProcessor.
+     */
+    class Input : public Singleton<Input>
+    {
+    public:
+        /** Make the handler and the game processor. Adds no interfaces. */
+        void Init() override;
 
-	/**
-	* Base input class for polling input in the Fling Engine
-	*/
-	class Input : public NonCopyable
-	{
-	public:
+        /** Remove every interface and destroy the handler. */
+        void Shutdown() override;
 
-		/** Initialize the input instance on this platform. Handle and input mapping on this platform */
-		static void Init() { m_Instance->InitImpl(); }
-		
-		/** 
-		* PreUpdate is called before polling of input, and after Init. Useful for
-		*			anything that needs to happen after Window creation.
-		*/
-		static void PreUpdate() { m_Instance->PreUpdateImpl(); };
+        bool IsInitialized() const { return m_Handler != nullptr; }
 
-		/**
-		* Shuts down input manager.
-		* Deletes the input implementation pointer.
-		*/
-		static void Shutdown() 
-		{ 
-			m_Instance->ShutdownImpl();
-			delete m_Instance; 
-		}
+        template <typename T, typename... Args>
+        InputInterfaceId AddInterface(Args&&... t_Args)
+        {
+            return AddInterface(std::make_shared<T>(std::forward<Args>(t_Args)...));
+        }
 
-		/**
-		 * Update any input polling that needs to happen on this platform.
-		 */
-		static void Poll() { m_Instance->PollImpl();  }
-		
-		static bool IsKeyDown(const std::string& t_KeyName) { return m_Instance->IsKeyDownImpl(t_KeyName); }
-		static bool IsKeyHeld(const std::string& t_KeyName) { return m_Instance->IsKeyHelpImpl(t_KeyName); }
-		
-		static bool IsMouseButtonPressed(const std::string& t_KeyName) { return m_Instance->IsMouseButtonPressedImpl(t_KeyName); }
-		static bool IsMouseDown(const std::string& t_KeyName) { return m_Instance->IsMouseDownImpl(t_KeyName); }
+        InputInterfaceId AddInterface(std::shared_ptr<IInputDeviceInterface> t_Interface);
 
-		/**
-		 * Get the current mouse position in screen space
-		 */
-		static MousePos GetMousePos() { return m_Instance->GetMousePosImpl(); }
-		
-		/**
-		 * Bind a callback function to when a key is pressed
-		 * 
-		 * @tparam Candidate The function that you would like to bind
-		 * @param t_KeyName Key name to bind to 
-		 * @param t_Instance The instance of the object you are binding to
-		 * @see https://github.com/skypjack/entt/wiki/Crash-Course:-events,-signals-and-everything-in-between#delegate
-		 * @see Fling::KeyNames
-		 */
-		template<auto Candidate, typename Type>
-		static void BindKeyPress(const std::string& t_KeyName, Type& t_Instance);
+        bool RemoveInterface(InputInterfaceId t_Id);
 
-		/** Input Key mappings */
-		typedef std::map<std::string, Fling::Key> KeyMap;
-		typedef std::pair<std::string, Fling::Key> KeyPair;
+        std::shared_ptr<IInputDeviceInterface> FindInterface(InputInterfaceId t_Id) const;
 
-		/** Key press delegate mappings */
-		typedef std::map<std::string, entt::delegate<void()>> KeyDownMap;
-		typedef std::pair<std::string, entt::delegate<void()>> KeyDownMapPair;
+        /** The interface with this ID as a T, or null if there is none or it is not a T. */
+        template <typename T>
+        std::shared_ptr<T> FindInterface(InputInterfaceId t_Id) const
+        {
+            return std::dynamic_pointer_cast<T>(FindInterface(t_Id));
+        }
 
-	protected:
+        std::shared_ptr<IInputDeviceInterface> FindInterface(std::string_view t_Name) const;
 
-		/** The actual key map */
-		static KeyMap m_KeyMap;
+        void NotifyWindowCreated(WindowHandle t_Window);
 
-		static KeyDownMap m_KeyDownMap;
+        void NotifyWindowDestroyed(WindowHandle t_Window);
 
-		/** Created by the implementation class @see WindowInput */
-		static Input* m_Instance;
-		
-		/**
-		 * Add a key mapping to this platform.
-		 * 
-		 * @param t_Name 		The name of this key 
-		 * @param t_KeyCode 	The KeyCode that maps this key to the current platform
-		 */
-		static void AddKeyMap(const std::string& t_Name, uint32 t_KeyCode)
-		{
-			m_KeyMap.insert( KeyPair(t_Name, Fling::Key(t_Name, t_KeyCode)) );
-		}
+        /** Poll every interface (this pumps platform events), then fire deferred device events. */
+        void Poll();
 
-		virtual void InitImpl() = 0;
-		virtual void PreUpdateImpl() = 0;
-		virtual void ShutdownImpl() = 0;
+        /**
+         * Consume input for the game, up to t_UntilNs. If the game processor fell behind
+         * the queue, it is resynced from the newest state first.
+         */
+        void BeginTick(int64 t_UntilNs = std::numeric_limits<int64>::max());
 
-		/** Poll for input from the keyboard */
-		virtual void PollImpl() = 0;
+        /** Clear the game processor's edge counts and mouse deltas. */
+        void EndTick();
 
-		virtual void InitKeyMap() = 0;
+        /**
+         * Tell the game that UI (for example ImGui) owns the keyboard or the mouse. While a
+         * device is captured, the key queries below give neutral input for its keys: not
+         * held, no presses, no releases, and no mouse delta. Gamepads are never captured.
+         * Other processors (the UI's own) still get every message.
+         */
+        void SetUICapture(bool t_Keyboard, bool t_Mouse);
 
-		virtual bool IsKeyDownImpl(const std::string& t_KeyName) = 0;
-		virtual bool IsKeyHelpImpl(const std::string& t_KeyName) = 0;
-		
-		virtual bool IsMouseButtonPressedImpl(const std::string& t_KeyName) = 0;
-		virtual bool IsMouseDownImpl(const std::string& t_KeyName) = 0;
-		virtual MousePos GetMousePosImpl() = 0;
-	};
+        bool IsKeyboardCaptured() const { return m_KeyboardCaptured; }
 
-}	// namespace Fling
+        bool IsMouseCaptured() const { return m_MouseCaptured; }
 
-#include "Input.inl"
+        /**
+         * Log each input message at this level (see --log-input). Keeps the level for a later
+         * Init. Device connects and disconnects are always logged.
+         */
+        void SetLogLevel(InputLogLevel t_Level);
+
+        InputLogLevel GetLogLevel() const { return m_LogLevel; }
+
+        /** True if the key is held on any device. */
+        bool IsHeld(InputKey t_Key) const;
+
+        /** True if the key was pressed on any device this tick. */
+        bool WasPressed(InputKey t_Key) const;
+
+        /** True if the key was released on any device this tick. */
+        bool WasReleased(InputKey t_Key) const;
+
+        /** The state of a key on one device, this tick. */
+        InputKeyState GetKeyState(InputDeviceId t_Device, InputKey t_Key) const;
+
+        /** The largest absolute axis value of this key over every device, this tick (with its sign). */
+        float GetAxisValue(InputKey t_Key) const;
+
+        /** Mouse movement this tick, summed over every device, in integer counts. */
+        void GetMouseDelta(int32& t_OutX, int32& t_OutY) const;
+
+        /**
+         * The cursor position of the first connected device with the Pointer capability,
+         * in window coordinates. Returns false if there is no such device.
+         */
+        bool GetPointerPosition(float& t_OutX, float& t_OutY) const;
+
+        std::shared_ptr<InputDevice> GetDevice(InputDeviceId t_Id) const;
+
+        /** Every connected device. */
+        std::vector<std::shared_ptr<InputDevice>> GetDevices() const;
+
+        entt::sink<void(const InputDevice&)> OnDeviceConnected() { return m_Handler->OnDeviceConnected(); }
+
+        entt::sink<void(const InputDevice&)> OnDeviceDisconnected() { return m_Handler->OnDeviceDisconnected(); }
+
+        /** Make a new consumer of the message queue. After Shutdown it reads nothing (IsValid is false). */
+        InputMessageProcessor CreateProcessor() const;
+
+        const InputMessageProcessor& GetGameProcessor() const { return *m_GameProcessor; }
+
+        /** The handler, or null before Init. Keep a std::weak_ptr if you store it. */
+        const std::shared_ptr<InputMessageHandler>& GetHandler() const { return m_Handler; }
+
+    private:
+        std::shared_ptr<InputMessageHandler> m_Handler;
+
+        std::optional<InputMessageProcessor> m_GameProcessor;
+
+        /** True if the key belongs to a device that UI owns now. */
+        bool IsCaptured(InputKey t_Key) const;
+
+        bool m_KeyboardCaptured = false;
+
+        bool m_MouseCaptured = false;
+
+        InputLogLevel m_LogLevel = InputLogLevel::Off;
+    };
+} // namespace Fling

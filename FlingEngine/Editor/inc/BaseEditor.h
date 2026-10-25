@@ -5,6 +5,7 @@
 #include "IDebugUI.h"
 #include "WorldOutlinePanel.h"
 #include "EntityEditorPanel.h"
+#include "InputDevicesPanel.h"
 #include <array>
 #include <string>
 
@@ -53,6 +54,9 @@ namespace Fling
 
 		/** Inspects the entity currently selected in m_WorldOutline */
 		EntityEditorPanel m_EntityEditor;
+
+		/** Lists input interfaces and devices, and changes the input log level */
+		InputDevicesPanel m_InputDevices;
 
 		virtual void DrawFileMenu();
 
