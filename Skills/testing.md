@@ -29,6 +29,15 @@ ctest --test-dir build                         # Linux / single-config generator
 ctest --test-dir build -C <Debug|Release>      # Visual Studio
 ```
 
+`scripts/run-tests.sh` does both steps: it builds every module test executable
+that has sources, then runs CTest (Catch2 cases and isolation tests) with the
+same failure and timeout flags as CI. Run it from a configured `build/` before
+opening a pull request:
+
+```bash
+./scripts/run-tests.sh
+```
+
 Each Catch2 `TEST_CASE` is a separate CTest test, and they run from the repo
 root.
 
