@@ -19,6 +19,9 @@ target_compile_definitions(Core PUBLIC
 	WITH_IMGUI=$<BOOL:${WITH_IMGUI_FLAG}>
 	WITH_EDITOR=$<BOOL:${WITH_EDITOR_FLAG}>
 	WITH_CRASH_HANDLER=$<BOOL:${WITH_CRASH_HANDLER_FLAG}>
+	# Input recording and playback (--record-input, --replay-input, the editor UI).
+	# Shipping builds do not have it, so a shipped game cannot be driven by an input file.
+	WITH_INPUT_RECORDING=$<NOT:$<BOOL:${DEFINE_SHIPPING}>>
 	$<$<BOOL:${DEFINE_SHIPPING}>:FLING_SHIPPING>
 )
 

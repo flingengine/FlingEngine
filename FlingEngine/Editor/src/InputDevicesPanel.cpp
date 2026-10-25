@@ -55,6 +55,7 @@ namespace Fling
             return "-";
         }
 
+#if WITH_INPUT_RECORDING
         /** A new file path for a recording, named with the local time. */
         std::string MakeRecordingPath()
         {
@@ -79,6 +80,7 @@ namespace Fling
             std::snprintf(Overlay, sizeof(Overlay), "%s %.1f s", t_Text, t_Remaining);
             ImGui::ProgressBar(Fraction, ImVec2(-1.0f, 0.0f), Overlay);
         }
+#endif // WITH_INPUT_RECORDING
     } // namespace
 
     void InputDevicesPanel::Draw(entt::registry& t_Reg)
@@ -101,6 +103,7 @@ namespace Fling
                 DrawLogLevelButton();
                 DrawSummary();
                 ImGui::Separator();
+#if WITH_INPUT_RECORDING
                 if (ImGui::CollapsingHeader("Recording + Playback", ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     DrawRecording();
@@ -109,6 +112,7 @@ namespace Fling
                     ImGui::Separator();
                     DrawRecordingLog();
                 }
+#endif
                 DrawInterfaces();
                 DrawDevices();
             }
@@ -154,6 +158,7 @@ namespace Fling
         ImGui::Text("Window: %s", Window.IsValid() ? "set" : "none (headless)");
     }
 
+#if WITH_INPUT_RECORDING
     void InputDevicesPanel::DrawRecording()
     {
         InputRecorder& Recorder = Input::Get().GetRecorder();
@@ -399,6 +404,7 @@ namespace Fling
         }
         ImGui::EndChild();
     }
+#endif // WITH_INPUT_RECORDING
 
     void InputDevicesPanel::DrawInterfaces()
     {

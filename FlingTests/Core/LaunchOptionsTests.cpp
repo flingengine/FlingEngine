@@ -93,6 +93,7 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--seed"));
     }
 
+#if WITH_INPUT_RECORDING
     SECTION("Replay and record input paths")
     {
         REQUIRE(ParseArgs({"--replay-input", "a.input.jsonl", "--record-input=b.input.jsonl"}, Options, Error));
@@ -118,6 +119,15 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE_FALSE(ParseArgs({"--record-input="}, Options, Error));
         REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--record-input needs a file path"));
     }
+#else
+    SECTION("Replay and record input are errors in shipping builds")
+    {
+        REQUIRE_FALSE(ParseArgs({"--replay-input", "a.input.jsonl"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--replay-input is not available in shipping builds"));
+        REQUIRE_FALSE(ParseArgs({"--record-input", "b.input.jsonl"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--record-input is not available in shipping builds"));
+    }
+#endif
 
     SECTION("Unknown log format")
     {

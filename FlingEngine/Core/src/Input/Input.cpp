@@ -10,12 +10,15 @@ namespace Fling
         m_KeyboardCaptured = false;
         m_MouseCaptured = false;
         m_GameProcessor.emplace(m_Handler->CreateProcessor());
+#if WITH_INPUT_RECORDING
         m_Recorder = std::make_unique<InputRecorder>(std::weak_ptr<InputMessageHandler>(m_Handler));
         m_Playback = std::make_unique<InputPlayback>(std::weak_ptr<InputMessageHandler>(m_Handler));
+#endif
     }
 
     void Input::Shutdown()
     {
+#if WITH_INPUT_RECORDING
         if (m_Playback)
         {
             m_Playback->Stop();
@@ -24,13 +27,16 @@ namespace Fling
         {
             m_Recorder->Stop();
         }
+#endif
         m_GameProcessor.reset();
         if (m_Handler)
         {
             m_Handler->RemoveAllInterfaces();
         }
+#if WITH_INPUT_RECORDING
         m_Playback.reset();
         m_Recorder.reset();
+#endif
         m_Handler.reset();
     }
 
@@ -76,10 +82,16 @@ namespace Fling
         {
             return;
         }
+#if WITH_INPUT_RECORDING
         m_Playback->Update(t_DeltaSeconds);
+#endif
         m_Handler->PollInterfaces(InputNowNs());
         m_Handler->DispatchDeferredEvents();
+#if WITH_INPUT_RECORDING
         m_Recorder->Update(t_DeltaSeconds);
+#else
+        (void)t_DeltaSeconds;
+#endif
     }
 
     void Input::BeginTick(int64 t_UntilNs)

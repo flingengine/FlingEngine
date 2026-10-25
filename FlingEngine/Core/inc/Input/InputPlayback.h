@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+// Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)
+#if WITH_INPUT_RECORDING
 namespace Fling
 {
     class InputMessageHandler;
@@ -131,3 +133,4 @@ namespace Fling
         bool m_IsFirstUpdate = false;
     };
 } // namespace Fling
+#endif // WITH_INPUT_RECORDING

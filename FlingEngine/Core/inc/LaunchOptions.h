@@ -32,6 +32,7 @@ namespace Fling
      *                       Device connects and disconnects are always logged
      *   --replay-input F    Play the input messages in file F from the first tick
      *   --record-input F    Record the input messages, and save them to file F at exit
+     *                       (--replay-input and --record-input are errors in shipping builds)
      */
     struct LaunchOptions
     {

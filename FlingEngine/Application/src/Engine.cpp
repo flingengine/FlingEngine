@@ -93,6 +93,7 @@ namespace Fling
 		// only set in the config file. Command line args passed directly still win.
 		CommandLine::Get().LoadConfigFile(EngineConfigPath);
 
+#if WITH_INPUT_RECORDING
 		// Start input replay and recording before the world exists. A file that cannot
 		// be read then exits with code 3, and Shutdown has no world to stop.
 		if (!m_Options.ReplayInput.empty())
@@ -114,6 +115,7 @@ namespace Fling
 			Input::Get().GetRecorder().Start(RecordPath, 0.0f, 0.0f);
 			F_LOG_TRACE("Recording input to {}", RecordPath);
 		}
+#endif
 
 		if (m_Options.NullRender)
 		{
@@ -254,6 +256,7 @@ namespace Fling
 		// Cleanup any resources
 		if (m_SystemsStarted)
 		{
+#if WITH_INPUT_RECORDING
 			Input::Get().GetPlayback().Stop();
 			InputRecorder& Recorder = Input::Get().GetRecorder();
 			if (Recorder.IsActive())
@@ -268,6 +271,7 @@ namespace Fling
 					F_LOG_ERROR("Cannot save input recording to {}: {}", RecordPath, Recorder.GetLastError());
 				}
 			}
+#endif
 
 			if (m_GlfwInputId.IsValid())
 			{

@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <string_view>
 
+#if WITH_INPUT_RECORDING
 namespace Fling
 {
     void InputRecorder::Start(const std::string& t_Path, float t_StartDelay, float t_Duration)
@@ -226,3 +227,4 @@ namespace Fling
         return false;
     }
 } // namespace Fling
+#endif // WITH_INPUT_RECORDING

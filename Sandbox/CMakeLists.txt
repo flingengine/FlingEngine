@@ -52,33 +52,45 @@ if( FLING_BUILD_TESTS )
         PASS_REGULAR_EXPRESSION "Fling exit: code=3 ticks=0"
     )
 
-    # Replay an input file. The Escape press at 0.5 s goes out on tick 30, so the
-    # game quits after 31 ticks.
-    add_test( NAME "Sandbox: replay input quits"
-        COMMAND ${PROJECT_NAME} --null-render --unattended --frames 600 --seed 1
-                --replay-input Sandbox/Tests/Input/escape_quits.input.jsonl
-        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
-    )
-    set_tests_properties( "Sandbox: replay input quits" PROPERTIES
-        PASS_REGULAR_EXPRESSION "Fling exit: code=0 ticks=31 "
-    )
+    # Input replay is compiled out of shipping builds (WITH_INPUT_RECORDING)
+    if( NOT DEFINE_SHIPPING )
+        # Replay an input file. The Escape press at 0.5 s goes out on tick 30, so the
+        # game quits after 31 ticks.
+        add_test( NAME "Sandbox: replay input quits"
+            COMMAND ${PROJECT_NAME} --null-render --unattended --frames 600 --seed 1
+                    --replay-input Sandbox/Tests/Input/escape_quits.input.jsonl
+            WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+        )
+        set_tests_properties( "Sandbox: replay input quits" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Fling exit: code=0 ticks=31 "
+        )
 
-    # An input file that cannot be read must exit with code 3 (ExitCode::BadArguments)
-    add_test( NAME "Sandbox: replay input bad file"
-        COMMAND ${PROJECT_NAME} --null-render --unattended --frames 10 --seed 1
-                --replay-input Sandbox/Tests/Input/does_not_exist.input.jsonl
-        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
-    )
-    set_tests_properties( "Sandbox: replay input bad file" PROPERTIES
-        PASS_REGULAR_EXPRESSION "Fling exit: code=3"
-    )
+        # An input file that cannot be read must exit with code 3 (ExitCode::BadArguments)
+        add_test( NAME "Sandbox: replay input bad file"
+            COMMAND ${PROJECT_NAME} --null-render --unattended --frames 10 --seed 1
+                    --replay-input Sandbox/Tests/Input/does_not_exist.input.jsonl
+            WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+        )
+        set_tests_properties( "Sandbox: replay input bad file" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Fling exit: code=3"
+        )
+        set_tests_properties( "Sandbox: replay input quits" "Sandbox: replay input bad file" PROPERTIES TIMEOUT 120 )
+    else()
+        add_test( NAME "Sandbox: replay input is off in shipping"
+            COMMAND ${PROJECT_NAME} --null-render --unattended --frames 10 --seed 1
+                    --replay-input Sandbox/Tests/Input/escape_quits.input.jsonl
+            WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+        )
+        set_tests_properties( "Sandbox: replay input is off in shipping" PROPERTIES
+            PASS_REGULAR_EXPRESSION "--replay-input is not available in shipping builds"
+            TIMEOUT 120
+        )
+    endif()
 
     set_tests_properties(
         "Sandbox: headless run"
         "Sandbox: headless json logs"
         "Sandbox: bad launch argument"
-        "Sandbox: replay input quits"
-        "Sandbox: replay input bad file"
         PROPERTIES TIMEOUT 120
     )
 endif()

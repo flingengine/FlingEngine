@@ -1,23 +1,24 @@
 #pragma once
 
-#include "FileBrowserPopup.h"
 #include "FlingEditorPanel.h"
+
+#if WITH_INPUT_RECORDING
+#include "FileBrowserPopup.h"
 #include "Input/InputRecording.h"
+#endif
 
 #include <entt/entity/registry.hpp>
 
 namespace Fling
 {
     class InputDevice;
-    enum class InputRecorderState : uint8;
-    enum class InputPlaybackState : uint8;
 
     /**
      * Debug window for the input system. It lists every input interface and the devices
      * it owns, every device with its metadata and live state, and has a button that
      * changes the input log level. A "Recording + Playback" section starts and stops
      * input recording and playback, picks the playback file, and shows a log of the
-     * messages that are recorded or replayed.
+     * messages that are recorded or replayed. Shipping builds do not have that section.
      */
     class InputDevicesPanel final : public FlingEditorPanel
     {
@@ -35,6 +36,7 @@ namespace Fling
 
         void DrawSummary();
 
+#if WITH_INPUT_RECORDING
         void DrawRecording();
 
         void DrawPlayback();
@@ -43,6 +45,7 @@ namespace Fling
 
         /** Draw one log in a scrolling child region, with a Clear button. */
         void DrawLogView(const char* t_Id, InputEventLog& t_Log, uint64& t_SeenTotal);
+#endif
 
         void DrawInterfaces();
 
@@ -52,6 +55,7 @@ namespace Fling
 
         bool m_ShowDisconnected = true;
 
+#if WITH_INPUT_RECORDING
         float m_RecordDelay = 3.0f;
 
         float m_RecordDuration = 0.0f;
@@ -84,5 +88,6 @@ namespace Fling
         uint64 m_SeenPlaybackTotal = 0;
 
         FileBrowserPopup m_FileBrowser;
+#endif
     };
 } // namespace Fling

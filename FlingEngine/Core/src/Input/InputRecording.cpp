@@ -12,6 +12,7 @@
 #include <optional>
 #include <sstream>
 
+#if WITH_INPUT_RECORDING
 namespace Fling
 {
     namespace
@@ -1049,3 +1050,4 @@ namespace Fling
         m_TotalAdded = 0;
     }
 } // namespace Fling
+#endif // WITH_INPUT_RECORDING

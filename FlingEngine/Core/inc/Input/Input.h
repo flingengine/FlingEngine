@@ -68,7 +68,8 @@ namespace Fling
 
         /**
          * Advance input playback, poll every interface (this pumps platform events), fire
-         * deferred device events, then let the recorder read the new messages.
+         * deferred device events, then let the recorder read the new messages. Shipping
+         * builds have no playback or recorder.
          *
          * @param t_DeltaSeconds    The frame time. It moves the playback and recording clocks
          */
@@ -141,11 +142,13 @@ namespace Fling
 
         const InputMessageProcessor& GetGameProcessor() const { return *m_GameProcessor; }
 
-        /** Records the message stream to a file. Only call this after Init. */
+#if WITH_INPUT_RECORDING
+        /** Records the message stream to a file. Only call this after Init. Not in shipping builds. */
         InputRecorder& GetRecorder() { return *m_Recorder; }
 
-        /** Plays an input file through the "Playback" interface. Only call this after Init. */
+        /** Plays an input file through the "Playback" interface. Only call this after Init. Not in shipping builds. */
         InputPlayback& GetPlayback() { return *m_Playback; }
+#endif
 
         /** The handler, or null before Init. Keep a std::weak_ptr if you store it. */
         const std::shared_ptr<InputMessageHandler>& GetHandler() const { return m_Handler; }
@@ -155,9 +158,11 @@ namespace Fling
 
         std::optional<InputMessageProcessor> m_GameProcessor;
 
+#if WITH_INPUT_RECORDING
         std::unique_ptr<InputRecorder> m_Recorder;
 
         std::unique_ptr<InputPlayback> m_Playback;
+#endif
 
         /** True if the key belongs to a device that UI owns now. */
         bool IsCaptured(InputKey t_Key) const;

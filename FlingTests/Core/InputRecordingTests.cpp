@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#if WITH_INPUT_RECORDING
 namespace
 {
     using namespace Fling;
@@ -861,3 +862,4 @@ TEST_CASE("InputRecorder can remove the click that stopped it", "[Input][Recorde
     CHECK(Saved.Messages[1].Message.Key == Keys::MouseLeft);
     CHECK(Saved.Messages[2].Message.Type == InputMessageType::KeyUp);
 }
+#endif // WITH_INPUT_RECORDING

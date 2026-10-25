@@ -8,6 +8,8 @@
 #include <string_view>
 #include <vector>
 
+// Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)
+#if WITH_INPUT_RECORDING
 namespace Fling
 {
     /**
@@ -120,3 +122,4 @@ namespace Fling
         uint64 m_TotalAdded = 0;
     };
 } // namespace Fling
+#endif // WITH_INPUT_RECORDING

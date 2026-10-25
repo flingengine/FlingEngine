@@ -7,6 +7,8 @@
 #include <optional>
 #include <string>
 
+// Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)
+#if WITH_INPUT_RECORDING
 namespace Fling
 {
     class InputMessageHandler;
@@ -142,3 +144,4 @@ namespace Fling
         uint32 m_SaveCount = 0;
     };
 } // namespace Fling
+#endif // WITH_INPUT_RECORDING

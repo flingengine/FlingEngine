@@ -18,6 +18,7 @@ namespace Fling
         constexpr std::string_view ReplayInputFlag = "replay-input";
         constexpr std::string_view RecordInputFlag = "record-input";
 
+#if WITH_INPUT_RECORDING
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
         bool ReadPath(const CommandLine& t_CmdLine, std::string_view t_Flag, std::string& t_Out, std::string& t_OutError)
         {
@@ -38,6 +39,7 @@ namespace Fling
             t_Out = std::string(Str);
             return true;
         }
+#endif
 
         /** Read a bool flag. A flag with no value is "true". */
         bool ReadBool(const CommandLine& t_CmdLine, std::string_view t_Flag, bool& t_Out, std::string& t_OutError)
@@ -162,6 +164,7 @@ namespace Fling
             }
         }
 
+#if WITH_INPUT_RECORDING
         if (!ReadPath(t_CmdLine, ReplayInputFlag, t_Out.ReplayInput, t_OutError))
         {
             return false;
@@ -171,6 +174,17 @@ namespace Fling
         {
             return false;
         }
+#else
+        // A shipped game cannot be driven by an input file
+        for (const std::string_view Flag : {ReplayInputFlag, RecordInputFlag})
+        {
+            if (t_CmdLine.GetValueAsString(Flag) != nullptr)
+            {
+                t_OutError = "--" + std::string(Flag) + " is not available in shipping builds";
+                return false;
+            }
+        }
+#endif
 
         return true;
     }

@@ -19,6 +19,10 @@ Use it to:
 | `--record-input <file>` | Records from the first tick, and saves the file when the engine exits |
 | Editor: **Windows > Input Devices > Recording + Playback** | Start and stop a recording, with a start delay and a duration. Select a file and play it. The click on **Stop recording** is not saved |
 
+Recording and playback are only in dev builds. Shipping builds
+(`DEFINE_SHIPPING=ON`) compile them out with `WITH_INPUT_RECORDING=0`, and the two
+flags exit with code `3` (see [`building.md`](building.md#define_shipping)).
+
 Relative paths start at the project root (`FlingPaths::ProjectDir`). The editor
 saves new recordings to `Saved/InputRecordings/`. The `Saved/` folder is not in
 source control.
