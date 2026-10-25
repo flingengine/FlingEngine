@@ -74,6 +74,9 @@ into `Skills/`.
   [`Plans/improve-ai-iteration.md`](Plans/improve-ai-iteration.md).
 - Timing API and fixed-tick loop (SimTick, tick sources, frame publishing for
   render interpolation and rollback): [`Plans/improve-time.md`](Plans/improve-time.md).
+- How Graphics loads Vulkan at runtime with only the official SDK
+  (`VK_NO_PROTOTYPES`, a function-pointer table, no import library), replacing
+  the MSVC `/DELAYLOAD` fix: [`Plans/vulkan-loading.md`](Plans/vulkan-loading.md).
 - Input events, the input thread, and per-tick input (timestamped event ring,
   readers, gamepad polling, input contexts, render-side look):
   [`Plans/improve-input.md`](Plans/improve-input.md).

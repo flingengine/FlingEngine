@@ -254,6 +254,10 @@ Done. The rules that it establishes are in
   Graphics is still linked. A `<Name>Server` target that does not link Graphics
   is P5 in `project-model.md`.
 - Graphics resources keep CPU data only when `VulkanApp::HasDevice()` is false.
+- On MSVC, `vulkan-1.dll` is delay-loaded, so a `--null-render` run starts on a
+  machine with no Vulkan runtime. Linux and MinGW still need the Vulkan loader
+  installed. [`vulkan-loading.md`](vulkan-loading.md) fixes this on every
+  platform.
 - With no developer UI (a game build, or `--null-render`), the game starts at
   once. Before this change, only the editor's Play button started it.
 - `--seed` seeds the global `Random`. The per-world RNG comes with T3 in
