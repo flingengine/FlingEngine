@@ -40,6 +40,16 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 ```
 
+## Garden skybox by Humus
+
+The six face images in
+[`Assets/Textures/Skybox/Garden/`](Assets/Textures/Skybox/Garden/) are the work
+of Emil Persson, aka [Humus](http://www.humus.name). The default skybox uses them
+(see the `[Graphics] Skybox` value in `Config/EngineConf.ini`). They are
+licensed under the
+[Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/).
+The author's `readme.txt` is in the same folder.
+
 ## Libraries in `external/`
 
 These are git submodules. Each one keeps its own license file, listed here.

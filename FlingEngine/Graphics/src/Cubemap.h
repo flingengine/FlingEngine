@@ -1,132 +1,54 @@
 #pragma once
 
-#include "Model.h"
-#include "Texture.h"
+#include "Resource.h"
 #include "FlingVulkan.h"
-#include "Buffer.h"
-#include "FlingTypes.h"
-#include "FlingMath.h"
-#include "File.h"
-#include "LogicalDevice.h"
-#include "UniformBufferObject.h"
-#include "Camera.h"
-#include "GraphicsPipeline.h"
-#include "MultiSampler.h"
 #include <memory>
-#include <vector>
 
 namespace Fling
 {
-	class LogicalDevice;
-
-    class Cubemap
+    /**
+     * A cube map image made from six face images in one folder. The Guid is the folder path
+     * relative to the assets directory, for example "Textures/Skybox/Garden". The folder must
+     * have the files posx, negx, posy, negy, posz and negz, each with an image extension
+     * (.png, .jpg, .jpeg, .tga or .bmp). All faces must be square and the same size.
+     */
+    class Cubemap : public Resource
     {
-        public:
-            Cubemap(
-                Guid t_PosX_ID,
-                Guid t_NegX_ID,
-                Guid t_PosY_ID,
-                Guid t_NegY_ID,
-                Guid t_PosZ_ID,
-                Guid t_NegZ_ID,
-                Guid t_VertexShader,
-                Guid t_FragShader,
-                VkRenderPass t_RenderPass,
-                LogicalDevice* t_LogicalDevice);
+    public:
+        static std::shared_ptr<Fling::Cubemap> Create(Guid t_ID);
 
-            Cubemap(
-                Guid t_CubeMap_ID,
-                VkRenderPass t_Renderpass,
-                VkDevice t_LogicalDevice);
+        explicit Cubemap(Guid t_ID);
+        virtual ~Cubemap();
 
-            ~Cubemap();
+        FORCEINLINE uint32 GetFaceSize() const { return m_FaceSize; }
 
-            void Init(Camera* t_Camera, uint32 t_CurrentImage, size_t t_NumeFramesInFlight, Multisampler* t_Sampler);
+        /** True when the faces loaded and the GPU image exists */
+        FORCEINLINE bool IsValid() const { return m_ImageView != VK_NULL_HANDLE; }
 
-            void UpdateUniformBuffer(uint32 t_CurrentImage, const glm::mat4& t_ProjectionMatrix, const glm::mat4& t_ViewMatrix);
+        FORCEINLINE const VkDescriptorImageInfo* GetDescriptorInfo() const { return &m_ImageInfo; }
 
-            void BindCmdBuffer(VkCommandBuffer& t_CommandBuffer);
+        /** Release the Vulkan resources of this cube map */
+        void Release();
 
-            std::unique_ptr<GraphicsPipeline> GetGraphicsPipeline() const { return std::unique_ptr<GraphicsPipeline>(m_GraphicsPipeline); }
+    private:
+        /** Load the six faces and upload them to one cube compatible image with six layers */
+        void LoadVulkanImage();
 
-            /**
-             * Get the Descriptor Sets object
-             * 
-             * @return const VkDescriptorSet> 
-             */
-            VkDescriptorSet& GetDescriptorSet() { return m_DescriptorSet; }
+        void CreateImageView();
 
-            /**
-             * Get the Vertex Buffer object
-             * 
-             * @return const Buffer* 
-             */
-            Buffer* GetVertexBuffer() const { return m_Cube->GetVertexBuffer(); }
+        void CreateSampler();
 
-            /**
-             * Get the Index Buffer object
-             * 
-             * @return const Buffer* 
-             */
-            Buffer* GetIndexBuffer() const { return m_Cube->GetIndexBuffer(); }
+        /** Width and height of each face, in pixels */
+        uint32 m_FaceSize = 0;
 
-            /**
-             * Get the Index Count object
-             */
-            uint32 GetIndexCount() const { return m_Cube->GetIndexCount(); }
+        VkImage m_Image = VK_NULL_HANDLE;
 
-            VkIndexType GetIndexType() const { return m_Cube->GetIndexType(); }
+        VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;
 
-            VkImage GetImage() const { return m_Image; }
-            VkDeviceMemory GetImageMemory() const{ return m_ImageMemory; }
-            VkDescriptorImageInfo& GetImageInfo() { return m_DescriptorImageInfo; }
+        VkImageView m_ImageView = VK_NULL_HANDLE;
 
-        private:
+        VkSampler m_Sampler = VK_NULL_HANDLE;
 
-            void PreparePipeline(Multisampler* t_Sampler);
-
-            /** Loads cubemaps with file format .hdr for ibl **/
-            void LoadCubeMapImage(Guid t_CubeMap_ID);
-            
-            void LoadCubemapImages(
-                Guid t_PosX_ID,
-                Guid t_NegX_ID,
-                Guid t_PosY_ID,
-                Guid t_NegY_ID,
-                Guid t_PosZ_ID,
-                Guid t_NegZ_ID);
-
-            void SetupDescriptors();
-
-            std::vector<Texture> m_cubeMapImages;
-            std::vector<std::shared_ptr<class Buffer>> m_UniformBuffers;
-
-            VkImage m_Image;
-            VkImageView m_Imageview;
-            VkImageLayout m_ImageLayout;
-            VkDeviceMemory m_ImageMemory;
-            VkSampler m_Sampler;
-            
-            VkDescriptorSetLayout m_DescriptorSetLayout;
-            VkDescriptorImageInfo m_DescriptorImageInfo;
-            VkDescriptorSet m_DescriptorSet;
-            VkDescriptorPool m_DescriptorPool;
-            VkRenderPass m_RenderPass;
-            LogicalDevice* m_Device;
-            VkDescriptorBufferInfo m_UniformBufferDescriptor;
-
-            VkDeviceSize m_ImageSize;
-            VkDeviceSize m_LayerSize;
-            VkFormat m_Format;
-            uint32 m_NumChannels;
-            uint32 m_MipLevels;
-            size_t m_numsFrameInFlight;
-
-            UboSkyboxVS m_UboVS;
-            std::shared_ptr<Model> m_Cube;
-            GraphicsPipeline* m_GraphicsPipeline;
-
-            Guid m_FragShader;
-            Guid m_VertexShader;
+        VkDescriptorImageInfo m_ImageInfo{};
     };
-}
+} // namespace Fling

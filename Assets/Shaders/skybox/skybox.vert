@@ -1,25 +1,18 @@
 #version 450
 
-layout (location = 0) in vec3 inPos;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+// Normalized device coordinates of this pixel, for the fragment shader to make a view ray
+layout (location = 0) out vec2 outNDC;
 
-layout (binding = 0) uniform UBO 
-{
-	mat4 projection;
-	mat4 modelView;
-} ubo;
-
-layout (location = 0) out vec3 outUVW;
-
-out gl_PerVertex 
+out gl_PerVertex
 {
 	vec4 gl_Position;
 };
 
-void main() 
+void main()
 {
-	vec3 position = mat3(ubo.modelView) * inPos.xyz;
-	gl_Position = (ubo.projection * vec4(position, 0.0)).xyzz;
-	outUVW = inPos.xyz;
+	// One triangle that covers the full screen, made from the vertex index with no vertex buffer
+	// @see https://www.saschawillems.de/blog/2016/08/13/vulkan-tutorial-on-rendering-a-fullscreen-quad-without-buffers/
+	vec2 uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	outNDC = uv * 2.0 - 1.0;
+	gl_Position = vec4(outNDC, 1.0, 1.0);
 }

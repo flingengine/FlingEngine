@@ -106,7 +106,8 @@ namespace Fling
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = SwapImageCount;
+		// Each subpass may allocate one set for each swap chain image
+		poolInfo.maxSets = SwapImageCount * static_cast<uint32>(m_Subpasses.size());
 
 		VK_CHECK_RESULT(vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool));
 

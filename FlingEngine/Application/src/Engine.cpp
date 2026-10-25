@@ -128,7 +128,7 @@ namespace Fling
 		else
 		{
 			VulkanApp::Get().Init(
-				static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::IMGUI),
+				static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP | PipelineFlags::IMGUI),
 				g_Registry,
 				m_DebugUI
 			);
