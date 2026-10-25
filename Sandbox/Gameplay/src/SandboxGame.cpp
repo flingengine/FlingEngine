@@ -143,9 +143,10 @@ namespace Sandbox
 			glm::vec3 max = { 15.0f, 1.0f, 15.0f };
 			const glm::vec3 startPos = Fling::Random::GetRandomVec3(min, max);
 
-			// PointLight on_construct adds Transform if missing, so set pose after.
+			// The renderer adds a Transform to a new PointLight, but there is no renderer
+			// under --null-render. get_or_assign works in both cases.
             PointLight& Light = t_Reg.assign<PointLight>(e0);
-			Transform& t0 = t_Reg.get<Transform>(e0);
+			Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
 			t0.SetPos(startPos);
             Mover& m0 = t_Reg.assign<Mover>(e0);
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);

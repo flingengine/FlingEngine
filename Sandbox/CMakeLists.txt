@@ -24,3 +24,38 @@ if( WITH_EDITOR_FLAG )
 else()
     target_link_libraries( ${PROJECT_NAME} PRIVATE Fling::GameStack )
 endif()
+
+################# Headless tests ######################
+
+# Run the Sandbox game with no window and no GPU, the same way CI and agents do.
+# These run on CI machines that have no display and no Vulkan device.
+if( FLING_BUILD_TESTS )
+    add_test( NAME "Sandbox: headless run"
+        COMMAND ${PROJECT_NAME} --null-render --unattended --frames 120 --seed 1
+        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+    )
+
+    add_test( NAME "Sandbox: headless json logs"
+        COMMAND ${PROJECT_NAME} --null-render --unattended --frames 10 --seed 1 --log-format json
+        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+    )
+    set_tests_properties( "Sandbox: headless json logs" PROPERTIES
+        PASS_REGULAR_EXPRESSION "{\"event\":\"exit\",\"code\":0,\"ticks\":10,\"seed\":1,\"render\":\"null\""
+    )
+
+    # A bad launch argument must exit with code 3 (ExitCode::BadArguments)
+    add_test( NAME "Sandbox: bad launch argument"
+        COMMAND ${PROJECT_NAME} --null-render --unattended --frames not-a-number
+        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+    )
+    set_tests_properties( "Sandbox: bad launch argument" PROPERTIES
+        PASS_REGULAR_EXPRESSION "Fling exit: code=3 ticks=0"
+    )
+
+    set_tests_properties(
+        "Sandbox: headless run"
+        "Sandbox: headless json logs"
+        "Sandbox: bad launch argument"
+        PROPERTIES TIMEOUT 120
+    )
+endif()

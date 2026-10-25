@@ -99,6 +99,19 @@ namespace Fling
 				const std::string Value = StripSurroundingQuotes(Arg.substr(EqualsPos + 1));
 				ParsedArgs[Key] = Value;
 			}
+			else if (FirstNonDash == 2 && i + 1 < argc && argv[i + 1][0] != '\0' && argv[i + 1][0] != '-'
+					 && std::string_view(argv[i + 1]).size() <= MaxArgLength)
+			{
+				// "--frames 300": a double dash key with no "=" takes the next arg as
+				// its value, if that arg is not a flag itself
+				++i;
+				CmdStream << argv[i];
+				if (i + 1 < argc)
+				{
+					CmdStream << " ";
+				}
+				ParsedArgs[Arg] = StripSurroundingQuotes(argv[i]);
+			}
 			else
 			{
 				// A flag with no explicit value, e.g. "-BoolFlag", is treated as true

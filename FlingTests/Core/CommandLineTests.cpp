@@ -240,3 +240,46 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE_FALSE(CommandLine::Get().LoadConfigFile("ThisFileDoesNotExist.ini"));
     }
 }
+
+TEST_CASE("Command Line - double dash key with a separate value", "[Command Line]") {
+    using namespace Fling;
+
+    SECTION("Takes the next argument as the value") {
+        const char* Args[] = {"FlingEngine.exe", "--frames", "300", "--null-render"};
+        constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
+        REQUIRE(CommandLine::Get().Init(ArgCount, Args));
+
+        REQUIRE(CommandLine::Get().GetValueAs<int32>("frames", -1) == 300);
+        REQUIRE(CommandLine::Get().GetValueAs<bool>("null-render", false));
+
+        // The value does not become a flag of its own
+        REQUIRE_FALSE(CommandLine::Get().HasParam("300"));
+        REQUIRE(CommandLine::Get().GetCommandLineData() == "--frames 300 --null-render");
+    }
+
+    SECTION("A following flag is not taken as the value") {
+        const char* Args[] = {"FlingEngine.exe", "--unattended", "--seed", "7"};
+        constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
+        REQUIRE(CommandLine::Get().Init(ArgCount, Args));
+
+        REQUIRE(CommandLine::Get().GetValueAs<bool>("unattended", false));
+        REQUIRE(CommandLine::Get().GetValueAs<int32>("seed", -1) == 7);
+    }
+
+    SECTION("A single dash key does not take the next argument") {
+        const char* Args[] = {"FlingEngine.exe", "-BoolFlag", "value"};
+        constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
+        REQUIRE(CommandLine::Get().Init(ArgCount, Args));
+
+        REQUIRE(CommandLine::Get().GetValueAs<bool>("BoolFlag", false));
+        REQUIRE(CommandLine::Get().HasParam("value"));
+    }
+
+    SECTION("An equals sign still sets the value") {
+        const char* Args[] = {"FlingEngine.exe", "--frames=12", "34"};
+        constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
+        REQUIRE(CommandLine::Get().Init(ArgCount, Args));
+
+        REQUIRE(CommandLine::Get().GetValueAs<int32>("frames", -1) == 12);
+    }
+}

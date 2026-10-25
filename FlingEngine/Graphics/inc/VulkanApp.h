@@ -65,6 +65,12 @@ namespace Fling
         inline PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
         inline FirstPersonCamera* GetCamera() const { return m_Camera; }
 
+        /**
+         * True after Init made a GPU device. False under --null-render, where Init is
+         * not called: resources then keep their CPU data and make no GPU objects.
+         */
+        inline bool HasDevice() const { return m_LogicalDevice != nullptr; }
+
         /** Name reported by the active physical device, or empty when none is selected. */
         std::string GetPhysicalDeviceName() const;
 

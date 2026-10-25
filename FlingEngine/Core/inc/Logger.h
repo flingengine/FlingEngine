@@ -3,6 +3,7 @@
 #include "Platform.h"
 #include "BuildConfig.h"
 #include "Singleton.hpp"
+#include "LaunchOptions.h"
 
 #define SPDLOG_TRACE_ON
 #define SPDLOG_DEBUG_ON
@@ -29,6 +30,18 @@ namespace Fling
 		virtual void Init() override;
 
 		/**
+		 * Write all queued log lines and stop the log thread. Call this last in
+		 * shutdown. Init can start the logger again.
+		 */
+		virtual void Shutdown() override;
+
+		/**
+		 * Set the format of the console and file logs. Call this before Init. Json
+		 * writes one JSON object per line, to fling_log.jsonl instead of fling_log.txt.
+		 */
+		static void SetFormat(LogFormat t_Format) { m_Format = t_Format; }
+
+		/**
 		* Gets a reference to the current logging console
 		* @return Shader ptr to the current console
 		*/
@@ -47,6 +60,8 @@ namespace Fling
 
 		/** Pointer to the log file logger */
 		static std::shared_ptr<spdlog::logger> m_FileLog;
+
+		static LogFormat m_Format;
 
 	};
 

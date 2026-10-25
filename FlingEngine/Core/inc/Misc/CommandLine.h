@@ -21,8 +21,13 @@ namespace Fling
     * For example, to specify the "foo" option with a value of 7, you could use:
     * 
     *   -foo=7
-    * 
-    * on the command line. 
+    *
+    * on the command line. A key with two dashes and no "=" takes the next
+    * argument as its value, if that argument does not start with "-":
+    *
+    *   --frames 300
+    *
+    * A key with no value, for example "-BoolFlag", has the value "true".
     */
     class CommandLine
     {

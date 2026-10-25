@@ -78,20 +78,20 @@ namespace Fling
         int32 m_Channels = 0;
 
 		/** The Vulkan image data */
-		VkImage m_vVkImage;
+		VkImage m_vVkImage = VK_NULL_HANDLE;
 
         /** The view of this image for the swap chain */
-        VkImageView m_ImageView;
+        VkImageView m_ImageView = VK_NULL_HANDLE;
 
-		VkSampler m_TextureSampler;
+		VkSampler m_TextureSampler = VK_NULL_HANDLE;
 
 		/** The Vulkan memory resource for this image */
-		VkDeviceMemory m_VkMemory;
+		VkDeviceMemory m_VkMemory = VK_NULL_HANDLE;
 
 		VkDescriptorImageInfo m_ImageInfo{};
         
         /** Pixel data of image **/
-        stbi_uc* m_PixelData;
+        stbi_uc* m_PixelData = nullptr;
 
         VkFormat m_Format = VK_FORMAT_R8G8B8A8_UNORM;
     };

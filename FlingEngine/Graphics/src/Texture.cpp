@@ -24,6 +24,12 @@ namespace Fling
 	Texture::Texture(Guid t_ID)
         : Resource(t_ID)
     {
+        // Under --null-render there is no GPU device, so there is no image to make
+        if (!VulkanApp::Get().HasDevice())
+        {
+            return;
+        }
+
         LoadVulkanImage();
 
         // Create the image views for sampling
@@ -273,9 +279,14 @@ namespace Fling
     {
         // We don't need this stbi pixel data any more
         stbi_image_free(m_PixelData);
-        
+        m_PixelData = nullptr;
+
 		LogicalDevice* LogDevice = VulkanApp::Get().GetLogicalDevice();
-		assert(LogDevice);
+		if (LogDevice == nullptr)
+		{
+			// --null-render: the constructor made no GPU objects
+			return;
+		}
 
         VkDevice Device = LogDevice->GetVkDevice();
 

@@ -11,9 +11,10 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 
 - `FlingEngine/Core` — the `Core` module (`Fling::Core`, built with
   `fling_add_module()`): platform macros, logging, math, memory, timing,
-  `FlingPaths`, and the platform-independent `Input` class. Core includes and
+  `FlingPaths`, the platform-independent `Input` class, and launch support
+  (`LaunchOptions`, `ExitCode`, `CrashHandler`). Core includes and
   links no other engine module, and its own include path enforces that.
-  `WITH_IMGUI`, `WITH_EDITOR`, and `FLING_SHIPPING` are PUBLIC definitions on
+  `WITH_IMGUI`, `WITH_EDITOR`, `WITH_CRASH_HANDLER`, and `FLING_SHIPPING` are PUBLIC definitions on
   Core, so every target sees them.
 - `FlingEngine/Resources` — the `Resources` module (depends on Core): config
   files, JSON, file loading, `ResourceManager`. GPU resources (`Texture`,
@@ -34,7 +35,9 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 - `FlingEngine/Application` — the `Application` module (depends on Engine and
   Graphics): the top-level startup layer. `Engine.h`/`Engine.cpp`
   (`Engine::Run`, the main loop) and `FlingEngine.h`. It boots a game client,
-  server, test, or editor application. Only a game's `main()` includes it.
+  server, test, or editor application. Only a game's `main()` includes it. The
+  main loop does not need `VulkanApp`: under `--null-render` it makes no window
+  and no GPU device (see [`testing.md`](testing.md#headless-runs)).
 - `FlingEngine/Editor` — the `Editor` module (depends on Engine and Graphics):
   `BaseEditor` and its panels. A leaf: built only when `WITH_EDITOR_FLAG` is ON,
   and only editor builds link it.

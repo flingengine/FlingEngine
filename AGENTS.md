@@ -34,6 +34,10 @@ platform setup (Vulkan SDK, GLFW, etc.).
   one executable is `./build/FlingTests/bin/<Module>Tests` (for example
   `./build/FlingTests/bin/CoreTests`). The `FLING_BUILD_TESTS` CMake option
   controls whether these executables exist.
+- Run the game with no window and no GPU:
+  `Sandbox --null-render --unattended --frames 120 --seed 1`. It exits with
+  `0` success, `1` failure, `2` crash, or `3` bad arguments. Use `--unattended` for
+  every run with no human present, so that a crash cannot open a dialog.
 - Full detail, including how to add a new test file: [`Skills/testing.md`](Skills/testing.md).
 
 ## Coding style
@@ -70,6 +74,9 @@ into `Skills/`.
   [`Plans/improve-ai-iteration.md`](Plans/improve-ai-iteration.md).
 - Timing API and fixed-tick loop (SimTick, tick sources, frame publishing for
   render interpolation and rollback): [`Plans/improve-time.md`](Plans/improve-time.md).
+- How Graphics loads Vulkan at runtime with only the official SDK
+  (`VK_NO_PROTOTYPES`, a function-pointer table, no import library), replacing
+  the MSVC `/DELAYLOAD` fix: [`Plans/vulkan-loading.md`](Plans/vulkan-loading.md).
 - Input events, the input thread, and per-tick input (timestamped event ring,
   readers, gamepad polling, input contexts, render-side look):
   [`Plans/improve-input.md`](Plans/improve-input.md).

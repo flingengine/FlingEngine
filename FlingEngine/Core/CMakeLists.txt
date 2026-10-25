@@ -16,6 +16,7 @@ fling_add_module(Core
 target_compile_definitions(Core PUBLIC
 	WITH_IMGUI=$<BOOL:${WITH_IMGUI_FLAG}>
 	WITH_EDITOR=$<BOOL:${WITH_EDITOR_FLAG}>
+	WITH_CRASH_HANDLER=$<BOOL:${WITH_CRASH_HANDLER_FLAG}>
 	$<$<BOOL:${DEFINE_SHIPPING}>:FLING_SHIPPING>
 )
 
@@ -40,3 +41,8 @@ configure_file(inc/GitVersion_TEMPLATE.h.in "${_core_gen}/GitVersion.h")
 set(FLING_ENGINE_SOURCE_PATH "${FLING_ROOT_DIR}/FlingEngine")
 configure_file(src/FlingAssetPaths.cpp.in "${_core_gen}/FlingAssetPaths.cpp")
 target_sources(Core PRIVATE "${_core_gen}/FlingAssetPaths.cpp")
+
+# CrashHandler reads symbol names for stack traces with DbgHelp
+if(WIN32 AND WITH_CRASH_HANDLER_FLAG)
+	target_link_libraries(Core PRIVATE dbghelp)
+endif()
