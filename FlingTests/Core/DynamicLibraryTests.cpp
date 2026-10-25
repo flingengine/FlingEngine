@@ -4,9 +4,14 @@
 #include "Platform.h"
 
 #include <cstddef>
+#include <cstdio>
 #include <span>
 #include <string>
 #include <string_view>
+
+#if FLING_LINUX
+#include <unistd.h>
+#endif
 
 namespace {
 #if FLING_LINUX
@@ -33,6 +38,104 @@ namespace {
         REQUIRE(Fn() != 0);
 #endif
     }
+
+#if FLING_WINDOWS
+    std::string WideToUtf8(std::wstring_view t_Text) {
+        if (t_Text.empty()) {
+            return {};
+        }
+        const int Size = static_cast<int>(t_Text.size());
+        const int Needed = WideCharToMultiByte(CP_UTF8, 0, t_Text.data(), Size, nullptr, 0, nullptr, nullptr);
+        REQUIRE(Needed > 0);
+        std::string Text(static_cast<size_t>(Needed), '\0');
+        WideCharToMultiByte(CP_UTF8, 0, t_Text.data(), Size, Text.data(), Needed, nullptr, nullptr);
+        return Text;
+    }
+
+    std::wstring TempDirectory() {
+        wchar_t Buffer[MAX_PATH] = {};
+        const DWORD Length = GetTempPathW(MAX_PATH, Buffer);
+        REQUIRE(Length > 0);
+        REQUIRE(Length < MAX_PATH);
+        return std::wstring(Buffer, Length);
+    }
+
+    void WriteTempBytes(const std::wstring& t_Path) {
+        const HANDLE File =
+            CreateFileW(t_Path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        REQUIRE(File != INVALID_HANDLE_VALUE);
+        const char Bytes[] = {'M', 'Z', 0, 0};
+        DWORD Written = 0;
+        const BOOL Ok = WriteFile(File, Bytes, sizeof(Bytes), &Written, nullptr);
+        CloseHandle(File);
+        REQUIRE(Ok);
+        REQUIRE(Written == sizeof(Bytes));
+    }
+
+    /** Delete one file when this guard leaves scope. */
+    class DeleteFileGuard {
+    public:
+        explicit DeleteFileGuard(std::wstring t_Path) : m_Path(std::move(t_Path)) {}
+
+        ~DeleteFileGuard() { DeleteFileW(m_Path.c_str()); }
+
+        DeleteFileGuard(const DeleteFileGuard&) = delete;
+        DeleteFileGuard& operator=(const DeleteFileGuard&) = delete;
+
+    private:
+        std::wstring m_Path;
+    };
+
+    /** Delete one empty directory when this guard leaves scope. */
+    class DeleteDirectoryGuard {
+    public:
+        explicit DeleteDirectoryGuard(std::wstring t_Path) : m_Path(std::move(t_Path)) {}
+
+        ~DeleteDirectoryGuard() { RemoveDirectoryW(m_Path.c_str()); }
+
+        DeleteDirectoryGuard(const DeleteDirectoryGuard&) = delete;
+        DeleteDirectoryGuard& operator=(const DeleteDirectoryGuard&) = delete;
+
+    private:
+        std::wstring m_Path;
+    };
+
+    /**
+     * Restore the process current directory when this guard leaves scope.
+     * A failed REQUIRE still runs the destructor.
+     */
+    class CurrentDirectoryGuard {
+    public:
+        CurrentDirectoryGuard() {
+            const DWORD Needed = GetCurrentDirectoryW(0, nullptr);
+            if (Needed == 0) {
+                return;
+            }
+            m_Previous.resize(Needed);
+            const DWORD Written = GetCurrentDirectoryW(Needed, m_Previous.data());
+            if (Written == 0 || Written >= Needed) {
+                m_Previous.clear();
+                return;
+            }
+            m_Previous.resize(Written);
+        }
+
+        ~CurrentDirectoryGuard() {
+            if (!m_Previous.empty()) {
+                SetCurrentDirectoryW(m_Previous.c_str());
+            }
+        }
+
+        CurrentDirectoryGuard(const CurrentDirectoryGuard&) = delete;
+        CurrentDirectoryGuard& operator=(const CurrentDirectoryGuard&) = delete;
+
+        /** True when the previous directory was saved. */
+        bool Captured() const { return !m_Previous.empty(); }
+
+    private:
+        std::wstring m_Previous;
+    };
+#endif
 } // namespace
 
 TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
@@ -102,4 +205,61 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]") {
         REQUIRE_FALSE(static_cast<bool>(Outer));
         REQUIRE(Outer.Symbol(SymbolName) == nullptr);
     }
+
+#if FLING_WINDOWS
+    SECTION("An unsigned absolute path is rejected") {
+        const std::wstring Path =
+            TempDirectory() + L"fling_unsigned_" + std::to_wstring(GetCurrentProcessId()) + L".dll";
+        const DeleteFileGuard RemoveFile(Path);
+        WriteTempBytes(Path);
+
+        std::string Error;
+        Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(WideToUtf8(Path), &Error);
+        REQUIRE_FALSE(static_cast<bool>(Library));
+        REQUIRE(Error.find("not signed") != std::string::npos);
+    }
+
+    SECTION("A bare name does not search the current directory") {
+        const DWORD ProcessId = GetCurrentProcessId();
+        const std::wstring Dir = TempDirectory() + L"fling_dynlib_cwd_" + std::to_wstring(ProcessId);
+        const BOOL Created = CreateDirectoryW(Dir.c_str(), nullptr);
+        REQUIRE((Created != FALSE || GetLastError() == ERROR_ALREADY_EXISTS));
+        const DeleteDirectoryGuard RemoveDir(Dir);
+
+        const std::wstring Bare = L"fling_planted_" + std::to_wstring(ProcessId) + L".dll";
+        const DeleteFileGuard RemoveFile(Dir + L"\\" + Bare);
+        WriteTempBytes(Dir + L"\\" + Bare);
+
+        const CurrentDirectoryGuard Cwd;
+        REQUIRE(Cwd.Captured());
+        REQUIRE(SetCurrentDirectoryW(Dir.c_str()));
+
+        std::string Error;
+        Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(WideToUtf8(Bare), &Error);
+        REQUIRE_FALSE(static_cast<bool>(Library));
+        REQUIRE(Error.find("not signed") == std::string::npos);
+    }
+#endif
+
+#if FLING_LINUX
+    SECTION("An absolute path to a text file fails") {
+        const std::string Path = "/tmp/fling_dynlib_" + std::to_string(static_cast<long>(::getpid())) + ".txt";
+        struct RemoveFile {
+            std::string Path;
+            ~RemoveFile() { std::remove(Path.c_str()); }
+        } const Guard{Path};
+
+        FILE* File = std::fopen(Path.c_str(), "wb");
+        REQUIRE(File != nullptr);
+        const char Bytes[] = "not a shared library\n";
+        const std::size_t Written = std::fwrite(Bytes, 1, sizeof(Bytes) - 1, File);
+        std::fclose(File);
+        REQUIRE(Written == sizeof(Bytes) - 1);
+
+        std::string Error;
+        Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(Path, &Error);
+        REQUIRE_FALSE(static_cast<bool>(Library));
+        REQUIRE_FALSE(Error.empty());
+    }
+#endif
 }

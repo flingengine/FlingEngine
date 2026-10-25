@@ -14,6 +14,11 @@ fling_add_module(Core
 # DynamicLibrary is the only dlopen caller. Older glibc keeps it in libdl.
 target_link_libraries(Core PRIVATE ${CMAKE_DL_LIBS})
 
+# DynamicLibrary calls WinVerifyTrust before LoadLibraryExW.
+if(WIN32)
+	target_link_libraries(Core PRIVATE wintrust)
+endif()
+
 # Feature flags are read from Core headers (FlingTypes.h) and from every module
 # that links Core, so they live here and propagate to everything.
 target_compile_definitions(Core PUBLIC

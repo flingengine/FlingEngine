@@ -109,17 +109,41 @@ hand-kept list becomes a problem.
 
 ### 3. Loader
 
-`Fling::DynamicLibrary` (Core) is the only code that calls `LoadLibrary` or
-`dlopen`. Graphics does not call `LoadLibrary`, `dlopen`, `GetProcAddress`, or
-`dlsym`.
+`Fling::DynamicLibrary` (Core) is the only code that calls `LoadLibraryEx` or
+`dlopen`. Graphics does not call `LoadLibrary`, `LoadLibraryEx`, `dlopen`,
+`GetProcAddress`, or `dlsym`.
 
 `DynamicLibrary` is move-only. `Open` loads one file name. `OpenFirst` tries
 each name and returns the first library that opens. `Symbol` returns an
 address, or null when the library is closed or the symbol is missing. `Close`
-unloads the library and is safe to call twice. On Windows it uses `LoadLibraryW`
-(UTF-8 name to UTF-16), `GetProcAddress`, and `FreeLibrary`. On Linux it uses
-`dlopen(name, RTLD_NOW | RTLD_LOCAL)`, `dlsym`, and `dlclose`. There is no flag
-parameter. macOS is not a target.
+unloads the library and is safe to call twice.
+
+On Windows, `Open` calls `WinVerifyTrust` with
+`WINTRUST_ACTION_GENERIC_VERIFY_V2` before it maps the file. The check uses
+`WTD_UI_NONE`, `WTD_REVOKE_NONE`, and
+`WTD_SAFER_FLAG | WTD_CACHE_ONLY_URL_RETRIEVAL`. Startup shows no UI and does
+not use the network. `ERROR_SUCCESS` means the signature is valid. That covers
+an embedded signature and a catalog signature, so `kernel32.dll` still loads.
+`TRUST_E_NOSIGNATURE`, `TRUST_E_SUBJECT_FORM_UNKNOWN`, and
+`TRUST_E_PROVIDER_UNKNOWN` report "The shared library is not signed". Any other
+failure reports "The shared library signature is not trusted".
+
+A bare Windows name is resolved in System32 (`GetSystemDirectoryW`), then in
+the directory of the executable (`GetModuleFileNameW`). The current directory
+and `PATH` are not searched. When a candidate file exists and the signature
+check fails, `Open` returns that failure and does not try the next directory.
+A name that contains a slash, a backslash, or a drive prefix is an explicit
+path. `Open` resolves it with `GetFullPathNameW`, verifies that file, and does
+not search. The load uses `LoadLibraryExW` on the absolute path that passed
+the check, with
+`LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32`. A missing
+file reports "The shared library was not found". The name is UTF-8 and the
+Win32 calls take UTF-16. A missing DLL does not open a dialog. `Symbol` uses
+`GetProcAddress`. `Close` uses `FreeLibrary`.
+
+On Linux, `Open` uses `dlopen(name, RTLD_NOW | RTLD_LOCAL)`. Linux does not
+check a signature. `Symbol` uses `dlsym` and `Close` uses `dlclose`. There is
+no flag parameter. macOS is not a target.
 
 `VulkanLoader` (Graphics, private) uses that type:
 
@@ -155,7 +179,8 @@ pointer is set.
   library so CMake can find the headers. The linked Sandbox binary must not
   import `libvulkan` or `vulkan-1.dll`.
 - Core links `${CMAKE_DL_LIBS}` privately. `dlopen` is in libc on glibc 2.34
-  and newer. Older glibc keeps it in `libdl`. Graphics does not call `dlopen`.
+  and newer. Older glibc keeps it in `libdl`. On Windows, Core links
+  `wintrust` for `WinVerifyTrust`. Graphics does not call `dlopen`.
 
 ## Tests
 

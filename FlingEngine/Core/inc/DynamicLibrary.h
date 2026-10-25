@@ -10,8 +10,16 @@ namespace Fling {
     /**
      * Load and unload one shared library.
      *
-     * This is the only Fling type that calls LoadLibrary or dlopen.
+     * This is the only Fling type that calls LoadLibraryEx or dlopen.
      * Move a DynamicLibrary. Do not copy it.
+     *
+     * On Windows, check the Authenticode signature before the load.
+     * A valid signature is embedded or catalog.
+     * Resolve a bare name in System32, then in the executable directory.
+     * Windows does not search the current directory or PATH.
+     * An explicit path contains a slash, a backslash, or a drive prefix.
+     * Verify and load that path only.
+     * Linux calls dlopen. Linux does not check a signature.
      */
     class CORE_API DynamicLibrary {
     public:
@@ -31,7 +39,8 @@ namespace Fling {
          *
          * An empty object means that the load failed. When t_Error is not
          * null, write the platform message there on failure. Clear t_Error
-         * on success.
+         * on success. On Windows, a missing file sets
+         * "The shared library was not found".
          */
         static DynamicLibrary Open(std::string_view t_Name, std::string* t_Error = nullptr);
 

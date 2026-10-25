@@ -9,6 +9,10 @@
 
 #if FLING_WINDOWS
 
+#include <cstdio>
+#include <wintrust.h>
+#include <softpub.h>
+
 namespace {
     std::wstring Utf8ToWide(std::string_view t_Text) {
         if (t_Text.empty() || t_Text.size() > static_cast<size_t>(std::numeric_limits<int>::max())) {
@@ -68,9 +72,145 @@ namespace {
             LocalFree(Buffer);
         }
         if (Message.empty()) {
-            Message = "LoadLibraryW failed (code " + std::to_string(t_Code) + ")";
+            Message = "LoadLibraryExW failed (code " + std::to_string(t_Code) + ")";
         }
         return Message;
+    }
+
+    bool IsExplicitPath(std::wstring_view t_Name) {
+        if (t_Name.find(L'\\') != std::wstring_view::npos || t_Name.find(L'/') != std::wstring_view::npos) {
+            return true;
+        }
+        if (t_Name.size() >= 2 && t_Name[1] == L':') {
+            const wchar_t Drive = t_Name[0];
+            if ((Drive >= L'A' && Drive <= L'Z') || (Drive >= L'a' && Drive <= L'z')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::wstring FullPath(const std::wstring& t_Path) {
+        const DWORD Needed = GetFullPathNameW(t_Path.c_str(), 0, nullptr, nullptr);
+        if (Needed == 0) {
+            return {};
+        }
+
+        std::wstring Path(static_cast<size_t>(Needed), L'\0');
+        const DWORD Written = GetFullPathNameW(t_Path.c_str(), Needed, Path.data(), nullptr);
+        if (Written == 0 || Written >= Needed) {
+            return {};
+        }
+        Path.resize(Written);
+        return Path;
+    }
+
+    std::wstring SystemDirectory() {
+        const UINT Needed = GetSystemDirectoryW(nullptr, 0);
+        if (Needed == 0) {
+            return {};
+        }
+
+        std::wstring Path(static_cast<size_t>(Needed), L'\0');
+        const UINT Written = GetSystemDirectoryW(Path.data(), Needed);
+        if (Written == 0 || Written >= Needed) {
+            return {};
+        }
+        Path.resize(Written);
+        return Path;
+    }
+
+    std::wstring ExecutableDirectory() {
+        std::wstring Path(MAX_PATH, L'\0');
+        DWORD Written = GetModuleFileNameW(nullptr, Path.data(), static_cast<DWORD>(Path.size()));
+        while (Written == Path.size()) {
+            Path.resize(Path.size() * 2);
+            Written = GetModuleFileNameW(nullptr, Path.data(), static_cast<DWORD>(Path.size()));
+        }
+        if (Written == 0) {
+            return {};
+        }
+
+        Path.resize(Written);
+        const size_t Slash = Path.find_last_of(L"\\/");
+        if (Slash == std::wstring::npos) {
+            return {};
+        }
+        return Path.substr(0, Slash);
+    }
+
+    std::wstring JoinPath(std::wstring_view t_Directory, std::wstring_view t_Name) {
+        std::wstring Path;
+        Path.reserve(t_Directory.size() + 1 + t_Name.size());
+        Path.assign(t_Directory.begin(), t_Directory.end());
+        if (!Path.empty() && Path.back() != L'\\' && Path.back() != L'/') {
+            Path.push_back(L'\\');
+        }
+        Path.append(t_Name.begin(), t_Name.end());
+        return Path;
+    }
+
+    enum class Candidate { Missing, Found, Failed };
+
+    Candidate ProbeCandidate(const std::wstring& t_Path) {
+        const DWORD Attributes = GetFileAttributesW(t_Path.c_str());
+        if (Attributes != INVALID_FILE_ATTRIBUTES) {
+            return Candidate::Found;
+        }
+
+        const DWORD Code = GetLastError();
+        if (Code == ERROR_FILE_NOT_FOUND || Code == ERROR_PATH_NOT_FOUND) {
+            return Candidate::Missing;
+        }
+        return Candidate::Failed;
+    }
+
+    enum class Signature { Valid, NotSigned, NotTrusted };
+
+    struct SignatureResult {
+        Signature Status = Signature::NotTrusted;
+        LONG Code = 0;
+    };
+
+    SignatureResult VerifyAuthenticode(const std::wstring& t_Path) {
+        WINTRUST_FILE_INFO FileInfo{};
+        FileInfo.cbStruct = sizeof(FileInfo);
+        FileInfo.pcwszFilePath = t_Path.c_str();
+
+        GUID Action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+
+        WINTRUST_DATA Trust{};
+        Trust.cbStruct = sizeof(Trust);
+        Trust.dwUIChoice = WTD_UI_NONE;
+        Trust.fdwRevocationChecks = WTD_REVOKE_NONE;
+        Trust.dwUnionChoice = WTD_CHOICE_FILE;
+        Trust.dwStateAction = WTD_STATEACTION_VERIFY;
+        Trust.dwProvFlags = WTD_SAFER_FLAG | WTD_CACHE_ONLY_URL_RETRIEVAL;
+        Trust.pFile = &FileInfo;
+
+        const LONG Status = WinVerifyTrust(nullptr, &Action, &Trust);
+
+        Trust.dwStateAction = WTD_STATEACTION_CLOSE;
+        WinVerifyTrust(nullptr, &Action, &Trust);
+
+        SignatureResult Result;
+        Result.Code = Status;
+        if (Status == ERROR_SUCCESS) {
+            Result.Status = Signature::Valid;
+        } else if (Status == static_cast<LONG>(TRUST_E_NOSIGNATURE) ||
+                   Status == static_cast<LONG>(TRUST_E_SUBJECT_FORM_UNKNOWN) ||
+                   Status == static_cast<LONG>(TRUST_E_PROVIDER_UNKNOWN)) {
+            Result.Status = Signature::NotSigned;
+        } else {
+            Result.Status = Signature::NotTrusted;
+        }
+        return Result;
+    }
+
+    std::string UntrustedMessage(LONG t_Status) {
+        char Hex[16] = {};
+        std::snprintf(Hex, sizeof(Hex), "%08lX", static_cast<unsigned long>(t_Status));
+        return std::string("The shared library signature is not trusted (0x") + Hex + ")";
     }
 } // namespace
 
@@ -139,7 +279,62 @@ namespace Fling {
             return {};
         }
 
-        HMODULE Handle = LoadLibraryW(WideName.c_str());
+        std::wstring Path;
+        if (IsExplicitPath(WideName)) {
+            Path = FullPath(WideName);
+            if (Path.empty()) {
+                WriteError(t_Error, WindowsErrorMessage(GetLastError()));
+                return {};
+            }
+            const Candidate Lookup = ProbeCandidate(Path);
+            if (Lookup == Candidate::Failed) {
+                WriteError(t_Error, WindowsErrorMessage(GetLastError()));
+                return {};
+            }
+            if (Lookup != Candidate::Found) {
+                WriteError(t_Error, "The shared library was not found");
+                return {};
+            }
+        } else {
+            const std::wstring SystemDir = SystemDirectory();
+            const std::wstring SystemCandidate = SystemDir.empty() ? std::wstring{} : JoinPath(SystemDir, WideName);
+            const Candidate SystemLookup =
+                SystemCandidate.empty() ? Candidate::Missing : ProbeCandidate(SystemCandidate);
+            if (SystemLookup == Candidate::Failed) {
+                WriteError(t_Error, WindowsErrorMessage(GetLastError()));
+                return {};
+            }
+            if (SystemLookup == Candidate::Found) {
+                Path = SystemCandidate;
+            } else {
+                const std::wstring ExeDir = ExecutableDirectory();
+                const std::wstring ExeCandidate = ExeDir.empty() ? std::wstring{} : JoinPath(ExeDir, WideName);
+                const Candidate ExeLookup = ExeCandidate.empty() ? Candidate::Missing : ProbeCandidate(ExeCandidate);
+                if (ExeLookup == Candidate::Failed) {
+                    WriteError(t_Error, WindowsErrorMessage(GetLastError()));
+                    return {};
+                }
+                if (ExeLookup != Candidate::Found) {
+                    WriteError(t_Error, "The shared library was not found");
+                    return {};
+                }
+                Path = ExeCandidate;
+            }
+        }
+
+        const SignatureResult Checked = VerifyAuthenticode(Path);
+        if (Checked.Status == Signature::NotSigned) {
+            WriteError(t_Error, "The shared library is not signed");
+            return {};
+        }
+        if (Checked.Status != Signature::Valid) {
+            WriteError(t_Error, UntrustedMessage(Checked.Code));
+            return {};
+        }
+
+        // LoadLibraryExW does not open a dialog when the DLL is missing.
+        HMODULE Handle =
+            LoadLibraryExW(Path.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
         if (Handle == nullptr) {
             WriteError(t_Error, WindowsErrorMessage(GetLastError()));
             return {};
