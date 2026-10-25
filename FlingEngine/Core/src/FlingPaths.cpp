@@ -1,6 +1,7 @@
 #include "FlingPaths.h"
 #include "Logger.h"
 #include <cstring>
+#include <filesystem>
 
 namespace Fling
 {
@@ -74,5 +75,20 @@ namespace Fling
             F_LOG_TRACE("Current working dir: {}", t_OutBuf);
         }
 #endif	// FLING_LINUX
+    }
+
+    std::string FlingPaths::ResolveProjectPath(const std::string& t_Path)
+    {
+        const std::string& Root = ProjectDir();
+        if (t_Path.empty() || Root.empty())
+        {
+            return t_Path;
+        }
+        const std::filesystem::path Path(t_Path);
+        if (Path.is_absolute())
+        {
+            return t_Path;
+        }
+        return (std::filesystem::path(Root) / Path).string();
     }
 }   // namespace Fling 

@@ -11,6 +11,7 @@
 #include "FlingPaths.h"
 #include "FlingWindow.h"
 #include "Input/Input.h"
+#include "Input/GlfwInput.h"
 #include "Random.h"
 
 namespace Fling
@@ -66,7 +67,8 @@ namespace Fling
 
 		ResourceManager::Get().Init();
 		Timing::Get().Init();
-		Input::Init();
+		Input::Get().SetLogLevel(m_Options.InputLog);
+		Input::Get().Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
@@ -90,6 +92,30 @@ namespace Fling
 		// fallback, so systems can query CommandLine::GetValueAs for values that were
 		// only set in the config file. Command line args passed directly still win.
 		CommandLine::Get().LoadConfigFile(EngineConfigPath);
+
+#if WITH_INPUT_RECORDING
+		// Start input replay and recording before the world exists. A file that cannot
+		// be read then exits with code 3, and Shutdown has no world to stop.
+		if (!m_Options.ReplayInput.empty())
+		{
+			const std::string ReplayPath = FlingPaths::ResolveProjectPath(m_Options.ReplayInput);
+			std::string ReplayError;
+			if (!Input::Get().GetPlayback().Start(ReplayPath, 0.0f, ReplayError))
+			{
+				F_LOG_ERROR("Cannot replay input: {}", ReplayError);
+				return ExitCode::BadArguments;
+			}
+			const InputPlayback& Playback = Input::Get().GetPlayback();
+			F_LOG_TRACE("Replaying input from {} ({} messages, {:.2f} s)", ReplayPath, Playback.GetMessageCount(), Playback.GetLength());
+		}
+
+		if (!m_Options.RecordInput.empty())
+		{
+			const std::string RecordPath = FlingPaths::ResolveProjectPath(m_Options.RecordInput);
+			Input::Get().GetRecorder().Start(RecordPath, 0.0f, 0.0f);
+			F_LOG_TRACE("Recording input to {}", RecordPath);
+		}
+#endif
 
 		if (m_Options.NullRender)
 		{
@@ -128,7 +154,10 @@ namespace Fling
 
 		if (!m_Options.NullRender)
 		{
-			Input::PreUpdate();
+			// The window exists now. Its events are pumped by the GLFW input interface
+			m_InputWindow = GetInputWindowHandle(VulkanApp::Get().GetCurrentWindow());
+			m_GlfwInputId = Input::Get().AddInterface(CreateGlfwInputDeviceInterface());
+			Input::Get().NotifyWindowCreated(m_InputWindow);
 		}
 
 		return ExitCode::Success;
@@ -164,15 +193,20 @@ namespace Fling
 			// Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
 
-			// There are no input devices without a window
-			if (!m_Options.NullRender)
-			{
-				Input::Poll();
-			}
+			// Poll pumps the platform events (GLFW) when there is a window, so it comes before
+			// anything that reads the window state. Under --null-render there are no window
+			// devices. DeltaTime moves the input recorder and playback clocks, so a
+			// --null-render replay is the same every time.
+			Input::Get().Poll(DeltaTime);
+
+			// The game sees the input up to now, and the same input for the whole tick
+			Input::Get().BeginTick();
 
 			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
 			++m_TicksRun;
+
+			Input::Get().EndTick();
 
 			if(m_World->ShouldQuit())
 			{
@@ -222,7 +256,32 @@ namespace Fling
 		// Cleanup any resources
 		if (m_SystemsStarted)
 		{
-			Input::Shutdown();
+#if WITH_INPUT_RECORDING
+			Input::Get().GetPlayback().Stop();
+			InputRecorder& Recorder = Input::Get().GetRecorder();
+			if (Recorder.IsActive())
+			{
+				const std::string RecordPath = Recorder.GetPath();
+				if (Recorder.Stop())
+				{
+					F_LOG_TRACE("Saved input recording to {}", RecordPath);
+				}
+				else
+				{
+					F_LOG_ERROR("Cannot save input recording to {}: {}", RecordPath, Recorder.GetLastError());
+				}
+			}
+#endif
+
+			if (m_GlfwInputId.IsValid())
+			{
+				// The window is still alive here (VulkanApp::Shutdown is below)
+				Input::Get().NotifyWindowDestroyed(m_InputWindow);
+				Input::Get().RemoveInterface(m_GlfwInputId);
+				m_GlfwInputId = InputInterfaceId{};
+				m_InputWindow = WindowHandle{};
+			}
+			Input::Get().Shutdown();
 			ResourceManager::Get().Shutdown();
 			FlingConfig::Get().Shutdown();
 			Timing::Get().Shutdown();

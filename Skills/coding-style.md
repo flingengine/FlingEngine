@@ -45,6 +45,34 @@ Trivial members/accessors can use a one-line `/** ... */`.
   (`.github/workflows/build.yml`, `comment-style` job runs the Python script;
   formatting is expected to already be clean going in).
 
+## Braces
+
+An opening brace `{` is always on a new line (Allman style). This applies to
+namespaces, classes, structs, enums, functions, control statements, lambdas, and
+`try`/`catch`. `.clang-format` sets `BreakBeforeBraces: Allman`, so
+`clang-format` puts braces in the correct place.
+
+```cpp
+namespace Fling
+{
+    class InputDevice
+    {
+    public:
+        void PushKey(InputKey t_Key, bool t_IsDown)
+        {
+            if (!m_Connected)
+            {
+                return;
+            }
+        }
+    };
+} // namespace Fling
+```
+
+A short function body inside a class can stay on one line, for example
+`bool IsValid() const { return Value != 0; }`. A braced initializer
+(`InputKey Key{InputKeyId::W};`) is not a block, so it stays on one line too.
+
 ## Naming / conventions to preserve
 
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are
@@ -55,5 +83,5 @@ Trivial members/accessors can use a one-line `/** ... */`.
 - Include `Platform.h` before you test `FLING_WINDOWS`, `FLING_LINUX`, or
   `FLING_DEBUG` with `#if`. If you do not, the macro is undefined and the block is
   silently compiled out. GCC and Clang builds use `-Wundef` to catch this.
-- `Platform.h` defines platform macros only. Include `DesktopWindow.h`,
-  `Input/Input.h`, and the keycode headers directly where you use them.
+- `Platform.h` defines platform macros only. Include `DesktopWindow.h` and
+  `Input/Input.h` directly where you use them.

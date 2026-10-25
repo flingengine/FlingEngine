@@ -1,13 +1,16 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Input/InputMessage.h"
 #include <string>
 
-namespace Fling {
+namespace Fling
+{
     class CommandLine;
 
     /** The format of log lines on the console and in the log file. */
-    enum class LogFormat : uint8 {
+    enum class LogFormat : uint8
+    {
         /** Human-readable text lines. */
         Text,
 
@@ -25,8 +28,14 @@ namespace Fling {
      *   --frames N          Run N ticks, then exit
      *   --seed S            Seed the random number generator
      *   --log-format json   Write logs as JSON lines
+     *   --log-input [all]   Log each input message. "all" also logs mouse movement.
+     *                       Device connects and disconnects are always logged
+     *   --replay-input F    Play the input messages in file F from the first tick
+     *   --record-input F    Record the input messages, and save them to file F at exit
+     *                       (--replay-input and --record-input are errors in shipping builds)
      */
-    struct LaunchOptions {
+    struct LaunchOptions
+    {
         /** The tick rate of a --null-render run, in ticks per second. */
         static constexpr uint32 NullRenderTickRate = 60;
 
@@ -43,6 +52,14 @@ namespace Fling {
         uint32 Seed = 0;
 
         LogFormat Format = LogFormat::Text;
+
+        InputLogLevel InputLog = InputLogLevel::Off;
+
+        /** The input file to play (--replay-input). Empty means no replay. */
+        std::string ReplayInput;
+
+        /** The file to save an input recording to (--record-input). Empty means no recording. */
+        std::string RecordInput;
 
         /**
          * Read the launch flags from a command line. Flags that are not given keep

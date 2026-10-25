@@ -21,6 +21,10 @@ NamespaceIndentation: All
 IndentCaseLabels: false
 IndentPPDirectives: None
 
+# Braces — always on their own line (Allman): namespaces, classes, structs,
+# enums, functions, control statements, lambdas, and try/catch.
+BreakBeforeBraces: Allman
+
 # Pointers / references
 PointerAlignment: Left
 ReferenceAlignment: Left

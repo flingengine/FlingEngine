@@ -38,6 +38,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   `Sandbox --null-render --unattended --frames 120 --seed 1`. It exits with
   `0` success, `1` failure, `2` crash, or `3` bad arguments. Use `--unattended` for
   every run with no human present, so that a crash cannot open a dialog.
+- Drive a headless run with `--replay-input <file>`. Agents can write their own
+  `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).
 - Full detail, including how to add a new test file: [`Skills/testing.md`](Skills/testing.md).
 
 ## Coding style
@@ -84,6 +86,9 @@ into `Skills/`.
 ## Contribution conventions
 
 - Branching: feature branches off `main`, PR back into `main` when done and tested.
+- Third-party code or data (a library in `external/`, a data file such as
+  `Config/gamecontrollerdb.txt`): add it, with its license, to
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 - CI (`.github/workflows/build.yml`) builds on Linux (GCC/Clang) and Windows
   (MSVC/MinGW) and runs the per-module Catch2 tests via CTest plus the comment-style check on every PR —
   make sure changes pass locally first.

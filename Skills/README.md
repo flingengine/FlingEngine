@@ -10,4 +10,5 @@ detail on a given topic. These files are meant to be read on demand, not all at 
 | [`testing.md`](testing.md) | Per-module Catch2 executables, adding tests, isolation tests |
 | [`coding-style.md`](coding-style.md) | Doc-comment conventions, formatting, what not to touch |
 | [`architecture.md`](architecture.md) | Current folder/module layout, where new code belongs |
+| [`input-playback.md`](input-playback.md) | Record and replay input (`--record-input`, `--replay-input`), the `.input.jsonl` format |
 | [`adding-modules.md`](adding-modules.md) | How to add a new engine module (`fling_add_module`, UI example) |

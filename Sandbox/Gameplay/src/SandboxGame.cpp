@@ -17,7 +17,6 @@
 #include "Misc/CommandLine.h"
 #include "FlingWindow.h"
 #include "Input/Input.h"
-#include "Input/Key.h"
 #include "Logger.h"
 
 namespace Sandbox
@@ -28,17 +27,6 @@ namespace Sandbox
     {
         // Lets create an entity! 
         F_LOG_TRACE("Sandbox Init!");
-
-        // notify we want to quit when we press escape
-        Input::BindKeyPress<&Sandbox::Game::OnQuitPressed>(KeyNames::FL_KEY_ESCAPE, *this);
-
-        // Toggle cursor/mouse visibility with M
-        Input::BindKeyPress<&Sandbox::Game::ToggleCursorVisibility>(KeyNames::FL_KEY_M, *this);
-
-        // Toggle model rotation in Update
-        Input::BindKeyPress<&Sandbox::Game::ToggleRotation>(KeyNames::FL_KEY_T, *this);
-        Input::BindKeyPress<&Sandbox::Game::OnToggleMoveLights>(KeyNames::FL_KEY_SPACE, *this);
-		Input::BindKeyPress<&Sandbox::Game::OnTestSpawn>(KeyNames::FL_KEY_0, *this);
 
 		{
 			using namespace Fling;
@@ -68,6 +56,44 @@ namespace Sandbox
 
     void Game::Update(entt::registry& t_Reg, float DeltaTime)
     {
+        const Input& GameInput = Input::Get();
+
+        // Each action has a keyboard key and a gamepad button (Xbox names in the comments)
+        auto WasPressed = [&GameInput](InputKey t_Key, InputKey t_GamepadButton)
+        {
+            return GameInput.WasPressed(t_Key) || GameInput.WasPressed(t_GamepadButton);
+        };
+
+        // Quit with Escape or View
+        if (WasPressed(Keys::Escape, Keys::GamepadBack))
+        {
+            OnQuitPressed();
+        }
+
+        // Toggle cursor/mouse visibility with M or Menu
+        if (WasPressed(Keys::M, Keys::GamepadStart))
+        {
+            ToggleCursorVisibility();
+        }
+
+        // Toggle model rotation with T or X
+        if (WasPressed(Keys::T, Keys::GamepadFaceLeft))
+        {
+            ToggleRotation();
+        }
+
+        // Toggle moving lights with Space or A
+        if (WasPressed(Keys::Space, Keys::GamepadFaceBottom))
+        {
+            OnToggleMoveLights();
+        }
+
+        // Spawn a test entity with 0 or Y
+        if (WasPressed(Keys::Zero, Keys::GamepadFaceTop))
+        {
+            OnTestSpawn();
+        }
+
         if (m_DoRotations)
         {
             glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);

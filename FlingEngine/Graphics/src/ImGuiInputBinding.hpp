@@ -7,22 +7,8 @@
 #include "DesktopWindow.h"  // GLFW with GLFW_INCLUDE_VULKAN, before glfw3native.h
 #include "VulkanApp.h"
 
-#if FLING_WINDOWS
-
-#include "Input/WindowsKeycodes.h"
-
-#undef APIENTRY
-#define GLFW_EXPOSE_NATIVE_WIN32
-
-#elif FLING_LINUX
-
-#include "Input/LinuxKeycodes.h"
-
-#define GLFW_EXPOSE_NATIVE_X11
-
-#endif
-
-#include <GLFW/glfw3native.h>   // for glfwGetWin32Window
+#include "Input/Input.h"
+#include <optional>
 
 namespace Fling
 {
@@ -56,42 +42,42 @@ namespace Fling
 			glfwSetClipboardString((GLFWwindow*)user_data, text);
 		}
 
-			// Maps a raw FL_KEYCODE_* key code to the ImGuiKey enum required by the
+		// Maps a raw GLFW_KEY_* key code to the ImGuiKey enum required by the
 		// enum required by the modern (1.87+) io.AddKeyEvent() input API.
 		static ImGuiKey ImGui_ImplGlfw_KeyToImGuiKey(int key)
 		{
 			switch (key)
 			{
-			case FL_KEYCODE_TAB: return ImGuiKey_Tab;
-			case FL_KEYCODE_LEFT: return ImGuiKey_LeftArrow;
-			case FL_KEYCODE_RIGHT: return ImGuiKey_RightArrow;
-			case FL_KEYCODE_UP: return ImGuiKey_UpArrow;
-			case FL_KEYCODE_DOWN: return ImGuiKey_DownArrow;
-			case FL_KEYCODE_PAGE_UP: return ImGuiKey_PageUp;
-			case FL_KEYCODE_PAGE_DOWN: return ImGuiKey_PageDown;
-			case FL_KEYCODE_HOME: return ImGuiKey_Home;
-			case FL_KEYCODE_END: return ImGuiKey_End;
-			case FL_KEYCODE_INSERT: return ImGuiKey_Insert;
-			case FL_KEYCODE_DELETE: return ImGuiKey_Delete;
-			case FL_KEYCODE_BACKSPACE: return ImGuiKey_Backspace;
-			case FL_KEYCODE_SPACE: return ImGuiKey_Space;
-			case FL_KEYCODE_ENTER: return ImGuiKey_Enter;
-			case FL_KEYCODE_ESCAPE: return ImGuiKey_Escape;
-			case FL_KEYCODE_KP_ENTER: return ImGuiKey_KeypadEnter;
-			case FL_KEYCODE_LEFT_CONTROL: return ImGuiKey_LeftCtrl;
-			case FL_KEYCODE_RIGHT_CONTROL: return ImGuiKey_RightCtrl;
-			case FL_KEYCODE_LEFT_SHIFT: return ImGuiKey_LeftShift;
-			case FL_KEYCODE_RIGHT_SHIFT: return ImGuiKey_RightShift;
-			case FL_KEYCODE_LEFT_ALT: return ImGuiKey_LeftAlt;
-			case FL_KEYCODE_RIGHT_ALT: return ImGuiKey_RightAlt;
-			case FL_KEYCODE_LEFT_SUPER: return ImGuiKey_LeftSuper;
-			case FL_KEYCODE_RIGHT_SUPER: return ImGuiKey_RightSuper;
-			case FL_KEYCODE_A: return ImGuiKey_A;
-			case FL_KEYCODE_C: return ImGuiKey_C;
-			case FL_KEYCODE_V: return ImGuiKey_V;
-			case FL_KEYCODE_X: return ImGuiKey_X;
-			case FL_KEYCODE_Y: return ImGuiKey_Y;
-			case FL_KEYCODE_Z: return ImGuiKey_Z;
+			case GLFW_KEY_TAB: return ImGuiKey_Tab;
+			case GLFW_KEY_LEFT: return ImGuiKey_LeftArrow;
+			case GLFW_KEY_RIGHT: return ImGuiKey_RightArrow;
+			case GLFW_KEY_UP: return ImGuiKey_UpArrow;
+			case GLFW_KEY_DOWN: return ImGuiKey_DownArrow;
+			case GLFW_KEY_PAGE_UP: return ImGuiKey_PageUp;
+			case GLFW_KEY_PAGE_DOWN: return ImGuiKey_PageDown;
+			case GLFW_KEY_HOME: return ImGuiKey_Home;
+			case GLFW_KEY_END: return ImGuiKey_End;
+			case GLFW_KEY_INSERT: return ImGuiKey_Insert;
+			case GLFW_KEY_DELETE: return ImGuiKey_Delete;
+			case GLFW_KEY_BACKSPACE: return ImGuiKey_Backspace;
+			case GLFW_KEY_SPACE: return ImGuiKey_Space;
+			case GLFW_KEY_ENTER: return ImGuiKey_Enter;
+			case GLFW_KEY_ESCAPE: return ImGuiKey_Escape;
+			case GLFW_KEY_KP_ENTER: return ImGuiKey_KeypadEnter;
+			case GLFW_KEY_LEFT_CONTROL: return ImGuiKey_LeftCtrl;
+			case GLFW_KEY_RIGHT_CONTROL: return ImGuiKey_RightCtrl;
+			case GLFW_KEY_LEFT_SHIFT: return ImGuiKey_LeftShift;
+			case GLFW_KEY_RIGHT_SHIFT: return ImGuiKey_RightShift;
+			case GLFW_KEY_LEFT_ALT: return ImGuiKey_LeftAlt;
+			case GLFW_KEY_RIGHT_ALT: return ImGuiKey_RightAlt;
+			case GLFW_KEY_LEFT_SUPER: return ImGuiKey_LeftSuper;
+			case GLFW_KEY_RIGHT_SUPER: return ImGuiKey_RightSuper;
+			case GLFW_KEY_A: return ImGuiKey_A;
+			case GLFW_KEY_C: return ImGuiKey_C;
+			case GLFW_KEY_V: return ImGuiKey_V;
+			case GLFW_KEY_X: return ImGuiKey_X;
+			case GLFW_KEY_Y: return ImGuiKey_Y;
+			case GLFW_KEY_Z: return ImGuiKey_Z;
 			default: return ImGuiKey_None;
 			}
 		}
@@ -142,8 +128,86 @@ namespace Fling
 			io.AddKeyEvent(ImGuiKeyCode, action == GLFW_PRESS);
 		}
 
-		void SetImGuiCallbacks()
+		/**
+		 * ImGui's own consumer of the input queue. It is not the game's processor, so
+		 * Input::SetUICapture does not hide input from ImGui. It holds a weak_ptr to the
+		 * queue, so it becomes invalid if Input is shut down.
+		 */
+		static std::optional<InputMessageProcessor> g_InputProcessor;
+
+		/** Called each frame before ImGui::NewFrame. The mouse comes from the input system. */
+		void UpdateImGuiIO(FlingWindow* t_Window)
 		{
+			ImGuiIO& io = ImGui::GetIO();
+
+			io.DisplaySize = ImVec2(
+				static_cast<float>(t_Window->GetWidth()),
+				static_cast<float>(t_Window->GetHeight())
+			);
+
+			if (!Input::Get().IsInitialized())
+			{
+				g_InputProcessor.reset();
+				return;
+			}
+			if (!g_InputProcessor || !g_InputProcessor->IsValid())
+			{
+				g_InputProcessor.emplace(Input::Get().CreateProcessor());
+			}
+
+			InputMessageProcessor& Processor = *g_InputProcessor;
+			if (Processor.Overran())
+			{
+				const std::shared_ptr<InputMessageHandler>& Handler = Input::Get().GetHandler();
+				Processor.Resync(Handler->GetLatestState(), Handler->GetLatestSequence());
+			}
+			Processor.ConsumeUntil();
+
+			bool MouseLeft = false;
+			bool MouseRight = false;
+			for (const std::shared_ptr<InputDevice>& Device : Input::Get().GetDevices())
+			{
+				if (!Device->GetInfo().HasCapability(InputDeviceCapabilities::Pointer))
+				{
+					continue;
+				}
+				const InputDeviceState* State = Processor.GetState().Find(Device->GetId());
+				if (State == nullptr)
+				{
+					continue;
+				}
+				io.MousePos = ImVec2(State->PointerX, State->PointerY);
+
+				// A press and release inside one frame still gives ImGui one frame of "down".
+				const InputKeyState Left = State->GetKeyState(Keys::MouseLeft);
+				const InputKeyState Right = State->GetKeyState(Keys::MouseRight);
+				MouseLeft = MouseLeft || Left.IsHeld || Left.WasPressed();
+				MouseRight = MouseRight || Right.IsHeld || Right.WasPressed();
+			}
+			io.MouseDown[0] = MouseLeft;
+			io.MouseDown[1] = MouseRight;
+
+			Processor.ClearEdges();
+		}
+
+		/** Tell the input system which devices ImGui owns this frame. Call after ImGui::NewFrame. */
+		void UpdateInputCapture()
+		{
+			if (Input::Get().IsInitialized())
+			{
+				const ImGuiIO& io = ImGui::GetIO();
+				Input::Get().SetUICapture(io.WantCaptureKeyboard, io.WantCaptureMouse);
+			}
+		}
+
+		/** Install the ImGui GLFW callbacks once. They chain to the callbacks that were installed before. */
+		void SetImGuiCallbacks(FlingWindow* t_Window)
+		{
+			if (g_InstalledCallbacks)
+			{
+				return;
+			}
+
 			if (!ImGui::GetCurrentContext())
 			{
 				ImGui::CreateContext();
@@ -154,9 +218,12 @@ namespace Fling
 			io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
 			io.BackendPlatformName = "imgui_impl_glfw";
 
-			DesktopWindow* DesktopWin = static_cast<DesktopWindow*>(VulkanApp::Get().GetCurrentWindow());
+			DesktopWindow* DesktopWin = dynamic_cast<DesktopWindow*>(t_Window);
 
-			assert(DesktopWin);
+			if (!DesktopWin)
+			{
+				return;
+			}
 
 			io.SetClipboardTextFn = ImGui_ImplGlfw_SetClipboardText;
 			io.GetClipboardTextFn = ImGui_ImplGlfw_GetClipboardText;

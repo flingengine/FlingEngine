@@ -1,8 +1,8 @@
 # Improve input plan
 
-Design for how Fling reads input: devices produce timestamped events into a
-shared ring, and each consumer (the game simulation, the renderer, UI, the
-recorder) reads that ring at its own pace. Later, a dedicated input thread
+Design for how Fling reads input: input devices produce timestamped messages
+into a shared queue, and each consumer (the game simulation, the renderer, UI,
+the recorder) reads that queue at its own pace. Later, a dedicated input thread
 polls devices at a fixed, high rate, so no press is lost between game ticks,
 and the render thread can use the newest input for low-latency camera look
 and UI hover.
@@ -23,7 +23,7 @@ rewrite. Do not keep its API, its structure, or its behavior (for example,
 key repeat counts as a new press) only because it exists. The list below shows
 why it must be replaced; it is not a list of things to fix in place.
 
-- `Input` (`FlingEngine/Core/inc/Input/Input.h`) is a static class with a
+- The old `Input` (`FlingEngine/Core/inc/Input/Input.h`) is a static class with a
   virtual implementation and string-keyed maps.
 - `WindowsInput::PollImpl` and `LinuxInput::PollImpl`
   (`FlingEngine/Graphics/src/Input/`) are almost the same code. Both read key
@@ -65,7 +65,7 @@ why it must be replaced; it is not a list of things to fix in place.
 
 - Input remapping UI, rebinding, and platform-specific devices (touch,
   motion, wheels). These build on this design later.
-- Text input and IME. The ring carries `Char` events for them, but the text
+- Text input and IME. The queue carries `Char` events for them, but the text
   system is designed separately.
 
 ## Design
@@ -73,145 +73,303 @@ why it must be replaced; it is not a list of things to fix in place.
 ### Overview
 
 ```
-                 ┌──────────────────────────── consumers (each has its own cursor) ─┐
- Input thread    │                                                                  │
- ────────────    │  Game side:   InputReader ─► contexts ─► TickInput ─► InputState │
- OS events  ─┐   │  Render side: InputReader ─► late camera look, UI hover         │
- Pad polling ─┼─► InputEventRing ─► Recorder:    InputReader ─► event log file     │
- Virtual dev ─┘   │  Editor/UI:   InputReader ─► ImGui                             │
-                 └──────────────────────────────────────────────────────────────────┘
+                   ┌──────────────────────────── consumers (each has its own cursor) ──┐
+ Input thread      │                                                                   │
+ ────────────      │  Game side:   InputMessageProcessor ─► contexts ─► TickInput      │
+ IInputDevice-     │  Render side: InputMessageProcessor ─► late camera look, UI hover │
+  Interface ─┐     │  Recorder:    InputMessageProcessor ─► event log file             │
+  (GLFW,     ├─► InputMessageHandler ─► InputMessageQueue                             │
+   Virtual)  │     │  Editor/UI:   InputMessageProcessor ─► ImGui                      │
+ InputDevice ┘     └───────────────────────────────────────────────────────────────────┘
 ```
 
-- **Producers** write `InputEvent`s into one `InputEventRing`. All sources go
-  through **one producer thread**, so the ring is in time order (see
+- **Devices** (`InputDevice`) are the keyboards, mice, and gamepads. An
+  **interface** (`IInputDeviceInterface`) is a backend, for example GLFW. It
+  finds devices, makes them through the `InputDeviceFactory`, and pushes their
+  input. See [Devices](#devices) and [Interfaces](#interfaces).
+- Every `InputMessage` goes through one entry point,
+  `InputMessageHandler::HandleMessage`. It sets the sequence and the time and
+  pushes the message into one `InputMessageQueue`. All interfaces go through
+  **one input thread**, so the queue is in time order (see
   [Ordering](#ordering)).
-- **Consumers** each hold an `InputReader` with their own cursor. A consumer
-  reads ("pumps") when it wants and moves its cursor ("pops") as far as it
-  wants. Reading never removes an event for another consumer.
+- **Consumers** each hold an `InputMessageProcessor` with their own cursor and
+  their own `InputDeviceStates`. A consumer reads ("pumps") when it wants and
+  moves its cursor ("consumes") as far as it wants. Reading never removes a
+  message for another consumer.
 - **Ownership** is decided on the game side by an input context stack (see
-  [Input contexts](#input-contexts)), not by the ring.
+  [Input contexts](#input-contexts)), not by the queue.
+- `Input` (a `Singleton`, Core) is the game-facing API. It owns the handler and
+  the game's processor.
 
-### Input events
+The headers are in `FlingEngine/Core/inc/Input/`. They are the source of
+truth for names and signatures. The code blocks below are short excerpts.
+
+### Devices
+
+An `InputDevice` is one human interface device: one keyboard, one mouse, one
+gamepad. The `InputDeviceFactory` makes it. The interface that owns it calls
+its `Push*` functions (`PushKey`, `PushRepeat`, `PushChar`, `PushAxis`,
+`PushMouseMove`, `PushWheel`, `PushFocus`). Each one builds an `InputMessage`
+and sends it to the handler. A push on a device that is not connected does
+nothing.
 
 ```cpp
-enum class InputEventType : uint8
+struct InputDeviceId { uint32 Value = 0; };   // opaque. 0 is not valid
+
+struct InputDeviceInfo
+{
+    InputDeviceType Type;                      // Keyboard, Mouse, Gamepad, Touch, Virtual
+    std::string DisplayName;                   // for UI
+    uint16 VendorId, ProductId;                // 0 if not known
+    std::string HardwarePath;                  // GUID, device path, "glfw:keyboard"
+    InputDeviceCapabilities Capabilities;      // flags
+};
+```
+
+- **`InputDeviceId` is opaque** (`uint32`). It stays the same when the same
+  device disconnects and connects again, so recordings still match.
+- **Identity** of a device is the interface name, the type, the vendor ID, the
+  product ID, and the hardware path. The interface **name** (for example
+  "GLFW", "Virtual"), not the instance, is used. If an interface is destroyed
+  and made again, its devices get their old IDs.
+- **`InputDeviceInfo`** is metadata for UI, for example the name to show and
+  the vendor and product IDs for glyph sets.
+- **`InputDeviceCapabilities`** are flags: `Keys`, `MouseButtons`, `Pointer`,
+  `RelativeMotion`, `Wheel`, `Buttons`, `Thumbsticks`, `Triggers`, `Haptics`,
+  `Lighting`, `Gyro`, `Accelerometer`, `Touchpad`. UI uses them, for example to
+  show gamepad glyphs only when a pad is connected.
+- **`InputDeviceFactory`** is the registry. `CreateDevice(info, interface)`
+  makes a connected device, or connects again a disconnected device with the
+  same identity. `DisconnectDevice(id)` releases the held keys, then
+  disconnects. A disconnected device **stays in the registry**, with an
+  invalid owner, so it keeps its ID. `Find`, `GetDevices`, and
+  `GetConnectedDevices` list it.
+- **Connect and disconnect signals are deferred.** The factory sends a
+  `DeviceConnected` or `DeviceDisconnected` message at once, so every consumer
+  sees it in order. The `OnDeviceConnected` and `OnDeviceDisconnected` signals
+  (`entt::sink`) only fire when `InputMessageHandler::DispatchDeferredEvents`
+  runs. Game code then never runs from inside a device callback.
+
+### Input keys
+
+An `InputKey` is a platform-agnostic name for one button or axis on a device.
+
+```cpp
+InputKey key = Keys::W;
+key.GetName();                         // "W". Files and code use this
+key.GetDisplayName();                  // for UI
+key.IsAxis();  key.IsGamepadKey();     // from InputKeyFlags
+InputKey::FromName("LeftShift");       // invalid key if the name is unknown
+```
+
+- The built-in keys are in `Keys::` (`Keys::W`, `Keys::MouseLeft`,
+  `Keys::GamepadLeftX`, ...). They come from one list,
+  `InputKeyList.inl`, with an X-macro `FLING_INPUT_KEY(Id, DisplayName,
+  Flags)`. `InputKeyId`, the `Keys::` constants, and the static
+  `InputKeyDetails` table are all made from it. To add a key, add one line.
+- **Files store keys by name**, never by ID. The ID order can change between
+  builds. A recording works on every platform.
+- **Keyboard keys name the physical key position** on a US layout, not the
+  character it types. `Keys::W` is the key above `S`, also on AZERTY. This is
+  how gameplay binds to the scancode position (Rule 6). The OS scancode is
+  still in `InputMessage::Scancode` when the backend has one. Text uses `Char`.
+- `InputKeyFlags` are `Keyboard`, `Mouse`, `Gamepad`, `Axis`, `Modifier`.
+
+**`InputKeyState`** is the state of one key on one device, as one consumer
+sees it:
+
+```cpp
+struct InputKeyState
+{
+    bool IsHeld;
+    uint16 PressCount, ReleaseCount, RepeatCount;   // edges since the last ClearEdges
+    float Value;                                    // axis value, or 1 / 0 for a button
+    int64 LastChangeTimeNs;
+};
+```
+
+- The counts are per device and per consumer. A press and a release between
+  two reads give `PressCount 1, ReleaseCount 1, IsHeld false`.
+- A repeat is counted in `RepeatCount`. It is not a press.
+- `InputDeviceStates` keeps one `InputDeviceState` per `InputDeviceId`. Each
+  has a map from `InputKey` to `InputKeyState`, the summed mouse delta in
+  integer counts, the pointer position, the summed wheel, and `Connected`.
+  `Apply(message)` updates it. `ClearEdges()` resets the counts and sums but
+  keeps held state.
+
+### Input messages
+
+```cpp
+enum class InputMessageType : uint8
 {
     KeyDown, KeyUp,
     KeyRepeat,          // OS key repeat. UI and text readers only, never gameplay
     Char,               // Text input (a Unicode code point). UI and text readers only
-    MouseButtonDown, MouseButtonUp,
+    Axis,               // One sample of one axis (stick, trigger, any analog key)
     MouseMove,          // Relative delta in integer counts, and absolute cursor position
     MouseWheel,
-    GamepadButtonDown, GamepadButtonUp,
-    GamepadAxis,        // One sample of one axis, int16
     DeviceConnected, DeviceDisconnected,
     FocusLost, FocusGained,
 };
 
-struct InputEvent
+struct InputMessage
 {
-    uint64 Sequence;    // Increases by 1 for each event. Unique for the session.
-    int64 TimeNs;       // PlatformTime when the producer received the event. Never decreases
-    uint16 DeviceId;    // Stable across reconnects (see Local players)
-    InputEventType Type;
-    // Payload: scancode and key code, button code, axis id and value,
-    // mouse delta and position, code point, ...
+    uint64 Sequence;    // Increases by 1 for each message. Unique for the session.
+    int64 TimeNs;       // InputNowNs() when the message was received. Never decreases
+    InputDeviceId Device;   // Stable across reconnects (see Local players)
+    InputMessageType Type;
+    InputKey Key;
+    uint32 Scancode, CodePoint;
+    float Value;                  // Axis
+    int32 DeltaX, DeltaY;         // MouseMove, integer counts
+    float PositionX, PositionY;   // MouseMove, window coordinates
+    float WheelX, WheelY;
 };
 ```
 
-- `Sequence` lets a consumer say exactly which events it has used. The render
-  side uses this to avoid counting the same mouse movement twice (see
+- Buttons (keys, mouse buttons, gamepad buttons) use `KeyDown` and `KeyUp`
+  with an `InputKey`. There are no separate mouse or gamepad button types.
+- `Sequence` lets a consumer say exactly which messages it has used. The
+  render side uses this to avoid counting the same mouse movement twice (see
   [Render-side input](#render-side-input)).
-- **Key events carry the scancode and the key code.** Gameplay binds to
-  scancodes, so WASD stays in the same place on AZERTY and other layouts. UI
-  shortcuts and text use the key code and `Char`.
+- **Key messages carry an `InputKey` and the scancode.** Gameplay binds to
+  `InputKey` values, which name the physical key position, so WASD stays in the
+  same place on AZERTY and other layouts. UI shortcuts and text use `Char`.
 - **Mouse deltas are integer counts**, not floats. Sums are then exact in any
   order, on the game side and the render side. Sensitivity is applied after
   the sum.
-- **Mouse moves are merged.** The producer pushes at most one `MouseMove` per
-  pump, with the summed delta. A 1–8 kHz mouse would otherwise fill the ring
+- **Mouse moves are merged.** An interface pushes at most one `MouseMove` per
+  poll, with the summed delta. A 1–8 kHz mouse would otherwise fill the queue
   in seconds.
-- On `FocusLost`, the producer adds release events for every held key and
+- On `FocusLost`, the interface adds release events for every held key and
   button, so no key stays held.
+
+### Interfaces
+
+An `IInputDeviceInterface` is one input backend: GLFW, XInput, GameInput, a
+Win32 message pump, or a virtual device.
+
+```cpp
+class IInputDeviceInterface
+{
+public:
+    virtual const char* GetName() const = 0;               // same in every session
+    virtual void Init(InputMessageHandler& handler) = 0;   // create the devices that exist
+    virtual void Shutdown() = 0;                           // handler disconnects its devices after
+    virtual bool WantsPoll(int64 nowNs) const { return true; }
+    virtual void Poll(int64 nowNs) = 0;
+    virtual void OnWindowCreated(WindowHandle window) {}
+    virtual void OnWindowDestroyed(WindowHandle window) {}
+};
+```
+
+| Interface | Source | Notes |
+|-----------|--------|-------|
+| `GlfwInputDeviceInterface` (Graphics) | GLFW key, char, mouse button, cursor, scroll, focus callbacks, and gamepad state | Replaces both `WindowsInput` and `LinuxInput`. Uses callbacks, not `glfwGetKey`, so short presses are not lost |
+| `VirtualInputDeviceInterface` (Core) | The command layer, agent scripts, tests | `CreateDevice` and `Queue(message)`. `Poll` sends the queued messages in order. Works with `--null-render` |
+| `EventLogPlayer` (future) | An event log file | Plays a recorded message stream back in real time, as an interface |
+
+- **Lifecycle.** `Init` is called once, when the interface is added. The
+  interface creates its devices through the factory. `Shutdown` is called once
+  before it is destroyed.
+- **Polling.** `WantsPoll(nowNs)` lets a polled device (a gamepad) poll at its
+  own rate. `Poll(nowNs)` reads input and pushes it to the interface's devices.
+- **Runtime add and remove.** `Input::AddInterface<T>(args...)` returns an
+  `InputInterfaceId`. `RemoveInterface(id)` first releases every held key of
+  the interface's devices (`KeyUp` from the latest state), then disconnects
+  them, then calls `Shutdown`, then destroys the interface. Tests, replays,
+  and the command layer can start and stop the virtual interface at any time.
+- **Deferred apply during polling.** An add or remove asked for during
+  `PollInterfaces`, or from inside a device callback, is queued. It is applied
+  at the end of `PollInterfaces`, so the interface list never changes while it
+  is iterated.
+- **Window handle.** The window is passed as an opaque `WindowHandle` (for GLFW,
+  the `GLFWwindow*`). The handler keeps the current window. It calls
+  `OnWindowCreated` on an interface that is added after the window exists, so
+  a late interface still gets the window. `InputDevice::GetWindow` says which
+  window a keyboard or mouse reports for.
+- **`GlfwInputDeviceInterface::Poll` is the only place `glfwPollEvents` is
+  called.** It was in `DesktopWindow::Update`, and the renderer pumped input.
+  That pump also delivers window events (close, framebuffer resize), so the
+  GLFW interface **lives as long as the GLFW window**: it is added when the
+  window is created and removed before the window is destroyed. `Input::Poll()`
+  runs before `VulkanApp::Update` in `Engine::Tick`, so `ShouldClose` and
+  resize see this frame's events.
+- **`InputMessageHandler` is the single entry point.** Every message, from
+  every device, goes through `HandleMessage`.
 
 ### Ordering
 
 `Read` by time and the `TickInput` cut at `LastSequence` both assume that
 sequence order is time order. Several sources break that if they push
-directly: OS events, pad polls, `VirtualInputDevice` with chosen timestamps,
-and later device timestamps from Raw Input. So:
+directly: OS events, pad polls, `VirtualInputDeviceInterface` with chosen
+timestamps, and later device timestamps from Raw Input. So:
 
-- Only the producer thread calls `Push`. Other sources (virtual devices,
-  playback, a later Raw Input thread) hand events to it through a queue.
-- `Push` sets `TimeNs = max(TimeNs, lastTimeNs)`, so time never goes back.
+- Only the input thread calls `HandleMessage`. Other sources (virtual devices,
+  playback, a later Raw Input thread) hand messages to it through a queue.
+  `VirtualInputDeviceInterface::Queue` does this today.
+- `HandleMessage` sets `Sequence`, and sets `TimeNs = max(TimeNs,
+  lastTimeNs)`, so time never goes back. A `TimeNs` of 0 means "now".
 
-### The event ring
+### The message queue
 
 ```cpp
-/** One producer thread, many readers. The producer never waits. */
-class InputEventRing
+/** One producer thread, many readers. Push never waits. */
+class InputMessageQueue
 {
 public:
-    explicit InputEventRing(uint32 capacity);   // for example 4096 events
-    void Push(const InputEvent& event);          // producer thread only
-    InputReader CreateReader();
-
-    /** The producer's newest device state and the sequence it is valid at. For overrun recovery. */
-    DeviceStateSnapshot LatestState() const;
+    explicit InputMessageQueue(uint32 capacity = 4096);
+    void Push(const InputMessage& message);     // InputMessageHandler only
+    uint64 NewestSequence() const;
+    uint64 OldestSequence() const;
+    uint32 CopyRange(uint64 afterSequence, InputMessage* out, uint32 max, int64 untilNs) const;
 };
 
-class InputReader
+class InputMessageProcessor
 {
 public:
-    /**
-     * Copies events after the cursor with TimeNs < untilNs into out, up to max.
-     * Does not move the cursor. Returns the number copied.
-     */
-    uint32 Read(InputEvent* out, uint32 max, int64 untilNs);
-
-    /** Moves the cursor past every event up to and including sequence, and applies them to State(). */
-    void Consume(uint64 sequence);
-
-    /** True if the producer overwrote events that this reader did not read. */
-    bool Overran() const;
-
-    /** Held keys and buttons, axis values, and cursor position at this reader's cursor. */
-    const DeviceState& State() const;
+    uint32 Read(InputMessage* out, uint32 max, int64 untilNs) const;   // does not move the cursor
+    void Consume(uint64 sequence);          // move the cursor, apply to GetState()
+    uint32 ConsumeUntil(int64 untilNs);     // Read + Consume
+    void ClearEdges();                      // reset counts and mouse sums, keep held state
+    const InputDeviceStates& GetState() const;
+    bool Overran() const;                   // the queue overwrote unread messages
+    void Resync(const InputDeviceStates& latest, uint64 latestSequence);
 };
 ```
 
-- The ring has a fixed size. The producer overwrites the oldest events and
-  never waits for a slow reader.
-- **`Read` copies.** A view into the ring (`std::span`) can wrap, and the
-  producer can overwrite it while the reader uses it. That works on one thread
-  and tears with two. Each slot has a sequence number, and the reader checks
-  it again after the copy (a seqlock). A changed number means the slot was
-  overwritten: the reader reports `Overran()`.
-- **Each reader owns its `DeviceState`.** It applies events as it consumes
-  them. The producer cannot know the state at some other reader's cursor.
-- **Overrun recovery.** The reader takes `LatestState()` (a `{state,
-  sequence}` pair), moves its cursor to that sequence, and makes press and
-  release events from the difference between its old state and the new one.
-  Held keys are then correct, even though short taps in the lost range are
-  gone. With merged mouse moves, 4096 events is several seconds of input, so
-  this only happens on a long hitch.
-- On one thread (today) the ring is a plain array. The API is the same.
-
-### Producers
-
-| Producer | Source | Notes |
-|----------|--------|-------|
-| `GlfwInputProducer` | GLFW key, char, mouse button, cursor, scroll, focus callbacks, and gamepad state | Replaces both `WindowsInput` and `LinuxInput`. Uses callbacks, not `glfwGetKey`, so short presses are not lost |
-| `VirtualInputDevice` | The command layer, agent scripts, tests | Hands events to the producer thread. Works with `--null-render` |
-| `EventLogPlayer` | An event log file | Plays a recorded event stream back in real time, through the producer thread |
+- The queue has a fixed size. `Push` overwrites the oldest message and never
+  waits for a slow reader.
+- **`Read` copies.** A view into the queue (`std::span`) can wrap, and the
+  writer can overwrite it while the reader uses it. That works on one thread
+  and tears with two. When the queue moves to its own thread, each slot gets a
+  sequence number, and the reader checks it again after the copy (a seqlock).
+  A changed number means the slot was overwritten: the reader reports
+  `Overran()`. The reader API does not change.
+- **Each processor owns its `InputDeviceStates`.** It applies messages as it
+  consumes them. The handler cannot know the state at some other processor's
+  cursor. Edge counts mean "since this processor last called `ClearEdges`", so
+  a 30 Hz game reader sees every press made between its ticks, and a 144 Hz
+  render reader keeps its own counts.
+- **Overrun recovery.** The processor takes `InputMessageHandler::GetLatestState()`
+  and its sequence, and calls `Resync`. Resync makes press and release
+  messages from the difference between the old state and the new one
+  (`InputDeviceStates::MakeTransitionMessages`), then moves the cursor. Held
+  keys are then correct, even though short taps in the lost range are gone.
+  With merged mouse moves, 4096 messages is several seconds of input, so this
+  only happens on a long hitch. `Input::BeginTick` does this for the game
+  processor.
+- A new processor starts after the newest message, with the newest device
+  state (`InputMessageHandler::CreateProcessor`).
+- On one thread (today) the queue is a plain array. The API is the same.
 
 ### The input thread and polling
 
 Keyboard and mouse are event devices. The OS queues their events, so they are
 not lost if they are read late. Fixed-rate polling adds nothing for them:
 waking up on each event already gives the best timestamps. Gamepads are
-polled: the producer reads a state snapshot, and a press and release between
-two polls is lost. So the producer:
+polled: the interface reads a state snapshot, and a press and release between
+two polls is lost. So the input thread:
 
 - **Wakes up on every OS event**, not once per frame, so event timestamps are
   accurate.
@@ -243,7 +401,7 @@ Render thread: render from SnapshotRing           -- started by the main thread
 - **Cursor capture** (disable, hide, release) changes only on the main
   thread. Other threads send a request through a command queue. GLFW reports
   one large false delta on the first motion after a capture change. The
-  producer drops it.
+  GLFW interface drops it.
 - **ImGui's GLFW backend** sets the cursor shape and reads the clipboard
   through GLFW, so it must run on the main thread. ImGui on another thread
   needs a custom platform backend that queues those requests to the main
@@ -254,12 +412,12 @@ main thread is not busy. Device timestamps from Windows are not much better:
 `GetMessageTime` uses the system tick (about 15.6 ms). If more accuracy is
 needed later, the backend changes to a Raw Input message-only window on its
 own thread for the mouse, and GameInput or XInput for pads. That thread hands
-events to the producer, behind the same ring.
+messages to the handler, behind the same queue.
 
 **Today**, with one thread, the engine calls
-`InputProducer::PollOnCallerThread()` once per frame before `RunFrame`. Events
+`Input::Poll()` once per frame before `RunFrame`. Messages
 still go through callbacks, so presses are not lost, but timestamps are only
-accurate to the frame. Consumers do not change when the producer moves to its
+accurate to the frame. Consumers do not change when input moves to its
 own thread.
 
 ### Input contexts
@@ -322,19 +480,19 @@ struct TickInput
 - **By time.** For tick n, the builder reads events with `TimeNs` before the
   real time of the end of tick n. That time comes from `PresentationClock` and
   `TickTimeline` in `improve-time.md`.
-- **Late arrivals.** With a separate producer, an event stamped before the end
+- **Late arrivals.** With a separate input thread, an event stamped before the end
   of tick n can arrive after tick n was built. It goes to
   `max(tickByTime, firstUnbuiltTick)`. An event never goes to a tick that was
   already built.
 - **Dropped ticks under the hitch threshold** (`MaxTicksPerFrame` clamp):
   their presses and releases go into the next tick that runs.
 - **A hitch over the threshold** (0.1 s): presses and releases in the gap are
-  dropped, but held state is kept from the reader's `DeviceState`. A key held
+  dropped, but held state is kept from the processor's `InputDeviceStates`. A key held
   through a breakpoint is still held, and a press from a second ago does not
   fire now.
 - **Pause.** While paused (`ScaleQ16` is 0), real time cannot be mapped to a
   tick. Gameplay edges are dropped. UI readers still get every event. On
-  resume, held state comes from the reader's `DeviceState`.
+  resume, held state comes from the processor's `InputDeviceStates`.
 - **Single steps** (`RequestSteps` while paused) take every event up to now.
 - **Re-anchoring.** Time scale and rate nudge changes are fine, because each
   `PresentationClock` anchor has a version number and only moves forward.
@@ -425,25 +583,28 @@ Rules for this:
 
 ### Recording
 
-- **Event log** (raw `InputEvent`s with timestamps): good for finding bugs in
+- **Event log** (raw `InputMessage`s with timestamps): good for finding bugs in
   the `TickInput` builder, the render-side look, and UI. Playback is in real
-  time, so it is not exact.
+  time, so it is not exact. **Done:** `InputRecorder`, `InputPlayback`, the
+  `.input.jsonl` format, `--record-input` and `--replay-input`, and the editor
+  UI. See `Skills/input-playback.md`.
 - **`TickInput` log**: exact. This is what scenario tests and the state hash
   use. It includes context changes and UI commands (through `TickCommands`).
 - The recorder is one more reader. Recording can be turned on at any time.
 
 ### Headless
 
-With `--null-render` there is no window and no `GlfwInputProducer`. Input comes
-from `VirtualInputDevice`, or directly from a `TickInput` log. Headless
+With `--null-render` there is no window and no `GlfwInputDeviceInterface`. Input comes
+from `VirtualInputDeviceInterface`, or directly from a `TickInput` log. Headless
 scenario tests feed `TickInput`s and skip timestamps entirely, so they do not
 depend on real time.
 
 ## Rules
 
-1. Every input goes through `InputEventRing`, pushed only by the producer
-   thread. No code reads GLFW or platform input state directly.
-2. Every event has a sequence number and a real-time timestamp that never
+1. Every input goes through `InputMessageQueue`, reaching it only through
+   `InputMessageHandler::HandleMessage` on the input thread. No code reads GLFW
+   or platform input state directly.
+2. Every message has a sequence number and a real-time timestamp that never
    decreases.
 3. The simulation reads only `InputState`, built from one `TickInput` per
    player per tick, after the input context stack.
@@ -451,7 +612,7 @@ depend on real time.
    writes sim state, and it computes the late look from the latest snapshot
    every frame.
 5. Gameplay checks press counts, not only held state.
-6. Gameplay binds to scancodes and ignores `KeyRepeat` and `Char`.
+6. Gameplay binds to `InputKey` values (physical key positions) and ignores `KeyRepeat` and `Char`.
 7. Mouse deltas stay integer counts until after they are summed.
 
 ## Tests
@@ -471,7 +632,7 @@ depend on real time.
 - **Several readers:** two readers at different speeds each see every event
   once.
 - **Overrun:** a reader that falls behind by more than the ring size reports
-  `Overran()`, and its held state matches the producer's after recovery.
+  `Overran()`, and its held state matches the handler's latest state after recovery.
 - **Torn read:** with a second thread pushing, `Read` never returns an event
   that was overwritten during the copy.
 - **Ordering:** an event pushed with an earlier timestamp than the last one
@@ -497,20 +658,68 @@ on every CI platform.
 
 | Phase | Work | Depends on |
 |-------|------|------------|
-| **I1** | `InputEvent` (with scancodes, `KeyRepeat`, `Char`, integer mouse counts), `InputEventRing` with copying `Read`, `InputReader` with its own `DeviceState`. `GlfwInputProducer` with callbacks replaces `WindowsInput` and `LinuxInput`. A temporary shim lets the old `Input::IsKeyHeld` callers read from a reader until I5 deletes them. Do not extend the shim. One thread | `PlatformTime` from `improve-time.md` T1 |
+| **I1** | **In progress.** Device layer (`InputDevice`, `InputDeviceFactory`, `InputDeviceId`), `InputKey`, `InputMessage` (with scancodes, `KeyRepeat`, `Char`, integer mouse counts), `InputMessageQueue` with copying `Read`, `InputMessageHandler`, `InputMessageProcessor` with its own `InputDeviceStates`. `GlfwInputDeviceInterface` with callbacks replaces `WindowsInput` and `LinuxInput`. `VirtualInputDeviceInterface`. The old static `Input` is removed, with no shim. One thread. See [Phase I1 status](#phase-i1-status) | `PlatformTime` from `improve-time.md` T1 (not yet; `InputNowNs()` is used) |
 | **I2** | `TickInput` builder with edge counts and the tick assignment rules (late arrival, hitch, pause). `InputState` | `improve-time.md` T3 |
-| **I3** | `VirtualInputDevice`, event log and `TickInput` log record and replay | I2. Phase B in `improve-ai-iteration.md` |
+| **I3** | Event log and `TickInput` log record and replay (`VirtualInputDeviceInterface` exists from I1). Event log record and replay is done (`Skills/input-playback.md`). The `TickInput` log is still to do | I2. Phase B in `improve-ai-iteration.md` |
 | **I4** | Gamepad support, polled by deadline at `input.poll_hz`. Raw mouse motion and cursor capture requests | I1 |
-| **I5** | Input context stack, with ImGui capture flags. UI commands into `TickCommands`. Remove `Input::BindKeyPress` and the static `Input`. Systems read `InputState`. ImGui and the editor get their own reader | I2, `ecs-plan.md` systems |
+| **I5** | Input context stack, with ImGui capture flags. UI commands into `TickCommands`. Systems read `InputState`. ImGui and the editor get their own reader | I2, `ecs-plan.md` systems |
 | **Later** | Main thread becomes the input thread. Render-side late look and UI hover. Local player slots. Chords and input buffers. Rumble. A Raw Input or GameInput backend if timestamps need to be better | Game and render threads from `improve-time.md` |
+
+### Phase I1 status
+
+In progress. The device layer is implemented in Core, with Catch2 tests in
+`FlingTests/Core/`. The GLFW interface is in Graphics. The rules that it
+establishes move to `Skills/` when I1 is done.
+
+Done:
+
+- **Device layer.** `InputDevice`, `InputDeviceId` (opaque `uint32`),
+  `InputDeviceInfo`, `InputDeviceCapabilities`, `InputDeviceFactory` (registry
+  that keeps disconnected devices, and reuses the ID on reconnect), and the
+  deferred connect and disconnect signals (`DispatchDeferredEvents`).
+- **`InputKey`.** Built-in `Keys::` list from `InputKeyList.inl`, stored by
+  name, with `InputKeyState` (held, press, release, and repeat counts) per
+  device per consumer in `InputDeviceStates`.
+- **`InputMessage`** with `InputDeviceId` as the device field, and
+  `InputMessageType`.
+- **`InputMessageQueue`, `InputMessageHandler`, and
+  `InputMessageProcessor`** on one thread. Many processors read at their own
+  rate. `Read` copies. Overrun is detected and `Resync` recovers.
+- **Interfaces.** `IInputDeviceInterface` with runtime add and remove
+  (deferred during polling) and window handle passing.
+  `GlfwInputDeviceInterface` uses GLFW callbacks, and its `Poll` is the only
+  `glfwPollEvents` call. `VirtualInputDeviceInterface` works with
+  `--null-render`.
+- **Old `Input` removed.** The static `Input`, `Key`, `KeyState`,
+  `WindowsInput`, and `LinuxInput` are gone. `Input` is now a `Singleton` that
+  owns the handler and the game processor (`Poll`, `BeginTick`, `EndTick`,
+  `IsHeld`, `WasPressed`, ...). `FirstPersonCamera` and `SandboxGame` use it.
+  `Input::BindKeyPress` delegates are gone. Callers check `WasPressed`.
+
+Not done:
+
+- **Timestamps.** `PlatformTime` (`improve-time.md` T1) does not exist.
+  Messages use `InputNowNs()`, a `steady_clock` helper in
+  `InputMessage.h`. Replace it when T1 lands.
+- **Scancode binding.** Gameplay binds to `InputKey` values, which name the
+  physical key position. The scancode field is filled when the backend has
+  one, but nothing reads it yet.
+- **Threading.** The queue is a plain array with no seqlock. There is no input
+  thread. The main thread polls once per frame.
+- **Gamepads, raw mouse motion, and cursor capture requests** are I4.
+  `Poll` reads GLFW gamepad state with `glfwGetGamepadState` once per frame, not at `input.poll_hz` (I4).
+- `TickInput`, tick assignment, and `InputState` are I2. The input context
+  stack is I5. Event log record and replay is I3.
 
 ## Open questions
 
 - Does Fling keep GLFW for input, or move to SDL3, which supports more
   gamepads? SDL3 has the same main-thread rule, so it does not change the
   thread design.
-- Where do `InputEvent` and `InputEventRing` live: Core (no window
-  dependency) with producers in a platform module?
+- `InputMessage`, `InputMessageQueue`, and the device layer live in Core (no
+  window dependency). `GlfwInputDeviceInterface` lives in Graphics. Should
+  future platform interfaces (XInput, GameInput) go in Graphics too, or in a
+  new platform module?
 - Action mapping: hard-coded per game at first, or a config file from the
   start?
 - Should the render-side late look be on by default, or opt-in per camera?

@@ -16,6 +16,7 @@
 #include "IDebugUI.h"
 #include "ExitCode.h"
 #include "LaunchOptions.h"
+#include "Input/InputDeviceTypes.h"
 #include <chrono>
 #include <memory>
 #include <type_traits>
@@ -125,6 +126,12 @@ namespace Fling
 
 		/** True after Startup started the engine systems, which Shutdown must then stop */
 		bool m_SystemsStarted = false;
+
+		/** The ID of the GLFW input interface. Invalid under --null-render. */
+		InputInterfaceId m_GlfwInputId;
+
+		/** The window that the GLFW input interface was told about. */
+		WindowHandle m_InputWindow;
 
 		/** Real time when Startup began, for the exit summary */
 		std::chrono::steady_clock::time_point m_StartTime;
