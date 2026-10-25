@@ -2,6 +2,9 @@
 
 #include "FlingWindow.h"
 
+// FlingVulkan.h sets VK_NO_PROTOTYPES before glfw3.h includes vulkan.h.
+#include "FlingVulkan.h"
+
 #ifndef GLFW_INCLUDE_VULKAN
 #	define GLFW_INCLUDE_VULKAN
 #endif

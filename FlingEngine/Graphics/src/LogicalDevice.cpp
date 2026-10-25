@@ -1,4 +1,5 @@
 #include "LogicalDevice.h"
+#include "VulkanLoader.h"
 #include "Instance.h"
 #include "PhyscialDevice.h"
 #include "Logger.h"
@@ -126,6 +127,8 @@ namespace Fling
         {
             F_LOG_FATAL( "Failed to create logical Device!" );
         }
+
+        VulkanLoader::LoadDevice(m_Device);
 
         vkGetDeviceQueue(m_Device, m_GraphicsFamily, 0, &m_GraphicsQueue);
         vkGetDeviceQueue(m_Device, m_PresentFamily, 0, &m_PresentQueue);

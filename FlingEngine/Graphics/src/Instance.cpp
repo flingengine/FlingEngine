@@ -1,4 +1,5 @@
 #include "Instance.h"
+#include "VulkanLoader.h"
 #include "FlingConfig.h"
 #include <GLFW/glfw3.h>
 #include "Logger.h"
@@ -64,6 +65,8 @@ namespace Fling
 		{
             F_LOG_FATAL( "Failed to create the Vulkan instance!" );
 		}
+
+		VulkanLoader::LoadInstance(m_Instance);
 
 		// Find out what extensions are available
 		uint32_t extensionCount = 0;

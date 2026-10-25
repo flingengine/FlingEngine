@@ -19,6 +19,8 @@ namespace Fling
 		// Initialize GLFW if we have to
 		if (!bGlfwInitalized)
 		{
+			// Give GLFW the loader that Fling opened. Call this before glfwInit.
+			glfwInitVulkanLoader(vkGetInstanceProcAddr);
 			glfwInit();
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			bGlfwInitalized = true;

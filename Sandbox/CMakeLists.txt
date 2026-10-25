@@ -52,10 +52,19 @@ if( FLING_BUILD_TESTS )
         PASS_REGULAR_EXPRESSION "Fling exit: code=3 ticks=0"
     )
 
+    # The linked binary must not import libvulkan / vulkan-1.dll. The loader is
+    # opened at runtime by Fling::DynamicLibrary.
+    add_test(NAME "Sandbox: no Vulkan import"
+        COMMAND ${CMAKE_COMMAND}
+            -DBINARY=$<TARGET_FILE:${PROJECT_NAME}>
+            -P "${FLING_ROOT_DIR}/FlingTests/VulkanLoad/ExpectNoVulkanImport.cmake"
+    )
+
     set_tests_properties(
         "Sandbox: headless run"
         "Sandbox: headless json logs"
         "Sandbox: bad launch argument"
+        "Sandbox: no Vulkan import"
         PROPERTIES TIMEOUT 120
     )
 endif()
