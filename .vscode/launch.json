@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Sandbox/bin/Sandbox",
-            "args": [""],
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
