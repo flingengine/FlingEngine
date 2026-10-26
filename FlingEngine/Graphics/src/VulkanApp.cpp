@@ -374,10 +374,8 @@ namespace Fling
 
             // Offscreen pipeline ------
             // These shaders have vertex input and fill in the buffers that the final pass uses
-            std::shared_ptr<Fling::Shader> OffscreenVert =
-                Shader::Create(HS("Deferred/mrt.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> OffscreenFrag =
-                Shader::Create(HS("Deferred/mrt.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(HS("Deferred/mrt.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(HS("Deferred/mrt.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(
                 m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenVert, OffscreenFrag));
 
@@ -387,10 +385,8 @@ namespace Fling
             assert(Offscreen);
             FrameBuffer* OffscreenBuf = Offscreen->GetOffscreenFrameBuffer();
             assert(OffscreenBuf);
-            std::shared_ptr<Fling::Shader> GeomVert =
-                Shader::Create(HS("Deferred/deferred.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> GeomFrag =
-                Shader::Create(HS("Deferred/deferred.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Deferred/deferred.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Deferred/deferred.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice,
                                                                      m_SwapChain,
                                                                      t_Reg,
