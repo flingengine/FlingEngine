@@ -121,6 +121,12 @@ the game on machines that have no display and no Vulkan device:
 A flag takes its value as `--frames 120` or `--frames=120`. The flags are parsed
 by `LaunchOptions::Parse` (`FlingEngine/Core/inc/LaunchOptions.h`).
 
+`--null-render` does not call `VulkanApp::Init`, so it does not open the Vulkan
+loader. The Sandbox binary does not import `libvulkan` or `vulkan-1.dll`.
+CTest checks that (`Sandbox: no Vulkan import`) and checks that every
+first-party `vk[A-Z]` call is named in `VulkanFunctions.inl`
+(`Vulkan calls are listed`).
+
 Exit codes (`Fling::ExitCode` in `ExitCode.h`): `0` success, `1` scenario or
 assertion failure, `2` crash or fatal error, `3` bad arguments or bad content.
 At exit the engine prints one summary line to stdout, for example

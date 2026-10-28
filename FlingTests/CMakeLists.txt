@@ -102,6 +102,13 @@ if( WITH_EDITOR_FLAG )
 	fling_add_isolation_test( EditorHeaders        Fling::Editor    "BaseEditor.h"      VISIBLE )
 endif()
 
+# Every first-party vk* call must be named in VulkanFunctions.inl.
+add_test(NAME "Vulkan calls are listed"
+	COMMAND ${CMAKE_COMMAND}
+		-DSOURCE_ROOT=${FLING_ROOT_DIR}
+		-P "${CMAKE_CURRENT_SOURCE_DIR}/VulkanLoad/CheckVulkanCalls.cmake"
+)
+
 # Unattended crash tests. CrashProbe crashes on purpose after
 # CrashHandler::InstallUnattended. Each test passes only if the process exits
 # with code 2 and prints a stack trace. A modal dialog makes the test time out.
