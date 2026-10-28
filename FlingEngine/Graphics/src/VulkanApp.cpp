@@ -21,9 +21,39 @@
 #include "Version.h"
 #include "BuildConfig.h"
 #include "GitVersion.h"
+#include "VulkanLoader.h"
+
+#include <stdexcept>
+#include <string>
 
 namespace
 {
+    [[noreturn]] void StopForMissingVulkan(const std::string& t_Detail)
+    {
+        const bool Untrusted =
+            t_Detail.find("not signed") != std::string::npos || t_Detail.find("not trusted") != std::string::npos;
+        const char* Message = Untrusted ? "Vulkan loader was found, but its signature is not trusted"
+                                        : "Vulkan runtime not found: install a GPU driver with Vulkan support";
+        if (const auto Console = Fling::Logger::GetCurrentConsole())
+        {
+            if (!t_Detail.empty())
+            {
+                Console->error("Vulkan loader: {}", t_Detail);
+            }
+            Console->error(Message);
+            Console->flush();
+        }
+        if (const auto File = Fling::Logger::GetCurrentLogFile())
+        {
+            if (!t_Detail.empty())
+            {
+                File->error("Vulkan loader: {}", t_Detail);
+            }
+            File->error(Message);
+        }
+        throw std::runtime_error(Message);
+    }
+
     VkExtent2D
     ChooseSwapExtent(Fling::FlingWindow* t_Window, Fling::PhysicalDevice* t_PhysicalDevice, VkSurfaceKHR t_Surface)
     {
@@ -80,6 +110,13 @@ namespace Fling
 
     void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
     {
+        // Open the loader before Prepare. Prepare calls glfwInit.
+        std::string LoaderError;
+        if (!VulkanLoader::LoadLoader(&LoaderError))
+        {
+            StopForMissingVulkan(LoaderError);
+        }
+
         Singleton<VulkanApp>::Init();
 
         Prepare();
@@ -708,6 +745,9 @@ namespace Fling
         // Cleanup Window --------
         delete m_CurrentWindow;
         m_CurrentWindow = nullptr;
+
+        // vkDestroyInstance already ran in the Instance destructor.
+        VulkanLoader::UnloadLoader();
 
         F_LOG_TRACE("Vulkan App Shutdown!");
     }

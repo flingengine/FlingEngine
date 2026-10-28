@@ -11,9 +11,14 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 
 - `FlingEngine/Core` — the `Core` module (`Fling::Core`, built with
   `fling_add_module()`): platform macros, logging, math, memory, timing,
-  `FlingPaths`, the platform-independent `Input` class, and launch support
-  (`LaunchOptions`, `ExitCode`, `CrashHandler`). Core includes and
-  links no other engine module, and its own include path enforces that.
+  `FlingPaths`, the platform-independent `Input` class, launch support
+  (`LaunchOptions`, `ExitCode`, `CrashHandler`), and `DynamicLibrary`.
+  `DynamicLibrary` is the only code that calls `LoadLibrary` or `dlopen`.
+  `Open` does not check a signature. `OpenSigned` checks Authenticode on
+  Windows and resolves a bare name in System32, then the executable directory.
+  Linux `OpenSigned` calls `Open`.
+  Core includes and links no other engine module, and it does not depend on
+  Vulkan. Its include path enforces that.
   `WITH_IMGUI`, `WITH_EDITOR`, `WITH_CRASH_HANDLER`, and `FLING_SHIPPING` are PUBLIC definitions on
   Core, so every target sees them.
 - `FlingEngine/Resources` — the `Resources` module (depends on Core): config
@@ -31,7 +36,11 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   Engine): the Vulkan renderer, window, GPU resources, render components
   (`MeshRenderer`, lights), and the GLFW input backends (`LinuxInput`,
   `WindowsInput`, keycodes). Developer UI plugs in through `IDebugUI`, so
-  Graphics never includes Editor headers.
+  Graphics never includes Editor headers. Include Vulkan only through
+  `FlingVulkan.h` (`VK_NO_PROTOTYPES`). Add every new `vk*` call to
+  `VulkanFunctions.inl`. `VulkanLoader` loads those pointers with
+  `DynamicLibrary`. Graphics links `Vulkan::Headers` and does not link the
+  Vulkan loader.
 - `FlingEngine/Application` — the `Application` module (depends on Engine and
   Graphics): the top-level startup layer. `Engine.h`/`Engine.cpp`
   (`Engine::Run`, the main loop) and `FlingEngine.h`. It boots a game client,

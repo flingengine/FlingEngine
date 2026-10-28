@@ -78,7 +78,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            ninja-build pkg-config \
+            ninja-build pkg-config binutils \
             xorg-dev libx11-dev libwayland-dev libxkbcommon-dev libglu1-mesa-dev \
             libvulkan-dev
 
@@ -221,6 +221,42 @@ jobs:
       - name: Run tests
         if: runner.os == 'Windows'
         run: ctest --test-dir build -C Debug --output-on-failure --no-tests=error --timeout 300
+
+  # Build with the Vulkan SDK, then run Sandbox where libvulkan.so.1 cannot be
+  # loaded. The windowed run must exit 2 and log the missing-runtime line.
+  # --null-render must still exit 0, because it does not open the loader.
+  # The mount namespace hides the host copies. It does not uninstall packages
+  # and it does not change the other jobs.
+  no-vulkan-runtime:
+    name: Linux no Vulkan runtime
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build pkg-config \
+            xorg-dev libx11-dev libwayland-dev libxkbcommon-dev libglu1-mesa-dev \
+            libvulkan-dev
+
+      - name: Build and install Catch2
+        run: |
+          cmake -DFLING_INIT_CONFIGS=Release \
+            -DFLING_INIT_SKIP_SUBMODULES=ON -DFLING_INIT_SKIP_CONFIGURE=ON \
+            -P scripts/init.cmake
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Sandbox
+        run: cmake --build build --target Sandbox --parallel
+
+      - name: Run with the loader hidden
+        run: bash FlingTests/VulkanLoad/RunWithoutVulkanLoader.sh build/Sandbox/bin/Sandbox
 
   # Doc-comment conventions for first-party sources (see Skills/coding-style.md / issue #166).
   # clang-format cannot enforce comment *content*; this script does.

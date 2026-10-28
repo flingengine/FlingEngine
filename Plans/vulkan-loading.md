@@ -4,8 +4,10 @@ Design for how the Graphics module loads Vulkan at runtime, with only the
 official Vulkan SDK (Khronos headers and loader) and no third-party Vulkan
 helper libraries.
 
-This is a plan, not an established standard. When a phase is done, move the
-rules that it establishes into [`Skills/`](../Skills/).
+L1 and L2 are implemented. This file stays a plan until the rules move fully
+into [`Skills/`](../Skills/). The rules that already hold are also noted in
+[`Skills/architecture.md`](../Skills/architecture.md) and
+[`Skills/testing.md`](../Skills/testing.md).
 
 Related plans: [`improve-ai-iteration.md`](improve-ai-iteration.md) (phase A,
 `--null-render`) and [`project-model.md`](project-model.md) (P5, the
@@ -13,182 +15,207 @@ Related plans: [`improve-ai-iteration.md`](improve-ai-iteration.md) (phase A,
 
 ## Problem
 
-- Graphics links `Vulkan::Vulkan`, the import library of the Vulkan loader.
-  The operating system then loads the loader (`vulkan-1.dll`,
-  `libvulkan.so.1`) when the process starts, before `main()`. A process cannot
-  start on a machine that has no Vulkan runtime, even with `--null-render`.
-- The short-term fix (PR #219) delay-loads `vulkan-1.dll` with MSVC
-  `/DELAYLOAD` (`FlingEngine/Graphics/CMakeLists.txt`). It works only with
-  MSVC:
-  - Linux still loads `libvulkan.so.1` at process start. A headless run on a
-    server image with no `libvulkan1` package does not start.
-  - MinGW has no `/DELAYLOAD`, so it still loads `vulkan-1.dll` at process start.
-- With delay loading, a missing runtime in a windowed run is an exception on
-  the first Vulkan call (a crash), not an error that the engine can report.
-- Every Vulkan call goes through the loader's dispatch code. Device functions
-  that come from `vkGetDeviceProcAddr` skip that step.
+- Graphics used to link `Vulkan::Vulkan`, the import library of the Vulkan
+  loader. The operating system then loaded the loader (`vulkan-1.dll`,
+  `libvulkan.so.1`) when the process started, before `main()`. A process could
+  not start on a machine that has no Vulkan runtime, even with `--null-render`.
+- The short-term fix (PR #219) delay-loaded `vulkan-1.dll` with MSVC
+  `/DELAYLOAD`. It worked only with MSVC. Linux still loaded `libvulkan.so.1`
+  at process start. MinGW has no `/DELAYLOAD`.
+- With delay loading, a missing runtime in a windowed run was an exception on
+  the first Vulkan call, not an error that the engine can report.
 
 ## Goals
 
 1. A `--null-render` run starts with no Vulkan runtime, on every platform and
    every compiler.
-2. A windowed run with no Vulkan runtime, or with no Vulkan driver, logs a
-   clear error and exits with `ExitCode::Crash` (2). There is no exception and
+2. A windowed run with no Vulkan runtime logs a clear error and exits with
+   `ExitCode::Crash` (2). There is no exception from the operating system and
    no "DLL not found" dialog.
 3. Only the official Vulkan SDK: the Khronos headers and the Khronos loader.
    No volk and no other third-party Vulkan helper library.
 4. Call sites in Graphics do not change. `vkCreateBuffer(...)` stays
    `vkCreateBuffer(...)`.
-5. Building needs only the Vulkan headers, not the import library.
+5. Building needs the Vulkan headers. The linked binary must not import
+   `libvulkan` or `vulkan-1.dll`.
 
 ## Non-goals
 
 - More than one Vulkan device at a time. The engine has one `LogicalDevice`.
-  A per-device function table can come later if that changes.
-- Vulkan-Hpp (`vulkan.hpp`). It is part of the SDK and has its own dynamic
-  dispatcher, but Graphics uses the C API. Moving to Vulkan-Hpp is a much
-  larger change than this plan.
+  One global function table is correct. A per-device table can come later if
+  that changes.
+- Vulkan-Hpp (`vulkan.hpp`). Graphics uses the C API.
 - A Graphics module that is not linked. That is the `<Name>Server` target
   (P5 in `project-model.md`).
+- A player message box. A log line and exit code 2 are enough.
+- Generating `VulkanFunctions.inl` from `vk.xml`. The hand-kept list is enough.
 
 ## Design
 
 ### 1. No prototypes
 
 `FlingVulkan.h` is the only first-party file that includes `<vulkan/vulkan.h>`.
-It defines `VK_NO_PROTOTYPES` before the include. The SDK header then declares
-the `PFN_vk...` function-pointer types, but no functions. Nothing links against
-the loader, so the import library is no longer needed.
+It defines `VK_NO_PROTOTYPES` before the include. Graphics also compiles with
+`VK_NO_PROTOTYPES`, so a direct include cannot turn the prototypes back on.
+The SDK header then declares the `PFN_vk...` types and no functions.
 
-Every first-party file must get Vulkan through `FlingVulkan.h`.
-`DesktopWindow.h` defines `GLFW_INCLUDE_VULKAN`, and `glfw3.h` then includes
-`<vulkan/vulkan.h>` itself. It must include `FlingVulkan.h` first, so
-`VK_NO_PROTOTYPES` is set (or stop using `GLFW_INCLUDE_VULKAN`). A build check:
-compile one file that calls a Vulkan function without the table; it must fail.
+`DesktopWindow.h` includes `FlingVulkan.h` before it defines
+`GLFW_INCLUDE_VULKAN`. `glfw3.h` then includes `<vulkan/vulkan.h>` with the
+prototypes already off.
 
 ### 2. One list of functions
 
-A hand-written X-macro list, `Graphics/src/VulkanFunctions.inl`, names every
-Vulkan function that Graphics calls (about 90 today). It has three sections,
-one for each level at which Vulkan gives the pointer:
+`FlingEngine/Graphics/src/VulkanFunctions.inl` is the hand-kept X-macro list of
+every Vulkan command first-party code calls. The same list declares the
+`extern "C"` pointers in `FlingVulkan.h`, defines them in `VulkanLoader.cpp`,
+and loads them. A command added to the list is added to all three.
+
+Groups:
+
+- `FLING_VK_GLOBAL` — loader commands, from `vkGetInstanceProcAddr(nullptr, ...)`.
+- `FLING_VK_GLOBAL_OPTIONAL` — same level. A null pointer is not an error.
+  `vkEnumerateInstanceVersion` is in this group. Older loaders may not export it.
+- `FLING_VK_INSTANCE` — instance commands, including commands whose first
+  parameter is `VkPhysicalDevice`. Load them with `vkGetInstanceProcAddr(instance, ...)`.
+- `FLING_VK_INSTANCE_OPTIONAL` — extension commands that may be absent.
+  `vkCreateDebugUtilsMessengerEXT` and `vkDestroyDebugUtilsMessengerEXT` are here.
+  A null pointer is not an error.
+- `FLING_VK_DEVICE` — commands whose first parameter is `VkDevice`, `VkQueue`,
+  or `VkCommandBuffer`. Load them with `vkGetDeviceProcAddr`.
+- `FLING_VK_DEVICE_OPTIONAL` — same level. A null pointer is not an error.
+  The group is empty today.
+
+`vkGetDeviceProcAddr` takes `VkDevice`, but it is loaded with
+`vkGetInstanceProcAddr`. It is how the device commands are loaded. Physical-device
+commands stay on the instance list.
+
+Each pointer is a global with the C API name:
 
 ```cpp
-// Loader level: from vkGetInstanceProcAddr(nullptr, ...)
-FLING_VK_GLOBAL(vkCreateInstance)
-FLING_VK_GLOBAL(vkEnumerateInstanceExtensionProperties)
-FLING_VK_GLOBAL(vkEnumerateInstanceLayerProperties)
-
-// Instance level: from vkGetInstanceProcAddr(instance, ...)
-FLING_VK_INSTANCE(vkDestroyInstance)
-FLING_VK_INSTANCE(vkEnumeratePhysicalDevices)
-FLING_VK_INSTANCE(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
-FLING_VK_INSTANCE(vkCreateDevice)
-// ...
-
-// Device level: from vkGetDeviceProcAddr(device, ...)
-FLING_VK_DEVICE(vkCreateBuffer)
-FLING_VK_DEVICE(vkCmdDraw)
-FLING_VK_DEVICE(vkQueuePresentKHR)
-// ...
+extern "C" PFN_vkCreateBuffer vkCreateBuffer;
 ```
 
-- The same list declares the pointers (in `FlingVulkan.h`), defines them, and
-  loads them (in `VulkanLoader.cpp`). A function that is added to one place is
-  added to all three.
-- Each pointer is a global with the same name as the Vulkan function:
-  `extern PFN_vkCreateBuffer vkCreateBuffer;`. `VK_NO_PROTOTYPES` removes the
-  real declarations, so these names are free, and call sites do not change.
-  This is the same approach that the Khronos samples use when they load
-  Vulkan dynamically.
-- The SDK's `vk.xml` registry says at which level each function is (a
-  `VkDevice`, `VkQueue`, or `VkCommandBuffer` first parameter means device
-  level). The list is short enough to keep by hand. A generator from `vk.xml`
-  is an option later, if the list grows a lot.
-- A function from an extension (`vkCreateSwapchainKHR`, debug utils) is
-  loaded only after its extension is enabled. A null pointer for an optional
-  extension is not an error. For a required extension it is.
+`VK_NO_PROTOTYPES` removes the real declarations, so these names are free and
+call sites do not change.
+
+A null required pointer logs `Required Vulkan function is null: <name>` and
+stops the process with `ExitCode::Crash`. A null optional pointer is not an
+error.
+
+`FlingTests/VulkanLoad/CheckVulkanCalls.cmake` fails when a first-party
+`vk[A-Z]` call is missing from the list. CTest runs it as
+`Vulkan calls are listed`. Do not generate the list from `vk.xml` unless the
+hand-kept list becomes a problem.
 
 ### 3. Loader
 
-`VulkanLoader` (Graphics, private) has three steps. `VulkanApp` calls them in
-order:
+`Fling::DynamicLibrary` (Core) is the only code that calls `LoadLibrary` or
+`dlopen`. Graphics does not call `LoadLibrary`, `LoadLibraryEx`, `dlopen`,
+`GetProcAddress`, or `dlsym`.
+
+`DynamicLibrary` is move-only. `Open` loads one file name with the platform
+search path and does not check a signature. Game modules and plugins use
+`Open`. `OpenFirst` tries each name with `Open` and returns the first library
+that opens. `Symbol` returns an address, or null when the library is closed or
+the symbol is missing. `Close` unloads the library and is safe to call twice.
+
+`OpenSigned` is opt-in. On Windows it calls `WinVerifyTrust` with
+`WINTRUST_ACTION_GENERIC_VERIFY_V2` before it maps the file. The check uses
+`WTD_UI_NONE`, `WTD_REVOKE_NONE`, and
+`WTD_SAFER_FLAG | WTD_CACHE_ONLY_URL_RETRIEVAL`. Startup shows no UI and does
+not use the network. `ERROR_SUCCESS` means the signature is valid. That covers
+an embedded signature and a catalog signature, so `kernel32.dll` still loads.
+`TRUST_E_NOSIGNATURE`, `TRUST_E_SUBJECT_FORM_UNKNOWN`, and
+`TRUST_E_PROVIDER_UNKNOWN` report "The shared library is not signed". Any other
+failure reports "The shared library signature is not trusted". The check runs
+before the load, so it does not close a swap of the file in that gap.
+
+A bare Windows name passed to `OpenSigned` is resolved in System32
+(`GetSystemDirectoryW`), then in the directory of the executable
+(`GetModuleFileNameW`). The current directory and `PATH` are not searched.
+When a candidate file exists and the signature check fails, `OpenSigned`
+returns that failure and does not try the next directory. A name that contains
+a slash, a backslash, or a drive prefix is an explicit path. `OpenSigned`
+resolves it with `GetFullPathNameW`, verifies that file, and does not search.
+The load uses `LoadLibraryExW` on the absolute path that passed the check,
+with `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32`. A
+missing file reports "The shared library was not found". The name is UTF-8
+and the Win32 calls take UTF-16. A missing DLL does not open a dialog.
+`Symbol` uses `GetProcAddress`. `Close` uses `FreeLibrary`.
+
+On Linux, `Open` uses `dlopen(name, RTLD_NOW | RTLD_LOCAL)`. Linux does not
+check a signature, so `OpenSigned` calls `Open`. `Symbol` uses `dlsym` and
+`Close` uses `dlclose`. macOS is not a target.
+
+`VulkanLoader` (Graphics, private) uses that type:
 
 | Step | Called from | Does |
 | --- | --- | --- |
-| `LoadLoader()` | Start of `VulkanApp::Init` | `LoadLibraryW(L"vulkan-1.dll")` on Windows, `dlopen("libvulkan.so.1", RTLD_NOW \| RTLD_LOCAL)` on Linux. Gets `vkGetInstanceProcAddr`, then the loader-level pointers. Returns false if the library or the symbol is missing |
-| `LoadInstance(VkInstance)` | After `vkCreateInstance` (`Instance.cpp`) | Instance-level pointers |
-| `LoadDevice(VkDevice)` | After `vkCreateDevice` (`LogicalDevice.cpp`) | Device-level pointers, from `vkGetDeviceProcAddr` |
+| `LoadLoader()` | Start of `VulkanApp::Init`, before GLFW | Linux: `OpenFirst` of `libvulkan.so.1`, then `libvulkan.so`. Windows: `OpenSigned("vulkan-1.dll")`. `SymbolAs` reads `vkGetInstanceProcAddr` from the library, then the global commands are loaded. Returns false when the library or that symbol is missing. A null required global command closes the library before the process stops |
+| `LoadInstance(VkInstance)` | After `vkCreateInstance` (`Instance.cpp`) | Instance commands, from `vkGetInstanceProcAddr` |
+| `LoadDevice(VkDevice)` | After `vkCreateDevice` (`LogicalDevice.cpp`) | Device commands, from `vkGetDeviceProcAddr` |
+| `UnloadLoader()` | End of `VulkanApp::Shutdown`, after `vkDestroyInstance` | Sets every Vulkan function pointer to null, then `Close()` |
 
-- `UnloadLoader()` runs at the end of `VulkanApp::Shutdown`, after
-  `vkDestroyInstance`. It sets every pointer back to null.
-- If `LoadLoader()` fails, `VulkanApp::Init` logs
-  "Vulkan runtime not found: install a GPU driver with Vulkan support" and the
-  engine exits with `ExitCode::Crash`. If a required pointer is null after
-  `LoadInstance` or `LoadDevice`, it logs the function name.
-- Under `--null-render`, `VulkanApp::Init` is not called, so the loader is
-  never loaded.
-- macOS (MoltenVK) is not a target today (`Platform.h` stops the build). If it
-  becomes one, `LoadLoader()` also tries `libvulkan.1.dylib`.
+`vkGetInstanceProcAddr` is taken from the library with `Symbol`. It is not
+replaced by calling `vkGetInstanceProcAddr` on itself. Vulkan 1.0 and 1.1
+loaders do not return that pointer.
+
+When `LoadLoader()` fails because the library is missing, `VulkanApp::Init`
+logs "Vulkan runtime not found: install a GPU driver with Vulkan support" and
+throws. When the file is found and the signature is not trusted, the log line
+is "Vulkan loader was found, but its signature is not trusted". `main` catches
+that and returns `ExitCode::Crash` (2). There is no message box. Under
+`--null-render`, `VulkanApp::Init` is not called, so
+`DynamicLibrary::Open` is not called.
 
 ### 4. GLFW
 
-GLFW loads the Vulkan loader itself for `glfwCreateWindowSurface` and
-`glfwGetRequiredInstanceExtensions`. GLFW 3.4 and newer (the vendored version
-is 3.5) has `glfwInitVulkanLoader(PFN_vkGetInstanceProcAddr)`. Call it with our
-`vkGetInstanceProcAddr` before `glfwInit()`, so that GLFW uses the same loader
-and does not open a second copy.
+GLFW 3.4 and newer can take our loader. `DesktopWindow` calls
+`glfwInitVulkanLoader(vkGetInstanceProcAddr)` and then `glfwInit()`. GLFW uses
+that pointer and does not open a second copy. `LoadLoader()` runs first, so the
+pointer is set.
 
 ### 5. CMake
 
-- Graphics links `Vulkan::Headers` (from CMake's `FindVulkan`) instead of
-  `Vulkan::Vulkan`.
-- Remove the `/DELAYLOAD:vulkan-1.dll` and `delayimp` lines from
-  `FlingEngine/Graphics/CMakeLists.txt`.
-- Linux: link `${CMAKE_DL_LIBS}` for `dlopen` (glibc 2.34 and newer has it in
-  libc, but older systems need `libdl`).
-- `find_package(Vulkan REQUIRED)` stays. The SDK is still how a developer gets
-  the headers, and the validation layers for debug runs.
+- Graphics links `Vulkan::Headers`, not `Vulkan::Vulkan`.
+- `/DELAYLOAD:vulkan-1.dll` and `delayimp` are gone.
+- `find_package(Vulkan REQUIRED)` stays. Configure time still needs the SDK
+  library so CMake can find the headers. The linked Sandbox binary must not
+  import `libvulkan` or `vulkan-1.dll`.
+- Core links `${CMAKE_DL_LIBS}` privately. `dlopen` is in libc on glibc 2.34
+  and newer. Older glibc keeps it in `libdl`. On Windows, Core links
+  `wintrust` for `WinVerifyTrust`. Graphics does not call `dlopen`.
 
 ## Tests
 
-- **No Vulkan import.** A CTest that fails if the Sandbox binary imports the
-  Vulkan loader: `readelf -d` (no `libvulkan` in `NEEDED`) on Linux, and the
-  PE import table on Windows (`dumpbin /imports` or `objdump -p`). Run it with
-  `cmake -P`, like `FlingTests/CrashProbe/ExpectCrash.cmake`.
-- **Headless with no runtime.** One Linux CI job runs the headless CTest tests
-  in a container without the `libvulkan1` package (build in a separate step
-  that has it).
-- **Missing runtime in a windowed run.** In the same container with no
-  `libvulkan1`, a windowed Sandbox run must exit with code 2 and log
+- **No Vulkan import.** `Sandbox: no Vulkan import` runs
+  `FlingTests/VulkanLoad/ExpectNoVulkanImport.cmake`. Linux: `readelf -d` has
+  no `libvulkan` in `NEEDED`. Windows: the PE import table (and the delay-import
+  table) has no `vulkan-1.dll`, read with `objdump -p`, `dumpbin /IMPORTS`, or
+  `pe_imports.py`.
+- **Call list.** `Vulkan calls are listed` runs `CheckVulkanCalls.cmake`.
+- **Headless.** `Sandbox --null-render --unattended --frames 120 --seed 1`
+  exits 0. It does not open the loader.
+- **Missing runtime.** The `Linux no Vulkan runtime` CI job builds with the SDK
+  installed, then runs Sandbox in a mount namespace where `libvulkan.so.1` and
+  `libvulkan.so` are not loadable. The windowed run must exit 2 and log
   "Vulkan runtime not found". `LoadLoader()` runs before GLFW opens a window,
-  so the test does not need a display.
-- The existing headless and windowed runs must give the same results as
-  before.
+  so the test does not need a display. The same namespace runs the headless
+  command and expects exit 0. The other CI jobs are unchanged.
 
 ## Phases
 
-Each phase must leave the engine, Sandbox, and FlingTests building and passing
-on every CI platform.
-
-| Phase | Work | Depends on |
+| Phase | Status | Work |
 | --- | --- | --- |
-| **L1** | `VK_NO_PROTOTYPES` in `FlingVulkan.h`, `VulkanFunctions.inl`, `VulkanLoader`, calls from `VulkanApp`, `Instance`, and `LogicalDevice`. Link `Vulkan::Headers`. Remove `/DELAYLOAD`. "No Vulkan import" test | None |
-| **L2** | `glfwInitVulkanLoader`. Clear error and `ExitCode::Crash` when the runtime is missing. Linux CI job with no `libvulkan1` | L1 |
-| **Later** | Generate `VulkanFunctions.inl` from `vk.xml`, if the hand-kept list becomes a problem. A per-device table, if the engine uses more than one device | L1 |
+| **L1** | Done | `VK_NO_PROTOTYPES`, `VulkanFunctions.inl`, `VulkanLoader`, `DynamicLibrary`. Link `Vulkan::Headers`. Remove `/DELAYLOAD`. No-import test and call-list test |
+| **L2** | Done | `glfwInitVulkanLoader`. Log line and `ExitCode::Crash` when the runtime is missing. Linux CI job with the loader not loadable |
+| **Later** | Not started | Generate `VulkanFunctions.inl` from `vk.xml` if the hand-kept list becomes a problem. A per-device table, if the engine uses more than one device |
 
-When L1 is done, update the Graphics rules in
-[`Skills/testing.md`](../Skills/testing.md#headless-runs) and
-[`Skills/architecture.md`](../Skills/architecture.md): include Vulkan only
-through `FlingVulkan.h`, and add each new Vulkan function to
-`VulkanFunctions.inl`.
+## Decisions
 
-## Open questions
-
-- Is the hand-kept list enough, or do we generate it from `vk.xml` from the
-  start? About 90 functions today suggests that by hand is fine.
-- Do device-level functions get loaded with `vkGetDeviceProcAddr` (faster
-  calls, one device only), or all with `vkGetInstanceProcAddr` (slower calls,
-  but works with any device)? The plan picks `vkGetDeviceProcAddr`, because
-  there is one device.
-- Does the "runtime not found" case need a message box for players (not
-  `--unattended`), or is a log line and exit code enough?
+- The hand-kept list is enough. A CTest fails when a first-party `vk[A-Z]` call
+  is missing from it. Do not generate from `vk.xml` now.
+- Device commands load with `vkGetDeviceProcAddr`. There is one `LogicalDevice`,
+  so one table is correct. Physical-device commands stay on the instance list.
+- A missing runtime logs one line and exits with code 2. There is no player
+  message box.
