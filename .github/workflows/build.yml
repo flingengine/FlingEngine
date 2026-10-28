@@ -43,10 +43,24 @@ jobs:
           - name: Windows MSVC Debug
             os: windows-2022
             compiler: msvc
+            generator: Visual Studio 17 2022
             build_type: Debug
           - name: Windows MSVC Release
             os: windows-2022
             compiler: msvc
+            generator: Visual Studio 17 2022
+            build_type: Release
+          # VS 2026 (MSVC 14.5x) is stricter about constant expressions than
+          # VS 2022 (see issue #226), so build with both.
+          - name: Windows MSVC 2026 Debug
+            os: windows-2025-vs2026
+            compiler: msvc
+            generator: Visual Studio 18 2026
+            build_type: Debug
+          - name: Windows MSVC 2026 Release
+            os: windows-2025-vs2026
+            compiler: msvc
+            generator: Visual Studio 18 2026
             build_type: Release
           - name: Windows MSYS2 UCRT64 Release
             os: windows-2022
@@ -126,7 +140,7 @@ jobs:
       - name: Configure (Windows)
         if: runner.os == 'Windows' && matrix.compiler != 'mingw'
         run: |
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+          cmake -S . -B build -G "${{ matrix.generator }}" -A x64 `
             -DDEFINE_SHIPPING=OFF `
             -DENABLE_MULTICORE=ON
 
