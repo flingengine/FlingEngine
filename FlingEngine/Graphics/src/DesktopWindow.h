@@ -36,9 +36,13 @@ namespace Fling
 		/** Is this window currently minimized? */
 		virtual bool IsMinimized() const override final;
 
-		virtual uint32 GetWidth() const override;
+		virtual uint32 GetFramebufferWidth() const override;
 
-		virtual uint32 GetHeight() const override;
+		virtual uint32 GetFramebufferHeight() const override;
+
+		virtual uint32 GetWindowWidth() const override;
+
+		virtual uint32 GetWindowHeight() const override;
 
 		virtual float GetAspectRatio() const override;
 
@@ -58,6 +62,10 @@ namespace Fling
 		virtual void SetWindowMode(WindowMode t_WindowMode) override;
 		virtual WindowMode GetWindowMode() override;
 	private:
+
+		/** Shrink the window, keeping its aspect ratio, if it would cover most of the monitor's work area */
+		void FitToWorkArea(uint32 t_Width, uint32 t_Height);
+
 
 		GLFWwindow* m_Window = nullptr;
 
