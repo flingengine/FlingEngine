@@ -148,8 +148,8 @@ namespace Fling
 			if (WindowWidth > 0.0f && WindowHeight > 0.0f)
 			{
 				io.DisplayFramebufferScale = ImVec2(
-					static_cast<float>(t_Window->GetWidth()) / WindowWidth,
-					static_cast<float>(t_Window->GetHeight()) / WindowHeight
+					static_cast<float>(t_Window->GetFramebufferWidth()) / WindowWidth,
+					static_cast<float>(t_Window->GetFramebufferHeight()) / WindowHeight
 				);
 			}
 

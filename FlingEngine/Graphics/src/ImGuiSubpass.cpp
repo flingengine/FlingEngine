@@ -428,7 +428,7 @@ namespace Fling {
         io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
         if (io.DisplaySize.x > 0.0f && io.DisplaySize.y > 0.0f) {
             io.DisplayFramebufferScale =
-                ImVec2((float)m_Window->GetWidth() / io.DisplaySize.x, (float)m_Window->GetHeight() / io.DisplaySize.y);
+                ImVec2((float)m_Window->GetFramebufferWidth() / io.DisplaySize.x, (float)m_Window->GetFramebufferHeight() / io.DisplaySize.y);
         }
     }
 

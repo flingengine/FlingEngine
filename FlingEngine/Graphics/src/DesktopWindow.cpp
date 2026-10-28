@@ -125,7 +125,7 @@ namespace Fling
 		return false;
 	}
 
-	uint32 DesktopWindow::GetWidth() const
+	uint32 DesktopWindow::GetFramebufferWidth() const
 	{
 		int width, height;
 		glfwGetFramebufferSize(m_Window, &width, &height);
@@ -133,7 +133,7 @@ namespace Fling
 		return width;
 	}
 
-	uint32 DesktopWindow::GetHeight() const
+	uint32 DesktopWindow::GetFramebufferHeight() const
 	{
 		int width, height;
 		glfwGetFramebufferSize(m_Window, &width, &height);

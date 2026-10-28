@@ -37,8 +37,8 @@ namespace
             return t_Capabilies.currentExtent;
         }
 
-        uint32 width = t_Window->GetWidth();
-        uint32 height = t_Window->GetHeight();
+        uint32 width = t_Window->GetFramebufferWidth();
+        uint32 height = t_Window->GetFramebufferHeight();
 
         VkExtent2D actualExtent = {width, height};
 
@@ -454,8 +454,8 @@ namespace Fling
     {
         // Prepare the frame for submission by waiting for the swap chain
         m_CurrentWindow->Update();
-        m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetWidth()),
-                                  static_cast<float>(m_CurrentWindow->GetHeight()));
+        m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
+                                  static_cast<float>(m_CurrentWindow->GetFramebufferHeight()));
         m_Camera->Update(DeltaTime);
 
         // Aquire the active image index

@@ -36,9 +36,9 @@ namespace Fling
 		/** Is this window currently minimized? */
 		virtual bool IsMinimized() const override final;
 
-		virtual uint32 GetWidth() const override;
+		virtual uint32 GetFramebufferWidth() const override;
 
-		virtual uint32 GetHeight() const override;
+		virtual uint32 GetFramebufferHeight() const override;
 
 		virtual uint32 GetWindowWidth() const override;
 

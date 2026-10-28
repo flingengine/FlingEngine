@@ -45,14 +45,14 @@ namespace Fling
 		virtual void WaitForNewWindowSize() = 0;
 
 		/** The current width of this window's framebuffer, in pixels */
-		virtual uint32 GetWidth() const = 0;
+		virtual uint32 GetFramebufferWidth() const = 0;
 
 		/** The current height of this window's framebuffer, in pixels */
-		virtual uint32 GetHeight() const = 0;
+		virtual uint32 GetFramebufferHeight() const = 0;
 
 		/**
 		* The current width of this window in screen coordinates. Mouse positions use these units.
-		* This differs from GetWidth when the display is scaled.
+		* This differs from GetFramebufferWidth when the display is scaled.
 		*/
 		virtual uint32 GetWindowWidth() const = 0;
 
