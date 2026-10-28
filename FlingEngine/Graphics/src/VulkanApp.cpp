@@ -283,19 +283,17 @@ namespace Fling
     void VulkanApp::CreateGameWindow(const uint32 t_width, const uint32 t_height)
     {
         WindowProps Props = {};
-        Props.m_Height = t_width;
-        Props.m_Width = t_width;
 
         // Ensure the window width is valid
         if (t_width > 0 && t_width < 5000 && t_height > 0 && t_height < 5000)
         {
-            Props.m_Height = t_width;
+            Props.m_Width = t_width;
             Props.m_Height = t_height;
         }
         else
         {
             F_LOG_ERROR("Window Width of {} or height of {} is invalid! Using default values", t_width, t_height);
-            Props.m_Height = FLING_DEFAULT_WINDOW_WIDTH;
+            Props.m_Width = FLING_DEFAULT_WINDOW_WIDTH;
             Props.m_Height = FLING_DEFAULT_WINDOW_HEIGHT;
         }
 

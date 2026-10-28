@@ -5,6 +5,8 @@
 #include "Logger.h"
 #include "BuildConfig.h"
 
+#include <algorithm>
+
 namespace Fling
 {
 	static bool bGlfwInitalized = false;
@@ -27,6 +29,54 @@ namespace Fling
 		m_Window = glfwCreateWindow(t_Props.m_Width, t_Props.m_Height, t_Props.m_Title.c_str(), nullptr, nullptr);
 
 		glfwSetFramebufferSizeCallback(m_Window, &DesktopWindow::FrameBufferResizeCallback);
+
+		FitToWorkArea(t_Props.m_Width, t_Props.m_Height);
+
+		int FbW = 0, FbH = 0;
+		glfwGetFramebufferSize(m_Window, &FbW, &FbH);
+		F_LOG_TRACE("Window created: {}x{} framebuffer {}x{}", GetWindowWidth(), GetWindowHeight(), FbW, FbH);
+	}
+
+	void DesktopWindow::FitToWorkArea(uint32 t_Width, uint32 t_Height)
+	{
+		GLFWmonitor* Monitor = glfwGetPrimaryMonitor();
+		if (Monitor == nullptr || t_Width == 0 || t_Height == 0)
+		{
+			return;
+		}
+
+		int WorkX = 0, WorkY = 0, WorkW = 0, WorkH = 0;
+		glfwGetMonitorWorkarea(Monitor, &WorkX, &WorkY, &WorkW, &WorkH);
+
+		// Wayland reports the work area in pixels but sizes windows in scaled units. The
+		// monitor scale is rounded up to a whole number, so use the window's scale, which
+		// is the real (possibly fractional) one.
+		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+		{
+			float ScaleX = 1.0f, ScaleY = 1.0f;
+			glfwGetWindowContentScale(m_Window, &ScaleX, &ScaleY);
+			WorkW = static_cast<int>(WorkW / ScaleX);
+			WorkH = static_cast<int>(WorkH / ScaleY);
+		}
+		if (WorkW <= 0 || WorkH <= 0)
+		{
+			return;
+		}
+
+		// Window managers such as GNOME maximize a new window that covers most of the work
+		// area, which makes windowed mode look like fullscreen.
+		const float MaxFraction = 0.75f;
+		const float Fit = std::min({ 1.0f,
+			(WorkW * MaxFraction) / static_cast<float>(t_Width),
+			(WorkH * MaxFraction) / static_cast<float>(t_Height) });
+		if (Fit < 1.0f)
+		{
+			const int Width = static_cast<int>(t_Width * Fit);
+			const int Height = static_cast<int>(t_Height * Fit);
+			F_LOG_WARN("Window size {}x{} is too big for the {}x{} work area, using {}x{}",
+				t_Width, t_Height, WorkW, WorkH, Width, Height);
+			glfwSetWindowSize(m_Window, Width, Height);
+		}
 	}
 
 	void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
@@ -87,6 +137,22 @@ namespace Fling
 	{
 		int width, height;
 		glfwGetFramebufferSize(m_Window, &width, &height);
+
+		return height;
+	}
+
+	uint32 DesktopWindow::GetWindowWidth() const
+	{
+		int width, height;
+		glfwGetWindowSize(m_Window, &width, &height);
+
+		return width;
+	}
+
+	uint32 DesktopWindow::GetWindowHeight() const
+	{
+		int width, height;
+		glfwGetWindowSize(m_Window, &width, &height);
 
 		return height;
 	}

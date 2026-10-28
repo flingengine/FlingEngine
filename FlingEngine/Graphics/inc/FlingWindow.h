@@ -44,11 +44,20 @@ namespace Fling
 		/** Any work that this window needs to do for swap chain recreation */
 		virtual void WaitForNewWindowSize() = 0;
 
-		/** The current width of this window */
+		/** The current width of this window's framebuffer, in pixels */
 		virtual uint32 GetWidth() const = 0;
 
-		/** The current height of this window */
+		/** The current height of this window's framebuffer, in pixels */
 		virtual uint32 GetHeight() const = 0;
+
+		/**
+		* The current width of this window in screen coordinates. Mouse positions use these units.
+		* This differs from GetWidth when the display is scaled.
+		*/
+		virtual uint32 GetWindowWidth() const = 0;
+
+		/** The current height of this window in screen coordinates. See GetWindowWidth. */
+		virtual uint32 GetWindowHeight() const = 0;
 
 		/** The current aspect ratio of this windows*/
 		virtual float GetAspectRatio() const = 0;
