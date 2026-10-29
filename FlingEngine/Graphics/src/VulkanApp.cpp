@@ -3,6 +3,7 @@
 #include "RenderPipeline.h"
 
 #include "GeometrySubpass.h"
+#include "SkyboxSubpass.h"
 #include "OffscreenSubpass.h"
 #include "ImGuiSubpass.h"
 #include "DebugSubpass.h"
@@ -17,6 +18,7 @@
 #include "FirstPersonCamera.h"
 #include "GraphicsHelpers.h"
 #include "DepthBuffer.h"
+#include "Cubemap.h"
 #include "Logger.h"
 #include "Version.h"
 #include "BuildConfig.h"
@@ -420,6 +422,28 @@ namespace Fling
             assert(Offscreen);
             FrameBuffer* OffscreenBuf = Offscreen->GetOffscreenFrameBuffer();
             assert(OffscreenBuf);
+
+            // Skybox pass ------
+            // Draws before the geometry pass, which discards the pixels that have no geometry
+            if (t_Conf & PipelineFlags::CUBEMAP)
+            {
+                const std::string SkyboxPath = FlingConfig::GetString("Graphics", "Skybox", "Textures/Skybox/Garden");
+                std::shared_ptr<Cubemap> Sky = SkyboxPath.empty() ? nullptr : Cubemap::Create(HS(SkyboxPath.c_str()));
+                if (Sky && Sky->IsValid())
+                {
+                    F_LOG_TRACE("Add skybox {} to the DEFERRED render pipeline", SkyboxPath);
+                    std::shared_ptr<Fling::Shader> SkyboxVert =
+                        Shader::Create(HS("skybox/skybox.vert.spv"), m_LogicalDevice);
+                    std::shared_ptr<Fling::Shader> SkyboxFrag =
+                        Shader::Create(HS("skybox/skybox.frag.spv"), m_LogicalDevice);
+                    Subpasses.emplace_back(std::make_unique<SkyboxSubpass>(
+                        m_LogicalDevice, m_SwapChain, m_State->m_RenderPass, m_Camera, Sky, SkyboxVert, SkyboxFrag));
+                }
+                else if (!SkyboxPath.empty())
+                {
+                    F_LOG_ERROR("Skybox {} did not load, so the DEFERRED render pipeline has no skybox", SkyboxPath);
+                }
+            }
             std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Deferred/deferred.vert.spv"), m_LogicalDevice);
             std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Deferred/deferred.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice,
@@ -437,12 +461,6 @@ namespace Fling
         if (t_Conf & PipelineFlags::REFLECTIONS)
         {
             F_LOG_WARN("Bulid REFLECTIONS render pipeline! (NOT YET IMPL)");
-        }
-
-        if (t_Conf & PipelineFlags::CUBEMAP)
-        {
-            F_LOG_WARN("Build CUBEMAP render pipeline!");
-            // Add a cubemap
         }
 
         /*if (t_Conf & PipelineFlags::DEBUG)

@@ -40,7 +40,16 @@ layout (binding = 7) uniform UBO
 void main() 
 {
 	// Get G-Buffer values
-	vec3 fragPos = texture(samplerposition, inUV).rgb;
+	vec4 position = texture(samplerposition, inUV);
+
+	// The offscreen pass writes alpha 1 for geometry and clears to 0. Keep what is
+	// already in the frame (the skybox, if there is one) where there is no geometry.
+	if (position.a == 0.0)
+	{
+		discard;
+	}
+
+	vec3 fragPos = position.rgb;
 	vec3 normal = normalize(texture(samplerNormal, inUV).rgb);
 	vec4 albedo = texture(samplerAlbedo, inUV);
 	float roughness = texture(samplerRoughness, inUV).x;

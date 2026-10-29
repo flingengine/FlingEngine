@@ -16,10 +16,4 @@ namespace Fling
 		// The world position of this object
 		glm::vec3 ObjPos;
 	};
-
-    struct UboSkyboxVS
-    {
-        glm::mat4 Projection;
-        glm::mat4 ModelView;
-    };
 }   // namespace Fling
