@@ -149,6 +149,25 @@ namespace
     private:
         std::wstring m_Previous;
     };
+
+    /**
+     * Set the error mode of this thread to 0, so the loader shows dialogs, and restore it when this guard
+     * leaves scope. The launcher (Git Bash, CTest, a debugger) sets the inherited error mode, so without this
+     * guard a test can pass only because its parent process hides the dialogs.
+     */
+    class LoaderDialogsOnGuard
+    {
+    public:
+        LoaderDialogsOnGuard() { SetThreadErrorMode(0, &m_Previous); }
+
+        ~LoaderDialogsOnGuard() { SetThreadErrorMode(m_Previous, nullptr); }
+
+        LoaderDialogsOnGuard(const LoaderDialogsOnGuard&) = delete;
+        LoaderDialogsOnGuard& operator=(const LoaderDialogsOnGuard&) = delete;
+
+    private:
+        DWORD m_Previous = 0;
+    };
 #endif
 } // namespace
 
@@ -245,6 +264,27 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         REQUIRE_FALSE(static_cast<bool>(Unchecked));
         REQUIRE(OpenError.find("not signed") == std::string::npos);
         REQUIRE(OpenError.find("not trusted") == std::string::npos);
+    }
+
+    // A file that is not a valid DLL must not open a "Bad Image" dialog. If it does,
+    // the test waits for a user and CTest stops it at the timeout.
+    SECTION("A bad image does not open a dialog")
+    {
+        const std::wstring Path =
+            TempDirectory() + L"fling_bad_image_" + std::to_wstring(GetCurrentProcessId()) + L".dll";
+        const DeleteFileGuard RemoveFile(Path);
+        WriteTempBytes(Path);
+
+        const LoaderDialogsOnGuard DialogsOn;
+        REQUIRE(GetThreadErrorMode() == 0);
+
+        std::string Error;
+        Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(WideToUtf8(Path), &Error);
+        REQUIRE_FALSE(static_cast<bool>(Library));
+        REQUIRE_FALSE(Error.empty());
+
+        // Open restores the error mode of the caller.
+        REQUIRE(GetThreadErrorMode() == 0);
     }
 
     SECTION("A bare name does not search the current directory")
