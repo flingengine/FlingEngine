@@ -242,7 +242,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ninja-build pkg-config \
             xorg-dev libx11-dev libwayland-dev libxkbcommon-dev libglu1-mesa-dev \
-            libvulkan-dev
+            libvulkan-dev glslang-tools
 
       - name: Build and install Catch2
         run: |
