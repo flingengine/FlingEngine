@@ -35,20 +35,27 @@ jobs:
       - name: Run variants with a timeout
         shell: bash
         run: |
+          set +e
           EXE=$(find build -name CoreTests.exe | head -1)
+          ctest --version | head -1
+          procs() { tasklist //FO CSV //NH | cut -d, -f1 | sort | uniq > "$1"; }
           run() {
             local LABEL="$1"; shift
+            procs before.txt
             START=$(date +%s)
-            timeout 120 "$@" > out.txt 2>&1
+            timeout 60 bash -c "$*" > out.txt 2>&1
             RC=$?
             echo "=== [$LABEL] rc=$RC time=$(( $(date +%s) - START ))s"
-            if [ $RC -ne 0 ]; then tail -25 out.txt; fi
+            tail -15 out.txt
+            procs after.txt
+            echo "--- new processes:"; comm -13 before.txt after.txt
           }
-          run "whole case from repo root" "$EXE" DynamicLibrary -s
-          run "whole case, durations" "$EXE" DynamicLibrary -d yes
-          run "all CoreTests" "$EXE"
-          run "ctest -R DynamicLibrary" ctest --test-dir build -C Debug -R "^DynamicLibrary$" --output-on-failure -V
-          run "ctest first 9" ctest --test-dir build -C Debug -I 1,9 --output-on-failure
+          run "pipe stdout" "'$EXE' DynamicLibrary -s | cat"
+          run "pipe, stdin null" "'$EXE' DynamicLibrary -s < /dev/null | cat"
+          run "ctest -V" "ctest --test-dir build -C Debug -R '^DynamicLibrary\$' -V --timeout 40"
+          for S in "An unsigned absolute path is rejected" "A bare name does not search the current directory" "Open and call a symbol"; do
+            run "pipe: $S" "'$EXE' DynamicLibrary -c '$S' -s | cat"
+          done
 
       - name: Environment info
         if: always()
