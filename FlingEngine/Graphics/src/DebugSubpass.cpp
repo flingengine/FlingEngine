@@ -46,7 +46,7 @@ namespace Fling
 	{
 		// For every mesh bind it's model and descriptor set info.
 		// View instead of owning group so assign<Transform>() references stay valid.
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<"Debug"_hs>>();
+		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Debug")>>();
 
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
@@ -190,7 +190,7 @@ namespace Fling
 			return;
 		}
 
-		t_Reg.assign<entt::tag<"Debug"_hs >>(t_Ent);
+		t_Reg.assign<entt::tag<entt::hashed_string::to_value("Debug")>>(t_Ent);
 
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)

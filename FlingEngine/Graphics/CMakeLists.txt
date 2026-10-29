@@ -13,7 +13,7 @@ fling_add_module(Graphics
 	# Public headers do not include Vulkan, GLFW, SPIRV-Cross, or stb.
 	# tinyobjloader and ImGui stay private as well.
 	PRIVATE_LIBS
-		Vulkan::Vulkan
+		Vulkan::Headers
 		glfw
 		spirv-cross-core
 		spirv-cross-cpp
@@ -26,12 +26,27 @@ if(WITH_IMGUI_FLAG)
 	target_link_libraries(Graphics PRIVATE ImGui)
 endif()
 
-# Load vulkan-1.dll on the first Vulkan call, not when the process starts. A
-# --null-render run makes no Vulkan call, so it can start on a machine that has
-# no Vulkan runtime (CI runners, servers). MinGW has no /DELAYLOAD. This is a
-# short-term fix: Plans/vulkan-loading.md replaces it on every platform.
-if(MSVC)
-	# LNK4199: a target that links Graphics but makes no Vulkan call (ApplicationTests)
-	target_link_options(Graphics INTERFACE /DELAYLOAD:vulkan-1.dll /IGNORE:4199)
-	target_link_libraries(Graphics INTERFACE delayimp)
-endif()
+# Engine shaders. Load them by their path under Assets/Shaders plus ".spv",
+# for example HS("Deferred/mrt.vert.spv").
+fling_add_shaders(Graphics
+	BASE_DIR "${FLING_ENGINE_SHADER_DIR}"
+	SOURCES
+		"${FLING_ENGINE_SHADER_DIR}/CubeMapReflections.vert"
+		"${FLING_ENGINE_SHADER_DIR}/CubeMapReflections.frag"
+		"${FLING_ENGINE_SHADER_DIR}/PBRDefault.vert"
+		"${FLING_ENGINE_SHADER_DIR}/PBRDefault.frag"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/deferred.vert"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/deferred.frag"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/mrt.vert"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/mrt.frag"
+		"${FLING_ENGINE_SHADER_DIR}/imgui/ui.vert"
+		"${FLING_ENGINE_SHADER_DIR}/imgui/ui.frag"
+		"${FLING_ENGINE_SHADER_DIR}/skybox/skybox.vert"
+		"${FLING_ENGINE_SHADER_DIR}/skybox/skybox.frag"
+)
+
+# Keep prototypes off even when a file includes vulkan.h before FlingVulkan.h.
+# The loader is opened at runtime. Do not link Vulkan::Vulkan.
+target_compile_definitions(Graphics PRIVATE VK_NO_PROTOTYPES)
+
+set_source_files_properties(src/VulkanFunctions.inl PROPERTIES HEADER_FILE_ONLY TRUE)

@@ -52,6 +52,14 @@ if( FLING_BUILD_TESTS )
         PASS_REGULAR_EXPRESSION "Fling exit: code=3 ticks=0"
     )
 
+    # The linked binary must not import libvulkan / vulkan-1.dll. The loader is
+    # opened at runtime by Fling::DynamicLibrary.
+    add_test(NAME "Sandbox: no Vulkan import"
+        COMMAND ${CMAKE_COMMAND}
+            -DBINARY=$<TARGET_FILE:${PROJECT_NAME}>
+            -P "${FLING_ROOT_DIR}/FlingTests/VulkanLoad/ExpectNoVulkanImport.cmake"
+    )
+
     # Input replay is compiled out of shipping builds (WITH_INPUT_RECORDING)
     if( NOT DEFINE_SHIPPING )
         # Replay an input file. The Escape press at 0.5 s goes out on tick 30, so the
@@ -91,6 +99,7 @@ if( FLING_BUILD_TESTS )
         "Sandbox: headless run"
         "Sandbox: headless json logs"
         "Sandbox: bad launch argument"
+        "Sandbox: no Vulkan import"
         PROPERTIES TIMEOUT 120
     )
 endif()

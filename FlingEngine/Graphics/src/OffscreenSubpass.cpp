@@ -111,7 +111,7 @@ namespace Fling
 		{
 			for (entt::entity Ent : m_ReplacedMeshes)
 			{
-				if (t_reg.valid(Ent) && t_reg.has<MeshRenderer, entt::tag<"Default"_hs>>(Ent))
+				if (t_reg.valid(Ent) && t_reg.has<MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>(Ent))
 				{
 					MeshRenderer& MeshRend = t_reg.get<MeshRenderer>(Ent);
 					CreateMeshDescriptorSet(MeshRend);
@@ -145,7 +145,7 @@ namespace Fling
 	{
 		// Use a view, not an owning group. group<Transform>(MeshRenderer, ...) packs
 		// Transform and can swap it out from under assign<Transform>() references.
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<"Default"_hs>>();
+		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
 
 		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
@@ -198,7 +198,7 @@ namespace Fling
 
 		VkDeviceSize offsets[1] = { 0 };
 
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<"Default"_hs>>();
+		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
 
 		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
@@ -477,7 +477,7 @@ namespace Fling
 			return;
 		}
 
-		t_Reg.assign<entt::tag<"Default"_hs >>(t_Ent);
+		t_Reg.assign<entt::tag<entt::hashed_string::to_value("Default")>>(t_Ent);
 
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)

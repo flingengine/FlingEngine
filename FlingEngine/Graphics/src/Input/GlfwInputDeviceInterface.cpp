@@ -848,7 +848,9 @@ namespace Fling
         InputDeviceInfo Info;
         Info.Type = InputDeviceType::Gamepad;
         Info.DisplayName = Name ? Name : "Gamepad";
-        Info.HardwarePath = std::string("glfw:") + (Guid ? Guid : "");
+        // Two pads of the same model have the same GUID. On Windows, all XInput pads have the same
+        // GUID. The slot makes the path different for each connected pad.
+        Info.HardwarePath = std::string("glfw:") + (Guid ? Guid : "") + ":" + std::to_string(t_JoystickId);
         ReadIdsFromGuid(Guid, Info.VendorId, Info.ProductId);
         Info.Capabilities =
             InputDeviceCapabilities::Buttons | InputDeviceCapabilities::Thumbsticks | InputDeviceCapabilities::Triggers;

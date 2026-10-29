@@ -18,7 +18,7 @@ RUN apt-get update -qq \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 		ca-certificates git cmake ninja-build build-essential pkg-config \
 		xorg-dev libx11-dev libwayland-dev libxkbcommon-dev libglu1-mesa-dev \
-		libvulkan-dev \
+		libvulkan-dev glslang-tools \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /usr/local/bin/fling-fresh-clone

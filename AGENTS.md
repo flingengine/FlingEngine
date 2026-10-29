@@ -22,6 +22,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   `cmake -B build -DCMAKE_BUILD_TYPE=Debug`, then build with your generator
   (e.g. `cmake --build build --parallel`).
 - `-DDEFINE_SHIPPING=ON` strips dev-only code gated behind `#ifdef FLING_SHIPPING`.
+- The build compiles shaders to `build/Shaders` (`fling_add_shaders`). Do not
+  commit `.spv` files.
 - Full detail: [`Skills/building.md`](Skills/building.md).
 
 ## Tests
