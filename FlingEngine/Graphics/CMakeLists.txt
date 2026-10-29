@@ -26,6 +26,25 @@ if(WITH_IMGUI_FLAG)
 	target_link_libraries(Graphics PRIVATE ImGui)
 endif()
 
+# Engine shaders. Load them by their path under Assets/Shaders plus ".spv",
+# for example HS("Deferred/mrt.vert.spv").
+fling_add_shaders(Graphics
+	BASE_DIR "${FLING_ENGINE_SHADER_DIR}"
+	SOURCES
+		"${FLING_ENGINE_SHADER_DIR}/CubeMapReflections.vert"
+		"${FLING_ENGINE_SHADER_DIR}/CubeMapReflections.frag"
+		"${FLING_ENGINE_SHADER_DIR}/PBRDefault.vert"
+		"${FLING_ENGINE_SHADER_DIR}/PBRDefault.frag"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/deferred.vert"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/deferred.frag"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/mrt.vert"
+		"${FLING_ENGINE_SHADER_DIR}/Deferred/mrt.frag"
+		"${FLING_ENGINE_SHADER_DIR}/imgui/ui.vert"
+		"${FLING_ENGINE_SHADER_DIR}/imgui/ui.frag"
+		"${FLING_ENGINE_SHADER_DIR}/skybox/skybox.vert"
+		"${FLING_ENGINE_SHADER_DIR}/skybox/skybox.frag"
+)
+
 # Keep prototypes off even when a file includes vulkan.h before FlingVulkan.h.
 # The loader is opened at runtime. Do not link Vulkan::Vulkan.
 target_compile_definitions(Graphics PRIVATE VK_NO_PROTOTYPES)

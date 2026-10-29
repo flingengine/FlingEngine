@@ -99,9 +99,14 @@ namespace Fling {
             t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
         vkCmdBindPipeline(t_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeLine);
 
+        // The viewport is in framebuffer pixels. ImGui's coordinates are in screen coordinates,
+        // which differ when the display is scaled.
+        const ImVec2 fbScale = io.DisplayFramebufferScale;
+        float displayWidth = io.DisplaySize.x * fbScale.x;
+        float displayHeight = io.DisplaySize.y * fbScale.y;
         // for minimizing screen
-        float displayWidth = ImGui::GetIO().DisplaySize.x ? ImGui::GetIO().DisplaySize.x : .0001f;
-        float displayHeight = ImGui::GetIO().DisplaySize.y ? ImGui::GetIO().DisplaySize.y : .0001f;
+        displayWidth = displayWidth ? displayWidth : .0001f;
+        displayHeight = displayHeight ? displayHeight : .0001f;
 
         VkViewport viewport = Initializers::Viewport(displayWidth, displayHeight, 0.0f, 1.0f);
         vkCmdSetViewport(t_commandBuffer, 0, 1, &viewport);
@@ -127,11 +132,19 @@ namespace Fling {
                 const ImDrawList* cmd_list = imDrawData->CmdLists[i];
                 for (int32 j = 0; j < cmd_list->CmdBuffer.Size; ++j) {
                     const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
+                    const float clipMinX = std::max(pcmd->ClipRect.x * fbScale.x, 0.0f);
+                    const float clipMinY = std::max(pcmd->ClipRect.y * fbScale.y, 0.0f);
+                    const float clipMaxX = std::min(pcmd->ClipRect.z * fbScale.x, displayWidth);
+                    const float clipMaxY = std::min(pcmd->ClipRect.w * fbScale.y, displayHeight);
+                    if (clipMaxX <= clipMinX || clipMaxY <= clipMinY) {
+                        indexOffset += pcmd->ElemCount;
+                        continue;
+                    }
                     VkRect2D scissorRect;
-                    scissorRect.offset.x = std::max((int32)(pcmd->ClipRect.x), 0);
-                    scissorRect.offset.y = std::max((int32)(pcmd->ClipRect.y), 0);
-                    scissorRect.extent.width = (int32)(pcmd->ClipRect.z - pcmd->ClipRect.x);
-                    scissorRect.extent.height = (int32)(pcmd->ClipRect.w - pcmd->ClipRect.y);
+                    scissorRect.offset.x = (int32)clipMinX;
+                    scissorRect.offset.y = (int32)clipMinY;
+                    scissorRect.extent.width = (uint32)(clipMaxX - clipMinX);
+                    scissorRect.extent.height = (uint32)(clipMaxY - clipMinY);
                     vkCmdSetScissor(t_commandBuffer, 0, 1, &scissorRect);
                     vkCmdDrawIndexed(t_commandBuffer, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
                     indexOffset += pcmd->ElemCount;
@@ -411,8 +424,12 @@ namespace Fling {
         style.Colors[ImGuiCol_CheckMark] = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
         // Dimensions
         ImGuiIO& io = ImGui::GetIO();
-        io.DisplaySize = ImVec2((float)m_Window->GetWidth(), (float)m_Window->GetHeight());
+        io.DisplaySize = ImVec2((float)m_Window->GetWindowWidth(), (float)m_Window->GetWindowHeight());
         io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+        if (io.DisplaySize.x > 0.0f && io.DisplaySize.y > 0.0f) {
+            io.DisplayFramebufferScale =
+                ImVec2((float)m_Window->GetFramebufferWidth() / io.DisplaySize.x, (float)m_Window->GetFramebufferHeight() / io.DisplaySize.y);
+        }
     }
 
     void ImGuiSubpass::PrepareResources() {

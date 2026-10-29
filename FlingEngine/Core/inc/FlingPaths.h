@@ -18,7 +18,13 @@ namespace Fling
         
         /** Returns directory where engine assets are kept */
         static const std::string& EngineAssetsDir();
-        
+
+        /**
+         * Returns directory where the build writes compiled SPIR-V shaders.
+         * @see CMake/FlingShaders.cmake
+         */
+        static const std::string& CompiledShaderDir();
+
         /** Returns directory where your current binary is */
         static const std::string& BinaryDir();
 

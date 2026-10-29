@@ -11,7 +11,18 @@ namespace Fling
 	{
 		glm::mat4 GetWorldMatrix() const;
 
+		/** Recalculate the cached world matrix and clear the dirty flag. */
 		static void CalculateWorldMatrix(Transform& t_Trans);
+
+		/**
+		* True when the position, rotation, or scale changed after the last
+		* CalculateWorldMatrix call. The renderer uses this to skip GPU uploads
+		* for objects that did not move.
+		*/
+		inline bool IsDirty() const { return m_Dirty; }
+
+		/** Call this after you write m_Pos, m_Rotation, or m_Scale directly. */
+		inline void MarkDirty() { m_Dirty = true; }
 
 		bool operator==(const Transform &other) const;
 		bool operator!=(const Transform &other) const;
@@ -33,5 +44,8 @@ namespace Fling
 		glm::vec3 m_Rotation { 0.0f, 0.0f, 0.0f };
 		glm::vec3 m_Scale { 1.0f, 1.0f, 1.0f };
 		glm::mat4 m_worldMat {};
+
+		/** Starts true so that a new transform gets its first upload. */
+		bool m_Dirty = true;
 	};
 }	// namespace Fling

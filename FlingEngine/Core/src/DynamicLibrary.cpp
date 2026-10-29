@@ -256,6 +256,32 @@ namespace
         return Result;
     }
 
+    /**
+     * Stop the loader from opening a "Bad Image" dialog on this thread while this guard is in scope.
+     * Without this, a file that is not a valid DLL opens a modal dialog and the call waits for a user.
+     * The process error mode can come from the parent process, so do not rely on it.
+     */
+    class NoLoaderDialogs
+    {
+    public:
+        NoLoaderDialogs() : m_Restore(SetThreadErrorMode(SEM_FAILCRITICALERRORS, &m_Previous) != FALSE) {}
+
+        ~NoLoaderDialogs()
+        {
+            if (m_Restore)
+            {
+                SetThreadErrorMode(m_Previous, nullptr);
+            }
+        }
+
+        NoLoaderDialogs(const NoLoaderDialogs&) = delete;
+        NoLoaderDialogs& operator=(const NoLoaderDialogs&) = delete;
+
+    private:
+        DWORD m_Previous = 0;
+        bool m_Restore = false;
+    };
+
     std::string UntrustedMessage(LONG t_Status)
     {
         char Hex[16] = {};
@@ -345,8 +371,11 @@ namespace Fling
             return {};
         }
 
-        // LoadLibraryW does not open a dialog when the DLL is missing.
-        HMODULE Handle = LoadLibraryW(WideName.c_str());
+        HMODULE Handle = nullptr;
+        {
+            const NoLoaderDialogs Guard;
+            Handle = LoadLibraryW(WideName.c_str());
+        }
         if (Handle == nullptr)
         {
             WriteError(t_Error, WindowsErrorMessage(GetLastError()));
@@ -460,9 +489,12 @@ namespace Fling
             return {};
         }
 
-        // LoadLibraryExW does not open a dialog when the DLL is missing.
-        HMODULE Handle =
-            LoadLibraryExW(Path.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+        HMODULE Handle = nullptr;
+        {
+            const NoLoaderDialogs Guard;
+            Handle =
+                LoadLibraryExW(Path.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+        }
         if (Handle == nullptr)
         {
             WriteError(t_Error, WindowsErrorMessage(GetLastError()));

@@ -69,8 +69,8 @@ namespace
             return t_Capabilies.currentExtent;
         }
 
-        uint32 width = t_Window->GetWidth();
-        uint32 height = t_Window->GetHeight();
+        uint32 width = t_Window->GetFramebufferWidth();
+        uint32 height = t_Window->GetFramebufferHeight();
 
         VkExtent2D actualExtent = {width, height};
 
@@ -322,19 +322,17 @@ namespace Fling
     void VulkanApp::CreateGameWindow(const uint32 t_width, const uint32 t_height)
     {
         WindowProps Props = {};
-        Props.m_Height = t_width;
-        Props.m_Width = t_width;
 
         // Ensure the window width is valid
         if (t_width > 0 && t_width < 5000 && t_height > 0 && t_height < 5000)
         {
-            Props.m_Height = t_width;
+            Props.m_Width = t_width;
             Props.m_Height = t_height;
         }
         else
         {
             F_LOG_ERROR("Window Width of {} or height of {} is invalid! Using default values", t_width, t_height);
-            Props.m_Height = FLING_DEFAULT_WINDOW_WIDTH;
+            Props.m_Width = FLING_DEFAULT_WINDOW_WIDTH;
             Props.m_Height = FLING_DEFAULT_WINDOW_HEIGHT;
         }
 
@@ -413,10 +411,8 @@ namespace Fling
 
             // Offscreen pipeline ------
             // These shaders have vertex input and fill in the buffers that the final pass uses
-            std::shared_ptr<Fling::Shader> OffscreenVert =
-                Shader::Create(HS("Shaders/Deferred/mrt_vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> OffscreenFrag =
-                Shader::Create(HS("Shaders/Deferred/mrt_frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(HS("Deferred/mrt.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(HS("Deferred/mrt.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(
                 m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenVert, OffscreenFrag));
 
@@ -437,9 +433,9 @@ namespace Fling
                 {
                     F_LOG_TRACE("Add skybox {} to the DEFERRED render pipeline", SkyboxPath);
                     std::shared_ptr<Fling::Shader> SkyboxVert =
-                        Shader::Create(HS("Shaders/skybox/skybox.vert.spv"), m_LogicalDevice);
+                        Shader::Create(HS("skybox/skybox.vert.spv"), m_LogicalDevice);
                     std::shared_ptr<Fling::Shader> SkyboxFrag =
-                        Shader::Create(HS("Shaders/skybox/skybox.frag.spv"), m_LogicalDevice);
+                        Shader::Create(HS("skybox/skybox.frag.spv"), m_LogicalDevice);
                     Subpasses.emplace_back(std::make_unique<SkyboxSubpass>(
                         m_LogicalDevice, m_SwapChain, m_State->m_RenderPass, m_Camera, Sky, SkyboxVert, SkyboxFrag));
                 }
@@ -448,10 +444,8 @@ namespace Fling
                     F_LOG_ERROR("Skybox {} did not load, so the DEFERRED render pipeline has no skybox", SkyboxPath);
                 }
             }
-            std::shared_ptr<Fling::Shader> GeomVert =
-                Shader::Create(HS("Shaders/Deferred/deferred_vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> GeomFrag =
-                Shader::Create(HS("Shaders/Deferred/deferred_frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Deferred/deferred.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Deferred/deferred.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice,
                                                                      m_SwapChain,
                                                                      t_Reg,
@@ -474,8 +468,8 @@ namespace Fling
             F_LOG_WARN("Build DEBUG render pipeline!");
             std::vector<std::unique_ptr<Subpass>> Subpasses = {};
 
-            std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"),
-        m_LogicalDevice); std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_frag.spv"),
+            std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Debug/debug.vert.spv"),
+        m_LogicalDevice); std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Debug/debug.frag.spv"),
         m_LogicalDevice); Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg,
         m_State->m_RenderPass, m_Camera, DebugVert, DebugFrag));
 
@@ -489,8 +483,8 @@ namespace Fling
 #if WITH_IMGUI
             F_LOG_TRACE("Bulid IMGUI render pipeline! ");
             std::vector<std::unique_ptr<Subpass>> Subpasses = {};
-            std::shared_ptr<Fling::Shader> ImGuiVert = Shader::Create(HS("Shaders/imgui/ui.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> ImGuiFrag = Shader::Create(HS("Shaders/imgui/ui.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> ImGuiVert = Shader::Create(HS("imgui/ui.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> ImGuiFrag = Shader::Create(HS("imgui/ui.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<ImGuiSubpass>(m_LogicalDevice,
                                                                   m_SwapChain,
                                                                   t_Reg,
@@ -511,8 +505,8 @@ namespace Fling
     {
         // Prepare the frame for submission by waiting for the swap chain
         m_CurrentWindow->Update();
-        m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetWidth()),
-                                  static_cast<float>(m_CurrentWindow->GetHeight()));
+        m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
+                                  static_cast<float>(m_CurrentWindow->GetFramebufferHeight()));
         m_Camera->Update(DeltaTime);
 
         // Aquire the active image index

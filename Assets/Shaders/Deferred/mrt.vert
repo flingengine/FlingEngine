@@ -7,13 +7,19 @@ layout(location = 2) in vec3 inTangent;
 layout(location = 3) in vec3 inNormal;
 layout(location = 4) in vec2 inUV;
 
+// Per object data. Only written when the object's transform changes.
 layout (binding = 0) uniform UBO 
 {
-	mat4 projection;
 	mat4 model;
-	mat4 view;
 	vec3 objPos;
 } ubo;
+
+// Camera data shared by every object, written once per frame
+layout (binding = 5) uniform CameraUBO
+{
+	mat4 projection;
+	mat4 view;
+} cam;
 
 layout (location = 0) out vec3 outNormal;
 layout (location = 1) out vec2 outUV;
@@ -38,6 +44,6 @@ void main()
 	outWorldPos = (ubo.model * vec4(inPos, 1.0)).rgb;
 	outNormal = mat3(ubo.model) * normalize(inNormal);
 
-	gl_Position =  ubo.projection * ubo.view * vec4(outWorldPos, 1.0);
+	gl_Position =  cam.projection * cam.view * vec4(outWorldPos, 1.0);
 	outTangent = normalize( inTangent * mat3(ubo.model) );
 }

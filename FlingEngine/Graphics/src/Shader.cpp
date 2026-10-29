@@ -2,6 +2,7 @@
 #include "ResourceManager.h"
 #include "LogicalDevice.h"
 #include "Logger.h"
+#include "FlingPaths.h"
 
 namespace Fling
 {
@@ -26,11 +27,13 @@ namespace Fling
 		, m_Device(t_Dev)
     {
 		assert(m_Device);
-        std::vector<char> RawCode = LoadRawBytes(GetFilepathReleativeToAssets());
-        
+        // Shaders are compiled by the build, not stored in Assets
+        const std::string FilePath = FlingPaths::CompiledShaderDir() + "/" + GetGuidString();
+        std::vector<char> RawCode = LoadRawBytes(FilePath);
+
         if (CreateShaderModule(RawCode) != VK_SUCCESS)
         {
-            F_LOG_ERROR("Failed to create shader module for {}", GetFilepathReleativeToAssets());
+            F_LOG_ERROR("Failed to create shader module for {}", FilePath);
         }
 
 		assert(RawCode.size() % 4 == 0);

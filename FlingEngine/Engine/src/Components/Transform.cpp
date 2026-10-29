@@ -42,21 +42,25 @@ namespace Fling
 		t_Trans.m_worldMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);;
 		t_Trans.m_worldMat= t_Trans.m_worldMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
 		t_Trans.m_worldMat = glm::scale(t_Trans.m_worldMat, t_Trans.m_Scale);
+		t_Trans.m_Dirty = false;
 	}
 
     void Transform::SetPos(const glm::vec3& t_Pos)
     {
         m_Pos = t_Pos;
+        m_Dirty = true;
     }
 
     void Transform::SetScale(const glm::vec3& t_Scale)
     {
         m_Scale = t_Scale;
+        m_Dirty = true;
     }
 
     void Transform::SetRotation(const glm::vec3& t_Rot)
     {
         m_Rotation = t_Rot;
+        m_Dirty = true;
     }
 
 	void Transform::Serialize(JsonArchive& Ar)
@@ -68,6 +72,8 @@ namespace Fling
 		if (Ar.IsLoading())
 		{
 			CalculateWorldMatrix(*this);
+			// The GPU copy is still out of date, so keep the dirty flag set
+			m_Dirty = true;
 		}
 	}
 }   // namespace Fling

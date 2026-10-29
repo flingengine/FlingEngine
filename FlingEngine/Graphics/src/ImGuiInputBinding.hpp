@@ -140,10 +140,18 @@ namespace Fling
 		{
 			ImGuiIO& io = ImGui::GetIO();
 
-			io.DisplaySize = ImVec2(
-				static_cast<float>(t_Window->GetWidth()),
-				static_cast<float>(t_Window->GetHeight())
-			);
+			// ImGui works in screen coordinates, the same units as the mouse. The renderer
+			// scales to framebuffer pixels with DisplayFramebufferScale.
+			const float WindowWidth = static_cast<float>(t_Window->GetWindowWidth());
+			const float WindowHeight = static_cast<float>(t_Window->GetWindowHeight());
+			io.DisplaySize = ImVec2(WindowWidth, WindowHeight);
+			if (WindowWidth > 0.0f && WindowHeight > 0.0f)
+			{
+				io.DisplayFramebufferScale = ImVec2(
+					static_cast<float>(t_Window->GetFramebufferWidth()) / WindowWidth,
+					static_cast<float>(t_Window->GetFramebufferHeight()) / WindowHeight
+				);
+			}
 
 			if (!Input::Get().IsInitialized())
 			{
