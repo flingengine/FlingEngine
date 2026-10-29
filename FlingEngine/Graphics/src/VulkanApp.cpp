@@ -409,10 +409,8 @@ namespace Fling
 
             // Offscreen pipeline ------
             // These shaders have vertex input and fill in the buffers that the final pass uses
-            std::shared_ptr<Fling::Shader> OffscreenVert =
-                Shader::Create(HS("Shaders/Deferred/mrt_vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> OffscreenFrag =
-                Shader::Create(HS("Shaders/Deferred/mrt_frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(HS("Deferred/mrt.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(HS("Deferred/mrt.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(
                 m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenVert, OffscreenFrag));
 
@@ -422,10 +420,8 @@ namespace Fling
             assert(Offscreen);
             FrameBuffer* OffscreenBuf = Offscreen->GetOffscreenFrameBuffer();
             assert(OffscreenBuf);
-            std::shared_ptr<Fling::Shader> GeomVert =
-                Shader::Create(HS("Shaders/Deferred/deferred_vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> GeomFrag =
-                Shader::Create(HS("Shaders/Deferred/deferred_frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(HS("Deferred/deferred.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(HS("Deferred/deferred.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice,
                                                                      m_SwapChain,
                                                                      t_Reg,
@@ -454,8 +450,8 @@ namespace Fling
             F_LOG_WARN("Build DEBUG render pipeline!");
             std::vector<std::unique_ptr<Subpass>> Subpasses = {};
 
-            std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Shaders/Debug/debug_vert.spv"),
-        m_LogicalDevice); std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Shaders/Debug/debug_frag.spv"),
+            std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(HS("Debug/debug.vert.spv"),
+        m_LogicalDevice); std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(HS("Debug/debug.frag.spv"),
         m_LogicalDevice); Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg,
         m_State->m_RenderPass, m_Camera, DebugVert, DebugFrag));
 
@@ -469,8 +465,8 @@ namespace Fling
 #if WITH_IMGUI
             F_LOG_TRACE("Bulid IMGUI render pipeline! ");
             std::vector<std::unique_ptr<Subpass>> Subpasses = {};
-            std::shared_ptr<Fling::Shader> ImGuiVert = Shader::Create(HS("Shaders/imgui/ui.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> ImGuiFrag = Shader::Create(HS("Shaders/imgui/ui.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> ImGuiVert = Shader::Create(HS("imgui/ui.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> ImGuiFrag = Shader::Create(HS("imgui/ui.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<ImGuiSubpass>(m_LogicalDevice,
                                                                   m_SwapChain,
                                                                   t_Reg,

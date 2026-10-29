@@ -4,6 +4,7 @@
 #   cmake [-D<option>=<value>...] -P scripts/init.cmake [-- <args>...]
 #
 # Steps:
+#   0. Make sure glslangValidator is installed (the build needs it for shaders)
 #   1. Pull git submodules
 #   2. Build and install Catch2 to external/Catch2/install (where the root
 #      CMakeLists.txt looks for it), so the test executables can find it
@@ -55,6 +56,57 @@ function( fling_init_run )
 endfunction()
 
 message( "======================== Fling Engine init ========================" )
+
+# ---------- Prerequisites ----------
+# The build/ configure needs glslangValidator to compile shaders (see
+# CMake/FlingShaders.cmake). Look for it now, so a missing tool stops init before
+# the Catch2 build and not after it.
+if( NOT FLING_INIT_SKIP_CONFIGURE )
+	# A path given with -DFLING_GLSLANG_VALIDATOR=<path> is used as is
+	foreach( _arg IN LISTS _configure_args )
+		if( _arg MATCHES "^-DFLING_GLSLANG_VALIDATOR(:[A-Z]+)?=(.+)$" )
+			set( _glslang_arg "${CMAKE_MATCH_2}" )
+		endif()
+	endforeach()
+
+	# Message lines that start with spaces keep their layout; CMake rewraps the others
+	if( _glslang_arg )
+		if( NOT EXISTS "${_glslang_arg}" )
+			message( FATAL_ERROR "FLING_GLSLANG_VALIDATOR is set to ${_glslang_arg}, but that file does not exist." )
+		endif()
+		set( _glslang "${_glslang_arg}" )
+	else()
+		find_program( _glslang
+			NAMES glslangValidator
+			HINTS "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/bin"
+		)
+		if( NOT _glslang )
+			if( CMAKE_HOST_WIN32 OR CMAKE_HOST_APPLE )
+				set( _hint
+					"Install the Vulkan SDK from https://vulkan.lunarg.com/sdk/home. It includes glslangValidator. "
+					"Then open a new terminal, so that the VULKAN_SDK variable that the installer sets is available, "
+					"and run init again." )
+			else()
+				set( _hint
+					"Install the glslang package for your distribution, for example:\n"
+					"  sudo apt-get install glslang-tools   (Debian/Ubuntu)\n"
+					"  sudo dnf install glslang             (Fedora)\n"
+					"  sudo pacman -S glslang               (Arch)\n"
+					"Or install the Vulkan SDK from https://vulkan.lunarg.com/sdk/home." )
+			endif()
+			if( DEFINED ENV{VULKAN_SDK} )
+				list( APPEND _hint "\nVULKAN_SDK is set to $ENV{VULKAN_SDK}, but glslangValidator is not in its Bin folder." )
+			endif()
+			list( JOIN _hint "" _hint )
+			message( FATAL_ERROR
+				"glslangValidator was not found. The build needs it to compile shaders to SPIR-V.\n"
+				"${_hint}\n"
+				"If glslangValidator is installed in a different location, give its path to init:\n"
+				"  Init -DFLING_GLSLANG_VALIDATOR=<path to glslangValidator>" )
+		endif()
+	endif()
+	message( "-- Found glslangValidator: ${_glslang}" )
+endif()
 
 # ---------- 1. Submodules ----------
 if( FLING_INIT_SKIP_SUBMODULES )

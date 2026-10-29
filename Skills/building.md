@@ -78,6 +78,36 @@ scripts for the commands above; they were removed since CI and IDE tooling
 (VS Code's cmake-tools extension) never used them and they only added an
 indirection layer over a couple of CMake flags.
 
+## Shaders
+
+The build compiles GLSL shaders to SPIR-V. Do not commit `.spv` files (they are
+in `.gitignore`), and do not compile shaders by hand. Configure finds
+`glslangValidator` in the Vulkan SDK (`$VULKAN_SDK/Bin`) or on `PATH`. On Linux,
+install `glslang-tools`. Set `-DFLING_GLSLANG_VALIDATOR=<path>` to use a
+different one.
+
+A target lists its shaders with `fling_add_shaders`
+([`CMake/FlingShaders.cmake`](../CMake/FlingShaders.cmake)). Engine shaders are
+listed in `FlingEngine/Graphics/CMakeLists.txt`. A game target can use it too:
+
+```cmake
+fling_add_shaders(Sandbox
+    BASE_DIR     "${CMAKE_CURRENT_SOURCE_DIR}/Shaders"
+    SOURCES      Shaders/Water.vert Shaders/Water.frag
+    INCLUDE_DIRS Shaders/common
+)
+```
+
+- Each source compiles to `build/Shaders/<path relative to BASE_DIR>.spv`.
+  Load it by that relative path: `Shader::Create(HS("Water.vert.spv"), ...)`.
+  `FlingPaths::CompiledShaderDir()` gives the folder.
+- A shader recompiles when its source, or a file it includes, changes.
+- `Assets/Shaders` is always on the include path, so any shader can
+  `#include "utils/Lights.h"`.
+- Two targets that write the same `.spv` path are a configure error.
+- In shipping builds, `CompiledShaderDir()` is `Shaders`, relative to the working
+  directory. Copy `build/Shaders` there when you package a game.
+
 ## `DEFINE_SHIPPING`
 
 `-DDEFINE_SHIPPING=ON` sets `FLING_SHIPPING`, used in first-party code to strip
