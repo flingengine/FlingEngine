@@ -25,9 +25,13 @@ namespace Fling
     {
         void Transform(Fling::Transform& t)
         {
-            ImGui::InputFloat3( "Position", ( float* ) &t.m_Pos );
-            ImGui::InputFloat3( "Scale", ( float* )  &t.m_Scale );
-            ImGui::InputFloat3( "Rotation", ( float* )  &t.m_Rotation );
+            bool bChanged = ImGui::InputFloat3( "Position", ( float* ) &t.m_Pos );
+            bChanged |= ImGui::InputFloat3( "Scale", ( float* )  &t.m_Scale );
+            bChanged |= ImGui::InputFloat3( "Rotation", ( float* )  &t.m_Rotation );
+            if (bChanged)
+            {
+                t.MarkDirty();
+            }
         }
 
         void PointLight(Fling::PointLight& t_Light)
@@ -74,6 +78,8 @@ namespace Fling
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadModelFromPath(SelectedAsset);
+                    // Tell the renderer to record its draw calls again with the new model
+                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
 
                     fileDialog.ClearSelected();
                 }
@@ -108,12 +114,11 @@ namespace Fling
                 {
                     std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
-                    // Update the material in place. Going through registry.replace<MeshRenderer>()
-                    // here would construct a brand new component and drop its m_UniformBuffer
-                    // and descriptor set (only OnMeshRendererAdded, hooked to on_construct, sets
-                    // those up) -- the next frame's render pass would then dereference a null
-                    // uniform buffer for this entity.
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
+                    // Tell the renderer to write the new textures to the descriptor set.
+                    // replace() copies the component without its GPU handles, and the
+                    // move assignment keeps the handles on the stored component.
+                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
 
                     fileDialog.ClearSelected();
                 }

@@ -12,6 +12,7 @@
 #include "GraphicsPipeline.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
+#include "Buffer.h"
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
 #include "Logger.h"
@@ -29,6 +30,11 @@ namespace Fling
 		, m_Camera(t_Cam)
 	{
 		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
+		t_reg.on_replace<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
+		t_reg.on_destroy<MeshRenderer>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		// The render view needs a Transform, so adding or removing one changes what we draw
+		t_reg.on_construct<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.on_destroy<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
 
 		// Set the clear values for the G Buffer
 		m_ClearValues.resize(6);
@@ -52,6 +58,13 @@ namespace Fling
 			m_OffscreenCmdBufs[i] = new Fling::CommandBuffer(m_Device, m_CommandPool);
 			assert(m_OffscreenCmdBufs[i] != nullptr);
 		}
+		m_RecordedDrawListVersions.resize(m_OffscreenCmdBufs.size(), 0);
+
+		// One camera UBO is enough because each frame waits for the GPU to finish
+		// before the next frame writes it again
+		VkDeviceSize CameraBufferSize = sizeof(OffscreenCameraUBO);
+		m_CameraUboBuffer = new Buffer(CameraBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		m_CameraUboBuffer->MapMemory(CameraBufferSize);
 
 		// Tell the Vulkan app that the draw command buffers need to WAIT on this offscreen semaphore
 		PrepareAttachments();
@@ -77,12 +90,15 @@ namespace Fling
 
 		delete m_OffscreenFrameBuf;
 		m_OffscreenFrameBuf = nullptr;
+
+		delete m_CameraUboBuffer;
+		m_CameraUboBuffer = nullptr;
 	}
 
 	void OffscreenSubpass::Draw(
-		CommandBuffer& t_CmdBuf, 
-		uint32 t_ActiveSwapImage, 
-		entt::registry& t_reg, 
+		CommandBuffer& t_CmdBuf,
+		uint32 t_ActiveSwapImage,
+		entt::registry& t_reg,
 		float DeltaTime)
 	{
 		assert(m_GraphicsPipeline);
@@ -90,9 +106,77 @@ namespace Fling
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveSwapImage];
 		assert(OffscreenCmdBuf);
 
+		// Write the descriptor sets of replaced meshes now that entt has stored the new values
+		if (!m_ReplacedMeshes.empty())
+		{
+			for (entt::entity Ent : m_ReplacedMeshes)
+			{
+				if (t_reg.valid(Ent) && t_reg.has<MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>(Ent))
+				{
+					MeshRenderer& MeshRend = t_reg.get<MeshRenderer>(Ent);
+					CreateMeshDescriptorSet(MeshRend);
+					MarkMeshRendererUboDirty(MeshRend);
+				}
+			}
+			m_ReplacedMeshes.clear();
+			InvalidateCommandBuffers();
+		}
+
+		// The camera moves on most frames, but it is only one small write
+		OffscreenCameraUBO CameraUBO = {};
+		// Invert the project value to match the proper coordinate space compared to OpenGL
+		CameraUBO.Projection = m_Camera->GetProjectionMatrix();
+		CameraUBO.Projection[1][1] *= -1.0f;
+		CameraUBO.View = m_Camera->GetViewMatrix();
+		memcpy(m_CameraUboBuffer->m_MappedMem, &CameraUBO, sizeof(CameraUBO));
+
+		UpdateMeshUniformBuffers(t_reg);
+
+		// The command buffer holds only draw calls and descriptor bindings, not
+		// UBO data. Keep the last recording if the draw list did not change.
+		if (m_RecordedDrawListVersions[t_ActiveSwapImage] != m_DrawListVersion)
+		{
+			BuildOffscreenCommandBuffer(*OffscreenCmdBuf, t_reg);
+			m_RecordedDrawListVersions[t_ActiveSwapImage] = m_DrawListVersion;
+		}
+	}
+
+	void OffscreenSubpass::UpdateMeshUniformBuffers(entt::registry& t_reg)
+	{
+		// Use a view, not an owning group. group<Transform>(MeshRenderer, ...) packs
+		// Transform and can swap it out from under assign<Transform>() references.
+		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
+
+		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		{
+			Buffer* buf = t_MeshRend.m_UniformBuffer;
+			if (!buf || t_MeshRend.m_GpuState == nullptr)
+			{
+				return;
+			}
+
+			bool& bUboDirty = t_MeshRend.m_GpuState->m_UboDirty;
+			if (!bUboDirty && !t_trans.IsDirty())
+			{
+				return;
+			}
+
+			Transform::CalculateWorldMatrix(t_trans);
+
+			OffscreenUBO MeshUBO = {};
+			MeshUBO.Model = t_trans.GetWorldMat();
+			MeshUBO.ObjPos = t_trans.GetPos();
+
+			memcpy(buf->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
+			bUboDirty = false;
+		});
+	}
+
+	void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, entt::registry& t_reg)
+	{
 		// Set viewport and scissors to the offscreen frame buffer
 		VkViewport viewport = Initializers::Viewport(
-			static_cast<float>(m_OffscreenFrameBuf->GetWidth()), 
+			static_cast<float>(m_OffscreenFrameBuf->GetWidth()),
 			static_cast<float>(m_OffscreenFrameBuf->GetHeight()),
 			0.0f, 1.0f
 		);
@@ -104,28 +188,16 @@ namespace Fling
 			/** offsetY */ 0
 		);
 
-		OffscreenCmdBuf->Begin();
-		OffscreenCmdBuf->BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
+		t_CmdBuf.Begin();
+		t_CmdBuf.BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
 
-		OffscreenCmdBuf->SetViewport(0, { viewport });
-		OffscreenCmdBuf->SetScissor(0, { scissor });
+		t_CmdBuf.SetViewport(0, { viewport });
+		t_CmdBuf.SetScissor(0, { scissor });
 
-		vkCmdBindPipeline(OffscreenCmdBuf->GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 
 		VkDeviceSize offsets[1] = { 0 };
 
-		OffscreenUBO CurrentUBO = {};
-		// Invert the project value to match the proper coordinate space compared to OpenGL
-		CurrentUBO.Projection = m_Camera->GetProjectionMatrix();
-		CurrentUBO.Projection[1][1] *= -1.0f;
-		CurrentUBO.View = m_Camera->GetViewMatrix();	
-
-		// #TODO This is where a lot of the cost of our engine loop comes from
-		// We can improve this by doing some kind of dirty bit tracking to only
-		// update the UBO's on MeshRenders if they have changed
-		//
-		// Use a view, not an owning group. group<Transform>(MeshRenderer, ...) packs
-		// Transform and can swap it out from under assign<Transform>() references.
 		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
 
 		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
@@ -136,23 +208,9 @@ namespace Fling
 				return;
 			}
 
-			// UPDATE UNIFORM BUF of the mesh --------
-			
-			Transform::CalculateWorldMatrix(t_trans);
-			CurrentUBO.Model = t_trans.GetWorldMatrix();
-			CurrentUBO.ObjPos = t_trans.GetPos();
-
-			// Memcpy to the buffer
-			Buffer* buf = t_MeshRend.m_UniformBuffer;
-			memcpy(
-				buf->m_MappedMem, 
-				&CurrentUBO,
-				buf->GetSize()
-			);
-
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(
-				OffscreenCmdBuf->GetHandle(),
+				t_CmdBuf.GetHandle(),
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
@@ -163,14 +221,14 @@ namespace Fling
 
 			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
 			// Render the mesh
-			vkCmdBindVertexBuffers(OffscreenCmdBuf->GetHandle(), 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(OffscreenCmdBuf->GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
-			vkCmdDrawIndexed(OffscreenCmdBuf->GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
+			vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+			vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
 		});
 
-		OffscreenCmdBuf->EndRenderPass();
+		t_CmdBuf.EndRenderPass();
 
-		OffscreenCmdBuf->End();
+		t_CmdBuf.End();
 	}
 
 	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
@@ -223,16 +281,17 @@ namespace Fling
 			Initializers::WriteDescriptorSetImage(
 				t_MeshRend.m_Material->GetPBRTextures().m_RoughnessTexture,
 				MeshRendererDescriptorSet(t_MeshRend),
-				4)
+				4),
 			// Any other PBR textures or other samplers go HERE and you add to the MRT shader
+
+			// 5: Camera UBO
+			Initializers::WriteDescriptorSetUniform(
+				m_CameraUboBuffer,
+				MeshRendererDescriptorSet(t_MeshRend),
+				5)
 		};
 
 		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
-	}
-
-	void OffscreenSubpass::BuildOffscreenCommandBuffer(entt::registry& t_reg, uint32 t_ActiveFrameInFlight)
-	{
-
 	}
 
 	void OffscreenSubpass::PrepareAttachments()
@@ -374,6 +433,14 @@ namespace Fling
 	void OffscreenSubpass::CleanUp(entt::registry& t_reg)
 	{
 		assert(m_Device != nullptr);
+
+		// Stop listening, the descriptor pool and mesh buffers are about to go away
+		t_reg.on_construct<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
+		t_reg.on_replace<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
+		t_reg.on_destroy<MeshRenderer>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.on_construct<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.on_destroy<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		m_ReplacedMeshes.clear();
 		
 		t_reg.view<MeshRenderer>().each([](MeshRenderer& t_Mesh)
 		{
@@ -397,6 +464,9 @@ namespace Fling
 			CreateGraphicsPipeline();
 		}
 
+		// The old recordings use the old frame buffer and pipeline
+		InvalidateCommandBuffers();
+
 		(void)t_reg;
 	}
 
@@ -419,5 +489,18 @@ namespace Fling
 		
 		// I would love to create some descriptor sets here		
 		CreateMeshDescriptorSet(t_MeshRend);
+		MarkMeshRendererUboDirty(t_MeshRend);
+		InvalidateCommandBuffers();
+	}
+
+	void OffscreenSubpass::OnMeshRendererReplaced(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	{
+		m_ReplacedMeshes.emplace_back(t_Ent);
+		InvalidateCommandBuffers();
+	}
+
+	void OffscreenSubpass::OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg)
+	{
+		InvalidateCommandBuffers();
 	}
 }   // namespace Fling
