@@ -32,25 +32,23 @@ jobs:
       - name: Build CoreTests
         run: cmake --build build --config Debug --target CoreTests --parallel
 
-      - name: Run each section with a timeout
+      - name: Run variants with a timeout
         shell: bash
         run: |
           EXE=$(find build -name CoreTests.exe | head -1)
-          echo "exe: $EXE"
-          for S in "Open and call a symbol" \
-                   "A missing library returns an empty object and an error" \
-                   "OpenFirst skips a bad name" \
-                   "Move leaves the source empty" \
-                   "Close then Symbol returns null" \
-                   "Destructor unloads a moved library" \
-                   "An unsigned absolute path is rejected" \
-                   "A bare name does not search the current directory"; do
+          run() {
+            local LABEL="$1"; shift
             START=$(date +%s)
-            timeout 60 "$EXE" "DynamicLibrary" -c "$S" -s > out.txt 2>&1
+            timeout 120 "$@" > out.txt 2>&1
             RC=$?
-            echo "=== [$S] rc=$RC time=$(( $(date +%s) - START ))s"
-            if [ $RC -ne 0 ]; then tail -30 out.txt; fi
-          done
+            echo "=== [$LABEL] rc=$RC time=$(( $(date +%s) - START ))s"
+            if [ $RC -ne 0 ]; then tail -25 out.txt; fi
+          }
+          run "whole case from repo root" "$EXE" DynamicLibrary -s
+          run "whole case, durations" "$EXE" DynamicLibrary -d yes
+          run "all CoreTests" "$EXE"
+          run "ctest -R DynamicLibrary" ctest --test-dir build -C Debug -R "^DynamicLibrary$" --output-on-failure -V
+          run "ctest first 9" ctest --test-dir build -C Debug -I 1,9 --output-on-failure
 
       - name: Environment info
         if: always()
