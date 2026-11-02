@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Singleton.hpp"
 #include "FlingWarnings.h"
+#include "Singleton.hpp"
+
 #include <string>
 
 // inih's header-only parser uses a deliberately bounded strncpy. SYSTEM includes

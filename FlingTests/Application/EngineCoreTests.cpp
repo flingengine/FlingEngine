@@ -1,6 +1,6 @@
-#include <catch2/catch_all.hpp>
-
 #include "Engine.h"
+
+#include <catch2/catch_all.hpp>
 
 TEST_CASE("Smoke test", "[core]") {
     SECTION("No command line options") {

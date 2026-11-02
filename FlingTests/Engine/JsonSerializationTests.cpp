@@ -1,17 +1,16 @@
-#include <catch2/catch_all.hpp>
-
-#include "Json.h"
-#include "JsonArchive.h"
-#include "ComponentTypeRegistry.h"
-#include "Components/Transform.h"
 #include "Components/Name.hpp"
+#include "Components/Transform.h"
+#include "ComponentTypeRegistry.h"
 #include "FlingPaths.h"
 #include "Game.h"
+#include "Json.h"
+#include "JsonArchive.h"
+#include "Logger.h"
 #include "World.h"
 
+#include <catch2/catch_all.hpp>
 #include <cstdio>
 #include <string>
-#include "Logger.h"
 
 namespace {
     class JsonTestGame : public Fling::Game {

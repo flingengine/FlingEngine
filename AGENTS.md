@@ -48,7 +48,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 - Style doc: [`Skills/coding-style.md`](Skills/coding-style.md) — documentation
   comment conventions (no `@brief`, no `/*!`), enforced by
-  `python3 scripts/check_comment_style.py`.
+  `python3 scripts/check_comment_style.py`; include ordering (project `"..."`
+  includes first, then `<...>` includes, each alphabetical).
 - Layout/formatting is enforced by `.clang-format` at the repo root (run
   `clang-format`, not manual formatting judgment).
 - Applies to first-party code only (`FlingEngine/`, `Sandbox/`, `FlingTests/`).

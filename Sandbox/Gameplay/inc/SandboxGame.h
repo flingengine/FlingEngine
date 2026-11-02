@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Game.h"
 #include "FlingMath.h"
+#include "Game.h"
+
 #include <string>
 
 namespace Sandbox

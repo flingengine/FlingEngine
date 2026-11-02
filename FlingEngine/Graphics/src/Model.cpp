@@ -1,10 +1,11 @@
 #include "Model.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
+#include "Logger.h"
 #include "ResourceManager.h"
 #include "VulkanApp.h"
-#include "Logger.h"
+
+#include <tiny_obj_loader.h>
 
 namespace Fling
 {

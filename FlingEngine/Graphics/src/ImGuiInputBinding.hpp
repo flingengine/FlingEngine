@@ -3,11 +3,11 @@
 #include "Platform.h"
 
 #if WITH_IMGUI
-#include <imgui.h>
 #include "DesktopWindow.h"  // GLFW with GLFW_INCLUDE_VULKAN, before glfw3native.h
+#include "Input/Input.h"
 #include "VulkanApp.h"
 
-#include "Input/Input.h"
+#include <imgui.h>
 #include <optional>
 
 namespace Fling

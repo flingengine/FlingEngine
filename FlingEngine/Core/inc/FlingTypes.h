@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cstdint>
-#include <limits>
-#include <stdexcept>
-#include <inttypes.h>
 #include <entt/core/hashed_string.hpp>
 #include <entt/entity/helper.hpp>
+#include <inttypes.h>
+#include <limits>
+#include <stdexcept>
 
 // Integer typedefs for ease of use
 typedef uint8_t                 uint8;

@@ -7,8 +7,11 @@
 #   define FLING_DEBUG 1
 //#	define _CRTDBG_MAP_ALLOC  
 
+// Not alphabetical: stdlib.h must come before crtdbg.h for _CRTDBG_MAP_ALLOC
+// clang-format off
 #include <stdlib.h>
-#include <crtdbg.h> 
+#include <crtdbg.h>
+// clang-format on
 
 #ifdef _MSC_VER
 #	define FLING_BREAK(...)	__debugbreak()
@@ -37,8 +40,8 @@
 #define NOMINMAX
 #endif
 
-#include <Windows.h>
 #include <direct.h>
+#include <Windows.h>
 
 #   ifdef _MSC_VER
 

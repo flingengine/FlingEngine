@@ -1,7 +1,8 @@
 #pragma once
 
-#include "PhysicsAPI.h"
 #include "FlingMath.h"
+#include "PhysicsAPI.h"
+
 #include <entt/entity/registry.hpp>
 
 namespace Fling

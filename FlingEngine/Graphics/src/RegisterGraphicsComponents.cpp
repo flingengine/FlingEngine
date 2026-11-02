@@ -1,8 +1,8 @@
-#include "RegisterGraphicsComponents.h"
 #include "ComponentTypeRegistry.h"
-#include "MeshRenderer.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+#include "MeshRenderer.h"
+#include "RegisterGraphicsComponents.h"
 
 namespace Fling
 {

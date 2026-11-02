@@ -1,8 +1,8 @@
-#include <catch2/catch_all.hpp>
-
+#include "Components/Transform.h"
 #include "Json.h"
 #include "JsonArchive.h"
-#include "Components/Transform.h"
+
+#include <catch2/catch_all.hpp>
 
 using Fling::Transform;
 

@@ -1,13 +1,14 @@
+#include "FlingPaths.h"
 #include "GlfwInputDeviceInterface.h"
 #include "Input/InputDevice.h"
 #include "Input/InputDeviceFactory.h"
 #include "Input/InputMessageHandler.h"
-#include "FlingPaths.h"
 #include "Logger.h"
-#include <GLFW/glfw3.h>
+
 #include <cmath>
 #include <cstring>
 #include <fstream>
+#include <GLFW/glfw3.h>
 #include <sstream>
 #include <string>
 

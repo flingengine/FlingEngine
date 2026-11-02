@@ -1,9 +1,9 @@
 #pragma once
 
-#include "MeshRenderer.h"
-#include "Lighting/Lighting.hpp"
-#include "Components/Transform.h"
 #include "Camera.h"
+#include "Components/Transform.h"
+#include "Lighting/Lighting.hpp"
+#include "MeshRenderer.h"
 
 namespace Fling
 {

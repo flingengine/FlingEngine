@@ -73,6 +73,32 @@ A short function body inside a class can stay on one line, for example
 `bool IsValid() const { return Value != 0; }`. A braced initializer
 (`InputKey Key{InputKeyId::W};`) is not a block, so it stays on one line too.
 
+## Include ordering
+
+Keep `#include` lines alphabetical, in two groups separated by a blank line:
+
+1. Project includes (`"..."`) first, alphabetical.
+2. Everything in angle brackets (`<...>`: standard library, system, and third-party
+   headers) below them, alphabetical.
+
+Sorting is case-insensitive and does not make the file's own header special.
+`.clang-format` enforces this (`SortIncludes`, `IncludeBlocks: Regroup`), so run
+`clang-format` instead of ordering by hand. Only a run of consecutive includes is
+sorted; a `#if`, `#define`, or comment between includes starts a new run.
+
+```cpp
+#include "Logger.h"
+#include "Platform.h"
+
+#include <algorithm>
+#include <string>
+#include <vector>
+```
+
+If a header genuinely has to come before another (for example `stdlib.h` before
+`crtdbg.h` with `_CRTDBG_MAP_ALLOC`), keep that order, wrap it in
+`// clang-format off` / `// clang-format on`, and say why in a comment.
+
 ## Naming / conventions to preserve
 
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are

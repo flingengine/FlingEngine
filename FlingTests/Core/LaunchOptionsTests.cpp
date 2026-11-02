@@ -1,7 +1,7 @@
-#include <catch2/catch_all.hpp>
-
 #include "LaunchOptions.h"
 #include "Misc/CommandLine.h"
+
+#include <catch2/catch_all.hpp>
 #include <string>
 #include <vector>
 

@@ -1,17 +1,16 @@
 #pragma once
 
+#include "FlingExports.h"
 #include "FlingVulkan.h"
-
+#include "Resource.h"
+#include "spirv.h"
 #include "spirv_cross.hpp"
 #include "spirv_glsl.hpp"
-#include "spirv.h"
 
-#include "Resource.h"
-#include "FlingExports.h"
 #include <fstream>
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace Fling
 {

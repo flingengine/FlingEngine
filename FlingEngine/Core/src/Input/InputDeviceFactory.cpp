@@ -1,5 +1,5 @@
-#include "Input/InputDeviceFactory.h"
 #include "Input/IInputDeviceInterface.h"
+#include "Input/InputDeviceFactory.h"
 #include "Input/InputMessageHandler.h"
 
 namespace Fling

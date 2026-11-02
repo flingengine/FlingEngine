@@ -1,8 +1,7 @@
-#include <catch2/catch_all.hpp>
-
 #include "DynamicLibrary.h"
 #include "Platform.h"
 
+#include <catch2/catch_all.hpp>
 #include <cstddef>
 #include <cstdio>
 #include <span>

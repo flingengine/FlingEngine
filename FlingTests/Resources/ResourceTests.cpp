@@ -1,10 +1,10 @@
-#include <catch2/catch_all.hpp>
-
-#include "Singleton.hpp"
 #include "FlingConfig.h"
-#include "ResourceManager.h"
 #include "FlingPaths.h"
 #include "Logger.h"
+#include "ResourceManager.h"
+#include "Singleton.hpp"
+
+#include <catch2/catch_all.hpp>
 
 // @see TestConf.ini
 

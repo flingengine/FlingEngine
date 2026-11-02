@@ -1,15 +1,14 @@
 #pragma once
 
-#include "NonCopyable.hpp"
-#include "Level.h"
-#include "Game.h"
 #include "FlingTypes.h"
+#include "Game.h"
+#include "Level.h"
+#include "NonCopyable.hpp"
+#include "Platform.h"
 
 #include <cassert>
-#include <string>
-
 #include <entt/entity/registry.hpp>
-#include "Platform.h"
+#include <string>
 
 namespace Fling
 {

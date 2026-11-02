@@ -1,9 +1,10 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "NonCopyable.hpp"
 #include "Input/InputDevice.h"
 #include "Input/InputDeviceTypes.h"
+#include "NonCopyable.hpp"
+
 #include <map>
 #include <memory>
 #include <string>

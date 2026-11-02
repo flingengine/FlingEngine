@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "Input/InputMessage.h"
+
 #include <string>
 
 namespace Fling

@@ -1,11 +1,12 @@
 #pragma once
 
-#include "FlingVulkan.h"
-#include "FlingTypes.h"
-#include "File.h"
-#include "Texture.h"
 #include "Buffer.h"
+#include "File.h"
+#include "FlingTypes.h"
+#include "FlingVulkan.h"
 #include "Logger.h"
+#include "Texture.h"
+
 #include <memory>
 #include <vector>
 

@@ -1,4 +1,5 @@
 #include "Input/Input.h"
+
 #include <cmath>
 
 namespace Fling

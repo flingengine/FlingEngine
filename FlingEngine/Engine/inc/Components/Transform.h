@@ -1,7 +1,7 @@
 #pragma once
 
-#include "JsonArchive.h"
 #include "FlingMath.h"
+#include "JsonArchive.h"
 
 #include <ostream>
 

@@ -1,4 +1,5 @@
 #include "Input/InputMessageQueue.h"
+
 #include <algorithm>
 #include <cassert>
 

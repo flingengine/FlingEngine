@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputMessage.h"
+
 #include <deque>
 #include <string>
 #include <string_view>

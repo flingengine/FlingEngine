@@ -1,9 +1,10 @@
 #pragma once
 
 #include "NonCopyable.hpp"
-#include <string>
-#include <entt/entity/registry.hpp>
 #include "Platform.h"
+
+#include <entt/entity/registry.hpp>
+#include <string>
 //#include "World.h" 
 
 namespace Fling

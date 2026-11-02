@@ -1,7 +1,7 @@
-#include <catch2/catch_all.hpp>
-
-#include "Physics.h"
 #include "Components/Transform.h"
+#include "Physics.h"
+
+#include <catch2/catch_all.hpp>
 
 TEST_CASE("Physics Step moves entities by their velocity", "[physics]") {
     using namespace Fling;

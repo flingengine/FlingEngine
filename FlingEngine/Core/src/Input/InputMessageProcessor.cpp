@@ -1,5 +1,6 @@
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
+
 #include <algorithm>
 
 namespace Fling

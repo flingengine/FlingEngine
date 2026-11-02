@@ -3,8 +3,8 @@
 #include "Resource.h"
 
 #include <fstream>
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace Fling
 {

@@ -1,11 +1,12 @@
 #pragma once
 
+#include "FlingTypes.h"
+
+#include <cstdlib>
+#include <sstream>
 #include <string>
 #include <string_view>
-#include <sstream>
 #include <type_traits>
-#include <cstdlib>
-#include "FlingTypes.h"
 
 namespace Fling
 {

@@ -1,5 +1,5 @@
-#include "Logger.h"
 #include "FlingPaths.h"
+#include "Logger.h"
 #include "spdlog/pattern_formatter.h"
 
 #include <cstdio>

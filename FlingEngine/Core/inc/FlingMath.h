@@ -6,10 +6,10 @@
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES  // Force GLM to use a version of vec2 and mat4 that have specific alignments
 #define GLM_ENABLE_EXPERIMENTAL	// So that we can hash our vertecies 
 
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/transform.hpp> 
 #include <glm/gtc/random.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/hash.hpp>
+#include <glm/gtx/transform.hpp> 
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>

@@ -1,6 +1,6 @@
-#include <catch2/catch_all.hpp>
-
 #include "Input/InputDeviceStates.h"
+
+#include <catch2/catch_all.hpp>
 
 namespace
 {

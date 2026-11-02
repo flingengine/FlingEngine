@@ -1,6 +1,6 @@
-#include <catch2/catch_all.hpp>
-
 #include "Misc/StringUtils.h"
+
+#include <catch2/catch_all.hpp>
 #include <string>
 #include <string_view>
 

@@ -1,8 +1,9 @@
 #pragma once
+#include "CoreAPI.h"
 #include "GitVersion.h"
 #include "Platform.h"
+
 #include <string>
-#include "CoreAPI.h"
 
 namespace Fling
 {

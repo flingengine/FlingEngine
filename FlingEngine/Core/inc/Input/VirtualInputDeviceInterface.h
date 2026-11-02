@@ -4,6 +4,7 @@
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputMessage.h"
+
 #include <memory>
 #include <string>
 #include <vector>

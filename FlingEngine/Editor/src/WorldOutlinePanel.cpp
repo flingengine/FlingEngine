@@ -1,13 +1,11 @@
-#include "WorldOutlinePanel.h"
-
 #include "Components/Name.hpp"
-
-#include <imgui.h>
-
-#include <sstream>
-#include <vector>
 #include "FlingTypes.h"
 #include "Logger.h"
+#include "WorldOutlinePanel.h"
+
+#include <imgui.h>
+#include <sstream>
+#include <vector>
 
 namespace Fling
 {

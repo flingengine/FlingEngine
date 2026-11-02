@@ -1,11 +1,12 @@
 #pragma once
 
-#include <random>
+#include "CoreAPI.h"
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "FlingWarnings.h"
 #include "Platform.h"
-#include "CoreAPI.h"
+
+#include <random>
 
 namespace Fling
 {

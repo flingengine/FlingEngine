@@ -1,14 +1,14 @@
-#include "World.h"
-#include "ComponentTypeRegistry.h"
 #include "Components/Name.hpp"
+#include "ComponentTypeRegistry.h"
 #include "FlingConfig.h"
 #include "FlingPaths.h"
 #include "Json.h"
+#include "Logger.h"
+#include "World.h"
 
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include "Logger.h"
 
 namespace Fling
 {

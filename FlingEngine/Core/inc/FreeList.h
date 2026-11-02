@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stdlib.h>     // size_t
-#include <cstddef>		//std::ptrdiff_t
-#include <assert.h>
-
-#include "FlingExports.h"
 #include "CoreAPI.h"
+#include "FlingExports.h"
+
+#include <assert.h>
+#include <cstddef>		//std::ptrdiff_t
+#include <stdlib.h>     // size_t
 
 namespace Fling
 {

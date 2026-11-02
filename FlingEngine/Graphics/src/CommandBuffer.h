@@ -1,7 +1,8 @@
 #pragma once
 
-#include "FlingVulkan.h"
 #include "FlingTypes.h"
+#include "FlingVulkan.h"
+
 #include <vector>
 
 namespace Fling

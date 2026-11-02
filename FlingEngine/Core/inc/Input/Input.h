@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "Singleton.hpp"
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDevice.h"
 #include "Input/InputDeviceTypes.h"
@@ -11,6 +10,8 @@
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputPlayback.h"
 #include "Input/InputRecorder.h"
+#include "Singleton.hpp"
+
 #include <limits>
 #include <memory>
 #include <optional>

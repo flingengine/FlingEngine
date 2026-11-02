@@ -1,10 +1,11 @@
 #pragma once
 
+#include "FlingTypes.h"
 #include "FlingVulkan.h"
 #include "NonCopyable.hpp"
-#include "FlingTypes.h"
-#include <vector>
 #include "Platform.h"
+
+#include <vector>
 
 namespace Fling
 {

@@ -2,17 +2,15 @@
 // Define the STB library image implementation here. Make sure 
 // this is ONLY in this file 
 #define STB_IMAGE_IMPLEMENTATION
-#include "Texture.h"
-
+#include "Buffer.h"
 #include "FlingVulkan.h"
+#include "GraphicsHelpers.h"
+#include "Logger.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
-#include "VulkanApp.h"
-
 #include "ResourceManager.h"
-#include "GraphicsHelpers.h"
-#include "Buffer.h"
-#include "Logger.h"
+#include "Texture.h"
+#include "VulkanApp.h"
 
 namespace Fling
 {

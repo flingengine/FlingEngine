@@ -1,5 +1,4 @@
 #include "DynamicLibrary.h"
-
 #include "Platform.h"
 
 #include <cstring>
@@ -10,8 +9,11 @@
 #if FLING_WINDOWS
 
 #include <cstdio>
+// Not alphabetical: wintrust.h must come before softpub.h
+// clang-format off
 #include <wintrust.h>
 #include <softpub.h>
+// clang-format on
 
 namespace
 {

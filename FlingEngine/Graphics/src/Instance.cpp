@@ -1,9 +1,10 @@
-#include "Instance.h"
-#include "VulkanLoader.h"
 #include "FlingConfig.h"
-#include <GLFW/glfw3.h>
+#include "Instance.h"
 #include "Logger.h"
 #include "Version.h"
+#include "VulkanLoader.h"
+
+#include <GLFW/glfw3.h>
 
 namespace Fling
 {

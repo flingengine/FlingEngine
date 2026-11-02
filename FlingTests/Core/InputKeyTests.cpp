@@ -1,6 +1,6 @@
-#include <catch2/catch_all.hpp>
-
 #include "Input/InputKey.h"
+
+#include <catch2/catch_all.hpp>
 #include <string>
 #include <unordered_map>
 

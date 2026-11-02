@@ -1,6 +1,6 @@
-#include "Input/GlfwInput.h"
 #include "DesktopWindow.h"
 #include "GlfwInputDeviceInterface.h"
+#include "Input/GlfwInput.h"
 
 namespace Fling
 {

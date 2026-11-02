@@ -1,12 +1,10 @@
-#include "InputDevicesPanel.h"
-
 #include "FlingPaths.h"
 #include "Input/Input.h"
-
-#include <imgui.h>
+#include "InputDevicesPanel.h"
 
 #include <algorithm>
 #include <ctime>
+#include <imgui.h>
 #include <iomanip>
 #include <memory>
 #include <sstream>

@@ -1,23 +1,23 @@
-#include "SandboxGame.h"
-#include "World.h"
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
-#include "MeshRenderer.h"
-#include "Stats.h"
-#include "VulkanApp.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+#include "MeshRenderer.h"
 #include "Random.h"
+#include "SandboxGame.h"
+#include "Stats.h"
+#include "VulkanApp.h"
+#include "World.h"
 // For getting some lighting info
+#include "ComponentTypeRegistry.h"
 #include "Lighting/DeferredLightSettings.h"
 #include "Mover.h"
-#include "ComponentTypeRegistry.h"
 
 // Test command line args
-#include "Misc/CommandLine.h"
 #include "FlingWindow.h"
 #include "Input/Input.h"
 #include "Logger.h"
+#include "Misc/CommandLine.h"
 
 namespace Sandbox
 {

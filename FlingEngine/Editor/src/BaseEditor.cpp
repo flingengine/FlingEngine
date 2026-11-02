@@ -1,23 +1,23 @@
 #if WITH_EDITOR
 
 #include "BaseEditor.h"
-#include "VulkanApp.h"
 #include "FirstPersonCamera.h"
+#include "VulkanApp.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
-#include "MeshRenderer.h"
+#include "ComponentTypeRegistry.h"
+#include "FlingPaths.h"
+#include "ImFileBrowser.hpp"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
-#include "ImFileBrowser.hpp"
+#include "Logger.h"
+#include "MeshRenderer.h"
+#include "Timing.h"
 #include "World.h"
-#include "ComponentTypeRegistry.h"
 
 #include <stdio.h>
 #include <string.h>
-#include "FlingPaths.h"
-#include "Logger.h"
-#include "Timing.h"
 
 namespace Fling
 {
