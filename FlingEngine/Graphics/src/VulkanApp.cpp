@@ -145,7 +145,7 @@ namespace Fling
 
         m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_State->m_Surface);
 
-        m_PhysicalDevice = new PhysicalDevice(m_Instance);
+        m_PhysicalDevice = new PhysicalDevice(m_Instance->GetBestPhysicalDevice());
         assert(m_PhysicalDevice);
 
         m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_State->m_Surface);
