@@ -1,90 +1,58 @@
 #include "VkStringHelpers.h"
 
-#include "FlingVulkan.h"
-#include "FlingTypes.h"
-#include <vector>
 #include <sstream>
 
 namespace Fling::Utils
 {
-    static const char* GetDeviceTypeStr(VkPhysicalDeviceProperties t_Props);
-    static const char* GetDeviceVendorStr(VkPhysicalDeviceProperties t_Props);
-
-    std::string DeviceToString(VkPhysicalDevice InDevice)
+    static const char* GetDeviceTypeStr(const VkPhysicalDeviceProperties& t_Props)
     {
-        if(InDevice == VK_NULL_HANDLE)
+        switch (t_Props.deviceType)
+        {
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            return "Integrated";
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            return "Discrete";
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            return "Virtual";
+        case VK_PHYSICAL_DEVICE_TYPE_CPU:
+            return "CPU";
+        default:
+            return "Other";
+        }
+    }
+
+    static const char* GetDeviceVendorStr(const VkPhysicalDeviceProperties& t_Props)
+    {
+        switch (t_Props.vendorID)
+        {
+        case 0x8086:
+            return "Intel";
+        case 0x10DE:
+            return "Nvidia";
+        case 0x1002:
+            return "AMD";
+        default:
+            return "Unknown";
+        }
+    }
+
+    std::string DeviceToString(VkPhysicalDevice t_Device)
+    {
+        if (t_Device == VK_NULL_HANDLE)
         {
             return "Null Device";
         }
 
-        // Checks if the requested extensions are supported.
-        uint32_t extensionPropertyCount;
-        vkEnumerateDeviceExtensionProperties(InDevice, nullptr, &extensionPropertyCount, nullptr);
-        std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
-        vkEnumerateDeviceExtensionProperties(InDevice, nullptr, &extensionPropertyCount, extensionProperties.data());
+        VkPhysicalDeviceProperties Props;
+        vkGetPhysicalDeviceProperties(t_Device, &Props);
+
         std::stringstream DeviceInfo;
-
-        VkPhysicalDeviceProperties PhysicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(InDevice, &PhysicalDeviceProperties);
-
-        DeviceInfo << "\nPhysical Device Info: \n\tType: " << GetDeviceTypeStr(PhysicalDeviceProperties);
-
-        // ID
-        DeviceInfo << "\n\tID: " << PhysicalDeviceProperties.deviceID;
-
-        // Vendor
-        DeviceInfo << "\n\tVendor:" << GetDeviceVendorStr(PhysicalDeviceProperties);
-        
-        // Versions
-        uint32 supportedVersion[]
-        { 
-            VK_VERSION_MAJOR(PhysicalDeviceProperties.apiVersion), 
-            VK_VERSION_MINOR(PhysicalDeviceProperties.apiVersion),
-            VK_VERSION_PATCH(PhysicalDeviceProperties.apiVersion) 
-        };
-        
-        DeviceInfo << "\n\tAPI Version: " << supportedVersion[0];
-        DeviceInfo << "." << supportedVersion[1];
-        DeviceInfo << "." << supportedVersion[2];
+        DeviceInfo << "\nPhysical Device Info: \n\tType: " << GetDeviceTypeStr(Props);
+        DeviceInfo << "\n\tID: " << Props.deviceID;
+        DeviceInfo << "\n\tVendor: " << GetDeviceVendorStr(Props);
+        DeviceInfo << "\n\tAPI Version: " << VK_VERSION_MAJOR(Props.apiVersion);
+        DeviceInfo << "." << VK_VERSION_MINOR(Props.apiVersion);
+        DeviceInfo << "." << VK_VERSION_PATCH(Props.apiVersion);
         return DeviceInfo.str();
     }
-
-    static const char* GetDeviceTypeStr(VkPhysicalDeviceProperties t_Props)
-	{
-		switch (static_cast<uint32>(t_Props.deviceType))
-		{
-		case 1:
-			return "Integrated";
-			break;
-		case 2:
-			return "Discrete";
-			break;
-		case 3:
-			return "Virtual";
-			break;
-		case 4:
-			return "CPU";
-			break;
-		default:
-			return "Other";
-		}
-	}
-
-	static const char* GetDeviceVendorStr(VkPhysicalDeviceProperties t_Props)
-	{
-		switch (t_Props.vendorID)
-		{
-		case 0x8086:
-			return " 'Intel'";
-			break;
-		case 0x10DE:
-			return " 'Nvidia'";
-			break;
-		case 0x1002:
-			return " 'AMD'";
-			break;
-		default:
-			return "Unknown";
-		}
-	}
-}
+} // namespace Fling::Utils

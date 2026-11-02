@@ -6,7 +6,7 @@
 namespace Fling::Utils
 {
     /**
-     * helper to create a string for the specific vulkan physics device
+     * Formatted string of the given Vulkan physical device's type, ID, vendor, and API version.
      */
-    std::string DeviceToString(VkPhysicalDevice InDevice);
-}
+    std::string DeviceToString(VkPhysicalDevice t_Device);
+} // namespace Fling::Utils
