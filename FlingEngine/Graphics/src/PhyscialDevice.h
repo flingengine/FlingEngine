@@ -14,7 +14,7 @@ namespace Fling
     {
     public:
 
-        explicit PhysicalDevice(class Instance* t_Instance);
+        explicit PhysicalDevice(VkPhysicalDevice t_Device);
         
 		/** The physical device will get cleaned up when the Instance does automatically */
         ~PhysicalDevice() noexcept = default;
@@ -24,16 +24,6 @@ namespace Fling
 
 		const VkPhysicalDeviceProperties& GetDeviceProps() const { return m_DeviceProperties; }
         const VkPhysicalDeviceFeatures& GetDeivceFeatures() const { return m_DeviceFeatures; } 
-
-        /**
-         * Get a string representing the device vendor
-         * 
-         * @param t_Props 
-         * @return const char* 
-         */
-        static const char* GetDeviceType(VkPhysicalDeviceProperties t_Props);
-
-        static const char* GetDeviceVendor(VkPhysicalDeviceProperties t_Props);
 
 		/** Logs info about this physical device (vendor, model, ID, etc) to the console/Log file */
 		void LogPhysicalDeviceInfo();
@@ -47,19 +37,16 @@ namespace Fling
 
 		VkBool32 GetSupportedDepthFormat(VkFormat* depthFormat) const;
 
+        /**
+         * Formatted string of this device's type, ID, vendor, and API version. 
+         */
+        std::string ToString() const;
+
     private:
 
-		/**
-		 * Choose the best available physical device on this machine favoring discrete GPU's and
-		 * those who match all instance extensions
-		 */
-		VkPhysicalDevice ChooseBestPhyscialDevice(std::vector<VkPhysicalDevice>& t_AvailableDevices);
 
         /** The Vulkan physical device */
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-
-		/** Owning instance of this physical device */
-        const class Instance* m_Instance;
 
 		/** Misc. Device properties that may be useful */
         VkPhysicalDeviceProperties m_DeviceProperties{};

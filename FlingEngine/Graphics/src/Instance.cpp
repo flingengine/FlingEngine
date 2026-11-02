@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "Logger.h"
 #include "Version.h"
+#include "Utils/VkStringHelpers.h"
 
 namespace Fling
 {
@@ -214,4 +215,121 @@ namespace Fling
 
 		vkDestroyInstance( m_Instance, nullptr );
     }
+
+	std::vector<VkPhysicalDevice> Instance::GetAllAvailableDevices() const
+	{
+		if(m_Instance == VK_NULL_HANDLE)
+		{
+			return {};
+		}
+
+		uint32 DeviceCount = 0;
+		vkEnumeratePhysicalDevices(m_Instance, &DeviceCount, nullptr);
+
+		if (DeviceCount == 0)
+		{
+			F_LOG_FATAL("Failed to find GPU's with Vulkan support!");
+			return {};
+		}
+
+		std::vector<VkPhysicalDevice> Devices(DeviceCount);
+		
+		vkEnumeratePhysicalDevices(m_Instance, &DeviceCount, Devices.data());
+		return Devices;
+	}
+
+	VkPhysicalDevice Instance::GetBestPhysicalDevice() const
+	{
+		std::vector<VkPhysicalDevice> AvailableDevices = GetAllAvailableDevices();
+		return ChooseBestPhyscialDevice(AvailableDevices, GetEnabledExtensions());
+	}
+
+	VkPhysicalDevice Instance::ChooseBestPhyscialDevice(
+		std::vector<VkPhysicalDevice>& t_AvailableDevices,
+		const std::vector<const char*>& EnabledExtensions)
+	{
+		std::multimap<int32, VkPhysicalDevice> SortedDevices;
+
+		// Lambda for scoring a physical device 
+		auto ScoreDeviceLambda = [&EnabledExtensions](VkPhysicalDevice t_Device) -> int32
+		{
+			int32 Score = 0;
+
+			// Get the extension support of this device
+			uint32_t ExtensionPropertyCount;
+			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, nullptr);
+			std::vector<VkExtensionProperties> ExtensionProperties(ExtensionPropertyCount);
+			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, ExtensionProperties.data());
+
+			// Check to make sure that this device support all needed extensions
+			for (const char* currentExtension : EnabledExtensions)
+			{
+				bool ExtensionFound = false;
+
+				for (const VkExtensionProperties& Extension : ExtensionProperties)
+				{
+					if (strcmp(currentExtension, Extension.extensionName) == 0)
+					{
+						ExtensionFound = true;
+						break;
+					}
+				}
+
+				// If not, then just return 0 because we won't want to use this device
+				if (!ExtensionFound)
+				{
+					return 0;
+				}
+			}
+
+			// Obtain the device properties of the current device being rated
+			VkPhysicalDeviceProperties physicalDeviceProperties;
+			vkGetPhysicalDeviceProperties(t_Device, &physicalDeviceProperties);
+
+			// Prefer real GPUs over software rasterizers (e.g. llvmpipe), and discrete over integrated.
+			switch (physicalDeviceProperties.deviceType)
+			{
+			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+				Score += 100000;
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+				Score += 50000;
+				break;
+			case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+				Score += 25000;
+				break;
+			default:
+				break;
+			}
+
+			// Gives a higher score to devices with a higher maximum texture size.
+			Score += physicalDeviceProperties.limits.maxImageDimension2D;
+
+			return Score;
+		};
+
+		std::stringstream AvailableDevicesStr;
+		AvailableDevicesStr << "Available physical VK devices: \n";
+
+		// Calculate device scores
+		for (const VkPhysicalDevice& Device : t_AvailableDevices)
+		{
+			// Add this device and it's score to the multimap
+			const uint32 DeviceScore = ScoreDeviceLambda(Device);
+			SortedDevices.emplace(DeviceScore, Device);
+
+			AvailableDevicesStr << Fling::Utils::DeviceToString(Device);
+			AvailableDevicesStr << "\n\tscore: " << DeviceScore << "\n";
+		}
+
+		F_LOG_TRACE("{}", AvailableDevicesStr.str());
+
+		// Return the device with the best score
+		if (SortedDevices.rbegin()->first > 0)
+		{
+			return SortedDevices.rbegin()->second;
+		}
+
+		return VK_NULL_HANDLE;
+	}
 }   // namespace Fling

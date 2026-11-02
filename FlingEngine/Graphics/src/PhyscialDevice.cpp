@@ -1,6 +1,6 @@
 #include "PhyscialDevice.h"
-#include "Instance.h"
 #include "Logger.h"
+#include "Utils/VkStringHelpers.h"
 #include <map>
 
 // @note
@@ -9,22 +9,14 @@
 
 namespace Fling
 {
-    PhysicalDevice::PhysicalDevice(Instance* t_Instance)
-        : m_Instance(t_Instance)
+    PhysicalDevice::PhysicalDevice(VkPhysicalDevice t_Device)
+        : m_PhysicalDevice(t_Device)
     {		
-		// Enumerate available devices
-		uint32 DeviceCount = 0;
-		vkEnumeratePhysicalDevices(m_Instance->GetRawVkInstance(), &DeviceCount, nullptr);
-
-		if (DeviceCount == 0)
+		if (t_Device == VK_NULL_HANDLE)
 		{
-			F_LOG_FATAL("Failed to find GPU's with Vulkan support!");
+			F_LOG_FATAL("Failed to create a PhysicalDevice");
 		}
 
-		std::vector<VkPhysicalDevice> Devices(DeviceCount);
-		vkEnumeratePhysicalDevices(m_Instance->GetRawVkInstance(), &DeviceCount, Devices.data());
-
-		m_PhysicalDevice = ChooseBestPhyscialDevice(Devices);
 		m_MSAASamples = GetMaxUsableSampleCount();
 
 		if (m_PhysicalDevice == VK_NULL_HANDLE)
@@ -48,75 +40,14 @@ namespace Fling
 		return formatProperties;
 	}
 
-	const char* PhysicalDevice::GetDeviceType(VkPhysicalDeviceProperties t_Props)
-	{
-		switch (static_cast<uint32>(t_Props.deviceType))
-		{
-		case 1:
-			return "Integrated";
-			break;
-		case 2:
-			return "Discrete";
-			break;
-		case 3:
-			return "Virtual";
-			break;
-		case 4:
-			return "CPU";
-			break;
-		default:
-			return "Other";
-		}
-	}
-
-	const char* PhysicalDevice::GetDeviceVendor(VkPhysicalDeviceProperties t_Props)
-	{
-		switch (t_Props.vendorID)
-		{
-		case 0x8086:
-			return " 'Intel'";
-			break;
-		case 0x10DE:
-			return " 'Nvidia'";
-			break;
-		case 0x1002:
-			return " 'AMD'";
-			break;
-		default:
-			return "Unknown";
-		}
-	}
-
 	void PhysicalDevice::LogPhysicalDeviceInfo()
+	{		
+		F_LOG_TRACE("{}", this->ToString());
+	}
+
+	std::string PhysicalDevice::ToString() const
 	{
-		// Checks if the requested extensions are supported.
-		uint32_t extensionPropertyCount;
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, nullptr);
-		std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionPropertyCount, extensionProperties.data());
-  		std::stringstream DeviceInfo;
-
-		DeviceInfo << "\nPhysical Device Info: \n\tType: " << GetDeviceType(m_DeviceProperties);
-
-		// ID
-		DeviceInfo << "\n\tID: " << m_DeviceProperties.deviceID;
-
-		// Vendor
-		DeviceInfo << "\n\tVendor:" << GetDeviceVendor(m_DeviceProperties);
-		
-		// Versions
-		uint32 supportedVersion[]
-		{ 
-			VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), 
-			VK_VERSION_MINOR(m_DeviceProperties.apiVersion),
-			VK_VERSION_PATCH(m_DeviceProperties.apiVersion) 
-		};
-		
-		DeviceInfo << "\n\tAPI Version: " << supportedVersion[0];
-		DeviceInfo << "." << supportedVersion[1];
-		DeviceInfo << "." << supportedVersion[2];
-		
-		F_LOG_TRACE("{}\n", DeviceInfo.str());
+		return Fling::Utils::DeviceToString(m_PhysicalDevice);
 	}
 
 	VkSampleCountFlagBits PhysicalDevice::GetMaxUsableSampleCount()
@@ -160,74 +91,5 @@ namespace Fling
 		}
 
 		return false;
-	}
-
-	VkPhysicalDevice PhysicalDevice::ChooseBestPhyscialDevice(std::vector<VkPhysicalDevice>& t_AvailableDevices)
-	{
-		std::multimap<int32, VkPhysicalDevice> SortedDevices;
-
-		// Lambda for scoring a physical device 
-		auto ScoreDeviceLambda = [this](VkPhysicalDevice t_Device)
-		{
-			int32 Score = 0;
-
-			// Get the extension support of this device
-			uint32_t ExtensionPropertyCount;
-			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, nullptr);
-			std::vector<VkExtensionProperties> ExtensionProperties(ExtensionPropertyCount);
-			vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, ExtensionProperties.data());
-
-			// Check to make sure that this device support all needed extensions
-			for (const char* currentExtension : m_Instance->GetEnabledExtensions())
-			{
-				bool ExtensionFound = false;
-
-				for (const VkExtensionProperties& Extension : ExtensionProperties)
-				{
-					if (strcmp(currentExtension, Extension.extensionName) == 0)
-					{
-						ExtensionFound = true;
-						break;
-					}
-				}
-
-				// If not, then just return 0 because we won't want to use this device
-				if (!ExtensionFound)
-				{
-					return 0;
-				}
-
-				// Obtain the device features and properties of the current device being rated
-				VkPhysicalDeviceProperties physicalDeviceProperties;
-				VkPhysicalDeviceFeatures physicalDeviceFeatures;
-				vkGetPhysicalDeviceProperties(t_Device, &physicalDeviceProperties);
-				vkGetPhysicalDeviceFeatures(t_Device, &physicalDeviceFeatures);
-
-				// Adds a large score boost for discrete GPUs (dedicated graphics cards).
-				if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-				{
-					Score += 1000;
-				}
-
-				// Gives a higher score to devices with a higher maximum texture size.
-				Score += physicalDeviceProperties.limits.maxImageDimension2D;
-			}
-
-			return Score;
-		};
-
-		// Calculate device scores
-		for (const VkPhysicalDevice& CurDevice : t_AvailableDevices)
-		{
-			SortedDevices.emplace(ScoreDeviceLambda(CurDevice), CurDevice);
-		}
-
-		// Return the device with the best score
-		if (SortedDevices.rbegin()->first > 0)
-		{
-			return SortedDevices.rbegin()->second;
-		}
-
-		return VK_NULL_HANDLE;
 	}
 }   // namespace Fling

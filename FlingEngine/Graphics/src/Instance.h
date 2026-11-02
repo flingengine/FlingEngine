@@ -29,6 +29,12 @@ namespace Fling
 
 		const std::vector<const char*>& GetEnabledExtensions() const { return m_DeviceExtensions; };
 
+        /**
+         * Return the "most capable" available physical device we should use.
+         * We prefer discrete GPU's over most other options.
+         */
+        VkPhysicalDevice GetBestPhysicalDevice() const;
+
     private:
 
         /** The Vulkan instance */
@@ -48,6 +54,19 @@ namespace Fling
         std::vector<const char*> GetRequiredExtensions();
 
         bool CheckValidationLayerSupport();
+
+        /**
+         * All available physical VK devices on this device.
+         */
+        std::vector<VkPhysicalDevice> GetAllAvailableDevices() const;
+
+        /**
+		 * Choose the best available physical device on this machine favoring discrete GPU's and
+		 * those who match all instance extensions
+		 */
+		static VkPhysicalDevice ChooseBestPhyscialDevice(
+            std::vector<VkPhysicalDevice>& t_AvailableDevices,
+            const std::vector<const char*>& EnabledExtensiions);
 
 #if FLING_DEBUG
         // Debug messenger callbacks ---------------------------
