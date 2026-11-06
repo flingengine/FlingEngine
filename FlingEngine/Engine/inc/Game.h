@@ -70,9 +70,14 @@ namespace Fling
         virtual void OnStartGame(entt::registry& t_Reg) = 0;
 
 		/**
-		* Update is called every frame. Call any system updates for your gameplay systems inside of here
-		*/
-		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
+		 * Called once per frame during play, after the fixed system ticks. Optional and
+		 * legacy: put gameplay in systems (RegisterSystems) instead.
+		 */
+		virtual void Update(entt::registry& t_Reg, float DeltaTime)
+		{
+			(void)t_Reg;
+			(void)DeltaTime;
+		}
 
         /**
          * Called by the World when play stops, before the World resets its entities.

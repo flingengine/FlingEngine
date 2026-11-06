@@ -26,39 +26,19 @@ namespace Sandbox
 		 */
 		void OnStartGame(entt::registry& t_Reg) override final;
 
-		/**
-		* Update is called every frame. Call any system updates for your gameplay systems inside of here
-		*/
-		void Update(entt::registry& t_Reg, float DeltaTime) override final;
-
         /** Called when play stops. Resets the state that is not in the registry. */
         void OnStopGame(entt::registry& t_Reg) override final;
 
 		void Shutdown(entt::registry& t_Reg) override final;
-
-		/**
-		 * Callback for when the user has given input that shows they want to exit
-		 */
-		void OnQuitPressed();
 
 		/* Creates a 3D array of meshes */
 		void GenerateTestMeshes(entt::registry& t_Reg);
 
 		void LightingTest(entt::registry& t_Reg);
 
-		/* Toggles the visibility of the cursor */
-		void ToggleCursorVisibility();
-
 	private:
 
 		void AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
 
-		void OnTestSpawn();
-
-        /** Puts the per-play member state back to its start values */
-        void ResetPlayState();
-
-        /** The X position of the last sphere from OnTestSpawn */
-        float m_TestSpawnX = -1.0f;
     };
 }	// namespace Sandbox

@@ -1,5 +1,6 @@
 #include "Components/Transform.h"
 #include "DefaultPhysicsProvider.h"
+#include "Ecs/detail/EnttBridge.h"
 #include "Physics.h"
 #include "Threading/ThreadManager.h"
 
@@ -42,7 +43,7 @@ namespace
         std::vector<std::pair<entt::entity, entt::entity>> Pairs;
         for (const ContactEvent& Event : t_Reg.ctx<ContactEvents>().m_Contacts)
         {
-            Pairs.emplace_back(Event.m_A, Event.m_B);
+            Pairs.emplace_back(Detail::ToEntt(Event.m_A), Detail::ToEntt(Event.m_B));
         }
         return Pairs;
     }
@@ -80,7 +81,9 @@ namespace
     {
         for (const ContactEvent& Event : t_Reg.ctx<ContactEvents>().m_Contacts)
         {
-            if ((Event.m_A == t_A && Event.m_B == t_B) || (Event.m_A == t_B && Event.m_B == t_A))
+            const entt::entity EventA = Detail::ToEntt(Event.m_A);
+            const entt::entity EventB = Detail::ToEntt(Event.m_B);
+            if ((EventA == t_A && EventB == t_B) || (EventA == t_B && EventB == t_A))
             {
                 return true;
             }
@@ -188,7 +191,7 @@ TEST_CASE("Provider: impulse changes velocity by impulse / mass", "[physics][pro
     Physics::ApplyImpulse(Reg, Box, glm::vec3(4.0f, 0.0f, 0.0f));
     Physics::Tick(Reg, Dt);
 
-    REQUIRE(Reg.ctx<PhysicsCommands>().m_Commands.empty());
+    REQUIRE(Reg.ctx<PhysicsCommands>().Requests.empty());
     const glm::vec3 Vel = Reg.get<RigidBody>(Box).m_Velocity;
     REQUIRE(Vel.x == Catch::Approx(2.0f).epsilon(1e-3));
     REQUIRE(Vel.y == Catch::Approx(0.0f).margin(1e-4f));

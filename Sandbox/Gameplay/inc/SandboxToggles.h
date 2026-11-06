@@ -17,3 +17,13 @@ struct SandboxToggles
     bool Rotate = false;
     bool MoveLights = false;
 };
+
+/** Singleton component: where the next test sphere goes. The Sandbox.TestSpawn system owns it. */
+struct SandboxSpawnState
+{
+    static constexpr Fling::ComponentInfo Component{
+        .Name = "SandboxSpawnState", .Kind = Fling::ComponentKind::Singleton, .Transient = true};
+
+    /** The X position of the last sphere. Each spawn goes 1 unit further left. */
+    float LastX = -1.0f;
+};

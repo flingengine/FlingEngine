@@ -297,6 +297,19 @@ namespace Fling
 
 			Input::Get().EndTick();
 
+			// Requests from systems that only the application can carry out
+			for (const AppRequest Request : m_World->TakeAppRequests())
+			{
+				if (Request == AppRequest::ToggleCursor && !m_Options.NullRender)
+				{
+					FlingWindow* Window = VulkanApp::Get().GetCurrentWindow();
+					if (Window)
+					{
+						Window->SetMouseVisible(!Window->GetMouseVisible());
+					}
+				}
+			}
+
 			if(m_World->ShouldQuit())
 			{
 				F_LOG_TRACE("World should quit! Exiting engine loop...");

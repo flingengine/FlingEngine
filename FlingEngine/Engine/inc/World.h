@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Components/AppRequests.h"
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
@@ -13,6 +14,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace Fling
 {
@@ -48,6 +51,12 @@ namespace Fling
 
 		/** The schedule that Init built. Null before Init. */
 		const Schedule* GetSchedule() const;
+
+		/**
+		 * The AppRequests from this frame's systems that the application handles (all but
+		 * Quit, which the world handles). Clears the list.
+		 */
+		std::vector<AppRequest> TakeAppRequests() { return std::exchange(m_AppRequestsForApp, {}); }
 
 		/** The schedule errors from Init. Empty if the schedule is valid. */
 		const std::string& GetScheduleErrors() const { return m_ScheduleErrors; }
@@ -208,6 +217,12 @@ namespace Fling
 
 		/** @see GetScheduleErrors */
 		std::string m_ScheduleErrors;
+
+		/** @see TakeAppRequests */
+		std::vector<AppRequest> m_AppRequestsForApp;
+
+		/** Take the AppRequests queue: handle Quit, and keep the rest for the application. */
+		void ProcessAppRequests();
 
 		/** The game will allow users to specify their own update/read/write functions */
 		Fling::Game* m_Game = nullptr;

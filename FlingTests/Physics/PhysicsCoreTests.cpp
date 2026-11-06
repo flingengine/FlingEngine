@@ -1,4 +1,5 @@
 #include "Components/Transform.h"
+#include "Ecs/detail/EnttBridge.h"
 #include "Physics.h"
 
 #include <catch2/catch_all.hpp>
@@ -219,7 +220,7 @@ TEST_CASE("Physics changes forces to impulses of force * tick time", "[physics]"
     // Requests made in a tick that runs no step wait for the next step
     Physics::ApplyForce(Reg, Box, glm::vec3(60.0f, 0.0f, 0.0f));
     Physics::Tick(Reg, Dt * 0.25f);
-    REQUIRE(Reg.ctx<PhysicsCommands>().m_Commands.empty());
+    REQUIRE(Reg.ctx<PhysicsCommands>().Requests.empty());
     REQUIRE(Log->m_Commands.empty());
 
     Physics::ApplyImpulse(Reg, Box, glm::vec3(0.0f, 2.0f, 0.0f));
@@ -275,14 +276,14 @@ TEST_CASE("Physics sorts and merges contacts, whatever order the provider gives"
     {
         // One event for each pair, in pair order, with the largest impulse
         REQUIRE(Events.size() == 3);
-        REQUIRE(Events[0].m_A == A);
-        REQUIRE(Events[0].m_B == B);
+        REQUIRE(Events[0].m_A == Detail::FromEntt(A));
+        REQUIRE(Events[0].m_B == Detail::FromEntt(B));
         REQUIRE(Events[0].m_Impulse == 3.0f);
         REQUIRE(Events[0].m_Point.x == 2.0f);
-        REQUIRE(Events[1].m_A == A);
-        REQUIRE(Events[1].m_B == C);
-        REQUIRE(Events[2].m_A == B);
-        REQUIRE(Events[2].m_B == C);
+        REQUIRE(Events[1].m_A == Detail::FromEntt(A));
+        REQUIRE(Events[1].m_B == Detail::FromEntt(C));
+        REQUIRE(Events[2].m_A == Detail::FromEntt(B));
+        REQUIRE(Events[2].m_B == Detail::FromEntt(C));
     }
 }
 

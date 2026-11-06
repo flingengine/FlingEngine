@@ -101,6 +101,7 @@ namespace Fling
                 ComputePhaseReach();
                 CheckFlushPhases();
                 AddInferredEdges();
+                ReportUnorderedConflicts();
                 CheckFixedAndFrameWrites();
 
                 std::array<std::vector<Index>, UpdateRateCount> phaseOrder;
@@ -472,14 +473,14 @@ namespace Fling
                         {
                             if (sameWorlds)
                             {
-                                ReportConflict(ScheduleErrorKind::WriteConflict, a, b, ea.Name);
+                                m_PendingConflicts.push_back({ScheduleErrorKind::WriteConflict, a, b, ea.Name});
                             }
                         }
                         else if (ea.Mode == AccessMode::Consume && eb.Mode == AccessMode::Consume)
                         {
                             if (sameWorlds)
                             {
-                                ReportConflict(ScheduleErrorKind::ConsumeConflict, a, b, ea.Name);
+                                m_PendingConflicts.push_back({ScheduleErrorKind::ConsumeConflict, a, b, ea.Name});
                             }
                         }
                         else if (ea.Mode == AccessMode::Write && eb.Mode == AccessMode::Read)
@@ -509,6 +510,68 @@ namespace Fling
             }
 
             std::string WhereIs(const Index system) const { return "phase " + PhaseName(m_SystemPhase[system]); }
+
+            /**
+             * A conflict is an error only if nothing orders the two systems: no chain of
+             * edges and phase order from one to the other. An order through a third
+             * system counts, for example A before B and B before C orders A and C.
+             */
+            void ReportUnorderedConflicts()
+            {
+                if (m_PendingConflicts.empty())
+                {
+                    return;
+                }
+
+                std::vector<std::vector<Index>> next(Count());
+                for (const ScheduleEdge& edge : m_Result.Value.Edges)
+                {
+                    next[edge.From].push_back(edge.To);
+                }
+                for (Index a = 0; a < Count(); ++a)
+                {
+                    for (Index b = 0; b < Count(); ++b)
+                    {
+                        if (a != b && HasPhase(a) && HasPhase(b) && RateOfSystem(a) == RateOfSystem(b) &&
+                            m_SystemPhase[a] != m_SystemPhase[b] && m_Reach[m_SystemPhase[a]][m_SystemPhase[b]])
+                        {
+                            next[a].push_back(b);
+                        }
+                    }
+                }
+
+                const auto reaches = [&](const Index from, const Index to)
+                {
+                    std::vector<bool> seen(Count(), false);
+                    std::vector<Index> stack{from};
+                    while (!stack.empty())
+                    {
+                        const Index at = stack.back();
+                        stack.pop_back();
+                        for (const Index n : next[at])
+                        {
+                            if (n == to)
+                            {
+                                return true;
+                            }
+                            if (!seen[n])
+                            {
+                                seen[n] = true;
+                                stack.push_back(n);
+                            }
+                        }
+                    }
+                    return false;
+                };
+
+                for (const PendingConflict& conflict : m_PendingConflicts)
+                {
+                    if (!reaches(conflict.A, conflict.B) && !reaches(conflict.B, conflict.A))
+                    {
+                        ReportConflict(conflict.Kind, conflict.A, conflict.B, conflict.TypeName);
+                    }
+                }
+            }
 
             void ReportConflict(const ScheduleErrorKind kind, const Index a, const Index b, const char* typeName)
             {
@@ -913,6 +976,15 @@ namespace Fling
             std::map<std::string_view, Index> m_SystemByName;
             std::set<std::pair<Index, Index>> m_Ordered;
             std::set<std::pair<Index, Index>> m_EdgeSet;
+
+            struct PendingConflict
+            {
+                ScheduleErrorKind Kind;
+                Index A;
+                Index B;
+                const char* TypeName;
+            };
+            std::vector<PendingConflict> m_PendingConflicts;
         };
 
         std::string Pad(std::string text, const std::size_t width)

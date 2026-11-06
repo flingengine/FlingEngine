@@ -170,6 +170,21 @@ TEST_CASE("Two writers with no order are an error", "[ecs][schedule]")
     REQUIRE(message.find(".After = \"Test.Mover\" to Test.Rotator") != std::string::npos);
 }
 
+TEST_CASE("An order through a third system orders two writers", "[ecs][schedule]")
+{
+    // Spawn before Rotator, and Mover after Rotator: Spawn and Mover are ordered too
+    FakeSystems systems;
+    systems.Add(SystemInfo{.Name = "Test.Spawn", .Phase = Phases::Simulation, .Before = "Test.Rotator"},
+                {{"Transform", W}});
+    systems.Add(Sim("Test.Rotator"), {{"Transform", W}});
+    systems.Add(SystemInfo{.Name = "Test.Mover", .Phase = Phases::Simulation, .After = "Test.Rotator"},
+                {{"Transform", W}});
+
+    const ScheduleResult result = systems.Build();
+    REQUIRE(result.ErrorReport() == "");
+    REQUIRE(RunNames(result.Value) == std::vector<std::string>{"Test.Spawn", "Test.Rotator", "Test.Mover"});
+}
+
 TEST_CASE("Two writers in worlds that never meet are not an error", "[ecs][schedule]")
 {
     FakeSystems systems;

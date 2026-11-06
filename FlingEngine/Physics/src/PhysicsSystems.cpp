@@ -1,4 +1,5 @@
 #include "Components/Transform.h"
+#include "Ecs/detail/EnttBridge.h"
 #include "Physics.h"
 
 #include <algorithm>
@@ -166,15 +167,16 @@ namespace Fling
                                  PhysicsCommands& t_Commands,
                                  float t_DeltaTime)
         {
-            for (const PhysicsCommand& Command : t_Commands.m_Commands)
+            for (const PhysicsCommand& Command : t_Commands.Requests)
             {
-                if (!t_Reg.valid(Command.m_Entity) || !t_Reg.has<PhysicsBody>(Command.m_Entity))
+                const entt::entity Target = Detail::ToEntt(Command.m_Entity);
+                if (Target == entt::null || !t_Reg.valid(Target) || !t_Reg.has<PhysicsBody>(Target))
                 {
                     continue;
                 }
 
                 PhysicsBodyCommand Out;
-                Out.m_Body = t_Reg.get<PhysicsBody>(Command.m_Entity).m_Id;
+                Out.m_Body = t_Reg.get<PhysicsBody>(Target).m_Id;
                 switch (Command.m_Type)
                 {
                 case PhysicsCommandType::Force:
@@ -197,7 +199,7 @@ namespace Fling
                 t_World.m_PendingCommands.push_back(Out);
             }
 
-            t_Commands.m_Commands.clear();
+            t_Commands.Requests.clear();
         }
 
         /**
@@ -305,8 +307,8 @@ namespace Fling
                 }
 
                 ContactEvent Event;
-                Event.m_A = FromUserData(Contact.m_UserDataA);
-                Event.m_B = FromUserData(Contact.m_UserDataB);
+                Event.m_A = Detail::FromEntt(FromUserData(Contact.m_UserDataA));
+                Event.m_B = Detail::FromEntt(FromUserData(Contact.m_UserDataB));
                 Event.m_Point = Contact.m_Point;
                 Event.m_Impulse = Contact.m_Impulse;
                 t_Events.m_Contacts.push_back(Event);

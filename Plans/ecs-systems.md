@@ -1310,8 +1310,29 @@ Each item is one PR off `main`, green on all CI platforms.
      it, the toggles take effect on the same tick again: the replay gives
      the same checksum as the code before item 6, digit for digit.
 
-After item 6, `ecs-plan.md` continues at Phase B (the `World` facade
-removes `g_Registry`) and Phase C (`TypeBuilder` reflection).
+**After item 6: the rest of Sandbox.** Sandbox has no `Game::Update` now, and
+`Game::Update` is optional in the base class (a default empty function):
+
+- `Sandbox.AppKeys` appends `Quit` and `ToggleCursor` to the engine's
+  `AppRequests` queue (`Engine/inc/Components/AppRequests.h`). `World`
+  handles `Quit` (stop play in the editor, quit otherwise) and passes the rest
+  to `Engine::Tick` (`World::TakeAppRequests`), which owns the window.
+- `Sandbox.BallControl` appends to `PhysicsCommands`, which is a Queue
+  component now (its list is `Requests`). `PhysicsCommand` and `ContactEvent`
+  hold `Fling::Entity`. `Physics.cpp` converts to EnTT.
+- `Sandbox.FirstHit` reads `ContactEvents` (a singleton component now) and
+  owns `SandboxPhysicsState`. The physics test level logs the hit on the same
+  tick as before (155).
+- `Sandbox.TestSpawn` spawns the test sphere and owns `SandboxSpawnState`.
+- A write conflict is an error only if no chain of edges or phase order
+  orders the two systems. `TestSpawn` (before `Rotator`) and `Mover` (after
+  `Rotator`) both write `Transform`, and that is ordered.
+- Still outside the schedule: `Physics::Tick`, once per frame from
+  `Engine::Tick`, and `Game::OnStartGame` (the lighting test grid, which uses
+  the global `Random`).
+
+Next, `ecs-plan.md` continues at Phase B (the `World` facade removes
+`g_Registry`) and Phase C (`TypeBuilder` reflection).
 
 ## 7. Questions for you
 

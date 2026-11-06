@@ -1,4 +1,5 @@
 #include "ComponentTypeRegistry.h"
+#include "Ecs/detail/EnttBridge.h"
 #include "Logger.h"
 #include "Physics.h"
 
@@ -22,10 +23,10 @@ namespace Fling
             }
 
             PhysicsCommand Command;
-            Command.m_Entity = t_Entity;
+            Command.m_Entity = Detail::FromEntt(t_Entity);
             Command.m_Type = t_Type;
             Command.m_Value = t_Value;
-            Commands->m_Commands.push_back(Command);
+            Commands->Requests.push_back(Command);
         }
     } // namespace
 

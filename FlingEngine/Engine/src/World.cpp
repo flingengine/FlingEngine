@@ -76,6 +76,9 @@ namespace Fling
 			}
 		}
 
+		// Systems append requests for the application. The world takes them each frame.
+		m_Registry.set<AppRequests>();
+
 		// Each system makes its singletons before the first level loads
 		m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Registry, m_RunnerConfig);
 		m_Runner->SetTickInputSource(m_TickInputSource);
@@ -221,6 +224,7 @@ namespace Fling
         if (m_Runner)
         {
             m_Runner->RunFixed(RealDelta, Role);
+            ProcessAppRequests();
         }
 
         if(bPlaying)
@@ -239,6 +243,35 @@ namespace Fling
         {
             m_Runner->RunFrame(RealDelta, Role);
         }
+	}
+
+	void World::ProcessAppRequests()
+	{
+		AppRequests* Queue = m_Registry.try_ctx<AppRequests>();
+		if (!Queue)
+		{
+			return;
+		}
+
+		for (const AppRequest Request : std::exchange(Queue->Requests, {}))
+		{
+			if (Request != AppRequest::Quit)
+			{
+				m_AppRequestsForApp.push_back(Request);
+			}
+			else if (m_GameQuitStopsPlay)
+			{
+				// Editor play: stop play, and keep the editor open
+				if (m_CurrentState == WorldState::Playing || m_CurrentState == WorldState::Paused)
+				{
+					m_PendingRequest = PlayRequest::Stop;
+				}
+			}
+			else
+			{
+				m_ShouldQuit = true;
+			}
+		}
 	}
 
 	bool World::OutputLevelFile(const std::string& t_LevelToLoad)

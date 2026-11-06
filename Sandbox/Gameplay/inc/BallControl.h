@@ -26,9 +26,12 @@ struct BallControl
     }
 };
 
-/** Singleton component: Sandbox state for the physics test level. */
+/** Singleton component: Sandbox state for the physics test level. The Sandbox.FirstHit system owns it. */
 struct SandboxPhysicsState
 {
+    static constexpr Fling::ComponentInfo Component{
+        .Name = "SandboxPhysicsState", .Kind = Fling::ComponentKind::Singleton, .Transient = true};
+
     /** True after the first contact between a BallControl body and another moving body. */
     bool m_HasLoggedHit = false;
 
