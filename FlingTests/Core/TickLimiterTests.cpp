@@ -22,6 +22,18 @@ namespace
 {
     using Clock = std::chrono::steady_clock;
 
+    /**
+     * Wait until t_Time without the OS sleep. On Windows a sleep can wake a full
+     * system tick (15.6 ms) late, which would make these "late by a part of a
+     * period" cases late by more than they say.
+     */
+    void SpinUntil(Clock::time_point t_Time)
+    {
+        while (Clock::now() < t_Time)
+        {
+        }
+    }
+
     /** Counts ticks, and opens Done at the tick t_TickCount. */
     class FixedRateRunnable : public CommandRunnable
     {
@@ -81,7 +93,7 @@ TEST_CASE("TickLimiter keeps its schedule after a slightly late tick", "[Threadi
     REQUIRE(Limiter.WaitForNextTick());
 
     // The Tick takes until a quarter period after tick 2 is due: tick 2 runs at once
-    std::this_thread::sleep_until(Start + Rate.Period * 2 + Rate.Period / 4);
+    SpinUntil(Start + Rate.Period * 2 + Rate.Period / 4);
     const Clock::time_point LateCall = Clock::now();
     REQUIRE(Limiter.WaitForNextTick());
     REQUIRE(Clock::now() - LateCall < Rate.Period);
@@ -101,7 +113,7 @@ TEST_CASE("TickLimiter starts the schedule again after a very late tick", "[Thre
     REQUIRE(Limiter.WaitForNextTick());
 
     // Tick 2 starts three quarters of a period late
-    std::this_thread::sleep_until(Start + Rate.Period * 2 + Rate.Period * 3 / 4);
+    SpinUntil(Start + Rate.Period * 2 + Rate.Period * 3 / 4);
     REQUIRE(Limiter.WaitForNextTick());
     const Clock::time_point LateReturn = Clock::now();
 
