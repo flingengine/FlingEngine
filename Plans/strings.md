@@ -326,8 +326,46 @@ the current language.
     source entries each one is missing.
   - Both run with no window and exit.
 - **Not built yet:** gathering keys and source text from code, plural rules,
-  number and date formats per language, fonts for other scripts, and right-to-left
-  text.
+  number and date formats per language, and fonts for other scripts.
+
+### Right-to-left languages
+
+Arabic, Hebrew, Persian, Urdu, and some others are read from right to left.
+Supporting them has two halves.
+
+**Built (data and localization):**
+
+- **Each language has a direction.** A language folder can have a
+  `_language.json` that is not a table: `{"DisplayName": "العربية",
+  "Direction": "RightToLeft"}`. Without it, `Localization::DefaultDirectionFor`
+  uses the language code: `ar`, `he`, `fa`, `ur`, `ps`, `yi`, `dv`, `sd`, `ug`,
+  and `ckb` are right to left, also with a region (`ar-EG`). The sample `ar` table
+  has one.
+- **The current direction is global.** When the active `Localization` changes
+  language, it calls `SetDisplayTextDirection`. UI reads
+  `GetDisplayTextDirection()` to mirror its layout. The startup log shows it.
+- **Text is in logical order.** Files, CSV, and `Resolve` hold text in the order
+  in which it is read. Nothing reverses text: reordering for display is the job of
+  the renderer.
+- **Arguments are isolated.** When the current language is right to left,
+  `DisplayText::Format` puts each argument between U+2068 FIRST STRONG ISOLATE and
+  U+2069 POP DIRECTIONAL ISOLATE. A left-to-right argument (a player name, a
+  number) then does not change the order of the right-to-left sentence around it.
+  In left-to-right languages no marks are added, so a renderer with no
+  bidirectional support does not draw them as boxes.
+
+**Not built (rendering and UI):** these belong to the text renderer and the game
+UI module, which do not exist yet.
+
+- The Unicode bidirectional algorithm (UAX #9) to reorder each line for display,
+  and shaping (for example HarfBuzz), which joins Arabic letters into their
+  connected forms.
+- Mirrored layout: right alignment, and menus, progress bars, and arrows from right
+  to left.
+- Cursor movement and selection in text fields.
+- The developer UI (ImGui) cannot do any of these. Right-to-left text in it shows
+  in the wrong order and with unjoined letters, which is acceptable for developer
+  tools only.
 
 ## Assets
 

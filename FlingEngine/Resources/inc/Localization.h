@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Strings/DisplayText.h"
 #include "Strings/Name.h"
 #include "Strings/String.h"
 #include "Threading/Mutex.h"
@@ -24,6 +25,16 @@ namespace Fling
         String SourceText;
     };
 
+    /** A language and how it is shown. */
+    struct LanguageInfo
+    {
+        /** The language code, which is also its folder name, for example "fr" or "ar". */
+        Name Code;
+        /** The name of the language in that language, for a language menu. Empty if not set. */
+        String DisplayName;
+        TextDirection Direction = TextDirection::LeftToRight;
+    };
+
     /**
      * The string tables of every language, and the current language. DisplayText
      * resolves table entries through the active Localization (see SetActive).
@@ -36,6 +47,15 @@ namespace Fling
      *
      * The source language has every key. The other languages translate them. A lookup
      * uses the current language, then the source language.
+     *
+     * A language folder can also have a "_language.json" file, which is not a table:
+     *
+     *     Localization/ar/_language.json    {"DisplayName": "...", "Direction": "RightToLeft"}
+     *
+     * Without it, the direction comes from the language code (see DefaultDirectionFor).
+     * The direction of the current language goes to SetDisplayTextDirection, so UI can
+     * mirror its layout. Text is always stored in logical order, never reversed: the
+     * renderer applies the Unicode bidirectional algorithm.
      *
      * Translators work in CSV: ExportCsv writes one row per entry, with a column per
      * language, and ImportCsv reads that file back.
@@ -73,6 +93,20 @@ namespace Fling
 
         /** The languages that have entries in memory, source language first. */
         std::vector<Name> GetLoadedLanguages() const;
+
+        /** The display name and direction of a language. */
+        LanguageInfo GetLanguageInfo(Name t_Language) const;
+
+        /** The direction of the current language. */
+        TextDirection GetTextDirection() const;
+
+        /**
+         * The direction of a language code with no "_language.json": RightToLeft for
+         * Arabic, Hebrew, Persian, Urdu, Pashto, Yiddish, Dhivehi, Sindhi, Uyghur, and
+         * Central Kurdish, otherwise LeftToRight. A region or script after "-" or "_"
+         * ("ar-EG") does not change it.
+         */
+        static TextDirection DefaultDirectionFor(Name t_Language);
 
         /**
          * A number that changes each time the current language or any text changes. UI
@@ -135,6 +169,13 @@ namespace Fling
         mutable SharedMutex m_Mutex;
         std::unordered_map<Name, Language> m_Languages FLING_GUARDED_BY(m_Mutex);
         Name m_Language FLING_GUARDED_BY(m_Mutex);
+        std::unordered_map<Name, LanguageInfo> m_Infos FLING_GUARDED_BY(m_Mutex);
+
+        /** The file in a language folder that holds its LanguageInfo, not a table. */
+        static constexpr const char* LanguageInfoFile = "_language.json";
+
+        /** Sends the direction of the current language to DisplayText, if this is the active Localization. */
+        void PublishDirection() const;
 
         std::atomic<std::uint64_t> m_Revision{0};
     };

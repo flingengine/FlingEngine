@@ -29,6 +29,11 @@ namespace Fling
     namespace
     {
         std::atomic<DisplayTextTableResolver> g_TableResolver {nullptr};
+        std::atomic<TextDirection> g_Direction {TextDirection::LeftToRight};
+
+        /** U+2068 FIRST STRONG ISOLATE and U+2069 POP DIRECTIONAL ISOLATE, in UTF-8. */
+        constexpr StringView FirstStrongIsolate = "\xE2\x81\xA8";
+        constexpr StringView PopDirectionalIsolate = "\xE2\x81\xA9";
 
         /** Appends the resolved text of the argument with this key, or returns false. */
         bool AppendArg(String& t_Out, const StringView t_Key, const std::vector<DisplayTextArg>& t_Args)
@@ -37,7 +42,16 @@ namespace Fling
             {
                 if (Arg.Key.ToView() == t_Key)
                 {
-                    t_Out += Arg.Value.Resolve();
+                    if (g_Direction.load(std::memory_order_acquire) == TextDirection::RightToLeft)
+                    {
+                        t_Out += FirstStrongIsolate;
+                        t_Out += Arg.Value.Resolve();
+                        t_Out += PopDirectionalIsolate;
+                    }
+                    else
+                    {
+                        t_Out += Arg.Value.Resolve();
+                    }
                     return true;
                 }
             }
@@ -92,6 +106,16 @@ namespace Fling
     void SetDisplayTextTableResolver(const DisplayTextTableResolver t_Resolver)
     {
         g_TableResolver.store(t_Resolver, std::memory_order_release);
+    }
+
+    void SetDisplayTextDirection(const TextDirection t_Direction)
+    {
+        g_Direction.store(t_Direction, std::memory_order_release);
+    }
+
+    TextDirection GetDisplayTextDirection()
+    {
+        return g_Direction.load(std::memory_order_acquire);
     }
 
     DisplayText DisplayText::FromTable(const Name t_Table, const Name t_Key, const StringView t_SourceText)

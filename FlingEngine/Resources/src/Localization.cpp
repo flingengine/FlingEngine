@@ -160,6 +160,9 @@ namespace Fling
 
         // Read the files before the lock, so lookups do not wait for the disk.
         Language Loaded;
+        LanguageInfo Info;
+        Info.Code = t_Language;
+        Info.Direction = DefaultDirectionFor(t_Language);
         for (const std::filesystem::directory_entry& Entry : std::filesystem::directory_iterator(Folder, Error))
         {
             if (!Entry.is_regular_file() || Entry.path().extension() != ".json")
@@ -175,6 +178,25 @@ namespace Fling
                 continue;
             }
 
+            if (Entry.path().filename() == LanguageInfoFile)
+            {
+                Info.DisplayName = Doc.GetString("DisplayName");
+                const String Direction = Doc.GetString("Direction");
+                if (Direction == "RightToLeft")
+                {
+                    Info.Direction = TextDirection::RightToLeft;
+                }
+                else if (Direction == "LeftToRight")
+                {
+                    Info.Direction = TextDirection::LeftToRight;
+                }
+                else if (!Direction.empty())
+                {
+                    F_LOG_ERROR("{}: Direction must be LeftToRight or RightToLeft, not '{}'", FilePath, Direction);
+                }
+                continue;
+            }
+
             Table& Entries = Loaded[Name(PathToUtf8(Entry.path().stem()))];
             for (const std::string& Key : Doc.Keys())
             {
@@ -185,8 +207,10 @@ namespace Fling
         {
             WriteScopedLock Lock(m_Mutex);
             m_Languages[t_Language] = std::move(Loaded);
+            m_Infos[t_Language] = std::move(Info);
         }
         BumpRevision();
+        PublishDirection();
         return true;
     }
 
@@ -209,6 +233,7 @@ namespace Fling
             m_Language = t_Language;
         }
         BumpRevision();
+        PublishDirection();
         return true;
     }
 
@@ -216,6 +241,56 @@ namespace Fling
     {
         ReadScopedLock Lock(m_Mutex);
         return m_Language;
+    }
+
+    LanguageInfo Localization::GetLanguageInfo(const Name t_Language) const
+    {
+        {
+            ReadScopedLock Lock(m_Mutex);
+            const auto Found = m_Infos.find(t_Language);
+            if (Found != m_Infos.end())
+            {
+                return Found->second;
+            }
+        }
+
+        LanguageInfo Info;
+        Info.Code = t_Language;
+        Info.Direction = DefaultDirectionFor(t_Language);
+        return Info;
+    }
+
+    TextDirection Localization::GetTextDirection() const
+    {
+        return GetLanguageInfo(GetLanguage()).Direction;
+    }
+
+    TextDirection Localization::DefaultDirectionFor(const Name t_Language)
+    {
+        StringView Code = t_Language.ToView();
+        const std::size_t Separator = Code.find_first_of("-_");
+        if (Separator != StringView::npos)
+        {
+            Code = Code.substr(0, Separator);
+        }
+
+        constexpr StringView RightToLeftCodes[] = {"ar", "he", "iw", "fa", "ur", "ps", "yi", "dv", "sd", "ug", "ckb"};
+        for (const StringView RightToLeft : RightToLeftCodes)
+        {
+            if (Code == RightToLeft)
+            {
+                return TextDirection::RightToLeft;
+            }
+        }
+        return TextDirection::LeftToRight;
+    }
+
+    void Localization::PublishDirection() const
+    {
+        if (GetActive().get() == this)
+        {
+            SetDisplayTextDirection(GetTextDirection());
+        }
     }
 
     std::vector<Name> Localization::FindLanguagesOnDisk() const
@@ -509,6 +584,9 @@ namespace Fling
             g_Active = std::move(t_Localization);
         }
         SetDisplayTextTableResolver(bHasActive ? &ResolveWithActive : nullptr);
+
+        const std::shared_ptr<Localization> Active = GetActive();
+        SetDisplayTextDirection(Active ? Active->GetTextDirection() : TextDirection::LeftToRight);
     }
 
     std::shared_ptr<Localization> Localization::GetActive()

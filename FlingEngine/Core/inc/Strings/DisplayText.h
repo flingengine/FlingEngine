@@ -23,6 +23,22 @@ namespace Fling
     /** Sets the resolver that DisplayText uses for table entries. nullptr removes it. */
     CORE_API void SetDisplayTextTableResolver(DisplayTextTableResolver t_Resolver);
 
+    /** The direction in which a language is read. */
+    enum class TextDirection : std::uint8_t
+    {
+        LeftToRight,
+        RightToLeft,
+    };
+
+    /**
+     * Sets the direction of the current language. The localization service sets it
+     * when the language changes. UI reads it to mirror its layout.
+     */
+    CORE_API void SetDisplayTextDirection(TextDirection t_Direction);
+
+    /** The direction of the current language. LeftToRight until a language sets it. */
+    CORE_API TextDirection GetDisplayTextDirection();
+
     /**
      * Text that the player sees. UI code takes only this type for visible text.
      *
@@ -60,6 +76,14 @@ namespace Fling
          * A pattern with named arguments, such as "{Count} enemies left". Each {Key} in
          * the resolved pattern is replaced with the resolved argument that has that key.
          * A key with no argument is kept as it is. "{{" and "}}" give "{" and "}".
+         *
+         * Text is always in logical order (the order in which it is read), never
+         * reversed. When the current language is RightToLeft, each argument is put
+         * between the Unicode marks FIRST STRONG ISOLATE (U+2068) and POP DIRECTIONAL
+         * ISOLATE (U+2069). Then a left-to-right argument, such as a player name or a
+         * number, does not change the order of the right-to-left text around it. A
+         * renderer that does the Unicode bidirectional algorithm does not draw these
+         * marks.
          */
         static DisplayText Format(const DisplayText& t_Pattern, std::initializer_list<DisplayTextArg> t_Args);
 

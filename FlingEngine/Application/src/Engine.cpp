@@ -37,7 +37,8 @@ namespace Fling
 			? m_Options.Language
 			: FlingConfig::GetString("Localization", "Language", std::string(SourceLanguage.ToView()));
 		Loc->SetLanguage(Name(Language));
-		F_LOG_TRACE("Language: {} (source {})", Loc->GetLanguage(), SourceLanguage);
+		F_LOG_TRACE("Language: {} (source {}), {}", Loc->GetLanguage(), SourceLanguage,
+			Loc->GetTextDirection() == TextDirection::RightToLeft ? "right to left" : "left to right");
 		Localization::SetActive(Loc);
 
 		if (!m_Options.LocImport.empty())

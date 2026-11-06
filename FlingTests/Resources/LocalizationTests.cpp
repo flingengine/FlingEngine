@@ -245,3 +245,109 @@ TEST_CASE("DisplayText resolves table entries through the active Localization", 
     CHECK(Enemies.Resolve() == "Il reste 3 ennemis");
     CHECK(KeyOnly.Resolve() == "Menu.Unknown");
 }
+
+TEST_CASE("Localization knows which languages read right to left", "[Localization][RightToLeft]")
+{
+    CHECK(Localization::DefaultDirectionFor("en"_name) == TextDirection::LeftToRight);
+    CHECK(Localization::DefaultDirectionFor("fr"_name) == TextDirection::LeftToRight);
+    CHECK(Localization::DefaultDirectionFor("ja"_name) == TextDirection::LeftToRight);
+    CHECK(Localization::DefaultDirectionFor("ar"_name) == TextDirection::RightToLeft);
+    CHECK(Localization::DefaultDirectionFor("he"_name) == TextDirection::RightToLeft);
+    CHECK(Localization::DefaultDirectionFor("fa"_name) == TextDirection::RightToLeft);
+    CHECK(Localization::DefaultDirectionFor("ur"_name) == TextDirection::RightToLeft);
+    CHECK(Localization::DefaultDirectionFor("ar-EG"_name) == TextDirection::RightToLeft);
+    CHECK(Localization::DefaultDirectionFor("he_IL"_name) == TextDirection::RightToLeft);
+    // A code that only starts with the letters of a right-to-left code is not one.
+    CHECK(Localization::DefaultDirectionFor("arn"_name) == TextDirection::LeftToRight);
+}
+
+TEST_CASE("_language.json sets the name and direction of a language, and is not a table", "[Localization][RightToLeft]")
+{
+    InitLogger();
+    TempTables Files("LanguageInfo");
+    // "Start" in Hebrew, and "Hebrew" in Hebrew, as UTF-8 bytes
+    Files.Write("he", "UI", "{\"Menu.Start\": \"\xD7\x94\xD7\xAA\xD7\x97\xD7\x9C\"}");
+    Files.Write("he", "_language", "{\"DisplayName\": \"\xD7\xA2\xD7\x91\xD7\xA8\xD7\x99\xD7\xAA\"}");
+    // A made-up code that reads right to left only because its file says so
+    Files.Write("xr", "UI", R"({"Menu.Start": "Start"})");
+    Files.Write("xr", "_language", R"({"Direction": "RightToLeft"})");
+
+    Localization Loc(Files.GetRoot(), "en"_name);
+    REQUIRE(Loc.LoadLanguage("he"_name));
+    REQUIRE(Loc.LoadLanguage("xr"_name));
+
+    const LanguageInfo Hebrew = Loc.GetLanguageInfo("he"_name);
+    CHECK(Hebrew.Code == "he"_name);
+    CHECK(Hebrew.DisplayName == "\xD7\xA2\xD7\x91\xD7\xA8\xD7\x99\xD7\xAA");
+    CHECK(Hebrew.Direction == TextDirection::RightToLeft);
+    CHECK(Loc.GetLanguageInfo("xr"_name).Direction == TextDirection::RightToLeft);
+    CHECK(Loc.GetLanguageInfo("fr"_name).Direction == TextDirection::LeftToRight);
+
+    // _language.json is not a table, so it is not exported.
+    CHECK(Loc.FindIn("he"_name, "_language"_name, "DisplayName"_name) == std::nullopt);
+    CHECK(Loc.ExportCsv({"he"_name}).find("_language") == String::npos);
+
+    CHECK(Loc.GetTextDirection() == TextDirection::LeftToRight);
+    REQUIRE(Loc.SetLanguage("he"_name));
+    CHECK(Loc.GetTextDirection() == TextDirection::RightToLeft);
+}
+
+TEST_CASE("Right-to-left text is kept in logical order through files and CSV", "[Localization][RightToLeft]")
+{
+    InitLogger();
+    TempTables Files("RightToLeftOrder");
+    // "ابدأ" ("Start" in Arabic) in logical order: the first letter read is the first byte.
+    const String Arabic = "\xD8\xA7\xD8\xA8\xD8\xAF\xD8\xA3";
+    {
+        Localization Loc(Files.GetRoot(), "en"_name);
+        Loc.SetEntry("ar"_name, "UI"_name, "Menu.Start"_name, Arabic);
+        String Error;
+        REQUIRE(Loc.SaveLanguage("ar"_name, Error));
+
+        const String Csv = Loc.ExportCsv({"ar"_name});
+        CHECK(Csv.find(Arabic) != String::npos);
+
+        Localization FromCsv("unused", "en"_name);
+        REQUIRE(FromCsv.ImportCsv(Csv, Error));
+        CHECK(FromCsv.FindIn("ar"_name, "UI"_name, "Menu.Start"_name) == Arabic);
+    }
+
+    Localization Loaded(Files.GetRoot(), "en"_name);
+    REQUIRE(Loaded.LoadLanguage("ar"_name));
+    CHECK(Loaded.FindIn("ar"_name, "UI"_name, "Menu.Start"_name) == Arabic);
+}
+
+TEST_CASE("Format arguments are isolated when the current language reads right to left",
+          "[Localization][RightToLeft][DisplayText]")
+{
+    const String Isolate = "\xE2\x81\xA8";
+    const String Pop = "\xE2\x81\xA9";
+
+    auto Loc = std::make_shared<Localization>("unused", "en"_name);
+    Loc->SetEntry("en"_name, "Hud"_name, "Score"_name, "{Player}: {Score}");
+    // "النقاط" ("points" in Arabic)
+    Loc->SetEntry(
+        "ar"_name, "Hud"_name, "Score"_name, "{Player} \xD8\xA7\xD9\x84\xD9\x86\xD9\x82\xD8\xA7\xD8\xB7 {Score}");
+    ActiveScope Scope(Loc);
+
+    const DisplayText Score =
+        DisplayText::Format(DisplayText::FromTable("Hud"_name, "Score"_name),
+                            {{"Player"_name, DisplayText::AsInvariant("Ben")}, {"Score"_name, 42}});
+
+    // Left to right: no marks, so a renderer with no bidirectional support shows no boxes.
+    CHECK(GetDisplayTextDirection() == TextDirection::LeftToRight);
+    CHECK(Score.Resolve() == "Ben: 42");
+
+    REQUIRE(Loc->SetLanguage("ar"_name));
+    CHECK(GetDisplayTextDirection() == TextDirection::RightToLeft);
+    CHECK(Score.Resolve() ==
+          Isolate + "Ben" + Pop + " \xD8\xA7\xD9\x84\xD9\x86\xD9\x82\xD8\xA7\xD8\xB7 " + Isolate + "42" + Pop);
+
+    REQUIRE(Loc->SetLanguage("en"_name));
+    CHECK(GetDisplayTextDirection() == TextDirection::LeftToRight);
+
+    // Removing the active Localization goes back to left to right.
+    REQUIRE(Loc->SetLanguage("ar"_name));
+    Localization::SetActive(nullptr);
+    CHECK(GetDisplayTextDirection() == TextDirection::LeftToRight);
+}
