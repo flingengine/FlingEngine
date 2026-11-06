@@ -1,16 +1,119 @@
 #pragma once
 
+#include "FlingTypes.h"
 #include "Threading/CpuRelax.h"
 #include "Threading/ThreadSafety.h"
 
 #include <atomic>
 #include <cassert>
+#include <condition_variable>
 #include <mutex>
 #include <shared_mutex>
 
 namespace Fling
 {
     class ConditionVariable;
+
+    namespace Detail
+    {
+        /**
+         * A shared mutex made of a std::mutex and two condition variables. It has
+         * the member functions of std::shared_mutex, so SharedMutex can use it in
+         * place of std::shared_mutex.
+         *
+         * SharedMutex uses it on MinGW. There, std::shared_mutex is a winpthreads
+         * rwlock, and CI saw two writers inside it at the same time (the
+         * "SharedMutex lets one writer in at a time" test counted 799999 of
+         * 800000 increments). The tests also run this type directly on every
+         * platform.
+         *
+         * A writer that waits goes first: new readers wait until it has had the
+         * lock, so readers cannot keep a writer out for ever.
+         */
+        class CondVarSharedMutex
+        {
+        public:
+            CondVarSharedMutex() = default;
+
+            CondVarSharedMutex(const CondVarSharedMutex&) = delete;
+            CondVarSharedMutex& operator=(const CondVarSharedMutex&) = delete;
+
+            void lock()
+            {
+                std::unique_lock<std::mutex> Lock(m_Mutex);
+                ++m_WaitingWriters;
+                m_WriterGate.wait(Lock, [this]() { return !m_Writer && m_Readers == 0; });
+                --m_WaitingWriters;
+                m_Writer = true;
+            }
+
+            bool try_lock()
+            {
+                std::lock_guard<std::mutex> Lock(m_Mutex);
+                if (m_Writer || m_Readers != 0)
+                {
+                    return false;
+                }
+                m_Writer = true;
+                return true;
+            }
+
+            void unlock()
+            {
+                // Notify while the mutex is held, so a thread that takes the lock
+                // and then destroys this object cannot race with the notify
+                std::lock_guard<std::mutex> Lock(m_Mutex);
+                m_Writer = false;
+                if (m_WaitingWriters != 0)
+                {
+                    m_WriterGate.notify_one();
+                }
+                m_ReaderGate.notify_all();
+            }
+
+            void lock_shared()
+            {
+                std::unique_lock<std::mutex> Lock(m_Mutex);
+                m_ReaderGate.wait(Lock, [this]() { return !m_Writer && m_WaitingWriters == 0; });
+                ++m_Readers;
+            }
+
+            bool try_lock_shared()
+            {
+                std::lock_guard<std::mutex> Lock(m_Mutex);
+                if (m_Writer || m_WaitingWriters != 0)
+                {
+                    return false;
+                }
+                ++m_Readers;
+                return true;
+            }
+
+            void unlock_shared()
+            {
+                std::lock_guard<std::mutex> Lock(m_Mutex);
+                --m_Readers;
+                if (m_Readers == 0 && m_WaitingWriters != 0)
+                {
+                    m_WriterGate.notify_one();
+                }
+            }
+
+        private:
+            std::mutex m_Mutex;
+            std::condition_variable m_WriterGate;
+            std::condition_variable m_ReaderGate;
+            uint32 m_Readers = 0;
+            uint32 m_WaitingWriters = 0;
+            bool m_Writer = false;
+        };
+
+#if defined(__MINGW32__)
+        using SharedMutexImpl = CondVarSharedMutex;
+#else
+        using SharedMutexImpl = std::shared_mutex;
+#endif
+    } // namespace Detail
 
     /**
      * Exclusive lock. Clang -Wthread-safety can see this type.
@@ -70,7 +173,8 @@ namespace Fling
         bool TryLockShared() FLING_TRY_ACQUIRE_SHARED(true) { return m_Mutex.try_lock_shared(); }
 
     private:
-        std::shared_mutex m_Mutex;
+        // std::shared_mutex, except on MinGW (see Detail::CondVarSharedMutex)
+        Detail::SharedMutexImpl m_Mutex;
     };
 
     /** Holds a shared lock on a SharedMutex until it is destroyed. */

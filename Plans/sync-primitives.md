@@ -71,7 +71,7 @@ Annotation macros. Use `__has_attribute` / `__clang__`, so the macros expand to 
 | --- | --- | --- |
 | `Mutex` (`FLING_CAPABILITY("mutex")`) | `std::mutex` | `Lock()` ACQUIRE, `Unlock()` RELEASE, `TryLock()` TRY_ACQUIRE(true) |
 | `ScopedLock` (`FLING_SCOPED_CAPABILITY`) | holds `Mutex&` | ctor ACQUIRE, dtor RELEASE, `Unlock()` RELEASE (early unlock, for `Thread.cpp:75/125`), `Lock()` ACQUIRE (relock) |
-| `SharedMutex` (`FLING_CAPABILITY("shared_mutex")`) | `std::shared_mutex` | `Lock/Unlock/TryLock` + `LockShared/UnlockShared/TryLockShared` |
+| `SharedMutex` (`FLING_CAPABILITY("shared_mutex")`) | `std::shared_mutex` (MinGW: `Detail::CondVarSharedMutex`) | `Lock/Unlock/TryLock` + `LockShared/UnlockShared/TryLockShared` |
 | `ReadScopedLock` / `WriteScopedLock` | hold `SharedMutex&` | shared or exclusive scoped capability |
 | `SpinLock` (`FLING_CAPABILITY("spinlock")`) | `std::atomic_flag` | `Lock` (test_and_set acquire; spin on `test()` relaxed + `CpuRelax()`), `Unlock` (clear release), `TryLock` |
 | `ScopedSpinLock` | holds `SpinLock&` | scoped capability |
@@ -96,7 +96,9 @@ Annotation macros. Use `__has_attribute` / `__clang__`, so the macros expand to 
 - Mark the wait functions `FLING_NO_THREAD_SAFETY_ANALYSIS` inside, where needed. The caller still holds the lock.
 
 ### 4. `Core/inc/Threading/Semaphore.h` and `Event.h`
-- `Semaphore` wraps `std::counting_semaphore<>`.
+- `Semaphore` is a count, a `Mutex`, and a `ConditionVariable`. It first wrapped
+  `std::counting_semaphore<>`, but the GCC 13 libstdc++ one can miss a wake under
+  contention, so a waiter sleeps for ever (a CI hang in the Semaphore holders test).
   - API: `explicit Semaphore(uint32 Initial = 0)`, `Release(uint32 Count = 1)`, `Acquire()`,
     `TryAcquire()`, and `TryAcquireFor(std::chrono::nanoseconds) -> bool`.
 - `Event` uses `enum class EventReset { Auto, Manual }`. Build it on `Mutex`, `ConditionVariable`,
