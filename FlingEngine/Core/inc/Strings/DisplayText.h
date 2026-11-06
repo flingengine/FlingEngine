@@ -1,0 +1,86 @@
+#pragma once
+
+#include "CoreAPI.h"
+#include "spdlog/fmt/fmt.h"
+#include "Strings/Name.h"
+#include "Strings/String.h"
+
+#include <cstdint>
+#include <initializer_list>
+#include <memory>
+
+namespace Fling
+{
+    struct DisplayTextArg;
+
+    /**
+     * Text that the player sees. UI code takes only this type for visible text.
+     *
+     * A DisplayText keeps its source, not its result: a string table key, a text that
+     * must not be translated, or a pattern and its arguments. Resolve makes the text in
+     * the current language, so the text changes when the language changes.
+     *
+     * There is no conversion from String or from a literal, so text in code cannot
+     * become visible text by accident. There is no operator==, because the text depends
+     * on the language. Compare the Name keys instead.
+     *
+     * Copies share the same immutable data, so a copy does not allocate.
+     */
+    class CORE_API DisplayText
+    {
+    public:
+        /** Empty text. */
+        DisplayText() = default;
+
+        /**
+         * The entry t_Key of the string table t_Table. Until string tables exist, this
+         * resolves to the text of t_Key.
+         */
+        static DisplayText FromTable(Name t_Table, Name t_Key);
+
+        /** Text that must not be translated, such as a player's name. */
+        static DisplayText AsInvariant(String t_Text);
+
+        /**
+         * A pattern with named arguments, such as "{Count} enemies left". Each {Key} in
+         * the resolved pattern is replaced with the resolved argument that has that key.
+         * A key with no argument is kept as it is. "{{" and "}}" give "{" and "}".
+         */
+        static DisplayText Format(const DisplayText& t_Pattern, std::initializer_list<DisplayTextArg> t_Args);
+
+        /** The text in the current language. */
+        String Resolve() const;
+
+        bool IsEmpty() const;
+
+    private:
+        struct Data;
+
+        explicit DisplayText(std::shared_ptr<const Data> t_Data);
+
+        std::shared_ptr<const Data> m_Data;
+    };
+
+    /** One named argument of DisplayText::Format. */
+    struct CORE_API DisplayTextArg
+    {
+        DisplayTextArg(Name t_Key, DisplayText t_Value);
+        DisplayTextArg(Name t_Key, std::int64_t t_Value);
+        DisplayTextArg(Name t_Key, int t_Value);
+        DisplayTextArg(Name t_Key, double t_Value);
+
+        Name Key;
+        DisplayText Value;
+    };
+} // namespace Fling
+
+/** Logs a DisplayText as its text in the current language. */
+template <>
+struct fmt::formatter<Fling::DisplayText> : fmt::formatter<fmt::string_view>
+{
+    auto format(const Fling::DisplayText& t_Text, fmt::format_context& t_Context) const
+    {
+        const Fling::String Resolved = t_Text.Resolve();
+        return fmt::formatter<fmt::string_view>::format(fmt::string_view(Resolved.data(), Resolved.size()), t_Context);
+    }
+};

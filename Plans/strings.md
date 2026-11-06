@@ -144,7 +144,10 @@ A process-wide table from hash to text. It makes `Name` readable.
 - **Interned.** Each distinct text is stored once. Text is stored in fixed-size
   blocks that never move, so `ToView()` is valid until the process exits. Entries
   are never removed.
-- **Reads take no lock.** An insert takes a lock on one shard, picked by the hash.
+- **Sharded.** The table has 64 shards, picked by the hash. A read takes a shared
+  lock on one shard and an insert takes its exclusive lock, so threads rarely
+  wait. Reads are for logs and the editor, not for the simulation, which compares
+  hashes and never reads text.
 - **Filled three ways:**
   1. **Literals.** `operator""_name` is a literal operator template. Using it
      instantiates a registrar variable for that literal, which adds the text at
@@ -176,8 +179,8 @@ A process-wide table from hash to text. It makes `Name` readable.
 - **Memory.** The table uses its own block allocator and reports its size in
   memory stats. It is on in every build, so shipping logs and crash reports are
   readable. A game that needs the memory can turn the text off in shipping with
-  `FLING_NAME_TEXT=0`. Then `ToView()` returns `#<hash>`, and nothing else
-  changes.
+  `FLING_NAME_TEXT=0` (not built yet). Then logs show `#<hash>`, and nothing
+  else changes.
 
 ### Editor and level files
 
@@ -275,7 +278,7 @@ namespace Fling
         // Text with arguments: "{Count} enemies left".
         static DisplayText Format(const DisplayText& t_Pattern, std::initializer_list<FormatArg> t_Args);
 
-        StringView Resolve() const;   // the text in the current language
+        String Resolve() const;   // the text in the current language
     };
 }
 ```
@@ -325,8 +328,9 @@ are stored in the binary, so a 1-byte encoding keeps them small.
   this.
 - **The `F_LOG_*` macros are each two statements** (console, then file), with no
   `do { } while (0)`. In `if (x) F_LOG_TRACE(...);` the file log runs even when
-  `x` is false. Fix this in Phase 1, and make one logger with two sinks, so that
-  each message is formatted once.
+  `x` is false. Phase 1 wraps each one in `do { } while (false)`. Later, one
+  logger with two sinks would format each message once; the file log is
+  asynchronous and the console is not, so that is a separate change.
 
 ## Rules for simulation code
 
@@ -360,13 +364,14 @@ Each phase is one or more PRs off `main`. Each one keeps all CI platforms green.
   `PathToUtf8`.
 - `Core/inc/Strings/Name.h` and `src/Strings/NameTable.cpp`: `Name`,
   `operator""_name`, the reverse table, `fmt::formatter<Name>`.
-- `Core/inc/Strings/DisplayText.h`: the type with `AsInvariant` and `Format`.
+- `Core/inc/Strings/DisplayText.h`: the type with `FromTable`, `AsInvariant`, and
+  `Format`.
   `FromTable` returns the key's text until Phase 5 adds string tables.
 - `Core/inc/Strings/Hash.h`: `constexpr` xxHash64. When the ECS types reach
   `main`, `Ecs/TypeHash.h` uses it: `TypeHash` becomes the hash of a `Name`, and
   `HashName` is deleted, so there is one hash function.
-- Logging: the `do { } while (0)` fix, one logger with two sinks, and
-  `SetConsoleOutputCP(CP_UTF8)` on Windows.
+- Logging: the `do { } while (false)` fix and `SetConsoleOutputCP(CP_UTF8)` on
+  Windows.
 - Tests in `FlingTests/Core/`:
   - Known text and hash pairs, run on all four CI toolchains. This proves that
     the hash is the same on every compiler and platform.

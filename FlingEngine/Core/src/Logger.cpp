@@ -68,6 +68,12 @@ namespace Fling
 			FlingPaths::MakeDir( FlingPaths::EngineLogDir().c_str() );
 		}
 
+#ifdef _WIN32
+		// The console reads bytes in its code page. Log text is UTF-8, so set the code
+		// page to UTF-8, or text that is not ASCII shows as the wrong characters.
+		SetConsoleOutputCP(CP_UTF8);
+#endif
+
 		// Create the SPD log console
 		if(!m_Console)
 		{
