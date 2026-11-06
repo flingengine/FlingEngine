@@ -312,6 +312,16 @@ namespace Fling
         {
             if (ImGui::BeginMenu("File"))
             {
+                // Loading or saving during play would change or save the play state,
+                // and the stop would then reset the level again
+                const bool bLevelEditLocked =
+                    !m_OwningWorld->IsReadyForPlay() || m_OwningWorld->HasPendingPlayRequest();
+                if (bLevelEditLocked)
+                {
+                    ImGui::TextDisabled("Stop play to open or save levels");
+                }
+                ImGui::BeginDisabled(bLevelEditLocked);
+
                 static ImGui::FileBrowser fileDialog;
                 static bool ShouldLoadLevel = false;
                 static bool ShouldSaveLevel = false;
@@ -367,6 +377,7 @@ namespace Fling
                     m_OwningWorld->LoadLevelFile("Levels/EmptyLevel.json");
                 }
 
+                ImGui::EndDisabled();
                 ImGui::EndMenu();
             }
 
@@ -387,27 +398,42 @@ namespace Fling
                 ImGui::EndMenu();
             }
 
-            if (m_OwningWorld->IsReadyForPlay())
-            {
-				if (ImGui::Button("Play Game"))
-				{
-					// Tell the world that we should start the game logic
-					m_OwningWorld->RequestGameStart();
-				}
-            }
-            else if(m_OwningWorld->IsPlaying())
-            {
-				if (ImGui::Button("Stop Game"))
-				{
-					// Tell the world to stop game play logic
-					m_OwningWorld->RequestGameStop();
-				}
-            }
+            DrawPlayControls();
 
             ImGui::EndMenuBar();
         }
 
         ImGui::End();
+    }
+
+    void BaseEditor::DrawPlayControls()
+    {
+        assert(m_OwningWorld);
+
+        if (m_OwningWorld->HasPendingPlayRequest())
+        {
+            // The request runs on the next world update
+            ImGui::BeginDisabled();
+            ImGui::Button(m_OwningWorld->IsPlaying() ? "Stopping..." : "Starting...");
+            ImGui::EndDisabled();
+        }
+        else if (m_OwningWorld->IsReadyForPlay())
+        {
+            if (ImGui::Button("Play"))
+            {
+                m_OwningWorld->RequestGameStart();
+            }
+        }
+        else if (m_OwningWorld->IsPlaying() || m_OwningWorld->IsPaused())
+        {
+            if (ImGui::Button("Stop"))
+            {
+                // The world calls OnStopGame, then resets the level to how it was at Play
+                m_OwningWorld->RequestGameStop();
+            }
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "Playing (Esc to stop)");
+        }
     }
 
     void BaseEditor::OnLoadLevel(std::string t_FileName)

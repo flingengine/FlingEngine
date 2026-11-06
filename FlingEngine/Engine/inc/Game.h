@@ -21,7 +21,10 @@ namespace Fling
 		// Friend class to the engine so that we can ensure the proper world is setup
 		friend class Engine;
 
-	public:
+        // The world runs the play session, and clears m_WantsToQuit when play stops
+        friend class World;
+
+    public:
 		Game(const Game&) = delete;
 		Game& operator=(const Game&) = delete;
 
@@ -37,20 +40,29 @@ namespace Fling
 		 */
 		virtual void RegisterComponents() {}
 
-		/**
-		* Called by the World when the game state should start.
-		*/
-		virtual void OnStartGame(entt::registry& t_Reg) = 0;
+        /**
+         * Called by the World when play starts. The World keeps a snapshot of all
+         * entities just before this call. Make the entities and state for play here.
+         * In the editor, play can start and stop many times in one run, so reset all
+         * per-play state here or in OnStopGame.
+         */
+        virtual void OnStartGame(entt::registry& t_Reg) = 0;
 
 		/**
 		* Update is called every frame. Call any system updates for your gameplay systems inside of here
 		*/
 		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
 
-		/**
-		* Called when the game should stop
-		*/
-		virtual void OnStopGame(entt::registry& t_Reg) = 0;
+        /**
+         * Called by the World when play stops, before the World resets its entities.
+         * After this call, the World removes all entities and loads the snapshot from
+         * play start again, so you do not have to destroy the entities that play made.
+         * Clean up all state that is not in the registry: member variables, cursor and
+         * window changes, handles to systems outside the world.
+         * The World also calls this at shutdown if the game is playing. It then does not
+         * reset the entities.
+         */
+        virtual void OnStopGame(entt::registry& t_Reg) = 0;
 
 		/** 
 		* Called by the world when the entire application is shutting down. Good spot to do 
@@ -64,10 +76,11 @@ namespace Fling
 		 */
 		FORCEINLINE World* GetWorld() const { assert(m_OwningWorld); return m_OwningWorld; }
 
-		/**
-		 * If true then this game wants to texit the application entirely.
-		 */
-		FORCEINLINE bool WantsToQuit() const { return m_WantsToQuit; } 
+        /**
+         * If true then this game wants to exit. In editor play this stops play instead
+         * of the application (see World::SetGameQuitStopsPlay).
+         */
+        FORCEINLINE bool WantsToQuit() const { return m_WantsToQuit; } 
 
 	protected:
 
@@ -79,8 +92,8 @@ namespace Fling
 		/** The world that updates this game. Set in the Engine::Startup */
 		World* m_OwningWorld = nullptr;
 
-		/** Change this value to true when the game is ready to exit the application entirely */
-		bool m_WantsToQuit = false;
+        /** Change this value to true when the game wants to exit. The World clears it when play stops. */
+        bool m_WantsToQuit = false;
 
 		// #TODO Camera class for the game
 	};

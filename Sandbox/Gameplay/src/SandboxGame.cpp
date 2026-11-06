@@ -51,7 +51,10 @@ namespace Sandbox
 	{
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
-		LightingTest(t_Reg);
+        // Play can start many times in one editor run, so each play starts from the same state
+        ResetPlayState();
+
+        LightingTest(t_Reg);
 	}
 
     void Game::Update(entt::registry& t_Reg, float DeltaTime)
@@ -131,14 +134,26 @@ namespace Sandbox
 	{
 		F_LOG_TRACE("Sandbox OnStopGame!");
 
-		auto RotateView = t_Reg.view<Transform, Rotator>();
-		t_Reg.destroy(RotateView.begin(), RotateView.end());
-		
-		auto MoverView = t_Reg.view<Transform, Mover>();
-		t_Reg.destroy(MoverView.begin(), MoverView.end());
-	}
+        // The world removes the entities that play made. Only state outside the
+        // registry is cleaned up here.
+        ResetPlayState();
 
-	void Game::Shutdown(entt::registry& t_Reg)
+        // Play can hide the cursor (M). Show it again for the editor.
+        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
+        if (CurrentWindow && !CurrentWindow->GetMouseVisible())
+        {
+            CurrentWindow->SetMouseVisible(true);
+        }
+    }
+
+    void Game::ResetPlayState()
+    {
+        m_DoRotations = false;
+        m_MovePointLights = false;
+        m_TestSpawnX = -1.0f;
+    }
+
+    void Game::Shutdown(entt::registry& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox Shutdown!");
 	}
@@ -284,14 +299,13 @@ namespace Sandbox
 	{
 		entt::registry& t_Reg = m_OwningWorld->GetRegistry();
 
-		static float pos = -1.0f;
-		pos -= 1.0f;
+        m_TestSpawnX -= 1.0f;
 
-		entt::entity e0 = t_Reg.create();
+        entt::entity e0 = t_Reg.create();
 		t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
 		t_Reg.assign<Rotator>(e0);
 		Transform& t0 = t_Reg.assign<Transform>(e0);
-		t0.SetPos(glm::vec3(pos, 0.0f, 0.0f));
-		F_LOG_TRACE("Spawn a sphere to the left!");
+        t0.SetPos(glm::vec3(m_TestSpawnX, 0.0f, 0.0f));
+        F_LOG_TRACE("Spawn a sphere to the left!");
 	}
 }	// namespace Sandbox
