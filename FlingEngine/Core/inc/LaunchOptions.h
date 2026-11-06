@@ -66,6 +66,25 @@ namespace Fling
         /** The file to save an input recording to (--record-input). Empty means no recording. */
         std::string RecordInput;
 
+        /** The language code to show text in (--language), for example "fr". Empty means use the config. */
+        std::string Language;
+
+        /**
+         * A CSV file to write every string table entry to (--loc-export), for translators.
+         * The engine writes it and exits, with no window.
+         */
+        std::string LocExport;
+
+        /**
+         * A CSV file of translations to read into the string tables (--loc-import). The
+         * engine writes the JSON tables of each language in the file and exits, with no
+         * window.
+         */
+        std::string LocImport;
+
+        /** True when a localization flag asks the engine to do its work and exit. */
+        bool IsLocalizationTool() const { return !LocExport.empty() || !LocImport.empty(); }
+
         /**
          * Read the launch flags from a command line. Flags that are not given keep
          * their default values.

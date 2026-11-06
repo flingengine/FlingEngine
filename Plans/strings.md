@@ -1,7 +1,7 @@
 # Strings
 
-Status: Phases 1 and 2 are built (Core string types, and assets). Phases 3 to 6
-are not.
+Status: Phases 1 and 2 are built (Core string types, and assets), and the string
+tables of Phase 5. Phases 3, 4, and 6, and the rest of Phase 5, are not.
 
 This plan sets out the string types of the engine, the rules for each one, and
 the order in which we move the code onto them. When a phase is done, move its
@@ -270,8 +270,9 @@ namespace Fling
     class DisplayText
     {
     public:
-        // From a string table entry: the table and the key are Names.
-        static DisplayText FromTable(Name t_Table, Name t_Key);
+        // From a string table entry: the table and the key are Names. The source text
+        // is the fallback when no table has the entry.
+        static DisplayText FromTable(Name t_Table, Name t_Key, StringView t_SourceText = {});
 
         // Text that must not be translated (a player's name, a number already formatted).
         static DisplayText AsInvariant(String t_Text);
@@ -294,10 +295,39 @@ namespace Fling
   language. Compare the `Name` keys instead.
 - **String tables** hold the text per language, keyed by `Name`. The game loads
   the tables for the current language. Changing the language at runtime
-  re-resolves the visible text.
+  re-resolves the visible text. See Localization below.
 - Localization is wider than text (fonts, text direction, number and date
   formats, audio). Those are designed when the string tables are, in Phase 5.
   The type and the rule come first, so that new UI code is right from the start.
+
+## Localization
+
+`Localization` (Resources module) holds the string tables of every language and
+the current language.
+
+- **Files.** `Assets/Localization/<language>/<Table>.json`, one JSON object of key
+  to text per table. The folder name is the language code (`en`, `fr`). The
+  `[Localization]` section of `EngineConf.ini` sets the folder, the source
+  language, and the language. `--language <code>` overrides the language.
+- **Lookup.** A table entry resolves in the current language, then in the source
+  language, then to the source text given to `FromTable`, then to the key. Core
+  does not depend on Resources: `Localization::SetActive` sets a resolver
+  function in `DisplayText`.
+- **Language change.** `SetLanguage` loads the language if it is not loaded. Every
+  `DisplayText` shows the new language the next time it resolves. `GetRevision`
+  changes with each change, so UI that keeps resolved text knows when to resolve
+  again.
+- **Translators work in CSV.**
+  - `Sandbox --loc-export Strings.csv` writes every entry of every language on
+    disk: UTF-8 with a byte order mark, a `Table,Key,<language>...` header, and
+    rows sorted by table and key. An empty cell is no entry.
+  - `Sandbox --loc-import Strings.csv` reads the file back (a new column is a new
+    language), writes the JSON tables of each language in it, and logs how many
+    source entries each one is missing.
+  - Both run with no window and exit.
+- **Not built yet:** gathering keys and source text from code, plural rules,
+  number and date formats per language, fonts for other scripts, and right-to-left
+  text.
 
 ## Assets
 
@@ -411,9 +441,9 @@ Each phase is one or more PRs off `main`. Each one keeps all CI platforms green.
 
 ### Phase 5 — Localization
 
-- String tables per language, keyed by `Name`, loaded for the current language,
-  with a language change at runtime. `DisplayText::FromTable` resolves through
-  them.
+- Done: string tables per language, keyed by `Name`, loaded for the current
+  language, with a language change at runtime. `DisplayText::FromTable` resolves
+  through them. CSV export and import for translators.
 - The editor and the UI module take only `DisplayText` for visible text.
 - Fonts, text direction, and number and date formats.
 

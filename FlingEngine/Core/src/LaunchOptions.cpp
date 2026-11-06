@@ -18,6 +18,9 @@ namespace Fling
         constexpr std::string_view LogInputFlag = "log-input";
         constexpr std::string_view ReplayInputFlag = "replay-input";
         constexpr std::string_view RecordInputFlag = "record-input";
+        constexpr std::string_view LanguageFlag = "language";
+        constexpr std::string_view LocExportFlag = "loc-export";
+        constexpr std::string_view LocImportFlag = "loc-import";
 
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
         bool ReadPath(const CommandLine& t_CmdLine, std::string_view t_Flag, std::string& t_Out, std::string& t_OutError)
@@ -166,6 +169,30 @@ namespace Fling
         if (!ReadPath(t_CmdLine, LevelFlag, t_Out.Level, t_OutError))
         {
             return false;
+        }
+
+        if (const char* Language = t_CmdLine.GetValueAsString(LanguageFlag))
+        {
+            const std::string_view Str = Language;
+            // A flag with no value has the value "true"
+            if (Str.empty() || Str == "true")
+            {
+                t_OutError = "--language needs a language code, for example --language fr";
+                return false;
+            }
+            t_Out.Language = std::string(Str);
+        }
+
+        if (!ReadPath(t_CmdLine, LocExportFlag, t_Out.LocExport, t_OutError) ||
+            !ReadPath(t_CmdLine, LocImportFlag, t_Out.LocImport, t_OutError))
+        {
+            return false;
+        }
+
+        // The localization tools only read and write files, so they need no window
+        if (t_Out.IsLocalizationTool())
+        {
+            t_Out.NullRender = true;
         }
 
 #if WITH_INPUT_RECORDING

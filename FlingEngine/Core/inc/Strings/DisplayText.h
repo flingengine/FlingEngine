@@ -14,6 +14,16 @@ namespace Fling
     struct DisplayTextArg;
 
     /**
+     * Finds the text of a string table entry in the current language. Returns false if
+     * there is no entry. The localization service (Resources) sets it at start-up, so
+     * Core does not depend on Resources.
+     */
+    using DisplayTextTableResolver = bool (*)(Name t_Table, Name t_Key, String& t_OutText);
+
+    /** Sets the resolver that DisplayText uses for table entries. nullptr removes it. */
+    CORE_API void SetDisplayTextTableResolver(DisplayTextTableResolver t_Resolver);
+
+    /**
      * Text that the player sees. UI code takes only this type for visible text.
      *
      * A DisplayText keeps its source, not its result: a string table key, a text that
@@ -33,10 +43,15 @@ namespace Fling
         DisplayText() = default;
 
         /**
-         * The entry t_Key of the string table t_Table. Until string tables exist, this
-         * resolves to the text of t_Key.
+         * The entry t_Key of the string table t_Table. It resolves to the entry in the
+         * current language, then in the source language. If no table has the entry, it
+         * resolves to t_SourceText, or to the text of t_Key when t_SourceText is empty.
+         *
+         * @param t_SourceText  The text in the source language, written where the text
+         *                      is used. It is the fallback, so text still shows before
+         *                      the tables have the entry.
          */
-        static DisplayText FromTable(Name t_Table, Name t_Key);
+        static DisplayText FromTable(Name t_Table, Name t_Key, StringView t_SourceText = {});
 
         /** Text that must not be translated, such as a player's name. */
         static DisplayText AsInvariant(String t_Text);

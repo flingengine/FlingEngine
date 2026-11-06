@@ -103,8 +103,9 @@ into `Skills/`.
   that the crash handler can read): [`Plans/lockless-threading.md`](Plans/lockless-threading.md).
 - Strings: `Name` (the default; a stable 64-bit hash made at compile time, with
   a reverse table for logs and the editor), `String` and `StringView` (UTF-8),
-  `DisplayText` (localizable), assets, logging, and the rules for strings in
-  simulation code: [`Plans/strings.md`](Plans/strings.md).
+  `DisplayText` (localizable), string tables and translator CSV
+  (`--language`, `--loc-export`, `--loc-import`), assets, logging, and the rules
+  for strings in simulation code: [`Plans/strings.md`](Plans/strings.md).
 - Physics: the provider interface (Jolt by default, Bullet, or a game's own
   library, picked with `FLING_PHYSICS_PROVIDER`), components, the fixed step,
   determinism and rollback, the test level, and what is next:

@@ -1,5 +1,6 @@
 #include "Strings/DisplayText.h"
 
+#include <atomic>
 #include <charconv>
 #include <cstdio>
 #include <utility>
@@ -19,6 +20,7 @@ namespace Fling
         Kind Type = Kind::Invariant;
         Name Table;
         Name Key;
+        /** Invariant text, or the source text of a table entry. */
         String Text;
         DisplayText Pattern;
         std::vector<DisplayTextArg> Args;
@@ -26,6 +28,8 @@ namespace Fling
 
     namespace
     {
+        std::atomic<DisplayTextTableResolver> g_TableResolver {nullptr};
+
         /** Appends the resolved text of the argument with this key, or returns false. */
         bool AppendArg(String& t_Out, const StringView t_Key, const std::vector<DisplayTextArg>& t_Args)
         {
@@ -85,12 +89,18 @@ namespace Fling
     {
     }
 
-    DisplayText DisplayText::FromTable(const Name t_Table, const Name t_Key)
+    void SetDisplayTextTableResolver(const DisplayTextTableResolver t_Resolver)
+    {
+        g_TableResolver.store(t_Resolver, std::memory_order_release);
+    }
+
+    DisplayText DisplayText::FromTable(const Name t_Table, const Name t_Key, const StringView t_SourceText)
     {
         auto NewData = std::make_shared<Data>();
         NewData->Type = Data::Kind::Table;
         NewData->Table = t_Table;
         NewData->Key = t_Key;
+        NewData->Text = String(t_SourceText);
         return DisplayText(std::move(NewData));
     }
 
@@ -121,8 +131,17 @@ namespace Fling
         switch (m_Data->Type)
         {
         case Data::Kind::Table:
-            // String tables come with localization. Until then the key is the text.
-            return String(m_Data->Key.ToView());
+        {
+            if (const DisplayTextTableResolver Resolver = g_TableResolver.load(std::memory_order_acquire))
+            {
+                String Text;
+                if (Resolver(m_Data->Table, m_Data->Key, Text))
+                {
+                    return Text;
+                }
+            }
+            return m_Data->Text.empty() ? String(m_Data->Key.ToView()) : m_Data->Text;
+        }
         case Data::Kind::Invariant:
             return m_Data->Text;
         case Data::Kind::Format:

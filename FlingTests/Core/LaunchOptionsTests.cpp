@@ -64,6 +64,35 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE(Error.find("--level needs a file path") != std::string::npos);
     }
 
+    SECTION("Language")
+    {
+        REQUIRE(ParseArgs({}, Options, Error));
+        REQUIRE(Options.Language.empty());
+
+        REQUIRE(ParseArgs({"--language", "fr"}, Options, Error));
+        REQUIRE(Options.Language == "fr");
+        REQUIRE_FALSE(Options.IsLocalizationTool());
+
+        REQUIRE_FALSE(ParseArgs({"--language"}, Options, Error));
+        REQUIRE(Error.find("--language needs a language code") != std::string::npos);
+    }
+
+    SECTION("Localization tools run with no window")
+    {
+        REQUIRE(ParseArgs({"--loc-export", "Strings.csv"}, Options, Error));
+        REQUIRE(Options.LocExport == "Strings.csv");
+        REQUIRE(Options.IsLocalizationTool());
+        REQUIRE(Options.NullRender);
+
+        LaunchOptions ImportOptions;
+        REQUIRE(ParseArgs({"--loc-import", "Strings.csv"}, ImportOptions, Error));
+        REQUIRE(ImportOptions.LocImport == "Strings.csv");
+        REQUIRE(ImportOptions.NullRender);
+
+        REQUIRE_FALSE(ParseArgs({"--loc-export"}, Options, Error));
+        REQUIRE(Error.find("--loc-export needs a file path") != std::string::npos);
+    }
+
     SECTION("Equals syntax")
     {
         REQUIRE(ParseArgs({"--frames=5", "--seed=0", "--null-render=false"}, Options, Error));
