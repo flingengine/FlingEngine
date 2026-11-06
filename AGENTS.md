@@ -62,6 +62,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   read it before restructuring includes or CMake targets.
 - Adding a new CMake module (folder + `fling_add_module`, with a UI example):
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
+- Threads, thread IDs and names, and command queues to subsystem threads, with
+  the rules that keep them out of the ECS: [`Skills/threading.md`](Skills/threading.md).
 
 ## Plans
 
@@ -85,6 +87,8 @@ into `Skills/`.
 - Input events, the input thread, and per-tick input (timestamped event ring,
   readers, gamepad polling, input contexts, render-side look):
   [`Plans/improve-input.md`](Plans/improve-input.md).
+- Lock-free `ThreadQueue` and `ThreadManager` (MPSC node queue, a slot table
+  that the crash handler can read): [`Plans/lockless-threading.md`](Plans/lockless-threading.md).
 
 ## Contribution conventions
 
