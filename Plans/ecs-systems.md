@@ -1,6 +1,7 @@
 # ECS systems and components: the first slice
 
-Status: proposal for review. Nothing here is implemented yet.
+Status: work items 1 to 3 are done (branch `feature/ecs-types`). Items 4 to 6
+are next. §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -85,7 +86,9 @@ FlingEngine/Engine/inc/Ecs/
     Phase.h             Phase, Cadence, WorldRole
     System.h            ISystem, SystemInfo, SystemDesc
     SystemBase.h        Fling::System<Derived, Access>: the adapter authors derive from
-    SystemContext.h     FixedContext / FrameContext: Query, Singleton, Queue (EnTT inside)
+    SimTime.h           SimTime, RealFrameTime (the runner writes them)
+    SystemContext.h     SystemContext<Self, Access>: Query, Get, Singleton, Queue, Spawn (EnTT inside)
+    detail/EnttBridge.h Fling::Entity <-> entt::entity
     SystemRegistry.h    SystemRegistry (owns the systems one world runs)
     Schedule.h          Schedule, ScheduleEdge, ScheduleError, BuildSchedule()
     SystemRunner.h      Runs a Schedule against a World each frame
@@ -377,6 +380,11 @@ Today's `Transform` maps onto this:
 This is the abstract interface the scheduler owns. Authors do not derive
 from it directly. They derive from the `System<>` adapter in §3.3.
 
+The virtuals are named `Run*`, not `OnCreate` or `FixedUpdate`. The author
+writes non-virtual `OnCreate(Setup&)` and `FixedUpdate(Context&)`, and a
+derived function with the same name as a base virtual would hide it
+(`-Woverloaded-virtual`, which `-Wall` turns on in Clang and GCC 13).
+
 ```cpp
 // Engine/inc/Ecs/System.h
 namespace Fling
@@ -399,24 +407,24 @@ namespace Fling
 
         /**
          * Called once when the world is made, in schedule order, before the
-         * first level loads. Make this system's singleton components here.
+         * first level loads. The adapter calls the author's OnCreate(Setup&).
          */
-        virtual void OnCreate(SystemSetupBase& setup) const {}
+        virtual void RunCreate(SystemSetupBase& setup) const = 0;
 
         /** Called once when the world shuts down, in reverse schedule order. */
-        virtual void OnDestroy(SystemSetupBase& setup) const {}
+        virtual void RunDestroy(SystemSetupBase& setup) const = 0;
 
         /** Called when the world mode changes to Play, after the edit snapshot. */
-        virtual void OnPlayBegin(SystemContextBase& ctx) const {}
+        virtual void RunPlayBegin(SystemContextBase& ctx) const = 0;
 
         /** Called when play stops, before the edit snapshot is restored. */
-        virtual void OnPlayEnd(SystemContextBase& ctx) const {}
+        virtual void RunPlayEnd(SystemContextBase& ctx) const = 0;
 
         /** Fixed rate. Called once per sim tick for a system in a fixed phase. */
-        virtual void FixedUpdate(SystemContextBase& ctx) const {}
+        virtual void RunFixedUpdate(SystemContextBase& ctx) const = 0;
 
         /** Variable rate. Called once per rendered frame for a system in a frame phase. */
-        virtual void Update(SystemContextBase& ctx) const {}
+        virtual void RunUpdate(SystemContextBase& ctx) const = 0;
     };
 }
 ```
@@ -661,69 +669,66 @@ the reason.
 A virtual function cannot be a template, so a plain
 `virtual void Update(SystemContext&)` could not check a `Query<T>` at
 compile time. The adapter solves that. It implements the `ISystem` virtuals,
-casts the base context to the typed context for that system's access list,
-and calls the author's non-virtual function. The scheduler sees only
-`ISystem`. Authors never see `SystemContextBase`.
+makes the typed context for that system's access list on the stack, and
+calls the author's non-virtual function. The scheduler sees only `ISystem`.
+Authors never see `SystemContextBase`.
 
-`Context` is a different type per cadence:
+`Context` is `SystemContext<Derived, Access>`. It is one type for both
+cadences. The base class cannot choose a type from `Derived::Info.Phase`,
+because `Derived` is not complete yet when its base is made. Instead, the
+functions that only a fixed phase may call (`Spawn`, `Commands`, `Queue`,
+`Drain`) have a `static_assert` on the phase. A class template's member
+function body is compiled only when it is called, so a frame system that
+calls `ctx.Spawn()` fails with "Only a fixed phase system spawns entities",
+and one that does not call it compiles.
 
-- `FixedContext<Access>` (fixed phases): `Query`, `Get`, `TryGet`,
-  `Singleton`, `Queue`, `Drain`, `Spawn`, `Commands`, `TickInput`.
-- `FrameContext<Access>` (frame phases): `Query`, `Get`, `TryGet`,
-  `Singleton`, and writes to
-  `Presentation` components only. It has no `Spawn`, no `Commands`, and no
-  `Queue` into a simulation queue. A frame rate system that wants to change
-  the sim (a UI button, an editor action) sends a command that the next tick
-  reads. The missing functions make this a compile error, not a review
-  comment.
+- All systems: `Query`, `Get`, `TryGet`, `IsAlive`, `Singleton`.
+- Fixed phases only: `Queue`, `Drain`, `Spawn`, `Commands`. A frame rate
+  system that wants to change the sim (a UI button, an editor action) sends
+  a command that the next tick reads.
 
 ```cpp
-// Engine/inc/Ecs/SystemBase.h  (sketch)
-template<typename Derived, typename AccessList>
+// Engine/inc/Ecs/SystemBase.h  (shortened)
+template <typename Derived, typename AccessList>
 class System : public ISystem
 {
 public:
     using Access = AccessList;
-    using Context = ContextFor<Derived, AccessList>;   // FixedContext or FrameContext, from Derived::Info.Phase
+    using Context = SystemContext<Derived, AccessList>;
     using Setup = SystemSetup<AccessList>;
 
-    const SystemDesc& Describe() const final { return s_Desc; }
+    const SystemDesc& Describe() const final { return Detail::DescOf<Derived, AccessList>; }
 
-    void FixedUpdate(SystemContextBase& ctx) const final
+    void RunFixedUpdate(SystemContextBase& core) const final
     {
-        if constexpr (HasFixedUpdate<Derived>)
+        if constexpr (Detail::HasFixedUpdate<Derived>)
         {
-            static_cast<const Derived*>(this)->FixedUpdate(static_cast<Context&>(ctx));
+            Context ctx(core);      // A reference to the core. Costs nothing.
+            Self().FixedUpdate(ctx);
         }
     }
-    // Update, OnCreate, OnDestroy, OnPlayBegin, OnPlayEnd: same shape.
-
-private:
-    static constexpr SystemDesc s_Desc = MakeDesc<Derived, AccessList>();
+    // RunUpdate, RunCreate, RunDestroy, RunPlayBegin, RunPlayEnd: same shape.
 };
 ```
+
+`DescOf` is a variable template outside the class, so it is made only when
+`Describe` is compiled, after `Derived` is complete.
 
 `SystemRegistry::Add<T>()` is where `T` is a complete type, so the checks
 that need it go there:
 
 ```cpp
-template<typename T>
+template <typename T>
 void SystemRegistry::Add()
 {
-    static_assert(std::is_base_of_v<ISystem, T>, "A system derives from Fling::System<Self, Access<...>>.");
-    static_assert(sizeof(T) == sizeof(ISystem),
-        "A system cannot have member state. Put it in a singleton component.");
-    static_assert(IsFixedPhase(T::Info.Phase) ? HasFixedUpdate<T> && !HasUpdate<T>
-                                              : HasUpdate<T> && !HasFixedUpdate<T>,
-        "A fixed phase system implements FixedUpdate only. A frame phase system implements Update only.");
-    static_assert(!IsFixedPhase(T::Info.Phase) || !Contains<typename T::Access, Read<RealFrameTime>>,
-        "A fixed rate system cannot read RealFrameTime. Use SimTime.");
-    static_assert(IsFixedPhase(T::Info.Phase) || NoSimulationWrites<typename T::Access>,
-        "A frame rate system cannot write a Simulation component. Mark it Presentation, or move the system to a fixed phase.");
-
+    static_assert(Detail::CheckSystem<T>());   // Each rule is its own static_assert, with its own message.
     m_Systems.push_back(std::make_unique<T>());
 }
 ```
+
+`FlingTests/EcsCompileFail/EcsCompileFail.cpp` has one case per rule. Each
+`ECS compile check: <Case>` CTest builds it and passes only if the build
+fails with that rule's message.
 
 ### 3.5 `SystemInfo` fields
 
@@ -753,13 +758,13 @@ system and the type):
 | `ctx.Singleton<T>()` needs a declared singleton. `Query` of a singleton does not compile | `SystemContext` |
 | `With<T>` / `Without<T>` filters need `Read<T>` | `SystemContext::Query` |
 | `ctx.Get<T>(e)` needs `Write<T>`. `ctx.Get<const T>(e)` and `TryGet` need `Read<T>` or `Write<T>` | `SystemContext` |
-| `ctx.Spawn()` needs `Fling::Spawns` in the access list | `FixedContext` |
+| `ctx.Spawn()` needs `Fling::Spawns` in the access list | `SystemContext::Spawn` |
 | `ctx.Queue<Q>()` needs `Append<Q>`. `ctx.Drain<Q>()` needs `Consume<Q>` | `SystemContext` |
 | No member state | `SystemRegistry::Add` |
 | Phase and cadence agree. A fixed system does not read `RealFrameTime` | `SystemRegistry::Add` |
 | A frame rate system does not write a `Simulation` component | `SystemRegistry::Add` |
 | A fixed rate system does not read a `Presentation` component ("drive visuals, don't depend on them") | `SystemRegistry::Add` |
-| A frame rate system does not spawn, destroy, or append to a sim queue | `FrameContext` has no such functions |
+| A frame rate system does not spawn, destroy, or append to a sim queue | `static_assert` on the phase in those functions |
 | No system writes `SimTime` or `RealFrameTime` (the runner does) | `Access<...>` |
 | `setup.AddSingleton<T>()` needs `Write<T>` (the owner makes it) | `SystemSetup` |
 
@@ -1033,9 +1038,35 @@ Each item is one PR off `main`, green on all CI platforms.
    schedules from fake `SystemDesc` arrays: write-before-read, appender
    before consumer, write/write error, explicit `After`, cycle path, stable
    tie order.
+   Done: `Ecs/System.h` (`ISystem`, `SystemInfo`, `SystemDesc`),
+   `Ecs/SystemRegistry.h`, `Ecs/Schedule.h`, and `src/Ecs/Schedule.cpp`,
+   with `FlingTests/Engine/EcsScheduleTests.cpp`. `BuildSchedule` also
+   reports duplicate and missing names, two consumers of one queue, and a
+   component written at both cadences. `SystemRegistry::Add` checks only
+   "derives from `ISystem`" and "no member state" so far. The phase and
+   cadence checks (`FixedUpdate` against `Update`, `RealFrameTime`,
+   `Simulation` writes from a frame system) need the adapter's `Info` and
+   `Context`, so they move to item 3. `WritesSimulation<A>` and
+   `ReadsPresentation<A>` in `Access.h` are ready for them.
 3. **`SystemContext` and the `System<>` adapter** in Engine, over EnTT. Tests
    build an `entt::registry`, run one system, and check the result. Add
    `SimTime` and a 60 Hz accumulator in `SystemRunner`.
+   Done: `SystemContext.h`, `SystemBase.h`, `SimTime.h`, `SystemRunner.h`,
+   with `FlingTests/Engine/EcsSystemTests.cpp` and the compile checks in
+   `FlingTests/EcsCompileFail/`. `SystemRegistry::Add` now has every rule
+   in §3.6. Not done yet, and why:
+   - `ctx.TickInput()`: no `TickInput` type yet. It comes with
+     `InputSystem` in item 6.
+   - `RunIf`: no system needs it yet. `RunIn` works.
+   - Queue buffers: `ctx.Queue<Q>().Push` writes to the queue directly. With
+     one thread that gives the same order as one buffer per system. The
+     per-system queue buffers come with the parallel executor.
+     Command buffers are already one per system.
+   - The debug "in simulation" flag for `Timing` and the global `Random`:
+     with the `World` wiring (item 4).
+   - The accumulator counts `std::chrono::nanoseconds`, not
+     `Threading/ThreadTypes.h`'s `TickRate`, so the `TickPeriod` rename can
+     happen without touching the runner.
 4. **Wire it into `World`.** `World` owns a `SystemRegistry` and a
    `Schedule`. `World::Init` calls `OnCreate`. `World::Update` runs the
    fixed phases, then `Game::Update`, then the frame phases.
