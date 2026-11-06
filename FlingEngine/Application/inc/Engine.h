@@ -86,9 +86,12 @@ namespace Fling
 
 		/**
 		* Run the main loop until the window closes, the world quits, or --frames
-		* ticks have run
+		* ticks have run. With --dump-schedule or --validate-schedule, start the world,
+		* report the system schedule, and return without running the loop.
+		*
+		* @return ExitCode::Failure if the system schedule has errors, otherwise ExitCode::Success
 		*/
-		void Tick();
+		ExitCode Tick();
 
 		/** True while the main loop must run one more tick. */
 		bool ShouldTick() const;
@@ -161,12 +164,12 @@ namespace Fling
 		// #TODO Use a pool allocator for new
 		m_GameImpl = new T_GameType();
 
-		const ExitCode StartupCode = Startup(argc, argv);
-		if (StartupCode == ExitCode::Success)
+		ExitCode Code = Startup(argc, argv);
+		if (Code == ExitCode::Success)
 		{
-			Tick();
+			Code = Tick();
 		}
 
-		return ToInt(Shutdown(StartupCode));
+		return ToInt(Shutdown(Code));
 	}
 }	// namespace Fling

@@ -14,6 +14,8 @@ namespace Fling
 	// Declared in the Physics module (PhysicsProvider.h). Engine only passes it on.
 	class PhysicsProvider;
 
+	class SystemRegistry;
+
 	/**
 	 * The game class is mean to be overridden on a per-game instance.
 	 *          It provides an interface for users to add their own System calls
@@ -43,6 +45,13 @@ namespace Fling
 		 * before Seal() and before the StartLevel is loaded.
 		 */
 		virtual void RegisterComponents() {}
+
+		/**
+		 * Add the game's ECS systems, phases, and orders. Called from World::Init after
+		 * RegisterComponents, before the schedule is built. A game with many systems
+		 * defines this in one register file that includes each system header.
+		 */
+		virtual void RegisterSystems(SystemRegistry& t_Systems) { (void)t_Systems; }
 
         /**
          * Return the physics provider that this game uses, for example a provider

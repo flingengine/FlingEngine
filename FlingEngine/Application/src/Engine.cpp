@@ -169,6 +169,13 @@ namespace Fling
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
 
+		// A --null-render run has no real frame time, so it runs one fixed tick per frame.
+		// Engine and module systems are added to m_World->GetSystems() here, before
+		// World::Init adds the game's systems and builds the schedule.
+		SystemRunnerConfig RunnerConfig;
+		RunnerConfig.OneTickPerFrame = m_Options.NullRender;
+		m_World->SetSystemRunnerConfig(RunnerConfig);
+
 		// Before World::Init() seals the component type registry, so developer UI
 		// (the editor) can still attach to component types
 		if (m_DebugUI)
@@ -192,14 +199,35 @@ namespace Fling
 		return ExitCode::Success;
 	}
 
-	void Engine::Tick()
+	ExitCode Engine::Tick()
 	{
 		assert(m_World && m_GameImpl);		// We HAVE to have a world and a game
 
 		Timing& Timing = Timing::Get();
 
 		// Once the world is initialized it allows the users to add their own components!
-		m_World->Init(m_Options.Level);
+		// A schedule with errors stops here: World::Init logged each error.
+		const bool bWorldReady = m_World->Init(m_Options.Level);
+
+		if (m_Options.DumpSchedule || m_Options.ValidateSchedule)
+		{
+			if (m_Options.DumpSchedule && m_World->GetSchedule())
+			{
+				std::fputs(m_World->GetSchedule()->Dump().c_str(), stdout);
+			}
+			if (!bWorldReady)
+			{
+				std::fputs(m_World->GetScheduleErrors().c_str(), stderr);
+			}
+			std::fflush(stdout);
+			F_LOG_TRACE("System schedule {} (--dump-schedule / --validate-schedule)", bWorldReady ? "is valid" : "has errors");
+			return bWorldReady ? ExitCode::Success : ExitCode::Failure;
+		}
+
+		if (!bWorldReady)
+		{
+			return ExitCode::Failure;
+		}
 
         // The developer UI starts the game with its "Play" button. With no developer
         // UI (a game build, or --null-render), the game starts on the first tick.
@@ -291,6 +319,7 @@ namespace Fling
 
 			Timing.UpdateFps();
 		}
+		return ExitCode::Success;
 	}
 
 	bool Engine::ShouldTick() const

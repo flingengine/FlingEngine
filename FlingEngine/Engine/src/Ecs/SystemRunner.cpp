@@ -3,8 +3,10 @@
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
+#include "Misc/SimulationCheck.h"
 
 #include <cassert>
+#include <optional>
 #include <ranges>
 
 namespace Fling
@@ -75,6 +77,8 @@ namespace Fling
 
     void SystemRunner::PlayBegin(const WorldRole role)
     {
+        // OnPlayBegin counts as setup for tick 0, so it follows the simulation rules.
+        const SimulationCheck::Scope simulation;
         for (const uint32 i : m_RunOrder)
         {
             if (RunsIn(i, role))
@@ -154,6 +158,11 @@ namespace Fling
     void SystemRunner::RunSegments(const UpdateRate rate, const WorldRole role)
     {
         const bool fixed = rate == UpdateRate::Fixed;
+        std::optional<SimulationCheck::Scope> simulation;
+        if (fixed)
+        {
+            simulation.emplace();
+        }
         for (const ScheduleSegment& segment : m_Schedule.GetSegments(rate))
         {
             for (const ScheduleStage& stage : segment.Stages)

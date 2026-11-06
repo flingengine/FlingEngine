@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Ecs/SystemRegistry.h"
+#include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
 #include "Game.h"
 #include "Json.h"
@@ -8,6 +10,7 @@
 
 #include <cassert>
 #include <entt/entity/registry.hpp>
+#include <memory>
 #include <string>
 
 namespace Fling
@@ -25,17 +28,37 @@ namespace Fling
 
 
 		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
+		~World();
 
 		/**
-		* Initializes the world. Loads the StartLevel that is specified in the config.
+		 * The ECS systems this world runs. Add engine and module systems here before
+		 * Init. Init then calls Game::RegisterSystems and builds the schedule.
+		 */
+		SystemRegistry& GetSystems() { return m_Systems; }
+
+		/** How the fixed tick runs (step length, one tick per frame). Set it before Init. */
+		void SetSystemRunnerConfig(const SystemRunnerConfig& t_Config) { m_RunnerConfig = t_Config; }
+
+		/** The schedule that Init built. Null before Init. */
+		const Schedule* GetSchedule() const;
+
+		/** The schedule errors from Init. Empty if the schedule is valid. */
+		const std::string& GetScheduleErrors() const { return m_ScheduleErrors; }
+
+		/**
+		* Initializes the world: registers components and systems, builds the system
+		* schedule, calls each system's OnCreate, then loads the StartLevel that is
+		* specified in the config.
 		* @note		Keep explicit Init and Shutdown functions to make the startup order more readable
 		*
 		* @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty means use the config.
+		* @return False if the system schedule has errors (see GetScheduleErrors). The world is then not ready for play.
 		*/
-		void Init(const std::string& t_StartLevel = {});
+		bool Init(const std::string& t_StartLevel = {});
 
 		/**
-		 * Tick all active levels in the world and upates any Lua scripts that have Update functions
+		 * Run one frame: the fixed system ticks that are due, then Game::Update, then the
+		 * frame systems. Systems run in the Play role during play and the Edit role otherwise.
 		 *
 		 * @param t_DeltaTime   Time between previous frame and the current one.
 		 */
@@ -163,6 +186,18 @@ namespace Fling
 
         /** The registry and represents all active entities in this world */
 		entt::registry& m_Registry;
+
+		/** The systems this world runs. */
+		SystemRegistry m_Systems;
+
+		/** @see SetSystemRunnerConfig */
+		SystemRunnerConfig m_RunnerConfig;
+
+		/** Runs the schedule. Made by Init when the schedule has no errors. */
+		std::unique_ptr<SystemRunner> m_Runner;
+
+		/** @see GetScheduleErrors */
+		std::string m_ScheduleErrors;
 
 		/** The game will allow users to specify their own update/read/write functions */
 		Fling::Game* m_Game = nullptr;

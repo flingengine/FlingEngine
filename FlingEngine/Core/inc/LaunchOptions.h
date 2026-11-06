@@ -35,6 +35,10 @@ namespace Fling
      *   --replay-input F    Play the input messages in file F from the first tick
      *   --record-input F    Record the input messages, and save them to file F at exit
      *                       (--replay-input and --record-input are errors in shipping builds)
+     *   --dump-schedule     Print the ECS schedule (phases, stages, and why), then exit.
+     *                       Exits with code 1 if the schedule has errors
+     *   --validate-schedule Check the ECS schedule, print any errors, then exit with
+     *                       code 0 (no errors) or 1. The build runs this (fling_validate_schedule)
      */
     struct LaunchOptions
     {
@@ -65,6 +69,12 @@ namespace Fling
 
         /** The file to save an input recording to (--record-input). Empty means no recording. */
         std::string RecordInput;
+
+        /** Print the ECS schedule, then exit (--dump-schedule). */
+        bool DumpSchedule = false;
+
+        /** Check the ECS schedule, then exit (--validate-schedule). */
+        bool ValidateSchedule = false;
 
         /**
          * Read the launch flags from a command line. Flags that are not given keep

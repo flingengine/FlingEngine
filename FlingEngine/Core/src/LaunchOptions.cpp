@@ -18,6 +18,8 @@ namespace Fling
         constexpr std::string_view LogInputFlag = "log-input";
         constexpr std::string_view ReplayInputFlag = "replay-input";
         constexpr std::string_view RecordInputFlag = "record-input";
+        constexpr std::string_view DumpScheduleFlag = "dump-schedule";
+        constexpr std::string_view ValidateScheduleFlag = "validate-schedule";
 
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
         bool ReadPath(const CommandLine& t_CmdLine, std::string_view t_Flag, std::string& t_Out, std::string& t_OutError)
@@ -108,6 +110,12 @@ namespace Fling
         }
 
         if (!ReadBool(t_CmdLine, UnattendedFlag, t_Out.Unattended, t_OutError))
+        {
+            return false;
+        }
+
+        if (!ReadBool(t_CmdLine, DumpScheduleFlag, t_Out.DumpSchedule, t_OutError) ||
+            !ReadBool(t_CmdLine, ValidateScheduleFlag, t_Out.ValidateSchedule, t_OutError))
         {
             return false;
         }

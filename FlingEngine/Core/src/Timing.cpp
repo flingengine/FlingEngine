@@ -1,5 +1,7 @@
+#include "Misc/SimulationCheck.h"
 #include "Timing.h"
 
+#include <cassert>
 #include <cmath>
 
 namespace Fling
@@ -34,6 +36,8 @@ namespace Fling
 
 	float Timing::GetDeltaTime()
 	{
+		assert(!SimulationCheck::IsActive() &&
+			   "Simulation code must not read the frame delta. Use the SimTime singleton.");
 		return m_deltaTime;	
 	}
 
@@ -51,6 +55,7 @@ namespace Fling
 
 	double Timing::GetTime() const
 	{
+		assert(!SimulationCheck::IsActive() && "Simulation code must not read the wall clock. Use the SimTime singleton.");
 		auto now = std::chrono::high_resolution_clock::now();
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>( now - sStartTime ).count();
 		//a little uncool to then convert into a double just to go back, but oh well.

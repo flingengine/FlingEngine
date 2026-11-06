@@ -7,6 +7,7 @@
 #include "World.h"
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 #include <vector>
 
@@ -26,15 +27,40 @@ namespace Fling
 		, m_ShouldQuit(false)
 	{ }
 
-	void World::Init(const std::string& t_StartLevel)
+	World::~World() = default;
+
+	const Schedule* World::GetSchedule() const
+	{
+		return m_Runner ? &m_Runner->GetSchedule() : nullptr;
+	}
+
+	bool World::Init(const std::string& t_StartLevel)
 	{
 		F_LOG_TRACE("World Init!");
 		assert(m_CurrentState == WorldState::NONE);
 
 		m_Game->RegisterComponents();
 		ComponentTypeRegistry::Get().RunExternalRegistrars();
+		m_Game->RegisterSystems(m_Systems);
 		m_Game->Init(m_Registry);
 		ComponentTypeRegistry::Get().Seal();
+
+		// Build the schedule before any level loads. A bad schedule never runs.
+		ScheduleResult Schedule = m_Systems.BuildSchedule();
+		if (!Schedule.Ok())
+		{
+			m_ScheduleErrors = Schedule.ErrorReport();
+			for (const ScheduleError& Error : Schedule.Errors)
+			{
+				F_LOG_ERROR("System schedule: {}", Error.Message);
+			}
+			return false;
+		}
+		F_LOG_TRACE("System schedule: {} systems", m_Systems.Size());
+
+		// Each system makes its singletons before the first level loads
+		m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Registry, m_RunnerConfig);
+		m_Runner->Create();
 
 		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : t_StartLevel;
 		if (!LevelToLoad.empty())
@@ -43,6 +69,7 @@ namespace Fling
 		}
 
 		m_CurrentState = WorldState::Initalized;
+		return true;
 	}
 
 	void World::Shutdown()
@@ -59,7 +86,12 @@ namespace Fling
 
         m_CurrentState = WorldState::ShuttingDown;
 
-		// Shut down the game
+		// Systems remove their singletons in reverse schedule order, then the game shuts down
+		if (m_Runner)
+		{
+			m_Runner->Destroy();
+			m_Runner.reset();
+		}
 		m_Game->Shutdown(m_Registry);
 
 		F_LOG_TRACE("World shutdown complete!");
@@ -119,6 +151,10 @@ namespace Fling
         }
 
         m_CurrentState = WorldState::Starting;
+        if (m_Runner)
+        {
+            m_Runner->PlayBegin(WorldRole::Play);
+        }
         m_Game->OnStartGame(m_Registry);
 		m_CurrentState = WorldState::Playing;
     }
@@ -127,7 +163,11 @@ namespace Fling
     {
         F_LOG_TRACE("World: stop play");
 
-        // The game cleans up its own state while its entities still exist
+        // Systems and the game clean up their own state while the entities still exist
+        if (m_Runner)
+        {
+            m_Runner->PlayEnd(WorldRole::Play);
+        }
         m_Game->OnStopGame(m_Registry);
         m_Game->m_WantsToQuit = false;
 
@@ -153,9 +193,19 @@ namespace Fling
         // rendering), so they run here, before the game ticks
         ProcessPlayRequest();
 
-        if(m_CurrentState == WorldState::Playing)
+        const bool bPlaying = m_CurrentState == WorldState::Playing;
+        const WorldRole Role = bPlaying ? WorldRole::Play : WorldRole::Edit;
+        const auto RealDelta = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::duration<double>(static_cast<double>(t_DeltaTime)));
+
+        // The fixed ticks that are due, then the legacy game update, then the frame systems
+        if (m_Runner)
+        {
+            m_Runner->RunFixed(RealDelta, Role);
+        }
+
+        if(bPlaying)
 		{
-			// Once we are done with core updates, then call the game!
 			m_Game->Update(m_Registry, t_DeltaTime);
 
             // In editor play, a game that wants to quit stops play instead
@@ -164,6 +214,11 @@ namespace Fling
                 m_Game->m_WantsToQuit = false;
                 m_PendingRequest = PlayRequest::Stop;
             }
+        }
+
+        if (m_Runner)
+        {
+            m_Runner->RunFrame(RealDelta, Role);
         }
 	}
 

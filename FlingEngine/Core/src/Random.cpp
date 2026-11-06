@@ -1,6 +1,8 @@
+#include "Misc/SimulationCheck.h"
 #include "Random.h"
 
 #include <algorithm>
+#include <cassert>
 
 namespace Fling
 {
@@ -110,22 +112,26 @@ namespace Fling
 	const int Random::Random0ToN(const int t_max)
 	{
 		assert(bIsInitalized);
+		assert(!SimulationCheck::IsActive() && "Simulation code must not use the global Random. Use a random stream seeded from the tick.");
 		return s_Stream.Random0ToN(t_max);
 	}
 
 	const int Random::RandomBetween(const int t_min, const int t_max)
 	{
 		assert(bIsInitalized);
+		assert(!SimulationCheck::IsActive() && "Simulation code must not use the global Random. Use a random stream seeded from the tick.");
 		return s_Stream.RandomBetween(t_min, t_max);
 	}
 
 	glm::vec3 Random::GetRandomVec3(const glm::vec3 t_Min, const glm::vec3 t_Max)
 	{
+		assert(!SimulationCheck::IsActive() && "Simulation code must not use the global Random. Use a random stream seeded from the tick.");
 		return s_Stream.GetRandomVec3(t_Min, t_Max);
 	}
 
 	float Random::GetRandomFloat(float t_Min, float t_Max)
 	{
+		assert(!SimulationCheck::IsActive() && "Simulation code must not use the global Random. Use a random stream seeded from the tick.");
 		return s_Stream.GetRandomFloat(t_Min, t_Max);
 	}
 }	// namespace Fling

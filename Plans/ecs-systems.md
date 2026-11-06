@@ -1,7 +1,7 @@
 # ECS systems and components: the first slice
 
-Status: work items 1 to 3 and 3b (open phases, §3.8) are done (branch
-`feature/ecs-types`). Items 4 to 6 are next. §6 lists what changed from this plan while they were written.
+Status: work items 1 to 4 (with 3b, open phases, §3.8) are done (branch
+`feature/ecs-types`). Items 5 and 6 are next. §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -1217,6 +1217,28 @@ Each item is one PR off `main`, green on all CI platforms.
    `RequestGameStart`/`Stop` call `OnPlayBegin`/`OnPlayEnd`. Add
    `Game::RegisterSystems`, `--dump-schedule`, `--validate-schedule`, and
    `fling_validate_schedule()`.
+   Done:
+   - `World` owns the `SystemRegistry` (`GetSystems()`, filled before
+     `Init`) and the `SystemRunner`. `World::Init` calls
+     `Game::RegisterSystems`, builds the schedule, and returns false on
+     errors (`GetScheduleErrors()`), before any level loads.
+   - `World::Update` runs `RunFixed`, then `Game::Update` (play only), then
+     `RunFrame`. The role is `Play` during play and `Edit` otherwise, so
+     default systems (`RunIn = Play`) do nothing in the editor.
+   - `StartGame` calls `PlayBegin` after the snapshot and before
+     `Game::OnStartGame`. `StopGame` calls `PlayEnd` before
+     `Game::OnStopGame` and the restore. `Shutdown` calls `Destroy`.
+     Singletons live in the registry context, so the play snapshot restore
+     (`registry.reset()`) keeps them.
+   - `Engine::Startup` sets `OneTickPerFrame` under `--null-render`.
+     Engine and Graphics systems will be added to `World::GetSystems()`
+     there, when they exist.
+   - `--dump-schedule` and `--validate-schedule` start the world, report,
+     and exit with 0 or 1. `fling_validate_schedule(Sandbox)` runs the
+     check after each link (`-DFLING_VALIDATE_SCHEDULE=OFF` turns it off).
+   - `Misc/SimulationCheck.h` (Core): the runner marks the thread during
+     fixed systems and `OnPlayBegin`. `Timing::GetDeltaTime`,
+     `Timing::GetTime`, and the global `Random` assert that it is not set.
 5. **`ComponentTypeRegistry::Register<T>()`** from `T::Component`, plus
    kinds, transient, and the `"singletons"` level key. Existing levels load
    unchanged (test with `Assets/Levels/Level_1.json`).

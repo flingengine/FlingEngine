@@ -79,3 +79,20 @@ function(fling_set_bin_output TARGET)
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
 	)
 endfunction()
+
+# Checks a game's ECS system schedule after each build: runs the game headless
+# with --validate-schedule, so a schedule error (two unordered writers, a cycle,
+# a bad After name) fails `cmake --build` before anyone runs the game
+# (Plans/ecs-systems.md section 3.6). Turn it off with -DFLING_VALIDATE_SCHEDULE=OFF.
+option(FLING_VALIDATE_SCHEDULE "Check the ECS system schedule after building a game" ON)
+function(fling_validate_schedule TARGET)
+	if(NOT FLING_VALIDATE_SCHEDULE)
+		return()
+	endif()
+	add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND $<TARGET_FILE:${TARGET}> --null-render --unattended --validate-schedule
+		WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+		COMMENT "Checking the ECS system schedule of ${TARGET}"
+		VERBATIM
+	)
+endfunction()

@@ -18,6 +18,9 @@ fling_set_bin_output( ${PROJECT_NAME} )
 
 target_include_directories( ${PROJECT_NAME} PRIVATE Gameplay/inc )
 
+# A schedule error fails the build (--validate-schedule after each link)
+fling_validate_schedule( ${PROJECT_NAME} )
+
 if( WITH_EDITOR_FLAG )
     target_include_directories( ${PROJECT_NAME} PRIVATE Editor/inc )
     target_link_libraries( ${PROJECT_NAME} PRIVATE Fling::EditorStack )
@@ -56,6 +59,15 @@ if( FLING_BUILD_TESTS )
             TIMEOUT 120
         )
     endif()
+
+    # The ECS system schedule is valid, and --dump-schedule lists it and exits
+    add_test( NAME "Sandbox: system schedule"
+        COMMAND ${PROJECT_NAME} --null-render --unattended --dump-schedule
+        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+    )
+    set_tests_properties( "Sandbox: system schedule" PROPERTIES
+        PASS_REGULAR_EXPRESSION "Fling exit: code=0 ticks=0"
+    )
 
     # A bad launch argument must exit with code 3 (ExitCode::BadArguments)
     add_test( NAME "Sandbox: bad launch argument"
@@ -113,6 +125,7 @@ if( FLING_BUILD_TESTS )
         "Sandbox: headless run"
         "Sandbox: headless json logs"
         "Sandbox: bad launch argument"
+        "Sandbox: system schedule"
         "Sandbox: no Vulkan import"
         PROPERTIES TIMEOUT 120
     )
