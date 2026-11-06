@@ -4,13 +4,13 @@
 
 namespace Fling
 {
-	std::shared_ptr<Fling::JsonFile> JsonFile::Create(Guid t_ID)
+	std::shared_ptr<Fling::JsonFile> JsonFile::Create(const AssetPath& t_Path)
 	{
-		return ResourceManager::LoadResource<Fling::JsonFile>(t_ID);
+		return ResourceManager::LoadResource<Fling::JsonFile>(t_Path);
 	}
 
-	JsonFile::JsonFile(Guid t_ID)
-		: Resource(t_ID)
+	JsonFile::JsonFile(const AssetPath& t_Path)
+		: Resource(t_Path)
 	{
 		LoadJsonFile();
 	}

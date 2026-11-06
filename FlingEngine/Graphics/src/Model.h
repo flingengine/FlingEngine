@@ -18,21 +18,21 @@ namespace Fling
     {
 	public:
 
-		static std::shared_ptr<Fling::Model> Create(Guid t_ID);
+		static std::shared_ptr<Fling::Model> Create(const AssetPath& t_Path);
 
 		/** Creates a quad primitive model */
 		static std::shared_ptr<Fling::Model> Quad();
 
 		/**
-		 * Load a model from the asset path represented by t_ID.
-		 * @param t_ID              The GUID that represents the file path to this model
+		 * Load a model from the asset path t_Path.
+		 * @param t_Path            The path of this model, relative to the assets folder
 		 */
-		Model(Guid t_ID);
+		Model(const AssetPath& t_Path);
 
 		/**
-		 * @param	t_ID The GUID that represents a unique name for this model. It's up to the user to ensure uniqueness
+		 * @param	t_Path A unique name for this model. It's up to the user to ensure uniqueness
 		 */
-		Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies);
+		Model(const AssetPath& t_Path, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies);
 
 		~Model();
 

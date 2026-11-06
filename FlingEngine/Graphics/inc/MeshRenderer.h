@@ -71,9 +71,9 @@ namespace Fling
         void LoadMaterialFromPath(const std::string& t_MatPath);
 
         /** Asset path of the assigned model, or an empty string when none is set. */
-        std::string GetModelGuidString() const;
+        std::string GetModelPath() const;
 
         /** Asset path of the assigned material, or an empty string when none is set. */
-        std::string GetMaterialGuidString() const;
+        std::string GetMaterialPath() const;
     };
 } // namespace Fling

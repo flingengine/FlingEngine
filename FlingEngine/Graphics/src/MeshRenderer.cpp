@@ -67,22 +67,22 @@ namespace Fling
         Release();
     }
 
-    std::string MeshRenderer::GetModelGuidString() const
+    std::string MeshRenderer::GetModelPath() const
     {
         if (m_Model == nullptr)
         {
             return {};
         }
-        return m_Model->GetGuidString();
+        return m_Model->GetAssetPath().GetText();
     }
 
-    std::string MeshRenderer::GetMaterialGuidString() const
+    std::string MeshRenderer::GetMaterialPath() const
     {
         if (m_Material == nullptr)
         {
             return {};
         }
-        return m_Material->GetGuidString();
+        return m_Material->GetAssetPath().GetText();
     }
 
     MeshRenderer::MeshRenderer(const std::string& t_MeshPath)
@@ -126,13 +126,13 @@ namespace Fling
     void MeshRenderer::LoadModelFromPath(const std::string& t_MeshPath)
     {
         // Load the model
-        m_Model = Model::Create(Guid{t_MeshPath.c_str()}).get();
+        m_Model = Model::Create(AssetPath(t_MeshPath)).get();
         assert(m_Model);
     }
 
     void MeshRenderer::LoadMaterialFromPath(const std::string& t_MatPath)
     {
-        m_Material = Material::Create(Guid{t_MatPath.c_str()}).get();
+        m_Material = Material::Create(AssetPath(t_MatPath)).get();
         assert(m_Material);
     }
 
@@ -143,8 +143,8 @@ namespace Fling
 
         if (Ar.IsSaving())
         {
-            meshPath = m_Model ? m_Model->GetGuidString() : "";
-            materialPath = m_Material ? m_Material->GetGuidString() : "";
+            meshPath = m_Model ? m_Model->GetAssetPath().GetText() : "";
+            materialPath = m_Material ? m_Material->GetAssetPath().GetText() : "";
         }
 
         Ar << MakeNVP("mesh", meshPath);

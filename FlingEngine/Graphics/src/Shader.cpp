@@ -16,19 +16,19 @@ namespace Fling
 		uint32_t set{};
 	};
 
-    std::shared_ptr<Fling::Shader> Shader::Create(Guid t_ID, LogicalDevice* t_Dev)
+    std::shared_ptr<Fling::Shader> Shader::Create(const AssetPath& t_Path, LogicalDevice* t_Dev)
     {
-		const auto& shader = ResourceManager::LoadResource<Shader>(t_ID, t_Dev);
+		const auto& shader = ResourceManager::LoadResource<Shader>(t_Path, t_Dev);
 		return shader;
     }
 
-    Shader::Shader(Guid t_ID, LogicalDevice* t_Dev)
-        : Resource(t_ID)
+    Shader::Shader(const AssetPath& t_Path, LogicalDevice* t_Dev)
+        : Resource(t_Path)
 		, m_Device(t_Dev)
     {
 		assert(m_Device);
         // Shaders are compiled by the build, not stored in Assets
-        const std::string FilePath = FlingPaths::CompiledShaderDir() + "/" + GetGuidString();
+        const std::string FilePath = FlingPaths::CompiledShaderDir() + "/" + GetAssetPath().GetText();
         std::vector<char> RawCode = LoadRawBytes(FilePath);
 
         if (CreateShaderModule(RawCode) != VK_SUCCESS)

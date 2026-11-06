@@ -14,18 +14,18 @@ namespace Fling
 		{ "DEBUG",			Type::Debug },
 	};
 	
-	std::shared_ptr<Fling::Material> Material::Create(Guid t_ID)
+	std::shared_ptr<Fling::Material> Material::Create(const AssetPath& t_Path)
     {
-        return ResourceManager::LoadResource<Fling::Material>(t_ID);
+        return ResourceManager::LoadResource<Fling::Material>(t_Path);
     }
 
 	std::shared_ptr<Fling::Material> Material::GetDefaultMat()
 	{
-		return Material::Create("Materials/Default.mat");
+		return Material::Create(AssetPath("Materials/Default.mat"));
 	}
 
-    Material::Material(Guid t_ID)
-        : JsonFile(t_ID)
+    Material::Material(const AssetPath& t_Path)
+        : JsonFile(t_Path)
     {
         LoadMaterial();
     }
@@ -46,19 +46,19 @@ namespace Fling
             // Load Textures -------------
             // Albedo
             const std::string AlbedoPath = m_JsonData.GetString("albedo");
-            m_Textures.m_AlbedoTexture = Texture::Create(HS(AlbedoPath.c_str())).get();
+            m_Textures.m_AlbedoTexture = Texture::Create(AssetPath(AlbedoPath)).get();
 
             // Normal
             const std::string NormalPath = m_JsonData.GetString("normal");
-            m_Textures.m_NormalTexture = Texture::Create(HS(NormalPath.c_str())).get();
+            m_Textures.m_NormalTexture = Texture::Create(AssetPath(NormalPath)).get();
 
             // Metal
             const std::string MetalPath = m_JsonData.GetString("metal");
-            m_Textures.m_MetalTexture = Texture::Create(HS(MetalPath.c_str())).get();
+            m_Textures.m_MetalTexture = Texture::Create(AssetPath(MetalPath)).get();
 
             // Rough
             const std::string RoughPath = m_JsonData.GetString("rough");
-            m_Textures.m_RoughnessTexture = Texture::Create(HS(RoughPath.c_str())).get();
+            m_Textures.m_RoughnessTexture = Texture::Create(AssetPath(RoughPath)).get();
         }
         catch (std::exception& e)
         {

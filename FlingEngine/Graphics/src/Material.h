@@ -37,11 +37,11 @@ namespace Fling
 			Debug
 		};
 
-        static std::shared_ptr<Fling::Material> Create(Guid t_ID);
+        static std::shared_ptr<Fling::Material> Create(const AssetPath& t_Path);
 
 		static std::shared_ptr<Fling::Material> GetDefaultMat();
 
-        explicit Material(Guid t_ID);
+        explicit Material(const AssetPath& t_Path);
 
         const PBRTextures& GetPBRTextures() const { return m_Textures; }
 

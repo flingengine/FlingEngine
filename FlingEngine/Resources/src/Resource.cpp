@@ -5,6 +5,6 @@ namespace Fling
 {
     std::string Resource::GetFilepathReleativeToAssets() const
     {
-        return (FlingPaths::EngineAssetsDir() + "/" + GetGuidString());
+        return (FlingPaths::EngineAssetsDir() + "/" + m_Path.GetText());
     }
 }

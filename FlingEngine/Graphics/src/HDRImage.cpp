@@ -11,13 +11,13 @@
 
 namespace Fling
 {
-    std::shared_ptr<Fling::HDRImage> HDRImage::Create(Guid t_ID, LogicalDevice* t_dev, void* t_Data)
+    std::shared_ptr<Fling::HDRImage> HDRImage::Create(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data)
     {
-        return ResourceManager::LoadResource<Fling::HDRImage>(t_ID, t_dev, t_Data);
+        return ResourceManager::LoadResource<Fling::HDRImage>(t_Path, t_dev, t_Data);
     }
 
-    HDRImage::HDRImage(Guid t_ID, LogicalDevice* t_dev, void* t_Data)
-        : Resource(t_ID)
+    HDRImage::HDRImage(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data)
+        : Resource(t_Path)
 		, m_Device(t_dev)
     {
         LoadVulkanImage();

@@ -14,13 +14,13 @@
 
 namespace Fling
 {
-	std::shared_ptr<Fling::Texture> Texture::Create(Guid t_ID)
+	std::shared_ptr<Fling::Texture> Texture::Create(const AssetPath& t_Path)
 	{
-		return ResourceManager::LoadResource<Fling::Texture>(t_ID);
+		return ResourceManager::LoadResource<Fling::Texture>(t_Path);
 	}
 
-	Texture::Texture(Guid t_ID)
-        : Resource(t_ID)
+	Texture::Texture(const AssetPath& t_Path)
+        : Resource(t_Path)
     {
         // Under --null-render there is no GPU device, so there is no image to make
         if (!VulkanApp::Get().HasDevice())

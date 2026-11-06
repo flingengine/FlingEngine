@@ -1,6 +1,7 @@
 # Strings
 
-Status: proposed. Nothing in this plan is built yet.
+Status: Phases 1 and 2 are built (Core string types, and assets). Phases 3 to 6
+are not.
 
 This plan sets out the string types of the engine, the rules for each one, and
 the order in which we move the code onto them. When a phase is done, move its
@@ -302,8 +303,9 @@ namespace Fling
 
 Assets use `Name` and `String`. They do not add a string type.
 
-- **`AssetPath`** makes a canonical path from text: forward slashes, relative to
-  the assets root, no `.` or `..`, case kept. Builds without `FLING_SHIPPING`
+- **`AssetPath`** (Resources module) makes a canonical path from text: forward
+  slashes, relative to its root folder, no `.` segments, and a `..` removes the
+  segment before it. Case is kept. Later, builds without `FLING_SHIPPING` should
   warn when the case does not match the file on disk, because Windows does not
   care about case and Linux does.
 - **`AssetId`** is a typed wrapper around the `Name` of the canonical path. Only
