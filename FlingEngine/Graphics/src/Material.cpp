@@ -6,12 +6,12 @@
 
 namespace Fling
 {    
-	std::unordered_map<std::string, Material::Type> Material::TypeMap =
+	std::unordered_map<Name, Material::Type> Material::TypeMap =
 	{
-		{ "DEFAULT",		Type::Default },
-		{ "CUBEMAP" ,		Type::Cubemap},
-		{ "REFLECTION",		Type::Reflection },
-		{ "DEBUG",			Type::Debug },
+		{ "DEFAULT"_name,		Type::Default },
+		{ "CUBEMAP"_name,		Type::Cubemap},
+		{ "REFLECTION"_name,	Type::Reflection },
+		{ "DEBUG"_name,			Type::Debug },
 	};
 	
 	std::shared_ptr<Fling::Material> Material::Create(const AssetPath& t_Path)
@@ -67,26 +67,21 @@ namespace Fling
         }
     }
 
-	Material::Type Material::GetTypeFromStr(const std::string& t_Str)
+	Material::Type Material::GetTypeFromStr(const StringView t_Str)
 	{
-		if (TypeMap.find(t_Str) != TypeMap.end())
-		{
-			return TypeMap[t_Str];
-		}
-
-		return Type::Default;
+		const auto Found = TypeMap.find(Name::WithoutText(t_Str));
+		return Found != TypeMap.end() ? Found->second : Type::Default;
 	}
 
-	const std::string& Material::GetStringFromType(const Material::Type t_Type)
+	StringView Material::GetStringFromType(const Material::Type t_Type)
 	{
 		auto it = std::find_if(std::begin(TypeMap), std::end(TypeMap),
 			[&t_Type](auto&& p) { return p.second == t_Type; });
 
 		if (it == std::end(TypeMap))
 		{
-			static std::string DefaultStr = "DEFAULT";
-			return DefaultStr;
+			return "DEFAULT";
 		}
-		return it->first;
+		return it->first.ToView();
 	}
 }   // namespace Fling

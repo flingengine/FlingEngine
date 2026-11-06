@@ -139,7 +139,7 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         int count = 0;
         reg.view<Transform, NameComponent>().each([&](auto /*entity*/, Transform& t, NameComponent& name) {
             ++count;
-            REQUIRE(name.Name == "Hero");
+            REQUIRE(name.Name == "Hero"_name);
             REQUIRE(t.GetPos().x == Catch::Approx(4.f));
             REQUIRE(t.GetPos().y == Catch::Approx(5.f));
             REQUIRE(t.GetPos().z == Catch::Approx(6.f));
@@ -185,9 +185,9 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         glm::vec3 left{};
         glm::vec3 right{};
         reg.view<Transform, NameComponent>().each([&](auto /*entity*/, Transform& t, NameComponent& name) {
-            if (name.Name == "Left") {
+            if (name.Name == "Left"_name) {
                 left = t.GetPos();
-            } else if (name.Name == "Right") {
+            } else if (name.Name == "Right"_name) {
                 right = t.GetPos();
             }
         });

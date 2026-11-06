@@ -47,9 +47,9 @@ namespace Fling
 
 		Material::Type GetType() const { return m_Type; }
 
-		static Material::Type GetTypeFromStr(const std::string& t_Str);
+		static Material::Type GetTypeFromStr(StringView t_Str);
 
-		static const std::string& GetStringFromType(const Material::Type);
+		static StringView GetStringFromType(const Material::Type);
 
     private:
 
@@ -63,6 +63,6 @@ namespace Fling
         float m_Shininiess = 0.5f;
 
 		// A map of types to their parsed names
-		static std::unordered_map<std::string, Material::Type> TypeMap;
+		static std::unordered_map<Name, Material::Type> TypeMap;
     };
 }   // namespace Fling

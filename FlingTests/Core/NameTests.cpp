@@ -254,3 +254,17 @@ TEST_CASE("DisplayText::Format replaces named arguments", "[Strings][DisplayText
     CHECK(Nested.Resolve() == "<3 enemies left, Ben! {Missing} {x}>");
     CHECK(fmt::format("{}", Nested) == "<3 enemies left, Ben! {Missing} {x}>");
 }
+
+TEST_CASE("Name::WithoutText looks up text without adding it", "[Strings][Name]")
+{
+    const String Text = "NameTests.LookupOnly." + std::to_string(777);
+    const Name Lookup = Name::WithoutText(Text);
+    CHECK(Lookup.GetHash() == HashText(Text));
+    CHECK(Lookup.ToView().empty());
+    CHECK(Detail::FindNameText(HashText(Text)).empty());
+
+    // It finds a Name that was made with its text.
+    CHECK(Name::WithoutText("Jump") == "Jump"_name);
+    CHECK(Name::WithoutText("").IsNone());
+    static_assert(Name::WithoutText("Jump") == "Jump"_name);
+}

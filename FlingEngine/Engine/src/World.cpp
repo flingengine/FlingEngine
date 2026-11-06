@@ -200,7 +200,7 @@ namespace Fling
 			std::string name;
 			if (m_Registry.has<NameComponent>(entity))
 			{
-				name = m_Registry.get<NameComponent>(entity).Name;
+				name = std::string(m_Registry.get<NameComponent>(entity).Name.ToView());
 			}
 			if (name.empty())
 			{
@@ -306,7 +306,7 @@ namespace Fling
 			}
 
 			NameComponent& nameComp = m_Registry.assign<NameComponent>(entity);
-			nameComp.Name = name;
+			nameComp.Name = Name(name);
 
 			auto LoadNamedComponent = [&](const std::string& key)
 			{

@@ -16,7 +16,7 @@ namespace Fling
 		// the generic component list, so it isn't offered twice.
 		bool IsNameComponent(const ComponentTypeInfo& info)
 		{
-			return info.name && std::strcmp(info.name, "NameComponent") == 0;
+			return info.TypeName == "NameComponent"_name;
 		}
 	}
 
@@ -50,18 +50,30 @@ namespace Fling
 
 			// Rename field. Only touches the registry once the user actually edits it,
 			// so just opening the editor doesn't silently attach a NameComponent.
+			// The new Name is made only when the edit ends. A Name per key press would add
+			// every partial text ("P", "Pl", ...) to the name table, which keeps them all.
 			{
-				char NameBuf[128] = {};
-				const std::string& CurrentName = t_Reg.has<NameComponent>(t_Entity) ? t_Reg.get<NameComponent>(t_Entity).Name : std::string();
-				std::strncpy(NameBuf, CurrentName.c_str(), sizeof(NameBuf) - 1);
+				static char NameBuf[128] = {};
+				static entt::entity BufferEntity = entt::null;
+				static bool bEditing = false;
+				if (!bEditing || BufferEntity != t_Entity)
+				{
+					const StringView CurrentName = t_Reg.has<NameComponent>(t_Entity) ? t_Reg.get<NameComponent>(t_Entity).Name.ToView() : StringView();
+					const size_t Length = std::min(CurrentName.size(), sizeof(NameBuf) - 1);
+					std::memcpy(NameBuf, CurrentName.data(), Length);
+					NameBuf[Length] = '\0';
+					BufferEntity = t_Entity;
+				}
 
-				if (ImGui::InputText("Name", NameBuf, sizeof(NameBuf)))
+				ImGui::InputText("Name", NameBuf, sizeof(NameBuf));
+				bEditing = ImGui::IsItemActive();
+				if (ImGui::IsItemDeactivatedAfterEdit())
 				{
 					if (!t_Reg.has<NameComponent>(t_Entity))
 					{
 						t_Reg.assign<NameComponent>(t_Entity);
 					}
-					t_Reg.get<NameComponent>(t_Entity).Name = NameBuf;
+					t_Reg.get<NameComponent>(t_Entity).Name = Name(StringView(NameBuf));
 				}
 			}
 

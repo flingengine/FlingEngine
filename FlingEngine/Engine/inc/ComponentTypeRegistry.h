@@ -1,6 +1,8 @@
 #pragma once
 
 #include "JsonArchive.h"
+#include "Strings/Name.h"
+#include "Strings/String.h"
 
 #include <deque>
 #include <entt/entity/registry.hpp>
@@ -14,6 +16,9 @@ namespace Fling
 	struct ComponentTypeInfo
 	{
 		const char* name = nullptr;
+
+		/** The registered name as a Name, for fast compares. */
+		Name TypeName;
 		void (*save)(const entt::registry&, entt::entity, Json& out) = nullptr;
 		void (*load)(entt::registry&, entt::entity, const Json& in) = nullptr;
 		bool (*has)(const entt::registry&, entt::entity) = nullptr;
@@ -75,7 +80,7 @@ namespace Fling
 		void Seal();
 		bool IsSealed() const { return m_Sealed; }
 
-		const ComponentTypeInfo* Find(const std::string& name) const;
+		const ComponentTypeInfo* Find(StringView name) const;
 		const std::vector<ComponentTypeInfo>& All() const { return m_Types; }
 
 #ifdef FLING_WITH_TEST_HOOKS
@@ -101,7 +106,7 @@ namespace Fling
 		// entries hold into these strings via .c_str().
 		std::deque<std::string> m_NameStorage;
 
-		std::unordered_map<std::string, std::size_t> m_NameToIndex;
+		std::unordered_map<Name, std::size_t> m_NameToIndex;
 		std::vector<IComponentRegistrar*> m_Registrars;
 		bool m_Sealed = false;
 	};
