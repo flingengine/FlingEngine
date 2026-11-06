@@ -28,8 +28,8 @@ namespace Sandbox
 		*/
 		void Update(entt::registry& t_Reg, float DeltaTime) override final;
 
-		/* Called when the engine is shutting down */
-		void OnStopGame(entt::registry& t_Reg) override final;
+        /** Called when play stops. Resets the state that is not in the registry. */
+        void OnStopGame(entt::registry& t_Reg) override final;
 
 		void Shutdown(entt::registry& t_Reg) override final;
 
@@ -59,8 +59,10 @@ namespace Sandbox
 
 		void OnToggleMoveLights();
 
-		/** Temp vector for keeping track of the movement of things */
-		glm::vec3 MoveDelta = {};
+        /** Puts the per-play member state back to its start values */
+        void ResetPlayState();
 
-	};
+        /** The X position of the last sphere from OnTestSpawn */
+        float m_TestSpawnX = -1.0f;
+    };
 }	// namespace Sandbox

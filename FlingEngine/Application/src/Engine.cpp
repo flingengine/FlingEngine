@@ -178,10 +178,16 @@ namespace Fling
 		// Once the world is initialized it allows the users to add their own components!
 		m_World->Init();
 
-		// The developer UI starts the game with its "Play" button. With no developer
-		// UI (a game build, or --null-render), the game starts now.
-		if (!m_DebugUI)
-		{
+        // The developer UI starts the game with its "Play" button. With no developer
+        // UI (a game build, or --null-render), the game starts on the first tick.
+        if (m_DebugUI)
+        {
+            // In editor play, a game that wants to quit (Escape) stops play, and
+            // the editor stays open
+            m_World->SetGameQuitStopsPlay(true);
+        }
+        else
+        {
 			m_World->RequestGameStart();
 		}
 

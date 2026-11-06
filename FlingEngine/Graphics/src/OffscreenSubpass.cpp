@@ -31,7 +31,7 @@ namespace Fling
 	{
 		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
 		t_reg.on_replace<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
-		t_reg.on_destroy<MeshRenderer>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.on_destroy<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
 		// The render view needs a Transform, so adding or removing one changes what we draw
 		t_reg.on_construct<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
 		t_reg.on_destroy<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
@@ -105,6 +105,9 @@ namespace Fling
 		// Don't use the given command buffer, instead build the OFFSCREEN command buffer
 		CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveSwapImage];
 		assert(OffscreenCmdBuf);
+
+		// The previous frame is done on the GPU, so the resources of destroyed meshes can go
+		ReleaseRetiredMeshResources();
 
 		// Write the descriptor sets of replaced meshes now that entt has stored the new values
 		if (!m_ReplacedMeshes.empty())
@@ -364,6 +367,8 @@ namespace Fling
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		// Each mesh frees its set when it is destroyed (see ReleaseRetiredMeshResources)
+		poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = to_u32(1000 * m_SwapChain->GetImageViewCount());
@@ -437,11 +442,14 @@ namespace Fling
 		// Stop listening, the descriptor pool and mesh buffers are about to go away
 		t_reg.on_construct<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
 		t_reg.on_replace<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
-		t_reg.on_destroy<MeshRenderer>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.on_destroy<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
 		t_reg.on_construct<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
 		t_reg.on_destroy<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
 		m_ReplacedMeshes.clear();
-		
+
+		// Called after the device is idle, so nothing uses these now
+		ReleaseRetiredMeshResources();
+
 		t_reg.view<MeshRenderer>().each([](MeshRenderer& t_Mesh)
 		{
 			t_Mesh.Release();
@@ -502,5 +510,46 @@ namespace Fling
 	void OffscreenSubpass::OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg)
 	{
 		InvalidateCommandBuffers();
+	}
+
+	void OffscreenSubpass::OnMeshRendererDestroyed(entt::entity t_Ent, entt::registry& t_Reg)
+	{
+		// entt sends this before it removes the component, so it is still valid
+		MeshRenderer& MeshRend = t_Reg.get<MeshRenderer>(t_Ent);
+
+		if (MeshRend.m_GpuState != nullptr && MeshRend.m_GpuState->m_DescriptorSet != VK_NULL_HANDLE)
+		{
+			m_RetiredDescriptorSets.emplace_back(MeshRend.m_GpuState->m_DescriptorSet);
+			MeshRend.m_GpuState->m_DescriptorSet = VK_NULL_HANDLE;
+		}
+
+		// Take the UBO, so that the MeshRenderer destructor does not delete it
+		// while a command buffer can still use it
+		if (MeshRend.m_UniformBuffer != nullptr)
+		{
+			m_RetiredUniformBuffers.emplace_back(MeshRend.m_UniformBuffer);
+			MeshRend.m_UniformBuffer = nullptr;
+		}
+
+		InvalidateCommandBuffers();
+	}
+
+	void OffscreenSubpass::ReleaseRetiredMeshResources()
+	{
+		if (!m_RetiredDescriptorSets.empty() && m_DescriptorPool != VK_NULL_HANDLE)
+		{
+			VK_CHECK_RESULT(vkFreeDescriptorSets(
+				m_Device->GetVkDevice(),
+				m_DescriptorPool,
+				static_cast<uint32>(m_RetiredDescriptorSets.size()),
+				m_RetiredDescriptorSets.data()));
+		}
+		m_RetiredDescriptorSets.clear();
+
+		for (Buffer* Ubo : m_RetiredUniformBuffers)
+		{
+			delete Ubo;
+		}
+		m_RetiredUniformBuffers.clear();
 	}
 }   // namespace Fling
