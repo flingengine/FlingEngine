@@ -9,6 +9,7 @@ include(Catch)
 # One Catch2 executable per module that owns tests. Each links Catch2 and only
 # that module; public dependencies come along transitively. An empty folder
 # adds no target, so a module with no real tests (Graphics, Editor) stays out.
+# Extra libraries after MODULE are linked too (for example the physics provider).
 function( fling_add_module_tests MODULE )
 	file( GLOB _sources CONFIGURE_DEPENDS
 		"${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}/*.cpp"
@@ -26,6 +27,7 @@ function( fling_add_module_tests MODULE )
 	target_link_libraries( ${_target} PRIVATE
 		Catch2::Catch2WithMain
 		Fling::${MODULE}
+		${ARGN}
 	)
 
 	# PRE_TEST lists the tests when ctest runs instead of running the binary at
@@ -52,7 +54,7 @@ endfunction()
 fling_add_module_tests( Core )
 fling_add_module_tests( Resources )
 fling_add_module_tests( Engine )
-fling_add_module_tests( Physics )
+fling_add_module_tests( Physics Fling::DefaultPhysicsProvider )
 fling_add_module_tests( Application )
 
 # Module isolation tests. Each one builds IsolationCheck.cpp with one header,
@@ -93,6 +95,19 @@ fling_add_isolation_test( EngineCannotSeeGraphics  Fling::Engine   "VulkanApp.h"
 fling_add_isolation_test( EngineCannotSeeApplication Fling::Engine "FlingEngine.h"     HIDDEN )
 fling_add_isolation_test( PhysicsHeaders           Fling::Physics   "Physics.h"         VISIBLE )
 fling_add_isolation_test( PhysicsCannotSeeGraphics Fling::Physics   "VulkanApp.h"       HIDDEN )
+fling_add_isolation_test( PhysicsCannotSeeBullet   Fling::Physics   "btBulletDynamicsCommon.h" HIDDEN )
+fling_add_isolation_test( PhysicsCannotSeeJolt     Fling::Physics   "Jolt/Jolt.h"       HIDDEN )
+# The engine finds physics providers by searching folders, including a provider
+# outside the engine (FlingTests/PhysicsProviderExample)
+add_test( NAME "Physics: providers are found"
+	COMMAND ${CMAKE_COMMAND} -DFLING_ROOT_DIR=${FLING_ROOT_DIR}
+		-P "${CMAKE_CURRENT_SOURCE_DIR}/PhysicsProviderExample/FindProvidersTest.cmake"
+)
+
+# A provider links its physics library PRIVATE, so the game never sees it,
+# whichever provider is selected
+fling_add_isolation_test( ApplicationCannotSeeJolt   Fling::Application "Jolt/Jolt.h"              HIDDEN )
+fling_add_isolation_test( ApplicationCannotSeeBullet Fling::Application "btBulletDynamicsCommon.h" HIDDEN )
 fling_add_isolation_test( GraphicsHeaders          Fling::Graphics  "VulkanApp.h"       VISIBLE )
 fling_add_isolation_test( GraphicsCannotSeeApplication Fling::Graphics "FlingEngine.h"  HIDDEN )
 fling_add_isolation_test( GraphicsCannotSeeEditor  Fling::Graphics  "BaseEditor.h"      HIDDEN )

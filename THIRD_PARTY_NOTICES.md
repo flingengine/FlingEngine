@@ -56,12 +56,14 @@ These are git submodules. Each one keeps its own license file, listed here.
 
 | Library | Used for | License | License file |
 | --- | --- | --- | --- |
+| [Bullet Physics](https://github.com/bulletphysics/bullet3) (our fork: [flingengine/bullet3](https://github.com/flingengine/bullet3)) | Physics provider when `FLING_PHYSICS_PROVIDER=Bullet` (LinearMath, BulletCollision, BulletDynamics only) | zlib | `external/bullet3/LICENSE.txt` |
 | [Catch2](https://github.com/catchorg/Catch2) | Unit tests | Boost Software License 1.0 | `external/Catch2/LICENSE.txt` |
 | [cereal](https://github.com/USCiLab/cereal) | Serialization | BSD 3-Clause | `external/cereal/LICENSE` |
 | [EnTT](https://github.com/skypjack/entt) | Entity component system, signals | MIT | `external/entt/LICENSE` |
 | [GLFW](https://www.glfw.org/) | Windows and input | zlib | `external/glfw/LICENSE.md` |
 | [GLM](https://github.com/g-truc/glm) | Math | MIT (or the Happy Bunny License) | `external/glm/copying.txt` |
 | [Dear ImGui](https://github.com/ocornut/imgui) | Editor and debug UI | MIT | `external/imgui/LICENSE.txt` |
+| [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (our fork: [flingengine/JoltPhysics](https://github.com/flingengine/JoltPhysics), at tag v5.6.0) | Physics provider when `FLING_PHYSICS_PROVIDER=Jolt` (the default) | MIT | `external/JoltPhysics/LICENSE` |
 | [inih](https://github.com/benhoyt/inih) | INI config files | BSD 3-Clause | `external/inih/LICENSE.txt` |
 | [JSON for Modern C++](https://github.com/nlohmann/json) | JSON files, input recordings | MIT | `external/json/LICENSE.MIT` |
 | [spdlog](https://github.com/gabime/spdlog) | Logging | MIT | `external/spdlog/LICENSE` |

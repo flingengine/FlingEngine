@@ -2,23 +2,90 @@
 
 #include "FlingMath.h"
 #include "PhysicsAPI.h"
+#include "PhysicsComponents.h"
+#include "PhysicsProvider.h"
+#include "PhysicsTypes.h"
 
 #include <entt/entity/registry.hpp>
+#include <memory>
 
 namespace Fling
 {
-	/** Linear velocity of an entity, in world units per second. */
-	struct RigidBody
-	{
-		glm::vec3 m_Velocity { 0.0f, 0.0f, 0.0f };
-	};
+    namespace Physics
+    {
+        /**
+         * Create the physics scene and the physics singleton components
+         * (PhysicsWorld, PhysicsSettings, PhysicsCommands, ContactEvents) in this
+         * registry. Each registry has its own scene. Call it one time, before the
+         * first Tick.
+         *
+         * @param t_Reg         The registry (world) that gets physics
+         * @param t_Provider    The physics library to use. If it is null, the null provider is used
+         * @param t_Settings    The first value of the PhysicsSettings singleton
+         */
+        PHYSICS_API void InitWorld(entt::registry& t_Reg,
+                                   std::shared_ptr<PhysicsProvider> t_Provider,
+                                   const PhysicsSettings& t_Settings = {});
 
-	namespace Physics
-	{
-		/**
-		 * Move every entity that has a Transform and a RigidBody by its velocity.
-		 * This is a stub: there are no forces, collisions, or rotation yet.
-		 */
-		PHYSICS_API void Step(entt::registry& t_Reg, float t_DeltaTime);
-	}	// namespace Physics
-}	// namespace Fling
+        /**
+         * Remove every body and the physics singleton components from this
+         * registry. The PhysicsBody components are removed too.
+         */
+        PHYSICS_API void ShutdownWorld(entt::registry& t_Reg);
+
+        /**
+         * Run the physics phase for one game tick. The time goes into a clock, and
+         * the clock runs whole steps of PhysicsSettings::m_FixedStep. A tick can run
+         * no step, one step, or more. The order is:
+         *   1. Create bodies for new entities that have a Transform, a RigidBody, and a Collider
+         *   2. Remove the bodies of destroyed entities
+         *   3. Change the requests in PhysicsCommands to provider requests, then clear it
+         *   4. For each fixed step: apply the waiting requests, step, and collect the contacts
+         *   5. Fill ContactEvents and write the poses and velocities into Transform and RigidBody
+         *
+         * Does nothing if InitWorld was not called for this registry.
+         */
+        PHYSICS_API void Tick(entt::registry& t_Reg, float t_DeltaTime);
+
+        /**
+         * Request a force (newtons) on an entity. It acts for the delta time of the
+         * next Tick, so the result does not change with the frame rate.
+         */
+        PHYSICS_API void ApplyForce(entt::registry& t_Reg, entt::entity t_Entity, const glm::vec3& t_Force);
+
+        /** Request an impulse (newton seconds) on an entity at the next fixed step. */
+        PHYSICS_API void ApplyImpulse(entt::registry& t_Reg, entt::entity t_Entity, const glm::vec3& t_Impulse);
+
+        /** Request a torque (newton meters) on an entity, for the delta time of the next Tick. */
+        PHYSICS_API void ApplyTorque(entt::registry& t_Reg, entt::entity t_Entity, const glm::vec3& t_Torque);
+
+        /** Request a new linear velocity for an entity at the next fixed step. */
+        PHYSICS_API void SetLinearVelocity(entt::registry& t_Reg, entt::entity t_Entity, const glm::vec3& t_Velocity);
+
+        /**
+         * Save the physics scene and clock of this registry, for rollback. The
+         * entities and their components are not saved: the caller saves them.
+         *
+         * @return False if there is no scene, or the provider cannot save (PhysicsCapability::SaveRestore)
+         */
+        PHYSICS_API bool SaveState(const entt::registry& t_Reg, PhysicsSnapshot& t_Out);
+
+        /**
+         * Restore a snapshot from SaveState, then write every body's pose and
+         * velocity into Transform and RigidBody. The scene must have the same
+         * bodies as when it was saved.
+         *
+         * @return False if there is no scene, or the provider cannot restore it
+         */
+        PHYSICS_API bool RestoreState(entt::registry& t_Reg, const PhysicsSnapshot& t_Snapshot);
+
+        /** The number of bodies in the physics scene of this registry. 0 if there is no scene. */
+        PHYSICS_API uint32 GetBodyCount(const entt::registry& t_Reg);
+
+        /** The provider of this registry, or null if InitWorld was not called. */
+        PHYSICS_API std::shared_ptr<PhysicsProvider> GetProvider(const entt::registry& t_Reg);
+    } // namespace Physics
+
+    /** Registers RigidBody and Collider for level files. Called from Engine::Startup. */
+    PHYSICS_API void RegisterPhysicsComponents();
+} // namespace Fling

@@ -1,17 +1,21 @@
 #include "ComponentTypeRegistry.h"
+#include "DefaultPhysicsProvider.h"
 #include "Engine.h"
 #include "File.h"
+#include "FlingConfig.h"
 #include "FlingPaths.h"
 #include "FlingWindow.h"
 #include "Input/GlfwInput.h"
 #include "Input/Input.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CrashHandler.h"
+#include "Physics.h"
 #include "Random.h"
 #include "RegisterGraphicsComponents.h"
 #include "Threading/Thread.h"
 #include "VulkanApp.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <random>
@@ -142,6 +146,25 @@ namespace Fling
 
 		RegisterEngineComponents();
 		RegisterGraphicsComponents();
+		RegisterPhysicsComponents();
+
+		// The game can bring its own physics provider. If it does not, use the one
+		// that this build compiled (FLING_PHYSICS_PROVIDER).
+		std::shared_ptr<PhysicsProvider> PhysicsProviderToUse = m_GameImpl->CreatePhysicsProvider();
+		if (!PhysicsProviderToUse)
+		{
+			PhysicsProviderToUse = CreateDefaultPhysicsProvider();
+		}
+		// [Physics] WorkerThreads: threads that help with each physics step. 0 (or
+		// missing) runs the step on the game thread. The result is the same either way.
+		PhysicsSettings InitialPhysicsSettings;
+		InitialPhysicsSettings.m_WorkerThreadCount =
+			static_cast<uint32>(std::max(FlingConfig::GetInt("Physics", "WorkerThreads"), 0));
+		F_LOG_TRACE("Physics provider: {} ({} worker threads)",
+			PhysicsProviderToUse->GetName(), InitialPhysicsSettings.m_WorkerThreadCount);
+
+		// The physics scene is in the registry context, so a level load (registry.reset) keeps it
+		Physics::InitWorld(g_Registry, PhysicsProviderToUse, InitialPhysicsSettings);
 
 		m_World = new World(g_Registry, m_GameImpl);
 		m_GameImpl->m_OwningWorld = m_World;
@@ -176,7 +199,7 @@ namespace Fling
 		Timing& Timing = Timing::Get();
 
 		// Once the world is initialized it allows the users to add their own components!
-		m_World->Init();
+		m_World->Init(m_Options.Level);
 
         // The developer UI starts the game with its "Play" button. With no developer
         // UI (a game build, or --null-render), the game starts on the first tick.
@@ -223,6 +246,13 @@ namespace Fling
 
 			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
+
+			// Physics runs after the game, with the same delta. Forces that the game
+			// requested this tick are applied in this step.
+			if (m_World->IsPlaying())
+			{
+				Physics::Tick(g_Registry, DeltaTime);
+			}
 			++m_TicksRun;
 
 			Input::Get().EndTick();
@@ -332,6 +362,7 @@ namespace Fling
 			}
 		}
 
+		Physics::ShutdownWorld(g_Registry);
 		g_Registry.reset();
 
 		PrintExitSummary(t_Code);

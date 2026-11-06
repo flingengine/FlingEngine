@@ -33,8 +33,18 @@ touching CMake targets or cross-folder includes. The phases of the split are in
   Graphics, Editor, or Application headers. Actual gameplay systems (AI,
   abilities, ...) do not go here: they get their own modules that depend on
   Engine. The name `Gameplay` is reserved for those.
-- `FlingEngine/Physics` — the `Physics` module (depends on Core and Engine). A
-  stub today. It cannot include Graphics headers.
+- `FlingEngine/Physics` — the `Physics` module (depends on Core and Engine): the
+  part of physics that gameplay sees (`RigidBody`, `Collider`, the request queue,
+  `ContactEvents`, the fixed step clock) and the `PhysicsProvider` interface. It
+  has no physics library in it. `Engine::Tick` calls `Physics::Tick`. It cannot
+  include Graphics headers.
+- `FlingEngine/PhysicsJolt`, `FlingEngine/PhysicsBullet` — provider modules
+  (depend on Physics), made with `fling_add_physics_provider(<Name>)` and
+  registered with `FLING_IMPLEMENT_PHYSICS_PROVIDER`. Each one links its library
+  (`external/JoltPhysics`, `external/bullet3`) PRIVATE and has no public
+  headers. Only the one picked by `FLING_PHYSICS_PROVIDER` is configured and
+  compiled. A game can add its own provider folder the same way. See
+  [`Plans/physics.md`](../Plans/physics.md).
 - `FlingEngine/Graphics` — the `Graphics` module (depends on Core, Resources, and
   Engine): the Vulkan renderer, window, GPU resources, render components
   (`MeshRenderer`, lights), and the GLFW input backends (`LinuxInput`,

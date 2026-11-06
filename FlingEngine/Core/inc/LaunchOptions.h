@@ -29,6 +29,7 @@ namespace Fling
      *   --frames N          Run N ticks, then exit
      *   --seed S            Seed the random number generator
      *   --log-format json   Write logs as JSON lines
+     *   --level F           Load level file F (relative to Assets/) instead of [Game] StartLevel
      *   --log-input [all]   Log each input message. "all" also logs mouse movement.
      *                       Device connects and disconnects are always logged
      *   --replay-input F    Play the input messages in file F from the first tick
@@ -55,6 +56,9 @@ namespace Fling
         LogFormat Format = LogFormat::Text;
 
         InputLogLevel InputLog = InputLogLevel::Off;
+
+        /** The level to load at start (--level), relative to the assets folder. Empty means use the config. */
+        std::string Level;
 
         /** The input file to play (--replay-input). Empty means no replay. */
         std::string ReplayInput;

@@ -4,6 +4,12 @@ add_subdirectory( Core )
 add_subdirectory( Resources )
 add_subdirectory( Engine )
 add_subdirectory( Physics )
+
+# The physics provider that FLING_PHYSICS_PROVIDER selects, and
+# Fling::DefaultPhysicsProvider. Other providers are not configured or compiled.
+# See CMake/FlingPhysicsProvider.cmake.
+fling_add_selected_physics_provider()
+
 add_subdirectory( Graphics )
 add_subdirectory( Application )
 

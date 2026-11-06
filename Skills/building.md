@@ -131,6 +131,24 @@ and `--record-input` / `--replay-input` exit with code 3. A shipped game cannot 
 driven by an input file. Guard code that uses them with `#if WITH_INPUT_RECORDING`.
 `VirtualInputDeviceInterface` stays, because only code can make one.
 
+## `FLING_PHYSICS_PROVIDER`
+
+Picks the physics provider: `Jolt` (the default), `Bullet`, `None`, or a
+provider of your own. Only the selected provider module and its library are
+configured and compiled, so a Jolt build does not compile Bullet and a Bullet
+build does not compile Jolt. `None` uses the null provider: bodies exist but
+never move.
+
+```bash
+cmake -B build -DFLING_PHYSICS_PROVIDER=Bullet
+```
+
+Providers are found in the folders of `FLING_PHYSICS_PROVIDER_PATHS` (and always
+`FlingEngine/`): a folder whose `CMakeLists.txt` calls
+`fling_add_physics_provider(<Name>)`. A game adds its own provider by adding its
+folder to that list. No engine change is needed. See "How to add a provider" in
+[`Plans/physics.md`](../Plans/physics.md).
+
 ## `WITH_CRASH_HANDLER_FLAG`
 
 ON by default. It builds `CrashHandler` (Core), which `--unattended` uses to

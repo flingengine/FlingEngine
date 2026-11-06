@@ -37,3 +37,9 @@
 	path = external/SPIRV-Cross
 	url = https://github.com/flingengine/SPIRV-Cross.git
 
+[submodule "external/bullet3"]
+	path = external/bullet3
+	url = https://github.com/flingengine/bullet3.git
+[submodule "external/JoltPhysics"]
+	path = external/JoltPhysics
+	url = https://github.com/flingengine/JoltPhysics.git

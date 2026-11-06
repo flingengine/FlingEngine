@@ -11,7 +11,7 @@ Graphics relinks `ApplicationTests` and leaves `CoreTests` alone.
 | `CoreTests` | `Fling::Core` | `FlingTests/Core/` — string utils, command line, launch options, timing, random, logger, allocators, circular buffer |
 | `ResourcesTests` | `Fling::Resources` | `FlingTests/Resources/` — `ResourceManager` / `FlingConfig`, `Json`, `JsonArchive` |
 | `EngineTests` | `Fling::Engine` | `FlingTests/Engine/` — `ComponentTypeRegistry`, world save/load, `Transform` / entt views |
-| `PhysicsTests` | `Fling::Physics` | `FlingTests/Physics/` — `Physics::Step` |
+| `PhysicsTests` | `Fling::Physics` + the selected provider | `FlingTests/Physics/` — `PhysicsCoreTests.cpp`: the clock, requests, and body bookkeeping, with a recording provider. `PhysicsProviderTests.cpp`: tests every provider must pass, including determinism, save/restore, and a golden hash that must match on every platform |
 | `ApplicationTests` | `Fling::Application` | `FlingTests/Application/` — `Fling::Engine` smoke test (`Engine.h` lives in Application) |
 
 Graphics and Editor have no test executable. Add one only when that module has a real test: a `.cpp` under `FlingTests/<Module>/` is enough, once `fling_add_module_tests` is called for that module.

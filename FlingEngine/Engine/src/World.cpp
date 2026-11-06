@@ -26,7 +26,7 @@ namespace Fling
 		, m_ShouldQuit(false)
 	{ }
 
-	void World::Init()
+	void World::Init(const std::string& t_StartLevel)
 	{
 		F_LOG_TRACE("World Init!");
 		assert(m_CurrentState == WorldState::NONE);
@@ -36,7 +36,7 @@ namespace Fling
 		m_Game->Init(m_Registry);
 		ComponentTypeRegistry::Get().Seal();
 
-		const std::string LevelToLoad = FlingConfig::GetString("Game", "StartLevel");
+		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : t_StartLevel;
 		if (!LevelToLoad.empty())
 		{
 			LoadLevelFile(LevelToLoad);
@@ -157,8 +157,6 @@ namespace Fling
 		{
 			// Once we are done with core updates, then call the game!
 			m_Game->Update(m_Registry, t_DeltaTime);
-
-			// #TODO Update physics here
 
             // In editor play, a game that wants to quit stops play instead
             if (m_GameQuitStopsPlay && m_Game->WantsToQuit())

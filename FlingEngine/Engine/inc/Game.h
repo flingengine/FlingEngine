@@ -3,12 +3,16 @@
 #include "Platform.h"
 
 #include <entt/entity/registry.hpp>
+#include <memory>
 #include <string>
 //#include "World.h" 
 
 namespace Fling
 {
 	class World;
+
+	// Declared in the Physics module (PhysicsProvider.h). Engine only passes it on.
+	class PhysicsProvider;
 
 	/**
 	 * The game class is mean to be overridden on a per-game instance.
@@ -39,6 +43,14 @@ namespace Fling
 		 * before Seal() and before the StartLevel is loaded.
 		 */
 		virtual void RegisterComponents() {}
+
+        /**
+         * Return the physics provider that this game uses, for example a provider
+         * for a physics library that the game brings. Return null (the default) to
+         * use the provider of this build (FLING_PHYSICS_PROVIDER). Called one time,
+         * before Init.
+         */
+        virtual std::shared_ptr<PhysicsProvider> CreatePhysicsProvider() { return nullptr; }
 
         /**
          * Called by the World when play starts. The World keeps a snapshot of all

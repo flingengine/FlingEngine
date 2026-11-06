@@ -169,6 +169,10 @@ These rules follow `Plans/ecs-plan.md` and the `gameplay-architecture` skill.
    code then runs on one thread.
 6. **ECS stages do not run on named threads.** A later job system (a pool of
    worker `Thread`s) runs parallel stages. It is a separate type.
+   Until then, the Jolt physics provider has its own pool, `JoltJobSystem`
+   ("Physics Worker N", `[Physics] WorkerThreads`). It is fork and join inside
+   `Physics::Tick`, and the workers run only Jolt jobs, never systems. See
+   [`Plans/physics.md`](../Plans/physics.md) §Threading.
 
 ## Tests
 

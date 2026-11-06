@@ -14,6 +14,7 @@ message( STATUS "Cmake mod path: " ${CMAKE_MODULE_PATH} )
 include(FlingTargets)
 include(FlingModule)
 include(FlingShaders)
+include(FlingPhysicsProvider)
 include (InstallRequiredSystemLibraries)
 
 # Option for the current build configuration
@@ -29,6 +30,13 @@ OPTION( FLING_BUILD_TESTS "Build the per-module Catch2 test executables (require
 OPTION( WITH_IMGUI_FLAG "WITH_IMGUI_FLAG will enable or disable the addition of IMGUI to the rendering pipeline. " ON )
 OPTION( WITH_EDITOR_FLAG "Enables or disables the editor in the Fling Engine!" ON )
 OPTION( WITH_CRASH_HANDLER_FLAG "Builds CrashHandler: --unattended crash handling and stack traces. Turn OFF to compile it out, for example when a shipping title has its own crash reporter" ON )
+# The physics provider to build (CMake/FlingPhysicsProvider.cmake). Only the
+# selected one is configured and compiled. The engine finds providers in
+# FLING_PHYSICS_PROVIDER_PATHS; a game appends its own folders to that list
+# before it adds the engine.
+set( FLING_PHYSICS_PROVIDER "Jolt" CACHE STRING "Physics provider to build: Jolt, Bullet, None, or a provider of your own" )
+list( APPEND FLING_PHYSICS_PROVIDER_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/FlingEngine" )
+
 OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
 
 # We can't have the editor without ImGUI!
@@ -57,6 +65,7 @@ message( STATUS "WITH_CRASH_HANDLER_FLAG=${WITH_CRASH_HANDLER_FLAG}" )
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
 message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
 message( STATUS "FLING_BUILD_TESTS=${FLING_BUILD_TESTS}" )
+message( STATUS "FLING_PHYSICS_PROVIDER=${FLING_PHYSICS_PROVIDER}" )
 message( STATUS "FLING_ROOT_DIR=${FLING_ROOT_DIR}" )
 
 # WITH_IMGUI / WITH_EDITOR / FLING_SHIPPING are set on the FlingEngine target
@@ -141,6 +150,7 @@ endif()
 
 # Header-only libraries (FlingExt::glm, FlingExt::spdlog, ...)
 include(FlingExternals)
+
 
 # Add the engine
 add_subdirectory ( "FlingEngine" )

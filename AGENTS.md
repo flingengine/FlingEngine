@@ -42,6 +42,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   every run with no human present, so that a crash cannot open a dialog.
 - Drive a headless run with `--replay-input <file>`. Agents can write their own
   `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).
+- Load a level other than `[Game] StartLevel` with `--level <file>` (relative
+  to `Assets/`), for example `--level Levels/PhysicsTest.json`.
 - Full detail, including how to add a new test file: [`Skills/testing.md`](Skills/testing.md).
 
 ## Coding style
@@ -89,6 +91,10 @@ into `Skills/`.
   [`Plans/improve-input.md`](Plans/improve-input.md).
 - Lock-free `ThreadQueue` and `ThreadManager` (MPSC node queue, a slot table
   that the crash handler can read): [`Plans/lockless-threading.md`](Plans/lockless-threading.md).
+- Physics: the provider interface (Jolt by default, Bullet, or a game's own
+  library, picked with `FLING_PHYSICS_PROVIDER`), components, the fixed step,
+  determinism and rollback, the test level, and what is next:
+  [`Plans/physics.md`](Plans/physics.md).
 
 ## Contribution conventions
 
