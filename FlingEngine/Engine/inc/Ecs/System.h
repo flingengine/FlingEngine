@@ -3,9 +3,6 @@
 #include "Ecs/Access.h"
 #include "Ecs/Phase.h"
 
-#include <array>
-#include <cstddef>
-#include <initializer_list>
 #include <span>
 
 namespace Fling
@@ -13,66 +10,24 @@ namespace Fling
     class SystemContextBase;
     class SystemSetupBase;
 
-    /** A short list of system names, for SystemInfo::After and SystemInfo::Before. Write one name or a braced list. */
-    struct SystemNames
-    {
-        static constexpr std::size_t Capacity = 4;
-
-        std::array<const char*, Capacity> Names{};
-
-        constexpr SystemNames() = default;
-
-        constexpr SystemNames(const char* name) : Names{name} {}
-
-        constexpr SystemNames(std::initializer_list<const char*> names)
-        {
-            if (names.size() > Capacity)
-            {
-                TooManyNames();
-            }
-            std::size_t next = 0;
-            for (const char* name : names)
-            {
-                if (next < Capacity)
-                {
-                    Names[next++] = name;
-                }
-            }
-        }
-
-        constexpr std::size_t Size() const
-        {
-            std::size_t count = 0;
-            while (count < Capacity && Names[count] != nullptr)
-            {
-                ++count;
-            }
-            return count;
-        }
-
-        constexpr const char* const* begin() const { return Names.data(); }
-
-        constexpr const char* const* end() const { return Names.data() + Size(); }
-
-    private:
-        /** Not constexpr, so a list that is too long does not compile when it is a constant. */
-        static void TooManyNames() {}
-    };
-
     /** The declaration on a system class: `static constexpr Fling::SystemInfo Info { .Name = "...", .Phase = ... };`.
      */
     struct SystemInfo
     {
         /** "Module.Name". Errors, the schedule dump, After, Before, and profiling use it. */
         const char* Name = nullptr;
-        /** The phase decides the update rate: FixedUpdate for a fixed phase, Update for a frame phase. */
-        Fling::Phase Phase = Fling::Phase::Simulation;
+        /** The phase, for example Fling::Phases::Simulation. Its update rate decides FixedUpdate or Update. */
+        PhaseRef Phase{};
         /** The world roles that run this system. */
         WorldRole RunIn = WorldRole::Play;
-        /** Systems in the same phase that must run before this one. Replaces the inferred edge between the two. */
-        SystemNames After{};
-        /** Systems in the same phase that must run after this one. Replaces the inferred edge between the two. */
-        SystemNames Before{};
+        /**
+         * Systems of the same update rate that must run before this one. Replaces the
+         * inferred edge between the two. A name in a phase that phase order puts
+         * after this one is a cycle.
+         */
+        NameList After{};
+        /** Systems of the same update rate that must run after this one. Replaces the inferred edge between the two. */
+        NameList Before{};
         /** For a system that touches GLFW or ImGui. A parallel executor runs it on the main thread. */
         bool MainThreadOnly = false;
         /** Reserved for rollback: run FixedUpdate again during a resimulation. */

@@ -16,6 +16,6 @@ namespace Fling
     ScheduleResult SystemRegistry::BuildSchedule() const
     {
         const std::vector<const SystemDesc*> descs = Descs();
-        return Fling::BuildSchedule(descs);
+        return Fling::BuildSchedule(ScheduleInput{descs, m_Phases, m_Orders});
     }
 } // namespace Fling

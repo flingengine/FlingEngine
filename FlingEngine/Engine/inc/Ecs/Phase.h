@@ -2,65 +2,152 @@
 
 #include "FlingTypes.h"
 
+#include <array>
 #include <cstddef>
+#include <initializer_list>
 
 namespace Fling
 {
-    /**
-     * The point in the frame where a system runs. The phase also decides the
-     * update rate: Input, Simulation, and ResolveDeferred run at the fixed tick.
-     * PostSimulation, Extract, and Editor run once per rendered frame.
-     */
-    enum class Phase : uint8
-    {
-        Input,
-        Simulation,
-        ResolveDeferred,
-        PostSimulation,
-        Extract,
-        Editor,
-    };
-
-    inline constexpr std::size_t PhaseCount = 6;
-
-    /** How often a phase runs. */
+    /** How often a phase runs. This split is the one part of the schedule that the engine owns. */
     enum class UpdateRate : uint8
     {
-        /** Once per fixed simulation tick. The system implements FixedUpdate. */
+        /** Once per fixed simulation tick. Its systems implement FixedUpdate. */
         Fixed,
-        /** Once per rendered frame. The system implements Update. */
+        /** Once per rendered frame. Its systems implement Update. */
         Frame,
     };
 
-    constexpr UpdateRate UpdateRateOf(const Phase phase)
+    inline constexpr std::size_t UpdateRateCount = 2;
+
+    constexpr const char* UpdateRateName(const UpdateRate rate)
     {
-        return phase <= Phase::ResolveDeferred ? UpdateRate::Fixed : UpdateRate::Frame;
+        return rate == UpdateRate::Fixed ? "Fixed" : "Frame";
     }
 
-    constexpr bool IsFixedPhase(const Phase phase)
+    /** A short list of system or phase names, for After and Before. Write one name or a braced list. */
+    struct NameList
     {
-        return UpdateRateOf(phase) == UpdateRate::Fixed;
-    }
+        static constexpr std::size_t Capacity = 4;
 
-    constexpr const char* PhaseName(const Phase phase)
-    {
-        switch (phase)
+        std::array<const char*, Capacity> Names{};
+
+        constexpr NameList() = default;
+
+        constexpr NameList(const char* name) : Names{name} {}
+
+        constexpr NameList(std::initializer_list<const char*> names)
         {
-        case Phase::Input:
-            return "Input";
-        case Phase::Simulation:
-            return "Simulation";
-        case Phase::ResolveDeferred:
-            return "ResolveDeferred";
-        case Phase::PostSimulation:
-            return "PostSimulation";
-        case Phase::Extract:
-            return "Extract";
-        case Phase::Editor:
-            return "Editor";
+            if (names.size() > Capacity)
+            {
+                TooManyNames();
+            }
+            std::size_t next = 0;
+            for (const char* name : names)
+            {
+                if (next < Capacity)
+                {
+                    Names[next++] = name;
+                }
+            }
         }
-        return "Unknown";
+
+        constexpr std::size_t Size() const
+        {
+            std::size_t count = 0;
+            while (count < Capacity && Names[count] != nullptr)
+            {
+                ++count;
+            }
+            return count;
+        }
+
+        constexpr const char* const* begin() const { return Names.data(); }
+
+        constexpr const char* const* end() const { return Names.data() + Size(); }
+
+    private:
+        /** Not constexpr, so a list that is too long does not compile when it is a constant. */
+        static void TooManyNames() {}
+    };
+
+    /**
+     * A named group of systems, placed with After and Before. Any module can
+     * declare one as an `inline constexpr Fling::PhaseInfo`. The engine's own
+     * phases are in Fling::Phases. Order inside an update rate comes from the
+     * phases and from what each system reads and writes (Plans/ecs-systems.md 3.8).
+     */
+    struct PhaseInfo
+    {
+        /** "Module.Name". Systems and other phases use it in After and Before. */
+        const char* Name = nullptr;
+        Fling::UpdateRate UpdateRate = Fling::UpdateRate::Fixed;
+        /** Phases of the same update rate that run before this one. */
+        NameList After{};
+        /** Phases of the same update rate that run after this one. */
+        NameList Before{};
+        /**
+         * Apply the deferred commands when this phase ends. The phase must then be
+         * ordered against every other phase of its update rate. The end of each
+         * fixed tick always applies them, so most phases do not need this.
+         */
+        bool FlushAfter = false;
+    };
+
+    /** A reference to an `inline constexpr` PhaseInfo, so that a system's update rate is known at compile time. */
+    class PhaseRef
+    {
+    public:
+        constexpr PhaseRef() = default;
+
+        constexpr PhaseRef(const PhaseInfo& phase) : m_Phase(&phase) {}
+
+        constexpr bool IsSet() const { return m_Phase != nullptr; }
+
+        constexpr const PhaseInfo& Get() const { return *m_Phase; }
+
+        constexpr const PhaseInfo* operator->() const { return m_Phase; }
+
+    private:
+        const PhaseInfo* m_Phase = nullptr;
+    };
+
+    constexpr bool IsFixed(const PhaseRef phase)
+    {
+        return phase.IsSet() && phase->UpdateRate == UpdateRate::Fixed;
     }
+
+    /**
+     * The engine's phases. They are anchors that other modules place their own
+     * phases against, with After and Before. Do not rename them: other modules use the names.
+     */
+    namespace Phases
+    {
+        /** Turns this tick's input into InputState. */
+        inline constexpr PhaseInfo Input{.Name = "Engine.Input", .UpdateRate = UpdateRate::Fixed};
+
+        /** Gameplay. */
+        inline constexpr PhaseInfo Simulation{
+            .Name = "Engine.Simulation", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Input"};
+
+        /** Consumes the queues that Simulation appends to: spawns, damage, effects. */
+        inline constexpr PhaseInfo ResolveDeferred{
+            .Name = "Engine.ResolveDeferred", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Simulation"};
+
+        /** Frame rate work that follows the simulation: camera smoothing, interpolation. */
+        inline constexpr PhaseInfo PostSimulation{.Name = "Engine.PostSimulation", .UpdateRate = UpdateRate::Frame};
+
+        /** Copies what the renderer needs out of the world. */
+        inline constexpr PhaseInfo Extract{
+            .Name = "Engine.Extract", .UpdateRate = UpdateRate::Frame, .After = "Engine.PostSimulation"};
+
+        /** Editor tools, last in the frame. */
+        inline constexpr PhaseInfo Editor{
+            .Name = "Engine.Editor", .UpdateRate = UpdateRate::Frame, .After = "Engine.Extract"};
+
+        /** Every engine phase, so that a schedule always has the anchors, even with no systems in them. */
+        inline constexpr std::array<const PhaseInfo*, 6> All{
+            &Input, &Simulation, &ResolveDeferred, &PostSimulation, &Extract, &Editor};
+    } // namespace Phases
 
     /** The job of a world. A bit mask: a system's RunIn says which roles it runs in. */
     enum class WorldRole : uint8

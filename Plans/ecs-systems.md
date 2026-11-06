@@ -1,7 +1,7 @@
 # ECS systems and components: the first slice
 
-Status: work items 1 to 3 are done (branch `feature/ecs-types`). Item 3b
-(open phases, §3.8) is in progress. Items 4 to 6 are next. §6 lists what changed from this plan while they were written.
+Status: work items 1 to 3 and 3b (open phases, §3.8) are done (branch
+`feature/ecs-types`). Items 4 to 6 are next. §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -441,13 +441,12 @@ World::Init
 loop, each frame
     [mode change to Play]   snapshot, then OnPlayBegin each system
     for each due sim tick
-        Phase::Input            FixedUpdate
-        Phase::Simulation       FixedUpdate
-        Phase::ResolveDeferred  FixedUpdate, then flush deferred commands
+        fixed phases in schedule order (Engine.Input, Engine.Simulation,
+            game phases, Engine.ResolveDeferred, ...)   FixedUpdate
+        flush deferred commands (and after any FlushAfter phase)
     Game::Update (legacy, until Sandbox moves to systems)
-    Phase::PostSimulation   Update
-    Phase::Extract          Update
-    Phase::Editor           Update (editor builds)
+    frame phases in schedule order (Engine.PostSimulation, Engine.Extract,
+        Engine.Editor, game phases)                     Update
     [mode change to Edit]   OnPlayEnd each system, then restore snapshot
 World::Shutdown
     OnDestroy        each system, reverse order
@@ -520,7 +519,7 @@ namespace Sandbox
     public:
         static constexpr Fling::SystemInfo Info {
             .Name = "Sandbox.Mover",
-            .Phase = Fling::Phase::Simulation };
+            .Phase = Fling::Phases::Simulation };
 
         void FixedUpdate(Context& ctx) const;
     };
@@ -614,7 +613,7 @@ class PlayerMoveSystem final : public Fling::System<PlayerMoveSystem, Fling::Acc
 public:
     static constexpr Fling::SystemInfo Info {
         .Name = "Sandbox.PlayerMove",
-        .Phase = Fling::Phase::Simulation };
+        .Phase = Fling::Phases::Simulation };
 
     void FixedUpdate(Context& ctx) const
     {
@@ -645,7 +644,7 @@ class InputSystem final : public Fling::System<InputSystem, Fling::Access<
 public:
     static constexpr Fling::SystemInfo Info {
         .Name = "Engine.Input",
-        .Phase = Fling::Phase::Input,
+        .Phase = Fling::Phases::Input,
         .RunIn = Fling::WorldRole::Play };
 
     void OnCreate(Setup& setup) const
@@ -1209,6 +1208,9 @@ Each item is one PR off `main`, green on all CI platforms.
    unordered phases, phase order winning over a reverse data edge, `Order()`
    on phases and systems, phase cycles, unknown anchors, update-rate
    mismatch, and a `FlushAfter` phase splitting a segment.
+   Done: `Ecs/Phase.h` (`PhaseInfo`, `PhaseRef`, `NameList`,
+   `Fling::Phases`), the rewritten `BuildSchedule` (`ScheduleInput`,
+   segments, `Schedule::Phases`), and `SystemRunner::RunSegments`.
 4. **Wire it into `World`.** `World` owns a `SystemRegistry` and a
    `Schedule`. `World::Init` calls `OnCreate`. `World::Update` runs the
    fixed phases, then `Game::Update`, then the frame phases.

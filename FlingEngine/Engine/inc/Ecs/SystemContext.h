@@ -373,7 +373,7 @@ namespace Fling
         template <typename Q>
         QueueWriter<Q> Queue()
         {
-            static_assert(IsFixedPhase(Derived::Info.Phase),
+            static_assert(IsFixed(Derived::Info.Phase),
                           "Only a fixed phase system appends to a queue. A frame rate system cannot change the "
                           "simulation.");
             static_assert(Allows<A, AccessMode::Append, Q>, "Add Append<Q> to the access list to push into Q.");
@@ -384,7 +384,7 @@ namespace Fling
         template <typename Q>
         auto Drain()
         {
-            static_assert(IsFixedPhase(Derived::Info.Phase), "Only a fixed phase system consumes a queue.");
+            static_assert(IsFixed(Derived::Info.Phase), "Only a fixed phase system consumes a queue.");
             static_assert(Allows<A, AccessMode::Consume, Q>, "Add Consume<Q> to the access list to drain Q.");
             return std::exchange(QueueComponent<Q>().Requests, {});
         }
@@ -397,7 +397,7 @@ namespace Fling
         template <typename... Cs>
         Entity Spawn(Cs&&... components)
         {
-            static_assert(IsFixedPhase(Derived::Info.Phase), "Only a fixed phase system spawns entities.");
+            static_assert(IsFixed(Derived::Info.Phase), "Only a fixed phase system spawns entities.");
             static_assert(A::HasSpawns, "Add Fling::Spawns to the access list to spawn entities.");
             static_assert((Allows<A, AccessMode::Write, std::decay_t<Cs>> && ...),
                           "Spawn adds a component that the access list does not write. Add Write<T>.");
@@ -411,7 +411,7 @@ namespace Fling
         /** Changes that wait until the end of the tick, such as Destroy. Fixed phases only. */
         CommandBuffer& Commands()
         {
-            static_assert(IsFixedPhase(Derived::Info.Phase),
+            static_assert(IsFixed(Derived::Info.Phase),
                           "Only a fixed phase system has Commands. A frame rate system cannot change the "
                           "simulation.");
             assert(m_Core.Commands() != nullptr);

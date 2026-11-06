@@ -26,6 +26,18 @@ namespace Fling
             m_Systems.push_back(std::make_unique<T>());
         }
 
+        /**
+         * Adds a phase that may have no systems yet, so that other phases can be
+         * placed against it. A system's own phase is added with the system.
+         */
+        void AddPhase(const PhaseInfo& phase) { m_Phases.push_back(&phase); }
+
+        /**
+         * Runs first before second. Both are system names, or both are phase names.
+         * Use it to order two modules that do not know about each other.
+         */
+        void Order(const char* first, const char* second) { m_Orders.push_back(ScheduleOrder{first, second}); }
+
         std::size_t Size() const { return m_Systems.size(); }
 
         const ISystem& At(const std::size_t index) const { return *m_Systems[index]; }
@@ -38,5 +50,7 @@ namespace Fling
 
     private:
         std::vector<std::unique_ptr<ISystem>> m_Systems;
+        std::vector<const PhaseInfo*> m_Phases;
+        std::vector<ScheduleOrder> m_Orders;
     };
 } // namespace Fling

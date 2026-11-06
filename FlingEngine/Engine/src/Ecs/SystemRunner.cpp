@@ -11,9 +11,6 @@ namespace Fling
 {
     namespace
     {
-        constexpr Phase FixedPhases[] = {Phase::Input, Phase::Simulation, Phase::ResolveDeferred};
-        constexpr Phase FramePhases[] = {Phase::PostSimulation, Phase::Extract, Phase::Editor};
-
         double Seconds(const std::chrono::nanoseconds time)
         {
             return std::chrono::duration<double>(time).count();
@@ -136,10 +133,7 @@ namespace Fling
         time.Tick = m_Tick;
         time.Elapsed = static_cast<double>(m_Tick) * Seconds(m_Config.FixedStep);
 
-        for (const Phase phase : FixedPhases)
-        {
-            RunPhase(phase, role);
-        }
+        RunSegments(UpdateRate::Fixed, role);
         FlushCommands();
     }
 
@@ -154,34 +148,38 @@ namespace Fling
         frame.TickAlpha =
             m_Config.OneTickPerFrame ? 1.0f : static_cast<float>(Seconds(m_Accumulator) / Seconds(m_Config.FixedStep));
 
-        for (const Phase phase : FramePhases)
-        {
-            RunPhase(phase, role);
-        }
+        RunSegments(UpdateRate::Frame, role);
     }
 
-    void SystemRunner::RunPhase(const Phase phase, const WorldRole role)
+    void SystemRunner::RunSegments(const UpdateRate rate, const WorldRole role)
     {
-        const bool fixed = IsFixedPhase(phase);
-        for (const ScheduleStage& stage : m_Schedule.GetPhase(phase).Stages)
+        const bool fixed = rate == UpdateRate::Fixed;
+        for (const ScheduleSegment& segment : m_Schedule.GetSegments(rate))
         {
-            for (const uint32 i : stage.Systems)
+            for (const ScheduleStage& stage : segment.Stages)
             {
-                if (!RunsIn(i, role))
+                for (const uint32 i : stage.Systems)
                 {
-                    continue;
-                }
+                    if (!RunsIn(i, role))
+                    {
+                        continue;
+                    }
 
-                // A frame phase gets no command buffer: it cannot change the simulation.
-                SystemContextBase ctx(m_Storage, fixed ? &m_Commands[i] : nullptr);
-                if (fixed)
-                {
-                    m_Systems.At(i).RunFixedUpdate(ctx);
+                    // A frame phase gets no command buffer: it cannot change the simulation.
+                    SystemContextBase ctx(m_Storage, fixed ? &m_Commands[i] : nullptr);
+                    if (fixed)
+                    {
+                        m_Systems.At(i).RunFixedUpdate(ctx);
+                    }
+                    else
+                    {
+                        m_Systems.At(i).RunUpdate(ctx);
+                    }
                 }
-                else
-                {
-                    m_Systems.At(i).RunUpdate(ctx);
-                }
+            }
+            if (fixed && segment.FlushPhase != nullptr)
+            {
+                FlushCommands();
             }
         }
     }

@@ -61,10 +61,10 @@ namespace Fling
         /** Adds the real time to the accumulator and runs each tick that is due. Returns the number of ticks run. */
         uint32 RunFixed(std::chrono::nanoseconds realDelta, WorldRole role);
 
-        /** Runs exactly one tick: Input, Simulation, ResolveDeferred, then the deferred commands. */
+        /** Runs exactly one tick: every fixed phase in schedule order, then the deferred commands. */
         void RunTick(WorldRole role);
 
-        /** Writes RealFrameTime, then runs PostSimulation, Extract, and Editor. */
+        /** Writes RealFrameTime, then runs every frame phase in schedule order. */
         void RunFrame(std::chrono::nanoseconds realDelta, WorldRole role);
 
         const Schedule& GetSchedule() const { return m_Schedule; }
@@ -73,7 +73,7 @@ namespace Fling
         uint64 TickCount() const { return m_Tick; }
 
     private:
-        void RunPhase(Phase phase, WorldRole role);
+        void RunSegments(UpdateRate rate, WorldRole role);
         void FlushCommands();
         bool RunsIn(uint32 system, WorldRole role) const;
 

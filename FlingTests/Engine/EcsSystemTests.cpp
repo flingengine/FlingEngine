@@ -90,7 +90,7 @@ namespace
     class SetupSystem final : public System<SetupSystem, Access<Write<Bounds>, Write<Calls>, Read<SimTime>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.Setup", .Phase = Phase::Input};
+        static constexpr SystemInfo Info{.Name = "Test.Setup", .Phase = Phases::Input};
 
         void OnCreate(Setup& setup) const
         {
@@ -121,7 +121,7 @@ namespace
         : public System<MoveSystem, Access<Read<SimTime>, Read<Velocity>, Read<Frozen>, Write<Position>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.Move", .Phase = Phase::Simulation};
+        static constexpr SystemInfo Info{.Name = "Test.Move", .Phase = Phases::Simulation};
 
         void FixedUpdate(Context& ctx) const
         {
@@ -137,7 +137,7 @@ namespace
     class CullSystem final : public System<CullSystem, Access<Read<Bounds>, Read<Position>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.Cull", .Phase = Phase::Simulation};
+        static constexpr SystemInfo Info{.Name = "Test.Cull", .Phase = Phases::Simulation};
 
         void FixedUpdate(Context& ctx) const
         {
@@ -157,7 +157,7 @@ namespace
         : public System<RequestSpawnSystem, Access<Read<Position>, Read<Frozen>, Append<SpawnQueue>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.RequestSpawn", .Phase = Phase::Simulation};
+        static constexpr SystemInfo Info{.Name = "Test.RequestSpawn", .Phase = Phases::Simulation};
 
         void FixedUpdate(Context& ctx) const
         {
@@ -173,7 +173,7 @@ namespace
         : public System<ResolveSpawnSystem, Access<Consume<SpawnQueue>, Write<Position>, Spawns>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.ResolveSpawn", .Phase = Phase::ResolveDeferred};
+        static constexpr SystemInfo Info{.Name = "Test.ResolveSpawn", .Phase = Phases::ResolveDeferred};
 
         void OnCreate(Setup& setup) const { setup.AddSingleton<SpawnQueue>(); }
 
@@ -192,7 +192,7 @@ namespace
     class FollowSystem final : public System<FollowSystem, Access<Read<Position>, Write<Follow>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.Follow", .Phase = Phase::Simulation};
+        static constexpr SystemInfo Info{.Name = "Test.Follow", .Phase = Phases::Simulation};
 
         void FixedUpdate(Context& ctx) const
         {
@@ -208,7 +208,8 @@ namespace
     class EditOnlySystem final : public System<EditOnlySystem, Access<Write<Calls>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.EditOnly", .Phase = Phase::Simulation, .RunIn = WorldRole::Edit};
+        static constexpr SystemInfo Info{
+            .Name = "Test.EditOnly", .Phase = Phases::Simulation, .RunIn = WorldRole::Edit};
 
         void FixedUpdate(Context& ctx) const { ctx.Singleton<Calls>().EditTicks++; }
     };
@@ -218,7 +219,7 @@ namespace
         : public System<DisplaySystem, Access<Read<RealFrameTime>, Read<Position>, Write<Display>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.Display", .Phase = Phase::PostSimulation};
+        static constexpr SystemInfo Info{.Name = "Test.Display", .Phase = Phases::PostSimulation};
 
         void Update(Context& ctx) const
         {
@@ -275,7 +276,7 @@ TEST_CASE("Describe is made from Info and the access list", "[ecs][system]")
     const MoveSystem system;
     const SystemDesc& desc = system.Describe();
     REQUIRE(std::string(desc.Info.Name) == "Test.Move");
-    REQUIRE(desc.Info.Phase == Phase::Simulation);
+    REQUIRE(&desc.Info.Phase.Get() == &Phases::Simulation);
     REQUIRE(desc.Access.size() == 4);
     REQUIRE(desc.Access[3].Hash == TypeHashOf<Position>);
     REQUIRE(desc.Access[3].Mode == AccessMode::Write);

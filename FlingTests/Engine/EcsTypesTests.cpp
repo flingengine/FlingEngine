@@ -153,15 +153,27 @@ TEST_CASE("A tag must be empty and a table must not be", "[ecs]")
     STATIC_REQUIRE_FALSE(IsWellFormedComponent<TagWithData>);
 }
 
+namespace
+{
+    inline constexpr PhaseInfo TestPhase{.Name = "Test.Phase", .UpdateRate = UpdateRate::Frame, .After = {"A", "B"}};
+} // namespace
+
 TEST_CASE("Phases decide the update rate", "[ecs]")
 {
-    STATIC_REQUIRE(IsFixedPhase(Phase::Input));
-    STATIC_REQUIRE(IsFixedPhase(Phase::Simulation));
-    STATIC_REQUIRE(IsFixedPhase(Phase::ResolveDeferred));
-    STATIC_REQUIRE_FALSE(IsFixedPhase(Phase::PostSimulation));
-    STATIC_REQUIRE_FALSE(IsFixedPhase(Phase::Extract));
-    STATIC_REQUIRE_FALSE(IsFixedPhase(Phase::Editor));
-    STATIC_REQUIRE(static_cast<std::size_t>(Phase::Editor) + 1 == PhaseCount);
+    STATIC_REQUIRE(IsFixed(Phases::Input));
+    STATIC_REQUIRE(IsFixed(Phases::Simulation));
+    STATIC_REQUIRE(IsFixed(Phases::ResolveDeferred));
+    STATIC_REQUIRE_FALSE(IsFixed(Phases::PostSimulation));
+    STATIC_REQUIRE_FALSE(IsFixed(Phases::Extract));
+    STATIC_REQUIRE_FALSE(IsFixed(Phases::Editor));
+    STATIC_REQUIRE_FALSE(IsFixed(PhaseRef{}));
+
+    // A phase from outside the engine works the same way, at compile time.
+    constexpr PhaseRef ref = TestPhase;
+    STATIC_REQUIRE(ref.IsSet());
+    STATIC_REQUIRE_FALSE(IsFixed(ref));
+    STATIC_REQUIRE(ref->After.Size() == 2);
+    STATIC_REQUIRE(Phases::All.size() == 6);
 }
 
 TEST_CASE("WorldRole is a bit mask", "[ecs]")

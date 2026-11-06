@@ -54,7 +54,7 @@ namespace
               Fling::Access<Fling::Read<Fling::SimTime>, Fling::Read<Velocity>, Fling::Write<Position>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Good", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Good", .Phase = Fling::Phases::Simulation};
 
         void FixedUpdate(Context& ctx) const
         {
@@ -86,7 +86,7 @@ namespace
               Fling::Access<Fling::Read<Fling::RealFrameTime>, Fling::Read<Position>, Fling::Write<Display>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.GoodFrame", .Phase = Fling::Phase::PostSimulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.GoodFrame", .Phase = Fling::Phases::PostSimulation};
 
         void Update(Context& ctx) const
         {
@@ -104,7 +104,7 @@ namespace
     class GoodOwnerSystem final : public Fling::System<GoodOwnerSystem, Fling::Access<Fling::Write<Score>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.GoodOwner", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.GoodOwner", .Phase = Fling::Phases::Simulation};
 
         void OnCreate(Setup& setup) const { setup.AddSingleton<Score>(); }
 
@@ -115,7 +115,7 @@ namespace
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Write<Position>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Simulation};
         void FixedUpdate(Context&) const {}
 
     private:
@@ -125,7 +125,7 @@ namespace
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Write<Position>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Simulation};
         void Update(Context&) const {}
     };
 #elif defined(FLING_ECS_CASE_FixedReadsRealTime)
@@ -133,35 +133,35 @@ namespace
         : public Fling::System<BadSystem, Fling::Access<Fling::Read<Fling::RealFrameTime>, Fling::Write<Position>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Simulation};
         void FixedUpdate(Context&) const {}
     };
 #elif defined(FLING_ECS_CASE_FixedReadsPresentation)
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Read<Display>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Simulation};
         void FixedUpdate(Context&) const {}
     };
 #elif defined(FLING_ECS_CASE_FrameWritesSimulation)
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Write<Position>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::PostSimulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::PostSimulation};
         void Update(Context&) const {}
     };
 #elif defined(FLING_ECS_CASE_WritesSimTime)
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Write<Fling::SimTime>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Simulation};
         void FixedUpdate(Context&) const {}
     };
 #elif defined(FLING_ECS_CASE_SingletonNotOwned)
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Read<Score>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phase::Simulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Simulation};
         void OnCreate(Setup& setup) const { setup.AddSingleton<Score>(); }
         void FixedUpdate(Context&) const {}
     };

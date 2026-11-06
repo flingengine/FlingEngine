@@ -64,7 +64,7 @@ namespace Fling
      *         Fling::Read<Fling::SimTime>, Fling::Write<Mover>>>
      *     {
      *     public:
-     *         static constexpr Fling::SystemInfo Info { .Name = "Sandbox.Mover", .Phase = Fling::Phase::Simulation };
+     *         static constexpr Fling::SystemInfo Info { .Name = "Sandbox.Mover", .Phase = Fling::Phases::Simulation };
      *         void FixedUpdate(Context& ctx) const;
      *     };
      *
@@ -166,12 +166,15 @@ namespace Fling
             {
                 using A = typename T::Access;
                 constexpr SystemInfo info = T::Info;
-                constexpr bool fixed = IsFixedPhase(info.Phase);
+                constexpr bool fixed = IsFixed(info.Phase);
 
                 static_assert(sizeof(T) == sizeof(ISystem),
                               "A system cannot have member state. Put the state in a singleton component.");
                 static_assert(std::is_default_constructible_v<T>, "A system must be default constructible.");
                 static_assert(info.Name != nullptr, "A system needs a Name in its SystemInfo.");
+                static_assert(
+                    info.Phase.IsSet(),
+                    "A system needs a Phase in its SystemInfo, for example .Phase = Fling::Phases::Simulation.");
 
                 static_assert(!fixed || HasFixedUpdate<T>, "A fixed phase system implements FixedUpdate(Context&).");
                 static_assert(!fixed || !HasUpdate<T>,
