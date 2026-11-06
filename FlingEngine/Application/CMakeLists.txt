@@ -7,4 +7,8 @@ fling_add_module(Application
 	PUBLIC_DEPS
 		Engine
 		Graphics
+		Physics
 )
+
+# The physics provider that FLING_PHYSICS_PROVIDER picked (see FlingEngine/CMakeLists.txt)
+target_link_libraries(Application PRIVATE Fling::DefaultPhysicsProvider)

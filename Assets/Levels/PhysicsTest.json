@@ -1,0 +1,299 @@
+{
+    "version": 1,
+    "title": "Physics Test",
+    "entities": [
+        {
+            "name": "Floor",
+            "Transform": {
+                "position": [
+                    0,
+                    -0.05,
+                    0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    40,
+                    0.1,
+                    40
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Cobblestone.mat"
+            },
+            "RigidBody": {
+                "mass": 0.0,
+                "friction": 0.8
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        },
+        {
+            "name": "Sun",
+            "Transform": {
+                "position": [
+                    0,
+                    10,
+                    0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "DirectionalLight": {
+                "color": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "direction": [
+                    1.0,
+                    -1.0,
+                    -0.5,
+                    1.0
+                ],
+                "intensity": 1.0
+            }
+        },
+        {
+            "name": "Ball",
+            "Transform": {
+                "position": [
+                    -8,
+                    0.5,
+                    0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/sphere.obj",
+                "material": "Materials/DeferredBronzeMat.mat"
+            },
+            "RigidBody": {
+                "mass": 5.0,
+                "friction": 0.6,
+                "rollingFriction": 0.01,
+                "velocity": [
+                    6.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "Collider": {
+                "shape": "sphere"
+            },
+            "BallControl": {
+                "pushForce": 40.0,
+                "jumpImpulse": 25.0
+            }
+        },
+        {
+            "name": "Cube_0",
+            "Transform": {
+                "position": [
+                    4.0,
+                    0.5,
+                    -1.02
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Wood.mat"
+            },
+            "RigidBody": {
+                "mass": 1.0,
+                "friction": 0.6
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        },
+        {
+            "name": "Cube_1",
+            "Transform": {
+                "position": [
+                    4.0,
+                    0.5,
+                    0.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Wood.mat"
+            },
+            "RigidBody": {
+                "mass": 1.0,
+                "friction": 0.6
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        },
+        {
+            "name": "Cube_2",
+            "Transform": {
+                "position": [
+                    4.0,
+                    0.5,
+                    1.02
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Wood.mat"
+            },
+            "RigidBody": {
+                "mass": 1.0,
+                "friction": 0.6
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        },
+        {
+            "name": "Cube_3",
+            "Transform": {
+                "position": [
+                    4.0,
+                    1.5,
+                    -0.51
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Wood.mat"
+            },
+            "RigidBody": {
+                "mass": 1.0,
+                "friction": 0.6
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        },
+        {
+            "name": "Cube_4",
+            "Transform": {
+                "position": [
+                    4.0,
+                    1.5,
+                    0.51
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Wood.mat"
+            },
+            "RigidBody": {
+                "mass": 1.0,
+                "friction": 0.6
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        },
+        {
+            "name": "Cube_5",
+            "Transform": {
+                "position": [
+                    4.0,
+                    2.5,
+                    0.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ],
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "MeshRenderer": {
+                "mesh": "Models/cube.obj",
+                "material": "Materials/Wood.mat"
+            },
+            "RigidBody": {
+                "mass": 1.0,
+                "friction": 0.6
+            },
+            "Collider": {
+                "shape": "box"
+            }
+        }
+    ]
+}

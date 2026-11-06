@@ -1,8 +1,10 @@
+#include "BallControl.h"
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "MeshRenderer.h"
+#include "Physics.h"
 #include "Random.h"
 #include "SandboxGame.h"
 #include "Stats.h"
@@ -22,6 +24,82 @@
 namespace Sandbox
 {
     using namespace Fling;
+
+    namespace
+    {
+        /**
+         * Push and jump each BallControl body with the player's input. The requests
+         * are queued, and physics applies them in this tick's physics step.
+         * Reads: BallControl, Input. Writes: PhysicsCommands.
+         */
+        void BallControlSystem(entt::registry& t_Reg, const Input& t_Input)
+        {
+            glm::vec3 Dir(0.0f);
+            if (t_Input.IsHeld(Keys::Up) || t_Input.IsHeld(Keys::GamepadDPadUp))
+            {
+                Dir.z -= 1.0f;
+            }
+            if (t_Input.IsHeld(Keys::Down) || t_Input.IsHeld(Keys::GamepadDPadDown))
+            {
+                Dir.z += 1.0f;
+            }
+            if (t_Input.IsHeld(Keys::Left) || t_Input.IsHeld(Keys::GamepadDPadLeft))
+            {
+                Dir.x -= 1.0f;
+            }
+            if (t_Input.IsHeld(Keys::Right) || t_Input.IsHeld(Keys::GamepadDPadRight))
+            {
+                Dir.x += 1.0f;
+            }
+            const bool bJump = t_Input.WasPressed(Keys::Space) || t_Input.WasPressed(Keys::GamepadFaceBottom);
+
+            t_Reg.view<BallControl>().each([&](entt::entity t_Entity, const BallControl& t_Control)
+            {
+                if (glm::length(Dir) > 0.0f)
+                {
+                    Physics::ApplyForce(t_Reg, t_Entity, glm::normalize(Dir) * t_Control.m_PushForce);
+                }
+                if (bJump)
+                {
+                    Physics::ApplyImpulse(t_Reg, t_Entity, glm::vec3(0.0f, t_Control.m_JumpImpulse, 0.0f));
+                }
+            });
+        }
+
+        /**
+         * Log the first time that a BallControl body hits another moving body. The
+         * headless physics test level looks for this line.
+         * Reads: ContactEvents (from the last physics step), BallControl, RigidBody.
+         * Writes: SandboxPhysicsState.
+         */
+        void LogFirstHitSystem(entt::registry& t_Reg)
+        {
+            SandboxPhysicsState* State = t_Reg.try_ctx<SandboxPhysicsState>();
+            const ContactEvents* Contacts = t_Reg.try_ctx<ContactEvents>();
+            if (State == nullptr || Contacts == nullptr || State->m_HasLoggedHit)
+            {
+                return;
+            }
+
+            auto IsMovingBody = [&t_Reg](entt::entity t_Entity)
+            {
+                return t_Reg.valid(t_Entity) && t_Reg.has<RigidBody>(t_Entity) && t_Reg.get<RigidBody>(t_Entity).m_Mass > 0.0f;
+            };
+
+            for (const ContactEvent& Contact : Contacts->m_Contacts)
+            {
+                const bool bAIsBall = t_Reg.valid(Contact.m_A) && t_Reg.has<BallControl>(Contact.m_A);
+                const bool bBIsBall = t_Reg.valid(Contact.m_B) && t_Reg.has<BallControl>(Contact.m_B);
+                const entt::entity Other = bAIsBall ? Contact.m_B : Contact.m_A;
+                if ((bAIsBall || bBIsBall) && !(bAIsBall && bBIsBall) && IsMovingBody(Other))
+                {
+                    F_LOG_TRACE("PhysicsTest: ball hit cube on tick {}", State->m_Tick);
+                    State->m_HasLoggedHit = true;
+                    return;
+                }
+            }
+        }
+    } // namespace
 
     void Game::Init(entt::registry& t_Reg)
     {
@@ -45,13 +123,21 @@ namespace Sandbox
 	{
 		Fling::ComponentTypeRegistry::Get().Register<Mover>("Mover");
 		Fling::ComponentTypeRegistry::Get().Register<Rotator>("Rotator");
+		Fling::ComponentTypeRegistry::Get().Register<BallControl>("BallControl");
 	}
 
 	void Game::OnStartGame(entt::registry& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
-		LightingTest(t_Reg);
+		t_Reg.set<SandboxPhysicsState>();
+
+		// A level with physics bodies (for example Levels/PhysicsTest.json) is a
+		// scene of its own. Only an empty level gets the lighting test grid.
+		if (t_Reg.view<RigidBody>().empty())
+		{
+			LightingTest(t_Reg);
+		}
 	}
 
     void Game::Update(entt::registry& t_Reg, float DeltaTime)
@@ -82,8 +168,21 @@ namespace Sandbox
             ToggleRotation();
         }
 
-        // Toggle moving lights with Space or A
-        if (WasPressed(Keys::Space, Keys::GamepadFaceBottom))
+        // Physics test level: the arrow keys push the ball and Space jumps.
+        // ContactEvents is from the physics step of the last tick.
+        const bool bHasBall = !t_Reg.view<BallControl>().empty();
+        if (bHasBall)
+        {
+            BallControlSystem(t_Reg, GameInput);
+            LogFirstHitSystem(t_Reg);
+        }
+        if (SandboxPhysicsState* PhysicsState = t_Reg.try_ctx<SandboxPhysicsState>())
+        {
+            ++PhysicsState->m_Tick;
+        }
+
+        // Toggle moving lights with Space or A (Space jumps when there is a ball)
+        if (!bHasBall && WasPressed(Keys::Space, Keys::GamepadFaceBottom))
         {
             OnToggleMoveLights();
         }

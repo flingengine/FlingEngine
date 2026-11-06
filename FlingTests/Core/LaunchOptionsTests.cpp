@@ -49,6 +49,21 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE(Options.Format == LogFormat::Json);
     }
 
+    SECTION("Level override")
+    {
+        REQUIRE(ParseArgs({}, Options, Error));
+        REQUIRE(Options.Level.empty());
+
+        REQUIRE(ParseArgs({"--level", "Levels/PhysicsTest.json"}, Options, Error));
+        REQUIRE(Options.Level == "Levels/PhysicsTest.json");
+    }
+
+    SECTION("Level with no path is an error")
+    {
+        REQUIRE_FALSE(ParseArgs({"--level"}, Options, Error));
+        REQUIRE(Error.find("--level needs a file path") != std::string::npos);
+    }
+
     SECTION("Equals syntax")
     {
         REQUIRE(ParseArgs({"--frames=5", "--seed=0", "--null-render=false"}, Options, Error));

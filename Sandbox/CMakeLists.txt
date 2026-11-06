@@ -43,6 +43,20 @@ if( FLING_BUILD_TESTS )
         PASS_REGULAR_EXPRESSION "{\"event\":\"exit\",\"code\":0,\"ticks\":10,\"seed\":1,\"render\":\"null\""
     )
 
+    # The physics test level: the ball rolls into the pyramid of cubes. With no
+    # physics library (FLING_PHYSICS_PROVIDER=None) nothing moves, so there is no test.
+    if( NOT FLING_PHYSICS_PROVIDER STREQUAL "None" )
+        add_test( NAME "Sandbox: physics test level"
+            COMMAND ${PROJECT_NAME} --null-render --unattended --frames 300 --seed 1
+                    --level Levels/PhysicsTest.json
+            WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+        )
+        set_tests_properties( "Sandbox: physics test level" PROPERTIES
+            PASS_REGULAR_EXPRESSION "PhysicsTest: ball hit cube on tick"
+            TIMEOUT 120
+        )
+    endif()
+
     # A bad launch argument must exit with code 3 (ExitCode::BadArguments)
     add_test( NAME "Sandbox: bad launch argument"
         COMMAND ${PROJECT_NAME} --null-render --unattended --frames not-a-number

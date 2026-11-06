@@ -28,8 +28,10 @@ namespace Fling
 		/**
 		* Initializes the world. Loads the StartLevel that is specified in the config.
 		* @note		Keep explicit Init and Shutdown functions to make the startup order more readable
+		*
+		* @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty means use the config.
 		*/
-		void Init();
+		void Init(const std::string& t_StartLevel = {});
 
 		/**
 		 * Tick all active levels in the world and upates any Lua scripts that have Update functions

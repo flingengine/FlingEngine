@@ -42,6 +42,19 @@ function(fling_set_warnings TARGET)
 endfunction()
 
 # Language standard, warnings, platform defines, and VS filters for a first-party target.
+# Floating point rules for simulation code (physics, and later the fixed tick).
+# The compiler must not fuse a multiply and an add into one FMA instruction, and
+# must not use fast math, because both change the result on some platforms or
+# compilers and break determinism. MSVC: /fp:precise does not fuse in VS 2022
+# and later.
+function(fling_set_deterministic_math TARGET)
+	if(MSVC)
+		target_compile_options(${TARGET} PRIVATE /fp:precise)
+	else()
+		target_compile_options(${TARGET} PRIVATE -ffp-contract=off -fno-fast-math)
+	endif()
+endfunction()
+
 function(fling_configure_target TARGET)
 	set_target_properties(${TARGET} PROPERTIES
 		CXX_STANDARD 20

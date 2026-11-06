@@ -66,6 +66,22 @@ jobs:
             os: windows-2022
             compiler: mingw
             build_type: Release
+          # The default physics provider is Jolt (FLING_PHYSICS_PROVIDER). Build the
+          # Bullet provider too, on one Linux and one Windows toolchain, so it does
+          # not break without anyone seeing it.
+          - name: Linux GCC Release (Bullet physics)
+            os: ubuntu-24.04
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+            build_type: Release
+            physics: Bullet
+          - name: Windows MSVC Release (Bullet physics)
+            os: windows-2022
+            compiler: msvc
+            generator: Visual Studio 17 2022
+            build_type: Release
+            physics: Bullet
 
     steps:
       - uses: actions/checkout@v5
@@ -135,6 +151,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DFLING_PHYSICS_PROVIDER=${{ matrix.physics || 'Jolt' }} \
             -DDEFINE_SHIPPING=${{ matrix.shipping && 'ON' || 'OFF' }} \
             ${{ matrix.shipping && '-DCMAKE_DISABLE_FIND_PACKAGE_Catch2=ON' || '' }}
 
@@ -142,6 +159,7 @@ jobs:
         if: runner.os == 'Windows' && matrix.compiler != 'mingw'
         run: |
           cmake -S . -B build -G "${{ matrix.generator }}" -A x64 `
+            -DFLING_PHYSICS_PROVIDER=${{ matrix.physics || 'Jolt' }} `
             -DDEFINE_SHIPPING=OFF `
             -DENABLE_MULTICORE=ON
 
@@ -151,6 +169,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DFLING_PHYSICS_PROVIDER=${{ matrix.physics || 'Jolt' }} \
             -DDEFINE_SHIPPING=OFF
 
       - name: Build
