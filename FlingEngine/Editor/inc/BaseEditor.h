@@ -61,7 +61,10 @@ namespace Fling
 
 		virtual void DrawFileMenu();
 
-		void DrawGpuInfo();
+        /** Draws the Play and Stop buttons in the menu bar */
+        void DrawPlayControls();
+
+        void DrawGpuInfo();
 
         void DrawCameraOptions();
 

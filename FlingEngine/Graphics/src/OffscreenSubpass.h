@@ -77,6 +77,15 @@ namespace Fling
 		/** Any change to the set of drawn entities. The command buffers must be recorded again. */
 		void OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg);
 
+		/**
+		* A MeshRenderer is about to be destroyed. Takes its descriptor set and UBO, so that
+		* ReleaseRetiredMeshResources frees them when the GPU no longer uses them.
+		*/
+		void OnMeshRendererDestroyed(entt::entity t_Ent, entt::registry& t_Reg);
+
+		/** Free the descriptor sets and UBOs of destroyed meshes */
+		void ReleaseRetiredMeshResources();
+
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
 
 		/** Write the UBO of each mesh whose transform changed since its last upload */
@@ -117,5 +126,15 @@ namespace Fling
 
 		/** Entities with a replaced MeshRenderer. Their descriptor sets update on the next Draw. */
 		std::vector<entt::entity> m_ReplacedMeshes;
+
+		/**
+		* Descriptor sets of destroyed meshes. A destroy can happen while a frame records
+		* (editor UI), so they are freed at the start of the next Draw. The previous frame
+		* has finished on the GPU then, and every command buffer records again.
+		*/
+		std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
+
+		/** UBOs of destroyed meshes. Deleted at the same time as m_RetiredDescriptorSets. */
+		std::vector<Buffer*> m_RetiredUniformBuffers;
 	};
 }   // namespace Fling

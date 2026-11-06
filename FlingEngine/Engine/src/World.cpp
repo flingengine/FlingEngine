@@ -47,12 +47,17 @@ namespace Fling
 
 	void World::Shutdown()
 	{
-		m_CurrentState = WorldState::Quitting;
+        // A request that has not run yet does not matter now
+        m_PendingRequest = PlayRequest::None;
 
-		// Stop the game
-		m_Game->OnStopGame(m_Registry);
+        // The application exits, so there is no reason to restore the snapshot
+        if (m_CurrentState == WorldState::Playing || m_CurrentState == WorldState::Paused)
+        {
+            m_CurrentState = WorldState::Quitting;
+            StopGame(false);
+        }
 
-		m_CurrentState = WorldState::ShuttingDown;
+        m_CurrentState = WorldState::ShuttingDown;
 
 		// Shut down the game
 		m_Game->Shutdown(m_Registry);
@@ -62,48 +67,130 @@ namespace Fling
 
 	void World::RequestGameStart()
 	{
-		assert(m_CurrentState == WorldState::Initalized);
+        if (m_CurrentState != WorldState::Initalized)
+        {
+            F_LOG_WARN("RequestGameStart ignored: the world is not ready for play");
+            return;
+        }
 
-		m_CurrentState = WorldState::Starting;
+        m_PendingRequest = PlayRequest::Start;
+    }
 
-		// Start game logic here like moving of objects, changing properties, etc
-		m_Game->OnStartGame(m_Registry);
+    void World::RequestGameStop()
+    {
+        const bool bStartPending = (m_PendingRequest == PlayRequest::Start);
+        if (m_CurrentState != WorldState::Playing && m_CurrentState != WorldState::Paused && !bStartPending)
+        {
+            F_LOG_WARN("RequestGameStop ignored: the world is not playing");
+            return;
+        }
+
+        // Stop before the start ran: cancel the start, and nothing changed
+        m_PendingRequest = bStartPending ? PlayRequest::None : PlayRequest::Stop;
+    }
+
+    void World::ProcessPlayRequest()
+    {
+        const PlayRequest Request = m_PendingRequest;
+        m_PendingRequest = PlayRequest::None;
+
+        if (Request == PlayRequest::Start && m_CurrentState == WorldState::Initalized)
+        {
+            StartGame();
+        }
+        else if (Request == PlayRequest::Stop &&
+                 (m_CurrentState == WorldState::Playing || m_CurrentState == WorldState::Paused))
+        {
+            StopGame(true);
+        }
+    }
+
+    void World::StartGame()
+    {
+        F_LOG_TRACE("World: start play");
+
+        // Keep the entities as they are now (with unsaved editor changes), so that
+        // stop can put them back
+        m_PlaySnapshot = Json::Object();
+        m_HasPlaySnapshot = SaveToJson(m_PlaySnapshot, "PlaySnapshot");
+        if (!m_HasPlaySnapshot)
+        {
+            F_LOG_ERROR("World: cannot make a play snapshot. Stop will not reset the world.");
+        }
+
+        m_CurrentState = WorldState::Starting;
+        m_Game->OnStartGame(m_Registry);
 		m_CurrentState = WorldState::Playing;
-	}
+    }
 
-	void World::RequestGameStop()
-	{
-		assert(m_CurrentState == WorldState::Playing);
+    void World::StopGame(bool t_RestoreSnapshot)
+    {
+        F_LOG_TRACE("World: stop play");
 
-		// Start game logic here like moving of objects, changing properties, etc
-		m_Game->OnStopGame(m_Registry);
+        // The game cleans up its own state while its entities still exist
+        m_Game->OnStopGame(m_Registry);
+        m_Game->m_WantsToQuit = false;
 
-		m_CurrentState = WorldState::Initalized;
+        if (t_RestoreSnapshot && m_HasPlaySnapshot)
+        {
+            // Removes every entity that play made or changed, then makes the
+            // entities from the start of play again
+            LoadFromJson(m_PlaySnapshot, "PlaySnapshot");
+        }
 
-		// Load a level back so that we clear out the game state
-	}
+        m_PlaySnapshot = Json();
+        m_HasPlaySnapshot = false;
+
+        if (m_CurrentState != WorldState::Quitting)
+        {
+            m_CurrentState = WorldState::Initalized;
+        }
+    }
 
 	void World::Update(float t_DeltaTime)
 	{
-		if(m_CurrentState == WorldState::Playing)
+        // Start and stop requests come from anywhere (the editor UI draws during
+        // rendering), so they run here, before the game ticks
+        ProcessPlayRequest();
+
+        if(m_CurrentState == WorldState::Playing)
 		{
 			// Once we are done with core updates, then call the game!
 			m_Game->Update(m_Registry, t_DeltaTime);
-		}
+
+            // In editor play, a game that wants to quit stops play instead
+            if (m_GameQuitStopsPlay && m_Game->WantsToQuit())
+            {
+                m_Game->m_WantsToQuit = false;
+                m_PendingRequest = PlayRequest::Stop;
+            }
+        }
 	}
 
 	bool World::OutputLevelFile(const std::string& t_LevelToLoad)
 	{
-		ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
-		if (!typeRegistry.IsSealed())
-		{
-			F_LOG_ERROR("OutputLevelFile('{}') failed: ComponentTypeRegistry is not sealed", t_LevelToLoad);
-			return false;
+        Json root = Json::Object();
+        if (!SaveToJson(root, t_LevelToLoad))
+        {
+            F_LOG_ERROR("OutputLevelFile('{}') failed", t_LevelToLoad);
+            return false;
 		}
 
-		std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelToLoad;
+        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelToLoad;
+        F_LOG_TRACE("Outputting Level file to {}", FullPath);
+        return root.SaveToFile(FullPath);
+    }
 
-		std::vector<std::pair<std::string, Json>> entityEntries;
+    bool World::SaveToJson(Json& t_OutDoc, const std::string& t_Title) const
+    {
+        const ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
+        if (!typeRegistry.IsSealed())
+        {
+            F_LOG_ERROR("Cannot save the world: ComponentTypeRegistry is not sealed");
+            return false;
+        }
+
+        std::vector<std::pair<std::string, Json>> entityEntries;
 		std::size_t unnamedIndex = 0;
 
 		m_Registry.each([&](const entt::entity entity)
@@ -153,31 +240,23 @@ namespace Fling
 			entities.PushBack(entry.second);
 		}
 
-		Json root = Json::Object();
-		root.Set("version", 1);
-		root.Set("title", t_LevelToLoad);
-		root.Set("entities", entities);
+        t_OutDoc = Json::Object();
+        t_OutDoc.Set("version", 1);
+        t_OutDoc.Set("title", t_Title);
+        t_OutDoc.Set("entities", entities);
+        return true;
+    }
 
-		F_LOG_TRACE("Outputting Level file to {}", FullPath);
-		if (!root.SaveToFile(FullPath))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	bool World::LoadLevelFile(const std::string& t_LevelToLoad)
+    bool World::LoadLevelFile(const std::string& t_LevelToLoad)
 	{
-		ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
-		if (!typeRegistry.IsSealed())
-		{
+        if (!ComponentTypeRegistry::Get().IsSealed())
+        {
 			F_LOG_ERROR("LoadLevelFile('{}') failed: ComponentTypeRegistry is not sealed", t_LevelToLoad);
 			return false;
 		}
 
-		std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelToLoad;
-		F_LOG_TRACE("Loading Level file from {}", FullPath);
+        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelToLoad;
+        F_LOG_TRACE("Loading Level file from {}", FullPath);
 
 		Json doc;
 		if (!doc.LoadFromFile(FullPath))
@@ -185,19 +264,32 @@ namespace Fling
 			return false;
 		}
 
-		m_Registry.reset();
+        return LoadFromJson(doc, FullPath);
+    }
 
-		const std::string title = doc.GetString("title", t_LevelToLoad);
-		F_LOG_TRACE("Level Title: {}", title);
+    bool World::LoadFromJson(const Json& t_Doc, const std::string& t_SourceName)
+    {
+        const ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
+        if (!typeRegistry.IsSealed())
+        {
+            F_LOG_ERROR("Cannot load '{}': ComponentTypeRegistry is not sealed", t_SourceName);
+            return false;
+        }
 
-		Json entities = doc.Get("entities");
-		if (!entities.IsArray())
+        Json entities = t_Doc.Get("entities");
+        if (!entities.IsArray())
 		{
-			F_LOG_ERROR("Level file '{}' is missing an entities array", FullPath);
-			return false;
+            F_LOG_ERROR("Level '{}' is missing an entities array", t_SourceName);
+            return false;
 		}
 
-		for (std::size_t i = 0; i < entities.Size(); ++i)
+        // Fires the destroy signals, so the renderer lets go of the old entities
+        m_Registry.reset();
+
+        const std::string title = t_Doc.GetString("title", t_SourceName);
+        F_LOG_TRACE("Level Title: {}", title);
+
+        for (std::size_t i = 0; i < entities.Size(); ++i)
 		{
 			Json entityJson = entities.At(i);
 			if (!entityJson.IsObject())
@@ -248,5 +340,5 @@ namespace Fling
 		}
 
 		return true;
-	}
+    }
 } // namespace Fling

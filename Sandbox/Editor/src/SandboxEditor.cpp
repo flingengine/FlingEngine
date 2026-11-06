@@ -15,14 +15,15 @@ namespace Sandbox
 		ImGui::Begin("Demo Info");
 		// Set it up in a nice spot
 		ImGui::SetWindowPos(ImVec2(0.0f, 500.0f), ImGuiCond_FirstUseEver);
-		
-		ImGui::Text("Press 'M' to hide the mouse cursor");
-		ImGui::Text("Press 'Space' to move lights around");
-		ImGui::Text("Press 'WASD' Move");
-		ImGui::Text("Right Click and drag to rotate camera");
-        ImGui::Text("Press 'WASD' Move");
 
-		// Gamma correction settings
+        ImGui::Text("Press 'Play' to start, 'Esc' or 'Stop' to stop");
+        ImGui::Text("Press 'M' to hide the mouse cursor");
+		ImGui::Text("Press 'Space' to move lights around");
+        ImGui::Text("Press 'T' to rotate the models");
+        ImGui::Text("Press 'WASD' Move");
+        ImGui::Text("Right Click and drag to rotate camera");
+
+        // Gamma correction settings
 		float GammaLevel = Fling::VulkanApp::Get().GetCamera()->GetGamma();
 		ImGui::SliderFloat("Gamma", &GammaLevel, .01f, 5.0f);
 		Fling::VulkanApp::Get().GetCamera()->SetGamma(GammaLevel);
