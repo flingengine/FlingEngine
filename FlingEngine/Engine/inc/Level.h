@@ -1,6 +1,5 @@
 #pragma once
 
-#include "NonCopyable.hpp"
 
 #include <string>
 
@@ -12,9 +11,12 @@ namespace Fling
      * A level contains active objects and provides the environment
      *          for the player. You should only load a level through the world. 
      */
-    class Level : public NonCopyable
+    class Level
     {
     public:
+        Level(const Level&) = delete;
+        Level& operator=(const Level&) = delete;
+
 		/**
 		* Loads this level based on the given file name. 
 		* @param t_LevelFile		The path to the level file (should be a full path, NOT relative to assets dir)

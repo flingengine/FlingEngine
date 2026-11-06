@@ -1,6 +1,5 @@
 #pragma once
 
-#include "NonCopyable.hpp"
 #include "Shader.h"
 
 #include <entt/entity/helper.hpp>
@@ -24,9 +23,12 @@ namespace Fling
 	* 
 	* @see GeometrySubpass for an example
 	*/
-	class Subpass : public NonCopyable
+	class Subpass
 	{
 	public:
+		Subpass(const Subpass&) = delete;
+		Subpass& operator=(const Subpass&) = delete;
+
 		Subpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
 		
 		virtual ~Subpass();

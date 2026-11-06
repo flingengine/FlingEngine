@@ -3,7 +3,6 @@
 #include "FlingTypes.h"
 #include "Game.h"
 #include "Level.h"
-#include "NonCopyable.hpp"
 #include "Platform.h"
 
 #include <cassert>
@@ -17,9 +16,12 @@ namespace Fling
 	* instance at any given time.
 	* @see Level
 	*/
-	class World : public NonCopyable
+	class World
 	{
 	public:
+		World(const World&) = delete;
+		World& operator=(const World&) = delete;
+
 
 		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
 

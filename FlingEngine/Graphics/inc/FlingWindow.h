@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "NonCopyable.hpp"
 
 #include <string>
 
@@ -27,10 +26,12 @@ namespace Fling
 	/**
 	* Base class that represents a window to the Fling Engine
 	*/
-	class FlingWindow : public NonCopyable
+	class FlingWindow
 	{
 	public:
-		
+		FlingWindow(const FlingWindow&) = delete;
+		FlingWindow& operator=(const FlingWindow&) = delete;
+
 		/** Create a window with the given data. Implemented per platform */
 		static FlingWindow* Create(const WindowProps& t_Props);
 
@@ -91,6 +92,8 @@ namespace Fling
 		virtual WindowMode GetWindowMode() = 0;
 
 	protected:
+		FlingWindow() = default;
+
 		/** Tracks mouse visibility in window **/
 		bool m_IsMouseVisible = true;
 

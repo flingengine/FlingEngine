@@ -1,6 +1,5 @@
 #pragma once
 
-#include "NonCopyable.hpp"
 #include "Subpass.h"
 
 #include <entt/entity/registry.hpp>
@@ -18,9 +17,12 @@ namespace Fling
 	/**
 	* A render pipeline encapsulates the functionality of a
 	*/
-	class RenderPipeline : public NonCopyable
+	class RenderPipeline
 	{
 	public:
+		RenderPipeline(const RenderPipeline&) = delete;
+		RenderPipeline& operator=(const RenderPipeline&) = delete;
+
 
 		RenderPipeline(entt::registry& t_Reg, LogicalDevice* t_dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses);
 		~RenderPipeline();
