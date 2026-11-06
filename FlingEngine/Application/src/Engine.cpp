@@ -9,6 +9,7 @@
 #include "Misc/CrashHandler.h"
 #include "Random.h"
 #include "RegisterGraphicsComponents.h"
+#include "Threading/Thread.h"
 #include "VulkanApp.h"
 
 #include <cstdint>
@@ -20,6 +21,9 @@ namespace Fling
     ExitCode Engine::Startup(int argc, const char* argv[])
 	{
 		m_StartTime = std::chrono::steady_clock::now();
+
+		// First, so that every later system sees this thread as GameThreadId
+		Thread::InitGameThread("Game Thread");
 
     	// Initalize the command line
 		const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);

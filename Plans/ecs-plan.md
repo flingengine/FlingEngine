@@ -424,7 +424,7 @@ A query captures the chunk count and the last chunk's row count when it starts, 
 |---|---|---|
 | `Input` | Once per live tick, before that tick's `Simulation`. Not on a resim | `InputSystem` reads the tick's `TickInput` (built from timestamped input events) and writes `InputState`. Game preprocessors (dead zones, action mapping) read it here. |
 | `Simulation` | Each live tick, and each replayed `TickCommands` | Gameplay, movement, AI. On a resim pass only systems that opted in run, and they query the prediction set. |
-| `ResolveDeferred` | After each of those ticks | Queue consumers, then that phase's `Commands` flush. Damage, audio, and VFX consumers leave `ReplayOnResim` off. |
+| `ResolveDeferred` | After each of those ticks | Queue consumers, then that phase's `Commands` flush. Damage, audio, and VFX consumers leave `ReplayOnResim` off. A consumer that sends work to a subsystem thread is the only call site for that thread (see [`Skills/threading.md`](../Skills/threading.md)). |
 | `PostSimulation` | Once per frame, after resim and the due ticks | `TransformSystem` (hierarchy to `LocalToWorld`). Interpolation is not here: the renderer does it from two snapshots (see `improve-time.md`). |
 | `Extract` | Once per frame, only when at least one tick ran | Writes a `RenderSnapshot` of the last live tick to the `SnapshotRing`. Proxy and UBO extraction move out of the subpasses. The renderer reads only the ring. |
 | `Editor` | Once per frame, editor builds only | Queued editor edits, at a sync point before `VulkanApp::Update`. |
