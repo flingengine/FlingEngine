@@ -35,13 +35,16 @@ namespace Fling
         Event(Event&&) = delete;
         Event& operator=(Event&&) = delete;
 
-        /** Set the flag and wake a waiter (Auto) or every waiter (Manual). */
+        /**
+         * Set the flag and wake a waiter (Auto) or every waiter (Manual).
+         *
+         * The notify is sent while the mutex is held. A waiter can then not
+         * return and destroy the Event before this call is done with it.
+         */
         void Signal()
         {
-            {
-                ScopedLock Lock(m_Mutex);
-                m_Set = true;
-            }
+            ScopedLock Lock(m_Mutex);
+            m_Set = true;
             if (m_Reset == EventReset::Manual)
             {
                 m_Condition.NotifyAll();
@@ -71,11 +74,13 @@ namespace Fling
         }
 
         /**
-         * Wait until the flag is set or t_Timeout ends.
+         * Wait until the flag is set or t_Timeout ends. A timeout too long for
+         * the clock waits until the flag is set.
          *
          * @return True when the flag was set. Auto then clears the flag.
          */
-        bool WaitFor(std::chrono::nanoseconds t_Timeout)
+        template <typename T_Rep, typename T_Period>
+        bool WaitFor(const std::chrono::duration<T_Rep, T_Period>& t_Timeout)
         {
             ScopedLock Lock(m_Mutex);
             const bool Signaled =

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Threading/WaitDeadline.h"
 
 #include <chrono>
 #include <cstddef>
@@ -33,8 +34,15 @@ namespace Fling
         /** Take one permit when one is available. Return false when the count is 0. */
         bool TryAcquire() { return m_Semaphore.try_acquire(); }
 
-        /** Take one permit, or return false when t_Timeout ends first. */
-        bool TryAcquireFor(std::chrono::nanoseconds t_Timeout) { return m_Semaphore.try_acquire_for(t_Timeout); }
+        /**
+         * Take one permit, or return false when t_Timeout ends first. A timeout
+         * too long for the clock waits until a permit is available.
+         */
+        template <typename T_Rep, typename T_Period>
+        bool TryAcquireFor(const std::chrono::duration<T_Rep, T_Period>& t_Timeout)
+        {
+            return m_Semaphore.try_acquire_until(Detail::DeadlineAfter(t_Timeout));
+        }
 
     private:
         std::counting_semaphore<> m_Semaphore;

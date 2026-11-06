@@ -125,7 +125,23 @@ std::shared_ptr<Thread> Worker = Thread::Create({.Name = "Ticker"}, TickRate::Hz
 First-party code uses the `Fling::` sync types, not `std::mutex`,
 `std::shared_mutex`, `std::condition_variable`, `std::lock_guard`, or
 `std::unique_lock`. Guard shared members with `FLING_GUARDED_BY`. The macros
-are in `Threading/ThreadSafety.h`. Clang checks them with `-Wthread-safety`.
+are in `Threading/ThreadSafety.h`. Clang checks them with `-Wthread-safety`,
+and a thread-safety warning fails the build.
+
+`ScopedLock`, `WriteScopedLock` and `ScopedSpinLock` are aliases of one
+template, `BasicScopedLock<T_Lock>`. A change to scoped lock behavior goes there.
+
+Clang cannot check that the `ScopedLock` passed to a `ConditionVariable` wait
+is locked. The wait checks it at run time, also in Release, and stops the
+program when it is not locked.
+
+The timed waits (`ConditionVariable::WaitFor`, `Event::WaitFor`,
+`Semaphore::TryAcquireFor`) take any `std::chrono::duration`. A timeout too
+long for the clock, for example `std::chrono::hours::max()`, waits with no
+limit. It does not overflow to a time in the past.
+
+`Event::Signal` notifies while it holds the mutex. So a thread can destroy an
+`Event` as soon as its wait returns.
 
 Use `SpinLock` only for a critical section of a few instructions. Do not hold
 it across an allocation, IO, or a wait. `CpuRelax` (`Threading/CpuRelax.h`) is

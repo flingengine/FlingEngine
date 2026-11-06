@@ -41,55 +41,6 @@ namespace Fling
     };
 
     /**
-     * Locks a Mutex when constructed and unlocks it when destroyed.
-     *
-     * Unlock releases the mutex early. Lock takes it again.
-     */
-    class FLING_SCOPED_CAPABILITY ScopedLock
-    {
-    public:
-        explicit ScopedLock(Mutex& t_Mutex) FLING_ACQUIRE(t_Mutex) : m_Mutex(t_Mutex), m_Locked(true)
-        {
-            m_Mutex.Lock();
-        }
-
-        ~ScopedLock() FLING_RELEASE()
-        {
-            if (m_Locked)
-            {
-                m_Mutex.Unlock();
-            }
-        }
-
-        ScopedLock(const ScopedLock&) = delete;
-        ScopedLock& operator=(const ScopedLock&) = delete;
-        ScopedLock(ScopedLock&&) = delete;
-        ScopedLock& operator=(ScopedLock&&) = delete;
-
-        /** Release the mutex before the ScopedLock is destroyed. */
-        void Unlock() FLING_RELEASE()
-        {
-            assert(m_Locked);
-            m_Mutex.Unlock();
-            m_Locked = false;
-        }
-
-        /** Take the mutex again after Unlock. */
-        void Lock() FLING_ACQUIRE()
-        {
-            assert(!m_Locked);
-            m_Mutex.Lock();
-            m_Locked = true;
-        }
-
-    private:
-        friend class ConditionVariable;
-
-        Mutex& m_Mutex;
-        bool m_Locked = false;
-    };
-
-    /**
      * A lock that many readers can hold, or that one writer can hold.
      *
      * Hold a read with ReadScopedLock. Hold a write with WriteScopedLock.
@@ -167,49 +118,6 @@ namespace Fling
         bool m_Locked = false;
     };
 
-    /** Holds the exclusive lock on a SharedMutex until it is destroyed. */
-    class FLING_SCOPED_CAPABILITY WriteScopedLock
-    {
-    public:
-        explicit WriteScopedLock(SharedMutex& t_Mutex) FLING_ACQUIRE(t_Mutex) : m_Mutex(t_Mutex), m_Locked(true)
-        {
-            m_Mutex.Lock();
-        }
-
-        ~WriteScopedLock() FLING_RELEASE()
-        {
-            if (m_Locked)
-            {
-                m_Mutex.Unlock();
-            }
-        }
-
-        WriteScopedLock(const WriteScopedLock&) = delete;
-        WriteScopedLock& operator=(const WriteScopedLock&) = delete;
-        WriteScopedLock(WriteScopedLock&&) = delete;
-        WriteScopedLock& operator=(WriteScopedLock&&) = delete;
-
-        /** Release the exclusive lock before the WriteScopedLock is destroyed. */
-        void Unlock() FLING_RELEASE()
-        {
-            assert(m_Locked);
-            m_Mutex.Unlock();
-            m_Locked = false;
-        }
-
-        /** Take the exclusive lock again after Unlock. */
-        void Lock() FLING_ACQUIRE()
-        {
-            assert(!m_Locked);
-            m_Mutex.Lock();
-            m_Locked = true;
-        }
-
-    private:
-        SharedMutex& m_Mutex;
-        bool m_Locked = false;
-    };
-
     /**
      * A lock for a critical section of a few instructions.
      *
@@ -246,16 +154,23 @@ namespace Fling
         std::atomic_flag m_Flag{};
     };
 
-    /** Locks a SpinLock when constructed and unlocks it when destroyed. */
-    class FLING_SCOPED_CAPABILITY ScopedSpinLock
+    /**
+     * Locks a T_Lock (Mutex, SpinLock, or the exclusive side of SharedMutex)
+     * when constructed and unlocks it when destroyed.
+     *
+     * Unlock releases the lock early. Lock takes it again. Use the aliases
+     * ScopedLock, WriteScopedLock and ScopedSpinLock.
+     */
+    template <typename T_Lock>
+    class FLING_SCOPED_CAPABILITY BasicScopedLock
     {
     public:
-        explicit ScopedSpinLock(SpinLock& t_Lock) FLING_ACQUIRE(t_Lock) : m_Lock(t_Lock), m_Locked(true)
+        explicit BasicScopedLock(T_Lock& t_Lock) FLING_ACQUIRE(t_Lock) : m_Lock(t_Lock), m_Locked(true)
         {
             m_Lock.Lock();
         }
 
-        ~ScopedSpinLock() FLING_RELEASE()
+        ~BasicScopedLock() FLING_RELEASE()
         {
             if (m_Locked)
             {
@@ -263,12 +178,12 @@ namespace Fling
             }
         }
 
-        ScopedSpinLock(const ScopedSpinLock&) = delete;
-        ScopedSpinLock& operator=(const ScopedSpinLock&) = delete;
-        ScopedSpinLock(ScopedSpinLock&&) = delete;
-        ScopedSpinLock& operator=(ScopedSpinLock&&) = delete;
+        BasicScopedLock(const BasicScopedLock&) = delete;
+        BasicScopedLock& operator=(const BasicScopedLock&) = delete;
+        BasicScopedLock(BasicScopedLock&&) = delete;
+        BasicScopedLock& operator=(BasicScopedLock&&) = delete;
 
-        /** Release the spin lock before the ScopedSpinLock is destroyed. */
+        /** Release the lock before the scoped lock is destroyed. */
         void Unlock() FLING_RELEASE()
         {
             assert(m_Locked);
@@ -276,7 +191,7 @@ namespace Fling
             m_Locked = false;
         }
 
-        /** Take the spin lock again after Unlock. */
+        /** Take the lock again after Unlock. */
         void Lock() FLING_ACQUIRE()
         {
             assert(!m_Locked);
@@ -285,7 +200,18 @@ namespace Fling
         }
 
     private:
-        SpinLock& m_Lock;
+        friend class ConditionVariable;
+
+        T_Lock& m_Lock;
         bool m_Locked = false;
     };
+
+    /** Holds a Mutex until it is destroyed. ConditionVariable waits take this type. */
+    using ScopedLock = BasicScopedLock<Mutex>;
+
+    /** Holds the exclusive lock on a SharedMutex until it is destroyed. */
+    using WriteScopedLock = BasicScopedLock<SharedMutex>;
+
+    /** Holds a SpinLock until it is destroyed. */
+    using ScopedSpinLock = BasicScopedLock<SpinLock>;
 } // namespace Fling

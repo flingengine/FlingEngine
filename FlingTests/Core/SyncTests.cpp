@@ -1,4 +1,5 @@
 #include "Threading/ConditionVariable.h"
+#include "Threading/CpuRelax.h"
 #include "Threading/Event.h"
 #include "Threading/Mutex.h"
 #include "Threading/Semaphore.h"
@@ -64,6 +65,32 @@ namespace
         Worker.join();
         return Failed.load();
     }
+
+    /** Take and release a shared lock. try_lock_shared can fail spuriously, so try more than once. */
+    bool CanTakeShared(SharedMutex& t_Mu)
+    {
+        for (int Attempt = 0; Attempt < 1000; ++Attempt)
+        {
+            if (t_Mu.TryLockShared())
+            {
+                t_Mu.UnlockShared();
+                return true;
+            }
+            CpuRelax();
+        }
+        return false;
+    }
+
+    /** Take and release the exclusive lock, if TryLock gets it. */
+    bool CanTakeExclusive(SharedMutex& t_Mu)
+    {
+        if (t_Mu.TryLock())
+        {
+            t_Mu.Unlock();
+            return true;
+        }
+        return false;
+    }
 } // namespace
 
 TEST_CASE("Mutex counts increments and TryLock fails while held", "[Threading]")
@@ -121,16 +148,12 @@ TEST_CASE("SharedMutex lets two readers in and keeps a writer out", "[Threading]
     std::thread First(Reader);
     std::thread Second(Reader);
     BothInside.wait();
-    REQUIRE(Inside.load() == 2);
-    if (Mu.TryLockShared())
-    {
-        Mu.UnlockShared();
-    }
-    else
-    {
-        REQUIRE(false);
-    }
-    REQUIRE_FALSE(Mu.TryLock());
+
+    // Join every thread before a REQUIRE. A failed REQUIRE throws, and a
+    // joinable std::thread that is destroyed calls std::terminate.
+    const int InsideCount = Inside.load();
+    const bool ReadTaken = CanTakeShared(Mu);
+    const bool WriteTaken = CanTakeExclusive(Mu);
 
     std::atomic<bool> WriterEntered{false};
     std::thread Writer(
@@ -140,10 +163,19 @@ TEST_CASE("SharedMutex lets two readers in and keeps a writer out", "[Threading]
             WriterEntered.store(true);
         });
 
+    // Give the writer time to reach the lock. It must stay out while the readers are in.
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    const bool EnteredWithReaders = WriterEntered.load();
+
     ReleaseReaders.count_down();
     First.join();
     Second.join();
     Writer.join();
+
+    REQUIRE(InsideCount == 2);
+    REQUIRE(ReadTaken);
+    REQUIRE_FALSE(WriteTaken);
+    REQUIRE_FALSE(EnteredWithReaders);
     REQUIRE(WriterEntered.load());
 }
 
@@ -199,6 +231,35 @@ TEST_CASE("Condition variable WaitFor times out", "[Threading]")
     REQUIRE_FALSE(Woke);
 }
 
+TEST_CASE("Condition variable WaitFor with a very long timeout waits for the predicate", "[Threading]")
+{
+    struct Box
+    {
+        Mutex Mu;
+        ConditionVariable Cv;
+        bool Ready FLING_GUARDED_BY(Mu) = false;
+    };
+    Box State;
+
+    std::thread Worker(
+        [&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            ScopedLock Lock(State.Mu);
+            State.Ready = true;
+            State.Cv.NotifyOne();
+        });
+
+    bool Woke = false;
+    {
+        ScopedLock Lock(State.Mu);
+        Woke =
+            State.Cv.WaitFor(Lock, std::chrono::hours::max(), [&]() FLING_REQUIRES(State.Mu) { return State.Ready; });
+    }
+    Worker.join();
+    REQUIRE(Woke);
+}
+
 TEST_CASE("Semaphore gives out its count", "[Threading]")
 {
     Semaphore Sem(2);
@@ -224,6 +285,16 @@ TEST_CASE("Semaphore gives out its count", "[Threading]")
     Done.wait();
     Worker.join();
     REQUIRE_FALSE(Sem.TryAcquire());
+
+    std::thread Releaser(
+        [&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            Sem.Release();
+        });
+    const bool Acquired = Sem.TryAcquireFor(std::chrono::nanoseconds::max());
+    Releaser.join();
+    REQUIRE(Acquired);
 }
 
 TEST_CASE("Event auto reset lets one waiter through per signal", "[Threading]")
@@ -303,4 +374,18 @@ TEST_CASE("Event that starts set does not block", "[Threading]")
     Manual.Wait();
     Manual.Wait();
     REQUIRE(Manual.IsSet());
+}
+
+TEST_CASE("Event WaitFor with a very long timeout waits for the signal", "[Threading]")
+{
+    Event Ev(EventReset::Auto);
+    std::thread Signaler(
+        [&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            Ev.Signal();
+        });
+    const bool Signaled = Ev.WaitFor(std::chrono::hours::max());
+    Signaler.join();
+    REQUIRE(Signaled);
 }

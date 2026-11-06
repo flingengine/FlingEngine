@@ -2,10 +2,12 @@
 
 #include "Threading/Mutex.h"
 #include "Threading/ThreadSafety.h"
+#include "Threading/WaitDeadline.h"
 
-#include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
+#include <cstdlib>
 #include <mutex>
 
 namespace Fling
@@ -16,6 +18,10 @@ namespace Fling
      * Pass the ScopedLock that holds the mutex. The wait can unlock that mutex
      * while the thread sleeps. The ScopedLock is locked again when the wait
      * returns.
+     *
+     * Clang cannot check that the ScopedLock passed to a wait is locked, so
+     * each wait checks it at run time, also in Release. A wait on an unlocked
+     * ScopedLock stops the program.
      */
     class ConditionVariable
     {
@@ -45,16 +51,18 @@ namespace Fling
         }
 
         /**
-         * Wait until t_Pred is true or t_Timeout ends.
+         * Wait until t_Pred is true or t_Timeout ends. A timeout too long for
+         * the clock waits until t_Pred is true.
          *
          * @return True when t_Pred is true
          */
-        template <typename T_Pred>
-        bool
-        WaitFor(ScopedLock& t_Lock, std::chrono::nanoseconds t_Timeout, T_Pred t_Pred) FLING_NO_THREAD_SAFETY_ANALYSIS
+        template <typename T_Rep, typename T_Period, typename T_Pred>
+        bool WaitFor(ScopedLock& t_Lock,
+                     const std::chrono::duration<T_Rep, T_Period>& t_Timeout,
+                     T_Pred t_Pred) FLING_NO_THREAD_SAFETY_ANALYSIS
         {
             AdoptedLock Adopted(t_Lock);
-            return m_Condition.wait_for(Adopted.Get(), t_Timeout, std::move(t_Pred));
+            return m_Condition.wait_until(Adopted.Get(), Detail::DeadlineAfter(t_Timeout), std::move(t_Pred));
         }
 
         /**
@@ -72,11 +80,18 @@ namespace Fling
         }
 
     private:
-        /** The ScopedLock must already hold its mutex. */
+        /**
+         * The ScopedLock must already hold its mutex. This check is not an
+         * assert, because a wait on an unlocked std::mutex is undefined behavior.
+         */
         static std::mutex& LockedMutex(ScopedLock& t_Lock)
         {
-            assert(t_Lock.m_Locked && "The ScopedLock must be locked");
-            return t_Lock.m_Mutex.m_Mutex;
+            if (!t_Lock.m_Locked)
+            {
+                std::fputs("ConditionVariable: wait on a ScopedLock that is not locked\n", stderr);
+                std::abort();
+            }
+            return t_Lock.m_Lock.m_Mutex;
         }
 
         /**
