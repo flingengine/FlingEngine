@@ -1,5 +1,5 @@
-#include "StackAllocator.h"
 #include "FlingTypes.h"
+#include "StackAllocator.h"
 
 namespace {
     static const size_t SIZE_OF_ALLOCATION_OFFSET = sizeof(uint32);

@@ -1,9 +1,8 @@
-#include <catch2/catch_all.hpp>
-
 #include "Json.h"
 #include "JsonArchive.h"
 #include "Logger.h"
 
+#include <catch2/catch_all.hpp>
 #include <string>
 
 namespace {

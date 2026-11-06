@@ -1,9 +1,9 @@
 #include "Buffer.h"
 #include "GraphicsHelpers.h"
-#include "VulkanApp.h"	// #TODO Pass in the devices by arg and not using this singleton
+#include "Logger.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
-#include "Logger.h"
+#include "VulkanApp.h"	// #TODO Pass in the devices by arg and not using this singleton
 
 namespace Fling
 {

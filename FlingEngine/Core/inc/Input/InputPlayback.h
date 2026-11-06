@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputRecording.h"
+
 #include <memory>
 #include <string>
 #include <unordered_map>

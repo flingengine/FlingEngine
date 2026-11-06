@@ -1,14 +1,13 @@
-#include <catch2/catch_all.hpp>
-
-#include "Timing.h"
-#include "Singleton.hpp"
-#include "Random.h"
-#include "Logger.h"
-#include "FreeList.h"
-#include "StackAllocator.h"
-#include "Memory.h"
 #include "CircularBuffer.hpp"
+#include "FreeList.h"
+#include "Logger.h"
+#include "Memory.h"
+#include "Random.h"
+#include "Singleton.hpp"
+#include "StackAllocator.h"
+#include "Timing.h"
 
+#include <catch2/catch_all.hpp>
 #include <cstdint>
 #include <vector>
 

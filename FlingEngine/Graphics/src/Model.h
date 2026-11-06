@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Resource.h"
-
 #include "Buffer.h"
+#include "Resource.h"
 #include "Vertex.h"
+
 #include <memory>
 #include <vector>
 

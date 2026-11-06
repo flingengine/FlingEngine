@@ -1,6 +1,7 @@
-#include "Input/InputPlayback.h"
 #include "Input/InputMessageHandler.h"
+#include "Input/InputPlayback.h"
 #include "Input/VirtualInputDeviceInterface.h"
+
 #include <algorithm>
 #include <cstdio>
 

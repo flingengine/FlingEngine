@@ -1,5 +1,5 @@
-#include "Resource.h"
 #include "FlingPaths.h"
+#include "Resource.h"
 
 namespace Fling
 {

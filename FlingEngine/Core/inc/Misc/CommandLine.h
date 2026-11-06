@@ -1,10 +1,11 @@
 #pragma once
 
+#include "FlingTypes.h"
+#include "Misc/StringUtils.h"
+
 #include <string> // string, stoi, to_string
 #include <string_view>  // std::string_view
 #include <unordered_map>
-#include "FlingTypes.h"
-#include "Misc/StringUtils.h"
 
 // TODO: I think that we may gain a lot if we just use
 // Boost. That certainly will have a better implementation then

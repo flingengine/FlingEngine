@@ -1,5 +1,6 @@
 #include "Input/InputMessageHandler.h"
 #include "Logger.h"
+
 #include <algorithm>
 #include <cstdio>
 #include <string>

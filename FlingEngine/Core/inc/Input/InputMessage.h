@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
+
 #include <chrono>
 #include <string>
 #include <string_view>

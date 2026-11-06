@@ -1,7 +1,7 @@
 #pragma once
 
-#include "FlingVulkan.h"
 #include "FlingExports.h"
+#include "FlingVulkan.h"
 #include "Platform.h"
 
 namespace Fling

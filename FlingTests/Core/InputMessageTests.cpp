@@ -1,6 +1,6 @@
-#include <catch2/catch_all.hpp>
-
 #include "Input/InputMessage.h"
+
+#include <catch2/catch_all.hpp>
 #include <string>
 
 TEST_CASE("Input message descriptions", "[Input]")

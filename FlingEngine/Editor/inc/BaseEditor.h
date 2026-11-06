@@ -1,12 +1,13 @@
 #pragma once
 
-#include <imgui.h>
-#include <entt/entity/registry.hpp>
-#include "IDebugUI.h"
-#include "WorldOutlinePanel.h"
 #include "EntityEditorPanel.h"
+#include "IDebugUI.h"
 #include "InputDevicesPanel.h"
+#include "WorldOutlinePanel.h"
+
 #include <array>
+#include <entt/entity/registry.hpp>
+#include <imgui.h>
 #include <string>
 
 namespace Fling

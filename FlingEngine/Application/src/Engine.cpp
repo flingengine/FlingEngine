@@ -1,18 +1,19 @@
+#include "ComponentTypeRegistry.h"
 #include "Engine.h"
+#include "File.h"
+#include "FlingPaths.h"
+#include "FlingWindow.h"
+#include "Input/GlfwInput.h"
+#include "Input/Input.h"
+#include "Misc/CommandLine.h"
+#include "Misc/CrashHandler.h"
+#include "Random.h"
+#include "RegisterGraphicsComponents.h"
+#include "VulkanApp.h"
+
 #include <cstdint>
 #include <cstdio>
 #include <random>
-#include "File.h"
-#include "VulkanApp.h"
-#include "Misc/CommandLine.h"
-#include "Misc/CrashHandler.h"
-#include "ComponentTypeRegistry.h"
-#include "RegisterGraphicsComponents.h"
-#include "FlingPaths.h"
-#include "FlingWindow.h"
-#include "Input/Input.h"
-#include "Input/GlfwInput.h"
-#include "Random.h"
 
 namespace Fling
 {

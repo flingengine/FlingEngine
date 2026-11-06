@@ -3,6 +3,7 @@
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
+
 #include <array>
 #include <cstdint>
 #include <memory>

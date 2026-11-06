@@ -1,8 +1,8 @@
-#include "Shader.h"
-#include "ResourceManager.h"
-#include "LogicalDevice.h"
-#include "Logger.h"
 #include "FlingPaths.h"
+#include "Logger.h"
+#include "LogicalDevice.h"
+#include "ResourceManager.h"
+#include "Shader.h"
 
 namespace Fling
 {

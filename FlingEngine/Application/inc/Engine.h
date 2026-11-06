@@ -1,23 +1,23 @@
 #pragma once
 
-#include "Platform.h"
-#include "Logger.h"
-#include "Timing.h"
-#include "ResourceManager.h"
+#include "ExitCode.h"
 #include "FlingConfig.h"
-#include "NonCopyable.hpp"
-#include "World.h"
-#include <entt/entity/registry.hpp>
-#include <csignal>
-
-#include "MovingAverage.hpp"
-#include "Stats.h"
 #include "Game.h"
 #include "IDebugUI.h"
-#include "ExitCode.h"
-#include "LaunchOptions.h"
 #include "Input/InputDeviceTypes.h"
+#include "LaunchOptions.h"
+#include "Logger.h"
+#include "MovingAverage.hpp"
+#include "NonCopyable.hpp"
+#include "Platform.h"
+#include "ResourceManager.h"
+#include "Stats.h"
+#include "Timing.h"
+#include "World.h"
+
 #include <chrono>
+#include <csignal>
+#include <entt/entity/registry.hpp>
 #include <memory>
 #include <type_traits>
 

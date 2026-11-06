@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Shader.h"
 #include "NonCopyable.hpp"
+#include "Shader.h"
 
-#include <entt/entity/registry.hpp>
 #include <entt/entity/helper.hpp>
+#include <entt/entity/registry.hpp>
 #include <memory>
 #include <vector>
 

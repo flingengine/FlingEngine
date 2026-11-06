@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingTypes.h"
+
 #include <cstddef>
 #include <functional>
 #include <string_view>

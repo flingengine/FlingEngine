@@ -1,4 +1,3 @@
-#include "SkyboxSubpass.h"
 #include "Buffer.h"
 #include "CommandBuffer.h"
 #include "Cubemap.h"
@@ -6,6 +5,7 @@
 #include "GraphicsHelpers.h"
 #include "GraphicsPipeline.h"
 #include "LogicalDevice.h"
+#include "SkyboxSubpass.h"
 #include "SwapChain.h"
 #include "VulkanApp.h"
 #include "VulkanAppState.h"

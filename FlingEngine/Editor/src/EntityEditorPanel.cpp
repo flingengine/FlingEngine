@@ -1,14 +1,12 @@
-#include "EntityEditorPanel.h"
-
-#include "ComponentTypeRegistry.h"
 #include "Components/Name.hpp"
+#include "ComponentTypeRegistry.h"
 #include "EditableComponent.h"
-
-#include <imgui.h>
+#include "EntityEditorPanel.h"
+#include "FlingTypes.h"
 
 #include <cstring>
+#include <imgui.h>
 #include <vector>
-#include "FlingTypes.h"
 
 namespace Fling
 {

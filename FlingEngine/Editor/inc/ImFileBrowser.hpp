@@ -4,13 +4,12 @@
 // MIT liscence
 
 #include <array>
+#include <cstring>
 #include <filesystem>
 #include <functional>
+#include <imgui.h>
 #include <memory>
 #include <string>
-
-#include <imgui.h>
-#include <cstring>
 #include <vector>
 
 #ifndef IMGUI_VERSION

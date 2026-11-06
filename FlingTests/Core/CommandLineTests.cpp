@@ -1,9 +1,9 @@
-#include <catch2/catch_all.hpp>
-
 #include "Misc/CommandLine.h"
-#include <string_view>
-#include <fstream>
+
+#include <catch2/catch_all.hpp>
 #include <cstdio>
+#include <fstream>
+#include <string_view>
 
 TEST_CASE("Command Line", "[Command Line]") {
     using namespace Fling;

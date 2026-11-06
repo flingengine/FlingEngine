@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Resource.h"
 #include "FlingVulkan.h"
+#include "Resource.h"
+
 #include <memory>
 
 namespace Fling

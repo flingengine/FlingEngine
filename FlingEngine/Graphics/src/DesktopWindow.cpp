@@ -1,9 +1,9 @@
-#include "DesktopWindow.h"
-#include "Texture.h"
-#include "FlingConfig.h"
-#include "VulkanApp.h"
-#include "Logger.h"
 #include "BuildConfig.h"
+#include "DesktopWindow.h"
+#include "FlingConfig.h"
+#include "Logger.h"
+#include "Texture.h"
+#include "VulkanApp.h"
 
 #include <algorithm>
 

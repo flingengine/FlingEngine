@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "NonCopyable.hpp"
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDeviceFactory.h"
 #include "Input/InputDeviceStates.h"
@@ -9,6 +8,8 @@
 #include "Input/InputMessage.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
+#include "NonCopyable.hpp"
+
 #include <entt/signal/sigh.hpp>
 #include <memory>
 #include <string_view>

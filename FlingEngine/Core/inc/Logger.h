@@ -1,20 +1,21 @@
 #pragma once
 
-#include "Platform.h"
 #include "BuildConfig.h"
-#include "Singleton.hpp"
 #include "LaunchOptions.h"
+#include "Platform.h"
+#include "Singleton.hpp"
 
 #define SPDLOG_TRACE_ON
 #define SPDLOG_DEBUG_ON
 
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/stdout_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/async.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/fmt/ostr.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/spdlog.h"
+
 #include <memory>
 
 namespace Fling

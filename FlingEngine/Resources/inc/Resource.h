@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Platform.h"
 #include "FlingTypes.h"
+#include "Platform.h"
+
 #include <string>
 
 namespace Fling

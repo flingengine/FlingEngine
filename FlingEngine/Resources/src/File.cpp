@@ -1,6 +1,6 @@
 #include "File.h"
-#include "ResourceManager.h"
 #include "Logger.h"
+#include "ResourceManager.h"
 
 namespace Fling
 {

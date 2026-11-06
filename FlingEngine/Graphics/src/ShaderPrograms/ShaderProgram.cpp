@@ -1,7 +1,8 @@
-#include "ShaderPrograms/ShaderProgram.h"
-#include "ResourceManager.h"
-#include <vector>
 #include "Logger.h"
+#include "ResourceManager.h"
+#include "ShaderPrograms/ShaderProgram.h"
+
+#include <vector>
 
 namespace Fling
 {

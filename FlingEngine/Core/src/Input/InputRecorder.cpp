@@ -1,6 +1,7 @@
-#include "Input/InputRecorder.h"
 #include "Input/InputMessageHandler.h"
+#include "Input/InputRecorder.h"
 #include "Input/VirtualInputDeviceInterface.h"
+
 #include <algorithm>
 #include <cstdio>
 #include <string_view>

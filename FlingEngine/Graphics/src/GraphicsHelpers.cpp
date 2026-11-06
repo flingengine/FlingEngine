@@ -1,9 +1,9 @@
 #include "GraphicsHelpers.h"
-#include "VulkanApp.h"
-#include "VulkanAppState.h"
+#include "Logger.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
-#include "Logger.h"
+#include "VulkanApp.h"
+#include "VulkanAppState.h"
 
 namespace Fling
 {

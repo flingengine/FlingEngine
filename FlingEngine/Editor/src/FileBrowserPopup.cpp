@@ -1,10 +1,9 @@
 #include "FileBrowserPopup.h"
 
-#include <imgui.h>
-
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <imgui.h>
 #include <system_error>
 
 namespace Fling

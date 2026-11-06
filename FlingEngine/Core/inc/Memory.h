@@ -1,9 +1,10 @@
 #pragma once
 
-#include <stdlib.h>
-#include <stdio.h>
 #include "FlingTypes.h"
 #include "Platform.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace Fling
 {

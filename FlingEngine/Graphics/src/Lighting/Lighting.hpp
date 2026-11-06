@@ -1,9 +1,10 @@
 #pragma once
 
-#include "FlingTypes.h"
 #include "Buffer.h"
+#include "FlingTypes.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+
 #include <vector>
 
 namespace Fling

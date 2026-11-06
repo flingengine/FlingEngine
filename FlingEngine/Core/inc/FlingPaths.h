@@ -1,9 +1,10 @@
 #pragma once
-#include <sys/types.h>
-#include <sys/stat.h>
-#include "Platform.h"
-#include <string>
 #include "CoreAPI.h"
+#include "Platform.h"
+
+#include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /** 
  * @see FlingAssetPaths.cpp.in

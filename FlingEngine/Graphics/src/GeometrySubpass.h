@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Subpass.h"
-
 #include "Lighting/DeferredLightSettings.h"
 #include "Lighting/DirectionalLight.hpp"
-#include "Lighting/PointLight.hpp"
 #include "Lighting/Lighting.hpp"
+#include "Lighting/PointLight.hpp"
+#include "Subpass.h"
+
 #include <memory>
 #include <vector>
 

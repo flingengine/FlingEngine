@@ -1,7 +1,7 @@
-#include <catch2/catch_all.hpp>
-
 #include "Input/InputMessageHandler.h"
 #include "Input/VirtualInputDeviceInterface.h"
+
+#include <catch2/catch_all.hpp>
 #include <functional>
 #include <memory>
 #include <string>

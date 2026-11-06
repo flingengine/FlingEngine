@@ -1,6 +1,6 @@
-#include "MultiSampler.h"
 #include "GraphicsHelpers.h"
 #include "LogicalDevice.h"
+#include "MultiSampler.h"
 
 namespace Fling
 {

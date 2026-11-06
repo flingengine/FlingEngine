@@ -1,8 +1,8 @@
+#include "Buffer.h"
+#include "Material.h"
 #include "MeshRenderer.h"
 #include "MeshRendererGpu.h"
 #include "Model.h"
-#include "Material.h"
-#include "Buffer.h"
 
 #include <entt/entity/helper.hpp>
 

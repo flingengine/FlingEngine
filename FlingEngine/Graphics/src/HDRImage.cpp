@@ -1,12 +1,12 @@
-#include "HDRImage.h"
-
+#include "Buffer.h"
 #include "FlingVulkan.h"
+#include "GraphicsHelpers.h"
+#include "HDRImage.h"
+#include "Logger.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
 #include "ResourceManager.h"
-#include "GraphicsHelpers.h"
-#include "Buffer.h"
-#include "Logger.h"
+
 #include <cmath>
 
 namespace Fling

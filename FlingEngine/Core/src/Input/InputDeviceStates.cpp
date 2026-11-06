@@ -1,4 +1,5 @@
 #include "Input/InputDeviceStates.h"
+
 #include <set>
 
 namespace Fling

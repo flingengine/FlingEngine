@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
+
 #include <memory>
 
 namespace Fling

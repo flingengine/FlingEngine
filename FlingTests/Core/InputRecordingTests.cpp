@@ -1,11 +1,11 @@
-#include <catch2/catch_all.hpp>
-
 #include "Input/Input.h"
 #include "Input/InputMessageHandler.h"
 #include "Input/InputPlayback.h"
 #include "Input/InputRecorder.h"
 #include "Input/InputRecording.h"
 #include "Input/VirtualInputDeviceInterface.h"
+
+#include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <fstream>
 #include <sstream>

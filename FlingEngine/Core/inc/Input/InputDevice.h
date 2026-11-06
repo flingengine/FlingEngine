@@ -1,10 +1,11 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "NonCopyable.hpp"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
 #include "Input/InputKeyState.h"
+#include "NonCopyable.hpp"
+
 #include <memory>
 
 namespace Fling

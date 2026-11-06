@@ -44,8 +44,16 @@ BinPackArguments: false
 BinPackParameters: false
 
 # Includes
-SortIncludes: false
-IncludeBlocks: Preserve
+SortIncludes: CaseInsensitive
+IncludeBlocks: Regroup
+# Project ("...") includes first, then <...> includes, each group alphabetical.
+IncludeCategories:
+  - Regex: '^"'
+    Priority: 1
+  - Regex: '^<'
+    Priority: 2
+# Treat no header as the "main" include so the .cpp's own header sorts alphabetically.
+IncludeIsMainRegex: '$^'
 
 # Spacing
 SpaceAfterCStyleCast: false

@@ -1,8 +1,7 @@
-#include "VulkanLoader.h"
-
 #include "DynamicLibrary.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "VulkanLoader.h"
 
 #include <stdexcept>
 #include <string>

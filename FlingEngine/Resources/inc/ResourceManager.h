@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Singleton.hpp"
-#include "Resource.h"
 #include "FlingTypes.h" // Guid
+#include "Resource.h"
+#include "Singleton.hpp"
 
 #include <fstream>
-#include <vector>
 #include <map>
 #include <memory>
+#include <vector>
 
 namespace Fling
 {

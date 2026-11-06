@@ -1,4 +1,5 @@
 #include "Input/InputRecording.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdarg>

@@ -1,6 +1,6 @@
-#include "ComponentTypeRegistry.h"
-#include "Components/Transform.h"
 #include "Components/Name.hpp"
+#include "Components/Transform.h"
+#include "ComponentTypeRegistry.h"
 #include "Logger.h"
 
 namespace Fling

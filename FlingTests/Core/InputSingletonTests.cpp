@@ -1,8 +1,8 @@
-#include <catch2/catch_all.hpp>
-
 #include "Input/Input.h"
 #include "Input/VirtualInputDeviceInterface.h"
 #include "Logger.h"
+
+#include <catch2/catch_all.hpp>
 #include <vector>
 
 namespace
