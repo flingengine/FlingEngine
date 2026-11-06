@@ -108,9 +108,11 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so
 they can all declare components and systems.
 
 The headers stay small so that a component header is cheap to include:
-`Component.h`, `Entity.h`, `TypeHash.h`, and `TypeList.h` include only `<cstdint>`,
-`<string_view>`, and `<type_traits>`. `SystemContext.h` is the only header
-that pulls in EnTT, and only through a detail `.inl`.
+`Component.h`, `Entity.h`, `TypeHash.h`, and `TypeList.h` include only
+`FlingTypes.h` (for `uint8`, `uint32`, and `uint64`; ECS code uses these, not
+`std::uint32_t`), `<string_view>`, and `<type_traits>`. `SystemContext.h`
+(through `detail/EnttBridge.h`) is the only header that pulls in the EnTT
+registry. `SystemRegistry.h` includes it, because `Add<T>()` makes the system.
 
 ---
 

@@ -2,9 +2,9 @@
 
 #include "Ecs/Phase.h"
 #include "Ecs/Schedule.h"
+#include "FlingTypes.h"
 
 #include <chrono>
-#include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <vector>
 
@@ -18,7 +18,7 @@ namespace Fling
         /** The length of one simulation tick. The default is 60 Hz. */
         std::chrono::nanoseconds FixedStep{16'666'667};
         /** The most ticks one frame may run. After a long stall, the extra time is dropped, not caught up. */
-        std::uint32_t MaxTicksPerFrame = 8;
+        uint32 MaxTicksPerFrame = 8;
         /** Run exactly one tick per frame, whatever the real time. Headless and --null-render runs use this. */
         bool OneTickPerFrame = false;
     };
@@ -59,7 +59,7 @@ namespace Fling
         void PlayEnd(WorldRole role);
 
         /** Adds the real time to the accumulator and runs each tick that is due. Returns the number of ticks run. */
-        std::uint32_t RunFixed(std::chrono::nanoseconds realDelta, WorldRole role);
+        uint32 RunFixed(std::chrono::nanoseconds realDelta, WorldRole role);
 
         /** Runs exactly one tick: Input, Simulation, ResolveDeferred, then the deferred commands. */
         void RunTick(WorldRole role);
@@ -70,16 +70,16 @@ namespace Fling
         const Schedule& GetSchedule() const { return m_Schedule; }
 
         /** The number of ticks run since Create. */
-        std::uint64_t TickCount() const { return m_Tick; }
+        uint64 TickCount() const { return m_Tick; }
 
     private:
         void RunPhase(Phase phase, WorldRole role);
         void FlushCommands();
-        bool RunsIn(std::uint32_t system, WorldRole role) const;
+        bool RunsIn(uint32 system, WorldRole role) const;
 
         const SystemRegistry& m_Systems;
         Schedule m_Schedule;
-        std::vector<std::uint32_t> m_RunOrder;
+        std::vector<uint32> m_RunOrder;
         entt::registry& m_Storage;
         SystemRunnerConfig m_Config;
 
@@ -88,7 +88,7 @@ namespace Fling
 
         std::chrono::nanoseconds m_Accumulator{0};
         std::chrono::nanoseconds m_RealElapsed{0};
-        std::uint64_t m_Tick = 0;
+        uint64 m_Tick = 0;
         bool m_Created = false;
     };
 } // namespace Fling

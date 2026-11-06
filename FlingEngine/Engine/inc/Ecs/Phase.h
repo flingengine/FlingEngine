@@ -1,7 +1,8 @@
 #pragma once
 
+#include "FlingTypes.h"
+
 #include <cstddef>
-#include <cstdint>
 
 namespace Fling
 {
@@ -10,7 +11,7 @@ namespace Fling
      * cadence: Input, Simulation, and ResolveDeferred run at the fixed tick.
      * PostSimulation, Extract, and Editor run once per rendered frame.
      */
-    enum class Phase : std::uint8_t
+    enum class Phase : uint8
     {
         Input,
         Simulation,
@@ -23,7 +24,7 @@ namespace Fling
     inline constexpr std::size_t PhaseCount = 6;
 
     /** How often a phase runs. */
-    enum class Cadence : std::uint8_t
+    enum class Cadence : uint8
     {
         /** Once per fixed simulation tick. The system implements FixedUpdate. */
         Fixed,
@@ -62,7 +63,7 @@ namespace Fling
     }
 
     /** The job of a world. A bit mask: a system's RunIn says which roles it runs in. */
-    enum class WorldRole : std::uint8_t
+    enum class WorldRole : uint8
     {
         None = 0,
         /** The world the editor changes. */
@@ -76,12 +77,12 @@ namespace Fling
 
     constexpr WorldRole operator|(const WorldRole a, const WorldRole b)
     {
-        return static_cast<WorldRole>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
+        return static_cast<WorldRole>(static_cast<uint8>(a) | static_cast<uint8>(b));
     }
 
     constexpr WorldRole operator&(const WorldRole a, const WorldRole b)
     {
-        return static_cast<WorldRole>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
+        return static_cast<WorldRole>(static_cast<uint8>(a) & static_cast<uint8>(b));
     }
 
     /** True if the two masks share a role. */

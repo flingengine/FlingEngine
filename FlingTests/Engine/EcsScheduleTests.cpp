@@ -1,5 +1,6 @@
 #include "Ecs/Schedule.h"
 #include "Ecs/SystemRegistry.h"
+#include "FlingTypes.h"
 
 #include <algorithm>
 #include <catch2/catch_all.hpp>
@@ -64,7 +65,7 @@ namespace
         for (const ScheduleStage& stage : schedule.GetPhase(phase).Stages)
         {
             std::vector<std::string>& names = stages.emplace_back();
-            for (const std::uint32_t i : stage.Systems)
+            for (const uint32 i : stage.Systems)
             {
                 names.emplace_back(schedule.Systems[i]->Info.Name);
             }
@@ -309,7 +310,7 @@ TEST_CASE("Phases keep their own stages", "[ecs][schedule]")
     REQUIRE(result.Value.Edges.empty());
 
     std::vector<std::string> run;
-    for (const std::uint32_t i : result.Value.RunOrder())
+    for (const uint32 i : result.Value.RunOrder())
     {
         run.emplace_back(result.Value.Systems[i]->Info.Name);
     }

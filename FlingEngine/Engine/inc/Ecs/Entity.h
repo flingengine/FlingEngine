@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstdint>
+#include "FlingTypes.h"
+
 #include <type_traits>
 
 namespace Fling
@@ -15,18 +16,18 @@ namespace Fling
      */
     struct Entity
     {
-        std::uint32_t Index = UINT32_MAX;
-        std::uint32_t Generation = UINT32_MAX;
+        uint32 Index = std::numeric_limits<uint32>::max();
+        uint32 Generation = std::numeric_limits<uint32>::max();
 
         static const Entity Null;
 
-        constexpr bool IsNull() const { return Index == UINT32_MAX; }
+        constexpr bool IsNull() const { return Index == std::numeric_limits<uint32>::max(); }
 
-        constexpr std::uint64_t ToBits() const { return (static_cast<std::uint64_t>(Generation) << 32) | Index; }
+        constexpr uint64 ToBits() const { return (static_cast<uint64>(Generation) << 32) | Index; }
 
-        static constexpr Entity FromBits(const std::uint64_t bits)
+        static constexpr Entity FromBits(const uint64 bits)
         {
-            return Entity{static_cast<std::uint32_t>(bits & 0xffffffffull), static_cast<std::uint32_t>(bits >> 32)};
+            return Entity{static_cast<uint32>(bits), static_cast<uint32>(bits >> 32)};
         }
 
         friend constexpr bool operator==(Entity, Entity) = default;

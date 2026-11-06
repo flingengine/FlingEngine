@@ -1,7 +1,7 @@
 #include "Ecs/Schedule.h"
+#include "FlingTypes.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <map>
 #include <set>
 #include <string_view>
@@ -11,7 +11,7 @@ namespace Fling
 {
     namespace
     {
-        using Index = std::uint32_t;
+        using Index = uint32;
 
         std::string_view NameOf(const SystemDesc& desc)
         {
@@ -458,9 +458,9 @@ namespace Fling
         }
     } // namespace
 
-    std::vector<std::uint32_t> Schedule::RunOrder() const
+    std::vector<uint32> Schedule::RunOrder() const
     {
-        std::vector<std::uint32_t> order;
+        std::vector<uint32> order;
         order.reserve(Systems.size());
         for (const SchedulePhase& phase : Phases)
         {
@@ -486,7 +486,7 @@ namespace Fling
 
             for (std::size_t s = 0; s < phase.Stages.size(); ++s)
             {
-                for (const std::uint32_t i : phase.Stages[s].Systems)
+                for (const uint32 i : phase.Stages[s].Systems)
                 {
                     const SystemDesc& desc = *Systems[i];
                     std::string line = "  stage " + std::to_string(s) + "  " +

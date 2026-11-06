@@ -2,6 +2,7 @@
 #include "Ecs/SystemContext.h"
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
+#include "FlingTypes.h"
 
 #include <cassert>
 #include <ranges>
@@ -47,14 +48,14 @@ namespace Fling
         m_Storage.set<SimTime>(SimTime{0, static_cast<float>(Seconds(m_Config.FixedStep)), 0.0});
         m_Storage.set<RealFrameTime>();
 
-        for (const std::uint32_t i : m_RunOrder)
+        for (const uint32 i : m_RunOrder)
         {
             if (const auto prepare = m_Systems.At(i).Describe().PrepareStorage)
             {
                 prepare(setup);
             }
         }
-        for (const std::uint32_t i : m_RunOrder)
+        for (const uint32 i : m_RunOrder)
         {
             m_Systems.At(i).RunCreate(setup);
         }
@@ -65,7 +66,7 @@ namespace Fling
     {
         assert(m_Created);
         SystemSetupBase setup(m_Storage);
-        for (const std::uint32_t i : std::views::reverse(m_RunOrder))
+        for (const uint32 i : std::views::reverse(m_RunOrder))
         {
             m_Systems.At(i).RunDestroy(setup);
         }
@@ -77,7 +78,7 @@ namespace Fling
 
     void SystemRunner::PlayBegin(const WorldRole role)
     {
-        for (const std::uint32_t i : m_RunOrder)
+        for (const uint32 i : m_RunOrder)
         {
             if (RunsIn(i, role))
             {
@@ -90,7 +91,7 @@ namespace Fling
 
     void SystemRunner::PlayEnd(const WorldRole role)
     {
-        for (const std::uint32_t i : m_RunOrder)
+        for (const uint32 i : m_RunOrder)
         {
             if (RunsIn(i, role))
             {
@@ -101,7 +102,7 @@ namespace Fling
         FlushCommands();
     }
 
-    std::uint32_t SystemRunner::RunFixed(const std::chrono::nanoseconds realDelta, const WorldRole role)
+    uint32 SystemRunner::RunFixed(const std::chrono::nanoseconds realDelta, const WorldRole role)
     {
         if (m_Config.OneTickPerFrame)
         {
@@ -110,7 +111,7 @@ namespace Fling
         }
 
         m_Accumulator += realDelta;
-        std::uint32_t ticks = 0;
+        uint32 ticks = 0;
         while (m_Accumulator >= m_Config.FixedStep && ticks < m_Config.MaxTicksPerFrame)
         {
             RunTick(role);
@@ -164,7 +165,7 @@ namespace Fling
         const bool fixed = IsFixedPhase(phase);
         for (const ScheduleStage& stage : m_Schedule.GetPhase(phase).Stages)
         {
-            for (const std::uint32_t i : stage.Systems)
+            for (const uint32 i : stage.Systems)
             {
                 if (!RunsIn(i, role))
                 {
@@ -187,7 +188,7 @@ namespace Fling
 
     void SystemRunner::FlushCommands()
     {
-        for (const std::uint32_t i : m_RunOrder)
+        for (const uint32 i : m_RunOrder)
         {
             CommandBuffer& commands = m_Commands[i];
             for (const Entity entity : commands.Destroys())
@@ -202,7 +203,7 @@ namespace Fling
         }
     }
 
-    bool SystemRunner::RunsIn(const std::uint32_t system, const WorldRole role) const
+    bool SystemRunner::RunsIn(const uint32 system, const WorldRole role) const
     {
         return Overlaps(m_Schedule.Systems[system]->Info.RunIn, role);
     }

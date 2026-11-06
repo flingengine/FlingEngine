@@ -2,9 +2,9 @@
 
 #include "Ecs/Phase.h"
 #include "Ecs/System.h"
+#include "FlingTypes.h"
 
 #include <array>
-#include <cstdint>
 #include <span>
 #include <string>
 #include <vector>
@@ -12,7 +12,7 @@
 namespace Fling
 {
     /** Why one system runs before another. */
-    enum class EdgeReason : std::uint8_t
+    enum class EdgeReason : uint8
     {
         /** The first system writes a component that the second reads. */
         WriteRead,
@@ -27,8 +27,8 @@ namespace Fling
     /** One "runs before" link between two systems in the same phase. Indices are into Schedule::Systems. */
     struct ScheduleEdge
     {
-        std::uint32_t From = 0;
-        std::uint32_t To = 0;
+        uint32 From = 0;
+        uint32 To = 0;
         EdgeReason Reason = EdgeReason::WriteRead;
         /** The component that made the edge. Null for After and Before. */
         const char* TypeName = nullptr;
@@ -37,7 +37,7 @@ namespace Fling
     /** Systems with no edge between them. A parallel executor can run them at the same time. Sorted by name. */
     struct ScheduleStage
     {
-        std::vector<std::uint32_t> Systems;
+        std::vector<uint32> Systems;
     };
 
     struct SchedulePhase
@@ -57,13 +57,13 @@ namespace Fling
         const SchedulePhase& GetPhase(const Phase phase) const { return Phases[static_cast<std::size_t>(phase)]; }
 
         /** Every system index in run order: phase, then stage, then name. */
-        std::vector<std::uint32_t> RunOrder() const;
+        std::vector<uint32> RunOrder() const;
 
         /** A readable listing of each phase, stage, and system, and why each edge exists. */
         std::string Dump() const;
     };
 
-    enum class ScheduleErrorKind : std::uint8_t
+    enum class ScheduleErrorKind : uint8
     {
         /** A system has no name. */
         MissingName,
@@ -90,7 +90,7 @@ namespace Fling
         /** A full sentence that names the systems, the type, and the fix. */
         std::string Message;
         /** The systems involved, as indices into Schedule::Systems. */
-        std::vector<std::uint32_t> Systems;
+        std::vector<uint32> Systems;
     };
 
     struct ScheduleResult

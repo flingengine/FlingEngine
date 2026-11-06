@@ -4,6 +4,7 @@
 #include "Ecs/Phase.h"
 #include "Ecs/TypeHash.h"
 #include "Ecs/TypeList.h"
+#include "FlingTypes.h"
 
 #include <catch2/catch_all.hpp>
 #include <vector>
@@ -96,9 +97,9 @@ TEST_CASE("TypeList finds its types", "[ecs]")
 TEST_CASE("HashName is FNV-1a and runs at compile time", "[ecs]")
 {
     // Published FNV-1a 64-bit test vectors.
-    STATIC_REQUIRE(HashName("") == 0xcbf29ce484222325ull);
-    STATIC_REQUIRE(HashName("a") == 0xaf63dc4c8601ec8cull);
-    STATIC_REQUIRE(HashName("foobar") == 0x85944171f73967e8ull);
+    STATIC_REQUIRE(HashName("") == uint64{0xcbf29ce484222325});
+    STATIC_REQUIRE(HashName("a") == uint64{0xaf63dc4c8601ec8c});
+    STATIC_REQUIRE(HashName("foobar") == uint64{0x85944171f73967e8});
     STATIC_REQUIRE(TypeHashOf<Position> == HashName("Test.Position"));
     STATIC_REQUIRE(TypeHashOf<Position> != TypeHashOf<Velocity>);
 }
@@ -112,7 +113,7 @@ TEST_CASE("Entity is an 8-byte handle with a null value", "[ecs]")
     STATIC_REQUIRE_FALSE(Entity{3, 0}.IsNull());
 
     constexpr Entity e{7, 42};
-    STATIC_REQUIRE(e.ToBits() == ((42ull << 32) | 7ull));
+    STATIC_REQUIRE(e.ToBits() == ((uint64{42} << 32) | uint64{7}));
     STATIC_REQUIRE(Entity::FromBits(e.ToBits()) == e);
     STATIC_REQUIRE(Entity{7, 43} != e);
 }

@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Ecs/Component.h"
-
-#include <cstdint>
+#include "FlingTypes.h"
 
 namespace Fling
 {
@@ -16,7 +15,7 @@ namespace Fling
             .Name = "SimTime", .Kind = ComponentKind::Singleton, .Transient = true};
 
         /** The number of the tick that is running. The first tick is 1. */
-        std::uint64_t Tick = 0;
+        uint64 Tick = 0;
         /** The length of one tick in seconds. It never changes while the world runs. */
         float FixedDelta = 1.0f / 60.0f;
         /** Tick * FixedDelta, in seconds. */

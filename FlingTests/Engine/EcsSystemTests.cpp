@@ -3,6 +3,7 @@
 #include "Ecs/SystemContext.h"
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
+#include "FlingTypes.h"
 
 #include <algorithm>
 #include <catch2/catch_all.hpp>
@@ -82,7 +83,7 @@ namespace
         int PlayEnded = 0;
         int Ticks = 0;
         int EditTicks = 0;
-        std::uint64_t LastTick = 0;
+        uint64 LastTick = 0;
     };
 
     /** Owns Bounds and Calls, and counts ticks. */

@@ -4,14 +4,14 @@
 // Fling::Entity and entt::entity, so callers do not change when the storage does.
 
 #include "Ecs/Entity.h"
+#include "FlingTypes.h"
 
-#include <cstdint>
 #include <entt/entity/entity.hpp>
 #include <entt/entity/registry.hpp>
 
 namespace Fling::Detail
 {
-    using EnttTraits = entt::entt_traits<std::uint32_t>;
+    using EnttTraits = entt::entt_traits<uint32>;
 
     /** EnTT 3.1 packs a 20-bit index and a 12-bit version into 32 bits. Fling::Entity keeps them apart. */
     inline Entity FromEntt(const entt::entity e)
@@ -20,7 +20,7 @@ namespace Fling::Detail
         {
             return Entity::Null;
         }
-        const auto bits = static_cast<std::uint32_t>(e);
+        const auto bits = static_cast<uint32>(e);
         return Entity{bits & EnttTraits::entity_mask, (bits >> EnttTraits::entity_shift) & EnttTraits::version_mask};
     }
 

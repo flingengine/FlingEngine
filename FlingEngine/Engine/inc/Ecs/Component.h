@@ -1,15 +1,15 @@
 #pragma once
 
 #include "Ecs/TypeHash.h"
+#include "FlingTypes.h"
 
-#include <cstdint>
 #include <string_view>
 #include <type_traits>
 
 namespace Fling
 {
     /** How a component type is stored, and how many there are. */
-    enum class ComponentKind : std::uint8_t
+    enum class ComponentKind : uint8
     {
         /** One per entity. The default. */
         Table,
@@ -22,7 +22,7 @@ namespace Fling
     };
 
     /** Which clock may write a component type. */
-    enum class ComponentDomain : std::uint8_t
+    enum class ComponentDomain : uint8
     {
         /** Written only at the fixed tick. The default. */
         Simulation,

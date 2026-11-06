@@ -2,16 +2,16 @@
 
 #include "Ecs/Component.h"
 #include "Ecs/TypeList.h"
+#include "FlingTypes.h"
 
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <type_traits>
 
 namespace Fling
 {
     /** What a system may do with one component type. */
-    enum class AccessMode : std::uint8_t
+    enum class AccessMode : uint8
     {
         /** Read the component. Many readers can run at the same time. */
         Read,
@@ -189,7 +189,8 @@ namespace Fling
         template <typename... Es>
         consteval auto MakeTable()
         {
-            constexpr std::size_t count = (std::size_t{0} + ... + (std::is_same_v<Es, Spawns> ? 0u : 1u));
+            constexpr std::size_t count =
+                (std::size_t{0} + ... + (std::is_same_v<Es, Spawns> ? std::size_t{0} : std::size_t{1}));
             constexpr std::array<bool, sizeof...(Es)> isRow{!std::is_same_v<Es, Spawns>...};
             constexpr std::array<AccessEntry, sizeof...(Es)> all{MakeEntry<Es>()...};
 
