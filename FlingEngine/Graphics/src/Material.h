@@ -2,7 +2,6 @@
 
 #include "JsonFile.h"
 #include "Shader.h"
-#include "ShaderPrograms/ShaderProgram.h"
 #include "Texture.h"
 
 #include <memory>
