@@ -39,13 +39,6 @@ namespace Fling
          * @return uint64
          */
         uint64 GetImageSize() const { return m_Width * m_Height * 6; }
-        /**
-         * Get the Pixel Data as signed floats
-         * 
-         * @return const float* 
-         */
-        const float* GetPixelData() const { return m_PixelData; }
-
         void Release();
 
     private:
@@ -69,7 +62,8 @@ namespace Fling
 
         VkDescriptorImageInfo m_ImageInfo = {};
 
-        float* m_PixelData;
+        /** Decoded pixels. Only valid while LoadVulkanImage uploads them, then freed. */
+        float* m_PixelData = nullptr;
 
         VkFormat m_Format = VK_FORMAT_R16G16B16_SFLOAT;
 

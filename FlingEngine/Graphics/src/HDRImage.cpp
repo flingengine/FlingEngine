@@ -96,6 +96,10 @@ namespace Fling
         CopyBufferToImage(StagingBuffer.GetVkBuffer());
 
         GenerateMipMaps(m_Format);
+
+        // The GPU has its own copy now, so do not keep the decoded pixels in RAM
+        stbi_image_free(m_PixelData);
+        m_PixelData = nullptr;
     }
 
     void HDRImage::CreateImageView()
@@ -255,9 +259,6 @@ namespace Fling
 
     void HDRImage::Release()
     {
-        // We don't need this stbi pixel data any more
-        stbi_image_free(m_PixelData);
-
         VkDevice Device = m_Device->GetVkDevice();
 
         if (Device == VK_NULL_HANDLE)

@@ -1,9 +1,10 @@
 #include "BuildConfig.h"
 #include "DesktopWindow.h"
 #include "FlingConfig.h"
+#include "FlingPaths.h"
 #include "Logger.h"
-#include "Texture.h"
 #include "VulkanApp.h"
+#include "stb_image.h"
 
 #include <algorithm>
 
@@ -195,18 +196,27 @@ namespace Fling
 
 	void DesktopWindow::SetWindowIcon(Guid t_ID)
 	{
-		// Load an image 
-		std::shared_ptr<Texture> Icon = Texture::Create(t_ID);
-		assert(Icon);
+		// Decode the file here. The icon does not need a GPU texture, and a Texture
+		// does not keep its pixels after the upload.
+		const std::string Filepath = FlingPaths::EngineAssetsDir() + "/" + t_ID.data();
+		int Width = 0;
+		int Height = 0;
+		int Channels = 0;
+		stbi_uc* Pixels = stbi_load(Filepath.c_str(), &Width, &Height, &Channels, STBI_rgb_alpha);
+		if (!Pixels)
+		{
+			F_LOG_ERROR("Failed to load window icon: {}", Filepath);
+			return;
+		}
 
-		// Set the Pixel data for this image
 		GLFWimage GLFW_Image;
-		GLFW_Image.height = Icon->GetHeight();
-		GLFW_Image.width = Icon->GetWidth();
-		GLFW_Image.pixels = Icon->GetPixelData();
+		GLFW_Image.height = Height;
+		GLFW_Image.width = Width;
+		GLFW_Image.pixels = Pixels;
 
-		// Set it via GLFW
+		// GLFW copies the pixels, so free them after this call
 		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
+		stbi_image_free(Pixels);
 	}
 
 	void DesktopWindow::SetWindowMode(WindowMode t_WindowMode)
