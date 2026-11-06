@@ -299,6 +299,25 @@ namespace Fling
         t_OutDoc.Set("version", 1);
         t_OutDoc.Set("title", t_Title);
         t_OutDoc.Set("entities", entities);
+
+        // Singletons that are saved (not Transient). The key is written only when
+        // there is one, so a level with none saves the same as before.
+        Json singletons = Json::Object();
+        bool bHasSingletons = false;
+        for (const ComponentTypeInfo& type : typeRegistry.All())
+        {
+            if (type.saveSingleton && type.hasSingleton && type.hasSingleton(m_Registry))
+            {
+                Json singletonJson = Json::Object();
+                type.saveSingleton(m_Registry, singletonJson);
+                singletons.Set(type.name, singletonJson);
+                bHasSingletons = true;
+            }
+        }
+        if (bHasSingletons)
+        {
+            t_OutDoc.Set("singletons", singletons);
+        }
         return true;
     }
 
@@ -393,6 +412,22 @@ namespace Fling
 				LoadNamedComponent(key);
 			}
 		}
+
+        // The optional "singletons" object. Levels from before singletons have no such key.
+        const Json singletons = t_Doc.Get("singletons");
+        if (singletons.IsObject())
+        {
+            for (const std::string& key : singletons.Keys())
+            {
+                const ComponentTypeInfo* info = typeRegistry.Find(key);
+                if (!info || !info->loadSingleton)
+                {
+                    F_LOG_WARN("Unknown singleton '{}' in level '{}', skipping", key, t_SourceName);
+                    continue;
+                }
+                info->loadSingleton(m_Registry, singletons.Get(key));
+            }
+        }
 
 		return true;
     }

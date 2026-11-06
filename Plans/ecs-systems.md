@@ -1,7 +1,7 @@
 # ECS systems and components: the first slice
 
-Status: work items 1 to 4 (with 3b, open phases, §3.8) are done (branch
-`feature/ecs-types`). Items 5 and 6 are next. §6 lists what changed from this plan while they were written.
+Status: work items 1 to 5 (with 3b, open phases, §3.8) are done (branch
+`feature/ecs-types`). Item 6 is next. §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -1242,6 +1242,29 @@ Each item is one PR off `main`, green on all CI platforms.
 5. **`ComponentTypeRegistry::Register<T>()`** from `T::Component`, plus
    kinds, transient, and the `"singletons"` level key. Existing levels load
    unchanged (test with `Assets/Levels/Level_1.json`).
+   Done:
+   - `ComponentTypeRegistry::Register<T>()` takes the name, kind, and
+     transient flag from `T::Component`, and stores `hash`, `kind`, and
+     `transient` in `ComponentTypeInfo`.
+   - A transient type needs no `Serialize` and is never saved. A tag saves
+     as `{}`. Singletons and queues get `hasSingleton`, `saveSingleton`, and
+     `loadSingleton` (in the registry context), and no entity functions.
+   - `World::SaveToJson` writes non-transient singletons into a
+     `"singletons"` object only when there is one, so levels with no
+     singletons save byte for byte as before. `LoadFromJson` reads the key
+     if it is there. The play snapshot goes through the same code, so play
+     stop restores saved singletons.
+   - The editor's Add Component menu skips singletons and queues.
+   - `FlingTests/Engine/ComponentRegistrationTests.cpp`.
+   Not done yet:
+   - `Register<T>(name)` does not log a deprecation warning yet. Every
+     engine type still uses it, so the warning would show on every run. Add
+     it once the engine types declare a `ComponentInfo`.
+   - The **World Singletons** editor panel.
+   - The startup check that each `TypeHash` in a `SystemDesc` matches a
+     registered component. `AccessEntry` has no transient flag yet, and a
+     transient singleton needs no registration, so the check needs that flag
+     first.
 6. **Port Sandbox.** `MoverSystem` and `RotatorSystem` replace the loops in
    `Game::Update`. `InputSystem` and `InputState` read from `Input`.
    Headless check: `Sandbox --null-render --unattended --frames 120 --seed 1`

@@ -72,7 +72,8 @@ namespace Fling
 			std::vector<const ComponentTypeInfo*> missing;
 			for (const ComponentTypeInfo& info : types)
 			{
-				if (IsNameComponent(info))
+				// Singletons and queues belong to the world, not to an entity
+				if (IsNameComponent(info) || info.IsSingleton())
 				{
 					continue;
 				}
