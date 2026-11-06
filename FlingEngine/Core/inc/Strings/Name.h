@@ -143,7 +143,9 @@ namespace Fling
         friend constexpr bool operator==(Name, Name) = default;
 
         /** Orders by hash: the same on every machine, but not alphabetical. */
-        friend constexpr std::strong_ordering operator<= > (Name, Name) = default;
+        // clang-format off: the repo style is C++17, which does not know operator<=>.
+        friend constexpr std::strong_ordering operator<=>(Name, Name) = default;
+        // clang-format on
 
     private:
         CORE_API void Register(StringView t_Text) const;
