@@ -134,6 +134,9 @@ namespace Fling
 		/** The window that the GLFW input interface was told about. */
 		WindowHandle m_InputWindow;
 
+		/** True while the window is in the background and Tick caps the frame rate */
+		bool m_FramesCapped = false;
+
 		/** Real time when Startup began, for the exit summary */
 		std::chrono::steady_clock::time_point m_StartTime;
 	};

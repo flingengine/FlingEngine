@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <random>
+#include <thread>
 
 namespace Fling
 {
@@ -186,8 +187,15 @@ namespace Fling
 
 		const float NullRenderDeltaTime = 1.0f / static_cast<float>(LaunchOptions::NullRenderTickRate);
 
+		// While the window is in the background, a frame takes at least this long. The swap
+		// chain does not wait for vsync, so with no cap a background game takes the whole GPU.
+		constexpr std::chrono::steady_clock::duration BackgroundFrameTime =
+			std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::seconds(1)) / 30;
+
 		while(ShouldTick())
 		{
+			const std::chrono::steady_clock::time_point FrameStart = std::chrono::steady_clock::now();
+
             // Update timing
             Timing.Update();
 
@@ -222,6 +230,27 @@ namespace Fling
 			if (!m_Options.NullRender)
 			{
 				VulkanApp::Get().Update(DeltaTime, g_Registry);
+
+				const bool bFocused = VulkanApp::Get().GetCurrentWindow()->IsFocused();
+				if (bFocused == m_FramesCapped)
+				{
+					m_FramesCapped = !bFocused;
+					if (m_FramesCapped)
+					{
+						F_LOG_TRACE("Window in the background: frames capped at 30 a second");
+					}
+					else
+					{
+						F_LOG_TRACE("Window in front: frames uncapped");
+					}
+				}
+
+				// The game ticks with the real delta time, so it runs at the same speed, only
+				// in fewer and longer ticks
+				if (m_FramesCapped)
+				{
+					std::this_thread::sleep_until(FrameStart + BackgroundFrameTime);
+				}
 			}
 
 			Timing.UpdateFps();

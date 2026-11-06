@@ -88,6 +88,9 @@ namespace Fling
 		*/
 		virtual bool IsMinimized() const = 0;
 
+		/** True if this window is in front and gets keyboard input */
+		virtual bool IsFocused() const = 0;
+
 		/** Changes window mode between fullscreen, window, and borderless window **/
 		virtual void SetWindowMode(WindowMode t_WindowMode) = 0;
 

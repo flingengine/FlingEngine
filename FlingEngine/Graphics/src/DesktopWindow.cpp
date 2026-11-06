@@ -8,6 +8,12 @@
 
 #include <algorithm>
 
+#if FLING_WINDOWS
+// For glfwGetWin32Window. Platform.h has already included Windows.h.
+#	define GLFW_EXPOSE_NATIVE_WIN32
+#	include <GLFW/glfw3native.h>
+#endif
+
 namespace Fling
 {
 	static bool bGlfwInitalized = false;
@@ -134,6 +140,17 @@ namespace Fling
 	bool DesktopWindow::IsMinimized() const
 	{
 		return false;
+	}
+
+	bool DesktopWindow::IsFocused() const
+	{
+#if FLING_WINDOWS
+		// Do not use GLFW_FOCUSED on Windows. GLFW reads it from GetActiveWindow, which is per
+		// thread and is true for a window that opened behind another program.
+		return GetForegroundWindow() == glfwGetWin32Window(m_Window);
+#else
+		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) != 0;
+#endif
 	}
 
 	uint32 DesktopWindow::GetFramebufferWidth() const
