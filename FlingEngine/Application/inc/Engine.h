@@ -8,7 +8,6 @@
 #include "LaunchOptions.h"
 #include "Logger.h"
 #include "MovingAverage.hpp"
-#include "NonCopyable.hpp"
 #include "Platform.h"
 #include "ResourceManager.h"
 #include "Stats.h"
@@ -48,9 +47,11 @@ namespace Fling
 	 * window and no GPU device, and ticks with a fixed delta. See LaunchOptions
 	 * for the launch flags.
 	 */
-	class Engine : public NonCopyable
+	class Engine
 	{
 	public:
+		Engine(const Engine&) = delete;
+		Engine& operator=(const Engine&) = delete;
 
 		FLING_API Engine() = default;
 

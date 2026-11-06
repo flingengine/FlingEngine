@@ -5,7 +5,6 @@
 #include "FlingConfig.h"
 #include "FlingWindow.h"
 #include "Logger.h"
-#include "NonCopyable.hpp"
 #include "Platform.h"
 #include "ResourceManager.h"
 #include "Singleton.hpp"

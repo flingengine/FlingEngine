@@ -3,7 +3,6 @@
 #include "FlingTypes.h"
 #include "Input/InputDevice.h"
 #include "Input/InputDeviceTypes.h"
-#include "NonCopyable.hpp"
 
 #include <map>
 #include <memory>
@@ -24,9 +23,12 @@ namespace Fling
      * Two devices are the same device if their interface name, type, vendor ID,
      * product ID, and hardware path are all equal.
      */
-    class InputDeviceFactory : public NonCopyable
+    class InputDeviceFactory
     {
     public:
+        InputDeviceFactory(const InputDeviceFactory&) = delete;
+        InputDeviceFactory& operator=(const InputDeviceFactory&) = delete;
+
         explicit InputDeviceFactory(InputMessageHandler& t_Handler);
 
         /**

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "NonCopyable.hpp"
 #include "Platform.h"
 
 #include <entt/entity/registry.hpp>
@@ -17,13 +16,15 @@ namespace Fling
 	 *          in the update, read, write, etc
 	 * @see World
 	 */
-	class Game : public NonCopyable
+	class Game
 	{
 		// Friend class to the engine so that we can ensure the proper world is setup
 		friend class Engine;
 
 	public:
-		
+		Game(const Game&) = delete;
+		Game& operator=(const Game&) = delete;
+
 		/**
 		* Initialization of a Game called by the world. This is a good place to bind
 		* any game input callbacks, or to Load any Lua scripts that need a "Start" method
