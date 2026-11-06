@@ -69,6 +69,20 @@ if( FLING_BUILD_TESTS )
         PASS_REGULAR_EXPRESSION "Fling exit: code=0 ticks=0"
     )
 
+    # The Rotator and Mover systems run headless. The checksum line at exit lets a
+    # change to gameplay code be compared with the run before it.
+    if( NOT DEFINE_SHIPPING )
+        add_test( NAME "Sandbox: systems move the lighting test"
+            COMMAND ${PROJECT_NAME} --null-render --unattended --frames 120 --seed 1
+                    --replay-input Sandbox/Tests/Input/toggle_rotate_and_lights.input.jsonl
+            WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+        )
+        set_tests_properties( "Sandbox: systems move the lighting test" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Sandbox: 754 transforms, checksum .*Fling exit: code=0 ticks=120"
+            TIMEOUT 120
+        )
+    endif()
+
     # A bad launch argument must exit with code 3 (ExitCode::BadArguments)
     add_test( NAME "Sandbox: bad launch argument"
         COMMAND ${PROJECT_NAME} --null-render --unattended --frames not-a-number

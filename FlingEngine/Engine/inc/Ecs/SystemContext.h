@@ -18,7 +18,7 @@
 namespace Fling
 {
     /** Changes that wait until the end of the fixed tick. Each system has its own buffer. */
-    class CommandBuffer
+    class DeferredCommands
     {
     public:
         /** Destroys the entity at the end of the tick. Destruction is deferred, so handles stay valid during the tick.
@@ -52,7 +52,7 @@ namespace Fling
     class SystemContextBase
     {
     public:
-        SystemContextBase(entt::registry& registry, CommandBuffer* commands)
+        SystemContextBase(entt::registry& registry, DeferredCommands* commands)
             : m_Registry(registry), m_Commands(commands)
         {
         }
@@ -61,11 +61,11 @@ namespace Fling
         entt::registry& Storage() const { return m_Registry; }
 
         /** Null in a frame phase. */
-        CommandBuffer* Commands() const { return m_Commands; }
+        DeferredCommands* Commands() const { return m_Commands; }
 
     private:
         entt::registry& m_Registry;
-        CommandBuffer* m_Commands = nullptr;
+        DeferredCommands* m_Commands = nullptr;
     };
 
     /** A query filter: only entities that also have each T. The components are not returned. */
@@ -409,7 +409,7 @@ namespace Fling
         }
 
         /** Changes that wait until the end of the tick, such as Destroy. Fixed phases only. */
-        CommandBuffer& Commands()
+        DeferredCommands& Commands()
         {
             static_assert(IsFixed(Derived::Info.Phase),
                           "Only a fixed phase system has Commands. A frame rate system cannot change the "

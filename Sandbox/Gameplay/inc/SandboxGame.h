@@ -17,6 +17,9 @@ namespace Sandbox
 
 		void RegisterComponents() override final;
 
+		/** Adds the Sandbox systems. Defined in RegisterSandboxSystems.cpp. */
+		void RegisterSystems(Fling::SystemRegistry& t_Systems) override final;
+
 		/**
 		 * Called before the first gameplay loop tick.
 		 * 			Do any initalization for custom gameplay systems here.
@@ -48,9 +51,6 @@ namespace Sandbox
 
 	private:
 
-		bool m_DoRotations = false;
-		bool m_MovePointLights = false;
-
 		void AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
 
 		void ToggleRotation();
@@ -59,8 +59,8 @@ namespace Sandbox
 
 		void OnToggleMoveLights();
 
-        /** Puts the per-play member state back to its start values */
-        void ResetPlayState();
+        /** Puts the per-play state (members and SandboxToggles) back to its start values */
+        void ResetPlayState(entt::registry& t_Reg);
 
         /** The X position of the last sphere from OnTestSpawn */
         float m_TestSpawnX = -1.0f;

@@ -1,7 +1,7 @@
 # ECS systems and components: the first slice
 
-Status: work items 1 to 5 (with 3b, open phases, §3.8) are done (branch
-`feature/ecs-types`). Item 6 is next. §6 lists what changed from this plan while they were written.
+Status: work items 1 to 6 (with 3b, open phases, §3.8) are done (branch
+`feature/ecs-types`), except `InputSystem` (see item 6). §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -1270,6 +1270,34 @@ Each item is one PR off `main`, green on all CI platforms.
    Headless check: `Sandbox --null-render --unattended --frames 120 --seed 1`
    gives the same final transforms before and after (write them to a log and
    compare).
+   Done:
+   - `Sandbox.Rotator` and `Sandbox.Mover` (`Sandbox/Gameplay/inc/Systems/`,
+     `src/Systems/`, and `src/RegisterSandboxSystems.cpp`) replace the two
+     loops in `Game::Update`. They use `SimTime::FixedDelta`. Mover has
+     `.After = "Sandbox.Rotator"`, the order the loops had.
+   - `Transform`, `Mover`, and `Rotator` declare a `ComponentInfo` with
+     their old saved names, so level JSON does not change. `Mover` and
+     `Rotator` use `Register<T>()`.
+   - The game's `m_DoRotations` and `m_MovePointLights` members are the
+     `SandboxToggles` singleton now. `Game::Update` still reads the keys and
+     flips it.
+   - Check: `Game::Shutdown` logs a checksum of every transform. With the
+     replay `Sandbox/Tests/Input/toggle_rotate_and_lights.input.jsonl`, the
+     new code gives the same checksum, digit for digit, as the old code with
+     each key press one tick later. The tick of delay is expected: the
+     fixed systems run before `Game::Update`, so a toggle that
+     `Game::Update` sets is seen on the next tick. The CTest "Sandbox:
+     systems move the lighting test" runs that replay.
+   - The ECS command buffer is `DeferredCommands`, not `CommandBuffer`.
+     Graphics already has a `Fling::CommandBuffer`, and two classes with one
+     name in one namespace are an ODR violation: the linker used the Vulkan
+     destructor for the ECS vector, and the game crashed at exit. Check new
+     ECS type names against the other modules.
+   Not done yet:
+   - `InputSystem` and `InputState`. The input for a fixed tick needs the
+     per-tick input of [`improve-input.md`](improve-input.md): today
+     `Input::BeginTick` runs once per frame, so a frame with two ticks would
+     see a key press twice. Until then, `Game::Update` handles the keys.
 
 After item 6, `ecs-plan.md` continues at Phase B (the `World` facade
 removes `g_Registry`) and Phase C (`TypeBuilder` reflection).

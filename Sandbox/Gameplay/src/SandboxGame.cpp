@@ -14,6 +14,7 @@
 #include "ComponentTypeRegistry.h"
 #include "Lighting/DeferredLightSettings.h"
 #include "Mover.h"
+#include "SandboxToggles.h"
 
 // Test command line args
 #include "FlingWindow.h"
@@ -117,12 +118,15 @@ namespace Sandbox
 		}
 
 		F_LOG_TRACE("Done cmd line testing");
+
+		// The Rotator and Mover systems read the toggles. Game::Update flips them from input.
+		t_Reg.set<SandboxToggles>();
     }
 
 	void Game::RegisterComponents()
 	{
-		Fling::ComponentTypeRegistry::Get().Register<Mover>("Mover");
-		Fling::ComponentTypeRegistry::Get().Register<Rotator>("Rotator");
+		Fling::ComponentTypeRegistry::Get().Register<Mover>();
+		Fling::ComponentTypeRegistry::Get().Register<Rotator>();
 		Fling::ComponentTypeRegistry::Get().Register<BallControl>("BallControl");
 	}
 
@@ -131,7 +135,7 @@ namespace Sandbox
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
         // Play can start many times in one editor run, so each play starts from the same state
-        ResetPlayState();
+        ResetPlayState(t_Reg);
         t_Reg.set<SandboxPhysicsState>();
 
         // A level with physics bodies (for example Levels/PhysicsTest.json) is a
@@ -195,37 +199,8 @@ namespace Sandbox
             OnTestSpawn();
         }
 
-        if (m_DoRotations)
-        {
-            glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
-
-            // For each active mesh renderer
-            t_Reg.view<Transform, Rotator>().each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
-            {
-                const glm::vec3& curRot = t_Trans.GetRotation();
-                t_Trans.SetRotation(curRot + RotOffset);
-            });
-        }
-
-        if (m_MovePointLights)
-        {
-            t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
-            {
-                glm::vec3 curPos = t_Trans.GetPos();
-
-                glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
-
-                // Move in a direction between two points and the speed
-                if(glm::length(DistanceToTarget) <= 0.5f)
-                {
-                    t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
-                }
-
-                // Lerp towards the target position
-                glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos,  t_Mover.Speed * DeltaTime);
-                t_Trans.SetPos(newPos);
-            });
-        }
+        // The Rotator and Mover loops are systems now (Sandbox/Gameplay/inc/Systems). They
+        // run in the fixed simulation tick, before this update.
     }
 
 	void Game::OnStopGame(entt::registry& t_Reg)
@@ -234,7 +209,7 @@ namespace Sandbox
 
         // The world removes the entities that play made. Only state outside the
         // registry is cleaned up here.
-        ResetPlayState();
+        ResetPlayState(t_Reg);
 
         // Play can hide the cursor (M). Show it again for the editor.
         FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
@@ -244,16 +219,27 @@ namespace Sandbox
         }
     }
 
-    void Game::ResetPlayState()
+    void Game::ResetPlayState(entt::registry& t_Reg)
     {
-        m_DoRotations = false;
-        m_MovePointLights = false;
+        t_Reg.set<SandboxToggles>();
         m_TestSpawnX = -1.0f;
     }
 
     void Game::Shutdown(entt::registry& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox Shutdown!");
+
+		// A checksum of every transform, to check that a change to gameplay code gives the same motion
+		double Checksum = 0.0;
+		std::size_t Count = 0;
+		t_Reg.view<Transform>().each([&](auto, Transform& t_Trans)
+		{
+			const glm::vec3 Pos = t_Trans.GetPos();
+			const glm::vec3 Rot = t_Trans.GetRotation();
+			Checksum += Pos.x + 3.0 * Pos.y + 7.0 * Pos.z + 11.0 * Rot.x + 13.0 * Rot.y + 17.0 * Rot.z;
+			++Count;
+		});
+		F_LOG_TRACE("Sandbox: {} transforms, checksum {:.9f}", Count, Checksum);
 	}
 
 	void Game::OnQuitPressed()
@@ -385,12 +371,14 @@ namespace Sandbox
 
     void Game::OnToggleMoveLights()
     {
-        m_MovePointLights = !m_MovePointLights;
+        SandboxToggles& Toggles = m_OwningWorld->GetRegistry().ctx<SandboxToggles>();
+        Toggles.MoveLights = !Toggles.MoveLights;
     }
 
     void Game::ToggleRotation()
     {
-        m_DoRotations = !m_DoRotations;
+        SandboxToggles& Toggles = m_OwningWorld->GetRegistry().ctx<SandboxToggles>();
+        Toggles.Rotate = !Toggles.Rotate;
     }
 
 	void Game::OnTestSpawn()

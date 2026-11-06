@@ -197,7 +197,7 @@ namespace Fling
     {
         for (const uint32 i : m_RunOrder)
         {
-            CommandBuffer& commands = m_Commands[i];
+            DeferredCommands& commands = m_Commands[i];
             for (const Entity entity : commands.Destroys())
             {
                 const entt::entity e = Detail::ToEntt(entity);

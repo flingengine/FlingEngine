@@ -10,7 +10,7 @@
 
 namespace Fling
 {
-    class CommandBuffer;
+    class DeferredCommands;
     class SystemRegistry;
 
     struct SystemRunnerConfig
@@ -84,7 +84,7 @@ namespace Fling
         SystemRunnerConfig m_Config;
 
         /** One buffer per system, by index in the schedule. */
-        std::vector<CommandBuffer> m_Commands;
+        std::vector<DeferredCommands> m_Commands;
 
         std::chrono::nanoseconds m_Accumulator{0};
         std::chrono::nanoseconds m_RealElapsed{0};

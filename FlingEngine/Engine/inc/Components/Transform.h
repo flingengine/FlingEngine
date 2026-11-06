@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "JsonArchive.h"
 
@@ -9,6 +10,8 @@ namespace Fling
 {
 	struct Transform
 	{
+		static constexpr ComponentInfo Component{.Name = "Transform"};
+
 		glm::mat4 GetWorldMatrix() const;
 
 		/** Recalculate the cached world matrix and clear the dirty flag. */
