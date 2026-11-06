@@ -663,3 +663,199 @@ TEST_CASE("Event can be destroyed as soon as its wait returns", "[Threading]")
     }
     SUCCEED();
 }
+
+// Detail::CondVarSharedMutex is the SharedMutex of MinGW builds. These tests run
+// it directly, so every platform checks it, not only MinGW.
+
+TEST_CASE("CondVarSharedMutex lets one writer in at a time", "[Threading]")
+{
+    constexpr int ThreadCount = 8;
+    constexpr int Iters = 50000;
+    Detail::CondVarSharedMutex Mu;
+    int Counter = 0;
+
+    std::latch Start(ThreadCount);
+    std::vector<std::thread> Workers;
+    for (int Index = 0; Index < ThreadCount; ++Index)
+    {
+        Workers.emplace_back(
+            [&]()
+            {
+                Start.arrive_and_wait();
+                for (int Step = 0; Step < Iters; ++Step)
+                {
+                    Mu.lock();
+                    ++Counter;
+                    Mu.unlock();
+                }
+            });
+    }
+    for (std::thread& Worker : Workers)
+    {
+        Worker.join();
+    }
+
+    REQUIRE(Counter == ThreadCount * Iters);
+}
+
+TEST_CASE("CondVarSharedMutex readers never see half of a write", "[Threading]")
+{
+    constexpr int WriterCount = 2;
+    constexpr int ReaderCount = 4;
+    constexpr int Iters = 20000;
+    Detail::CondVarSharedMutex Mu;
+    int First = 0;
+    int Second = 0;
+    std::atomic<int> TornReads{0};
+    std::atomic<int> Reads{0};
+
+    std::latch Start(WriterCount + ReaderCount);
+    std::vector<std::thread> Workers;
+    for (int Index = 0; Index < WriterCount; ++Index)
+    {
+        Workers.emplace_back(
+            [&]()
+            {
+                Start.arrive_and_wait();
+                for (int Step = 0; Step < Iters; ++Step)
+                {
+                    Mu.lock();
+                    ++First;
+                    ++Second;
+                    Mu.unlock();
+                }
+            });
+    }
+    for (int Index = 0; Index < ReaderCount; ++Index)
+    {
+        Workers.emplace_back(
+            [&]()
+            {
+                Start.arrive_and_wait();
+                for (int Step = 0; Step < Iters; ++Step)
+                {
+                    Mu.lock_shared();
+                    if (First != Second)
+                    {
+                        TornReads.fetch_add(1);
+                    }
+                    Mu.unlock_shared();
+                    Reads.fetch_add(1);
+                }
+            });
+    }
+    for (std::thread& Worker : Workers)
+    {
+        Worker.join();
+    }
+
+    REQUIRE(TornReads.load() == 0);
+    REQUIRE(Reads.load() == ReaderCount * Iters);
+    REQUIRE(First == WriterCount * Iters);
+    REQUIRE(Second == WriterCount * Iters);
+}
+
+TEST_CASE("CondVarSharedMutex lets readers in together and keeps writers out", "[Threading]")
+{
+    Detail::CondVarSharedMutex Mu;
+    std::latch BothInside(2);
+    std::latch ReleaseReaders(1);
+
+    auto Reader = [&]()
+    {
+        Mu.lock_shared();
+        BothInside.count_down();
+        ReleaseReaders.wait();
+        Mu.unlock_shared();
+    };
+
+    std::thread First(Reader);
+    std::thread Second(Reader);
+    BothInside.wait();
+
+    // Two readers are inside at the same time. A writer cannot get in.
+    const bool WriteTaken = Mu.try_lock();
+    const bool ReadTaken = Mu.try_lock_shared();
+    if (ReadTaken)
+    {
+        Mu.unlock_shared();
+    }
+
+    ReleaseReaders.count_down();
+    First.join();
+    Second.join();
+
+    REQUIRE_FALSE(WriteTaken);
+    REQUIRE(ReadTaken);
+
+    // With no reader inside, the writer gets in, and then readers are kept out
+    REQUIRE(Mu.try_lock());
+    REQUIRE_FALSE(Mu.try_lock_shared());
+    REQUIRE_FALSE(Mu.try_lock());
+    Mu.unlock();
+}
+
+TEST_CASE("CondVarSharedMutex lets a waiting writer go before new readers", "[Threading]")
+{
+    Detail::CondVarSharedMutex Mu;
+    Mu.lock_shared();
+
+    std::atomic<bool> WriterDone{false};
+    std::thread Writer(
+        [&]()
+        {
+            Mu.lock();
+            WriterDone.store(true);
+            Mu.unlock();
+        });
+
+    // Wait until the writer waits for the reader. Then a new reader must not get in.
+    bool NewReaderKeptOut = false;
+    const auto Deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    while (!NewReaderKeptOut && std::chrono::steady_clock::now() < Deadline)
+    {
+        if (Mu.try_lock_shared())
+        {
+            Mu.unlock_shared();
+            std::this_thread::yield();
+        }
+        else
+        {
+            NewReaderKeptOut = true;
+        }
+    }
+
+    Mu.unlock_shared();
+    Writer.join();
+
+    REQUIRE(NewReaderKeptOut);
+    REQUIRE(WriterDone.load());
+}
+
+TEST_CASE("Semaphore Release of many permits wakes that many waiters", "[Threading]")
+{
+    constexpr int WaiterCount = 6;
+    Semaphore Sem(0);
+    std::atomic<int> Passed{0};
+
+    std::vector<std::thread> Waiters;
+    for (int Index = 0; Index < WaiterCount; ++Index)
+    {
+        Waiters.emplace_back(
+            [&]()
+            {
+                Sem.Acquire();
+                Passed.fetch_add(1);
+            });
+    }
+
+    // Some waiters can arrive after the release. They still find a permit.
+    Sem.Release(WaiterCount);
+    for (std::thread& Waiter : Waiters)
+    {
+        Waiter.join();
+    }
+
+    REQUIRE(Passed.load() == WaiterCount);
+    REQUIRE_FALSE(Sem.TryAcquire());
+}

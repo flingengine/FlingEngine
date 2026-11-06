@@ -143,6 +143,13 @@ limit. It does not overflow to a time in the past.
 `Event::Signal` notifies while it holds the mutex. So a thread can destroy an
 `Event` as soon as its wait returns.
 
+`Semaphore` is built on `Mutex` and `ConditionVariable`, not on
+`std::counting_semaphore`: the GCC 13 libstdc++ one can miss a wake and hang.
+On MinGW, `SharedMutex` uses `Detail::CondVarSharedMutex`, because the
+winpthreads rwlock behind `std::shared_mutex` let two writers in at once on CI.
+Other platforms use `std::shared_mutex`. Tests run `CondVarSharedMutex` on every
+platform.
+
 Use `SpinLock` only for a critical section of a few instructions. Do not hold
 it across an allocation, IO, or a wait. `CpuRelax` (`Threading/CpuRelax.h`) is
 the pause hint for a spin. Do not replace it with a yield.
