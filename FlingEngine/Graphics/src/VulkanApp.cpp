@@ -179,6 +179,16 @@ namespace Fling
         // This is a sanity check for when we are recreating the swap chain
         assert(m_DrawCmdBuffers.size() == 0);
 
+        // One render-finished semaphore for each swap chain image. A present can still wait on
+        // the semaphore of its image after the frame's fence signals, so a semaphore is only
+        // safe to signal again when its image is acquired again. Only add semaphores here, never
+        // destroy them: there is no safe point to destroy one that a present may still wait on.
+        while (m_State->m_RenderFinishedSemaphores.size() < m_SwapChain->GetImageCount())
+        {
+            m_State->m_RenderFinishedSemaphores.push_back(
+                GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice()));
+        }
+
         // Build command buffers (one for each swap chain image)
         for (size_t i = 0; i < m_SwapChain->GetImageViewCount(); ++i)
         {
@@ -298,7 +308,6 @@ namespace Fling
         assert(m_LogicalDevice);
 
         m_State->m_PresentCompleteSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
-        m_State->m_RenderFinishedSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
         m_State->m_InFlightFences.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
 
         VkFenceCreateInfo fenceInfo = {};
@@ -308,7 +317,6 @@ namespace Fling
         for (int32 i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
         {
             m_State->m_PresentCompleteSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
-            m_State->m_RenderFinishedSemaphores[i] = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
             if (vkCreateFence(m_LogicalDevice->GetVkDevice(), &fenceInfo, nullptr, &m_State->m_InFlightFences[i]) !=
                 VK_SUCCESS)
             {
@@ -360,7 +368,11 @@ namespace Fling
     void VulkanApp::RecreateFrameResourcesForResize(entt::registry& t_Reg)
     {
         F_LOG_TRACE("Resizing the window!");
-        m_CurrentWindow->WaitForNewWindowSize();
+        if (!m_CurrentWindow->WaitForNewWindowSize())
+        {
+            // The window was closed while minimized. ShouldTick sees the close next.
+            return;
+        }
         m_LogicalDevice->WaitForIdle();
 
         CleanupSwapChainResources();
@@ -650,7 +662,7 @@ namespace Fling
 
         // Actually present the swap chain queue. This is always going to be the signal for the final semaphore
         FinalScreenSubmitInfo.signalSemaphoreCount = 1;
-        FinalScreenSubmitInfo.pSignalSemaphores = &m_State->m_RenderFinishedSemaphores[CurrentFrameIndex];
+        FinalScreenSubmitInfo.pSignalSemaphores = &m_State->m_RenderFinishedSemaphores[ImageIndex];
 
         VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(),
                                       1,
@@ -666,7 +678,7 @@ namespace Fling
 
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
-                                            m_State->m_RenderFinishedSemaphores[CurrentFrameIndex]);
+                                            m_State->m_RenderFinishedSemaphores[ImageIndex]);
 
         // Check if the swap chain is out of date and needs to be rebuilt
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || bNeedsResizing)
@@ -724,10 +736,15 @@ namespace Fling
 
         // #TODO Cleanup VMA allocator -------------
 
-        // Clean up Frame sync resources (created in CreateFrameSyncResources) --------------
+        // Clean up Frame sync resources (created in CreateFrameSyncResources and BuildSwapChainResources) ---
+        for (VkSemaphore Semaphore : m_State->m_RenderFinishedSemaphores)
+        {
+            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), Semaphore, nullptr);
+        }
+        m_State->m_RenderFinishedSemaphores.clear();
+
         for (size_t i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
         {
-            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_State->m_RenderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_State->m_PresentCompleteSemaphores[i], nullptr);
             vkDestroyFence(m_LogicalDevice->GetVkDevice(), m_State->m_InFlightFences[i], nullptr);
         }

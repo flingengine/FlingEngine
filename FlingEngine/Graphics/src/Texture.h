@@ -37,13 +37,6 @@ namespace Fling
          */
         uint64 GetImageSize() const { return m_Width * m_Height * 4; } 
 
-        /**
-         * Get the Pixel Data object
-         * 
-         * @return stbi_uc* 
-         */
-        stbi_uc* GetPixelData() const { return m_PixelData; }
-
 		/**
 		* Release the Vulkan resources of this image
 		*/
@@ -91,7 +84,7 @@ namespace Fling
 
 		VkDescriptorImageInfo m_ImageInfo{};
         
-        /** Pixel data of image **/
+        /** Decoded pixels. Only valid while LoadVulkanImage uploads them, then freed. **/
         stbi_uc* m_PixelData = nullptr;
 
         VkFormat m_Format = VK_FORMAT_R8G8B8A8_UNORM;

@@ -1,11 +1,18 @@
 #include "BuildConfig.h"
 #include "DesktopWindow.h"
 #include "FlingConfig.h"
+#include "FlingPaths.h"
 #include "Logger.h"
-#include "Texture.h"
 #include "VulkanApp.h"
+#include "stb_image.h"
 
 #include <algorithm>
+
+#if FLING_WINDOWS
+// For glfwGetWin32Window. Platform.h has already included Windows.h.
+#	define GLFW_EXPOSE_NATIVE_WIN32
+#	include <GLFW/glfw3native.h>
+#endif
 
 namespace Fling
 {
@@ -94,16 +101,24 @@ namespace Fling
 		}
 	}
 
-	void DesktopWindow::WaitForNewWindowSize()
+	bool DesktopWindow::WaitForNewWindowSize()
 	{
 		// If the window is minimized then wait for it to come to the foreground before displaying it again
 		// #TODO: Handle minimizing windows asynchronously or in a way that the renderer doesn't block
 		int width = 0, height = 0;
+		glfwGetFramebufferSize(m_Window, &width, &height);
 		while (width == 0 || height == 0)
 		{
-			glfwGetFramebufferSize(m_Window, &width, &height);
+			// A minimized window can be closed (for example from the taskbar). Its size then
+			// never comes back, so stop waiting and let the engine loop see the close.
+			if (glfwWindowShouldClose(m_Window))
+			{
+				return false;
+			}
 			glfwWaitEvents();
+			glfwGetFramebufferSize(m_Window, &width, &height);
 		}
+		return true;
 	}
 
 	DesktopWindow::~DesktopWindow()
@@ -125,6 +140,17 @@ namespace Fling
 	bool DesktopWindow::IsMinimized() const
 	{
 		return false;
+	}
+
+	bool DesktopWindow::IsFocused() const
+	{
+#if FLING_WINDOWS
+		// Do not use GLFW_FOCUSED on Windows. GLFW reads it from GetActiveWindow, which is per
+		// thread and is true for a window that opened behind another program.
+		return GetForegroundWindow() == glfwGetWin32Window(m_Window);
+#else
+		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) != 0;
+#endif
 	}
 
 	uint32 DesktopWindow::GetFramebufferWidth() const
@@ -187,18 +213,27 @@ namespace Fling
 
 	void DesktopWindow::SetWindowIcon(Guid t_ID)
 	{
-		// Load an image 
-		std::shared_ptr<Texture> Icon = Texture::Create(t_ID);
-		assert(Icon);
+		// Decode the file here. The icon does not need a GPU texture, and a Texture
+		// does not keep its pixels after the upload.
+		const std::string Filepath = FlingPaths::EngineAssetsDir() + "/" + t_ID.data();
+		int Width = 0;
+		int Height = 0;
+		int Channels = 0;
+		stbi_uc* Pixels = stbi_load(Filepath.c_str(), &Width, &Height, &Channels, STBI_rgb_alpha);
+		if (!Pixels)
+		{
+			F_LOG_ERROR("Failed to load window icon: {}", Filepath);
+			return;
+		}
 
-		// Set the Pixel data for this image
 		GLFWimage GLFW_Image;
-		GLFW_Image.height = Icon->GetHeight();
-		GLFW_Image.width = Icon->GetWidth();
-		GLFW_Image.pixels = Icon->GetPixelData();
+		GLFW_Image.height = Height;
+		GLFW_Image.width = Width;
+		GLFW_Image.pixels = Pixels;
 
-		// Set it via GLFW
+		// GLFW copies the pixels, so free them after this call
 		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
+		stbi_image_free(Pixels);
 	}
 
 	void DesktopWindow::SetWindowMode(WindowMode t_WindowMode)

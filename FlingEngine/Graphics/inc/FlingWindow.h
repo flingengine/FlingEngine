@@ -43,8 +43,11 @@ namespace Fling
 		/** Create the rendering surface for this window */
 		virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) = 0;
 
-		/** Any work that this window needs to do for swap chain recreation */
-		virtual void WaitForNewWindowSize() = 0;
+		/**
+		* Block until the framebuffer has a non-zero size, for example while the window is minimized.
+		* @return	False if the window is asked to close while it waits. Do not recreate the swap chain then.
+		*/
+		virtual bool WaitForNewWindowSize() = 0;
 
 		/** The current width of this window's framebuffer, in pixels */
 		virtual uint32 GetFramebufferWidth() const = 0;
@@ -84,6 +87,9 @@ namespace Fling
 		* @return	True if the window is currently minimized
 		*/
 		virtual bool IsMinimized() const = 0;
+
+		/** True if this window is in front and gets keyboard input */
+		virtual bool IsFocused() const = 0;
 
 		/** Changes window mode between fullscreen, window, and borderless window **/
 		virtual void SetWindowMode(WindowMode t_WindowMode) = 0;

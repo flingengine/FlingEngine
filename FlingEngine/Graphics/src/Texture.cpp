@@ -96,6 +96,10 @@ namespace Fling
 
         // Transition to image layout happens while generating mip maps
         GenerateMipMaps(VK_FORMAT_R8G8B8A8_UNORM);
+
+        // The GPU has its own copy now, so do not keep the decoded pixels in RAM
+        stbi_image_free(m_PixelData);
+        m_PixelData = nullptr;
     }
 
     void Texture::GenerateMipMaps(VkFormat imageFormat)
@@ -275,10 +279,6 @@ namespace Fling
 
     void Texture::Release()
     {
-        // We don't need this stbi pixel data any more
-        stbi_image_free(m_PixelData);
-        m_PixelData = nullptr;
-
 		LogicalDevice* LogDevice = VulkanApp::Get().GetLogicalDevice();
 		if (LogDevice == nullptr)
 		{
