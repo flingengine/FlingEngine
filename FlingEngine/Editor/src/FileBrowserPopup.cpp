@@ -33,14 +33,14 @@ namespace Fling
         }
     } // namespace
 
-    void FileBrowserPopup::Open(const std::string& t_StartPath, const std::string& t_Extension)
+    void FileBrowserPopup::Open(const StringView t_StartPath, const StringView t_Extension)
     {
         m_Extension = t_Extension;
         m_Selected.clear();
         m_Error.clear();
 
         std::error_code Ec;
-        fs::path Path = fs::absolute(fs::path(t_StartPath), Ec);
+        fs::path Path = fs::absolute(PathFromUtf8(t_StartPath), Ec);
         if (Ec || t_StartPath.empty())
         {
             Path = fs::current_path(Ec);

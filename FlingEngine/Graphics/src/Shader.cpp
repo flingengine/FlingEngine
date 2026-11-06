@@ -57,9 +57,9 @@ namespace Fling
         return vkCreateShaderModule(m_Device->GetVkDevice(), &CreateInfo, nullptr, &m_Module);
     }
 
-    std::vector<char> Shader::LoadRawBytes(const std::string& FilePath)
+    std::vector<char> Shader::LoadRawBytes(const StringView FilePath)
     {
-        std::ifstream File(FilePath, std::ios::ate | std::ios::binary);
+        std::ifstream File(PathFromUtf8(FilePath), std::ios::ate | std::ios::binary);
         std::vector<char> RawShaderCode;
         
         if (!File.is_open())

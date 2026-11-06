@@ -85,13 +85,13 @@ namespace Fling
         return m_Material->GetAssetPath().GetText();
     }
 
-    MeshRenderer::MeshRenderer(const std::string& t_MeshPath)
+    MeshRenderer::MeshRenderer(const StringView t_MeshPath)
     {
         LoadModelFromPath(t_MeshPath);
         LoadMaterialFromPath("Materials/Default.mat");
     }
 
-    MeshRenderer::MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath)
+    MeshRenderer::MeshRenderer(const StringView t_MeshPath, const StringView t_MaterialPath)
     {
         LoadModelFromPath(t_MeshPath);
         LoadMaterialFromPath(t_MaterialPath);
@@ -123,14 +123,14 @@ namespace Fling
         return !(*this == other);
     }
 
-    void MeshRenderer::LoadModelFromPath(const std::string& t_MeshPath)
+    void MeshRenderer::LoadModelFromPath(const StringView t_MeshPath)
     {
         // Load the model
         m_Model = Model::Create(AssetPath(t_MeshPath)).get();
         assert(m_Model);
     }
 
-    void MeshRenderer::LoadMaterialFromPath(const std::string& t_MatPath)
+    void MeshRenderer::LoadMaterialFromPath(const StringView t_MatPath)
     {
         m_Material = Material::Create(AssetPath(t_MatPath)).get();
         assert(m_Material);

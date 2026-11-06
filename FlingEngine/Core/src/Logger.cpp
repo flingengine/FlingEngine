@@ -63,9 +63,9 @@ namespace Fling
 	void Logger::Init()
 	{
 		// Create the logs directory if needed
-		if(!FlingPaths::DirExists( FlingPaths::EngineLogDir().c_str() ))
+		if(!FlingPaths::DirExists( FlingPaths::EngineLogDir() ))
 		{
-			FlingPaths::MakeDir( FlingPaths::EngineLogDir().c_str() );
+			FlingPaths::MakeDir( FlingPaths::EngineLogDir() );
 		}
 
 #ifdef _WIN32

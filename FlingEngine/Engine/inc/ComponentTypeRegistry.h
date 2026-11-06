@@ -61,7 +61,7 @@ namespace Fling
 		 * @return false if the registry is sealed or the name is already registered
 		 */
 		template<typename T>
-		bool Register(const char* name);
+		bool Register(StringView name);
 
 		/** Store an external registrar to run from World::Init. Asserts/logs if sealed. */
 		void AddRegistrar(IComponentRegistrar* registrar);
@@ -71,7 +71,7 @@ namespace Fling
 		 * editor tooling can render it without the registry knowing about ImGui
 		 * itself. No-op (with a warning) if the name hasn't been registered.
 		 */
-		void SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity));
+		void SetEditorWidget(StringView name, void(*fn)(entt::registry&, entt::entity));
 
 		/** Invoke every registrar added via AddRegistrar. */
 		void RunExternalRegistrars();
@@ -96,8 +96,8 @@ namespace Fling
 		ComponentTypeRegistry(const ComponentTypeRegistry&) = delete;
 		ComponentTypeRegistry& operator=(const ComponentTypeRegistry&) = delete;
 
-		bool CanRegister(const char* name);
-		void AddType(const char* name, ComponentTypeInfo info);
+		bool CanRegister(StringView name);
+		void AddType(StringView name, ComponentTypeInfo info);
 
 		std::vector<ComponentTypeInfo> m_Types;
 
@@ -115,7 +115,7 @@ namespace Fling
 	void RegisterEngineComponents();
 
 	template<typename T>
-	bool ComponentTypeRegistry::Register(const char* name)
+	bool ComponentTypeRegistry::Register(const StringView name)
 	{
 		static_assert(HasSerialize<T>::value, "Component type must implement void Serialize(JsonArchive&)");
 

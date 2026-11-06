@@ -11,9 +11,9 @@ namespace Fling
 		return instance;
 	}
 
-	bool ComponentTypeRegistry::CanRegister(const char* name)
+	bool ComponentTypeRegistry::CanRegister(const StringView name)
 	{
-		if (!name || name[0] == '\0')
+		if (name.empty())
 		{
 			F_LOG_ERROR("ComponentTypeRegistry::Register called with an empty type name");
 			return false;
@@ -34,7 +34,7 @@ namespace Fling
 		return true;
 	}
 
-	void ComponentTypeRegistry::AddType(const char* name, ComponentTypeInfo info)
+	void ComponentTypeRegistry::AddType(const StringView name, ComponentTypeInfo info)
 	{
 		m_NameStorage.emplace_back(name);
 		info.name = m_NameStorage.back().c_str();
@@ -57,7 +57,7 @@ namespace Fling
 		}
 	}
 
-	void ComponentTypeRegistry::SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity))
+	void ComponentTypeRegistry::SetEditorWidget(const StringView name, void(*fn)(entt::registry&, entt::entity))
 	{
 		const auto it = m_NameToIndex.find(Name::WithoutText(name));
 		if (it == m_NameToIndex.end())

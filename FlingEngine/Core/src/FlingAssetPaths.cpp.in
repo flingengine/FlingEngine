@@ -12,9 +12,9 @@ namespace Fling
         return BinDir;
     }
     
-    std::string FlingPaths::ConvertAbsolutePathToRelative(const std::string& t_FullPath)
+    std::string FlingPaths::ConvertAbsolutePathToRelative(const StringView t_FullPath)
     {
-        return t_FullPath.substr( FlingPaths::EngineAssetsDir().length() + 1 );
+        return std::string(t_FullPath.substr( FlingPaths::EngineAssetsDir().length() + 1 ));
     }
 
     const std::string& FlingPaths::EngineAssetsDir()

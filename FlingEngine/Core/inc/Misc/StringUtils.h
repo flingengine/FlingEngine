@@ -2,10 +2,12 @@
 
 #include "FlingTypes.h"
 
+#include <charconv>
 #include <cstdlib>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <type_traits>
 
 namespace Fling
@@ -48,26 +50,24 @@ namespace Fling
                 }
                 return Default;
             }
-            else if constexpr (std::is_integral_v<T>)
+            else if constexpr (std::is_integral_v<T> || std::is_floating_point_v<T>)
             {
-                const std::string Temp(Str);
-                char* End = nullptr;
-                const long long Result = std::strtoll(Temp.c_str(), &End, 10);
-                return (End != Temp.c_str()) ? static_cast<T>(Result) : Default;
-            }
-            else if constexpr (std::is_same_v<T, float>)
-            {
-                const std::string Temp(Str);
-                char* End = nullptr;
-                const float Result = std::strtof(Temp.c_str(), &End);
-                return (End != Temp.c_str()) ? Result : Default;
-            }
-            else if constexpr (std::is_same_v<T, double>)
-            {
-                const std::string Temp(Str);
-                char* End = nullptr;
-                const double Result = std::strtod(Temp.c_str(), &End);
-                return (End != Temp.c_str()) ? Result : Default;
+                // std::from_chars does not use the locale, so "3.14" reads the same on
+                // every machine. Like strtoll, skip leading spaces and a '+' sign, and
+                // read the number at the start ("776abc" reads 776).
+                std::string_view Text = Str;
+                while (!Text.empty() && (Text.front() == ' ' || Text.front() == '\t'))
+                {
+                    Text.remove_prefix(1);
+                }
+                if (!Text.empty() && Text.front() == '+')
+                {
+                    Text.remove_prefix(1);
+                }
+
+                T Result {};
+                const std::from_chars_result Parsed = std::from_chars(Text.data(), Text.data() + Text.size(), Result);
+                return Parsed.ec == std::errc() ? Result : Default;
             }
             else
             {

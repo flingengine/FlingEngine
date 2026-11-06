@@ -118,7 +118,7 @@ namespace Fling
         /**
          * Load the raw shader code in off-disk
          */
-        static std::vector<char> LoadRawBytes(const std::string& t_FilePath);
+        static std::vector<char> LoadRawBytes(StringView t_FilePath);
 
         /** The shader module created by this shader */
         VkShaderModule m_Module = VK_NULL_HANDLE;
