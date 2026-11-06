@@ -1,7 +1,7 @@
 # ECS systems and components: the first slice
 
-Status: work items 1 to 3 are done (branch `feature/ecs-types`). Items 4 to 6
-are next. §6 lists what changed from this plan while they were written.
+Status: work items 1 to 3 are done (branch `feature/ecs-types`). Item 3b
+(open phases, §3.8) is in progress. Items 4 to 6 are next. §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -811,8 +811,8 @@ itself *is* made at compile time; only the graph sort runs later.
 ### 3.7 How the order is made
 
 `BuildSchedule` gets each system's `SystemDesc`: a name, a phase, a
-`RunIn` mask, and a `constexpr` span of `{TypeHash, AccessMode}`. Inside one
-phase:
+`RunIn` mask, and a `constexpr` span of `{TypeHash, AccessMode}`. Between
+two systems that phase order does not already order (§3.8):
 
 | Declarations | Edge |
 |---|---|
@@ -851,6 +851,131 @@ error: Sandbox.Mover and Sandbox.Rotator both write Transform in Phase Simulatio
 
 That is the point of the check: today the order of those loops in
 `Game::Update` is an accident of where they were typed.
+
+### 3.8 Open phases: one graph per update rate
+
+The first version of §3.7 had a closed `enum class Phase` with six values,
+and made edges only inside one phase. That repeats the problem of a fixed
+set of tick groups: a game that needs "after abilities, before damage
+resolves" must edit the engine. Two modules that both want to run after
+`Simulation` also cannot be ordered against each other unless one knows the
+other. This section replaces the enum.
+
+**Three ideas, kept apart:**
+
+| Idea | Who owns it | Open? |
+|---|---|---|
+| Update rate: `Fixed` (once per sim tick) or `Frame` (once per rendered frame) | Engine | No. Determinism, rollback, and the compile-time rules depend on it |
+| Phases: named groups of systems, placed with `After` and `Before` | Any module | Yes |
+| Order inside an update rate | The schedule builder, from phases, access lists, and `After`/`Before` | Yes |
+
+**A phase is data.** Any module declares one, the same way it declares a
+system:
+
+```cpp
+// Game/inc/GamePhases.h
+inline constexpr Fling::PhaseInfo AbilityResolvePhase {
+    .Name = "Game.AbilityResolve",
+    .UpdateRate = Fling::UpdateRate::Fixed,
+    .After = "Engine.Simulation",
+    .Before = "Engine.ResolveDeferred" };
+
+class CastSystem final : public Fling::System<CastSystem, Fling::Access<...>>
+{
+public:
+    static constexpr Fling::SystemInfo Info { .Name = "Game.Cast", .Phase = AbilityResolvePhase };
+    void FixedUpdate(Context& ctx) const;
+};
+```
+
+`SystemInfo::Phase` is a `PhaseRef`: a pointer to an `inline constexpr`
+`PhaseInfo`. The update rate is still known at compile time, so every rule
+in §3.6 still compiles. The engine's six phases are ordinary `PhaseInfo`
+values in `Fling::Phases` (`Phases::Input`, `Phases::Simulation`, ...),
+with the names `Engine.Input`, `Engine.Simulation`, and so on. They are
+stable anchors that other modules place themselves against. They are not a
+list that only the engine can add to.
+
+**One graph per update rate.** `BuildSchedule` makes one graph for all
+`Fixed` phases and one for all `Frame` phases:
+
+- Each phase is two marker nodes, `Begin` and `End`. A system in phase P
+  gets the edges `P.Begin -> system -> P.End`.
+- "B is after A" (between phases) is the edge `A.End -> B.Begin`.
+- Data edges between systems (§3.7 table) are added **across phases**, but
+  only between two systems whose phases are the same, or not ordered
+  against each other.
+- When the phases are ordered (A is before B, directly or through other
+  phases), phase order wins. A data edge that points the other way is not
+  added: B writes, and A reads the value from the previous tick. That is
+  legal, the same as today's `Extract` writing something `Simulation` reads.
+- The write/write and consume/consume checks apply to the same pairs as the
+  data edges. Two modules that both write `Transform` in the same unordered
+  gap are a build error that names both systems.
+- `SystemInfo::After` and `Before` can name a system in another phase of the
+  same update rate. If that contradicts phase order, it is a cycle, reported
+  with its path.
+- Nothing crosses update rates. A phase `After` a phase of the other update
+  rate, or a system `After` a system of the other update rate, is an error.
+
+Two modules that do not know each other:
+
+```
+Engine.Simulation.End
+      |-> ModA.Abilities  (CooldownSystem writes Cooldown) --+
+      +-> ModB.Combo      (ComboSystem reads Cooldown)    <--+   inferred edge: Cooldown before Combo
+Engine.ResolveDeferred.Begin
+```
+
+Neither module names the other. The data decides. If they share no data,
+they are independent and a parallel executor can run them together.
+
+**Order from outside.** When two modules must be ordered but share no data,
+and neither should depend on the other, the project (or any module that
+knows both) adds the edge:
+
+```cpp
+// The game's register file
+systems.Order("ModA.Abilities", "ModB.Combo");     // phases or systems, by name
+```
+
+**Sync points.** The end of each fixed tick always applies the deferred
+commands. A phase can ask for another barrier with `.FlushAfter = true`.
+Such a phase must be ordered against every other phase in its update rate
+(directly or through other phases), so that every system is clearly before
+or after the flush. `BuildSchedule` reports a phase that is not. The engine's
+own phases have no `FlushAfter`, so a game that adds phases never has to
+place itself against an engine flush.
+
+**Stages and segments.** The flush points cut each update rate into
+segments. Inside a segment, each system's stage is the longest chain of
+systems before it (marker nodes count zero), so systems in unrelated phases
+can share a stage. Ties are broken by name. The result is the same on every
+platform and run.
+
+**Errors added:** a system with no phase; two phases with one name; a phase
+`After`/`Before` name that does not exist; a phase ordered against the other
+update rate; a `FlushAfter` phase that is not ordered against another
+phase; an `Order()` name that does not exist. Cycles (through phases or
+systems) use the existing cycle report, with phase markers shown as
+`Engine.Simulation (end)`.
+
+**What stays fixed, on purpose:**
+
+- The two update rates, and "a frame rate system cannot write a Simulation
+  component".
+- The engine anchor names, once published. Treat them like an API.
+- That phase order, where it exists, wins over data edges, so a new system
+  cannot move whole blocks of the frame.
+
+**The outer loop (after this slice).** `SystemRunner` runs the fixed
+segments for each due tick and then the frame segments. Later, the frame
+loop itself becomes a list of registered schedules with hooks for work that
+is not a system (input polling, network send and receive, the render), and
+the pacing policy (accumulator, catch-up cap, one tick per frame, lockstep)
+becomes a tick source ([`improve-time.md`](improve-time.md)). Then a
+dedicated server registers only the fixed schedule, and a tool registers
+only the editor phase.
 
 ---
 
@@ -1077,6 +1202,13 @@ Each item is one PR off `main`, green on all CI platforms.
    - The accumulator counts `std::chrono::nanoseconds`, not
      `Threading/ThreadTypes.h`'s `TickRate`, so the `TickPeriod` rename can
      happen without touching the runner.
+3b. **Open phases (§3.8).** `PhaseInfo`, `PhaseRef`, and `Fling::Phases`
+   replace `enum class Phase`. `BuildSchedule` makes one graph per update
+   rate, with segments and stages. `SystemRegistry::AddPhase` and `Order`.
+   Tests: two module phases ordered by data, a write conflict across
+   unordered phases, phase order winning over a reverse data edge, `Order()`
+   on phases and systems, phase cycles, unknown anchors, update-rate
+   mismatch, and a `FlushAfter` phase splitting a segment.
 4. **Wire it into `World`.** `World` owns a `SystemRegistry` and a
    `Schedule`. `World::Init` calls `OnCreate`. `World::Update` runs the
    fixed phases, then `Game::Update`, then the frame phases.
