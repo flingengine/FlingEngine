@@ -178,6 +178,7 @@ namespace Fling
 		RunnerConfig.OneTickPerFrame = m_Options.NullRender;
 		m_World->SetSystemRunnerConfig(RunnerConfig);
 		RegisterEngineSystems(m_World->GetSystems());
+		RegisterPhysicsSystems(m_World->GetSystems());
 
 		// Each fixed tick takes the input messages that no earlier tick took, with its own
 		// cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.
@@ -287,12 +288,8 @@ namespace Fling
 			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
 
-			// Physics runs after the game, with the same delta. Forces that the game
-			// requested this tick are applied in this step.
-			if (m_World->IsPlaying())
-			{
-				Physics::Tick(g_Registry, DeltaTime);
-			}
+			// Physics runs inside each fixed tick now: the Physics.Step system, in the
+			// ResolveDeferred phase, after every system that requests a force.
 			++m_TicksRun;
 
 			Input::Get().EndTick();

@@ -70,6 +70,23 @@ namespace Fling
     {
     };
 
+    /**
+     * The system reaches the storage directly with ctx.RawStorage(), to call a
+     * specialist subsystem that works on the storage (physics). The access list must
+     * still name every type the subsystem touches, so the schedule orders it. Use it
+     * only in an engine bridge to a subsystem, never in gameplay.
+     */
+    struct RawStorage
+    {
+    };
+
+    namespace Detail
+    {
+        /** True for the items that name no component: Spawns and RawStorage. */
+        template <typename E>
+        inline constexpr bool IsMarker = std::is_same_v<E, Spawns> || std::is_same_v<E, RawStorage>;
+    } // namespace Detail
+
     /** One row of a system's access table. The schedule builder reads these, not the types. */
     struct AccessEntry
     {
@@ -85,7 +102,7 @@ namespace Fling
     namespace Detail
     {
         template <typename E>
-        inline constexpr bool IsAccessItem = std::is_base_of_v<AccessItemBase, E> || std::is_same_v<E, Spawns>;
+        inline constexpr bool IsAccessItem = std::is_base_of_v<AccessItemBase, E> || IsMarker<E>;
 
         /** The type an item names, so that Read<A> and Write<A> count as the same type. */
         template <typename E, typename = void>
@@ -104,7 +121,7 @@ namespace Fling
         template <typename E>
         consteval bool IsValidItem()
         {
-            if constexpr (std::is_same_v<E, Spawns>)
+            if constexpr (IsMarker<E>)
             {
                 return true;
             }
@@ -129,14 +146,15 @@ namespace Fling
         template <typename E>
         consteval bool CheckItem()
         {
-            if constexpr (std::is_same_v<E, Spawns>)
+            if constexpr (IsMarker<E>)
             {
                 return true;
             }
             else if constexpr (!std::is_base_of_v<AccessItemBase, E>)
             {
-                static_assert(AlwaysFalse<E>,
-                              "Access<...> takes only Read<T>, Write<T>, Append<Q>, Consume<Q>, and Spawns.");
+                static_assert(
+                    AlwaysFalse<E>,
+                    "Access<...> takes only Read<T>, Write<T>, Append<Q>, Consume<Q>, Spawns, and RawStorage.");
                 return false;
             }
             else if constexpr (!Component<typename E::Type>)
@@ -173,7 +191,7 @@ namespace Fling
         template <typename E>
         consteval AccessEntry MakeEntry()
         {
-            if constexpr (std::is_same_v<E, Spawns>)
+            if constexpr (IsMarker<E>)
             {
                 return AccessEntry{};
             }
@@ -192,9 +210,8 @@ namespace Fling
         template <typename... Es>
         consteval auto MakeTable()
         {
-            constexpr std::size_t count =
-                (std::size_t{0} + ... + (std::is_same_v<Es, Spawns> ? std::size_t{0} : std::size_t{1}));
-            constexpr std::array<bool, sizeof...(Es)> isRow{!std::is_same_v<Es, Spawns>...};
+            constexpr std::size_t count = (std::size_t{0} + ... + (IsMarker<Es> ? std::size_t{0} : std::size_t{1}));
+            constexpr std::array<bool, sizeof...(Es)> isRow{!IsMarker<Es>...};
             constexpr std::array<AccessEntry, sizeof...(Es)> all{MakeEntry<Es>()...};
 
             std::array<AccessEntry, count> table{};
@@ -233,6 +250,9 @@ namespace Fling
 
         /** True if the list has Spawns. */
         static constexpr bool HasSpawns = (std::is_same_v<Es, Spawns> || ...);
+
+        /** True if the list has RawStorage. */
+        static constexpr bool HasRawStorage = (std::is_same_v<Es, RawStorage> || ...);
 
         /** One row per component type, in declaration order. Spawns has no row. */
         static constexpr auto Table = Detail::MakeTable<Es...>();

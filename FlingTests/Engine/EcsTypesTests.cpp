@@ -192,6 +192,10 @@ TEST_CASE("Valid access lists", "[ecs][access]")
     STATIC_REQUIRE(IsValidAccess<Append<SpawnQueue>>);
     STATIC_REQUIRE(IsValidAccess<Consume<SpawnQueue>>);
     STATIC_REQUIRE(IsValidAccess<Write<Position>, Fling::Spawns>);
+    STATIC_REQUIRE(IsValidAccess<Write<Position>, Fling::RawStorage>);
+    STATIC_REQUIRE(Access<Write<Position>, Fling::RawStorage>::HasRawStorage);
+    STATIC_REQUIRE(Access<Write<Position>, Fling::RawStorage>::Table.size() == 1);
+    STATIC_REQUIRE_FALSE(IsValidAccess<Fling::RawStorage, Fling::RawStorage>);
     STATIC_REQUIRE(IsValidAccess<Read<External>>);
 }
 

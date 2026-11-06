@@ -76,6 +76,9 @@ namespace
 #if defined(FLING_ECS_CASE_SpawnUndeclared)
             ctx.Spawn(Position{});
 #endif
+#if defined(FLING_ECS_CASE_RawStorageUndeclared)
+            (void)ctx.RawStorage();
+#endif
         }
     };
 

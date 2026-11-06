@@ -88,4 +88,12 @@ namespace Fling
 
     /** Registers RigidBody and Collider for level files. Called from Engine::Startup. */
     PHYSICS_API void RegisterPhysicsComponents();
+
+    class SystemRegistry;
+
+    /**
+     * Adds the Physics module's systems (Physics.Step, which runs Physics::Tick in the
+     * ResolveDeferred phase of each fixed tick during play). Called from Engine::Startup.
+     */
+    PHYSICS_API void RegisterPhysicsSystems(SystemRegistry& t_Systems);
 } // namespace Fling

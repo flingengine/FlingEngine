@@ -53,6 +53,7 @@ namespace Fling
             .Info = Derived::Info,
             .Access = A::Table,
             .Spawns = A::HasSpawns,
+            .RawStorage = A::HasRawStorage,
             .PrepareStorage = &PrepareStorage<A>,
         };
     } // namespace Detail
@@ -196,6 +197,7 @@ namespace Fling
                               "A frame rate system cannot write a Simulation component. Mark the component "
                               "Presentation, or move the system to a fixed phase.");
                 static_assert(fixed || !A::HasSpawns, "A frame rate system cannot spawn entities.");
+                static_assert(fixed || !A::HasRawStorage, "A frame rate system cannot use RawStorage.");
             }
             return true;
         }

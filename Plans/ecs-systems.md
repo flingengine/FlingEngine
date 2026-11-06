@@ -1327,9 +1327,15 @@ Each item is one PR off `main`, green on all CI platforms.
 - A write conflict is an error only if no chain of edges or phase order
   orders the two systems. `TestSpawn` (before `Rotator`) and `Mover` (after
   `Rotator`) both write `Transform`, and that is ordered.
-- Still outside the schedule: `Physics::Tick`, once per frame from
-  `Engine::Tick`, and `Game::OnStartGame` (the lighting test grid, which uses
-  the global `Random`).
+- `Physics.Step` (Physics module, `RegisterPhysicsSystems`) runs
+  `Physics::Tick` in `ResolveDeferred` of each fixed tick during play, with
+  `SimTime::FixedDelta`. It is a bridge to a subsystem that works on the
+  storage, so it uses the `RawStorage` access item (`ctx.RawStorage()`) and
+  names every type that physics touches. `Engine::Tick` no longer calls
+  physics.
+- Still outside the schedule: `Game::OnStartGame` (the lighting test grid,
+  which uses the global `Random`).
+- The rules this slice set are in [`Skills/ecs.md`](../Skills/ecs.md).
 
 Next, `ecs-plan.md` continues at Phase B (the `World` facade removes
 `g_Registry`) and Phase C (`TypeBuilder` reflection).

@@ -18,12 +18,17 @@ namespace Fling
      */
     struct PhysicsBody
     {
+        static constexpr ComponentInfo Component{.Name = "PhysicsBody", .Transient = true};
+
         PhysicsBodyId m_Id;
     };
 
     /** Singleton component: settings for the physics step. */
     struct PhysicsSettings
     {
+        static constexpr ComponentInfo Component{
+            .Name = "PhysicsSettings", .Kind = ComponentKind::Singleton, .Transient = true};
+
         glm::vec3 m_Gravity{0.0f, -9.81f, 0.0f};
 
         /** The length of one physics step, in seconds. Every step has this length. */
@@ -123,6 +128,9 @@ namespace Fling
      */
     struct PhysicsWorld
     {
+        static constexpr ComponentInfo Component{
+            .Name = "PhysicsWorld", .Kind = ComponentKind::Singleton, .Transient = true};
+
         std::shared_ptr<PhysicsProvider> m_Provider;
         std::unique_ptr<PhysicsScene> m_Scene;
 

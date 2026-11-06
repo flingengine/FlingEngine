@@ -414,6 +414,18 @@ namespace Fling
         }
 
         /**
+         * The storage itself, for a bridge to a specialist subsystem that works on it
+         * (Physics.Step calls Physics::Tick). Needs Fling::RawStorage in the access list,
+         * which must still name every type the subsystem touches. Fixed phases only.
+         */
+        entt::registry& RawStorage()
+        {
+            static_assert(IsFixed(Derived::Info.Phase), "Only a fixed phase system uses RawStorage.");
+            static_assert(A::HasRawStorage, "Add Fling::RawStorage to the access list to use ctx.RawStorage().");
+            return m_Core.Storage();
+        }
+
+        /**
          * The input of this tick, merged over devices, with presses and releases counted.
          * Fixed phases only. Only the engine's Input system reads it: it copies it into
          * the InputState singleton, which gameplay reads.

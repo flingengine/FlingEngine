@@ -42,6 +42,8 @@ namespace Fling
         std::span<const AccessEntry> Access{};
         /** True if the access list has Spawns. */
         bool Spawns = false;
+        /** True if the access list has RawStorage. A parallel executor runs such a system alone. */
+        bool RawStorage = false;
         /** Makes the storage for every component in the access table, so a query never changes the storage. */
         void (*PrepareStorage)(SystemSetupBase& setup) = nullptr;
     };

@@ -66,6 +66,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
 - Threads, thread IDs and names, and command queues to subsystem threads, with
   the rules that keep them out of the ECS: [`Skills/threading.md`](Skills/threading.md).
+- ECS components, systems, phases, and the schedule (how to write and test a
+  system, the update-rate rules, `--dump-schedule`): [`Skills/ecs.md`](Skills/ecs.md).
 
 ## Plans
 

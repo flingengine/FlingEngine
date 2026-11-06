@@ -127,6 +127,19 @@ Movement/
 - **Level format:** the current JSON shape stays (`{version, title, entities:[{name, <TypeName>:{...}}]}`) so existing levels load. We add:
   - an `EntityGuid` component (stable 64-bit ID, saved), so `Entity` fields in components are remapped on load. This preserves references, which is the gap today.
   - a `version` per component, plus an optional upgrade function per type. Loading by field name already ignores unknown or missing fields.
+- **Versioning (back compatibility of authored JSON):**
+  - **No version bump** for the common changes, because load matches fields by name:
+    - Add a field: an old file has no key, so the field keeps its default value.
+    - Remove a field: the old key is ignored, and the next save drops it. `type.Removed("oldName")` stops the warning and reserves the name.
+    - Rename a field: `type.Field("speed", &Mover::Speed).FormerNames({"velocity"})`. Load tries the old names. Save writes the new one.
+    - Rename a component: `ComponentInfo::FormerNames`.
+    - Enums save by name, so reordering an enum is safe.
+  - **A version bump** when the meaning or shape changes (Euler degrees to a quaternion, one field split into two, a unit change): `type.Version(2).Upgrade(1, [](Json& data) { ... })`. The upgrade rewrites the old JSON object before the fields load, because the struct knows only the current layout. Upgrades chain (v1 to v2, then v2 to v3), and each is written once and never changed.
+  - The version is stored in the component's object as `"$v"`. A missing `"$v"` is version 1, so every level file today is a valid v1 file. Save writes the current version, and writes `"$v"` only when it is above 1.
+  - Save writes every field, not only the ones that differ from the default. Then a changed default never changes an old level. Override-only saving (prefab instances) must bump the version when a default changes.
+  - `modules.RemovedComponent("OldName")` stops the "Unknown component" warning for a deleted type, with an optional function that turns it into another component.
+  - **Not versioned:** play snapshots, undo, and rollback (same build, raw copy), cooked binary levels (they store a hash of the type layouts and are cooked again from JSON when it does not match), and network data (both sides check the same hash on connect).
+  - **Tests and tools:** old-format fixture files in `FlingTests` must load to known values. A CI check loads every `Assets/Levels/*.json` with no warnings. `--upgrade-levels` loads and saves every level at the current versions. Delete an upgrade function when no file older than its version is left.
 - **Archive abstraction:** both JSON (authoring) and binary (cooked levels, snapshots) go through the same reflected field visitor.
 - **World snapshot / restore:** chunks are copied with `memcpy` for trivially-copyable columns and with reflected copy for the rest. Pressing Play stores that snapshot. Stop writes it back into the same `World`. A network resim does not snapshot the whole world (§1.5).
 - **Prefabs = entity definitions** (Overwatch: an entity is an ID plus an optional entity-definition asset). A prefab is a JSON entity template. `Instantiate(world, prefab)` creates the entity immediately. Instances save only their overrides.
