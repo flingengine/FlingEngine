@@ -33,6 +33,11 @@ function(fling_set_warnings TARGET)
 		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			target_compile_options(${TARGET} PRIVATE -Wno-class-memaccess)
 		endif()
+		# Std mutex types have no annotations. First-party code uses the wrappers
+		# in Threading/, which Clang can check. A thread-safety warning fails the build.
+		if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			target_compile_options(${TARGET} PRIVATE -Wthread-safety -Werror=thread-safety)
+		endif()
 	endif()
 endfunction()
 

@@ -1,14 +1,15 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "Threading/ConditionVariable.h"
+#include "Threading/Mutex.h"
 #include "Threading/Runnable.h"
+#include "Threading/ThreadSafety.h"
 #include "Threading/ThreadTypes.h"
 
 #include <atomic>
-#include <condition_variable>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <string_view>
 
@@ -111,12 +112,12 @@ namespace Fling
         uint64 m_NativeId = 0;
         std::atomic<bool> m_Running{false};
 
-        std::unique_ptr<NativeThread> m_Native;
-        std::mutex m_JoinMutex;
+        Mutex m_JoinMutex;
+        std::unique_ptr<NativeThread> m_Native FLING_GUARDED_BY(m_JoinMutex);
 
         // Create waits on this until Entry has called Runnable::Init
-        std::mutex m_StartMutex;
-        std::condition_variable m_StartCondition;
-        StartState m_StartState = StartState::Pending;
+        Mutex m_StartMutex;
+        ConditionVariable m_StartCondition;
+        StartState m_StartState FLING_GUARDED_BY(m_StartMutex) = StartState::Pending;
     };
 } // namespace Fling

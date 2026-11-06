@@ -1,13 +1,16 @@
 # Lock-free thread queues and thread registry
 
 Status: not started. The first version of the thread layer
-([`Skills/threading.md`](../Skills/threading.md)) uses a mutex in two places.
-This plan replaces both with lock-free code. The public API does not change.
+([`Skills/threading.md`](../Skills/threading.md)) uses a lock in two places.
+`ThreadQueue` and `ThreadManager` take those locks through the Core sync
+wrappers (`Fling::Mutex`, `Fling::ConditionVariable`). This plan replaces that
+wrapper use inside them. It does not replace the wrappers. The public API does
+not change.
 
 ## 1. `ThreadQueue<T>`: lock-free MPSC queue
 
-Today: `Push` locks a mutex and appends to a `std::vector`. `Drain` swaps the
-vector out under the lock. `WaitForItems` uses a condition variable.
+Today: `Push` locks a `Fling::Mutex` and appends to a `std::vector`. `Drain` swaps the
+vector out under the lock. `WaitForItems` uses a `Fling::ConditionVariable`.
 (`FlingEngine/Core/inc/Threading/ThreadQueue.h`)
 
 Target:
@@ -30,7 +33,7 @@ meaning. `CommandQueue` and `CommandRunnable` then need no change.
 
 ## 2. `ThreadManager`: lock-free registry
 
-Today: a mutex and a `std::map<ThreadId, ThreadInfo>`.
+Today: a `Fling::Mutex` and a `std::map<ThreadId, ThreadInfo>`.
 (`FlingEngine/Core/src/Threading/ThreadManager.cpp`)
 
 The main reason to change it is the crash handler. It must be able to print the

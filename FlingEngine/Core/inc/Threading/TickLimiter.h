@@ -1,12 +1,12 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "Threading/ConditionVariable.h"
+#include "Threading/Mutex.h"
 #include "Threading/ThreadTypes.h"
 
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
-#include <mutex>
 
 namespace Fling
 {
@@ -82,8 +82,8 @@ namespace Fling
 
         std::atomic<bool> m_Interrupted{false};
         std::atomic<uint64> m_MissedTicks{0};
-        std::mutex m_Mutex;
-        std::condition_variable m_Condition;
+        Mutex m_Mutex;
+        ConditionVariable m_Condition;
 
         // A high-resolution waitable timer and an interrupt event. Null on Windows
         // versions before 10 1803 (the limiter then waits on m_Condition). _WIN32

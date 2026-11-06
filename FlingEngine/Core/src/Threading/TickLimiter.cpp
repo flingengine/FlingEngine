@@ -1,13 +1,8 @@
 #include "Platform.h"
+#include "Threading/CpuRelax.h"
 #include "Threading/TickLimiter.h"
 
 #include <algorithm>
-
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-#include <immintrin.h>
-#elif defined(_M_ARM64)
-#include <intrin.h>
-#endif
 
 #if FLING_WINDOWS
 // Windows 10 1803 and later. MinGW headers can be older.
@@ -28,22 +23,6 @@ namespace Fling
         constexpr std::chrono::nanoseconds LowResolutionSpinWindow = 16ms;
 #endif
 
-        /**
-         * Tell the CPU that this is a spin loop, which eases the spin on the other
-         * hyperthread of the core. Do not give the core to the scheduler here
-         * (std::this_thread::yield, SwitchToThread). With every core busy, that
-         * can delay the return by a full scheduling quantum, which is milliseconds.
-         */
-        void CpuRelax()
-        {
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-            _mm_pause();
-#elif defined(_M_ARM64)
-            __yield();
-#elif defined(__aarch64__) || defined(__arm__)
-            asm volatile("yield");
-#endif
-        }
     } // namespace
 
     TickLimiter::TickLimiter(TickRate t_Rate) : m_Rate(t_Rate)
@@ -147,10 +126,10 @@ namespace Fling
     void TickLimiter::Interrupt()
     {
         {
-            std::lock_guard<std::mutex> Lock(m_Mutex);
+            ScopedLock Lock(m_Mutex);
             m_Interrupted.store(true, std::memory_order_release);
         }
-        m_Condition.notify_all();
+        m_Condition.NotifyAll();
 #if FLING_WINDOWS
         if (m_NativeInterrupt != nullptr)
         {
@@ -203,8 +182,8 @@ namespace Fling
             // SetWaitableTimerEx failed: wait on the condition variable instead
         }
 #endif
-        std::unique_lock<std::mutex> Lock(m_Mutex);
-        m_Condition.wait_until(Lock, t_Deadline, [this]() { return IsInterrupted(); });
+        ScopedLock Lock(m_Mutex);
+        m_Condition.WaitUntil(Lock, t_Deadline, [this]() { return IsInterrupted(); });
         return !IsInterrupted();
     }
 } // namespace Fling

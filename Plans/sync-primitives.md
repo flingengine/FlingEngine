@@ -1,6 +1,9 @@
 # Core sync primitives plan
 
-Status: not started. This is Phase 1 of [`audio.md`](audio.md).
+Status: done. The wrappers live in `FlingEngine/Core/inc/Threading/` (`Mutex`,
+`ScopedLock`, `SharedMutex`, `SpinLock`, `ConditionVariable`, `Semaphore`,
+`Event`). Clang `-Wthread-safety` checks them. This was Phase 1 of
+[`audio.md`](audio.md).
 
 This brief is for an agent with no prior context. Fling Engine is C++20 with CMake. Read
 `AGENTS.md`, `Skills/threading.md`, and `Skills/coding-style.md` first.
