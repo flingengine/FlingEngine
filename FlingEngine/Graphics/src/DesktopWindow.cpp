@@ -94,16 +94,24 @@ namespace Fling
 		}
 	}
 
-	void DesktopWindow::WaitForNewWindowSize()
+	bool DesktopWindow::WaitForNewWindowSize()
 	{
 		// If the window is minimized then wait for it to come to the foreground before displaying it again
 		// #TODO: Handle minimizing windows asynchronously or in a way that the renderer doesn't block
 		int width = 0, height = 0;
+		glfwGetFramebufferSize(m_Window, &width, &height);
 		while (width == 0 || height == 0)
 		{
-			glfwGetFramebufferSize(m_Window, &width, &height);
+			// A minimized window can be closed (for example from the taskbar). Its size then
+			// never comes back, so stop waiting and let the engine loop see the close.
+			if (glfwWindowShouldClose(m_Window))
+			{
+				return false;
+			}
 			glfwWaitEvents();
+			glfwGetFramebufferSize(m_Window, &width, &height);
 		}
+		return true;
 	}
 
 	DesktopWindow::~DesktopWindow()

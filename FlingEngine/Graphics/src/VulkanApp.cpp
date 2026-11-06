@@ -360,7 +360,11 @@ namespace Fling
     void VulkanApp::RecreateFrameResourcesForResize(entt::registry& t_Reg)
     {
         F_LOG_TRACE("Resizing the window!");
-        m_CurrentWindow->WaitForNewWindowSize();
+        if (!m_CurrentWindow->WaitForNewWindowSize())
+        {
+            // The window was closed while minimized. ShouldTick sees the close next.
+            return;
+        }
         m_LogicalDevice->WaitForIdle();
 
         CleanupSwapChainResources();

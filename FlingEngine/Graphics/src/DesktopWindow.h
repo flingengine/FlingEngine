@@ -27,8 +27,8 @@ namespace Fling
 		/** Tick the window. GLFW events are pumped by GlfwInputDeviceInterface::Poll, not here. */
 		virtual void Update() override;
 
-		/** BLocks until we get a new window size from GLFW */
-		virtual void WaitForNewWindowSize() override;
+		/** Blocks until we get a new window size from GLFW, or the window is asked to close */
+		virtual bool WaitForNewWindowSize() override;
 
 		/**
 		* Check if this window should close
