@@ -2,6 +2,12 @@
 
 Status: proposal for review. Nothing here is implemented yet.
 
+**Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
+
+- [`ecs-systems.md`](ecs-systems.md) (the first slice, beside EnTT): systems declare access as type lists that the compiler checks, not with a runtime `Declare(SystemDecl&)`. `ISystem` has a full lifecycle. Every system is a header plus a `.cpp`. All ECS code, including the native storage, lives in Engine. It also adds `Entity`, `EntityGuid`, and the hierarchy details. This replaces "How a system registers" in §1.5.
+- [`ecs-features.md`](ecs-features.md): worlds are instantiable. The editor has an edit world and clones it into a play world, in place of one world with a snapshot (rule 7, §1.6). Features add and remove systems at runtime. The `Game` class goes away. Editor edits are commands. Editor-only systems use `RunIn` by world role.
+- [`ecs-parallel.md`](ecs-parallel.md): parallel stages, chunked fork/join inside a system, the safety rules, and parallel level decoding (from Phase H).
+
 The ECS rules here come from Timothy Ford's GDC 2017 talk, *'Overwatch' Gameplay Architecture and Netcode* (https://gdcvault.com/play/1024001/-Overwatch-Gameplay-Architecture-and). Timestamps refer to that talk.
 
 ## Context
@@ -30,7 +36,7 @@ This document covers both parts: the ideal design (Part 1) and the migration tha
 4. **Defer big side effects.** Callers push to a queue singleton. One resolver system drains it at one point in the frame. (18:10, 20:35)
 5. **Explicit tuples with read/write access.** The scheduler reads them to order systems and, later, to run them in parallel. (43:27)
 6. **Proxy ("iceberg") components for specialist subsystems.** The renderer, and later physics and audio, keep their own internals. ECS sees only a handle. (43:27+)
-7. **The engine runs one `World`.** Storage, singletons, the scheduler, and the accumulator all live on it. Edit and play are modes of that object. A snapshot restores play back into the same object. Streaming cells and a resim are contents of that object, not more worlds (§1.5). A test may construct a `World` of its own. The running game does not.
+7. **Worlds are instantiable** (changed by [`ecs-features.md`](ecs-features.md)). Storage, singletons, the scheduler, and the accumulator all live on a world. A game runs one play world. The editor runs an edit world and clones it into a play world for Play. Streaming cells and a resim are contents of a world, not more worlds (§1.5). Nothing may assume that only one world exists.
 8. **Entity creation is immediate. Destruction and structural changes are deferred.** (Ford: deferred creation caused off-by-one-frame bugs.)
 
 ## 1.2 Core data model
@@ -497,7 +503,7 @@ A fighting game that must be bit-exact puts every gameplay entity in the set and
 ## 1.6 Worlds, editor, and play-in-editor
 
 - **`Fling::World`** is the one object the engine ticks. It owns storage, singletons, the `Scheduler`, the mode (`Edit` or `Play`), and the pause flag. It takes a `const TypeRegistry&` built from the `ModuleRegistration` (§1.3, §1.5). `g_Registry` goes away. Streamed levels are cells in this world. A resim is two phases inside `RunFrame` (§1.5).
-- **Play in the same world:** pressing Play snapshots the world and sets the mode to `Play`. Stop writes the snapshot back and returns the mode to `Edit`. This replaces `OnStopGame`'s "destroy everything with Rotator/Mover" hack.
+- **Play in a cloned world** (changed by [`ecs-features.md`](ecs-features.md) §6.2): pressing Play clones the edit world into a play world. Stop destroys the play world. The edit world is never touched during play. This replaces the snapshot and restore code in `World`.
 - **Editor edits are commands:** a widget edits a copy of the value, and if it changed, the editor pushes `EditCommand{entity, type, before, after}` (reflected bytes). They apply in the `Editor` phase. This gives **undo/redo** for free and removes the mid-render mutation. Selection becomes editor singleton state, and `EditableComponent` is deleted.
 - **Hierarchy:** `Parent` plus `Children` (or first-child/next-sibling) components, `LocalTransform` / `LocalToWorld`, and `TransformSystem` computing them in order. The outliner shows a tree.
 
@@ -611,7 +617,7 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 - Add a test that destroys an entity with a `MeshRenderer` and checks that the proxy pool released its slot.
 
 ### Phase F — Native backend (can be built in parallel from Phase B on)
-- Implement the archetypes, chunks (growing 1→16 KiB), Enableable and Sparse storage, the query cache, change versions, snapshot, and ECS telemetry (§1.2, §1.4, §1.10) in `Core/src/Ecs/`. The EnTT backend maps Enableable to add/remove and Sparse to its own storage, so both backends behave the same.
+- Implement the archetypes, chunks (growing 1→16 KiB), Enableable and Sparse storage, the query cache, change versions, snapshot, and ECS telemetry (§1.2, §1.4, §1.10) in `Engine/src/Ecs/` (see [`ecs-systems.md`](ecs-systems.md) §1). The EnTT backend maps Enableable to add/remove and Sparse to its own storage, so both backends behave the same.
 - Add an archetype/move budget check: a headless run of a fixed number of Sandbox frames.
 - Add a CMake option `FLING_ECS_BACKEND=entt|native` for the transition. CI runs FlingTests on both backends.
 - Add Catch2 `BENCHMARK` cases (tag `[!benchmark]`, not in the default CI run) for iterating 1M entities with 1, 2, and 4 components, create/destroy, and add/remove. They must be at least as fast as EnTT views for the multi-component queries.
@@ -623,7 +629,7 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 - Update `module-split-plan.md` (its module table lists entt), `architecture.md`, and the `ecs-architecture` skill's notes about Fling.
 
 ### Phase H — Features built on the new core (after EnTT is gone)
-Play-in-editor through world clone · undo/redo · hierarchy and outliner tree · prefabs · schedule panel and profiling · the parallel stage executor on a job system · binary cooked levels · prediction-set restore and input replay for rollback (consult the `rollback-netcode-expert` agent). Full-world snapshot stays the edit-to-play and replay-playback path.
+Play-in-editor through world clone · undo/redo · hierarchy and outliner tree · prefabs · schedule panel and profiling · the parallel executor and parallel level decoding ([`ecs-parallel.md`](ecs-parallel.md)) · runtime features and feature libraries ([`ecs-features.md`](ecs-features.md)) · binary cooked levels · prediction-set restore and input replay for rollback (consult the `rollback-netcode-expert` agent). World clone is the edit-to-play path. Full-world snapshot stays the replay-playback path.
 
 ---
 

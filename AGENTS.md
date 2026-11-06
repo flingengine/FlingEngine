@@ -75,6 +75,16 @@ into `Skills/`.
 
 - Phased plan for the module split, including what is done and what is next:
   [`Plans/module-split-plan.md`](Plans/module-split-plan.md).
+- First slice of the ECS (Engine module), beside EnTT: the `ISystem` lifecycle, component
+  declarations, compile-time access checks, and the schedule built from them:
+  [`Plans/ecs-systems.md`](Plans/ecs-systems.md). The full design
+  and EnTT removal: [`Plans/ecs-plan.md`](Plans/ecs-plan.md).
+- ECS worlds and data ownership, features that add and remove systems at
+  runtime, the end of the `Game` class, level streaming, and the editor (edit
+  commands, edit and play worlds, editor-only systems):
+  [`Plans/ecs-features.md`](Plans/ecs-features.md).
+- Running ECS systems in parallel (stages, chunked fork/join, safety rules) and
+  parallel level loading: [`Plans/ecs-parallel.md`](Plans/ecs-parallel.md).
 - How game projects use the engine (project descriptor, Game/Editor/Server
   targets, headless runs, project tooling):
   [`Plans/project-model.md`](Plans/project-model.md).
