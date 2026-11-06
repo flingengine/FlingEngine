@@ -874,6 +874,14 @@ iterator wraps `entt::view<Ts...>` in `Ecs/detail/EnttQuery.inl`, which only
 | `ctx.Get<T>(e)` / `ctx.TryGet<T>(e)` | `registry.get<T>` / `registry.try_get<T>`, after a `valid(e)` check |
 | `Fling::Entity` | `entt::entity`, converted in `EnttBridge.cpp` |
 
+**Type ids.** EnTT 3.1 numbers unnamed types with a counter
+(`entt::family`) that is two inline variables with no fixed initialization
+order. A Clang Release build gave `Position`, `Velocity`, and `Frozen` the
+same number, so they shared one pool and the runner tests crashed.
+`Component.h` makes every `Fling::Component` an EnTT named type, with an id
+from `TypeHashOf<T>`. Legacy types that are not `Fling::Component` yet (for
+example `Transform`) still use the counter.
+
 `BuildSchedule` makes the EnTT pool for every component in every access
 table (`registry.assure<T>()` through a function pointer stored in the
 `SystemDesc`). EnTT 3.1 makes a pool on first use, which changes the

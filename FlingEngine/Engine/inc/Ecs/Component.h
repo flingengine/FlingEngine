@@ -3,6 +3,7 @@
 #include "Ecs/TypeHash.h"
 #include "FlingTypes.h"
 
+#include <entt/core/type_traits.hpp>
 #include <string_view>
 #include <type_traits>
 
@@ -93,3 +94,22 @@ namespace Fling
     inline constexpr bool IsSingletonComponent =
         ComponentInfoOf<T>.Kind == ComponentKind::Singleton || ComponentInfoOf<T>.Kind == ComponentKind::Queue;
 } // namespace Fling
+
+/**
+ * EnTT 3.1 gives each unnamed type a number from a counter (entt::family). That
+ * counter is a pair of inline variables whose dynamic initialization order is not
+ * specified, so a build can give several types the same number, and then they
+ * share one storage pool. Clang Release builds do this.
+ *
+ * A named type does not use the counter. This makes every Fling::Component a
+ * named type, with an id made from its saved name. It is in this header so that
+ * every file that sees a component also sees its id.
+ */
+// clang-format off
+template <typename T>
+    requires Fling::Component<T>
+struct entt::named_type_traits<T>
+    : std::integral_constant<ENTT_ID_TYPE, static_cast<ENTT_ID_TYPE>(Fling::TypeHashOf<T> ^ (Fling::TypeHashOf<T> >> 32))>
+{
+};
+// clang-format on

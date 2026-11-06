@@ -300,6 +300,22 @@ TEST_CASE("Entity converts to and from EnTT", "[ecs][system]")
     REQUIRE(nullMaps);
 }
 
+TEST_CASE("Each component has its own EnTT type id and storage", "[ecs][system]")
+{
+    // EnTT 3.1's type counter can give two types the same id in an optimized
+    // build. Component.h makes every component a named type to avoid it.
+    STATIC_REQUIRE(entt::is_named_type_v<Position>);
+    STATIC_REQUIRE(entt::is_named_type_v<Bounds>);
+    REQUIRE(entt::registry::type<Position>() != entt::registry::type<Velocity>());
+    REQUIRE(entt::registry::type<Velocity>() != entt::registry::type<Frozen>());
+
+    entt::registry storage;
+    const entt::entity e = storage.create();
+    storage.assign<Position>(e, Position{1.0f});
+    REQUIRE_FALSE(storage.has<Velocity>(e));
+    REQUIRE(storage.size<Velocity>() == 0);
+}
+
 TEST_CASE("OnCreate and OnDestroy make and remove singletons", "[ecs][system]")
 {
     Harness h;
