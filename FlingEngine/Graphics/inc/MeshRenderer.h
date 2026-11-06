@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "JsonArchive.h"
 
 #include <entt/entity/registry.hpp>
@@ -13,6 +14,8 @@ namespace Fling
 
     struct MeshRenderer
     {
+        static constexpr ComponentInfo Component{.Name = "MeshRenderer"};
+
         /**
          * GPU descriptor for this mesh. Defined in the Graphics module so this
          * header does not name a Vulkan handle.

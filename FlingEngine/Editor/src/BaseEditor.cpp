@@ -152,6 +152,7 @@ namespace Fling
     void BaseEditor::Init(entt::registry& t_Reg, World* t_World, Game* t_Game)
     {
         m_OwningWorld = t_World;
+        m_WorldSingletons.SetWorld(t_World);
         m_Game = t_Game;
         RegisterComponents(t_Reg);
     }
@@ -229,6 +230,7 @@ namespace Fling
         }
 
         m_InputDevices.Draw(t_Reg);
+        m_WorldSingletons.Draw(t_Reg);
     }
 
     void BaseEditor::DrawCameraOptions()
@@ -386,6 +388,7 @@ namespace Fling
                 ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
 				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
 				ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
+				ImGui::Checkbox("World Singletons", &m_WorldSingletons.ShowWindowFlag());
                 ImGui::EndMenu();
             }
 

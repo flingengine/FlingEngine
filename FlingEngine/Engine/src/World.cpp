@@ -7,6 +7,7 @@
 #include "World.h"
 
 #include <algorithm>
+#include <set>
 #include <chrono>
 #include <utility>
 #include <vector>
@@ -58,8 +59,26 @@ namespace Fling
 		}
 		F_LOG_TRACE("System schedule: {} systems", m_Systems.Size());
 
+		// A component that a system uses and that is saved (not Transient) must be
+		// registered, or levels and the play snapshot lose it
+		std::set<std::string> Reported;
+		for (const SystemDesc* Desc : m_Systems.Descs())
+		{
+			for (const AccessEntry& Entry : Desc->Access)
+			{
+				if (!Entry.Transient && Entry.Name && !ComponentTypeRegistry::Get().Find(Entry.Name) &&
+					Reported.insert(Entry.Name).second)
+				{
+					F_LOG_WARN("System {} uses component {}, which is saved but not registered. Register it with "
+							   "ComponentTypeRegistry::Register<T>(), or mark it Transient.",
+							   Desc->Info.Name, Entry.Name);
+				}
+			}
+		}
+
 		// Each system makes its singletons before the first level loads
 		m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Registry, m_RunnerConfig);
+		m_Runner->SetTickInputSource(m_TickInputSource);
 		m_Runner->Create();
 
 		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : t_StartLevel;

@@ -53,14 +53,10 @@ namespace Sandbox
 
 		void AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
 
-		void ToggleRotation();
-
 		void OnTestSpawn();
 
-		void OnToggleMoveLights();
-
-        /** Puts the per-play state (members and SandboxToggles) back to its start values */
-        void ResetPlayState(entt::registry& t_Reg);
+        /** Puts the per-play member state back to its start values */
+        void ResetPlayState();
 
         /** The X position of the last sphere from OnTestSpawn */
         float m_TestSpawnX = -1.0f;

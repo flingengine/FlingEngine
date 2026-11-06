@@ -9,8 +9,8 @@ namespace Fling
 	void RegisterGraphicsComponents()
 	{
 		ComponentTypeRegistry& registry = ComponentTypeRegistry::Get();
-		registry.Register<MeshRenderer>("MeshRenderer");
-		registry.Register<DirectionalLight>("DirectionalLight");
-		registry.Register<PointLight>("PointLight");
+		registry.Register<MeshRenderer>();
+		registry.Register<DirectionalLight>();
+		registry.Register<PointLight>();
 	}
 }	// namespace Fling

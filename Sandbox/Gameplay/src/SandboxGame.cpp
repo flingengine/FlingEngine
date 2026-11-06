@@ -14,7 +14,6 @@
 #include "ComponentTypeRegistry.h"
 #include "Lighting/DeferredLightSettings.h"
 #include "Mover.h"
-#include "SandboxToggles.h"
 
 // Test command line args
 #include "FlingWindow.h"
@@ -118,16 +117,13 @@ namespace Sandbox
 		}
 
 		F_LOG_TRACE("Done cmd line testing");
-
-		// The Rotator and Mover systems read the toggles. Game::Update flips them from input.
-		t_Reg.set<SandboxToggles>();
     }
 
 	void Game::RegisterComponents()
 	{
 		Fling::ComponentTypeRegistry::Get().Register<Mover>();
 		Fling::ComponentTypeRegistry::Get().Register<Rotator>();
-		Fling::ComponentTypeRegistry::Get().Register<BallControl>("BallControl");
+		Fling::ComponentTypeRegistry::Get().Register<BallControl>();
 	}
 
 	void Game::OnStartGame(entt::registry& t_Reg)
@@ -135,7 +131,7 @@ namespace Sandbox
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
         // Play can start many times in one editor run, so each play starts from the same state
-        ResetPlayState(t_Reg);
+        ResetPlayState();
         t_Reg.set<SandboxPhysicsState>();
 
         // A level with physics bodies (for example Levels/PhysicsTest.json) is a
@@ -168,11 +164,8 @@ namespace Sandbox
             ToggleCursorVisibility();
         }
 
-        // Toggle model rotation with T or X
-        if (WasPressed(Keys::T, Keys::GamepadFaceLeft))
-        {
-            ToggleRotation();
-        }
+        // T and Space toggle the lighting test in the Sandbox.Toggles system, which reads
+        // the tick's InputState.
 
         // Physics test level: the arrow keys push the ball and Space jumps.
         // ContactEvents is from the physics step of the last tick.
@@ -185,12 +178,6 @@ namespace Sandbox
         if (SandboxPhysicsState* PhysicsState = t_Reg.try_ctx<SandboxPhysicsState>())
         {
             ++PhysicsState->m_Tick;
-        }
-
-        // Toggle moving lights with Space or A (Space jumps when there is a ball)
-        if (!bHasBall && WasPressed(Keys::Space, Keys::GamepadFaceBottom))
-        {
-            OnToggleMoveLights();
         }
 
         // Spawn a test entity with 0 or Y
@@ -209,7 +196,7 @@ namespace Sandbox
 
         // The world removes the entities that play made. Only state outside the
         // registry is cleaned up here.
-        ResetPlayState(t_Reg);
+        ResetPlayState();
 
         // Play can hide the cursor (M). Show it again for the editor.
         FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
@@ -219,9 +206,8 @@ namespace Sandbox
         }
     }
 
-    void Game::ResetPlayState(entt::registry& t_Reg)
+    void Game::ResetPlayState()
     {
-        t_Reg.set<SandboxToggles>();
         m_TestSpawnX = -1.0f;
     }
 
@@ -367,18 +353,6 @@ namespace Sandbox
         {
             CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
         }
-    }
-
-    void Game::OnToggleMoveLights()
-    {
-        SandboxToggles& Toggles = m_OwningWorld->GetRegistry().ctx<SandboxToggles>();
-        Toggles.MoveLights = !Toggles.MoveLights;
-    }
-
-    void Game::ToggleRotation()
-    {
-        SandboxToggles& Toggles = m_OwningWorld->GetRegistry().ctx<SandboxToggles>();
-        Toggles.Rotate = !Toggles.Rotate;
     }
 
 	void Game::OnTestSpawn()

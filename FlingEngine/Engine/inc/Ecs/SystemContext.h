@@ -6,6 +6,7 @@
 #include "Ecs/Entity.h"
 #include "Ecs/Phase.h"
 #include "Ecs/TypeList.h"
+#include "Input/TickInput.h"
 
 #include <cassert>
 #include <cstddef>
@@ -52,8 +53,8 @@ namespace Fling
     class SystemContextBase
     {
     public:
-        SystemContextBase(entt::registry& registry, DeferredCommands* commands)
-            : m_Registry(registry), m_Commands(commands)
+        SystemContextBase(entt::registry& registry, DeferredCommands* commands, const TickInput* tickInput = nullptr)
+            : m_Registry(registry), m_Commands(commands), m_TickInput(tickInput)
         {
         }
 
@@ -63,9 +64,13 @@ namespace Fling
         /** Null in a frame phase. */
         DeferredCommands* Commands() const { return m_Commands; }
 
+        /** This tick's input. Null in a frame phase. */
+        const TickInput* GetTickInput() const { return m_TickInput; }
+
     private:
         entt::registry& m_Registry;
         DeferredCommands* m_Commands = nullptr;
+        const TickInput* m_TickInput = nullptr;
     };
 
     /** A query filter: only entities that also have each T. The components are not returned. */
@@ -406,6 +411,19 @@ namespace Fling
             const entt::entity e = registry.create();
             (registry.template assign<std::decay_t<Cs>>(e, std::forward<Cs>(components)), ...);
             return Detail::FromEntt(e);
+        }
+
+        /**
+         * The input of this tick, merged over devices, with presses and releases counted.
+         * Fixed phases only. Only the engine's Input system reads it: it copies it into
+         * the InputState singleton, which gameplay reads.
+         */
+        const TickInput& ReadTickInput() const
+        {
+            static_assert(IsFixed(Derived::Info.Phase),
+                          "Only a fixed phase system reads the tick input. Read InputState instead.");
+            static const TickInput s_NoInput{};
+            return m_Core.GetTickInput() != nullptr ? *m_Core.GetTickInput() : s_NoInput;
         }
 
         /** Changes that wait until the end of the tick, such as Destroy. Fixed phases only. */

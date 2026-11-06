@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "JsonArchive.h"
@@ -14,6 +15,8 @@ namespace Fling
      */
     struct RigidBody
     {
+        static constexpr ComponentInfo Component{.Name = "RigidBody"};
+
         /** Mass in kilograms. A mass of 0 makes a static body that never moves. */
         float m_Mass = 1.0f;
 
@@ -66,6 +69,8 @@ namespace Fling
      */
     struct Collider
     {
+        static constexpr ComponentInfo Component{.Name = "Collider"};
+
         ColliderShape m_Shape = ColliderShape::Box;
 
         /** Half the size of a Box on each axis. */

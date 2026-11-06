@@ -4,6 +4,7 @@
 #include "IDebugUI.h"
 #include "InputDevicesPanel.h"
 #include "WorldOutlinePanel.h"
+#include "WorldSingletonsPanel.h"
 
 #include <array>
 #include <entt/entity/registry.hpp>
@@ -58,6 +59,9 @@ namespace Fling
 
 		/** Lists input interfaces and devices, and changes the input log level */
 		InputDevicesPanel m_InputDevices;
+
+		/** Singleton components and the system schedule */
+		WorldSingletonsPanel m_WorldSingletons;
 
 		virtual void DrawFileMenu();
 

@@ -116,7 +116,7 @@ namespace Fling
     void RegisterPhysicsComponents()
     {
         ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
-        Registry.Register<RigidBody>("RigidBody");
-        Registry.Register<Collider>("Collider");
+        Registry.Register<RigidBody>();
+        Registry.Register<Collider>();
     }
 } // namespace Fling

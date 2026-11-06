@@ -1,7 +1,7 @@
 # ECS systems and components: the first slice
 
 Status: work items 1 to 6 (with 3b, open phases, §3.8) are done (branch
-`feature/ecs-types`), except `InputSystem` (see item 6). §6 lists what changed from this plan while they were written.
+`feature/ecs-types`). After item 6, `ecs-plan.md` continues at Phase B. §6 lists what changed from this plan while they were written.
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
@@ -1256,15 +1256,16 @@ Each item is one PR off `main`, green on all CI platforms.
      stop restores saved singletons.
    - The editor's Add Component menu skips singletons and queues.
    - `FlingTests/Engine/ComponentRegistrationTests.cpp`.
-   Not done yet:
-   - `Register<T>(name)` does not log a deprecation warning yet. Every
-     engine type still uses it, so the warning would show on every run. Add
-     it once the engine types declare a `ComponentInfo`.
-   - The **World Singletons** editor panel.
-   - The startup check that each `TypeHash` in a `SystemDesc` matches a
-     registered component. `AccessEntry` has no transient flag yet, and a
-     transient singleton needs no registration, so the check needs that flag
-     first.
+   Done later, after item 6:
+   - Every engine component (`Transform`, `NameComponent`, `MeshRenderer`,
+     `DirectionalLight`, `PointLight`, `RigidBody`, `Collider`) and the
+     Sandbox components declare a `ComponentInfo` and use `Register<T>()`.
+     `Register<T>(name)` now logs a deprecation warning.
+   - The **World Singletons** editor window (Windows menu) lists each
+     singleton and queue type, whether the world has it, and its saved
+     value, and shows the schedule dump. It is read only.
+   - `AccessEntry::Transient`. `World::Init` warns when a system uses a
+     saved component that is not registered.
 6. **Port Sandbox.** `MoverSystem` and `RotatorSystem` replace the loops in
    `Game::Update`. `InputSystem` and `InputState` read from `Input`.
    Headless check: `Sandbox --null-render --unattended --frames 120 --seed 1`
@@ -1293,11 +1294,21 @@ Each item is one PR off `main`, green on all CI platforms.
      name in one namespace are an ODR violation: the linker used the Vulkan
      destructor for the ECS vector, and the game crashed at exit. Check new
      ECS type names against the other modules.
-   Not done yet:
-   - `InputSystem` and `InputState`. The input for a fixed tick needs the
-     per-tick input of [`improve-input.md`](improve-input.md): today
-     `Input::BeginTick` runs once per frame, so a frame with two ticks would
-     see a key press twice. Until then, `Game::Update` handles the keys.
+   - Per-tick input: `TickInputBuilder` (Core, `Input/TickInput.h`) has its
+     own cursor on the input queue. The runner calls it once before each
+     fixed tick, so each tick takes the messages that no earlier tick took:
+     a frame with no tick keeps its presses for the next tick, and the
+     second tick of a frame does not see them again. UI capture gives the
+     simulation neutral input. This is the "first tick not yet built" rule
+     of `improve-input.md` I2. Assigning messages to ticks by time waits for
+     `improve-time.md` T3.
+   - `Engine.Input` (`Engine/inc/Systems/InputSystem.h`, registered in
+     `RegisterEngineSystems`) copies `ctx.ReadTickInput()` into the
+     `InputState` singleton. `Engine::Startup` adds the engine systems and
+     the tick input source before `World::Init`.
+   - `Sandbox.Toggles` reads `InputState` and owns `SandboxToggles`. With
+     it, the toggles take effect on the same tick again: the replay gives
+     the same checksum as the code before item 6, digit for digit.
 
 After item 6, `ecs-plan.md` continues at Phase B (the `World` facade
 removes `g_Registry`) and Phase C (`TypeBuilder` reflection).

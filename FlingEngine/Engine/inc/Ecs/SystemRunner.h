@@ -3,9 +3,11 @@
 #include "Ecs/Phase.h"
 #include "Ecs/Schedule.h"
 #include "FlingTypes.h"
+#include "Input/TickInput.h"
 
 #include <chrono>
 #include <entt/entity/fwd.hpp>
+#include <functional>
 #include <vector>
 
 namespace Fling
@@ -58,6 +60,12 @@ namespace Fling
         /** Calls OnPlayEnd on each system that runs in the role. */
         void PlayEnd(WorldRole role);
 
+        /**
+         * Set the function that fills the input of each fixed tick. The runner calls it
+         * once before each tick that runs. With no source, every tick has no input.
+         */
+        void SetTickInputSource(std::function<void(TickInput&)> t_Source) { m_TickInputSource = std::move(t_Source); }
+
         /** Adds the real time to the accumulator and runs each tick that is due. Returns the number of ticks run. */
         uint32 RunFixed(std::chrono::nanoseconds realDelta, WorldRole role);
 
@@ -82,6 +90,11 @@ namespace Fling
         std::vector<uint32> m_RunOrder;
         entt::registry& m_Storage;
         SystemRunnerConfig m_Config;
+
+        std::function<void(TickInput&)> m_TickInputSource;
+
+        /** The input of the tick that runs now. */
+        TickInput m_TickInput;
 
         /** One buffer per system, by index in the schedule. */
         std::vector<DeferredCommands> m_Commands;

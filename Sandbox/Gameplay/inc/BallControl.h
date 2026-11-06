@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "FlingTypes.h"
 #include "JsonArchive.h"
 
@@ -10,6 +11,8 @@
  */
 struct BallControl
 {
+    static constexpr Fling::ComponentInfo Component{.Name = "BallControl"};
+
     /** The force of a push, in newtons. */
     float m_PushForce = 40.0f;
 

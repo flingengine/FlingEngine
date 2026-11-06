@@ -87,8 +87,8 @@ namespace Fling
 
 		/**
 		 * Register a component type that implements void Serialize(JsonArchive&), with
-		 * the name it has in level files. For types that do not declare a ComponentInfo
-		 * yet. Prefer Register<T>() for new types.
+		 * the name it has in level files. Deprecated: it logs a warning. Declare a
+		 * ComponentInfo on the type and use Register<T>().
 		 * @return false if the registry is sealed or the name is already registered
 		 */
 		template<typename T>
@@ -128,6 +128,9 @@ namespace Fling
 		ComponentTypeRegistry& operator=(const ComponentTypeRegistry&) = delete;
 
 		bool CanRegister(const char* name);
+
+		/** Logs that a type was registered by name. Register<T>() reads the name from the type. */
+		static void WarnRegisteredByName(const char* name);
 		void AddType(const char* name, ComponentTypeInfo info);
 
 		/** has, create, and destroy for a type that lives on entities. */
@@ -281,6 +284,8 @@ namespace Fling
 		{
 			return false;
 		}
+
+		WarnRegisteredByName(name);
 
 		ComponentTypeInfo info;
 		if constexpr (Component<T>)

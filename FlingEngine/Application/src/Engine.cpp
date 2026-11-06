@@ -1,5 +1,6 @@
 #include "ComponentTypeRegistry.h"
 #include "DefaultPhysicsProvider.h"
+#include "Ecs/RegisterEngineSystems.h"
 #include "Engine.h"
 #include "File.h"
 #include "FlingConfig.h"
@@ -7,6 +8,7 @@
 #include "FlingWindow.h"
 #include "Input/GlfwInput.h"
 #include "Input/Input.h"
+#include "Input/TickInput.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CrashHandler.h"
 #include "Physics.h"
@@ -175,6 +177,16 @@ namespace Fling
 		SystemRunnerConfig RunnerConfig;
 		RunnerConfig.OneTickPerFrame = m_Options.NullRender;
 		m_World->SetSystemRunnerConfig(RunnerConfig);
+		RegisterEngineSystems(m_World->GetSystems());
+
+		// Each fixed tick takes the input messages that no earlier tick took, with its own
+		// cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.
+		auto TickInputs = std::make_shared<TickInputBuilder>(Input::Get().GetHandler());
+		m_World->SetTickInputSource([TickInputs](TickInput& t_Out)
+		{
+			const Input& GameInput = Input::Get();
+			TickInputs->Build(t_Out, GameInput.IsKeyboardCaptured(), GameInput.IsMouseCaptured());
+		});
 
 		// Before World::Init() seals the component type registry, so developer UI
 		// (the editor) can still attach to component types

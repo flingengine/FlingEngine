@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "JsonArchive.h"
 #include "Platform.h"
@@ -13,6 +14,8 @@ namespace Fling
 	struct alignas(16) PointLight
 	{
 	public:
+		static constexpr ComponentInfo Component{.Name = "PointLight"};
+
 		/**
 		 * Diffuse color of this point light, RBA on a scale of 0.0 to 1.0
 		 */

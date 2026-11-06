@@ -34,6 +34,14 @@ namespace Fling
 		return true;
 	}
 
+	void ComponentTypeRegistry::WarnRegisteredByName(const char* name)
+	{
+		F_LOG_WARN("Component type '{}' is registered by name, which is deprecated. Add "
+				   "'static constexpr Fling::ComponentInfo Component {{ .Name = \"{}\" }};' to the type and use "
+				   "Register<T>().",
+				   name ? name : "", name ? name : "");
+	}
+
 	void ComponentTypeRegistry::AddType(const char* name, ComponentTypeInfo info)
 	{
 		m_NameStorage.emplace_back(name);
@@ -114,7 +122,7 @@ namespace Fling
 	void RegisterEngineComponents()
 	{
 		ComponentTypeRegistry& registry = ComponentTypeRegistry::Get();
-		registry.Register<Transform>("Transform");
-		registry.Register<NameComponent>("NameComponent");
+		registry.Register<Transform>();
+		registry.Register<NameComponent>();
 	}
 }	// namespace Fling

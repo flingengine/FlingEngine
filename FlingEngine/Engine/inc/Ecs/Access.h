@@ -78,6 +78,8 @@ namespace Fling
         const char* Name = nullptr;
         ComponentKind Kind = ComponentKind::Table;
         ComponentDomain Domain = ComponentDomain::Simulation;
+        /** True if the component is never saved. A saved component should be registered with ComponentTypeRegistry. */
+        bool Transient = false;
     };
 
     namespace Detail
@@ -182,7 +184,8 @@ namespace Fling
                                    E::Mode,
                                    ComponentInfoOf<T>.Name,
                                    ComponentInfoOf<T>.Kind,
-                                   ComponentInfoOf<T>.Domain};
+                                   ComponentInfoOf<T>.Domain,
+                                   ComponentInfoOf<T>.Transient};
             }
         }
 
