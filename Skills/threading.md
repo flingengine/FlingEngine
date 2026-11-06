@@ -15,6 +15,12 @@ Gameplay code does not use it directly.
 | `CommandQueue` | `Threading/CommandQueue.h` | `ThreadQueue` of `std::function<void()>`, with `Execute` |
 | `CommandRunnable` | `Threading/CommandRunnable.h` | A `Runnable` that runs the commands sent to it, then calls `Tick` |
 | `TickLimiter` | `Threading/TickLimiter.h` | Waits for each tick of a fixed `TickRate` (for example 60 or 120 Hz) |
+| `Mutex`, `ScopedLock` | `Threading/Mutex.h` | Exclusive lock. Clang `-Wthread-safety` can see it |
+| `SharedMutex`, `ReadScopedLock`, `WriteScopedLock` | `Threading/Mutex.h` | Many readers, or one writer |
+| `SpinLock`, `ScopedSpinLock` | `Threading/Mutex.h` | Spin lock for a critical section of a few instructions |
+| `ConditionVariable` | `Threading/ConditionVariable.h` | Wait and notify on a `ScopedLock` |
+| `Semaphore` | `Threading/Semaphore.h` | A counter of permits |
+| `Event` | `Threading/Event.h` | A flag that threads can wait on. Auto or manual reset |
 
 The OS code is in `src/Threading/NativeThreadPosix.cpp` and
 `src/Threading/NativeThreadWindows.cpp`. No public header includes
@@ -109,9 +115,21 @@ std::shared_ptr<Thread> Worker = Thread::Create({.Name = "Ticker"}, TickRate::Hz
   a subsystem. Data can be recorded and replayed. A lambda cannot.
 - A command copies values. It must not capture a `World`, a registry, a
   component pointer, or a query.
-- The queue uses a mutex and a vector swap. The API does not show the lock, so
-  a lock-free queue can replace it later. `ThreadManager` also uses a mutex. See
+- The queue uses `Fling::Mutex` and `Fling::ConditionVariable`. The API does not
+  show the lock, so a lock-free queue can replace it later. `ThreadManager` also
+  uses `Fling::Mutex`. See
   [`Plans/lockless-threading.md`](../Plans/lockless-threading.md) for both.
+
+## Sync
+
+First-party code uses the `Fling::` sync types, not `std::mutex`,
+`std::shared_mutex`, `std::condition_variable`, `std::lock_guard`, or
+`std::unique_lock`. Guard shared members with `FLING_GUARDED_BY`. The macros
+are in `Threading/ThreadSafety.h`. Clang checks them with `-Wthread-safety`.
+
+Use `SpinLock` only for a critical section of a few instructions. Do not hold
+it across an allocation, IO, or a wait. `CpuRelax` (`Threading/CpuRelax.h`) is
+the pause hint for a spin. Do not replace it with a yield.
 
 ## Rules with the ECS
 
@@ -138,8 +156,8 @@ These rules follow `Plans/ecs-plan.md` and the `gameplay-architecture` skill.
 
 ## Tests
 
-`FlingTests/Core/ThreadTests.cpp` and `FlingTests/Core/TickLimiterTests.cpp`, tag
-`[Threading]` (`[TickRate]` for the fixed-rate cases). Timing tests check only
+`FlingTests/Core/ThreadTests.cpp`, `TickLimiterTests.cpp`, and `SyncTests.cpp`,
+tag `[Threading]` (`[TickRate]` for the fixed-rate cases). Timing tests check only
 that a tick is never early. Their upper bounds are large, so that a busy CI
 machine does not make them fail. Synchronize with
 `std::latch` and atomics, not with sleeps. To run them with ThreadSanitizer,

@@ -12,7 +12,10 @@ touching CMake targets or cross-folder includes. The phases of the split are in
 - `FlingEngine/Core` — the `Core` module (`Fling::Core`, built with
   `fling_add_module()`): platform macros, logging, math, memory, timing,
   `FlingPaths`, the platform-independent `Input` class, launch support
-  (`LaunchOptions`, `ExitCode`, `CrashHandler`), and `DynamicLibrary`.
+  (`LaunchOptions`, `ExitCode`, `CrashHandler`), `DynamicLibrary`, the thread
+  layer, and sync types (`Mutex`, `SharedMutex`, `SpinLock`,
+  `ConditionVariable`, `Semaphore`, `Event`). The sync types are annotated for
+  Clang `-Wthread-safety`.
   `DynamicLibrary` is the only code that calls `LoadLibrary` or `dlopen`.
   `Open` does not check a signature. `OpenSigned` checks Authenticode on
   Windows and resolves a bare name in System32, then the executable directory.

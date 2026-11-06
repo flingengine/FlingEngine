@@ -1,8 +1,9 @@
+#include "Threading/Mutex.h"
 #include "Threading/ThreadManager.h"
+#include "Threading/ThreadSafety.h"
 
 #include <atomic>
 #include <map>
-#include <mutex>
 
 namespace Fling
 {
@@ -12,8 +13,8 @@ namespace Fling
         // crash handler can read thread names. See Plans/lockless-threading.md
         struct Registry
         {
-            std::mutex Mutex;
-            std::map<ThreadId, ThreadInfo> Threads;
+            Mutex m_Mutex;
+            std::map<ThreadId, ThreadInfo> Threads FLING_GUARDED_BY(m_Mutex);
             std::atomic<ThreadId> NextId{GameThreadId + 1};
         };
 
@@ -35,21 +36,21 @@ namespace Fling
         void Register(ThreadId t_Id, std::string_view t_Name, uint64 t_NativeId)
         {
             Registry& Reg = GetRegistry();
-            std::lock_guard<std::mutex> Lock(Reg.Mutex);
+            ScopedLock Lock(Reg.m_Mutex);
             Reg.Threads[t_Id] = ThreadInfo{t_Id, std::string(t_Name), t_NativeId};
         }
 
         void Unregister(ThreadId t_Id)
         {
             Registry& Reg = GetRegistry();
-            std::lock_guard<std::mutex> Lock(Reg.Mutex);
+            ScopedLock Lock(Reg.m_Mutex);
             Reg.Threads.erase(t_Id);
         }
 
         std::string GetThreadName(ThreadId t_Id)
         {
             Registry& Reg = GetRegistry();
-            std::lock_guard<std::mutex> Lock(Reg.Mutex);
+            ScopedLock Lock(Reg.m_Mutex);
             const auto It = Reg.Threads.find(t_Id);
             return It != Reg.Threads.end() ? It->second.Name : std::string();
         }
@@ -57,7 +58,7 @@ namespace Fling
         std::vector<ThreadInfo> GetThreads()
         {
             Registry& Reg = GetRegistry();
-            std::lock_guard<std::mutex> Lock(Reg.Mutex);
+            ScopedLock Lock(Reg.m_Mutex);
             std::vector<ThreadInfo> Result;
             Result.reserve(Reg.Threads.size());
             for (const auto& Pair : Reg.Threads)

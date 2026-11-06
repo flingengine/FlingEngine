@@ -1,7 +1,10 @@
 #include "Threading/CommandRunnable.h"
+#include "Threading/ConditionVariable.h"
+#include "Threading/Mutex.h"
 #include "Threading/NativeThread.h"
 #include "Threading/Thread.h"
 #include "Threading/ThreadManager.h"
+#include "Threading/ThreadSafety.h"
 
 #include <cassert>
 #include <utility>
@@ -61,18 +64,26 @@ namespace Fling
         std::shared_ptr<Thread> NewThread(
             new Thread(std::move(t_Runnable), std::move(t_Desc), ThreadManager::AllocateId()));
 
-        // Hold the start lock while m_Native is set, so Entry cannot read a half-set Thread
-        std::unique_lock<std::mutex> Lock(NewThread->m_StartMutex);
-        NewThread->m_Native = NativeThread::Start(&Thread::Entry, NewThread.get(), NewThread->m_Desc.StackSize);
-        if (!NewThread->m_Native)
+        // Hold the start lock while m_Native is set, so Entry cannot read a half-set Thread.
+        // m_Native is guarded by the join mutex. No other thread can take that lock yet:
+        // the shared_ptr is not published, and Entry blocks on the start lock.
+        ScopedLock Lock(NewThread->m_StartMutex);
+        bool HasNative = false;
+        {
+            ScopedLock JoinLock(NewThread->m_JoinMutex);
+            NewThread->m_Native = NativeThread::Start(&Thread::Entry, NewThread.get(), NewThread->m_Desc.StackSize);
+            HasNative = static_cast<bool>(NewThread->m_Native);
+        }
+        if (!HasNative)
         {
             return nullptr;
         }
 
-        NewThread->m_StartCondition.wait(Lock,
-                                         [&NewThread]() { return NewThread->m_StartState != StartState::Pending; });
+        NewThread->m_StartCondition.Wait(Lock,
+                                         [&NewThread]() FLING_REQUIRES(NewThread->m_StartMutex)
+                                         { return NewThread->m_StartState != StartState::Pending; });
         const bool Started = NewThread->m_StartState == StartState::Started;
-        Lock.unlock();
+        Lock.Unlock();
 
         if (!Started)
         {
@@ -105,7 +116,7 @@ namespace Fling
     void Thread::Entry(void* t_Thread)
     {
         Thread& Self = *static_cast<Thread*>(t_Thread);
-        std::unique_lock<std::mutex> Lock(Self.m_StartMutex);
+        ScopedLock Lock(Self.m_StartMutex);
 
         t_CurrentId = Self.m_Id;
         t_CurrentName = Self.m_Desc.Name;
@@ -122,8 +133,8 @@ namespace Fling
 
         const bool InitOk = Self.m_Runnable->Init();
         Self.m_StartState = InitOk ? StartState::Started : StartState::InitFailed;
-        Lock.unlock();
-        Self.m_StartCondition.notify_all();
+        Lock.Unlock();
+        Self.m_StartCondition.NotifyAll();
 
         if (InitOk)
         {
@@ -147,7 +158,7 @@ namespace Fling
     void Thread::Join()
     {
         assert(CurrentId() != m_Id && "A Thread cannot join itself");
-        std::lock_guard<std::mutex> Lock(m_JoinMutex);
+        ScopedLock Lock(m_JoinMutex);
         if (m_Native)
         {
             m_Native->Join();
@@ -157,7 +168,7 @@ namespace Fling
 
     bool Thread::SetPriority(ThreadPriority t_Priority)
     {
-        std::lock_guard<std::mutex> Lock(m_JoinMutex);
+        ScopedLock Lock(m_JoinMutex);
         if (!m_Native || !IsRunning())
         {
             return false;

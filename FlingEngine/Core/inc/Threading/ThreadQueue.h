@@ -1,10 +1,11 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Threading/ConditionVariable.h"
+#include "Threading/Mutex.h"
+#include "Threading/ThreadSafety.h"
 
 #include <chrono>
-#include <condition_variable>
-#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -29,10 +30,10 @@ namespace Fling
         void Push(T t_Item)
         {
             {
-                std::lock_guard<std::mutex> Lock(m_Mutex);
+                ScopedLock Lock(m_Mutex);
                 m_Items.push_back(std::move(t_Item));
             }
-            m_Condition.notify_one();
+            m_Condition.NotifyOne();
         }
 
         /**
@@ -45,7 +46,7 @@ namespace Fling
         {
             std::vector<T> Items;
             {
-                std::lock_guard<std::mutex> Lock(m_Mutex);
+                ScopedLock Lock(m_Mutex);
                 Items.swap(m_Items);
             }
             for (T& Item : Items)
@@ -62,8 +63,9 @@ namespace Fling
          */
         bool WaitForItems(std::chrono::nanoseconds t_Timeout)
         {
-            std::unique_lock<std::mutex> Lock(m_Mutex);
-            m_Condition.wait_for(Lock, t_Timeout, [this]() { return !m_Items.empty() || m_WakeRequested; });
+            ScopedLock Lock(m_Mutex);
+            m_Condition.WaitFor(
+                Lock, t_Timeout, [this]() FLING_REQUIRES(m_Mutex) { return !m_Items.empty() || m_WakeRequested; });
             m_WakeRequested = false;
             return !m_Items.empty();
         }
@@ -72,22 +74,22 @@ namespace Fling
         void Wake()
         {
             {
-                std::lock_guard<std::mutex> Lock(m_Mutex);
+                ScopedLock Lock(m_Mutex);
                 m_WakeRequested = true;
             }
-            m_Condition.notify_one();
+            m_Condition.NotifyOne();
         }
 
         bool IsEmpty() const
         {
-            std::lock_guard<std::mutex> Lock(m_Mutex);
+            ScopedLock Lock(m_Mutex);
             return m_Items.empty();
         }
 
     private:
-        mutable std::mutex m_Mutex;
-        std::condition_variable m_Condition;
-        std::vector<T> m_Items;
-        bool m_WakeRequested = false;
+        mutable Mutex m_Mutex;
+        ConditionVariable m_Condition;
+        std::vector<T> m_Items FLING_GUARDED_BY(m_Mutex);
+        bool m_WakeRequested FLING_GUARDED_BY(m_Mutex) = false;
     };
 } // namespace Fling
