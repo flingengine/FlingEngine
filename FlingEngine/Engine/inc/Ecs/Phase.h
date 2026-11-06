@@ -8,7 +8,7 @@ namespace Fling
 {
     /**
      * The point in the frame where a system runs. The phase also decides the
-     * cadence: Input, Simulation, and ResolveDeferred run at the fixed tick.
+     * update rate: Input, Simulation, and ResolveDeferred run at the fixed tick.
      * PostSimulation, Extract, and Editor run once per rendered frame.
      */
     enum class Phase : uint8
@@ -24,7 +24,7 @@ namespace Fling
     inline constexpr std::size_t PhaseCount = 6;
 
     /** How often a phase runs. */
-    enum class Cadence : uint8
+    enum class UpdateRate : uint8
     {
         /** Once per fixed simulation tick. The system implements FixedUpdate. */
         Fixed,
@@ -32,14 +32,14 @@ namespace Fling
         Frame,
     };
 
-    constexpr Cadence CadenceOf(const Phase phase)
+    constexpr UpdateRate UpdateRateOf(const Phase phase)
     {
-        return phase <= Phase::ResolveDeferred ? Cadence::Fixed : Cadence::Frame;
+        return phase <= Phase::ResolveDeferred ? UpdateRate::Fixed : UpdateRate::Frame;
     }
 
     constexpr bool IsFixedPhase(const Phase phase)
     {
-        return CadenceOf(phase) == Cadence::Fixed;
+        return UpdateRateOf(phase) == UpdateRate::Fixed;
     }
 
     constexpr const char* PhaseName(const Phase phase)

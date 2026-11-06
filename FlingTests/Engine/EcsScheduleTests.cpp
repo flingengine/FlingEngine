@@ -286,7 +286,7 @@ TEST_CASE("A queue has one consumer", "[ecs][schedule]")
     REQUIRE(HasError(systems.Build(), ScheduleErrorKind::ConsumeConflict));
 }
 
-TEST_CASE("A component written at both cadences is an error", "[ecs][schedule]")
+TEST_CASE("A component written at both update rates is an error", "[ecs][schedule]")
 {
     FakeSystems systems;
     systems.Add(Sim("Test.Mover"), {{"Transform", W}});

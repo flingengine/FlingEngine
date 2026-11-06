@@ -146,7 +146,7 @@ fling_add_ecs_compile_check( WriteThroughRead       "queries a component that it
 fling_add_ecs_compile_check( SpawnUndeclared        "Add Fling::Spawns to the access list" )
 fling_add_ecs_compile_check( FrameCommands          "Only a fixed phase system has Commands" )
 fling_add_ecs_compile_check( MemberState            "A system cannot have member state" )
-fling_add_ecs_compile_check( WrongCadence           "A fixed phase system implements FixedUpdate" )
+fling_add_ecs_compile_check( WrongUpdateRate        "A fixed phase system implements FixedUpdate" )
 fling_add_ecs_compile_check( FixedReadsRealTime     "A fixed rate system cannot read RealFrameTime" )
 fling_add_ecs_compile_check( FixedReadsPresentation "A fixed rate system cannot read a Presentation component" )
 fling_add_ecs_compile_check( FrameWritesSimulation  "A frame rate system cannot write a Simulation component" )

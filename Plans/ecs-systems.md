@@ -83,7 +83,7 @@ FlingEngine/Engine/inc/Ecs/
     Entity.h            Fling::Entity (8-byte handle)
     Component.h         ComponentInfo, ComponentKind, the Fling::Component concept
     Access.h            Read<T>, Write<T>, Append<Q>, Consume<Q>, Spawns, Access<...>
-    Phase.h             Phase, Cadence, WorldRole
+    Phase.h             Phase, UpdateRate, WorldRole
     System.h            ISystem, SystemInfo, SystemDesc
     SystemBase.h        Fling::System<Derived, Access>: the adapter authors derive from
     SimTime.h           SimTime, RealFrameTime (the runner writes them)
@@ -453,7 +453,7 @@ World::Shutdown
     OnDestroy        each system, reverse order
 ```
 
-**The phase decides the cadence.** `Input`, `Simulation`, and
+**The phase decides the update rate.** `Input`, `Simulation`, and
 `ResolveDeferred` are fixed rate. `PostSimulation`, `Extract`, and `Editor`
 are frame rate. A system has exactly one phase, so it implements exactly one
 of `FixedUpdate` or `Update`. The adapter checks this at compile time
@@ -676,7 +676,7 @@ calls the author's non-virtual function. The scheduler sees only `ISystem`.
 Authors never see `SystemContextBase`.
 
 `Context` is `SystemContext<Derived, Access>`. It is one type for both
-cadences. The base class cannot choose a type from `Derived::Info.Phase`,
+update rates. The base class cannot choose a type from `Derived::Info.Phase`,
 because `Derived` is not complete yet when its base is made. Instead, the
 functions that only a fixed phase may call (`Spawn`, `Commands`, `Queue`,
 `Drain`) have a `static_assert` on the phase. A class template's member
@@ -763,7 +763,7 @@ system and the type):
 | `ctx.Spawn()` needs `Fling::Spawns` in the access list | `SystemContext::Spawn` |
 | `ctx.Queue<Q>()` needs `Append<Q>`. `ctx.Drain<Q>()` needs `Consume<Q>` | `SystemContext` |
 | No member state | `SystemRegistry::Add` |
-| Phase and cadence agree. A fixed system does not read `RealFrameTime` | `SystemRegistry::Add` |
+| Phase and update rate agree. A fixed system does not read `RealFrameTime` | `SystemRegistry::Add` |
 | A frame rate system does not write a `Simulation` component | `SystemRegistry::Add` |
 | A fixed rate system does not read a `Presentation` component ("drive visuals, don't depend on them") | `SystemRegistry::Add` |
 | A frame rate system does not spawn, destroy, or append to a sim queue | `static_assert` on the phase in those functions |
@@ -1052,9 +1052,9 @@ Each item is one PR off `main`, green on all CI platforms.
    `Ecs/SystemRegistry.h`, `Ecs/Schedule.h`, and `src/Ecs/Schedule.cpp`,
    with `FlingTests/Engine/EcsScheduleTests.cpp`. `BuildSchedule` also
    reports duplicate and missing names, two consumers of one queue, and a
-   component written at both cadences. `SystemRegistry::Add` checks only
+   component written at both update rates. `SystemRegistry::Add` checks only
    "derives from `ISystem`" and "no member state" so far. The phase and
-   cadence checks (`FixedUpdate` against `Update`, `RealFrameTime`,
+   update-rate checks (`FixedUpdate` against `Update`, `RealFrameTime`,
    `Simulation` writes from a frame system) need the adapter's `Info` and
    `Context`, so they move to item 3. `WritesSimulation<A>` and
    `ReadsPresentation<A>` in `Access.h` are ready for them.

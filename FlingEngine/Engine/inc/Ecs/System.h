@@ -65,7 +65,7 @@ namespace Fling
     {
         /** "Module.Name". Errors, the schedule dump, After, Before, and profiling use it. */
         const char* Name = nullptr;
-        /** The phase decides the cadence: FixedUpdate for a fixed phase, Update for a frame phase. */
+        /** The phase decides the update rate: FixedUpdate for a fixed phase, Update for a frame phase. */
         Fling::Phase Phase = Fling::Phase::Simulation;
         /** The world roles that run this system. */
         WorldRole RunIn = WorldRole::Play;

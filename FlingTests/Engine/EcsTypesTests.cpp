@@ -153,7 +153,7 @@ TEST_CASE("A tag must be empty and a table must not be", "[ecs]")
     STATIC_REQUIRE_FALSE(IsWellFormedComponent<TagWithData>);
 }
 
-TEST_CASE("Phases decide the cadence", "[ecs]")
+TEST_CASE("Phases decide the update rate", "[ecs]")
 {
     STATIC_REQUIRE(IsFixedPhase(Phase::Input));
     STATIC_REQUIRE(IsFixedPhase(Phase::Simulation));

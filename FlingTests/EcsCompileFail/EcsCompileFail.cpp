@@ -121,7 +121,7 @@ namespace
     private:
         int m_Count = 0;
     };
-#elif defined(FLING_ECS_CASE_WrongCadence)
+#elif defined(FLING_ECS_CASE_WrongUpdateRate)
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Write<Position>>>
     {
     public:
@@ -183,7 +183,7 @@ int main()
     systems.Add<GoodSystem>();
     systems.Add<GoodFrameSystem>();
     systems.Add<GoodOwnerSystem>();
-#if defined(FLING_ECS_CASE_MemberState) || defined(FLING_ECS_CASE_WrongCadence) ||                                     \
+#if defined(FLING_ECS_CASE_MemberState) || defined(FLING_ECS_CASE_WrongUpdateRate) ||                                  \
     defined(FLING_ECS_CASE_FixedReadsRealTime) || defined(FLING_ECS_CASE_FixedReadsPresentation) ||                    \
     defined(FLING_ECS_CASE_FrameWritesSimulation) || defined(FLING_ECS_CASE_WritesSimTime) ||                          \
     defined(FLING_ECS_CASE_SingletonNotOwned)

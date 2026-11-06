@@ -274,7 +274,7 @@ namespace Fling
                                  std::string(NameOf(Desc(frameSystem))) + " (Phase " +
                                  PhaseName(Desc(frameSystem).Info.Phase) +
                                  ", frame rate). The simulation must not depend on the frame rate. Write it from "
-                                 "one cadence only.",
+                                 "one update rate only.",
                              {fixedSystem, frameSystem});
                 }
             }
