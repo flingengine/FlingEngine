@@ -8,7 +8,6 @@
 #include "Input/InputMessage.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
-#include "NonCopyable.hpp"
 
 #include <entt/signal/sigh.hpp>
 #include <memory>
@@ -33,7 +32,7 @@ namespace Fling
      * A handler is always owned by a shared_ptr (make one with Create), so devices,
      * interfaces, and processors can keep a weak_ptr to it and to its queue.
      */
-    class InputMessageHandler : public NonCopyable, public std::enable_shared_from_this<InputMessageHandler>
+    class InputMessageHandler : public std::enable_shared_from_this<InputMessageHandler>
     {
         /** Only Create can make this, so a handler is never on the stack or in a unique_ptr. */
         struct CreateKey
@@ -42,6 +41,9 @@ namespace Fling
         };
 
     public:
+        InputMessageHandler(const InputMessageHandler&) = delete;
+        InputMessageHandler& operator=(const InputMessageHandler&) = delete;
+
         static std::shared_ptr<InputMessageHandler> Create(uint32 t_QueueCapacity = InputMessageQueue::DefaultCapacity);
 
         /** Use Create. */

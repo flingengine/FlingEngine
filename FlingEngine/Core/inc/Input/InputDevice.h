@@ -4,7 +4,6 @@
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
 #include "Input/InputKeyState.h"
-#include "NonCopyable.hpp"
 
 #include <memory>
 
@@ -24,9 +23,12 @@ namespace Fling
      * keeps only a weak_ptr to its handler: after the handler is destroyed, the Push
      * functions do nothing.
      */
-    class InputDevice : public NonCopyable
+    class InputDevice
     {
     public:
+        InputDevice(const InputDevice&) = delete;
+        InputDevice& operator=(const InputDevice&) = delete;
+
         InputDevice(InputDeviceId t_Id,
                     const InputDeviceInfo& t_Info,
                     InputInterfaceId t_Owner,

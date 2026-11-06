@@ -2,7 +2,6 @@
 
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
-#include "NonCopyable.hpp"
 #include "Platform.h"
 
 #include <vector>
@@ -12,9 +11,12 @@ namespace Fling
     /**
      * The instance is a representation of this application graphics instance in Vulkan
      */
-    class Instance : NonCopyable
+    class Instance
     {
     public:
+        Instance(const Instance&) = delete;
+        Instance& operator=(const Instance&) = delete;
+
         explicit Instance();
 
         ~Instance();
