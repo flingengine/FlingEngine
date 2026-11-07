@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Strings/String.h"
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-
 #include <type_traits>
 
 namespace Fling

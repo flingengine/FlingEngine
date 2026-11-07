@@ -9,7 +9,6 @@
 
 #include <fstream>
 #include <memory>
-
 #include <vector>
 
 namespace Fling

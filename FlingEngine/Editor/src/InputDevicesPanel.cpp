@@ -9,7 +9,6 @@
 #include <iomanip>
 #include <memory>
 #include <sstream>
-
 #include <vector>
 
 namespace Fling

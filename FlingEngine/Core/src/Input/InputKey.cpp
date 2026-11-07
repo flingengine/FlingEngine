@@ -2,7 +2,6 @@
 #include "Strings/String.h"
 
 #include <array>
-
 #include <unordered_map>
 
 namespace Fling

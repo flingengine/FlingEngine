@@ -5,7 +5,6 @@
 
 #include <entt/entity/registry.hpp>
 
-
 namespace Fling
 {
     class Model;

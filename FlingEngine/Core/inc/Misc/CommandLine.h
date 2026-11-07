@@ -4,7 +4,6 @@
 #include "Misc/StringUtils.h"
 #include "Strings/String.h"
 
-  // StringView
 #include <unordered_map>
 
 // TODO: I think that we may gain a lot if we just use

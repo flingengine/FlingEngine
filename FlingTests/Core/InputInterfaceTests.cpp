@@ -6,7 +6,6 @@
 #include <functional>
 #include <memory>
 
-
 using Fling::String;
 using Fling::StringView;
 

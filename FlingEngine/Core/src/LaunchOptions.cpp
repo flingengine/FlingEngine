@@ -5,7 +5,6 @@
 #include <charconv>
 #include <limits>
 
-
 namespace Fling
 {
     namespace

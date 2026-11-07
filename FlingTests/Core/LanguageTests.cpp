@@ -3,7 +3,6 @@
 
 #include <catch2/catch_all.hpp>
 
-
 using namespace Fling;
 
 namespace

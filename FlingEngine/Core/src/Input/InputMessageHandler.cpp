@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstdio>
 
-
 namespace Fling
 {
     std::shared_ptr<InputMessageHandler> InputMessageHandler::Create(uint32 t_QueueCapacity)

@@ -12,7 +12,6 @@
 #include <catch2/catch_all.hpp>
 #include <cstdio>
 
-
 using Fling::String;
 using Fling::StringView;
 

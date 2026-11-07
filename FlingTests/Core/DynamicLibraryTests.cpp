@@ -7,11 +7,8 @@
 #include <cstdio>
 #include <span>
 
-
-
 #if FLING_LINUX
 #include <unistd.h>
-
 #endif
 
 using Fling::String;

@@ -3,8 +3,6 @@
 #include "BaseEditor.h"
 #include "Strings/String.h"
 
-
-
 namespace Sandbox
 {
     class SandboxEditor : public Fling::BaseEditor

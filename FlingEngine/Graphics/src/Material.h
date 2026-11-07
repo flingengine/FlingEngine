@@ -5,7 +5,6 @@
 #include "Texture.h"
 
 #include <memory>
-
 #include <unordered_map>
 
 namespace Fling

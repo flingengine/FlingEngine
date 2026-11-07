@@ -4,8 +4,6 @@
 #include "Strings/String.h"
 #include "Threading/ThreadTypes.h"
 
-
-
 #include <vector>
 
 namespace Fling

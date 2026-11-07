@@ -6,7 +6,6 @@
 
 #include <memory>
 
-
 #if !FLING_WINDOWS
 #include <pthread.h>
 #endif

@@ -5,7 +5,6 @@
 
 #include <chrono>
 
-
 namespace Fling
 {
     /** How closely a fixed-rate thread wakes at each tick. */

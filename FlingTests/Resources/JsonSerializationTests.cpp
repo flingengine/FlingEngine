@@ -5,7 +5,6 @@
 
 #include <catch2/catch_all.hpp>
 
-
 using Fling::String;
 using Fling::StringView;
 

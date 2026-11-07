@@ -6,7 +6,6 @@
 #include "Strings/String.h"
 
 #include <memory>
-
 #include <unordered_map>
 
 // Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)

@@ -12,7 +12,6 @@
 #include <cstring>
 #include <filesystem>
 
-
 namespace Fling
 {
     namespace

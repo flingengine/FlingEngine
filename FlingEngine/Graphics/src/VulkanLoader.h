@@ -3,8 +3,6 @@
 #include "FlingVulkan.h"
 #include "Strings/String.h"
 
-
-
 namespace Fling
 {
     /**

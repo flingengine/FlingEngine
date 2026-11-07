@@ -8,7 +8,6 @@
 #include <catch2/catch_all.hpp>
 #include <cstring>
 
-
 using Fling::String;
 using Fling::StringView;
 

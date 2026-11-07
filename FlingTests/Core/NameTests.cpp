@@ -8,7 +8,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <set>
-
 #include <thread>
 #include <unordered_set>
 #include <vector>

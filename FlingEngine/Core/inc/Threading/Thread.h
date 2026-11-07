@@ -12,8 +12,6 @@
 #include <functional>
 #include <memory>
 
-
-
 namespace Fling
 {
     class NativeThread;

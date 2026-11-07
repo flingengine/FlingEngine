@@ -5,7 +5,6 @@
 #include "Platform.h"
 #include "Strings/String.h"
 
-
 #include <utility>
 
 namespace Fling

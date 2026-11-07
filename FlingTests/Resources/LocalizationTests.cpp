@@ -7,7 +7,6 @@
 #include <filesystem>
 #include <fstream>
 
-
 using Fling::String;
 using Fling::StringView;
 

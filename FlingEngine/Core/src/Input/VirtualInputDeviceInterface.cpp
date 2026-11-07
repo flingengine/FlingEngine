@@ -4,7 +4,6 @@
 
 #include <algorithm>
 
-
 namespace Fling
 {
     void VirtualInputDeviceInterface::Init(const std::shared_ptr<InputMessageHandler>& t_Handler)

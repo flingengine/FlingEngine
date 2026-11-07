@@ -4,8 +4,6 @@
 #include "Platform.h"
 #include "Strings/String.h"
 
-
-
 namespace Fling
 {
 	struct CORE_API Version

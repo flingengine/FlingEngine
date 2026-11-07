@@ -5,8 +5,6 @@
 #include <cstring>
 #include <limits>
 
-
-
 #if FLING_WINDOWS
 
 #include <cstdio>

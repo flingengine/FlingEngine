@@ -8,7 +8,6 @@
 #include <memory>
 #include <optional>
 
-
 // Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)
 #if WITH_INPUT_RECORDING
 namespace Fling

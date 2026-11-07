@@ -6,7 +6,6 @@
 
 #include <deque>
 #include <entt/entity/registry.hpp>
-
 #include <unordered_map>
 #include <utility>
 #include <vector>

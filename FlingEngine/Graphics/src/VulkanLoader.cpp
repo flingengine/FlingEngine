@@ -6,8 +6,6 @@
 
 #include <stdexcept>
 
-
-
 extern "C"
 {
 #define FLING_VK_GLOBAL(name) PFN_##name name = nullptr;

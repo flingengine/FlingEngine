@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <fstream>
 
-
 using Fling::String;
 using Fling::StringView;
 

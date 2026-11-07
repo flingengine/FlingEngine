@@ -26,7 +26,6 @@
 
 #include <stdexcept>
 
-
 namespace
 {
     [[noreturn]] void StopForMissingVulkan(const Fling::StringView t_Detail)

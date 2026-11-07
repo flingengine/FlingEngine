@@ -4,8 +4,6 @@
 #include "Input/InputMessage.h"
 #include "Strings/String.h"
 
-
-
 namespace Fling
 {
     class CommandLine;

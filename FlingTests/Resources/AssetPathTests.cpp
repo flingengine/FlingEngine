@@ -6,7 +6,6 @@
 #include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <fstream>
-
 #include <unordered_set>
 
 using namespace Fling;

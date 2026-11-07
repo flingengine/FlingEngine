@@ -3,7 +3,6 @@
 #include "Platform.h"
 #include "Strings/String.h"
 
-
 #include <sys/stat.h>
 #include <sys/types.h>
 

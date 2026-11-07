@@ -7,7 +7,6 @@
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
-
 #include <vector>
 
 using Fling::String;

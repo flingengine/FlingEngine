@@ -7,7 +7,6 @@
 
 #include <map>
 #include <memory>
-
 #include <vector>
 
 namespace Fling

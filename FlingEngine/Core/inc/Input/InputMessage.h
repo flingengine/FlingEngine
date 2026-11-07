@@ -7,8 +7,6 @@
 
 #include <chrono>
 
-
-
 namespace Fling
 {
     /** The kind of an InputMessage. The fields that each type uses are given in InputMessage. */

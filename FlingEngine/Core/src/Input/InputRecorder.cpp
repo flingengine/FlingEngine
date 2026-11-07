@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cstdio>
 
-
 #if WITH_INPUT_RECORDING
 namespace Fling
 {

@@ -4,7 +4,6 @@
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
-
 #include <type_traits>
 #include <utility>
 

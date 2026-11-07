@@ -4,8 +4,6 @@
 #include "FlingTypes.h"
 #include "Strings/String.h"
 
-
-
 namespace Fling
 {
 	/** The current window mode  */

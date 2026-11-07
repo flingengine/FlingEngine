@@ -7,8 +7,6 @@
 
 #include <limits>
 
-
-
 namespace Fling
 {
     /** UTF-8 to UTF-16 for wide Windows calls. Return an empty string when t_Text is not valid UTF-8. */

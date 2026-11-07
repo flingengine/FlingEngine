@@ -2,7 +2,6 @@
 
 #include "Strings/String.h"
 
-
 #include <vector>
 
 namespace Fling

@@ -3,7 +3,6 @@
 #include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
-
 #include <vector>
 
 using Fling::String;

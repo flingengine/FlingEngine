@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <functional>
 
-
 namespace Fling
 {
     /**

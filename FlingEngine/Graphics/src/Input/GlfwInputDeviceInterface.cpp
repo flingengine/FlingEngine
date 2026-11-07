@@ -12,7 +12,6 @@
 #include <GLFW/glfw3.h>
 #include <sstream>
 
-
 namespace Fling
 {
     namespace

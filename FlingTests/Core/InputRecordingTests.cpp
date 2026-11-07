@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
-
 #include <vector>
 
 using Fling::String;

@@ -12,7 +12,6 @@
 
 #include <entt/signal/sigh.hpp>
 #include <memory>
-
 #include <utility>
 #include <vector>
 

@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <functional>
 
-
 namespace Fling
 {
     /** What kind of input a key is. A key can have more than one flag. */
