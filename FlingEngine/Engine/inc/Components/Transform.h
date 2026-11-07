@@ -2,7 +2,6 @@
 
 #include "Ecs/Component.h"
 #include "FlingMath.h"
-#include "JsonArchive.h"
 
 #include <ostream>
 
@@ -30,8 +29,6 @@ namespace Fling
 		bool operator==(const Transform &other) const;
 		bool operator!=(const Transform &other) const;
 		friend std::ostream& operator << (std::ostream& t_OutStream, const Fling::Transform& t_Transform);
-
-		void Serialize(JsonArchive& Ar);
 
 		inline const glm::vec3& GetPos() const { return m_Pos; }
 		inline const glm::vec3& GetScale() const { return m_Scale; }

@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: in progress. Phases A and B are done. Phase D is mostly done through [`ecs-systems.md`](ecs-systems.md). Each phase heading below says what is left.
+Status: in progress. Phases A, B, and C are done. Phase D is mostly done through [`ecs-systems.md`](ecs-systems.md). Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -618,6 +618,14 @@ Done, with one change from the text below. The facade is `Fling::EntityStorage` 
 - Replace the `entt::tag<"Default"_hs>` / `"Debug"_hs` tags with tag structs (`DeferredRenderTag`).
 
 ### Phase C — `ModuleRegistration`, `TypeRegistry`, and reflection (replaces `ComponentTypeRegistry`)
+
+Done. `Ecs/Reflection.h` (`TypeBuilder`, `FieldBuilder`, `TypeDesc`, `FieldTraits`), `Ecs/ModuleRegistration.h`, and `Ecs/TypeRegistry.h` (with `SaveObject` and `LoadObject`) are in Engine. Each module has `Register<Module>(ModuleRegistration&)`, and `Game::Register` replaces `RegisterComponents` and `RegisterSystems`. A world builds its own `TypeRegistry` in `Init`. `ComponentTypeRegistry`, `JsonArchive`, and every `Serialize` method are gone. `EntityGuid` is saved, and `Entity` fields remap on load. The versioning in §1.4 is in (`$v`, upgrades, former field and component names, removed fields and components). The editor inspector is generated, with `EditorWidgets::Override<T>` for `MeshRenderer`. Changes from the text below:
+
+- `Engine::Startup` calls `RegisterEngine`, `RegisterGraphics`, and `RegisterPhysics` by hand. A generated `RegisterLinkedModules` waits for `fling_add_game` ([`project-model.md`](project-model.md)).
+- A component's former names are on the builder (`TypeBuilder::FormerNames`), not on `ComponentInfo`.
+- `MeshRenderer` still holds raw `Model*` and `Material*`, and saves its paths through `TypeBuilder::Serialize`. The `AssetRef` split is part of Phase E.
+- Sandbox groups each feature's registration in one function in `RegisterSandbox.cpp`, not in feature folders yet.
+
 - Add `ModuleRegistration`, `TypeBuilder<T>`, and `TypeRegistry::Build` (§1.3). `fling_add_game` generates `RegisterLinkedModules` from the target's link line. Port `Transform`, `NameComponent`, the lights, `MeshRenderer`, `Mover`, and `Rotator` onto `modules.Component` / `modules.Singleton`. During the move, `.Serialize(fn)` adapts existing `Serialize(JsonArchive&)` methods.
 - Make `World::LoadLevelFile` and `OutputLevelFile` use reflection, and add `EntityGuid`. Existing `Assets/Levels/*.json` must load without changes.
 - The editor inspector is generated from reflection. The hand-written widgets in `BaseEditor.cpp` become `EditorWidgets::Override<T>`.

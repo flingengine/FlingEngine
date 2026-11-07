@@ -2,6 +2,7 @@
 #include "Json.h"
 #include "Logger.h"
 
+#include <cstdint>
 #include <fstream>
 
 // nlohmann/json v3.7 includes <ciso646>, which libstdc++ flags with a #warning under C++20
@@ -282,6 +283,122 @@ namespace Fling
 			return def;
 		}
 		return ReadVec4(m_Impl->data.at(key), def);
+	}
+
+	int64_t Json::GetInt64(const std::string& key, int64_t def /* = 0 */) const
+	{
+		if (!Contains(key) || !m_Impl->data.at(key).is_number_integer())
+		{
+			return def;
+		}
+		const nlohmann::json& value = m_Impl->data.at(key);
+		if (value.is_number_unsigned() && value.get<uint64_t>() > static_cast<uint64_t>(INT64_MAX))
+		{
+			return def;
+		}
+		return value.get<int64_t>();
+	}
+
+	uint64_t Json::GetUInt64(const std::string& key, uint64_t def /* = 0 */) const
+	{
+		if (!Contains(key) || !m_Impl->data.at(key).is_number_integer())
+		{
+			return def;
+		}
+		const nlohmann::json& value = m_Impl->data.at(key);
+		if (!value.is_number_unsigned() && value.get<int64_t>() < 0)
+		{
+			return def;
+		}
+		return value.get<uint64_t>();
+	}
+
+	double Json::GetDouble(const std::string& key, double def /* = 0.0 */) const
+	{
+		if (!Contains(key) || !m_Impl->data.at(key).is_number())
+		{
+			return def;
+		}
+		return m_Impl->data.at(key).get<double>();
+	}
+
+	glm::vec2 Json::GetVec2(const std::string& key, const glm::vec2& def /* = {} */) const
+	{
+		if (!Contains(key))
+		{
+			return def;
+		}
+		const nlohmann::json& value = m_Impl->data.at(key);
+		if (!value.is_array() || value.size() < 2 || !value.at(0).is_number() || !value.at(1).is_number())
+		{
+			return def;
+		}
+		return glm::vec2(value.at(0).get<float>(), value.at(1).get<float>());
+	}
+
+	glm::quat Json::GetQuat(const std::string& key, const glm::quat& def) const
+	{
+		if (!Contains(key))
+		{
+			return def;
+		}
+		const nlohmann::json& value = m_Impl->data.at(key);
+		if (!value.is_array() || value.size() < 4)
+		{
+			return def;
+		}
+		for (std::size_t i = 0; i < 4; ++i)
+		{
+			if (!value.at(i).is_number())
+			{
+				return def;
+			}
+		}
+		// glm::quat takes w first
+		return glm::quat(value.at(3).get<float>(), value.at(0).get<float>(), value.at(1).get<float>(), value.at(2).get<float>());
+	}
+
+	void Json::Set(const std::string& key, const glm::vec2& v)
+	{
+		EnsureObject();
+		m_Impl->data[key] = nlohmann::json::array({ v.x, v.y });
+	}
+
+	void Json::SetInt64(const std::string& key, int64_t v)
+	{
+		EnsureObject();
+		m_Impl->data[key] = v;
+	}
+
+	void Json::SetUInt64(const std::string& key, uint64_t v)
+	{
+		EnsureObject();
+		m_Impl->data[key] = v;
+	}
+
+	void Json::SetDouble(const std::string& key, double v)
+	{
+		EnsureObject();
+		m_Impl->data[key] = v;
+	}
+
+	void Json::SetQuat(const std::string& key, const glm::quat& v)
+	{
+		EnsureObject();
+		m_Impl->data[key] = nlohmann::json::array({ v.x, v.y, v.z, v.w });
+	}
+
+	void Json::Remove(const std::string& key)
+	{
+		if (m_Impl->data.is_object())
+		{
+			m_Impl->data.erase(key);
+		}
+	}
+
+	bool Json::IsString(const std::string& key) const
+	{
+		return Contains(key) && m_Impl->data.at(key).is_string();
 	}
 
 	void Json::Set(const std::string& key, const glm::vec3& v)

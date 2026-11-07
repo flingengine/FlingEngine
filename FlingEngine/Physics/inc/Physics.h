@@ -86,14 +86,13 @@ namespace Fling
         PHYSICS_API std::shared_ptr<PhysicsProvider> GetProvider(const Fling::EntityStorage& t_Reg);
     } // namespace Physics
 
-    /** Registers RigidBody and Collider for level files. Called from Engine::Startup. */
-    PHYSICS_API void RegisterPhysicsComponents();
-
-    class SystemRegistry;
+    class ModuleRegistration;
 
     /**
-     * Adds the Physics module's systems (Physics.Step, which runs Physics::Tick in the
-     * ResolveDeferred phase of each fixed tick during play). Called from Engine::Startup.
+     * Adds the Physics module's component types (RigidBody and Collider, which levels
+     * save, and the transient physics state) and systems (Physics.Step, which runs
+     * Physics::Tick in the ResolveDeferred phase of each fixed tick during play).
+     * Called from Engine::Startup.
      */
-    PHYSICS_API void RegisterPhysicsSystems(SystemRegistry& t_Systems);
+    PHYSICS_API void RegisterPhysics(ModuleRegistration& t_Modules);
 } // namespace Fling

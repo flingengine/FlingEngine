@@ -1,5 +1,5 @@
+#include "Components/EntityGuid.h"
 #include "Components/Name.hpp"
-#include "ComponentTypeRegistry.h"
 #include "FlingConfig.h"
 #include "FlingPaths.h"
 #include "Json.h"
@@ -7,8 +7,11 @@
 #include "World.h"
 
 #include <algorithm>
-#include <set>
 #include <chrono>
+#include <random>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -19,6 +22,19 @@ namespace Fling
 		bool IsReservedEntityKey(const std::string& key)
 		{
 			return key == "name" || key == "title" || key == "version" || key == "NameComponent";
+		}
+
+		/** True if the modules already have a type with this name. */
+		bool HasType(const ModuleRegistration& t_Modules, const char* t_Name)
+		{
+			for (const TypeDesc& Type : t_Modules.Types())
+			{
+				if (Type.Name == t_Name)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -39,11 +55,27 @@ namespace Fling
 		F_LOG_TRACE("World Init!");
 		assert(m_CurrentState == WorldState::NONE);
 
-		m_Game->RegisterComponents();
-		ComponentTypeRegistry::Get().RunExternalRegistrars();
-		m_Game->RegisterSystems(m_Systems);
+		m_Game->Register(m_Modules);
+
+		// The level format always has the entity name and id, so every world knows these two
+		if (!HasType(m_Modules, NameComponent::Component.Name))
+		{
+			m_Modules.Component<NameComponent>([](TypeBuilder<NameComponent>& t_Type)
+			{
+				t_Type.Field("Name", &NameComponent::Name);
+			});
+		}
+		if (!HasType(m_Modules, EntityGuid::Component.Name))
+		{
+			m_Modules.Component<EntityGuid>([](TypeBuilder<EntityGuid>& t_Type)
+			{
+				t_Type.Field("value", &EntityGuid::Value).ReadOnly();
+			});
+		}
+		m_Types = TypeRegistry::Build(m_Modules);
+		m_TypesBuilt = true;
+
 		m_Game->Init(m_Storage);
-		ComponentTypeRegistry::Get().Seal();
 
 		// Build the schedule before any level loads. A bad schedule never runs.
 		ScheduleResult Schedule = m_Systems.BuildSchedule();
@@ -65,11 +97,11 @@ namespace Fling
 		{
 			for (const AccessEntry& Entry : Desc->Access)
 			{
-				if (!Entry.Transient && Entry.Name && !ComponentTypeRegistry::Get().Find(Entry.Name) &&
+				if (!Entry.Transient && Entry.Name && !m_Types.Find(Entry.Name) &&
 					Reported.insert(Entry.Name).second)
 				{
-					F_LOG_WARN("System {} uses component {}, which is saved but not registered. Register it with "
-							   "ComponentTypeRegistry::Register<T>(), or mark it Transient.",
+					F_LOG_WARN("System {} uses component {}, which is saved but not registered. Add it with "
+							   "ModuleRegistration::Component<T>(), or mark it Transient.",
 							   Desc->Info.Name, Entry.Name);
 				}
 			}
@@ -287,15 +319,52 @@ namespace Fling
         return root.SaveToFile(FullPath);
     }
 
-    bool World::SaveToJson(Json& t_OutDoc, const std::string& t_Title) const
+    uint64 World::MakeEntityGuid() const
     {
-        const ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
-        if (!typeRegistry.IsSealed())
+        // Only level files use the id, so it does not need to be deterministic
+        static std::mt19937_64 Generator{ std::random_device{}() };
+        while (true)
         {
-            F_LOG_ERROR("Cannot save the world: ComponentTypeRegistry is not sealed");
+            const uint64 Value = Generator();
+            bool bTaken = Value == 0;
+            m_Storage.EachEntity([&](const Fling::Entity t_Entity)
+            {
+                const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
+                bTaken = bTaken || (Guid && Guid->Value == Value);
+            });
+            if (!bTaken)
+            {
+                return Value;
+            }
+        }
+    }
+
+    bool World::SaveToJson(Json& t_OutDoc, const std::string& t_Title)
+    {
+        if (!m_TypesBuilt)
+        {
+            F_LOG_ERROR("Cannot save the world before World::Init");
             return false;
         }
 
+        // Every entity needs an id, so that Entity fields in other components can name it.
+        // Two entities that share an id (a copy) get a new one.
+        std::unordered_set<uint64> UsedGuids;
+        std::vector<Fling::Entity> NeedGuid;
+        m_Storage.EachEntity([&](const Fling::Entity t_Entity)
+        {
+            const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
+            if (!Guid || Guid->Value == 0 || !UsedGuids.insert(Guid->Value).second)
+            {
+                NeedGuid.push_back(t_Entity);
+            }
+        });
+        for (const Fling::Entity Entity : NeedGuid)
+        {
+            m_Storage.AddOrReplace<EntityGuid>(Entity, EntityGuid{ MakeEntityGuid() });
+        }
+
+        const SaveContext Context{ &m_Storage };
         std::vector<std::pair<std::string, Json>> entityEntries;
 		std::size_t unnamedIndex = 0;
 
@@ -316,25 +385,28 @@ namespace Fling
 
 			entityJson.Set("name", name);
 
-			for (const ComponentTypeInfo& type : typeRegistry.All())
+			for (const TypeDesc& type : m_Types.All())
 			{
-				if (!type.name || IsReservedEntityKey(type.name))
+				if (!type.IsSaved() || type.IsSingleton() || IsReservedEntityKey(type.Name))
 				{
 					continue;
 				}
 
-				if (type.has && type.has(m_Storage, entity) && type.save)
+				if (type.Has && type.Has(m_Storage, entity))
 				{
 					Json componentJson = Json::Object();
-					type.save(m_Storage, entity, componentJson);
-					entityJson.Set(type.name, componentJson);
+					if (type.GetConst)
+					{
+						SaveObject(type, type.GetConst(m_Storage, entity), componentJson, Context);
+					}
+					entityJson.Set(type.Name, componentJson);
 				}
 			}
 
 			entityEntries.emplace_back(name, std::move(entityJson));
 		});
 
-		std::sort(entityEntries.begin(), entityEntries.end(),
+		std::stable_sort(entityEntries.begin(), entityEntries.end(),
 			[](const std::pair<std::string, Json>& a, const std::pair<std::string, Json>& b)
 			{
 				return a.first < b.first;
@@ -355,13 +427,17 @@ namespace Fling
         // there is one, so a level with none saves the same as before.
         Json singletons = Json::Object();
         bool bHasSingletons = false;
-        for (const ComponentTypeInfo& type : typeRegistry.All())
+        for (const TypeDesc& type : m_Types.All())
         {
-            if (type.saveSingleton && type.hasSingleton && type.hasSingleton(m_Storage))
+            if (!type.IsSingleton() || !type.IsSaved() || !type.GetSingletonConst)
+            {
+                continue;
+            }
+            if (const void* Object = type.GetSingletonConst(m_Storage))
             {
                 Json singletonJson = Json::Object();
-                type.saveSingleton(m_Storage, singletonJson);
-                singletons.Set(type.name, singletonJson);
+                SaveObject(type, Object, singletonJson, Context);
+                singletons.Set(type.Name, singletonJson);
                 bHasSingletons = true;
             }
         }
@@ -374,9 +450,9 @@ namespace Fling
 
     bool World::LoadLevelFile(const std::string& t_LevelToLoad)
 	{
-        if (!ComponentTypeRegistry::Get().IsSealed())
+        if (!m_TypesBuilt)
         {
-			F_LOG_ERROR("LoadLevelFile('{}') failed: ComponentTypeRegistry is not sealed", t_LevelToLoad);
+			F_LOG_ERROR("LoadLevelFile('{}') failed: call World::Init first", t_LevelToLoad);
 			return false;
 		}
 
@@ -394,10 +470,9 @@ namespace Fling
 
     bool World::LoadFromJson(const Json& t_Doc, const std::string& t_SourceName)
     {
-        const ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
-        if (!typeRegistry.IsSealed())
+        if (!m_TypesBuilt)
         {
-            F_LOG_ERROR("Cannot load '{}': ComponentTypeRegistry is not sealed", t_SourceName);
+            F_LOG_ERROR("Cannot load '{}': call World::Init first", t_SourceName);
             return false;
         }
 
@@ -414,6 +489,18 @@ namespace Fling
         const std::string title = t_Doc.GetString("title", t_SourceName);
         F_LOG_TRACE("Level Title: {}", title);
 
+        // Pass 1: make every entity and read its id, so that an Entity field can
+        // refer to an entity that comes later in the file
+        struct PendingEntity
+        {
+            Fling::Entity Entity;
+            Json Data;
+            std::string Name;
+        };
+        std::vector<PendingEntity> Pending;
+        std::unordered_map<uint64, Fling::Entity> GuidToEntity;
+        Pending.reserve(entities.Size());
+
         for (std::size_t i = 0; i < entities.Size(); ++i)
 		{
 			Json entityJson = entities.At(i);
@@ -423,38 +510,69 @@ namespace Fling
 				continue;
 			}
 
-			Fling::Entity entity = m_Storage.Create();
+			const Fling::Entity entity = m_Storage.Create();
 			std::string name = entityJson.GetString("name");
 			if (name.empty())
 			{
 				name = "Entity_" + std::to_string(i);
 			}
 
-			NameComponent& nameComp = m_Storage.Add<NameComponent>(entity);
-			nameComp.Name = name;
+			const uint64 Guid = entityJson.Get(EntityGuid::Component.Name).GetUInt64("value", 0);
+			if (Guid != 0 && !GuidToEntity.emplace(Guid, entity).second)
+			{
+				F_LOG_WARN("{}: entity '{}' has the same EntityGuid as another entity. References use the first one.",
+					t_SourceName, name);
+			}
+
+			Pending.push_back(PendingEntity{ entity, std::move(entityJson), std::move(name) });
+		}
+
+        // Pass 2: the components
+        const LoadContext Context{ &GuidToEntity, t_SourceName };
+        for (PendingEntity& Each : Pending)
+        {
+            NameComponent& nameComp = m_Storage.Add<NameComponent>(Each.Entity);
+            nameComp.Name = Each.Name;
 
 			auto LoadNamedComponent = [&](const std::string& key)
 			{
-				if (IsReservedEntityKey(key) || !entityJson.Contains(key))
+				if (IsReservedEntityKey(key) || !Each.Data.Contains(key))
 				{
 					return;
 				}
 
-				const ComponentTypeInfo* info = typeRegistry.Find(key);
-				if (!info || !info->load)
+				const TypeDesc* type = m_Types.Find(key);
+				if (!type || type->IsSingleton())
 				{
-					F_LOG_WARN("Unknown component '{}' on entity '{}', skipping", key, name);
+					if (const RemovedComponentDesc* removed = m_Types.FindRemoved(key))
+					{
+						if (removed->Convert)
+						{
+							removed->Convert(m_Storage, Each.Entity, Each.Data.Get(key));
+						}
+						return;
+					}
+					F_LOG_WARN("Unknown component '{}' on entity '{}', skipping", key, Each.Name);
+					return;
+				}
+				if (!type->IsSaved() || !type->Emplace)
+				{
 					return;
 				}
 
-				info->load(m_Storage, entity, entityJson.Get(key));
+				const Json ComponentJson = Each.Data.Get(key);
+				const std::function<void(void*)> Fill = [&](void* t_Object)
+				{
+					LoadObject(*type, t_Object, ComponentJson, Context);
+				};
+				type->Emplace(m_Storage, Each.Entity, type->IsTag() ? nullptr : &Fill);
 			};
 
 			// nlohmann objects iterate keys alphabetically, so MeshRenderer would
 			// otherwise construct before Transform. Load pose first so renderer
 			// hooks and later components see the authored transform.
 			LoadNamedComponent("Transform");
-			for (const std::string& key : entityJson.Keys())
+			for (const std::string& key : Each.Data.Keys())
 			{
 				if (key == "Transform")
 				{
@@ -470,13 +588,25 @@ namespace Fling
         {
             for (const std::string& key : singletons.Keys())
             {
-                const ComponentTypeInfo* info = typeRegistry.Find(key);
-                if (!info || !info->loadSingleton)
+                const TypeDesc* type = m_Types.Find(key);
+                if (!type || !type->IsSingleton() || !type->EmplaceSingleton)
                 {
-                    F_LOG_WARN("Unknown singleton '{}' in level '{}', skipping", key, t_SourceName);
+                    if (!m_Types.FindRemoved(key))
+                    {
+                        F_LOG_WARN("Unknown singleton '{}' in level '{}', skipping", key, t_SourceName);
+                    }
                     continue;
                 }
-                info->loadSingleton(m_Storage, singletons.Get(key));
+                if (!type->IsSaved())
+                {
+                    continue;
+                }
+                const Json SingletonJson = singletons.Get(key);
+                const std::function<void(void*)> Fill = [&](void* t_Object)
+                {
+                    LoadObject(*type, t_Object, SingletonJson, Context);
+                };
+                type->EmplaceSingleton(m_Storage, &Fill);
             }
         }
 

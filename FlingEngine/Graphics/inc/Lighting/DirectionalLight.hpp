@@ -2,7 +2,6 @@
 
 #include "Ecs/Component.h"
 #include "FlingMath.h"
-#include "JsonArchive.h"
 
 namespace Fling
 {
@@ -18,11 +17,5 @@ namespace Fling
 		alignas(16) glm::vec4 Direction { 1.0f, -1.0f, -0.5f, 1.0f  };
 		alignas(4)  float Intensity = 1.0f;
 
-		void Serialize(JsonArchive& Ar)
-		{
-			Ar << MakeNVP("color", DiffuseColor);
-			Ar << MakeNVP("direction", Direction);
-			Ar << MakeNVP("intensity", Intensity);
-		}
 	};
 }	// namespace Fling

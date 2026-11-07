@@ -3,7 +3,6 @@
 #include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "FlingTypes.h"
-#include "JsonArchive.h"
 
 #include <string>
 
@@ -43,17 +42,6 @@ namespace Fling
         /** Angular velocity in radians per second. The same rules as m_Velocity apply. */
         glm::vec3 m_AngularVelocity{0.0f, 0.0f, 0.0f};
 
-        void Serialize(JsonArchive& Ar)
-        {
-            Ar << MakeNVP("mass", m_Mass);
-            Ar << MakeNVP("friction", m_Friction);
-            Ar << MakeNVP("rollingFriction", m_RollingFriction);
-            Ar << MakeNVP("restitution", m_Restitution);
-            Ar << MakeNVP("linearDamping", m_LinearDamping);
-            Ar << MakeNVP("angularDamping", m_AngularDamping);
-            Ar << MakeNVP("velocity", m_Velocity);
-            Ar << MakeNVP("angularVelocity", m_AngularVelocity);
-        }
     };
 
     enum class ColliderShape : uint8
@@ -79,17 +67,5 @@ namespace Fling
         /** The radius of a Sphere. A Sphere uses the largest axis of the Transform scale. */
         float m_Radius = 0.5f;
 
-        void Serialize(JsonArchive& Ar)
-        {
-            std::string Shape = (m_Shape == ColliderShape::Sphere) ? "sphere" : "box";
-            Ar << MakeNVP("shape", Shape);
-            if (Ar.IsLoading())
-            {
-                m_Shape = (Shape == "sphere") ? ColliderShape::Sphere : ColliderShape::Box;
-            }
-
-            Ar << MakeNVP("halfExtents", m_HalfExtents);
-            Ar << MakeNVP("radius", m_Radius);
-        }
     };
 } // namespace Fling

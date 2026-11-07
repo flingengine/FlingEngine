@@ -1,6 +1,8 @@
 #include "Components/Transform.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/RegisterEngine.h"
+#include "Ecs/TypeRegistry.h"
 #include "Json.h"
-#include "JsonArchive.h"
 
 #include <catch2/catch_all.hpp>
 
@@ -62,18 +64,24 @@ TEST_CASE("A loaded transform stays dirty so the renderer uploads it", "[transfo
     Transform source;
     source.SetPos(glm::vec3(4.0f, 5.0f, 6.0f));
 
+    Fling::SystemRegistry systems;
+    Fling::ModuleRegistration modules(systems);
+    Fling::RegisterEngine(modules);
+    const Fling::TypeRegistry types = Fling::TypeRegistry::Build(modules);
+    const Fling::TypeDesc* type = types.Find<Transform>();
+    REQUIRE(type != nullptr);
+
     Fling::Json json = Fling::Json::Object();
-    {
-        Fling::JsonArchive saver(json, Fling::JsonArchive::Mode::Saving);
-        source.Serialize(saver);
-    }
+    Fling::SaveObject(*type, &source, json, {});
+    REQUIRE(json.Contains("position"));
+    REQUIRE(json.Contains("rotation"));
+    REQUIRE(json.Contains("scale"));
 
     Transform loaded;
     Transform::CalculateWorldMatrix(loaded);
     REQUIRE_FALSE(loaded.IsDirty());
 
-    Fling::JsonArchive loader(json, Fling::JsonArchive::Mode::Loading);
-    loaded.Serialize(loader);
+    Fling::LoadObject(*type, &loaded, json, {});
 
     REQUIRE(loaded.IsDirty());
     REQUIRE(loaded.GetPos() == source.GetPos());

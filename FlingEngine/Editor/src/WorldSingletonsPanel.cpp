@@ -1,10 +1,11 @@
-#include "ComponentTypeRegistry.h"
+#include "Ecs/TypeRegistry.h"
 #include "Json.h"
 #include "World.h"
 #include "WorldSingletonsPanel.h"
 
 #include <imgui.h>
 #include <string>
+#include <vector>
 
 namespace Fling
 {
@@ -30,7 +31,9 @@ namespace Fling
             if (ImGui::CollapsingHeader("Singletons", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 bool bAny = false;
-                for (const ComponentTypeInfo& Type : ComponentTypeRegistry::Get().All())
+                static const std::vector<TypeDesc> NoTypes;
+                const std::vector<TypeDesc>& AllTypes = m_World ? m_World->GetTypes().All() : NoTypes;
+                for (const TypeDesc& Type : AllTypes)
                 {
                     if (!Type.IsSingleton())
                     {
@@ -38,21 +41,21 @@ namespace Fling
                     }
                     bAny = true;
 
-                    const bool bPresent = Type.hasSingleton && Type.hasSingleton(t_Reg);
-                    const std::string Label = std::string(Type.name) + "  (" + KindName(Type.kind) +
-                                              (Type.transient ? ", transient" : ", saved") +
-                                              (bPresent ? ")" : ", not in the world)");
+                    const void* Object = Type.GetSingletonConst ? Type.GetSingletonConst(t_Reg) : nullptr;
+                    const std::string Label = Type.Name + "  (" + KindName(Type.Kind) +
+                                              (Type.Transient ? ", transient" : ", saved") +
+                                              (Object ? ")" : ", not in the world)");
 
-                    if (!bPresent || !Type.saveSingleton)
+                    if (!Object || Type.Fields.empty())
                     {
                         ImGui::BulletText("%s", Label.c_str());
                         continue;
                     }
 
-                    if (ImGui::TreeNode(Type.name, "%s", Label.c_str()))
+                    if (ImGui::TreeNode(Type.Name.c_str(), "%s", Label.c_str()))
                     {
                         Json Value = Json::Object();
-                        Type.saveSingleton(t_Reg, Value);
+                        SaveObject(Type, Object, Value, SaveContext{ &t_Reg });
                         ImGui::TextUnformatted(Value.Dump(2).c_str());
                         ImGui::TreePop();
                     }

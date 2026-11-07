@@ -1,6 +1,5 @@
-#include "ComponentTypeRegistry.h"
 #include "DefaultPhysicsProvider.h"
-#include "Ecs/RegisterEngineSystems.h"
+#include "Ecs/RegisterEngine.h"
 #include "Engine.h"
 #include "File.h"
 #include "FlingConfig.h"
@@ -13,7 +12,7 @@
 #include "Misc/CrashHandler.h"
 #include "Physics.h"
 #include "Random.h"
-#include "RegisterGraphicsComponents.h"
+#include "RegisterGraphics.h"
 #include "Threading/Thread.h"
 #include "VulkanApp.h"
 
@@ -152,9 +151,11 @@ namespace Fling
 			);
 		}
 
-		RegisterEngineComponents();
-		RegisterGraphicsComponents();
-		RegisterPhysicsComponents();
+		// Each linked module adds its component types and systems. World::Init adds the
+		// game's, then builds the type registry and the schedule.
+		RegisterEngine(m_World->GetModules());
+		RegisterGraphics(m_World->GetModules());
+		RegisterPhysics(m_World->GetModules());
 
 		// The game can bring its own physics provider. If it does not, use the one
 		// that this build compiled (FLING_PHYSICS_PROVIDER).
@@ -175,13 +176,9 @@ namespace Fling
 		Physics::InitWorld(Storage, PhysicsProviderToUse, InitialPhysicsSettings);
 
 		// A --null-render run has no real frame time, so it runs one fixed tick per frame.
-		// Engine and module systems are added to m_World->GetSystems() here, before
-		// World::Init adds the game's systems and builds the schedule.
 		SystemRunnerConfig RunnerConfig;
 		RunnerConfig.OneTickPerFrame = m_Options.NullRender;
 		m_World->SetSystemRunnerConfig(RunnerConfig);
-		RegisterEngineSystems(m_World->GetSystems());
-		RegisterPhysicsSystems(m_World->GetSystems());
 
 		// Each fixed tick takes the input messages that no earlier tick took, with its own
 		// cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EditorWidgets.h"
 #include "EntityEditorPanel.h"
 #include "IDebugUI.h"
 #include "InputDevicesPanel.h"
@@ -22,11 +23,14 @@ namespace Fling
         BaseEditor() = default;
         virtual ~BaseEditor() = default;
 
-        /** Keeps the world and game, then calls RegisterComponents(). */
+        /** Keeps the world and game, then calls RegisterWidgets(). */
         void Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game) override;
 
-		/** Register  */
-		virtual void RegisterComponents(Fling::EntityStorage& t_Reg);
+        /**
+         * Add editor widget overrides for components that the generated inspector cannot
+         * edit well. Call the base version from an override, to keep the engine's.
+         */
+        virtual void RegisterWidgets(EditorWidgets& t_Widgets);
 
         /**
          * Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
@@ -53,6 +57,9 @@ namespace Fling
 
 		/** Lists entities in the world and tracks which one is selected */
 		WorldOutlinePanel m_WorldOutline;
+
+		/** How each component type is drawn in the entity editor */
+		EditorWidgets m_Widgets;
 
 		/** Inspects the entity currently selected in m_WorldOutline */
 		EntityEditorPanel m_EntityEditor;

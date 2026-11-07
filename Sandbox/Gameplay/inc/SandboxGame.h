@@ -15,10 +15,8 @@ namespace Sandbox
 
 		void Init(Fling::EntityStorage& t_Reg) override final;
 
-		void RegisterComponents() override final;
-
-		/** Adds the Sandbox systems. Defined in RegisterSandboxSystems.cpp. */
-		void RegisterSystems(Fling::SystemRegistry& t_Systems) override final;
+		/** Adds the Sandbox component types and systems. Defined in RegisterSandbox.cpp. */
+		void Register(Fling::ModuleRegistration& t_Modules) override final;
 
 		/**
 		 * Called before the first gameplay loop tick.

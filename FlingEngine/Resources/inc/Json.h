@@ -2,6 +2,7 @@
 
 #include "FlingMath.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -47,9 +48,19 @@ namespace Fling
 		bool GetBool(const std::string& key, bool def = false) const;
 		int GetInt(const std::string& key, int def = 0) const;
 
+		/** Whole numbers. A value that is not a whole number, or does not fit, gives def. */
+		int64_t GetInt64(const std::string& key, int64_t def = 0) const;
+		uint64_t GetUInt64(const std::string& key, uint64_t def = 0) const;
+		double GetDouble(const std::string& key, double def = 0.0) const;
+
+		glm::vec2 GetVec2(const std::string& key, const glm::vec2& def = {}) const;
 		glm::vec3 GetVec3(const std::string& key, const glm::vec3& def = {}) const;
 		glm::vec4 GetVec4(const std::string& key, const glm::vec4& def = {}) const;
 
+		/** A quaternion saved as [x, y, z, w]. */
+		glm::quat GetQuat(const std::string& key, const glm::quat& def = glm::quat(1.f, 0.f, 0.f, 0.f)) const;
+
+		void Set(const std::string& key, const glm::vec2& v);
 		void Set(const std::string& key, const glm::vec3& v);
 		void Set(const std::string& key, const glm::vec4& v);
 		void Set(const std::string& key, const char* v);
@@ -57,6 +68,16 @@ namespace Fling
 		void Set(const std::string& key, float v);
 		void Set(const std::string& key, bool v);
 		void Set(const std::string& key, int v);
+		void SetInt64(const std::string& key, int64_t v);
+		void SetUInt64(const std::string& key, uint64_t v);
+		void SetDouble(const std::string& key, double v);
+		void SetQuat(const std::string& key, const glm::quat& v);
+
+		/** Remove a key from an object. Does nothing if the key is missing. */
+		void Remove(const std::string& key);
+
+		/** True if the key holds a string. */
+		bool IsString(const std::string& key) const;
 
 		bool IsNull() const;
 		bool IsObject() const;

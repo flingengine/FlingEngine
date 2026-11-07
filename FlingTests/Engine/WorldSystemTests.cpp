@@ -1,4 +1,4 @@
-#include "ComponentTypeRegistry.h"
+#include "Ecs/ModuleRegistration.h"
 #include "Ecs/SimTime.h"
 #include "Ecs/SystemBase.h"
 #include "Ecs/SystemRegistry.h"
@@ -97,14 +97,14 @@ namespace
         void OnStopGame(Fling::EntityStorage&) override {}
         void Shutdown(Fling::EntityStorage&) override {}
 
-        void RegisterSystems(SystemRegistry& t_Systems) override
+        void Register(ModuleRegistration& t_Modules) override
         {
-            t_Systems.Add<PlayCounterSystem>();
-            t_Systems.Add<EditCounterSystem>();
-            t_Systems.Add<FrameCounterSystem>();
+            t_Modules.System<PlayCounterSystem>();
+            t_Modules.System<EditCounterSystem>();
+            t_Modules.System<FrameCounterSystem>();
             if (AddConflict)
             {
-                t_Systems.Add<ConflictingSystem>();
+                t_Modules.System<ConflictingSystem>();
             }
         }
 
@@ -123,7 +123,6 @@ namespace
 TEST_CASE("The world runs its systems by role and calls the play hooks", "[world][ecs]")
 {
     QuietLogger();
-    ComponentTypeRegistry::Get().ResetForTests();
 
     SystemsGame TestGame;
     World TestWorld(&TestGame);
@@ -166,13 +165,11 @@ TEST_CASE("The world runs its systems by role and calls the play hooks", "[world
     TestWorld.Shutdown();
     REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);
 
-    ComponentTypeRegistry::Get().ResetForTests();
 }
 
 TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
 {
     QuietLogger();
-    ComponentTypeRegistry::Get().ResetForTests();
 
     SystemsGame TestGame;
     TestGame.AddConflict = true;
@@ -189,5 +186,4 @@ TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
     REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);
 
     TestWorld.Shutdown();
-    ComponentTypeRegistry::Get().ResetForTests();
 }

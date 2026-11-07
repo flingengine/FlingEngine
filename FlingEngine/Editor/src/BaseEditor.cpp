@@ -6,7 +6,7 @@
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
-#include "ComponentTypeRegistry.h"
+#include "EditorWidgets.h"
 #include "FlingPaths.h"
 #include "ImFileBrowser.hpp"
 #include "Lighting/DirectionalLight.hpp"
@@ -23,31 +23,6 @@ namespace Fling
 {
     namespace Widgets
     {
-        void Transform(Fling::Transform& t)
-        {
-            bool bChanged = ImGui::InputFloat3( "Position", ( float* ) &t.m_Pos );
-            bChanged |= ImGui::InputFloat3( "Scale", ( float* )  &t.m_Scale );
-            bChanged |= ImGui::InputFloat3( "Rotation", ( float* )  &t.m_Rotation );
-            if (bChanged)
-            {
-                t.MarkDirty();
-            }
-        }
-
-        void PointLight(Fling::PointLight& t_Light)
-        {
-            ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-            ImGui::InputFloat( "Range", &t_Light.Range );
-            ImGui::InputFloat( "Intensity", &t_Light.Intensity );
-        }
-
-        void DirectionalLight(Fling::DirectionalLight& t_Light)
-        {
-            ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-            ImGui::InputFloat3( "Direction", ( float* ) &t_Light.Direction );
-            ImGui::InputFloat( "Intensity", &t_Light.Intensity );
-        }
-
         void MeshRenderer(Fling::MeshRenderer& t_MeshRend, Fling::EntityStorage& t_Reg, Fling::Entity t_Entity)
         {
             // Model -----------------------
@@ -154,50 +129,20 @@ namespace Fling
         m_OwningWorld = t_World;
         m_WorldSingletons.SetWorld(t_World);
         m_Game = t_Game;
-        RegisterComponents(t_Reg);
+        m_EntityEditor.SetWorld(t_World, &m_Widgets);
+        (void)t_Reg;
+        RegisterWidgets(m_Widgets);
     }
 
-    void BaseEditor::RegisterComponents(Fling::EntityStorage& t_Reg)
+    void BaseEditor::RegisterWidgets(EditorWidgets& t_Widgets)
     {
-        (void)t_Reg;
-
-        // Transform, NameComponent, MeshRenderer, DirectionalLight, and PointLight are
-        // already known to ComponentTypeRegistry (RegisterEngineComponents /
-        // RegisterGraphicsComponents); we're just attaching an ImGui draw callback for
-        // each so EntityEditorPanel can render them.
-        ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
-
-        Registry.SetEditorWidget("Transform",
-            [](Fling::EntityStorage& reg, Fling::Entity e)
+        // The other components use the inspector made from their reflected fields.
+        // MeshRenderer saves asset paths by hand, so it gets file pickers.
+        t_Widgets.Override<Fling::MeshRenderer>(
+            [](Fling::EntityStorage& t_Storage, Fling::Entity t_Entity, Fling::MeshRenderer& t_Mesh)
             {
-                auto& t = reg.Get<Fling::Transform>(e);
-                Widgets::Transform(t);
-            }
-        );
-
-        Registry.SetEditorWidget("PointLight",
-            [](Fling::EntityStorage& reg, Fling::Entity e)
-            {
-                auto& t = reg.Get<Fling::PointLight>(e);
-                Widgets::PointLight(t);
-            }
-        );
-
-        Registry.SetEditorWidget("DirectionalLight",
-            [](Fling::EntityStorage& reg, Fling::Entity e)
-            {
-                auto& t = reg.Get<Fling::DirectionalLight>(e);
-                Widgets::DirectionalLight(t);
-            }
-        );
-
-        Registry.SetEditorWidget("MeshRenderer",
-            [](Fling::EntityStorage& reg, Fling::Entity e)
-            {
-                auto& t = reg.Get<Fling::MeshRenderer>(e);
-                Widgets::MeshRenderer(t, reg, e);
-            }
-        );
+                Widgets::MeshRenderer(t_Mesh, t_Storage, t_Entity);
+            });
     }
 
     void BaseEditor::Draw(Fling::EntityStorage& t_Reg, float DeltaTime)

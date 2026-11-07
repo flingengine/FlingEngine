@@ -1,21 +1,24 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
-#include "ComponentTypeRegistry.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/RegisterEngine.h"
+#include "Ecs/TypeRegistry.h"
 #include "FlingPaths.h"
 #include "Game.h"
 #include "Json.h"
-#include "JsonArchive.h"
 #include "Logger.h"
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
 #include <cstdio>
+#include <functional>
 #include <string>
 
 namespace {
     class JsonTestGame : public Fling::Game {
     public:
         void Init(Fling::EntityStorage&) override {}
+        void Register(Fling::ModuleRegistration& t_Modules) override { Fling::RegisterEngine(t_Modules); }
         void OnStartGame(Fling::EntityStorage&) override {}
         void Update(Fling::EntityStorage&, float) override {}
         void OnStopGame(Fling::EntityStorage&) override {}
@@ -23,13 +26,9 @@ namespace {
     };
 
     struct Health {
+        static constexpr Fling::ComponentInfo Component{.Name = "Health"};
         int Amount = 0;
         float Armor = 0.f;
-
-        void Serialize(Fling::JsonArchive& Ar) {
-            Ar << Fling::MakeNVP("Amount", Amount);
-            Ar << Fling::MakeNVP("Armor", Armor);
-        }
     };
 
     void InitLogger() {
@@ -53,16 +52,18 @@ namespace {
     }
 } // namespace
 
-TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
+TEST_CASE("Reflected components save and load, and the world loads levels", "[json]") {
     using namespace Fling;
     InitLogger();
 
-    ComponentTypeRegistry::Get().ResetForTests();
-
-    SECTION("Register save load via type info") {
-        REQUIRE(ComponentTypeRegistry::Get().Register<Health>("Health"));
-        ComponentTypeRegistry::Get().Seal();
-        REQUIRE(ComponentTypeRegistry::Get().IsSealed());
+    SECTION("Save and load through the type description") {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<Health>([](TypeBuilder<Health>& t_Type) {
+            t_Type.Field("Amount", &Health::Amount);
+            t_Type.Field("Armor", &Health::Armor);
+        });
+        const TypeRegistry types = TypeRegistry::Build(modules);
 
         Fling::EntityStorage reg;
         const Fling::Entity entity = reg.Create();
@@ -70,42 +71,32 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         src.Amount = 42;
         src.Armor = 3.5f;
 
-        const ComponentTypeInfo* info = ComponentTypeRegistry::Get().Find("Health");
+        const TypeDesc* info = types.Find("Health");
         REQUIRE(info != nullptr);
-        REQUIRE(info->has(reg, entity));
+        REQUIRE(info->Has(reg, entity));
 
         Json out = Json::Object();
-        info->save(reg, entity, out);
+        SaveObject(*info, info->GetConst(reg, entity), out, {});
         REQUIRE(out.GetInt("Amount") == 42);
         REQUIRE(out.GetFloat("Armor") == Catch::Approx(3.5f));
 
         Fling::EntityStorage loaded;
         const Fling::Entity loadedEntity = loaded.Create();
-        info->load(loaded, loadedEntity, out);
+        const std::function<void(void*)> fill = [&](void* t_Object) { LoadObject(*info, t_Object, out, {}); };
+        info->Emplace(loaded, loadedEntity, &fill);
         REQUIRE(loaded.Has<Health>(loadedEntity));
         REQUIRE(loaded.Get<Health>(loadedEntity).Amount == 42);
         REQUIRE(loaded.Get<Health>(loadedEntity).Armor == Catch::Approx(3.5f));
     }
 
-    SECTION("Register after Seal is rejected") {
-        REQUIRE(ComponentTypeRegistry::Get().Register<Health>("Health"));
-        ComponentTypeRegistry::Get().Seal();
-        REQUIRE_FALSE(ComponentTypeRegistry::Get().Register<Health>("OtherHealth"));
-        REQUIRE(ComponentTypeRegistry::Get().Find("OtherHealth") == nullptr);
-    }
-
-    SECTION("LoadLevelFile before Seal fails") {
+    SECTION("LoadLevelFile before Init fails") {
         JsonTestGame game;
         World world(&game);
-        REQUIRE_FALSE(ComponentTypeRegistry::Get().IsSealed());
+        REQUIRE(world.GetTypes().Empty());
         REQUIRE_FALSE(world.LoadLevelFile("Levels/EmptyLevel.json"));
     }
 
     SECTION("World save load Transform and skip unknown keys") {
-        REQUIRE(ComponentTypeRegistry::Get().Register<Transform>("Transform"));
-        REQUIRE(ComponentTypeRegistry::Get().Register<NameComponent>("NameComponent"));
-        ComponentTypeRegistry::Get().Seal();
-
         Json root = Json::Object();
         root.Set("version", 1);
         root.Set("title", "Unknown Key Level");
@@ -133,6 +124,7 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         JsonTestGame game;
         World world(&game);
         Fling::EntityStorage& reg = world.GetStorage();
+        REQUIRE(world.Init());
         REQUIRE(world.LoadLevelFile(TestLevelRelativePath()));
 
         int count = 0;
@@ -147,13 +139,10 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         REQUIRE(count == 1);
 
         RemoveTestLevelFile();
+        world.Shutdown();
     }
 
     SECTION("World loads distinct Transform positions from one file") {
-        REQUIRE(ComponentTypeRegistry::Get().Register<Transform>("Transform"));
-        REQUIRE(ComponentTypeRegistry::Get().Register<NameComponent>("NameComponent"));
-        ComponentTypeRegistry::Get().Seal();
-
         auto MakeEntity = [](const char* name, const glm::vec3& pos) {
             Json entity = Json::Object();
             entity.Set("name", name);
@@ -179,6 +168,7 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         JsonTestGame game;
         World world(&game);
         Fling::EntityStorage& reg = world.GetStorage();
+        REQUIRE(world.Init());
         REQUIRE(world.LoadLevelFile(TestLevelRelativePath()));
 
         glm::vec3 left{};
@@ -197,9 +187,8 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         REQUIRE(right.z == Catch::Approx(3.f));
 
         RemoveTestLevelFile();
+        world.Shutdown();
     }
-
-    ComponentTypeRegistry::Get().ResetForTests();
 }
 
 namespace {

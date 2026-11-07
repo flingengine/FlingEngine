@@ -11,6 +11,8 @@
 
 #include <cassert>
 #include "Ecs/EntityStorage.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/TypeRegistry.h"
 #include <functional>
 #include <memory>
 #include <string>
@@ -35,10 +37,17 @@ namespace Fling
 		~World();
 
 		/**
-		 * The ECS systems this world runs. Add engine and module systems here before
-		 * Init. Init then calls Game::RegisterSystems and builds the schedule.
+		 * What the modules add to this world: component types and systems. Call each
+		 * module's register function with it before Init. Init then calls Game::Register,
+		 * builds the TypeRegistry, and builds the schedule.
 		 */
+		ModuleRegistration& GetModules() { return m_Modules; }
+
+		/** The ECS systems this world runs. Modules add them through GetModules. */
 		SystemRegistry& GetSystems() { return m_Systems; }
+
+		/** Every component type this world knows. Empty before Init. */
+		const TypeRegistry& GetTypes() const { return m_Types; }
 
 		/** How the fixed tick runs (step length, one tick per frame). Set it before Init. */
 		void SetSystemRunnerConfig(const SystemRunnerConfig& t_Config) { m_RunnerConfig = t_Config; }
@@ -130,7 +139,7 @@ namespace Fling
 
 		/**
 		 * Reset the current registry and load entities/components from a JSON level file.
-		 * Requires ComponentTypeRegistry to be sealed.
+		 * Requires Init, which builds the type registry.
 		 *
 		 * @param t_LevelToLoad File path to load (relative to the assets directory)
 		 * @return True on success
@@ -184,8 +193,14 @@ namespace Fling
          */
         void StopGame(bool t_RestoreSnapshot);
 
-        /** Write all registered components on living entities to a level document */
-        bool SaveToJson(Json& t_OutDoc, const std::string& t_Title) const;
+        /**
+         * Write all saved components on living entities to a level document. Gives each
+         * entity an EntityGuid first if it has none, so references between entities save.
+         */
+        bool SaveToJson(Json& t_OutDoc, const std::string& t_Title);
+
+        /** A new random EntityGuid value that no entity in this world uses. */
+        uint64 MakeEntityGuid() const;
 
         /** Remove all entities, then make the entities in a level document */
         bool LoadFromJson(const Json& t_Doc, const std::string& t_SourceName);
@@ -208,6 +223,15 @@ namespace Fling
 
 		/** The systems this world runs. */
 		SystemRegistry m_Systems;
+
+		/** @see GetModules. Declared after m_Systems, which it refers to. */
+		ModuleRegistration m_Modules{ m_Systems };
+
+		/** @see GetTypes. Built by Init. */
+		TypeRegistry m_Types;
+
+		/** True after Init built m_Types. A level cannot load or save before that. */
+		bool m_TypesBuilt = false;
 
 		/** @see SetSystemRunnerConfig */
 		SystemRunnerConfig m_RunnerConfig;

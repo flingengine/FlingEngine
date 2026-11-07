@@ -11,7 +11,6 @@
 #include "VulkanApp.h"
 #include "World.h"
 // For getting some lighting info
-#include "ComponentTypeRegistry.h"
 #include "Lighting/DeferredLightSettings.h"
 #include "Mover.h"
 
@@ -42,13 +41,6 @@ namespace Sandbox
 
 		F_LOG_TRACE("Done cmd line testing");
     }
-
-	void Game::RegisterComponents()
-	{
-		Fling::ComponentTypeRegistry::Get().Register<Mover>();
-		Fling::ComponentTypeRegistry::Get().Register<Rotator>();
-		Fling::ComponentTypeRegistry::Get().Register<BallControl>();
-	}
 
 	void Game::OnStartGame(Fling::EntityStorage& t_Reg)
 	{

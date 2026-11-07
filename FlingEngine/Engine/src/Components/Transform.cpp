@@ -62,18 +62,4 @@ namespace Fling
         m_Rotation = t_Rot;
         m_Dirty = true;
     }
-
-	void Transform::Serialize(JsonArchive& Ar)
-	{
-		Ar << MakeNVP("position", m_Pos);
-		Ar << MakeNVP("rotation", m_Rotation);
-		Ar << MakeNVP("scale", m_Scale);
-
-		if (Ar.IsLoading())
-		{
-			CalculateWorldMatrix(*this);
-			// The GPU copy is still out of date, so keep the dirty flag set
-			m_Dirty = true;
-		}
-	}
 }   // namespace Fling

@@ -7,6 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL	// So that we can hash our vertecies 
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/hash.hpp>

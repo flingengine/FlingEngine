@@ -1,6 +1,6 @@
-#include "ComponentTypeRegistry.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/TypeRegistry.h"
 #include "Game.h"
-#include "JsonArchive.h"
 #include "Logger.h"
 #include "World.h"
 
@@ -15,8 +15,6 @@ namespace
     {
         static constexpr ComponentInfo Component{.Name = "Test.Health"};
         int Value = 100;
-
-        void Serialize(JsonArchive& Ar) { Ar << MakeNVP("value", Value); }
     };
 
     struct Boss
@@ -24,7 +22,7 @@ namespace
         static constexpr ComponentInfo Component{.Name = "Test.Boss", .Kind = ComponentKind::Tag};
     };
 
-    /** A cache that is never saved, so it needs no Serialize. */
+    /** A cache that is never saved, so it reflects no fields. */
     struct PathCache
     {
         static constexpr ComponentInfo Component{.Name = "Test.PathCache", .Transient = true};
@@ -35,8 +33,6 @@ namespace
     {
         static constexpr ComponentInfo Component{.Name = "Test.Difficulty", .Kind = ComponentKind::Singleton};
         int Level = 1;
-
-        void Serialize(JsonArchive& Ar) { Ar << MakeNVP("level", Level); }
     };
 
     struct FrameStats
@@ -53,20 +49,22 @@ namespace
         std::vector<int> Requests;
     };
 
+    void RegisterTestTypes(ModuleRegistration& t_Modules)
+    {
+        t_Modules.Component<Health>([](TypeBuilder<Health>& t_Type) { t_Type.Field("value", &Health::Value); });
+        t_Modules.Component<Boss>();
+        t_Modules.Component<PathCache>();
+        t_Modules.Component<Difficulty>([](TypeBuilder<Difficulty>& t_Type)
+                                        { t_Type.Field("level", &Difficulty::Level); });
+        t_Modules.Component<FrameStats>();
+        t_Modules.Component<DamageQueue>();
+    }
+
     class RegistrationGame : public Game
     {
     public:
         void Init(Fling::EntityStorage&) override {}
-        void RegisterComponents() override
-        {
-            ComponentTypeRegistry& types = ComponentTypeRegistry::Get();
-            types.Register<Health>();
-            types.Register<Boss>();
-            types.Register<PathCache>();
-            types.Register<Difficulty>();
-            types.Register<FrameStats>();
-            types.Register<DamageQueue>();
-        }
+        void Register(ModuleRegistration& t_Modules) override { RegisterTestTypes(t_Modules); }
         void OnStartGame(Fling::EntityStorage&) override {}
         void Update(Fling::EntityStorage&, float) override {}
         void OnStopGame(Fling::EntityStorage&) override {}
@@ -81,56 +79,75 @@ namespace
     }
 } // namespace
 
-TEST_CASE("Register<T>() reads the name and kind from ComponentInfo", "[components]")
+TEST_CASE("Component<T>() reads the name and kind from ComponentInfo", "[components]")
 {
     QuietLogger();
-    ComponentTypeRegistry& types = ComponentTypeRegistry::Get();
-    types.ResetForTests();
+    SystemRegistry systems;
+    ModuleRegistration modules(systems);
+    RegisterTestTypes(modules);
+    const TypeRegistry types = TypeRegistry::Build(modules);
 
-    RegistrationGame game;
-    game.RegisterComponents();
-
-    const ComponentTypeInfo* health = types.Find("Test.Health");
+    const TypeDesc* health = types.Find("Test.Health");
     REQUIRE(health != nullptr);
-    REQUIRE(health->hash == TypeHashOf<Health>);
-    REQUIRE(health->kind == ComponentKind::Table);
-    REQUIRE(health->save != nullptr);
-    REQUIRE(health->has != nullptr);
+    REQUIRE(health->Hash == TypeHashOf<Health>);
+    REQUIRE(types.Find<Health>() == health);
+    REQUIRE(health->Kind == ComponentKind::Table);
+    REQUIRE(health->IsSaved());
+    REQUIRE(health->Has != nullptr);
+    REQUIRE(health->Get != nullptr);
+    REQUIRE(health->Fields.size() == 1);
     REQUIRE_FALSE(health->IsSingleton());
 
-    const ComponentTypeInfo* boss = types.Find("Test.Boss");
-    REQUIRE(boss->kind == ComponentKind::Tag);
-    REQUIRE(boss->save != nullptr);
+    const TypeDesc* boss = types.Find("Test.Boss");
+    REQUIRE(boss->Kind == ComponentKind::Tag);
+    REQUIRE(boss->IsSaved());
+    REQUIRE(boss->Get == nullptr);
 
-    const ComponentTypeInfo* cache = types.Find("Test.PathCache");
-    REQUIRE(cache->transient);
-    REQUIRE(cache->save == nullptr);
-    REQUIRE(cache->load == nullptr);
-    REQUIRE(cache->has != nullptr);
+    const TypeDesc* cache = types.Find("Test.PathCache");
+    REQUIRE(cache->Transient);
+    REQUIRE_FALSE(cache->IsSaved());
+    REQUIRE(cache->Has != nullptr);
 
-    const ComponentTypeInfo* difficulty = types.Find("Test.Difficulty");
+    const TypeDesc* difficulty = types.Find("Test.Difficulty");
     REQUIRE(difficulty->IsSingleton());
-    REQUIRE(difficulty->has == nullptr);
-    REQUIRE(difficulty->saveSingleton != nullptr);
-    REQUIRE(difficulty->loadSingleton != nullptr);
+    REQUIRE(difficulty->Has == nullptr);
+    REQUIRE(difficulty->GetSingleton != nullptr);
+    REQUIRE(difficulty->EmplaceSingleton != nullptr);
 
-    const ComponentTypeInfo* stats = types.Find("Test.FrameStats");
+    const TypeDesc* stats = types.Find("Test.FrameStats");
     REQUIRE(stats->IsSingleton());
-    REQUIRE(stats->hasSingleton != nullptr);
-    REQUIRE(stats->saveSingleton == nullptr);
+    REQUIRE_FALSE(stats->IsSaved());
 
-    REQUIRE(types.Find("Test.DamageQueue")->kind == ComponentKind::Queue);
+    REQUIRE(types.Find("Test.DamageQueue")->Kind == ComponentKind::Queue);
 
-    // The name is the key, so registering it again fails
-    REQUIRE_FALSE(types.Register<Health>());
+    // The name is the key, so adding it again is ignored
+    modules.Component<Health>([](TypeBuilder<Health>&) {});
+    REQUIRE(modules.Types().size() == 6);
+    REQUIRE(TypeRegistry::Build(modules).Find<Health>()->Fields.size() == 1);
+}
 
-    types.ResetForTests();
+TEST_CASE("Two type registries built in one test stay separate", "[components]")
+{
+    QuietLogger();
+    SystemRegistry systemsA;
+    ModuleRegistration modulesA(systemsA);
+    modulesA.Component<Health>([](TypeBuilder<Health>& t_Type) { t_Type.Field("value", &Health::Value); });
+
+    SystemRegistry systemsB;
+    ModuleRegistration modulesB(systemsB);
+    modulesB.Component<Boss>();
+
+    const TypeRegistry a = TypeRegistry::Build(modulesA);
+    const TypeRegistry b = TypeRegistry::Build(modulesB);
+    REQUIRE(a.Find<Health>() != nullptr);
+    REQUIRE(a.Find<Boss>() == nullptr);
+    REQUIRE(b.Find<Boss>() != nullptr);
+    REQUIRE(b.Find<Health>() == nullptr);
 }
 
 TEST_CASE("Saved singletons and tags round-trip through the play snapshot", "[components][world]")
 {
     QuietLogger();
-    ComponentTypeRegistry::Get().ResetForTests();
 
     RegistrationGame TestGame;
     World TestWorld(&TestGame);
@@ -166,5 +183,4 @@ TEST_CASE("Saved singletons and tags round-trip through the play snapshot", "[co
     REQUIRE_FALSE(Reg.Has<PathCache>(restored));
 
     TestWorld.Shutdown();
-    ComponentTypeRegistry::Get().ResetForTests();
 }

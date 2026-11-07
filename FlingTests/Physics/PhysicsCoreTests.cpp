@@ -1,6 +1,8 @@
 #include "Components/Transform.h"
-#include "Ecs/detail/EnttBridge.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/TypeRegistry.h"
 #include "Physics.h"
+#include "PhysicsComponents.h"
 
 #include <catch2/catch_all.hpp>
 #include <type_traits>
@@ -333,23 +335,27 @@ TEST_CASE("Physics components round trip through JSON", "[physics]")
     Col.m_Shape = ColliderShape::Sphere;
     Col.m_Radius = 0.75f;
 
+    SystemRegistry Systems;
+    ModuleRegistration Modules(Systems);
+    RegisterPhysics(Modules);
+    const TypeRegistry Types = TypeRegistry::Build(Modules);
+    const TypeDesc* BodyType = Types.Find<RigidBody>();
+    const TypeDesc* ColType = Types.Find<Collider>();
+    REQUIRE(BodyType != nullptr);
+    REQUIRE(ColType != nullptr);
+
     Json BodyJson = Json::Object();
     Json ColJson = Json::Object();
-    {
-        JsonArchive BodyAr(BodyJson, JsonArchive::Mode::Saving);
-        Body.Serialize(BodyAr);
-        JsonArchive ColAr(ColJson, JsonArchive::Mode::Saving);
-        Col.Serialize(ColAr);
-    }
+    SaveObject(*BodyType, &Body, BodyJson, {});
+    SaveObject(*ColType, &Col, ColJson, {});
+
+    // The shape saves by name, as levels have always written it
+    REQUIRE(ColJson.GetString("shape") == "sphere");
 
     RigidBody LoadedBody;
     Collider LoadedCol;
-    {
-        JsonArchive BodyAr(BodyJson, JsonArchive::Mode::Loading);
-        LoadedBody.Serialize(BodyAr);
-        JsonArchive ColAr(ColJson, JsonArchive::Mode::Loading);
-        LoadedCol.Serialize(ColAr);
-    }
+    LoadObject(*BodyType, &LoadedBody, BodyJson, {});
+    LoadObject(*ColType, &LoadedCol, ColJson, {});
 
     REQUIRE(LoadedBody.m_Mass == Catch::Approx(5.0f));
     REQUIRE(LoadedBody.m_Velocity.x == Catch::Approx(6.0f));

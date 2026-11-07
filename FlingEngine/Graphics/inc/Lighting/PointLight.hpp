@@ -2,7 +2,6 @@
 
 #include "Ecs/Component.h"
 #include "FlingMath.h"
-#include "JsonArchive.h"
 #include "Platform.h"
 
 namespace Fling
@@ -30,12 +29,6 @@ namespace Fling
 		alignas(4) float Intensity = 10.0f;
 		alignas(4) float Range = 5.0f;
 
-		void Serialize(JsonArchive& Ar)
-		{
-			Ar << MakeNVP("color", DiffuseColor);
-			Ar << MakeNVP("range", Range);
-			Ar << MakeNVP("intensity", Intensity);
-		}
 
 		FORCEINLINE void SetPos(const glm::vec4& t_Pos) { Pos = t_Pos; }
 	};

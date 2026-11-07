@@ -40,10 +40,26 @@ struct Mover
 
     glm::vec3 TargetPos{ -10.0f, 0.0f, 0.0f };
     float Speed = 1.0f;
-
-    void Serialize(Fling::JsonArchive& Ar);   // Until reflection replaces it (ecs-plan.md Phase C)
 };
 ```
+
+A component has no functions. Its fields are described once, in the
+module's register file (or a feature `.cpp` that it calls):
+
+```cpp
+void Game::Register(Fling::ModuleRegistration& t_Modules)
+{
+    t_Modules.Component<Mover>([](Fling::TypeBuilder<Mover>& t_Type) {
+        t_Type.Category("Movement");
+        t_Type.Field("targetPos", &Mover::TargetPos);
+        t_Type.Field("speed", &Mover::Speed).Range(0.0f, 100.0f).Tooltip("Units per second");
+    });
+    t_Modules.System<MoverSystem>();
+}
+```
+
+Save, load, the play snapshot, and the editor inspector all come from that
+description.
 
 - `.Name` is the saved name in level files. Do not change it.
 - `.Kind`: `Table` (the default, one per entity), `Tag` (an empty struct),
@@ -51,9 +67,32 @@ struct Mover
   container named `Requests`).
 - `.Domain`: `Simulation` (the default, written at the fixed tick) or
   `Presentation` (written at the frame rate; the simulation never reads it).
-- `.Transient = true`: never saved. It then needs no `Serialize`.
-- Register it with `ComponentTypeRegistry::Get().Register<T>()`. The
-  overload that takes a name is deprecated and logs a warning.
+- `.Transient = true`: never saved. Register it with
+  `t_Modules.Component<T>()` and no fields.
+- **Field types:** `bool`, `int32`, `uint32`, `int64`, `uint64`, `float`,
+  `double`, `std::string`, `glm::vec2/3/4`, `glm::quat`, enums, and `Entity`.
+  For another type, specialize `Fling::FieldTraits` (`Kind = Custom`, with
+  `Save` and `Load`). `TypeBuilder::Serialize(save, load)` is the escape hatch
+  for a whole type (`MeshRenderer` uses it for its asset paths).
+- **Field options:** `Range`, `Tooltip`, `Color`, `Hidden`, `ReadOnly`,
+  `Transient` (not saved), and `Enum({{"name", Value}, ...})`. An enum with a
+  table saves by name, so a reorder is safe.
+- **Type options:** `Category`, `Partial` (only some members are saved, on
+  purpose), and `AfterLoad(fn)` for derived data. `AfterLoad` also runs after an
+  editor change.
+- **An `Entity` field** saves as the target's `EntityGuid`. The world gives
+  every entity an `EntityGuid` when it saves, and maps the ids back to the new
+  entities when it loads.
+- **Changing a saved component (back compatibility):**
+  - Add a field: nothing to do. An old file keeps the default.
+  - Remove a field: `t_Type.Removed("oldName")`, so load does not warn.
+  - Rename a field: `.FormerNames({"oldName"})` on the field.
+  - Rename a component: `t_Type.FormerNames({"OldName"})`.
+  - Delete a component: `t_Modules.RemovedComponent("OldName", convert)`.
+  - Change the meaning or shape: `t_Type.Version(2).Upgrade(1, fn)`. The
+    upgrade rewrites the old JSON object before the fields load. The version
+    is saved as `"$v"` when it is above 1. Write each upgrade once and do not
+    change it.
 - A component type name must not match another class in namespace `Fling`
   in any module. Two classes with one name are an ODR violation, and the
   linker mixes them up.
@@ -94,7 +133,21 @@ public:
 - **Destroy is deferred** (`ctx.Commands().Destroy(e)`, applied at the end of
   the tick). **Spawn is immediate** (`ctx.Spawn(components...)`).
 - **Register it.** One line in the module's register file
-  (`Register*Systems.cpp`): `systems.Add<MoverSystem>();`.
+  (`Register<Module>.cpp`): `t_Modules.System<MoverSystem>();`.
+
+## Registration
+
+Each module has one function, `Register<Module>(ModuleRegistration&)`
+(`RegisterEngine`, `RegisterGraphics`, `RegisterPhysics`), and a game
+overrides `Game::Register`. `Engine::Startup` calls the module functions on
+`World::GetModules()`. `World::Init` then calls `Game::Register` and builds
+the world's own `TypeRegistry` and schedule. There is no global type
+registry: a test makes a `ModuleRegistration` and calls
+`TypeRegistry::Build`.
+
+The editor draws a component from its reflected fields. For a type that needs
+more, override `BaseEditor::RegisterWidgets` and call
+`t_Widgets.Override<T>(fn)`.
 
 ## Phases and the order
 

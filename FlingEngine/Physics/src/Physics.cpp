@@ -1,4 +1,3 @@
-#include "ComponentTypeRegistry.h"
 #include "Ecs/detail/EnttBridge.h"
 #include "Logger.h"
 #include "Physics.h"
@@ -113,11 +112,4 @@ namespace Fling
             return World ? World->m_Provider : nullptr;
         }
     } // namespace Physics
-
-    void RegisterPhysicsComponents()
-    {
-        ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
-        Registry.Register<RigidBody>();
-        Registry.Register<Collider>();
-    }
 } // namespace Fling

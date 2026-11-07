@@ -1,6 +1,7 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
-#include "ComponentTypeRegistry.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/RegisterEngine.h"
 #include "Game.h"
 #include "Logger.h"
 #include "World.h"
@@ -17,10 +18,9 @@ namespace
     public:
         void Init(Fling::EntityStorage&) override { Calls.push_back("Init"); }
 
-        void RegisterComponents() override
+        void Register(Fling::ModuleRegistration& t_Modules) override
         {
-            Fling::ComponentTypeRegistry::Get().Register<Fling::Transform>("Transform");
-            Fling::ComponentTypeRegistry::Get().Register<Fling::NameComponent>("NameComponent");
+            Fling::RegisterEngine(t_Modules);
         }
 
         void OnStartGame(Fling::EntityStorage& t_Reg) override
@@ -92,7 +92,6 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
 {
     using namespace Fling;
     InitTestLogger();
-    ComponentTypeRegistry::Get().ResetForTests();
 
     PlayTestGame TestGame;
     World TestWorld(&TestGame);
@@ -234,5 +233,4 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         REQUIRE(TestGame.Calls == Expected);
     }
 
-    ComponentTypeRegistry::Get().ResetForTests();
 }

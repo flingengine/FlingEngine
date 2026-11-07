@@ -2,7 +2,6 @@
 
 #include "Ecs/Component.h"
 #include "Ecs/EntityStorage.h"
-#include "JsonArchive.h"
 
 #include <string>
 
@@ -67,8 +66,6 @@ namespace Fling
         bool operator==(const MeshRenderer& other) const;
         bool operator!=(const MeshRenderer& other) const;
 
-        void Serialize(JsonArchive& Ar);
-
         void LoadModelFromPath(const std::string& t_MeshPath);
 
         void LoadMaterialFromPath(const std::string& t_MatPath);
@@ -79,6 +76,7 @@ namespace Fling
         /** Asset path of the assigned material, or an empty string when none is set. */
         std::string GetMaterialGuidString() const;
     };
+
     /** Marks a mesh that the deferred (offscreen) pass draws. */
     struct DeferredRenderTag
     {
