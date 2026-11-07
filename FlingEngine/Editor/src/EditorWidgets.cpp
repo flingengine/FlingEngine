@@ -30,6 +30,24 @@ namespace Fling
             return false;
         }
 
+        /**
+         * A Name field. A Name made from runtime text stays in the name table, so the
+         * new Name is made only when the edit ends, not on each key press.
+         */
+        bool DrawName(const FieldDesc& field, Name* value)
+        {
+            char buffer[256] = {};
+            const StringView text = value->ToView();
+            std::memcpy(buffer, text.data(), std::min(text.size(), sizeof(buffer) - 1));
+            ImGui::InputText(field.Name.c_str(), buffer, sizeof(buffer));
+            if (ImGui::IsItemDeactivatedAfterEdit())
+            {
+                *value = Name(StringView(buffer));
+                return true;
+            }
+            return false;
+        }
+
         int64 ReadEnum(const FieldDesc& field, const void* address)
         {
             int64 value = 0;
@@ -99,6 +117,8 @@ namespace Fling
                 return ImGui::InputScalar(label, ImGuiDataType_Double, address);
             case FieldKind::String:
                 return DrawString(field, static_cast<std::string*>(address));
+            case FieldKind::Name:
+                return DrawName(field, static_cast<Name*>(address));
             case FieldKind::Vec2:
                 return ImGui::DragFloat2(label, static_cast<float*>(address), 0.05f);
             case FieldKind::Vec3:

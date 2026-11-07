@@ -96,6 +96,9 @@ namespace Fling
             case FieldKind::String:
                 out.Set(key, *static_cast<const std::string*>(address));
                 break;
+            case FieldKind::Name:
+                out.Set(key, static_cast<const Name*>(address)->ToView());
+                break;
             case FieldKind::Vec2:
                 out.Set(key, *static_cast<const glm::vec2*>(address));
                 break;
@@ -170,6 +173,10 @@ namespace Fling
                 break;
             case FieldKind::String:
                 field.Of<std::string>(object) = in.GetString(key, field.Of<std::string>(object));
+                break;
+            case FieldKind::Name:
+                // Loading makes the same hash from the text on every machine
+                field.Of<Name>(object) = Name(in.GetString(key, field.Of<Name>(object).ToView()));
                 break;
             case FieldKind::Vec2:
                 field.Of<glm::vec2>(object) = in.GetVec2(key, field.Of<glm::vec2>(object));

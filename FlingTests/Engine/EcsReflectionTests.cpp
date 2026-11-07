@@ -290,12 +290,12 @@ TEST_CASE("The world saves entity references and loads them into the new entitie
         EntityStorage& storage = world.GetStorage();
 
         const Entity leader = storage.Create();
-        storage.Add<NameComponent>(leader, NameComponent{"Leader"});
+        storage.Add<NameComponent>(leader, NameComponent{Name("Leader")});
         const Entity follower = storage.Create();
-        storage.Add<NameComponent>(follower, NameComponent{"Follower"});
+        storage.Add<NameComponent>(follower, NameComponent{Name("Follower")});
         storage.Add<Follow>(follower, Follow{leader, 3.0f});
         const Entity loner = storage.Create();
-        storage.Add<NameComponent>(loner, NameComponent{"Loner"});
+        storage.Add<NameComponent>(loner, NameComponent{Name("Loner")});
         storage.Add<Follow>(loner, Follow{Entity::Null, 1.0f});
 
         REQUIRE(world.OutputLevelFile(LevelPath));
@@ -318,15 +318,15 @@ TEST_CASE("The world saves entity references and loads them into the new entitie
     storage.View<NameComponent>().Each(
         [&](const Entity e, NameComponent& name)
         {
-            if (name.Name == "Leader")
+            if (name.Name == "Leader"_name)
             {
                 leader = e;
             }
-            else if (name.Name == "Follower")
+            else if (name.Name == "Follower"_name)
             {
                 follower = e;
             }
-            else if (name.Name == "Loner")
+            else if (name.Name == "Loner"_name)
             {
                 loner = e;
             }
@@ -373,7 +373,7 @@ TEST_CASE("Removed and renamed components in a level", "[reflection][world]")
         [&](NameComponent& name, Marker& marker)
         {
             ++markers;
-            if (name.Name == "A")
+            if (name.Name == "A"_name)
             {
                 REQUIRE(marker.Value == 40);
             }

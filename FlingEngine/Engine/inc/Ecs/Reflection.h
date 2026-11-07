@@ -7,6 +7,7 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "Json.h"
+#include "Strings/Name.h"
 
 #include <cstddef>
 #include <functional>
@@ -29,6 +30,8 @@ namespace Fling
         Float,
         Double,
         String,
+        /** A Fling::Name, saved as its text so files stay readable and load to the same hash. */
+        Name,
         Vec2,
         Vec3,
         Vec4,
@@ -70,6 +73,7 @@ namespace Fling
     template <> struct FieldTraits<float> : Detail::FieldKindIs<FieldKind::Float> {};
     template <> struct FieldTraits<double> : Detail::FieldKindIs<FieldKind::Double> {};
     template <> struct FieldTraits<std::string> : Detail::FieldKindIs<FieldKind::String> {};
+    template <> struct FieldTraits<Name> : Detail::FieldKindIs<FieldKind::Name> {};
     template <> struct FieldTraits<glm::vec2> : Detail::FieldKindIs<FieldKind::Vec2> {};
     template <> struct FieldTraits<glm::vec3> : Detail::FieldKindIs<FieldKind::Vec3> {};
     template <> struct FieldTraits<glm::vec4> : Detail::FieldKindIs<FieldKind::Vec4> {};

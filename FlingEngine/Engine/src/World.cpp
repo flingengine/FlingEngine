@@ -529,7 +529,7 @@ namespace Fling
 		}
 
         // Pass 2: the components
-        const LoadContext Context{ &GuidToEntity, t_SourceName };
+        const LoadContext Context{ &GuidToEntity, std::string(t_SourceName) };
         for (PendingEntity& Each : Pending)
         {
             NameComponent& nameComp = m_Storage.Add<NameComponent>(Each.Entity);
