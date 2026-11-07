@@ -33,6 +33,9 @@ namespace Fling
         /** The name of the language in that language, for a language menu. Empty if not set. */
         String DisplayName;
         TextDirection Direction = TextDirection::LeftToRight;
+        NumberFormat Numbers;
+        /** The short date pattern (see FormatDate). */
+        String DatePattern = "M/d/yyyy";
     };
 
     /**
@@ -52,9 +55,11 @@ namespace Fling
      *
      *     Localization/ar/_language.json    {"DisplayName": "...", "Direction": "RightToLeft"}
      *
-     * Without it, the direction comes from the language code (see DefaultDirectionFor).
-     * The direction of the current language goes to SetDisplayTextDirection, so UI can
-     * mirror its layout. Text is always stored in logical order, never reversed: the
+     * It can also set "DecimalSeparator", "GroupSeparator", "MinimumGroupingDigits", and
+     * "DatePattern". Anything it does not set comes from the language code (see
+     * DefaultDisplayLanguageFor). The current language goes to SetDisplayLanguage, which
+     * gives DisplayText its plural rules, number and date formats, and direction, and
+     * lets UI mirror its layout. Text is always stored in logical order, never reversed: the
      * renderer applies the Unicode bidirectional algorithm.
      *
      * Translators work in CSV: ExportCsv writes one row per entry, with a column per
@@ -174,8 +179,11 @@ namespace Fling
         /** The file in a language folder that holds its LanguageInfo, not a table. */
         static constexpr const char* LanguageInfoFile = "_language.json";
 
-        /** Sends the direction of the current language to DisplayText, if this is the active Localization. */
-        void PublishDirection() const;
+        /** Sends the current language to DisplayText, if this is the active Localization. */
+        void PublishLanguage() const;
+
+        /** The LanguageInfo of a code from the built-in defaults. */
+        static LanguageInfo DefaultInfoFor(Name t_Language);
 
         std::atomic<std::uint64_t> m_Revision{0};
     };

@@ -2,6 +2,7 @@
 
 #include "CoreAPI.h"
 #include "spdlog/fmt/fmt.h"
+#include "Strings/Language.h"
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
@@ -22,22 +23,6 @@ namespace Fling
 
     /** Sets the resolver that DisplayText uses for table entries. nullptr removes it. */
     CORE_API void SetDisplayTextTableResolver(DisplayTextTableResolver t_Resolver);
-
-    /** The direction in which a language is read. */
-    enum class TextDirection : std::uint8_t
-    {
-        LeftToRight,
-        RightToLeft,
-    };
-
-    /**
-     * Sets the direction of the current language. The localization service sets it
-     * when the language changes. UI reads it to mirror its layout.
-     */
-    CORE_API void SetDisplayTextDirection(TextDirection t_Direction);
-
-    /** The direction of the current language. LeftToRight until a language sets it. */
-    CORE_API TextDirection GetDisplayTextDirection();
 
     /**
      * Text that the player sees. UI code takes only this type for visible text.
@@ -72,10 +57,30 @@ namespace Fling
         /** Text that must not be translated, such as a player's name. */
         static DisplayText AsInvariant(String t_Text);
 
+        /** A number, written with the separators of the current language: 12345 is "12,345" in English and "12.345" in German. */
+        static DisplayText AsNumber(std::int64_t t_Number);
+        static DisplayText AsNumber(double t_Number);
+
+        /** A date, written with the date pattern of the current language. */
+        static DisplayText AsDate(int t_Year, int t_Month, int t_Day);
+
         /**
          * A pattern with named arguments, such as "{Count} enemies left". Each {Key} in
          * the resolved pattern is replaced with the resolved argument that has that key.
          * A key with no argument is kept as it is. "{{" and "}}" give "{" and "}".
+         *
+         * Plural and select forms, as in ICU MessageFormat, let the translation of each
+         * language pick the words:
+         *
+         *     {Count, plural, one {# enemy left} other {# enemies left}}
+         *     {Count, plural, =0 {No enemies} one {# enemy} other {# enemies}}
+         *     {Gender, select, female {She won} male {He won} other {They won}}
+         *
+         * A plural picks the "=N" case that matches the number, then the case of its
+         * plural category in the current language (zero, one, two, few, many, other; see
+         * GetPluralCategory), then "other". "#" in the chosen case is the number. A
+         * select picks the case that matches the resolved text of the argument, then
+         * "other".
          *
          * Text is always in logical order (the order in which it is read), never
          * reversed. When the current language is RightToLeft, each argument is put
@@ -92,6 +97,12 @@ namespace Fling
 
         bool IsEmpty() const;
 
+        /** True if this is a number (AsNumber). Plural forms need one. */
+        bool IsNumber() const;
+
+        /** The value of a number made by AsNumber, or 0. */
+        double GetNumber() const;
+
     private:
         struct Data;
 
@@ -104,6 +115,7 @@ namespace Fling
     struct CORE_API DisplayTextArg
     {
         DisplayTextArg(Name t_Key, DisplayText t_Value);
+        /** A number argument. It is formatted in the current language, and a plural form can use it. */
         DisplayTextArg(Name t_Key, std::int64_t t_Value);
         DisplayTextArg(Name t_Key, int t_Value);
         DisplayTextArg(Name t_Key, double t_Value);

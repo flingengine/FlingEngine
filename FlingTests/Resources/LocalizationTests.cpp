@@ -351,3 +351,27 @@ TEST_CASE("Format arguments are isolated when the current language reads right t
     Localization::SetActive(nullptr);
     CHECK(GetDisplayTextDirection() == TextDirection::LeftToRight);
 }
+
+TEST_CASE("_language.json can set number and date formats", "[Localization][Language]")
+{
+    InitLogger();
+    TempTables Files("Formats");
+    Files.Write("de", "UI", R"({"Menu.Start": "Spiel starten"})");
+    Files.Write("de-CH", "UI", R"({"Menu.Start": "Spiel starten"})");
+    // Swiss German uses an apostrophe to group digits
+    Files.Write("de-CH", "_language", R"({"GroupSeparator": "'", "DecimalSeparator": ".", "DatePattern": "d.M.yyyy"})");
+
+    auto Loc = std::make_shared<Localization>(Files.GetRoot(), "en"_name);
+    ActiveScope Scope(Loc);
+    const DisplayText Big = DisplayText::AsNumber(1234567.5);
+    const DisplayText Date = DisplayText::AsDate(2026, 3, 6);
+
+    REQUIRE(Loc->SetLanguage("de"_name));
+    CHECK(GetDisplayLanguage().Code == "de"_name);
+    CHECK(Big.Resolve() == "1.234.567,5");
+    CHECK(Date.Resolve() == "06.03.2026");
+
+    REQUIRE(Loc->SetLanguage("de-CH"_name));
+    CHECK(Big.Resolve() == "1'234'567.5");
+    CHECK(Date.Resolve() == "6.3.2026");
+}

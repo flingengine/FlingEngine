@@ -160,9 +160,7 @@ namespace Fling
 
         // Read the files before the lock, so lookups do not wait for the disk.
         Language Loaded;
-        LanguageInfo Info;
-        Info.Code = t_Language;
-        Info.Direction = DefaultDirectionFor(t_Language);
+        LanguageInfo Info = DefaultInfoFor(t_Language);
         for (const std::filesystem::directory_entry& Entry : std::filesystem::directory_iterator(Folder, Error))
         {
             if (!Entry.is_regular_file() || Entry.path().extension() != ".json")
@@ -194,6 +192,23 @@ namespace Fling
                 {
                     F_LOG_ERROR("{}: Direction must be LeftToRight or RightToLeft, not '{}'", FilePath, Direction);
                 }
+                if (Doc.Contains("DecimalSeparator"))
+                {
+                    Info.Numbers.DecimalSeparator = Doc.GetString("DecimalSeparator");
+                }
+                if (Doc.Contains("GroupSeparator"))
+                {
+                    Info.Numbers.GroupSeparator = Doc.GetString("GroupSeparator");
+                }
+                if (Doc.Contains("MinimumGroupingDigits"))
+                {
+                    Info.Numbers.MinimumGroupingDigits =
+                        static_cast<std::uint8_t>(Doc.GetInt("MinimumGroupingDigits", Info.Numbers.MinimumGroupingDigits));
+                }
+                if (Doc.Contains("DatePattern"))
+                {
+                    Info.DatePattern = Doc.GetString("DatePattern");
+                }
                 continue;
             }
 
@@ -210,7 +225,7 @@ namespace Fling
             m_Infos[t_Language] = std::move(Info);
         }
         BumpRevision();
-        PublishDirection();
+        PublishLanguage();
         return true;
     }
 
@@ -233,7 +248,7 @@ namespace Fling
             m_Language = t_Language;
         }
         BumpRevision();
-        PublishDirection();
+        PublishLanguage();
         return true;
     }
 
@@ -254,9 +269,17 @@ namespace Fling
             }
         }
 
+        return DefaultInfoFor(t_Language);
+    }
+
+    LanguageInfo Localization::DefaultInfoFor(const Name t_Language)
+    {
+        const DisplayLanguage Defaults = DefaultDisplayLanguageFor(t_Language);
         LanguageInfo Info;
         Info.Code = t_Language;
-        Info.Direction = DefaultDirectionFor(t_Language);
+        Info.Direction = Defaults.Direction;
+        Info.Numbers = Defaults.Numbers;
+        Info.DatePattern = Defaults.DatePattern;
         return Info;
     }
 
@@ -267,30 +290,23 @@ namespace Fling
 
     TextDirection Localization::DefaultDirectionFor(const Name t_Language)
     {
-        StringView Code = t_Language.ToView();
-        const std::size_t Separator = Code.find_first_of("-_");
-        if (Separator != StringView::npos)
-        {
-            Code = Code.substr(0, Separator);
-        }
-
-        constexpr StringView RightToLeftCodes[] = {"ar", "he", "iw", "fa", "ur", "ps", "yi", "dv", "sd", "ug", "ckb"};
-        for (const StringView RightToLeft : RightToLeftCodes)
-        {
-            if (Code == RightToLeft)
-            {
-                return TextDirection::RightToLeft;
-            }
-        }
-        return TextDirection::LeftToRight;
+        return DefaultDisplayLanguageFor(t_Language).Direction;
     }
 
-    void Localization::PublishDirection() const
+    void Localization::PublishLanguage() const
     {
-        if (GetActive().get() == this)
+        if (GetActive().get() != this)
         {
-            SetDisplayTextDirection(GetTextDirection());
+            return;
         }
+
+        const LanguageInfo Info = GetLanguageInfo(GetLanguage());
+        DisplayLanguage Language;
+        Language.Code = Info.Code;
+        Language.Direction = Info.Direction;
+        Language.Numbers = Info.Numbers;
+        Language.DatePattern = Info.DatePattern;
+        SetDisplayLanguage(std::move(Language));
     }
 
     std::vector<Name> Localization::FindLanguagesOnDisk() const
@@ -585,8 +601,14 @@ namespace Fling
         }
         SetDisplayTextTableResolver(bHasActive ? &ResolveWithActive : nullptr);
 
-        const std::shared_ptr<Localization> Active = GetActive();
-        SetDisplayTextDirection(Active ? Active->GetTextDirection() : TextDirection::LeftToRight);
+        if (const std::shared_ptr<Localization> Active = GetActive())
+        {
+            Active->PublishLanguage();
+        }
+        else
+        {
+            SetDisplayLanguage(DefaultDisplayLanguageFor("en"_name));
+        }
     }
 
     std::shared_ptr<Localization> Localization::GetActive()
