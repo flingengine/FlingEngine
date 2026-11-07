@@ -4,7 +4,7 @@
 #include "Ecs/detail/EnttBridge.h"
 #include "Ecs/Entity.h"
 #include "Ecs/TypeHash.h"
-#include "Signal.h"
+#include "Signals.h"
 
 #include <cstddef>
 #include <iterator>

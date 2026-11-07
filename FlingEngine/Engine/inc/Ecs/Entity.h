@@ -2,7 +2,6 @@
 
 #include "FlingTypes.h"
 
-#include <compare>
 #include <functional>
 #include <limits>
 #include <type_traits>
@@ -33,10 +32,18 @@ namespace Fling
             return Entity{static_cast<uint32>(bits), static_cast<uint32>(bits >> 32)};
         }
 
-        friend constexpr bool operator==(Entity, Entity) = default;
+        friend constexpr bool operator==(const Entity a, const Entity b)
+        {
+            return a.Index == b.Index && a.Generation == b.Generation;
+        }
+
+        friend constexpr bool operator!=(const Entity a, const Entity b) { return !(a == b); }
 
         /** Orders by index, then generation. Use it for sorting (for example, deterministic contact order). */
-        friend constexpr auto operator<= > (Entity, Entity) = default;
+        friend constexpr bool operator<(const Entity a, const Entity b)
+        {
+            return a.Index != b.Index ? a.Index < b.Index : a.Generation < b.Generation;
+        }
     };
 
     inline constexpr Entity Entity::Null{};

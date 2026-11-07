@@ -8,7 +8,7 @@
 #include "Input/InputMessage.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
-#include "Signal.h"
+#include "Signals.h"
 
 #include <memory>
 #include <string_view>

@@ -1,6 +1,6 @@
 #include "FlingTypes.h"
 #include "HashedString.h"
-#include "Signal.h"
+#include "Signals.h"
 
 #include <catch2/catch_all.hpp>
 #include <string>
