@@ -132,6 +132,10 @@ signatures:
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are
   intentional, even across the in-progress module split described in
   [`architecture.md`](architecture.md). Don't "fix" these to path-qualified includes.
+- Two different classes with the same fully qualified name, in any two
+  modules, are an ODR violation: the linker keeps one and silently uses it for
+  both. This is easy to do in `namespace Fling` across modules. Give each class
+  a unique name, or put a helper type in an anonymous namespace.
 - There is no `pch.h` or other catch-all include. Each header compiles on its own,
   and each file includes the headers it uses.
 - Include `Platform.h` before you test `FLING_WINDOWS`, `FLING_LINUX`, or

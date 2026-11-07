@@ -67,7 +67,7 @@ namespace Fling
          */
         std::vector<AppRequest> TakeAppRequests() { return std::exchange(m_AppRequestsForApp, {}); }
 
-        /** The schedule errors from Init. Empty if the schedule is valid. */
+        /** The schedule errors and component name errors from Init. Empty if both are valid. */
         const String& GetScheduleErrors() const { return m_ScheduleErrors; }
 
         /**
@@ -78,7 +78,7 @@ namespace Fling
          *
          * @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty
          * means use the config.
-         * @return False if the system schedule has errors (see GetScheduleErrors). The world is then not ready for
+         * @return False if the system schedule or the component names have errors (see GetScheduleErrors). The world is then not ready for
          * play.
          */
         bool Init(StringView t_StartLevel = {});

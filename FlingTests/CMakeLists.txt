@@ -158,6 +158,7 @@ fling_add_ecs_compile_check( WritesSimTime          "No system writes SimTime or
 fling_add_ecs_compile_check( SingletonNotOwned      "Only a writer of a singleton makes it" )
 fling_add_ecs_compile_check( QueueRead              "A queue is not read or written directly" )
 fling_add_ecs_compile_check( NotAComponent          "is not a Fling::Component" )
+fling_add_ecs_compile_check( NameMismatch           "saved .Name must end with its C.. type name" )
 fling_add_ecs_compile_check( DuplicateAccess        "A type appears more than once in Access" )
 
 # Every first-party vk* call must be named in VulkanFunctions.inl.

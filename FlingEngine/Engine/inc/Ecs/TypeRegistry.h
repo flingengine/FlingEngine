@@ -27,8 +27,16 @@ namespace Fling
         /**
          * Copy the types out of a ModuleRegistration. Logs a warning for a saved type
          * whose reflected fields cover much less than the struct (unless it is Partial).
+         * Names that cannot be told apart are errors (see Errors): two types with one
+         * saved name, a former name that is another type's name or a removed component's
+         * name, and a former name that two types claim.
          */
         static TypeRegistry Build(const ModuleRegistration& modules);
+
+        /** The name errors that Build found. A world with any does not start. */
+        const std::vector<String>& Errors() const { return m_Errors; }
+
+        bool Ok() const { return m_Errors.empty(); }
 
         /** The type with this saved name or former name. Null if there is none. */
         const TypeDesc* Find(StringView name) const;
@@ -53,6 +61,7 @@ namespace Fling
         std::vector<RemovedComponentDesc> m_Removed;
         std::unordered_map<String, size_t> m_ByName;
         std::unordered_map<TypeHash, size_t> m_ByHash;
+        std::vector<String> m_Errors;
     };
 
     /** What a save needs beyond the object: how to name another entity in the file. */

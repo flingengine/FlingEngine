@@ -1,8 +1,10 @@
 #include "Ecs/detail/NativeStorage.h"
+#include "Logger.h"
 #include "MathUtils.h"
 
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <mutex>
@@ -139,10 +141,19 @@ namespace Fling::Detail
         const auto found = table.ByKey.find(ops.Key);
         if (found != table.ByKey.end())
         {
-            // Two types with the same saved name share an id, so they must have the same shape
-            [[maybe_unused]] const ComponentOps& existing = table.Ops[found->second];
+            // The same type asks again (from another module, for example)
+            const ComponentOps& existing = table.Ops[found->second];
+            if (existing.TypeName != ops.TypeName)
+            {
+                F_LOG_ERROR("The component types {} and {} both have the saved name '{}'. Give one of them "
+                            "another .Name.",
+                            existing.TypeName,
+                            ops.TypeName,
+                            ops.Name);
+                std::abort();
+            }
             assert(existing.Size == ops.Size && existing.Align == ops.Align && existing.Storage == ops.Storage &&
-                   existing.Empty == ops.Empty && "Two component types have the same name but a different shape");
+                   existing.Empty == ops.Empty && "One component type has two shapes");
             return found->second;
         }
         const ComponentId id = static_cast<ComponentId>(table.Ops.size());

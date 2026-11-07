@@ -45,7 +45,7 @@ namespace
     struct SpawnQueue
     {
         static constexpr Fling::ComponentInfo Component{
-            .Name = "Test.SpawnQueue", .Kind = Fling::ComponentKind::Queue, .Transient = true};
+            .Name = "TypesTest.SpawnQueue", .Kind = Fling::ComponentKind::Queue, .Transient = true};
         std::vector<int> Requests;
     };
 
@@ -273,4 +273,23 @@ TEST_CASE("Simulation writes and Presentation reads are found", "[ecs][access]")
     STATIC_REQUIRE(ReadsPresentation<Access<Read<Camera>>>);
     STATIC_REQUIRE(ReadsPresentation<Access<Write<Camera>>>);
     STATIC_REQUIRE_FALSE(ReadsPresentation<Access<Read<Position>, Write<Velocity>>>);
+}
+
+TEST_CASE("A saved name must end with the C++ type name", "[ecs]")
+{
+    STATIC_REQUIRE(SavedNameMatchesType("Health", "Health", false));
+    STATIC_REQUIRE(SavedNameMatchesType("Game.Health", "Health", false));
+    STATIC_REQUIRE(SavedNameMatchesType("Studio.Game.Health", "Health", false));
+    STATIC_REQUIRE_FALSE(SavedNameMatchesType("Game.Hp", "Health", false));
+    STATIC_REQUIRE_FALSE(SavedNameMatchesType("GameHealth", "Health", false));
+    STATIC_REQUIRE_FALSE(SavedNameMatchesType(".Health", "Health", false));
+    STATIC_REQUIRE_FALSE(SavedNameMatchesType("Game.Health2", "Health", false));
+
+    // Each instance of a template has its own name, which starts with the template's name
+    STATIC_REQUIRE(SavedNameMatchesType("Game.Part3", "Part", true));
+    STATIC_REQUIRE_FALSE(SavedNameMatchesType("Game.Piece3", "Part", true));
+
+    // The declared components of this file pass the check, so these compile
+    STATIC_REQUIRE(StringView(ComponentInfoOf<Position>.Name) == "TypesTest.Position");
+    STATIC_REQUIRE(StringView(ComponentInfoOf<External>.Name) == "Test.External");
 }

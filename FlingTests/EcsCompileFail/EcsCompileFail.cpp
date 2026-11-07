@@ -177,6 +177,13 @@ namespace
 #elif defined(FLING_ECS_CASE_NotAComponent)
     using BadAccess = Fling::Access<Fling::Read<NotAComponent>>;
     constexpr auto BadTableSize = BadAccess::Table.size();
+#elif defined(FLING_ECS_CASE_NameMismatch)
+    struct Health
+    {
+        static constexpr Fling::ComponentInfo Component{.Name = "Check.Hp"};
+        float Value = 0.0f;
+    };
+    constexpr auto BadName = Fling::ComponentInfoOf<Health>.Name;
 #elif defined(FLING_ECS_CASE_DuplicateAccess)
     using BadAccess = Fling::Access<Fling::Read<Position>, Fling::Write<Position>>;
     constexpr auto BadTableSize = BadAccess::Table.size();

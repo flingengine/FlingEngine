@@ -317,6 +317,15 @@ namespace Fling
             m_Types.begin(), m_Types.end(), [&](const TypeDesc& other) { return other.Name == desc.Name; });
         if (taken != m_Types.end())
         {
+            if (taken->CppName != desc.CppName)
+            {
+                m_Errors.push_back(fmt::format("The component types {} and {} both have the saved name '{}'. Give "
+                                               "one of them another .Name.",
+                                               taken->CppName,
+                                               desc.CppName,
+                                               desc.Name));
+                return;
+            }
             F_LOG_WARN("Component type '{}' is registered twice. The second registration is ignored.", desc.Name);
             return;
         }
@@ -348,12 +357,66 @@ namespace Fling
             }
         }
 
-        // Former names come second, so a current name always wins.
+        registry.m_Errors = modules.Errors();
+        const auto isRemoved = [&registry](const StringView name)
+        {
+            return std::any_of(registry.m_Removed.begin(),
+                               registry.m_Removed.end(),
+                               [&](const RemovedComponentDesc& removed) { return removed.Name == name; });
+        };
+        for (const TypeDesc& type : registry.m_Types)
+        {
+            if (isRemoved(type.Name))
+            {
+                registry.m_Errors.push_back(
+                    fmt::format("'{}' is a component ({}) and also a RemovedComponent. Remove one of the two.",
+                                type.Name,
+                                type.CppName));
+            }
+        }
+
+        // Former names come after the current names, so that a clash is found and not hidden
         for (size_t i = 0; i < registry.m_Types.size(); ++i)
         {
-            for (const String& former : registry.m_Types[i].FormerNames)
+            const TypeDesc& type = registry.m_Types[i];
+            for (const String& former : type.FormerNames)
             {
-                registry.m_ByName.emplace(former, i);
+                const auto [found, added] = registry.m_ByName.emplace(former, i);
+                if (added && !isRemoved(former))
+                {
+                    continue;
+                }
+                const TypeDesc& other = registry.m_Types[found->second];
+                if (!added && found->second == i)
+                {
+                    registry.m_Errors.push_back(fmt::format(
+                        "'{}' ({}) lists its own name, or one name twice, in FormerNames.", former, type.CppName));
+                }
+                else if (!added && other.Name == former)
+                {
+                    registry.m_Errors.push_back(fmt::format(
+                        "'{}' is a former name of {} and the saved name of {}. A level with it cannot tell which "
+                        "one it means. Remove the former name, or rename {}.",
+                        former,
+                        type.CppName,
+                        other.CppName,
+                        other.CppName));
+                }
+                else if (!added)
+                {
+                    registry.m_Errors.push_back(fmt::format(
+                        "'{}' is a former name of both {} and {}. Only one type can take a name's old levels.",
+                        former,
+                        other.CppName,
+                        type.CppName));
+                }
+                else
+                {
+                    registry.m_Errors.push_back(
+                        fmt::format("'{}' is a former name of {} and also a RemovedComponent. Remove one of the two.",
+                                    former,
+                                    type.CppName));
+                }
             }
         }
         return registry;

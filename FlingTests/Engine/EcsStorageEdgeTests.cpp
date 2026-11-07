@@ -40,32 +40,32 @@ namespace
 
     struct EdgeA
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.A"};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeA"};
         int Value = 0;
     };
 
     struct EdgeB
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.B"};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeB"};
         String Text;
     };
 
     struct EdgeSparse
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.Sparse", .Storage = ComponentStorage::Sparse};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeSparse", .Storage = ComponentStorage::Sparse};
         String Text;
     };
 
     /** Used for the first time inside a hook, so the storage makes its sparse set then. */
     struct EdgeLateSparse
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.LateSparse", .Storage = ComponentStorage::Sparse};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeLateSparse", .Storage = ComponentStorage::Sparse};
         int Value = 0;
     };
 
     struct EdgeSparseCounted
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.SparseCounted", .Storage = ComponentStorage::Sparse};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeSparseCounted", .Storage = ComponentStorage::Sparse};
         Counted Inner;
     };
 
@@ -73,7 +73,7 @@ namespace
     struct EdgeSparseTag
     {
         static constexpr ComponentInfo Component{
-            .Name = "Edge.SparseTag", .Kind = ComponentKind::Tag, .Storage = ComponentStorage::Sparse};
+            .Name = "Edge.EdgeSparseTag", .Kind = ComponentKind::Tag, .Storage = ComponentStorage::Sparse};
         static inline int Live = 0;
 
         EdgeSparseTag() { ++Live; }
@@ -87,19 +87,19 @@ namespace
 
     struct alignas(128) EdgeHuge
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.Huge"};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeHuge"};
         int Value = 0;
     };
 
     struct EdgeQ
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.Q"};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeQ"};
         int Value = 0;
     };
 
     struct EdgeR
     {
-        static constexpr ComponentInfo Component{.Name = "Edge.R"};
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeR"};
         int Value = 0;
     };
 
@@ -524,36 +524,37 @@ namespace
 {
     struct StressText
     {
-        static constexpr ComponentInfo Component{.Name = "Stress.Text"};
+        static constexpr ComponentInfo Component{.Name = "Stress.StressText"};
         String Value;
     };
 
     struct StressTag
     {
-        static constexpr ComponentInfo Component{.Name = "Stress.Tag", .Kind = ComponentKind::Tag};
+        static constexpr ComponentInfo Component{.Name = "Stress.StressTag", .Kind = ComponentKind::Tag};
     };
 
     struct StressSparse
     {
-        static constexpr ComponentInfo Component{.Name = "Stress.Sparse", .Storage = ComponentStorage::Sparse};
+        static constexpr ComponentInfo Component{.Name = "Stress.StressSparse", .Storage = ComponentStorage::Sparse};
         int Value = 0;
     };
 
     struct StressEnable
     {
-        static constexpr ComponentInfo Component{.Name = "Stress.Enable", .Storage = ComponentStorage::Enableable};
+        static constexpr ComponentInfo Component{.Name = "Stress.StressEnable",
+                                                 .Storage = ComponentStorage::Enableable};
         int Value = 0;
     };
 
     struct alignas(32) StressAligned
     {
-        static constexpr ComponentInfo Component{.Name = "Stress.Aligned"};
+        static constexpr ComponentInfo Component{.Name = "Stress.StressAligned"};
         int Value = 0;
     };
 
     struct alignas(128) StressHuge
     {
-        static constexpr ComponentInfo Component{.Name = "Stress.Huge"};
+        static constexpr ComponentInfo Component{.Name = "Stress.StressHuge"};
         int Value = 0;
     };
 

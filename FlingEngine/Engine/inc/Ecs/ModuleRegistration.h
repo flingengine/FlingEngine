@@ -87,6 +87,9 @@ namespace Fling
 
         const std::vector<RemovedComponentDesc>& RemovedComponents() const { return m_Removed; }
 
+        /** Registration errors, such as two C++ types with one saved name. TypeRegistry::Build adds its own. */
+        const std::vector<String>& Errors() const { return m_Errors; }
+
     private:
         template <typename T>
         static TypeDesc MakeDesc()
@@ -94,6 +97,7 @@ namespace Fling
             constexpr ComponentInfo info = ComponentInfoOf<T>;
             TypeDesc desc;
             desc.Name = info.Name;
+            desc.CppName = TypeNameOf<T>();
             desc.Hash = TypeHashOf<T>;
             desc.Kind = info.Kind;
             desc.Domain = info.Domain;
@@ -175,5 +179,6 @@ namespace Fling
         SystemRegistry* m_Systems;
         std::vector<TypeDesc> m_Types;
         std::vector<RemovedComponentDesc> m_Removed;
+        std::vector<String> m_Errors;
     };
 } // namespace Fling

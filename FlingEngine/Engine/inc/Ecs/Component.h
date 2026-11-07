@@ -3,6 +3,7 @@
 #include "Ecs/TypeHash.h"
 #include "FlingTypes.h"
 #include "Strings/String.h"
+#include "TypeName.h"
 
 #include <string_view>
 #include <type_traits>
@@ -51,7 +52,12 @@ namespace Fling
      */
     struct ComponentInfo
     {
-        /** The saved name. Level files use it, so do not change it. */
+        /**
+         * The saved name. Level files use it. It must end with the C++ type name, after an
+         * optional prefix and a dot: "MyGame.Health" or "Health" for struct Health (for a
+         * template, the last part starts with it: "MyGame.Part3"). The compiler checks this. To rename, change it and
+         * add the old name with TypeBuilder::FormerNames, so old levels still load.
+         */
         const char* Name = nullptr;
         ComponentKind Kind = ComponentKind::Table;
         ComponentDomain Domain = ComponentDomain::Simulation;
@@ -91,9 +97,42 @@ namespace Fling
                         std::is_same_v<std::remove_cv_t<decltype(ComponentTraits<T>::Info)>, ComponentInfo> &&
                         std::is_nothrow_move_constructible_v<T>;
 
-    /** The ComponentInfo of T. */
+    /**
+     * True if a saved name ends with the C++ type name: the whole name, or a prefix, a
+     * dot, and the type name. "Game.Health" and "Health" match "Health"; "Game.Hp" does not.
+     * Each instance of a template needs its own name, so for a template (isTemplate) the
+     * last part only starts with the type name: "Game.Part3" matches Part<3>.
+     */
+    constexpr bool SavedNameMatchesType(const StringView savedName, const StringView typeName, const bool isTemplate)
+    {
+        const size_t dot = savedName.rfind('.');
+        const StringView last = dot == StringView::npos ? savedName : savedName.substr(dot + 1);
+        if (dot == 0)
+        {
+            return false;
+        }
+        return isTemplate ? last.starts_with(typeName) : last == typeName;
+    }
+
+    namespace Detail
+    {
+        template <typename T>
+        constexpr ComponentInfo CheckedComponentInfo()
+        {
+            constexpr ComponentInfo info = ComponentTraits<T>::Info;
+            static_assert(info.Name == nullptr || SavedNameMatchesType(info.Name,
+                                                                       ShortTypeNameOf<T>(),
+                                                                       TypeNameOf<T>().find('<') != StringView::npos),
+                          "A component's saved .Name must end with its C++ type name: \"Health\" or "
+                          "\"MyGame.Health\" for struct Health. If you renamed the struct, change .Name too, and "
+                          "add the old name with TypeBuilder::FormerNames so that old levels still load.");
+            return info;
+        }
+    } // namespace Detail
+
+    /** The ComponentInfo of T. The compiler checks that its saved name matches the type name. */
     template <Component T>
-    inline constexpr ComponentInfo ComponentInfoOf = ComponentTraits<T>::Info;
+    inline constexpr ComponentInfo ComponentInfoOf = Detail::CheckedComponentInfo<T>();
 
     /** True if the declaration of T is complete and agrees with the shape of the struct. */
     template <Component T>

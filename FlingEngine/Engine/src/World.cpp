@@ -75,13 +75,19 @@ namespace Fling
         m_Game->Init(m_Storage);
 
         // Build the schedule before any level loads. A bad schedule never runs.
+        // Component names that cannot be told apart stop the world too: levels would load the wrong type
         ScheduleResult Schedule = m_Systems.BuildSchedule();
-        if (!Schedule.Ok())
+        if (!Schedule.Ok() || !m_Types.Ok())
         {
-            m_ScheduleErrors = Schedule.ErrorReport();
+            m_ScheduleErrors = Schedule.Ok() ? String() : Schedule.ErrorReport();
             for (const ScheduleError& Error : Schedule.Errors)
             {
                 F_LOG_ERROR("System schedule: {}", Error.Message);
+            }
+            for (const String& Error : m_Types.Errors())
+            {
+                F_LOG_ERROR("Component types: {}", Error);
+                m_ScheduleErrors += "Component types: " + Error + "\n";
             }
             return false;
         }

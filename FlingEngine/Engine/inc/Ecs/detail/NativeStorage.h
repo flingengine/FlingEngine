@@ -10,6 +10,7 @@
 #include "Ecs/TypeHash.h"
 #include "FlingTypes.h"
 #include "Signals.h"
+#include "TypeName.h"
 
 #include <cstddef>
 #include <memory>
@@ -53,6 +54,8 @@ namespace Fling::Detail
         /** TypeHashOf for a Fling::Component, and a hash of the type's name for any other type. */
         uint64 Key = 0;
         const char* Name = "";
+        /** The C++ type name (TypeNameOf). Two different types with one Key are an error. */
+        StringView TypeName;
         size_t Size = 0;
         size_t Align = 1;
         ComponentStorage Storage = ComponentStorage::Table;
@@ -67,8 +70,9 @@ namespace Fling::Detail
     };
 
     /**
-     * Give a type its ComponentId, or return the one it has. Thread safe. Two types
-     * with the same key must have the same shape (a debug build asserts this).
+     * Give a type its ComponentId, or return the one it has. Thread safe. Two different
+     * C++ types with the same saved name would share one id and read each other's
+     * memory, so that logs an error and aborts, in every build.
      */
     ComponentId RegisterComponentType(const ComponentOps& ops);
 
@@ -94,6 +98,7 @@ namespace Fling::Detail
             ops.Name = typeid(T).name();
             ops.Key = HashName(ops.Name) ^ 0x9E3779B97F4A7C15ull;
         }
+        ops.TypeName = TypeNameOf<T>();
         ops.Empty = std::is_empty_v<T>;
         ops.Trivial = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
         ops.Size = std::is_empty_v<T> ? 0 : sizeof(T);

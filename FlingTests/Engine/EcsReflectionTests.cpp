@@ -692,3 +692,126 @@ TEST_CASE("A newer saved version, or a missing upgrade step, still loads fields 
     SaveObject(type, &fromOld, saved, {});
     REQUIRE(saved.GetInt64("$v") == 3);
 }
+
+namespace
+{
+    namespace One
+    {
+        struct Clash
+        {
+            static constexpr ComponentInfo Component{.Name = "Test.Clash"};
+            float A = 0.0f;
+        };
+    } // namespace One
+
+    namespace Two
+    {
+        struct Clash
+        {
+            static constexpr ComponentInfo Component{.Name = "Test.Clash"};
+            float A = 0.0f;
+        };
+    } // namespace Two
+
+    struct Renamed
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.Renamed"};
+        float A = 0.0f;
+    };
+
+    struct AlsoRenamed
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.AlsoRenamed"};
+        float A = 0.0f;
+    };
+
+    bool HasError(const TypeRegistry& t_Types, const StringView t_Text)
+    {
+        for (const String& error : t_Types.Errors())
+        {
+            if (error.find(t_Text) != String::npos)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+} // namespace
+
+TEST_CASE("Two C++ types with one saved name are an error", "[reflection]")
+{
+    QuietLogger();
+    SystemRegistry systems;
+    ModuleRegistration modules(systems);
+    modules.Component<One::Clash>();
+    modules.Component<One::Clash>(); // The same type again is only a warning
+    REQUIRE(modules.Errors().empty());
+
+    modules.Component<Two::Clash>();
+    const TypeRegistry types = TypeRegistry::Build(modules);
+    REQUIRE_FALSE(types.Ok());
+    REQUIRE(HasError(types, "both have the saved name 'Test.Clash'"));
+    REQUIRE(HasError(types, "One::Clash"));
+    REQUIRE(HasError(types, "Two::Clash"));
+}
+
+TEST_CASE("A former name must name only one type", "[reflection]")
+{
+    QuietLogger();
+
+    SECTION("A clean rename is not an error, and the old name finds the type")
+    {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<Renamed>([](TypeBuilder<Renamed>& t_Type) { t_Type.FormerNames({"Test.OldName"}); });
+        const TypeRegistry types = TypeRegistry::Build(modules);
+        REQUIRE(types.Ok());
+        REQUIRE(types.Find("Test.OldName") == types.Find<Renamed>());
+    }
+
+    SECTION("Another type's saved name")
+    {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<AlsoRenamed>();
+        modules.Component<Renamed>([](TypeBuilder<Renamed>& t_Type) { t_Type.FormerNames({"Test.AlsoRenamed"}); });
+        const TypeRegistry types = TypeRegistry::Build(modules);
+        REQUIRE(HasError(types, "'Test.AlsoRenamed' is a former name of"));
+        REQUIRE(types.Find("Test.AlsoRenamed") == types.Find<AlsoRenamed>());
+    }
+
+    SECTION("Two types claim one former name")
+    {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<Renamed>([](TypeBuilder<Renamed>& t_Type) { t_Type.FormerNames({"Test.Old"}); });
+        modules.Component<AlsoRenamed>([](TypeBuilder<AlsoRenamed>& t_Type) { t_Type.FormerNames({"Test.Old"}); });
+        REQUIRE(HasError(TypeRegistry::Build(modules), "'Test.Old' is a former name of both"));
+    }
+
+    SECTION("The type's own name")
+    {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<Renamed>([](TypeBuilder<Renamed>& t_Type) { t_Type.FormerNames({"Test.Renamed"}); });
+        REQUIRE(HasError(TypeRegistry::Build(modules), "lists its own name"));
+    }
+
+    SECTION("A removed component's name")
+    {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<Renamed>([](TypeBuilder<Renamed>& t_Type) { t_Type.FormerNames({"Test.Gone"}); });
+        modules.RemovedComponent("Test.Gone");
+        REQUIRE(HasError(TypeRegistry::Build(modules), "'Test.Gone' is a former name of"));
+    }
+
+    SECTION("A registered component that is also removed")
+    {
+        SystemRegistry systems;
+        ModuleRegistration modules(systems);
+        modules.Component<Renamed>();
+        modules.RemovedComponent("Test.Renamed");
+        REQUIRE(HasError(TypeRegistry::Build(modules), "also a RemovedComponent"));
+    }
+}

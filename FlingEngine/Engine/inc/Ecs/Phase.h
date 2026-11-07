@@ -123,34 +123,70 @@ namespace Fling
     namespace Phases
     {
         /** Turns this tick's input into InputState. */
-        inline constexpr PhaseInfo Input{.Name = "Engine.Input", .UpdateRate = UpdateRate::Fixed};
+        inline constexpr PhaseInfo Input
+        {
+            .Name = "Engine.Input",
+            .UpdateRate = UpdateRate::Fixed,
+        };
 
         /** Gameplay. */
-        inline constexpr PhaseInfo Simulation{
-            .Name = "Engine.Simulation", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Input"};
+        inline constexpr PhaseInfo Simulation
+        {
+            .Name = "Engine.Simulation",
+            .UpdateRate = UpdateRate::Fixed,
+            .After = "Engine.Input",
+        };
 
         /** Consumes the queues that Simulation appends to: spawns, damage, effects. */
-        inline constexpr PhaseInfo ResolveDeferred{
-            .Name = "Engine.ResolveDeferred", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Simulation"};
+        inline constexpr PhaseInfo ResolveDeferred
+        {
+            .Name = "Engine.ResolveDeferred",
+            .UpdateRate = UpdateRate::Fixed,
+            .After = "Engine.Simulation",
+        };
 
         /** Computes LocalToWorld from Transform and Parent, after everything that moves entities. */
-        inline constexpr PhaseInfo Transform{
-            .Name = "Engine.Transform", .UpdateRate = UpdateRate::Fixed, .After = "Engine.ResolveDeferred"};
+        inline constexpr PhaseInfo Transform
+        {
+            .Name = "Engine.Transform",
+            .UpdateRate = UpdateRate::Fixed,
+            .After = "Engine.ResolveDeferred",
+        };
 
         /** Frame rate work that follows the simulation: camera smoothing, interpolation. */
-        inline constexpr PhaseInfo PostSimulation{.Name = "Engine.PostSimulation", .UpdateRate = UpdateRate::Frame};
+        inline constexpr PhaseInfo PostSimulation
+        {
+            .Name = "Engine.PostSimulation",
+            .UpdateRate = UpdateRate::Frame,
+        };
 
         /** Copies what the renderer needs out of the world. */
-        inline constexpr PhaseInfo Extract{
-            .Name = "Engine.Extract", .UpdateRate = UpdateRate::Frame, .After = "Engine.PostSimulation"};
+        inline constexpr PhaseInfo Extract
+        {
+            .Name = "Engine.Extract",
+            .UpdateRate = UpdateRate::Frame,
+            .After = "Engine.PostSimulation",
+        };
 
         /** Editor tools, last in the frame. */
-        inline constexpr PhaseInfo Editor{
-            .Name = "Engine.Editor", .UpdateRate = UpdateRate::Frame, .After = "Engine.Extract"};
+        inline constexpr PhaseInfo Editor
+        {
+            .Name = "Engine.Editor",
+            .UpdateRate = UpdateRate::Frame,
+            .After = "Engine.Extract",
+        };
 
         /** Every engine phase, so that a schedule always has the anchors, even with no systems in them. */
-        inline constexpr std::array<const PhaseInfo*, 7> All{
-            &Input, &Simulation, &ResolveDeferred, &Transform, &PostSimulation, &Extract, &Editor};
+        inline constexpr std::array<const PhaseInfo*, 7> All
+        {
+            &Input,
+            &Simulation,
+            &ResolveDeferred,
+            &Transform,
+            &PostSimulation,
+            &Extract,
+            &Editor,
+        };
     } // namespace Phases
 
     /** The job of a world. A bit mask: a system's RunIn says which roles it runs in. */

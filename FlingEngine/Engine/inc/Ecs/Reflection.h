@@ -168,6 +168,9 @@ namespace Fling
         /** Names this type had before. A level that uses one still loads. */
         std::vector<String> FormerNames;
 
+        /** The C++ type name (TypeNameOf), to tell two types with one saved name apart. */
+        StringView CppName;
+
         TypeHash Hash = 0;
         ComponentKind Kind = ComponentKind::Table;
         ComponentDomain Domain = ComponentDomain::Simulation;

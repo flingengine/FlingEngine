@@ -20,7 +20,7 @@ namespace
     struct Counters
     {
         static constexpr ComponentInfo Component{
-            .Name = "Test.WorldCounters", .Kind = ComponentKind::Singleton, .Transient = true};
+            .Name = "Test.Counters", .Kind = ComponentKind::Singleton, .Transient = true};
         int Ticks = 0;
         int EditTicks = 0;
         int PlayBegan = 0;
@@ -30,7 +30,7 @@ namespace
 
     struct FrameCount
     {
-        static constexpr ComponentInfo Component{.Name = "Test.WorldFrameCount",
+        static constexpr ComponentInfo Component{.Name = "Test.FrameCount",
                                                  .Kind = ComponentKind::Singleton,
                                                  .Domain = ComponentDomain::Presentation,
                                                  .Transient = true};
@@ -107,9 +107,16 @@ namespace
             {
                 t_Modules.System<ConflictingSystem>();
             }
+            if (AddNameClash)
+            {
+                // A former name that is the type's own saved name
+                t_Modules.Component<FrameCount>([](TypeBuilder<FrameCount>& t_Type)
+                                                { t_Type.FormerNames({"Test.FrameCount"}); });
+            }
         }
 
         bool AddConflict = false;
+        bool AddNameClash = false;
         int Updates = 0;
     };
 
@@ -179,11 +186,27 @@ TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
     REQUIRE_FALSE(TestWorld.Init());
     REQUIRE_FALSE(TestWorld.IsReadyForPlay());
     REQUIRE(TestWorld.GetSchedule() == nullptr);
-    REQUIRE(TestWorld.GetScheduleErrors().find("Test.Conflicting and Test.PlayCounter both write Test.WorldCounters") !=
+    REQUIRE(TestWorld.GetScheduleErrors().find("Test.Conflicting and Test.PlayCounter both write Test.Counters") !=
             String::npos);
 
     // No system ran OnCreate
     REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);
+
+    TestWorld.Shutdown();
+}
+
+TEST_CASE("A world with component names that clash does not start", "[world][ecs]")
+{
+    QuietLogger();
+
+    SystemsGame TestGame;
+    TestGame.AddNameClash = true;
+    World TestWorld(&TestGame);
+
+    REQUIRE_FALSE(TestWorld.Init());
+    REQUIRE_FALSE(TestWorld.IsReadyForPlay());
+    REQUIRE(TestWorld.GetScheduleErrors().find("Component types: ") != String::npos);
+    REQUIRE(TestWorld.GetScheduleErrors().find("lists its own name") != String::npos);
 
     TestWorld.Shutdown();
 }
