@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreAPI.h"
 #include "Platform.h"
+#include "Strings/String.h"
 
 #include <string>
 #include <sys/stat.h>
@@ -45,12 +46,12 @@ namespace Fling
         static const std::string& ProjectSavedDir();
 
         /** An absolute path is returned as it is. A relative path is made relative to ProjectDir. */
-        static std::string ResolveProjectPath(const std::string& t_Path);
+        static std::string ResolveProjectPath(StringView t_Path);
 
         /**
          * Convert a full absolute path to one relative to the engine assets directory.
          */
-        static std::string ConvertAbsolutePathToRelative(const std::string& t_FullPath);
+        static std::string ConvertAbsolutePathToRelative(StringView t_FullPath);
 
         /**
          * Makes a directory given the specified path. 
@@ -58,7 +59,7 @@ namespace Fling
          * @param t_Dir     The directory to make
          * @return  0 if successful, error code if not
          */
-        static int MakeDir(const char* t_Dir);
+        static int MakeDir(StringView t_Dir);
 
         /**
          * Checks if this directory exists
@@ -66,7 +67,7 @@ namespace Fling
          * @param t_Dir     The directory to check
          * @return  True if the directory exists 
          */
-        static bool DirExists(const char* t_Dir);
+        static bool DirExists(StringView t_Dir);
 
         /**
          * Get the current working directory

@@ -2,6 +2,7 @@
 
 #include "FlingMath.h"
 #include "Game.h"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -36,7 +37,7 @@ namespace Sandbox
 
 	private:
 
-		void AddFloor(Fling::EntityStorage& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
+		void AddFloor(Fling::EntityStorage& t_Reg, Fling::StringView t_Model, Fling::StringView t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
 
     };
 }	// namespace Sandbox

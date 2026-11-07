@@ -84,10 +84,10 @@ namespace Sandbox
 		F_LOG_TRACE("Sandbox: {} transforms, checksum {:.9f}", Count, Checksum);
 	}
 
-	void Game::AddFloor(Fling::EntityStorage& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
+	void Game::AddFloor(Fling::EntityStorage& t_Reg, const Fling::StringView t_Model, const Fling::StringView t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
 	{
 		Fling::Entity e0 = t_Reg.Create();
-		t_Reg.Add<MeshRenderer>(e0, t_Model, t_Mat);
+		t_Reg.Add<MeshRenderer>(e0, MeshRenderer(Fling::String(t_Model), Fling::String(t_Mat)));
 		Transform& t0 = t_Reg.Add<Transform>(e0);
 		t0.Position = glm::vec3(0.0f, -1.0f, 0.0f);
 		t0.Scale = t_Scale;

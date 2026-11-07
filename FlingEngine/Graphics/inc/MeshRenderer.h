@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Ecs/Component.h"
+#include "Strings/String.h"
 
-#include <string>
 #include <utility>
 
 namespace Fling
@@ -18,15 +18,15 @@ namespace Fling
 
         MeshRenderer() = default;
 
-        explicit MeshRenderer(std::string t_Mesh, std::string t_Material = {})
+        explicit MeshRenderer(String t_Mesh, String t_Material = {})
             : Mesh(std::move(t_Mesh)), Material(std::move(t_Material))
         {
         }
 
         /** The model, relative to the assets folder. Empty draws nothing. */
-        std::string Mesh;
+        String Mesh;
 
         /** The material, relative to the assets folder. Empty uses the default material. */
-        std::string Material;
+        String Material;
     };
 } // namespace Fling

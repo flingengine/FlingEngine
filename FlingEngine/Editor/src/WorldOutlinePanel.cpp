@@ -15,10 +15,10 @@ namespace Fling
 	{
 		std::string LabelOf(const Fling::EntityStorage& t_Reg, const Fling::Entity t_Entity)
 		{
-			const NameComponent* Name = t_Reg.TryGet<NameComponent>(t_Entity);
-			if (Name && !Name->Name.empty())
+			const NameComponent* Label = t_Reg.TryGet<NameComponent>(t_Entity);
+			if (Label && !Label->Name.IsNone())
 			{
-				return Name->Name;
+				return std::string(Label->Name.ToView());
 			}
 			return "Entity " + std::to_string(t_Entity.Index);
 		}

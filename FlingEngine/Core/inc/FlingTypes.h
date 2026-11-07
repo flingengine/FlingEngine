@@ -1,7 +1,5 @@
 #pragma once
 
-#include "HashedString.h"
-
 #include <cstdint>
 #include <inttypes.h>
 #include <limits>
@@ -17,16 +15,6 @@ typedef int8_t                  int8;
 typedef signed short            int16;
 typedef int32_t                 int32;
 typedef int64_t                 int64;
-
-#define HS(str) ::Fling::HashedString { (str) }
-
-namespace Fling
-{
-    // Use hashed strings as Guid's
-    typedef HashedString                            Guid;
-    typedef HashedString::HashType                  Guid_Handle;
-    inline constexpr Guid INVALID_GUID = { "INVALID_GUID" };
-}
 
 /**
  * Helper function to check size_t is correctly converted to uint32_t

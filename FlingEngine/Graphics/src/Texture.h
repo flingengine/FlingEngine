@@ -15,9 +15,9 @@ namespace Fling
     {
     public:
 
-		static std::shared_ptr<Fling::Texture> Create(Guid t_ID);
+		static std::shared_ptr<Fling::Texture> Create(const AssetPath& t_Path);
 
-        explicit Texture(Guid t_ID);
+        explicit Texture(const AssetPath& t_Path);
         virtual ~Texture();
 
 		FORCEINLINE uint32 GetWidth() const { return m_Width; }

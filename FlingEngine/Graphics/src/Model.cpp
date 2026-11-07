@@ -9,9 +9,9 @@
 
 namespace Fling
 {
-	std::shared_ptr<Fling::Model> Model::Create(Guid t_ID)
+	std::shared_ptr<Fling::Model> Model::Create(const AssetPath& t_Path)
 	{
-		return ResourceManager::LoadResource<Model>(t_ID);
+		return ResourceManager::LoadResource<Model>(t_Path);
 	}
 
 	std::shared_ptr<Fling::Model> Model::Quad()
@@ -72,17 +72,17 @@ namespace Fling
 			}
 		}*/
 
-		return ResourceManager::LoadResource<Model>(HS("Fling_Primative_QUAD"), Verts, indexBuffer);
+		return ResourceManager::LoadResource<Model>(AssetPath("Fling_Primative_QUAD"), Verts, indexBuffer);
 	}
 
-	Model::Model(Guid t_ID)
-		: Resource(t_ID)
+	Model::Model(const AssetPath& t_Path)
+		: Resource(t_Path)
 	{
 		LoadModel();
 	}
 
-	Model::Model(Guid t_ID, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies)
-		: Resource(t_ID)
+	Model::Model(const AssetPath& t_Path, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies)
+		: Resource(t_Path)
 	{
 		m_Verts = t_Verts;
 		m_Indices = t_Indecies;

@@ -4,13 +4,13 @@
 
 namespace Fling
 {
-    std::shared_ptr<Fling::File> File::Create(Guid t_ID)
+    std::shared_ptr<Fling::File> File::Create(const AssetPath& t_Path)
     {
-		return ResourceManager::LoadResource<Fling::File>(t_ID);
+		return ResourceManager::LoadResource<Fling::File>(t_Path);
     }
 
-    File::File(Guid t_ID)
-        : Resource(t_ID)
+    File::File(const AssetPath& t_Path)
+        : Resource(t_Path)
     {
         LoadFile();
     }

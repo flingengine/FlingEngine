@@ -16,9 +16,9 @@ namespace Fling
     class HDRImage : public Resource
     {
     public:
-        static std::shared_ptr<Fling::HDRImage> Create(Guid t_ID, LogicalDevice* t_dev, void* t_Data = nullptr);
+        static std::shared_ptr<Fling::HDRImage> Create(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data = nullptr);
 
-        explicit HDRImage(Guid t_ID, LogicalDevice* t_dev, void* t_Data = nullptr);
+        explicit HDRImage(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data = nullptr);
         virtual ~HDRImage();
 
         FORCEINLINE uint32 GetWidth() const { return m_Width; }

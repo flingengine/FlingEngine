@@ -7,24 +7,26 @@
 namespace Fling
 {
 
-    int FlingPaths::MakeDir(const char* t_Dir)
+    int FlingPaths::MakeDir(const StringView t_Dir)
     {
         int Res = 0;
+        const std::string Dir(t_Dir);
 
 #if FLING_WINDOWS
-        Res = _mkdir(t_Dir);
+        Res = _mkdir(Dir.c_str());
 #else
-        Res = mkdir(t_Dir, 0755);
+        Res = mkdir(Dir.c_str(), 0755);
 #endif
 
         return Res;
     }
 
-    bool FlingPaths::DirExists(const char* t_Dir)
+    bool FlingPaths::DirExists(const StringView t_Dir)
     {
         struct stat info;
 
-        int statRC = stat( t_Dir, &info );
+        const std::string Dir(t_Dir);
+        int statRC = stat( Dir.c_str(), &info );
         if( statRC != 0 )
         {
             if (errno == ENOENT)  { return false; } // something along the path does not exist
@@ -78,18 +80,18 @@ namespace Fling
 #endif	// FLING_LINUX
     }
 
-    std::string FlingPaths::ResolveProjectPath(const std::string& t_Path)
+    std::string FlingPaths::ResolveProjectPath(const StringView t_Path)
     {
         const std::string& Root = ProjectDir();
         if (t_Path.empty() || Root.empty())
         {
-            return t_Path;
+            return std::string(t_Path);
         }
-        const std::filesystem::path Path(t_Path);
+        const std::filesystem::path Path = PathFromUtf8(t_Path);
         if (Path.is_absolute())
         {
-            return t_Path;
+            return std::string(t_Path);
         }
-        return (std::filesystem::path(Root) / Path).string();
+        return PathToUtf8(PathFromUtf8(Root) / Path);
     }
 }   // namespace Fling 

@@ -8,6 +8,7 @@
 #include "Json.h"
 #include "Level.h"
 #include "Platform.h"
+#include "Strings/String.h"
 
 #include <cassert>
 #include "Ecs/EntityStorage.h"
@@ -79,7 +80,7 @@ namespace Fling
 		* @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty means use the config.
 		* @return False if the system schedule has errors (see GetScheduleErrors). The world is then not ready for play.
 		*/
-		bool Init(const std::string& t_StartLevel = {});
+		bool Init(StringView t_StartLevel = {});
 
 		/**
 		 * Run one frame: the fixed system ticks that are due, then Game::Update, then the
@@ -135,7 +136,7 @@ namespace Fling
 		 * @param t_LevelToLoad File path to write (relative to the assets directory)
 		 * @return True on success
 		 */
-		bool OutputLevelFile(const std::string& t_LevelToLoad);
+		bool OutputLevelFile(StringView t_LevelToLoad);
 
 		/**
 		 * Reset the current registry and load entities/components from a JSON level file.
@@ -144,7 +145,7 @@ namespace Fling
 		 * @param t_LevelToLoad File path to load (relative to the assets directory)
 		 * @return True on success
 		 */
-		bool LoadLevelFile(const std::string& t_LevelToLoad);
+		bool LoadLevelFile(StringView t_LevelToLoad);
 
 		/** The entities, components, and singletons of this world. */
 		FORCEINLINE EntityStorage& GetStorage() { return m_Storage; }
@@ -197,13 +198,13 @@ namespace Fling
          * Write all saved components on living entities to a level document. Gives each
          * entity an EntityGuid first if it has none, so references between entities save.
          */
-        bool SaveToJson(Json& t_OutDoc, const std::string& t_Title);
+        bool SaveToJson(Json& t_OutDoc, StringView t_Title);
 
         /** A new random EntityGuid value that no entity in this world uses. */
         uint64 MakeEntityGuid() const;
 
         /** Remove all entities, then make the entities in a level document */
-        bool LoadFromJson(const Json& t_Doc, const std::string& t_SourceName);
+        bool LoadFromJson(const Json& t_Doc, StringView t_SourceName);
 
         WorldState m_CurrentState = WorldState::NONE;
 

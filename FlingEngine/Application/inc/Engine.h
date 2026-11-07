@@ -84,6 +84,14 @@ namespace Fling
 		ExitCode Startup(int argc, const char* argv[]);
 
 		/**
+		 * Load the string tables, pick the language, and make them the ones that
+		 * DisplayText uses. Runs --loc-import and --loc-export.
+		 *
+		 * @return ExitCode::Failure if a localization tool fails, otherwise ExitCode::Success
+		 */
+		ExitCode StartLocalization();
+
+		/**
 		* Run the main loop until the window closes, the world quits, or --frames
 		* ticks have run. With --dump-schedule or --validate-schedule, start the world,
 		* report the system schedule, and return without running the loop.
@@ -161,7 +169,8 @@ namespace Fling
 		m_GameImpl = new T_GameType();
 
 		ExitCode Code = Startup(argc, argv);
-		if (Code == ExitCode::Success)
+		// A localization tool (--loc-export, --loc-import) does its work in Startup
+		if (Code == ExitCode::Success && !m_Options.IsLocalizationTool())
 		{
 			Code = Tick();
 		}

@@ -99,6 +99,22 @@ If a header genuinely has to come before another (for example `stdlib.h` before
 `crtdbg.h` with `_CRTDBG_MAP_ALLOC`), keep that order, wrap it in
 `// clang-format off` / `// clang-format on`, and say why in a comment.
 
+## Strings
+
+The string types and their rules are in [`strings.md`](strings.md). For function
+signatures:
+
+- A read-only text parameter is `StringView` (`Fling::StringView`, from
+  `Strings/String.h`). Not `const std::string&`, and not `const char*`.
+- A text parameter that the function keeps is `String` by value, then
+  `std::move` it into place.
+- A parameter or member that identifies something is `Name`, not text.
+- `const char*` is only for a C API call (Win32, GLFW, Vulkan, ImGui ids and
+  labels, `argv`) and for `constexpr` tables of literals.
+- When the function body needs a terminating null (a C call, `fopen`), make a
+  `String` from the view at that call. Open files with `PathFromUtf8(path)`, not
+  with the text, so that non-ASCII paths work on Windows.
+
 ## Naming / conventions to preserve
 
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are

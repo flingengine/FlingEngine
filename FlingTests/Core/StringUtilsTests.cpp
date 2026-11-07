@@ -28,6 +28,19 @@ TEST_CASE("String Utils", "[String Utils]") {
         REQUIRE(StringUtils::ParseAs<int>("notANumber", -1) == -1);
     }
 
+    SECTION("Parse numbers the same way on every machine") {
+        // Leading spaces and a '+' sign are skipped, as strtoll did
+        REQUIRE(StringUtils::ParseAs<int>("  42", -1) == 42);
+        REQUIRE(StringUtils::ParseAs<int>("+42", -1) == 42);
+        REQUIRE(StringUtils::ParseAs<int>("776abc", -1) == 776);
+        REQUIRE(StringUtils::ParseAs<double>(" +2.5", 0.0) == Catch::Approx(2.5));
+        REQUIRE(StringUtils::ParseAs<double>("1e3", 0.0) == Catch::Approx(1000.0));
+
+        // A value out of range is not wrapped: it gives the default
+        REQUIRE(StringUtils::ParseAs<int8>("300", 7) == 7);
+        REQUIRE(StringUtils::ParseAs<uint32>("-1", 9u) == 9u);
+    }
+
     SECTION("Parse int32") {
         REQUIRE(StringUtils::ParseAs<int32>("2147483647", 0) == 2147483647);
     }

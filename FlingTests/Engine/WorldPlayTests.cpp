@@ -28,7 +28,7 @@ namespace
             Calls.push_back("OnStartGame");
             for (int i = 0; i < SpawnCount; ++i)
             {
-                t_Reg.Add<Fling::NameComponent>(t_Reg.Create()).Name = "Spawned";
+                t_Reg.Add<Fling::NameComponent>(t_Reg.Create()).Name = Fling::Name("Spawned");
             }
         }
 
@@ -68,7 +68,7 @@ namespace
     Fling::Entity MakeAuthoredEntity(Fling::EntityStorage& t_Reg, const std::string& t_Name, float t_X)
     {
         const Fling::Entity Entity = t_Reg.Create();
-        t_Reg.Add<Fling::NameComponent>(Entity).Name = t_Name;
+        t_Reg.Add<Fling::NameComponent>(Entity).Name = Fling::Name(t_Name);
         t_Reg.Add<Fling::Transform>(Entity).Position = glm::vec3(t_X, 0.0f, 0.0f);
         return Entity;
     }
@@ -79,7 +79,7 @@ namespace
         t_Reg.View<Fling::NameComponent>().Each(
             [&](auto, Fling::NameComponent& t_NameComp)
             {
-                if (t_NameComp.Name == t_Name)
+                if (t_NameComp.Name.ToView() == t_Name)
                 {
                     ++Count;
                 }

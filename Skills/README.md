@@ -12,3 +12,4 @@ detail on a given topic. These files are meant to be read on demand, not all at 
 | [`architecture.md`](architecture.md) | Current folder/module layout, where new code belongs |
 | [`input-playback.md`](input-playback.md) | Record and replay input (`--record-input`, `--replay-input`), the `.input.jsonl` format |
 | [`adding-modules.md`](adding-modules.md) | How to add a new engine module (`fling_add_module`, UI example) |
+| [`strings.md`](strings.md) | `Name`, `String`/`StringView`, `DisplayText`, assets, localization (string tables, plurals, translator CSV, right-to-left), strings in simulation code |

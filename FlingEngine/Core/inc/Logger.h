@@ -68,26 +68,26 @@ namespace Fling
 
 }	// namespace Fling
 
-// Debug/release mode defs
+// Each macro is one statement, so it is safe in an if with no braces.
 #if FLING_DEBUG || defined ( F_ENABLE_LOGGING )
 
-#define  F_LOG_TRACE( ... )    Fling::Logger::GetCurrentConsole()->info( __VA_ARGS__ ); Fling::Logger::GetCurrentLogFile()->info( __VA_ARGS__ )
-#define  F_LOG_WARN( ... )     Fling::Logger::GetCurrentConsole()->warn( __VA_ARGS__ ); Fling::Logger::GetCurrentLogFile()->warn( __VA_ARGS__ )
-#define  F_LOG_ERROR( ... )    Fling::Logger::GetCurrentConsole()->error( __VA_ARGS__ ); Fling::Logger::GetCurrentLogFile()->error( __VA_ARGS__ );
+#define  F_LOG_TRACE( ... )    do { Fling::Logger::GetCurrentConsole()->info( __VA_ARGS__ ); Fling::Logger::GetCurrentLogFile()->info( __VA_ARGS__ ); } while (false)
+#define  F_LOG_WARN( ... )     do { Fling::Logger::GetCurrentConsole()->warn( __VA_ARGS__ ); Fling::Logger::GetCurrentLogFile()->warn( __VA_ARGS__ ); } while (false)
+#define  F_LOG_ERROR( ... )    do { Fling::Logger::GetCurrentConsole()->error( __VA_ARGS__ ); Fling::Logger::GetCurrentLogFile()->error( __VA_ARGS__ ); } while (false)
 
 /** Log a message to the error console AND throw a runtime exception. Only use for fatal asserts!
     Left in in release builds! */
-#define  F_LOG_FATAL( ... )    Fling::Logger::GetCurrentConsole()->error( __VA_ARGS__ ); \
-                               throw std::runtime_error( __VA_ARGS__ )
+#define  F_LOG_FATAL( ... )    do { Fling::Logger::GetCurrentConsole()->error( __VA_ARGS__ ); \
+                               throw std::runtime_error( __VA_ARGS__ ); } while (false)
 
 #else
 
-#define  F_LOG_TRACE( ... ) 
-#define  F_LOG_WARN( ... )  
-#define  F_LOG_ERROR( ... ) 
+#define  F_LOG_TRACE( ... )    do { } while (false)
+#define  F_LOG_WARN( ... )     do { } while (false)
+#define  F_LOG_ERROR( ... )    do { } while (false)
 
 /** Log a message to the error console AND throw a runtime exception. Only use for fatal asserts!
     Left in in release builds! */
-#define  F_LOG_FATAL( ... )    Fling::Logger::GetCurrentConsole()->error( __VA_ARGS__ ); \
-                               throw std::runtime_error( __VA_ARGS__ )
+#define  F_LOG_FATAL( ... )    do { Fling::Logger::GetCurrentConsole()->error( __VA_ARGS__ ); \
+                               throw std::runtime_error( __VA_ARGS__ ); } while (false)
 #endif

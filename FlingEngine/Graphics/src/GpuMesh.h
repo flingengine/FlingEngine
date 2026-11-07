@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AssetPath.h"
 #include "FlingVulkan.h"
 #include "Material.h"
 #include "MeshProxyTable.h"
@@ -37,9 +38,9 @@ namespace Fling
         {
             return false;
         }
-        t_Out.MeshModel = Model::Create(Guid{t_Slot.Mesh.c_str()}).get();
+        t_Out.MeshModel = Model::Create(AssetPath(t_Slot.Mesh)).get();
         t_Out.MeshMaterial = t_Slot.Material.empty() ? Material::GetDefaultMat().get()
-                                                     : Material::Create(Guid{t_Slot.Material.c_str()}).get();
+                                                     : Material::Create(AssetPath(t_Slot.Material)).get();
         return t_Out.MeshModel != nullptr && t_Out.MeshMaterial != nullptr;
     }
 } // namespace Fling

@@ -15,14 +15,14 @@ namespace Fling
     {
     public:
 
-		static std::shared_ptr<Fling::File> Create(Guid t_ID);
+		static std::shared_ptr<Fling::File> Create(const AssetPath& t_Path);
 
         /**
-         * Load a file from the asset path represented by t_ID.
+         * Load a file from the asset path t_Path.
          * 
-         * @param t_ID              The GUID that represents the file path to this file.
+         * @param t_Path              The path of this file, relative to the assets folder.
          */
-        explicit File(Guid t_ID);
+        explicit File(const AssetPath& t_Path);
         
         /**
          * Get char* that represents the text in this file
@@ -46,8 +46,8 @@ namespace Fling
     private:
 
         /**
-         * Loads the file based on Guid path.
-         * @note All Guid paths are relative to the assets directory. 
+         * Loads the file from its path.
+         * @note All paths are relative to the assets directory. 
          */
 
         void LoadFile();

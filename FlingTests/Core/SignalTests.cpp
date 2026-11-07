@@ -1,32 +1,9 @@
-#include "FlingTypes.h"
-#include "HashedString.h"
 #include "Signals.h"
 
 #include <catch2/catch_all.hpp>
-#include <string>
 #include <vector>
 
 using namespace Fling;
-
-TEST_CASE("HashedString matches 32-bit FNV-1a", "[core][hashed_string]")
-{
-    // Known FNV-1a 32-bit values.
-    STATIC_REQUIRE(HashedString::ToValue("") == 2166136261u);
-    STATIC_REQUIRE(HashedString::ToValue("a") == 0xe40c292cu);
-    STATIC_REQUIRE(HashedString::ToValue("foobar") == 0xbf9cf968u);
-
-    constexpr HashedString Literal{"foobar"};
-    STATIC_REQUIRE(Literal.value() == 0xbf9cf968u);
-
-    const std::string Runtime = "foobar";
-    const HashedString FromPointer{Runtime.c_str()};
-    REQUIRE(FromPointer == Literal);
-    REQUIRE(FromPointer.value() == HashedString::ToValue(Runtime.data(), Runtime.size()));
-    REQUIRE(std::string(FromPointer.data()) == "foobar");
-    REQUIRE(HS("foobar") == Literal);
-    REQUIRE(HS("foo") != Literal);
-    REQUIRE(INVALID_GUID == Guid{"INVALID_GUID"});
-}
 
 namespace
 {

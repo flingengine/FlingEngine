@@ -131,7 +131,7 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
         int count = 0;
         reg.View<Transform, NameComponent>().Each([&](auto /*entity*/, Transform& t, NameComponent& name) {
             ++count;
-            REQUIRE(name.Name == "Hero");
+            REQUIRE(name.Name == "Hero"_name);
             REQUIRE(t.Position.x == Catch::Approx(4.f));
             REQUIRE(t.Position.y == Catch::Approx(5.f));
             REQUIRE(t.Position.z == Catch::Approx(6.f));
@@ -175,9 +175,9 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
         glm::vec3 left{};
         glm::vec3 right{};
         reg.View<Transform, NameComponent>().Each([&](auto /*entity*/, Transform& t, NameComponent& name) {
-            if (name.Name == "Left") {
+            if (name.Name == "Left"_name) {
                 left = t.Position;
-            } else if (name.Name == "Right") {
+            } else if (name.Name == "Right"_name) {
                 right = t.Position;
             }
         });

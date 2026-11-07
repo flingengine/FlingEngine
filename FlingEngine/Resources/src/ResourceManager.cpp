@@ -30,7 +30,7 @@ namespace Fling
 		m_ResourceMap.clear();
 	}
 
-	std::shared_ptr<Resource> ResourceManager::GetResource(Guid_Handle t_ID) const
+	std::shared_ptr<Resource> ResourceManager::GetResource(AssetId t_ID) const
 	{
 		ResourceMapConstIt It = m_ResourceMap.find(t_ID);
 		if (It != m_ResourceMap.end())
@@ -41,7 +41,7 @@ namespace Fling
 		return nullptr;
 	}
 
-	bool ResourceManager::IsLoaded(Guid_Handle t_ID) const
+	bool ResourceManager::IsLoaded(AssetId t_ID) const
 	{
         return (m_ResourceMap.find(t_ID) != m_ResourceMap.end());
 	}

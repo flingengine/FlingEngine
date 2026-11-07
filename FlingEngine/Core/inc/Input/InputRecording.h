@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputMessage.h"
+#include "Strings/String.h"
 
 #include <deque>
 #include <string>
@@ -84,13 +85,13 @@ namespace Fling
     bool ParseInputRecording(std::string_view t_Text, InputRecording& t_Out, std::string& t_OutError);
 
     /** Read an input recording from a file. See ParseInputRecording. */
-    bool LoadInputRecording(const std::string& t_Path, InputRecording& t_Out, std::string& t_OutError);
+    bool LoadInputRecording(StringView t_Path, InputRecording& t_Out, std::string& t_OutError);
 
     /** Write an input recording as JSON Lines text: a header line, then one line for each message. */
     std::string WriteInputRecording(const InputRecording& t_Recording);
 
     /** Write an input recording to a file. Makes the parent folders if they do not exist. */
-    bool SaveInputRecording(const std::string& t_Path, const InputRecording& t_Recording, std::string& t_OutError);
+    bool SaveInputRecording(StringView t_Path, const InputRecording& t_Recording, std::string& t_OutError);
 
     /**
      * A one-line description of a recorded message for the recorder and playback logs,

@@ -40,12 +40,12 @@ namespace Fling
         }
     } // namespace
 
-    std::shared_ptr<Fling::Cubemap> Cubemap::Create(Guid t_ID)
+    std::shared_ptr<Fling::Cubemap> Cubemap::Create(const AssetPath& t_Path)
     {
-        return ResourceManager::LoadResource<Fling::Cubemap>(t_ID);
+        return ResourceManager::LoadResource<Fling::Cubemap>(t_Path);
     }
 
-    Cubemap::Cubemap(Guid t_ID) : Resource(t_ID)
+    Cubemap::Cubemap(const AssetPath& t_Path) : Resource(t_Path)
     {
         // Under --null-render there is no GPU device, so there is no image to make
         if (!VulkanApp::Get().HasDevice())

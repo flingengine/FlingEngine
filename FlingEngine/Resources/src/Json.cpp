@@ -78,9 +78,9 @@ namespace Fling
 		return m_Impl->data.dump(indent);
 	}
 
-	bool Json::LoadFromFile(const std::string& path)
+	bool Json::LoadFromFile(StringView path)
 	{
-		std::ifstream ifs(path);
+		std::ifstream ifs(PathFromUtf8(path));
 		if (!ifs.is_open())
 		{
 			F_LOG_ERROR("Failed to load JSON file {}", path);
@@ -100,9 +100,9 @@ namespace Fling
 		}
 	}
 
-	bool Json::SaveToFile(const std::string& path) const
+	bool Json::SaveToFile(StringView path) const
 	{
-		std::ofstream ofs(path);
+		std::ofstream ofs(PathFromUtf8(path));
 		if (!ofs.is_open())
 		{
 			F_LOG_ERROR("Failed to save JSON file {}", path);
@@ -113,13 +113,13 @@ namespace Fling
 		return true;
 	}
 
-	bool Json::Contains(const std::string& key) const
+	bool Json::Contains(StringView key) const
 	{
 		if (!m_Impl->data.is_object())
 		{
 			return false;
 		}
-		return m_Impl->data.find(key) != m_Impl->data.end();
+		return m_Impl->data.find(std::string(key)) != m_Impl->data.end();
 	}
 
 	std::vector<std::string> Json::Keys() const
@@ -143,7 +143,7 @@ namespace Fling
 		return m_Impl->data.size();
 	}
 
-	Json Json::Get(const std::string& key) const
+	Json Json::Get(StringView key) const
 	{
 		Json result;
 		if (!Contains(key))
@@ -151,7 +151,7 @@ namespace Fling
 			return result;
 		}
 
-		result.m_Impl->data = m_Impl->data.at(key);
+		result.m_Impl->data = m_Impl->data.at(std::string(key));
 		return result;
 	}
 
@@ -175,10 +175,10 @@ namespace Fling
 		}
 	}
 
-	void Json::Set(const std::string& key, const Json& value)
+	void Json::Set(StringView key, const Json& value)
 	{
 		EnsureObject();
-		m_Impl->data[key] = value.m_Impl->data;
+		m_Impl->data[std::string(key)] = value.m_Impl->data;
 	}
 
 	void Json::PushBack(const Json& value)
@@ -197,41 +197,41 @@ namespace Fling
 		m_Impl->data.push_back(value.m_Impl->data);
 	}
 
-	std::string Json::GetString(const std::string& key, const std::string& def /* = {} */) const
+	std::string Json::GetString(StringView key, StringView def /* = {} */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_string())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_string())
 		{
-			return def;
+			return std::string(def);
 		}
-		return m_Impl->data.at(key).get<std::string>();
+		return m_Impl->data.at(std::string(key)).get<std::string>();
 	}
 
-	float Json::GetFloat(const std::string& key, float def /* = 0.f */) const
+	float Json::GetFloat(StringView key, float def /* = 0.f */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_number())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_number())
 		{
 			return def;
 		}
-		return m_Impl->data.at(key).get<float>();
+		return m_Impl->data.at(std::string(key)).get<float>();
 	}
 
-	bool Json::GetBool(const std::string& key, bool def /* = false */) const
+	bool Json::GetBool(StringView key, bool def /* = false */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_boolean())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_boolean())
 		{
 			return def;
 		}
-		return m_Impl->data.at(key).get<bool>();
+		return m_Impl->data.at(std::string(key)).get<bool>();
 	}
 
-	int Json::GetInt(const std::string& key, int def /* = 0 */) const
+	int Json::GetInt(StringView key, int def /* = 0 */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_number())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_number())
 		{
 			return def;
 		}
 
-		const nlohmann::json& value = m_Impl->data.at(key);
+		const nlohmann::json& value = m_Impl->data.at(std::string(key));
 		if (value.is_number_integer())
 		{
 			return value.get<int>();
@@ -267,31 +267,31 @@ namespace Fling
 		return glm::vec4(value.at(0).get<float>(), value.at(1).get<float>(), value.at(2).get<float>(), w);
 	}
 
-	glm::vec3 Json::GetVec3(const std::string& key, const glm::vec3& def /* = {} */) const
+	glm::vec3 Json::GetVec3(StringView key, const glm::vec3& def /* = {} */) const
 	{
 		if (!Contains(key))
 		{
 			return def;
 		}
-		return ReadVec3(m_Impl->data.at(key), def);
+		return ReadVec3(m_Impl->data.at(std::string(key)), def);
 	}
 
-	glm::vec4 Json::GetVec4(const std::string& key, const glm::vec4& def /* = {} */) const
+	glm::vec4 Json::GetVec4(StringView key, const glm::vec4& def /* = {} */) const
 	{
 		if (!Contains(key))
 		{
 			return def;
 		}
-		return ReadVec4(m_Impl->data.at(key), def);
+		return ReadVec4(m_Impl->data.at(std::string(key)), def);
 	}
 
-	int64_t Json::GetInt64(const std::string& key, int64_t def /* = 0 */) const
+	int64_t Json::GetInt64(StringView key, int64_t def /* = 0 */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_number_integer())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_number_integer())
 		{
 			return def;
 		}
-		const nlohmann::json& value = m_Impl->data.at(key);
+		const nlohmann::json& value = m_Impl->data.at(std::string(key));
 		if (value.is_number_unsigned() && value.get<uint64_t>() > static_cast<uint64_t>(INT64_MAX))
 		{
 			return def;
@@ -299,13 +299,13 @@ namespace Fling
 		return value.get<int64_t>();
 	}
 
-	uint64_t Json::GetUInt64(const std::string& key, uint64_t def /* = 0 */) const
+	uint64_t Json::GetUInt64(StringView key, uint64_t def /* = 0 */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_number_integer())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_number_integer())
 		{
 			return def;
 		}
-		const nlohmann::json& value = m_Impl->data.at(key);
+		const nlohmann::json& value = m_Impl->data.at(std::string(key));
 		if (!value.is_number_unsigned() && value.get<int64_t>() < 0)
 		{
 			return def;
@@ -313,22 +313,22 @@ namespace Fling
 		return value.get<uint64_t>();
 	}
 
-	double Json::GetDouble(const std::string& key, double def /* = 0.0 */) const
+	double Json::GetDouble(StringView key, double def /* = 0.0 */) const
 	{
-		if (!Contains(key) || !m_Impl->data.at(key).is_number())
+		if (!Contains(key) || !m_Impl->data.at(std::string(key)).is_number())
 		{
 			return def;
 		}
-		return m_Impl->data.at(key).get<double>();
+		return m_Impl->data.at(std::string(key)).get<double>();
 	}
 
-	glm::vec2 Json::GetVec2(const std::string& key, const glm::vec2& def /* = {} */) const
+	glm::vec2 Json::GetVec2(StringView key, const glm::vec2& def /* = {} */) const
 	{
 		if (!Contains(key))
 		{
 			return def;
 		}
-		const nlohmann::json& value = m_Impl->data.at(key);
+		const nlohmann::json& value = m_Impl->data.at(std::string(key));
 		if (!value.is_array() || value.size() < 2 || !value.at(0).is_number() || !value.at(1).is_number())
 		{
 			return def;
@@ -336,13 +336,13 @@ namespace Fling
 		return glm::vec2(value.at(0).get<float>(), value.at(1).get<float>());
 	}
 
-	glm::quat Json::GetQuat(const std::string& key, const glm::quat& def) const
+	glm::quat Json::GetQuat(StringView key, const glm::quat& def) const
 	{
 		if (!Contains(key))
 		{
 			return def;
 		}
-		const nlohmann::json& value = m_Impl->data.at(key);
+		const nlohmann::json& value = m_Impl->data.at(std::string(key));
 		if (!value.is_array() || value.size() < 4)
 		{
 			return def;
@@ -358,89 +358,89 @@ namespace Fling
 		return glm::quat(value.at(3).get<float>(), value.at(0).get<float>(), value.at(1).get<float>(), value.at(2).get<float>());
 	}
 
-	void Json::Set(const std::string& key, const glm::vec2& v)
+	void Json::Set(StringView key, const glm::vec2& v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = nlohmann::json::array({ v.x, v.y });
+		m_Impl->data[std::string(key)] = nlohmann::json::array({ v.x, v.y });
 	}
 
-	void Json::SetInt64(const std::string& key, int64_t v)
+	void Json::SetInt64(StringView key, int64_t v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = v;
 	}
 
-	void Json::SetUInt64(const std::string& key, uint64_t v)
+	void Json::SetUInt64(StringView key, uint64_t v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = v;
 	}
 
-	void Json::SetDouble(const std::string& key, double v)
+	void Json::SetDouble(StringView key, double v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = v;
 	}
 
-	void Json::SetQuat(const std::string& key, const glm::quat& v)
+	void Json::SetQuat(StringView key, const glm::quat& v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = nlohmann::json::array({ v.x, v.y, v.z, v.w });
+		m_Impl->data[std::string(key)] = nlohmann::json::array({ v.x, v.y, v.z, v.w });
 	}
 
-	void Json::Remove(const std::string& key)
+	void Json::Remove(StringView key)
 	{
 		if (m_Impl->data.is_object())
 		{
-			m_Impl->data.erase(key);
+			m_Impl->data.erase(std::string(key));
 		}
 	}
 
-	bool Json::IsString(const std::string& key) const
+	bool Json::IsString(StringView key) const
 	{
-		return Contains(key) && m_Impl->data.at(key).is_string();
+		return Contains(key) && m_Impl->data.at(std::string(key)).is_string();
 	}
 
-	void Json::Set(const std::string& key, const glm::vec3& v)
+	void Json::Set(StringView key, const glm::vec3& v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = nlohmann::json::array({ v.x, v.y, v.z });
+		m_Impl->data[std::string(key)] = nlohmann::json::array({ v.x, v.y, v.z });
 	}
 
-	void Json::Set(const std::string& key, const glm::vec4& v)
+	void Json::Set(StringView key, const glm::vec4& v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = nlohmann::json::array({ v.x, v.y, v.z, v.w });
+		m_Impl->data[std::string(key)] = nlohmann::json::array({ v.x, v.y, v.z, v.w });
 	}
 
-	void Json::Set(const std::string& key, const char* v)
+	void Json::Set(StringView key, const char* v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v ? v : "";
+		m_Impl->data[std::string(key)] = v ? v : "";
 	}
 
-	void Json::Set(const std::string& key, const std::string& v)
+	void Json::Set(StringView key, StringView v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = std::string(v);
 	}
 
-	void Json::Set(const std::string& key, float v)
+	void Json::Set(StringView key, float v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = v;
 	}
 
-	void Json::Set(const std::string& key, bool v)
+	void Json::Set(StringView key, bool v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = v;
 	}
 
-	void Json::Set(const std::string& key, int v)
+	void Json::Set(StringView key, int v)
 	{
 		EnsureObject();
-		m_Impl->data[key] = v;
+		m_Impl->data[std::string(key)] = v;
 	}
 
 	bool Json::IsNull() const
