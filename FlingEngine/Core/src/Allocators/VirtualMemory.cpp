@@ -81,6 +81,12 @@ namespace Fling::VirtualMemory
         return nullptr;
     }
 
+    void UseLargePages(void* address, const size_t bytes)
+    {
+        (void)address;
+        (void)bytes;
+    }
+
     void Free(void* address, const size_t bytes, const size_t alignment)
     {
         (void)bytes;
@@ -120,6 +126,20 @@ namespace Fling::VirtualMemory
             munmap(reinterpret_cast<void*>(aligned + size), end - (aligned + size));
         }
         return reinterpret_cast<void*>(aligned);
+    }
+
+    void UseLargePages(void* address, const size_t bytes)
+    {
+#if defined(MADV_HUGEPAGE)
+        if (address != nullptr && bytes >= LargePageBytes)
+        {
+            // Only a hint: if the kernel has no large page free, it uses small pages
+            madvise(address, bytes, MADV_HUGEPAGE);
+        }
+#else
+        (void)address;
+        (void)bytes;
+#endif
     }
 
     void Free(void* address, const size_t bytes, const size_t alignment)

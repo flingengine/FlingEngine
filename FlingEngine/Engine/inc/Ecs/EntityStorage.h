@@ -3,6 +3,7 @@
 #include "Ecs/Component.h"
 #include "Ecs/detail/NativeStorage.h"
 #include "Ecs/Entity.h"
+#include "Ecs/QueryFilters.h"
 #include "MathUtils.h"
 #include "Signals.h"
 
@@ -10,6 +11,7 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <memory>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -131,6 +133,34 @@ namespace Fling
 
         Entity Create() { return m_Native.Create(); }
 
+        /**
+         * Make an entity with the given components. It goes straight to the archetype of
+         * all of them, so this costs much less than Create and then Add for each. The
+         * Added hooks run after every component is in place, in the order given.
+         */
+        template <typename... Cs>
+        requires(sizeof...(Cs) > 0) Entity Create(Cs&&... components)
+        {
+            static_assert(((Component<std::decay_t<Cs>> && !IsSingletonComponent<std::decay_t<Cs>>) && ...),
+                          "Create takes Table, Tag, and Sparse components.");
+            static_assert(AllUnique<std::decay_t<Cs>...>, "A component appears twice in one Create.");
+            constexpr size_t Count = sizeof...(Cs);
+            const std::array<Detail::ComponentId, Count> ids{Detail::ComponentIdOf<std::decay_t<Cs>>()...};
+            std::array<void*, Count> memory{};
+            const Entity entity = m_Native.CreateWith(ids, memory);
+            size_t next = 0;
+            (ConstructComponent<std::decay_t<Cs>>(memory[next++], std::forward<Cs>(components)), ...);
+            for (const Detail::ComponentId id : ids)
+            {
+                // A hook may destroy the entity or remove a later component
+                if (m_Native.HasHooks(id) && m_Native.Has(entity, id))
+                {
+                    m_Native.EndAdd(entity, id);
+                }
+            }
+            return entity;
+        }
+
         /** Destroy the entity and all of its components. A stale or null handle is ignored. */
         void Destroy(const Entity entity) { m_Native.Destroy(entity); }
 
@@ -183,7 +213,11 @@ namespace Fling
             }
             else
             {
-                Detail::ConstructAt<T>(memory, std::forward<Args>(args)...);
+                T* constructed = Detail::ConstructAt<T>(memory, std::forward<Args>(args)...);
+                if (!m_Native.HasHooks(id))
+                {
+                    return *constructed;
+                }
                 m_Native.EndAdd(entity, id);
                 // A hook may move the entity, so find the component again
                 T* added = static_cast<T*>(m_Native.Get(entity, id));
@@ -237,6 +271,48 @@ namespace Fling
         void Remove(const Entity entity)
         {
             m_Native.Remove(entity, Detail::ComponentIdOf<T>());
+        }
+
+        /**
+         * Add a copy of value to every entity that has the components of the With filters,
+         * none of the Without filters, and no T:
+         * `storage.AddToAll(Burning{}, Fling::With<Health>{}, Fling::Without<Wet>{})`.
+         * Whole chunks move at once, so this costs much less than Add for each entity.
+         * The filters take Table, Enableable (enabled or not), and Tag components. If T
+         * is Sparse or has hooks, the entities are done one at a time. Returns how many
+         * entities got a T. Do not call it while a query is being iterated.
+         */
+        template <typename T, typename... Filters>
+        size_t AddToAll(const T& value, Filters...)
+        {
+            static_assert(Component<T> && !IsSingletonComponent<T>, "AddToAll adds a Table, Tag, or Sparse component.");
+            static_assert(std::is_copy_constructible_v<T>, "AddToAll copies the value to each entity.");
+            static_assert((Detail::FilterTypes<Filters>::IsFilter && ...),
+                          "AddToAll takes only Fling::With<...> and Fling::Without<...> filters.");
+            const auto required =
+                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithList...>::Type{});
+            const auto excluded =
+                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithoutList...>::Type{});
+            return m_Native.AddToAll(Detail::ComponentIdOf<T>(), &value, &FillCopies<T>, required, excluded);
+        }
+
+        /**
+         * Remove T from every entity that has it, the components of the With filters, and
+         * none of the Without filters. Whole chunks move at once. See AddToAll. Returns how
+         * many entities lost a T.
+         */
+        template <typename T, typename... Filters>
+        size_t RemoveFromAll(Filters...)
+        {
+            static_assert(Component<T> && !IsSingletonComponent<T>,
+                          "RemoveFromAll removes a Table, Tag, or Sparse component.");
+            static_assert((Detail::FilterTypes<Filters>::IsFilter && ...),
+                          "RemoveFromAll takes only Fling::With<...> and Fling::Without<...> filters.");
+            const auto required =
+                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithList...>::Type{});
+            const auto excluded =
+                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithoutList...>::Type{});
+            return m_Native.RemoveFromAll(Detail::ComponentIdOf<T>(), required, excluded);
         }
 
         /** Remove the entity's T if it has one. */
@@ -401,6 +477,37 @@ namespace Fling
         const Detail::NativeStorage& Native() const { return m_Native; }
 
     private:
+        /** The sorted ids of filter types, which must be in the archetypes (Table, Enableable, or Tag). */
+        template <typename... Ts>
+        static std::array<Detail::ComponentId, sizeof...(Ts)> SortedFilterIds(TypeList<Ts...>)
+        {
+            static_assert(((Component<Ts> &&
+                            (ComponentInfoOf<Ts>.Kind == ComponentKind::Table ||
+                             ComponentInfoOf<Ts>.Kind == ComponentKind::Tag) &&
+                            ComponentInfoOf<Ts>.Storage != ComponentStorage::Sparse) &&
+                           ...),
+                          "AddToAll and RemoveFromAll filter by Table, Enableable, and Tag components only.");
+            std::array<Detail::ComponentId, sizeof...(Ts)> ids{Detail::ComponentIdOf<Ts>()...};
+            std::sort(ids.begin(), ids.end());
+            return ids;
+        }
+
+        template <typename T, typename Arg>
+        static void ConstructComponent(void* memory, Arg&& value)
+        {
+            // Null for a Table tag, which has no memory
+            if (memory != nullptr)
+            {
+                Detail::ConstructAt<T>(memory, std::forward<Arg>(value));
+            }
+        }
+
+        template <typename T>
+        static void FillCopies(void* dst, const size_t count, const void* value)
+        {
+            std::uninitialized_fill_n(static_cast<T*>(dst), count, *static_cast<const T*>(value));
+        }
+
         template <typename... Ts>
         std::vector<Entity> Gather();
 

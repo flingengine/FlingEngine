@@ -19,6 +19,17 @@ namespace Fling::VirtualMemory
      */
     CORE_API void* Allocate(size_t bytes, size_t alignment);
 
+    /** The size of a large page that UseLargePages asks for (2 MiB). */
+    inline constexpr size_t LargePageBytes = 2 * 1024 * 1024;
+
+    /**
+     * Ask the OS to back pages from Allocate with large pages, where it can. One large
+     * page takes one page fault and one TLB entry in place of 512. A hint only: Linux
+     * uses it when transparent huge pages are on ("madvise" or "always"), and on Windows
+     * it does nothing, because large pages there need a user right.
+     */
+    CORE_API void UseLargePages(void* address, size_t bytes);
+
     /** Give pages from Allocate back to the OS. Bytes and alignment are the values given to Allocate. */
     CORE_API void Free(void* address, size_t bytes, size_t alignment);
 } // namespace Fling::VirtualMemory

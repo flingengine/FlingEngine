@@ -141,6 +141,33 @@ namespace Fling::Detail
         uint64** Enabled = nullptr;
     };
 
+    struct Archetype;
+
+    /** The archetype with one more or one less type, and how a row moves there. */
+    struct ArchetypeEdge
+    {
+        /** One column that both archetypes have: where its value goes when a row moves. */
+        struct ColumnMove
+        {
+            uint32 From = 0;
+            uint32 To = 0;
+            uint32 Size = 0;
+            bool Trivial = false;
+        };
+
+        ComponentId Id = InvalidComponentId;
+        Archetype* Target = nullptr;
+
+        /** The column of Id in Target. -1 for a remove, and for a tag. */
+        int32 TargetColumn = -1;
+
+        /** The columns that both archetypes have. */
+        std::vector<ColumnMove> Moves;
+
+        /** The columns of the source that Target does not have. Their values end when a row moves. */
+        std::vector<uint32> Dropped;
+    };
+
     /** All entities that have exactly one set of Table, Enableable, and Tag components. */
     struct Archetype
     {
@@ -176,9 +203,15 @@ namespace Fling::Detail
 
         size_t EntityCount = 0;
 
+        /** True if a column is Enableable, so a row move must copy enabled bits. */
+        bool AnyEnableable = false;
+
+        /** True if every column can be moved with a copy of its bytes. */
+        bool AllTrivial = true;
+
         /** The archetype with one more or one less type. Few per archetype, so a short list is faster than a map. */
-        std::vector<std::pair<ComponentId, Archetype*>> AddEdges;
-        std::vector<std::pair<ComponentId, Archetype*>> RemoveEdges;
+        std::vector<ArchetypeEdge> AddEdges;
+        std::vector<ArchetypeEdge> RemoveEdges;
 
         bool Has(const ComponentId id) const { return id < ColumnById.size() && ColumnById[id] != -1; }
 
@@ -256,6 +289,14 @@ namespace Fling::Detail
         ~NativeStorage();
 
         Entity Create();
+
+        /**
+         * Make an entity that has the types in ids, in one row of the archetype they make,
+         * with no move through the archetypes between. addresses gets the raw memory of
+         * each value, in the order of ids (null for a Table tag): the caller constructs
+         * each value, then calls EndAdd for each type. No type is in ids twice.
+         */
+        Entity CreateWith(std::span<const ComponentId> ids, std::span<void*> addresses);
         void Destroy(Entity entity);
         bool IsValid(Entity entity) const;
 
@@ -337,6 +378,25 @@ namespace Fling::Detail
 
         HookSet& Hooks(ComponentId id);
 
+        /** Constructs count copies of value at dst. AddToAll takes one for the type it adds. */
+        using FillValues = void (*)(void* dst, size_t count, const void* value);
+
+        /**
+         * Add id, with a copy of value made by fill, to every entity in the archetypes that
+         * have every type in required, none in excluded, and not id. Both lists are sorted.
+         * Moves whole chunks: one copy per column for each run of rows. Returns how many
+         * entities got the type. Must not run while a query is being iterated.
+         */
+        size_t AddToAll(ComponentId id,
+                        const void* value,
+                        FillValues fill,
+                        std::span<const ComponentId> required,
+                        std::span<const ComponentId> excluded);
+
+        /** Remove id from every entity that has it, every type in required, and none in excluded. See AddToAll. */
+        size_t
+        RemoveFromAll(ComponentId id, std::span<const ComponentId> required, std::span<const ComponentId> excluded);
+
         /** True if any hook is connected for the type, so the storage must call them. */
         bool HasHooks(ComponentId id) const { return id < m_Hooks.size() && m_Hooks[id] != nullptr; }
 
@@ -412,12 +472,27 @@ namespace Fling::Detail
         Slot* FindSlot(Entity entity);
         const Slot* FindSlot(Entity entity) const;
 
-        Archetype* FindOrMakeArchetype(std::vector<ComponentId> types);
-        Archetype* WithType(Archetype* from, ComponentId id);
-        Archetype* WithoutType(Archetype* from, ComponentId id);
+        /** A slot for a new entity: a free one, or a new one at the end. */
+        uint32 TakeSlotIndex();
 
-        /** Append a row for the entity, and return where it is. */
-        void AddRow(Archetype* arch, Entity entity, Slot& slot);
+        Archetype* FindOrMakeArchetype(std::vector<ComponentId> types);
+        Archetype* WithType(Archetype* from, ComponentId id) { return AddEdge(from, id).Target; }
+        Archetype* WithoutType(Archetype* from, ComponentId id) { return RemoveEdge(from, id).Target; }
+
+        /** The cached edge to the archetype with id added. Makes the archetype and the edge the first time. */
+        const ArchetypeEdge& AddEdge(Archetype* from, ComponentId id);
+
+        /** The cached edge to the archetype with id removed. Makes the archetype and the edge the first time. */
+        const ArchetypeEdge& RemoveEdge(Archetype* from, ComponentId id);
+
+        /** An edge from one archetype to another, with its column map. */
+        static ArchetypeEdge MakeEdge(const Archetype& from, ComponentId id, Archetype* to);
+
+        /** Append a row for the entity, and set slot to where it is. Returns the chunk of the row. */
+        Chunk& AddRow(Archetype* arch, Entity entity, Slot& slot);
+
+        /** Add a chunk to the end of the archetype, for AddRow when the last chunk is full. */
+        Chunk* AddChunk(Archetype* arch);
 
         /**
          * Move the entity's row to another archetype. Columns both archetypes have are
@@ -425,6 +500,28 @@ namespace Fling::Detail
          * has are raw memory: the caller constructs them.
          */
         void MoveRow(Slot& slot, Archetype* to);
+
+        /** MoveRow along an edge from the entity's archetype, with the column moves it has ready. */
+        void MoveRow(Slot& slot, const ArchetypeEdge& edge);
+
+        /**
+         * Move every row of from to the edge's target, a run of rows at a time, and fill the
+         * column the edge adds with fill(value). Frees the chunks of from. Returns the rows moved.
+         */
+        size_t MoveAllRows(Archetype* from, const ArchetypeEdge& edge, const void* value, FillValues fill);
+
+        /**
+         * The archetypes that match, with alsoRequired and alsoExcluded (when not
+         * InvalidComponentId) added to the lists, put in m_BulkArchetypes. A copy, so the
+         * archetypes that a move makes do not change it.
+         */
+        void MatchForBulk(std::span<const ComponentId> required,
+                          std::span<const ComponentId> excluded,
+                          ComponentId alsoRequired,
+                          ComponentId alsoExcluded);
+
+        /** The entities of every archetype in m_BulkArchetypes, put in m_BulkEntities. */
+        void CollectBulkEntities();
 
         /** Destroy the values of the row at slot and remove the row. */
         void RemoveRow(Slot& slot);
@@ -455,9 +552,6 @@ namespace Fling::Detail
         {
             m_Blocks.Free(reinterpret_cast<std::byte*>(chunk) - chunk->BlockOffset, chunk->BlockBytes);
         }
-
-        /** The archetype after one add (adding true) or remove of id, through the cached graph edges */
-        Archetype* Step(Archetype* from, ComponentId id, bool adding);
 
         EntityStorage& m_Owner;
 
@@ -499,6 +593,11 @@ namespace Fling::Detail
 
         /** Scratch for MakeChunk, kept so it does not allocate again */
         std::vector<size_t> m_ColumnOffsets;
+
+        /** Scratch for AddToAll and RemoveFromAll, kept so they do not allocate again */
+        std::vector<Archetype*> m_BulkArchetypes;
+        std::vector<ComponentId> m_BulkIds;
+        std::vector<Entity> m_BulkEntities;
 
         const ComponentOps& CacheOps(ComponentId id) const;
 

@@ -668,18 +668,25 @@ Done. `Ecs/detail/NativeStorage.h` is archetype storage in chunks that grow from
 
 | | EnTT 3.1 | Native, range-for | Native, `Each` |
 |---|---|---|---|
-| Iterate one component | 0.57 | 0.74 | 0.66 |
-| Iterate two components | 1.41 | 0.97 | 1.01 |
-| Iterate two, over 8 archetypes | 1.60 | 0.99 | 1.02 |
-| Create with two components | 29 | 69 | 67 |
-| Add / remove one component | 7.0 / 3.4 | 30 / 27 | 30 / 27 |
-| Destroy | 17.5 | 30 | 29.5 |
-| Memory, bytes per entity | 45.8 | 46.3 | 46.3 |
-| Memory after an add and remove of a third component | 58.2 | 50.5 | 50.5 |
+| Iterate one component | 0.56 | 0.66 | 0.62 |
+| Iterate two components | 1.38 | 0.74 | 0.77 |
+| Iterate two, over 8 archetypes | 1.60 | 0.88 | 0.91 |
+| Create with two components | 28 | 26 | 26 |
+| Add / remove one component | 8.0 / 3.4 | 19 / 18 | 19 / 18 |
+| Add to all / remove from all | 5.3 / 0.0 | 2.6 / 2.2 | 2.4 / 2.1 |
+| Destroy | 17 | 28 | 28 |
+| Memory, bytes per entity | 45.8 | 47.3 | 47.3 |
+| Memory after an add and remove of a third component | 58.2 | 51.5 | 51.5 |
 
-Memory counts the heap and the pages the world maps itself. Create includes the first touch of new pages: each run makes a new world, which maps fresh pages, while glibc gives EnTT the pages it kept from the run before. With cold pages for both, EnTT creates in 37 ns and the old heap-backed native storage in 66 ns. A world that lives keeps its pages, so a game pays this once.
+Memory counts the heap and the pages the world maps itself. Create is each library's usual form: `create` then `assign` for each component in EnTT, and `Create(Position{}, Velocity{})`, which goes straight to the archetype, in Fling. Create, then Add for each component, takes 45 ns. Add to all is a view loop with `assign` in EnTT (this version has no range add), and `AddToAll` in Fling. Remove from all is `reset<T>()` in EnTT, which only empties one pool.
 
-Multi-component iteration, the shape of most systems, is about 35% faster, and memory is smaller. Structural changes cost about 4 times as much, because a change moves the whole row. That is the trade an archetype store makes, and the reason adds and removes are deferred and batched.
+Multi-component iteration, the shape of most systems, is about 45% faster, and memory is smaller. A single add or remove costs about 2.5 to 5 times as much, because a change moves the whole row. That is the trade an archetype store makes, and the reason adds and removes are deferred and batched, and why `Create` with components and `AddToAll` move no row at a time.
+
+Where the time went, and what changed it:
+
+- A row move ran about 500 instructions. Each archetype edge now keeps the list of columns to copy, common component sizes copy with fixed-size moves, the enabled bits are skipped when an archetype has no Enableable column, and `Add` and `Remove` look the entity up once. Add went from 30 to 19 ns, remove from 27 to 18 ns.
+- The fresh pages of a new world cost about 10 ns per entity in page faults. The 128 KiB blocks now come from 2 MiB slabs that ask for a large page, which also makes iteration about 10% faster (fewer TLB misses).
+- `AddToAll` frees each source chunk as soon as its rows are out, so the target takes the same blocks and the move does not need twice the memory.
 
 - Implement the archetypes, chunks (growing 1→16 KiB), Enableable and Sparse storage, the query cache, change versions, snapshot, and ECS telemetry (§1.2, §1.4, §1.10) in `Engine/src/Ecs/` (see [`ecs-systems.md`](ecs-systems.md) §1). The EnTT backend maps Enableable to add/remove and Sparse to its own storage, so both backends behave the same.
 - Add an archetype/move budget check: a headless run of a fixed number of Sandbox frames.

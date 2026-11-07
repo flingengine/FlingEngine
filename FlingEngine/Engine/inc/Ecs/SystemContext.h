@@ -6,6 +6,7 @@
 #include "Ecs/Entity.h"
 #include "Ecs/EntityStorage.h"
 #include "Ecs/Phase.h"
+#include "Ecs/QueryFilters.h"
 #include "Ecs/TypeList.h"
 #include "Input/TickInput.h"
 #include "MathUtils.h"
@@ -222,60 +223,8 @@ namespace Fling
         const TickInput* m_TickInput = nullptr;
     };
 
-    /** A query filter: only entities that also have each T. The components are not returned. */
-    template <typename... Ts>
-    struct With
-    {
-    };
-
-    /** A query filter: only entities that have none of the Ts. */
-    template <typename... Ts>
-    struct Without
-    {
-    };
-
     namespace Detail
     {
-        template <typename F>
-        struct FilterTypes
-        {
-            static constexpr bool IsFilter = false;
-        };
-
-        template <typename... Ts>
-        struct FilterTypes<With<Ts...>>
-        {
-            static constexpr bool IsFilter = true;
-            using WithList = TypeList<Ts...>;
-            using WithoutList = TypeList<>;
-        };
-
-        template <typename... Ts>
-        struct FilterTypes<Without<Ts...>>
-        {
-            static constexpr bool IsFilter = true;
-            using WithList = TypeList<>;
-            using WithoutList = TypeList<Ts...>;
-        };
-
-        template <typename... Lists>
-        struct Concat
-        {
-            using Type = TypeList<>;
-        };
-
-        template <typename... As>
-        struct Concat<TypeList<As...>>
-        {
-            using Type = TypeList<As...>;
-        };
-
-        template <typename... As, typename... Bs, typename... Rest>
-        struct Concat<TypeList<As...>, TypeList<Bs...>, Rest...>
-        {
-            using Type = typename Concat<TypeList<As..., Bs...>, Rest...>::Type;
-        };
-
         template <typename T>
         inline constexpr bool IsTableComponent =
             Component<std::remove_const_t<T>> && ComponentInfoOf<std::remove_const_t<T>>.Kind == ComponentKind::Table;
@@ -972,10 +921,14 @@ namespace Fling
             static_assert((Allows<A, AccessMode::Write, std::decay_t<Cs>> && ...),
                           "Spawn adds a component that the access list does not write. Add Write<T>.");
 
-            EntityStorage& storage = m_Core.Storage();
-            const Entity e = storage.Create();
-            (storage.template Add<std::decay_t<Cs>>(e, std::forward<Cs>(components)), ...);
-            return e;
+            if constexpr (sizeof...(Cs) == 0)
+            {
+                return m_Core.Storage().Create();
+            }
+            else
+            {
+                return m_Core.Storage().Create(std::forward<Cs>(components)...);
+            }
         }
 
         /**

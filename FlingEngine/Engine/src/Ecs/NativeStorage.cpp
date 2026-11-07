@@ -47,12 +47,50 @@ namespace Fling::Detail
             return hash;
         }
 
+        /**
+         * Copy the bytes of one value. The common component sizes are copies of a size
+         * the compiler knows, so they are a few moves and not a call to memcpy.
+         */
+        inline void CopyValue(std::byte* dst, const std::byte* src, const size_t size)
+        {
+            switch (size)
+            {
+            case 4:
+                std::memcpy(dst, src, 4);
+                return;
+            case 8:
+                std::memcpy(dst, src, 8);
+                return;
+            case 12:
+                std::memcpy(dst, src, 12);
+                return;
+            case 16:
+                std::memcpy(dst, src, 16);
+                return;
+            case 24:
+                std::memcpy(dst, src, 24);
+                return;
+            case 32:
+                std::memcpy(dst, src, 32);
+                return;
+            case 48:
+                std::memcpy(dst, src, 48);
+                return;
+            case 64:
+                std::memcpy(dst, src, 64);
+                return;
+            default:
+                std::memcpy(dst, src, size);
+                return;
+            }
+        }
+
         /** Move one value between rows, and end the old one. */
         inline void RelocateValue(const Archetype::Column& column, std::byte* dst, std::byte* src)
         {
             if (column.Trivial)
             {
-                std::memcpy(dst, src, column.Size);
+                CopyValue(dst, src, column.Size);
             }
             else
             {
@@ -69,14 +107,13 @@ namespace Fling::Detail
             }
         }
 
-        template <typename Edges>
-        Archetype* FindEdge(const Edges& edges, const ComponentId id)
+        const ArchetypeEdge* FindEdge(const std::vector<ArchetypeEdge>& edges, const ComponentId id)
         {
-            for (const auto& [type, target] : edges)
+            for (const ArchetypeEdge& edge : edges)
             {
-                if (type == id)
+                if (edge.Id == id)
                 {
-                    return target;
+                    return &edge;
                 }
             }
             return nullptr;
@@ -207,23 +244,60 @@ namespace Fling::Detail
         return const_cast<NativeStorage*>(this)->FindSlot(entity);
     }
 
-    Entity NativeStorage::Create()
+    uint32 NativeStorage::TakeSlotIndex()
     {
-        uint32 index = 0;
         if (!m_FreeIndices.empty())
         {
-            index = m_FreeIndices.back();
+            const uint32 index = m_FreeIndices.back();
             m_FreeIndices.pop_back();
+            return index;
         }
-        else
-        {
-            index = static_cast<uint32>(m_Slots.size());
-            m_Slots.emplace_back();
-        }
+        m_Slots.emplace_back();
+        return static_cast<uint32>(m_Slots.size() - 1);
+    }
+
+    Entity NativeStorage::Create()
+    {
+        const uint32 index = TakeSlotIndex();
         Slot& slot = m_Slots[index];
         const Entity entity{index, slot.Generation};
         AddRow(m_Root, entity, slot);
         ++m_AliveCount;
+        return entity;
+    }
+
+    Entity NativeStorage::CreateWith(const std::span<const ComponentId> ids, const std::span<void*> addresses)
+    {
+        assert(ids.size() == addresses.size());
+        Archetype* arch = m_Root;
+        for (const ComponentId id : ids)
+        {
+            if (Ops(id).Storage != ComponentStorage::Sparse)
+            {
+                assert(!arch->Has(id) && "CreateWith has a type twice");
+                arch = AddEdge(arch, id).Target;
+            }
+        }
+
+        const uint32 index = TakeSlotIndex();
+        Slot& slot = m_Slots[index];
+        const Entity entity{index, slot.Generation};
+        const Chunk& chunk = AddRow(arch, entity, slot);
+        ++m_AliveCount;
+
+        const uint32 row = slot.Row();
+        for (size_t i = 0; i < ids.size(); ++i)
+        {
+            const ComponentId id = ids[i];
+            if (Ops(id).Storage == ComponentStorage::Sparse)
+            {
+                addresses[i] = AddSparse(entity, id);
+                continue;
+            }
+            const int32 column = arch->ColumnOf(id);
+            addresses[i] =
+                column >= 0 ? chunk.Columns[column] + row * arch->Columns[static_cast<size_t>(column)].Size : nullptr;
+        }
         return entity;
     }
 
@@ -408,6 +482,8 @@ namespace Fling::Detail
                                                       ops.MoveConstruct,
                                                       ops.Destroy});
             arch->RowBytes += ops.Size;
+            arch->AnyEnableable = arch->AnyEnableable || ops.Storage == ComponentStorage::Enableable;
+            arch->AllTrivial = arch->AllTrivial && ops.Trivial;
         }
 
         arch->Index = static_cast<uint32>(m_Archetypes.size());
@@ -417,38 +493,63 @@ namespace Fling::Detail
         return result;
     }
 
-    Archetype* NativeStorage::WithType(Archetype* from, const ComponentId id)
+    ArchetypeEdge NativeStorage::MakeEdge(const Archetype& from, const ComponentId id, Archetype* to)
     {
-        if (Archetype* known = FindEdge(from->AddEdges, id))
+        ArchetypeEdge edge;
+        edge.Id = id;
+        edge.Target = to;
+        edge.TargetColumn = from.Has(id) ? -1 : Math::Max(to->ColumnOf(id), -1);
+        for (size_t c = 0; c < from.Columns.size(); ++c)
         {
-            return known;
+            const Archetype::Column& column = from.Columns[c];
+            const int32 target = to->ColumnOf(column.Id);
+            if (target >= 0)
+            {
+                edge.Moves.push_back(ArchetypeEdge::ColumnMove{static_cast<uint32>(c),
+                                                               static_cast<uint32>(target),
+                                                               static_cast<uint32>(column.Size),
+                                                               column.Trivial});
+            }
+            else
+            {
+                edge.Dropped.push_back(static_cast<uint32>(c));
+            }
+        }
+        return edge;
+    }
+
+    const ArchetypeEdge& NativeStorage::AddEdge(Archetype* from, const ComponentId id)
+    {
+        if (const ArchetypeEdge* known = FindEdge(from->AddEdges, id))
+        {
+            return *known;
         }
         std::vector<ComponentId> types = from->Types;
         types.push_back(id);
         Archetype* to = FindOrMakeArchetype(std::move(types));
-        from->AddEdges.emplace_back(id, to);
         if (FindEdge(to->RemoveEdges, id) == nullptr)
         {
-            to->RemoveEdges.emplace_back(id, from);
+            to->RemoveEdges.push_back(MakeEdge(*to, id, from));
         }
-        return to;
+        from->AddEdges.push_back(MakeEdge(*from, id, to));
+        return from->AddEdges.back();
     }
 
-    Archetype* NativeStorage::WithoutType(Archetype* from, const ComponentId id)
+    const ArchetypeEdge& NativeStorage::RemoveEdge(Archetype* from, const ComponentId id)
     {
-        if (Archetype* known = FindEdge(from->RemoveEdges, id))
+        if (const ArchetypeEdge* known = FindEdge(from->RemoveEdges, id))
         {
-            return known;
+            return *known;
         }
         std::vector<ComponentId> types = from->Types;
         types.erase(std::remove(types.begin(), types.end(), id), types.end());
         Archetype* to = FindOrMakeArchetype(std::move(types));
-        from->RemoveEdges.emplace_back(id, to);
         if (FindEdge(to->AddEdges, id) == nullptr)
         {
-            to->AddEdges.emplace_back(id, from);
+            to->AddEdges.push_back(MakeEdge(*to, id, from));
         }
-        return to;
+        from->RemoveEdges.push_back(MakeEdge(*from, id, to));
+        return from->RemoveEdges.back();
     }
 
     Chunk* NativeStorage::MakeChunk(const Archetype& arch, size_t bytes)
@@ -551,59 +652,91 @@ namespace Fling::Detail
         return chunk;
     }
 
-    void NativeStorage::AddRow(Archetype* arch, const Entity entity, Slot& slot)
+    Chunk* NativeStorage::AddChunk(Archetype* arch)
     {
-        if (arch->Chunks.empty() || arch->Chunks.back()->Count == arch->Chunks.back()->Capacity)
+        assert(arch->Chunks.size() < MaxChunks && "An archetype has more chunks than a slot can address");
+        // Chunks grow from 1 KiB to 128 KiB, so an archetype with few entities stays small
+        const size_t bytes = Math::Min(MaxChunkBytes, FirstChunkBytes << Math::Min<size_t>(arch->Chunks.size(), 7));
+        arch->Chunks.push_back(MakeChunk(*arch, bytes));
+        return arch->Chunks.back();
+    }
+
+    Chunk& NativeStorage::AddRow(Archetype* arch, const Entity entity, Slot& slot)
+    {
+        const size_t chunkCount = arch->Chunks.size();
+        Chunk* chunk = chunkCount != 0 ? arch->Chunks.data()[chunkCount - 1] : nullptr;
+        if (chunk == nullptr || chunk->Count == chunk->Capacity) [[unlikely]]
         {
-            assert(arch->Chunks.size() < MaxChunks && "An archetype has more chunks than a slot can address");
-            // Chunks grow from 1 KiB to 128 KiB, so an archetype with few entities stays small
-            const size_t bytes = Math::Min(MaxChunkBytes, FirstChunkBytes << Math::Min<size_t>(arch->Chunks.size(), 7));
-            arch->Chunks.push_back(MakeChunk(*arch, bytes));
+            chunk = AddChunk(arch);
         }
 
-        Chunk& chunk = *arch->Chunks.back();
-        const uint32 row = chunk.Count++;
-        chunk.Entities[row] = entity;
-        for (size_t c = 0; c < arch->Columns.size(); ++c)
+        const uint32 row = chunk->Count++;
+        chunk->Entities[row] = entity;
+        if (arch->AnyEnableable)
         {
-            if (chunk.Enabled[c] != nullptr)
+            for (size_t c = 0; c < arch->Columns.size(); ++c)
             {
-                SetBit(chunk.Enabled[c], row, true);
+                if (chunk->Enabled[c] != nullptr)
+                {
+                    SetBit(chunk->Enabled[c], row, true);
+                }
             }
         }
         ++arch->EntityCount;
         slot.ArchIndex = arch->Index + 1;
         slot.SetPlace(static_cast<uint32>(arch->Chunks.size() - 1), row);
+        return *chunk;
     }
 
     void NativeStorage::FillHole(Archetype* arch, const uint32 chunkIndex, const uint32 row)
     {
         // Rows fill the chunks in order. The last chunk may be an empty spare, so the
         // archetype's last row is in the last chunk that has rows.
+        Chunk* const* chunks = arch->Chunks.data();
         size_t lastIndex = arch->Chunks.size() - 1;
-        if (arch->Chunks[lastIndex]->Count == 0)
+        if (chunks[lastIndex]->Count == 0)
         {
             --lastIndex;
         }
-        Chunk& chunk = *arch->Chunks[chunkIndex];
-        Chunk& last = *arch->Chunks[lastIndex];
+        Chunk& chunk = *chunks[chunkIndex];
+        Chunk& last = *chunks[lastIndex];
         const uint32 lastRow = last.Count - 1;
         const bool isLast = (&last == &chunk) && (lastRow == row);
         if (!isLast)
         {
-            for (size_t c = 0; c < arch->Columns.size(); ++c)
+            const size_t columnCount = arch->Columns.size();
+            const Archetype::Column* columns = arch->Columns.data();
+            std::byte* const* to = chunk.Columns;
+            std::byte* const* from = last.Columns;
+            if (arch->AllTrivial)
             {
-                const Archetype::Column& column = arch->Columns[c];
-                RelocateValue(column, chunk.Columns[c] + row * column.Size, last.Columns[c] + lastRow * column.Size);
-                if (chunk.Enabled[c] != nullptr)
+                for (size_t c = 0; c < columnCount; ++c)
                 {
-                    SetBit(chunk.Enabled[c], row, NativeStorage::RowEnabled(last, c, lastRow));
+                    const size_t size = columns[c].Size;
+                    CopyValue(to[c] + row * size, from[c] + lastRow * size, size);
+                }
+            }
+            else
+            {
+                for (size_t c = 0; c < columnCount; ++c)
+                {
+                    const Archetype::Column& column = columns[c];
+                    RelocateValue(column, to[c] + row * column.Size, from[c] + lastRow * column.Size);
+                }
+            }
+            if (arch->AnyEnableable)
+            {
+                for (size_t c = 0; c < columnCount; ++c)
+                {
+                    if (chunk.Enabled[c] != nullptr)
+                    {
+                        SetBit(chunk.Enabled[c], row, NativeStorage::RowEnabled(last, c, lastRow));
+                    }
                 }
             }
             const Entity moved = last.Entities[lastRow];
             chunk.Entities[row] = moved;
-            Slot& movedSlot = m_Slots[moved.Index];
-            movedSlot.SetPlace(chunkIndex, row);
+            m_Slots[moved.Index].SetPlace(chunkIndex, row);
         }
 
         --last.Count;
@@ -611,7 +744,7 @@ namespace Fling::Detail
         // Keep one small empty chunk as a spare, so an entity that comes and goes (a new
         // entity passes through the root archetype on its way to its own) does not free and
         // allocate a chunk each time. A second empty chunk, or a big one, is freed.
-        if (last.Count == 0)
+        if (last.Count == 0) [[unlikely]]
         {
             if (lastIndex + 1 < arch->Chunks.size() || last.BlockBytes > MaxSpareChunkBytes)
             {
@@ -641,12 +774,11 @@ namespace Fling::Detail
         const Entity entity = from->Chunks[slot.ChunkIndex()]->Entities[slot.Row()];
 
         // AddRow may add a chunk to `to`, so take the chunk references after it
-        AddRow(to, entity, slot);
+        Chunk& newChunk = AddRow(to, entity, slot);
         const uint32 oldChunkIndex = oldLocation.ChunkIndex();
         const uint32 oldRow = oldLocation.Row();
         const uint32 newRow = slot.Row();
         Chunk& oldChunk = *from->Chunks[oldChunkIndex];
-        Chunk& newChunk = *to->Chunks[slot.ChunkIndex()];
 
         for (size_t c = 0; c < from->Columns.size(); ++c)
         {
@@ -667,6 +799,60 @@ namespace Fling::Detail
             {
                 // Dropped: the old value ends here
                 DestroyValue(column, src);
+            }
+        }
+
+        FillHole(from, oldChunkIndex, oldRow);
+        ++m_StructuralMoves;
+    }
+
+    void NativeStorage::MoveRow(Slot& slot, const ArchetypeEdge& edge)
+    {
+        Archetype* from = ArchOf(slot);
+        Archetype* to = edge.Target;
+        const uint32 oldChunkIndex = slot.ChunkIndex();
+        const uint32 oldRow = slot.Row();
+        Chunk& oldChunk = *from->Chunks.data()[oldChunkIndex];
+
+        // AddRow may add a chunk to `to`, so take the chunk references after it
+        Chunk& newChunk = AddRow(to, oldChunk.Entities[oldRow], slot);
+        const uint32 newRow = slot.Row();
+
+        std::byte* const* src = oldChunk.Columns;
+        std::byte* const* dst = newChunk.Columns;
+        const ArchetypeEdge::ColumnMove* moves = edge.Moves.data();
+        const size_t moveCount = edge.Moves.size();
+        if (from->AllTrivial)
+        {
+            for (size_t m = 0; m < moveCount; ++m)
+            {
+                const ArchetypeEdge::ColumnMove& move = moves[m];
+                CopyValue(dst[move.To] + newRow * move.Size, src[move.From] + oldRow * move.Size, move.Size);
+            }
+        }
+        else
+        {
+            for (size_t m = 0; m < moveCount; ++m)
+            {
+                const ArchetypeEdge::ColumnMove& move = moves[m];
+                RelocateValue(
+                    from->Columns[move.From], dst[move.To] + newRow * move.Size, src[move.From] + oldRow * move.Size);
+            }
+            for (const uint32 c : edge.Dropped)
+            {
+                const Archetype::Column& column = from->Columns[c];
+                DestroyValue(column, src[c] + oldRow * column.Size);
+            }
+        }
+        if (from->AnyEnableable && to->AnyEnableable)
+        {
+            for (size_t m = 0; m < moveCount; ++m)
+            {
+                const ArchetypeEdge::ColumnMove& move = moves[m];
+                if (newChunk.Enabled[move.To] != nullptr)
+                {
+                    SetBit(newChunk.Enabled[move.To], newRow, NativeStorage::RowEnabled(oldChunk, move.From, oldRow));
+                }
             }
         }
 
@@ -727,8 +913,15 @@ namespace Fling::Detail
             return AddSparse(entity, id);
         }
 
-        MoveRow(*slot, WithType(ArchOf(*slot), id));
-        return ColumnAddress(*slot, id);
+        const ArchetypeEdge& edge = AddEdge(ArchOf(*slot), id);
+        MoveRow(*slot, edge);
+        if (edge.TargetColumn < 0)
+        {
+            return nullptr; // A tag
+        }
+        const Archetype& to = *edge.Target;
+        const Chunk& chunk = *to.Chunks.data()[slot->ChunkIndex()];
+        return chunk.Columns[edge.TargetColumn] + slot->Row() * to.Columns.data()[edge.TargetColumn].Size;
     }
 
     void* NativeStorage::AddSparse(const Entity entity, const ComponentId id)
@@ -763,37 +956,250 @@ namespace Fling::Detail
 
     void NativeStorage::Remove(const Entity entity, const ComponentId id)
     {
-        if (!Has(entity, id))
+        if (HasHooks(id)) [[unlikely]]
         {
-            assert(false && "Remove on an entity that does not have the component");
-            return;
-        }
-        if (HasHooks(id))
-        {
+            if (!Has(entity, id))
+            {
+                assert(false && "Remove on an entity that does not have the component");
+                return;
+            }
             m_Hooks[id]->Removed.Publish(m_Owner, entity);
+            // A Removed hook may remove the component or destroy the entity
             if (!Has(entity, id))
             {
                 return;
             }
         }
 
+        Slot* slot = FindSlot(entity);
+        if (slot == nullptr)
+        {
+            assert(false && "Remove on an entity that is not alive");
+            return;
+        }
         if (Ops(id).Storage == ComponentStorage::Sparse)
         {
-            EraseSparse(SparseFor(id), entity);
+            SparseSet* set = FindSparse(id);
+            if (set == nullptr || set->Find(entity) == nullptr)
+            {
+                assert(false && "Remove on an entity that does not have the component");
+                return;
+            }
+            EraseSparse(*set, entity);
             return;
         }
 
-        Slot* slot = FindSlot(entity);
-        MoveRow(*slot, WithoutType(ArchOf(*slot), id));
+        Archetype* arch = ArchOf(*slot);
+        if (!arch->Has(id))
+        {
+            assert(false && "Remove on an entity that does not have the component");
+            return;
+        }
+        MoveRow(*slot, RemoveEdge(arch, id));
     }
 
-    Archetype* NativeStorage::Step(Archetype* from, const ComponentId id, const bool adding)
+    void NativeStorage::MatchForBulk(const std::span<const ComponentId> required,
+                                     const std::span<const ComponentId> excluded,
+                                     const ComponentId alsoRequired,
+                                     const ComponentId alsoExcluded)
     {
-        if (adding)
+        assert(m_RowLimits.empty() && "AddToAll or RemoveFromAll while a query is being iterated");
+        const auto withId = [this](const std::span<const ComponentId> ids, const ComponentId id)
         {
-            return from->Has(id) ? from : WithType(from, id);
+            m_BulkIds.assign(ids.begin(), ids.end());
+            m_BulkIds.push_back(id);
+            std::sort(m_BulkIds.begin(), m_BulkIds.end());
+            return std::span<const ComponentId>(m_BulkIds);
+        };
+        const std::span<const ComponentId> req =
+            alsoRequired != InvalidComponentId ? withId(required, alsoRequired) : required;
+        const std::span<const ComponentId> exc =
+            alsoExcluded != InvalidComponentId ? withId(excluded, alsoExcluded) : excluded;
+        const std::vector<Archetype*>& matches = Match(req, exc);
+        m_BulkArchetypes.assign(matches.begin(), matches.end());
+    }
+
+    void NativeStorage::CollectBulkEntities()
+    {
+        m_BulkEntities.clear();
+        for (const Archetype* arch : m_BulkArchetypes)
+        {
+            for (const Chunk* chunk : arch->Chunks)
+            {
+                m_BulkEntities.insert(m_BulkEntities.end(), chunk->Entities, chunk->Entities + chunk->Count);
+            }
         }
-        return from->Has(id) ? WithoutType(from, id) : from;
+    }
+
+    size_t NativeStorage::AddToAll(const ComponentId id,
+                                   const void* value,
+                                   const FillValues fill,
+                                   const std::span<const ComponentId> required,
+                                   const std::span<const ComponentId> excluded)
+    {
+        if (Ops(id).Storage == ComponentStorage::Sparse || HasHooks(id))
+        {
+            // One entity at a time: a Sparse type is not part of the archetypes, and hooks run for each entity
+            const bool sparse = Ops(id).Storage == ComponentStorage::Sparse;
+            MatchForBulk(required, excluded, InvalidComponentId, sparse ? InvalidComponentId : id);
+            CollectBulkEntities();
+            size_t added = 0;
+            for (const Entity entity : m_BulkEntities)
+            {
+                // A hook may have destroyed the entity, or given it the type
+                if (!IsValid(entity) || Has(entity, id))
+                {
+                    continue;
+                }
+                if (void* memory = BeginAdd(entity, id))
+                {
+                    fill(memory, 1, value);
+                }
+                EndAdd(entity, id);
+                ++added;
+            }
+            return added;
+        }
+
+        MatchForBulk(required, excluded, InvalidComponentId, id);
+        size_t added = 0;
+        for (Archetype* from : m_BulkArchetypes)
+        {
+            if (from->EntityCount != 0)
+            {
+                added += MoveAllRows(from, AddEdge(from, id), value, fill);
+            }
+        }
+        return added;
+    }
+
+    size_t NativeStorage::RemoveFromAll(const ComponentId id,
+                                        const std::span<const ComponentId> required,
+                                        const std::span<const ComponentId> excluded)
+    {
+        if (Ops(id).Storage == ComponentStorage::Sparse || HasHooks(id))
+        {
+            const bool sparse = Ops(id).Storage == ComponentStorage::Sparse;
+            MatchForBulk(required, excluded, sparse ? InvalidComponentId : id, InvalidComponentId);
+            CollectBulkEntities();
+            size_t removed = 0;
+            for (const Entity entity : m_BulkEntities)
+            {
+                if (Has(entity, id))
+                {
+                    Remove(entity, id);
+                    ++removed;
+                }
+            }
+            return removed;
+        }
+
+        MatchForBulk(required, excluded, id, InvalidComponentId);
+        size_t removed = 0;
+        for (Archetype* from : m_BulkArchetypes)
+        {
+            if (from->EntityCount != 0)
+            {
+                removed += MoveAllRows(from, RemoveEdge(from, id), nullptr, nullptr);
+            }
+        }
+        return removed;
+    }
+
+    size_t
+    NativeStorage::MoveAllRows(Archetype* from, const ArchetypeEdge& edge, const void* value, const FillValues fill)
+    {
+        Archetype* to = edge.Target;
+        const uint32 toArchIndex = to->Index + 1;
+        size_t moved = 0;
+        for (Chunk*& src : from->Chunks)
+        {
+            uint32 done = 0;
+            while (done < src->Count)
+            {
+                Chunk* dst = to->Chunks.empty() ? nullptr : to->Chunks.back();
+                if (dst == nullptr || dst->Count == dst->Capacity)
+                {
+                    dst = AddChunk(to);
+                }
+                const uint32 dstIndex = static_cast<uint32>(to->Chunks.size() - 1);
+                const uint32 base = dst->Count;
+                const uint32 count = Math::Min(src->Count - done, dst->Capacity - base);
+
+                // The columns both have: one copy of the run for each
+                for (const ArchetypeEdge::ColumnMove& move : edge.Moves)
+                {
+                    std::byte* target = dst->Columns[move.To] + size_t{base} * move.Size;
+                    std::byte* source = src->Columns[move.From] + size_t{done} * move.Size;
+                    if (move.Trivial)
+                    {
+                        std::memcpy(target, source, size_t{count} * move.Size);
+                        continue;
+                    }
+                    const Archetype::Column& column = from->Columns[move.From];
+                    for (uint32 r = 0; r < count; ++r)
+                    {
+                        column.MoveConstruct(target + size_t{r} * move.Size, source + size_t{r} * move.Size);
+                        column.Destroy(source + size_t{r} * move.Size);
+                    }
+                }
+                for (const uint32 c : edge.Dropped)
+                {
+                    const Archetype::Column& column = from->Columns[c];
+                    if (!column.Trivial)
+                    {
+                        for (uint32 r = 0; r < count; ++r)
+                        {
+                            column.Destroy(src->Columns[c] + size_t{done + r} * column.Size);
+                        }
+                    }
+                }
+                if (edge.TargetColumn >= 0)
+                {
+                    const size_t size = to->Columns[static_cast<size_t>(edge.TargetColumn)].Size;
+                    fill(dst->Columns[edge.TargetColumn] + size_t{base} * size, count, value);
+                }
+                if (to->AnyEnableable)
+                {
+                    for (size_t c = 0; c < to->Columns.size(); ++c)
+                    {
+                        if (dst->Enabled[c] == nullptr)
+                        {
+                            continue;
+                        }
+                        // A column the entities had keeps its flags. The added column starts enabled.
+                        const int32 sourceColumn = from->ColumnOf(to->Columns[c].Id);
+                        for (uint32 r = 0; r < count; ++r)
+                        {
+                            const bool enabled =
+                                sourceColumn < 0 ||
+                                NativeStorage::RowEnabled(*src, static_cast<size_t>(sourceColumn), done + r);
+                            SetBit(dst->Enabled[c], base + r, enabled);
+                        }
+                    }
+                }
+
+                std::memcpy(dst->Entities + base, src->Entities + done, size_t{count} * sizeof(Entity));
+                for (uint32 r = 0; r < count; ++r)
+                {
+                    Slot& slot = m_Slots[dst->Entities[base + r].Index];
+                    slot.ArchIndex = toArchIndex;
+                    slot.SetPlace(dstIndex, base + r);
+                }
+                dst->Count += count;
+                to->EntityCount += count;
+                done += count;
+                moved += count;
+            }
+            // Free each chunk as soon as it is empty, so the next chunks of the target can
+            // take its block, and the move does not need twice the memory
+            FreeChunk(src);
+            src = nullptr;
+        }
+        from->Chunks.clear();
+        from->EntityCount = 0;
+        m_StructuralMoves += moved;
+        return moved;
     }
 
     void NativeStorage::ApplyBatch(const Entity entity, const std::span<PendingChange> changes)
@@ -861,16 +1267,31 @@ namespace Fling::Detail
         Slot* slot = FindSlot(entity);
         Archetype* from = ArchOf(*slot);
         Archetype* to = from;
+        // The edge of the only step, when there is one, so the move uses its column moves
+        const ArchetypeEdge* onlyStep = nullptr;
+        size_t steps = 0;
         for (size_t i = 0; i < changes.size(); ++i)
         {
-            if (wins(i) && Ops(changes[i].Id).Storage != ComponentStorage::Sparse)
+            const ComponentId id = changes[i].Id;
+            if (!wins(i) || Ops(id).Storage == ComponentStorage::Sparse || changes[i].IsAdd == to->Has(id))
             {
-                to = Step(to, changes[i].Id, changes[i].IsAdd);
+                continue;
             }
+            const ArchetypeEdge& edge = changes[i].IsAdd ? AddEdge(to, id) : RemoveEdge(to, id);
+            to = edge.Target;
+            onlyStep = &edge;
+            ++steps;
         }
         if (to != from)
         {
-            MoveRow(*slot, to);
+            if (steps == 1)
+            {
+                MoveRow(*slot, *onlyStep);
+            }
+            else
+            {
+                MoveRow(*slot, to);
+            }
         }
 
         // 3. The values, in the order the changes were recorded. No hooks run here.

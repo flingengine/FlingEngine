@@ -18,7 +18,8 @@ namespace Fling
      * Each slab is aligned to its own size, so the slab of a block is found from the
      * block's address with no search. Memory goes back to the OS only in Trim, which
      * frees the slabs that have no block in use, so the allocator does not take and
-     * give back pages while a game runs.
+     * give back pages while a game runs. The slabs of the biggest blocks are one large
+     * page each (see VirtualMemory::UseLargePages).
      *
      * Not thread safe: one owner (a world's storage) uses it.
      */

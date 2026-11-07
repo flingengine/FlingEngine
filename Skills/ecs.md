@@ -19,9 +19,17 @@ Systems do not use `EntityStorage`: they use their typed context.
   64-byte aligned column per component (`Ecs/detail/NativeStorage.h`). Big
   chunks keep the hardware prefetcher streaming; small archetypes stay small.
 - **Iterating is cheap. Adding and removing Table components is not.** A
-  structural change moves the whole row (about 30 ns), so do it with deferred
+  structural change moves the whole row (about 19 ns), so do it with deferred
   `ctx.Add` and `ctx.Remove` (batched per entity), or use `Sparse` or
   `Enableable` for components that come and go every few ticks.
+- **Make an entity with all its components at once:** `storage.Create(a, b, c)`
+  and `ctx.Spawn(a, b, c)` put it straight in its archetype, with no move per
+  component. The Added hooks run after every component is in place.
+- **Change many entities with one call:** `storage.AddToAll(value,
+  With<...>{}, Without<...>{})` and `storage.RemoveFromAll<T>(filters...)` move
+  whole chunks, one copy per column (about 2 ns per entity). A system calls them
+  inside `ctx.Defer<T>(...)`. A Sparse type, or a type with hooks, is done one
+  entity at a time. Do not call them while a query is being iterated.
 - In a hot loop, `ctx.Query<...>().Each(fn)` is the fastest form: a plain
   array loop per chunk, and the Entity column is read only if `fn` takes an
   `Entity`. The range-for (`for (auto [e, a] : ctx.Query<A>())`) is close.
@@ -51,6 +59,9 @@ Systems do not use `EntityStorage`: they use their typed context.
   blocks from 1 KiB to 128 KiB, cut from slabs of OS pages, with a free list
   per size, so a freed block is used again for the same size and memory does
   not fragment.
+- The slabs of the 128 KiB blocks are one 2 MiB large page each
+  (`VirtualMemory::UseLargePages`, Linux only), so a big world takes few page
+  faults and few TLB entries.
 - A chunk is one block: its header, the column pointers, the enabled bits, the
   Entity column, and one 64-byte aligned column per component (structure of
   arrays). Big chunks start their layout at one of 16 cache lines, so the

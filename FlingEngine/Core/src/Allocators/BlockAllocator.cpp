@@ -39,6 +39,12 @@ namespace Fling
 
     size_t BlockAllocator::ClassSlabBytes(const size_t sizeClass)
     {
+        // The biggest blocks hold the chunks of big archetypes. Their slabs are one large
+        // page, so filling them takes one page fault, and iterating them few TLB entries.
+        if (ClassBlockBytes(sizeClass) == MaxBlockBytes)
+        {
+            return VirtualMemory::LargePageBytes;
+        }
         return Math::Max<size_t>(64 * 1024, ClassBlockBytes(sizeClass) * 8);
     }
 
@@ -65,6 +71,7 @@ namespace Fling
         {
             return false;
         }
+        VirtualMemory::UseLargePages(slab, slabBytes);
 
         SizeClass& sc = m_Classes[sizeClass];
         sc.Slabs.emplace(reinterpret_cast<uintptr_t>(slab), 0u);

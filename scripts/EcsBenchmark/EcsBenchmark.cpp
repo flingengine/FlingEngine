@@ -54,6 +54,11 @@ template <typename T> static void Remove(World& w, Ent e) { w.remove<T>(e); }
 template <typename Fn> static void Each1(World& w, Fn fn) { w.view<Position>().each([&](Position& p) { fn(p); }); }
 template <typename Fn> static void Each2(World& w, Fn fn) { w.view<Position, Velocity>().each([&](Position& p, Velocity& v) { fn(p, v); }); }
 static void Reserve(World& w, size_t n) { w.reserve<Position>(n); w.reserve<Velocity>(n); w.reserve(n); }
+// The bulk forms: a loop over a view (no range add in this version), and reset, which empties one pool
+// An entity with Position and Velocity, the way each library makes one
+static Ent CreateMoving(World& w, float x) { const Ent e = w.create(); w.assign<Position>(e, Position{x, 0, 0}); w.assign<Velocity>(e); return e; }
+static void AddToAll(World& w) { for (const Ent e : w.view<Position>()) { w.assign<Health>(e); } }
+static void RemoveFromAll(World& w) { w.reset<Health>(); }
 // EnTT takes all of its memory through operator new.
 static size_t OsBytes(const World&) { return 0; }
 #else
@@ -89,6 +94,9 @@ template <typename Fn> static void Each2(World& w, Fn fn)
 }
 #endif
 static void Reserve(World&, size_t) {}
+static Ent CreateMoving(World& w, float x) { return w.Create(Position{x, 0, 0}, Velocity{}); }
+static void AddToAll(World& w) { w.AddToAll(Health{}, Fling::With<Position>{}); }
+static void RemoveFromAll(World& w) { w.RemoveFromAll<Health>(); }
 // Chunks and sparse slots come from the world's own pages, which operator new does not see.
 static size_t OsBytes(const World& w) { return w.Stats().ReservedBytes; }
 #endif
@@ -107,7 +115,7 @@ int main(int argc, char** argv)
     const int Reps = argc > 2 ? std::atoi(argv[2]) : 7;
 
     // Median of Reps for each workload
-    std::vector<double> create, iter1, iter2, iterFrag, add, remove, destroy;
+    std::vector<double> create, iter1, iter2, iterFrag, add, remove, addAll, removeAll, destroy;
     double bytesPerEntity = 0, bytesAfterChurn = 0;
 
     for (int rep = 0; rep < Reps; ++rep)
@@ -119,9 +127,7 @@ int main(int argc, char** argv)
         auto t0 = Clock::now();
         for (size_t i = 0; i < N; ++i)
         {
-            ents[i] = Create(*w);
-            Add<Position>(*w, ents[i], Position{float(i), 0, 0});
-            Add<Velocity>(*w, ents[i]);
+            ents[i] = CreateMoving(*w, float(i));
         }
         auto t1 = Clock::now();
         create.push_back(NsPerEntity(t0, t1, N));
@@ -150,6 +156,16 @@ int main(int argc, char** argv)
         remove.push_back(NsPerEntity(t0, t1, N));
         bytesAfterChurn = double(g_Live + OsBytes(*w) - liveBefore - N * sizeof(Ent)) / double(N);
 
+        t0 = Clock::now();
+        AddToAll(*w);
+        t1 = Clock::now();
+        addAll.push_back(NsPerEntity(t0, t1, N));
+
+        t0 = Clock::now();
+        RemoveFromAll(*w);
+        t1 = Clock::now();
+        removeAll.push_back(NsPerEntity(t0, t1, N));
+
         // Fragment: tags split the entities over 8 archetypes (EnTT: 3 more pools)
         for (size_t i = 0; i < N; ++i)
         {
@@ -171,8 +187,8 @@ int main(int argc, char** argv)
     }
 
     auto median = [](std::vector<double> v) { std::sort(v.begin(), v.end()); return v[v.size() / 2]; };
-    std::printf("%s N=%zu  create %.2f  iter1 %.3f  iter2 %.3f  iter2frag %.3f  add %.2f  remove %.2f  destroy %.2f  (ns/entity)  memory %.1f B/entity  after-churn %.1f B/entity\n",
-                BackendName, N, median(create), median(iter1), median(iter2), median(iterFrag), median(add), median(remove), median(destroy),
+    std::printf("%s N=%zu  create %.2f  iter1 %.3f  iter2 %.3f  iter2frag %.3f  add %.2f  remove %.2f  add-all %.2f  remove-all %.2f  destroy %.2f  (ns/entity)  memory %.1f B/entity  after-churn %.1f B/entity\n",
+                BackendName, N, median(create), median(iter1), median(iter2), median(iterFrag), median(add), median(remove), median(addAll), median(removeAll), median(destroy),
                 bytesPerEntity, bytesAfterChurn);
     return 0;
 }
