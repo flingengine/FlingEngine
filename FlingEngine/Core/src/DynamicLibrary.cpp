@@ -14,7 +14,7 @@
 #include <softpub.h>
 // clang-format on
 
-#include "Misc/WindowsStrings.h"
+#include "Strings/WindowsStrings.h"
 
 namespace
 {

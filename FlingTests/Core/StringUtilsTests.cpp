@@ -1,5 +1,5 @@
-#include "Misc/StringUtils.h"
 #include "Strings/String.h"
+#include "Strings/StringUtils.h"
 
 #include <catch2/catch_all.hpp>
 

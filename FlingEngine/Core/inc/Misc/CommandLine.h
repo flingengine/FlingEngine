@@ -1,8 +1,8 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "Misc/StringUtils.h"
 #include "Strings/String.h"
+#include "Strings/StringUtils.h"
 
 #include <unordered_map>
 

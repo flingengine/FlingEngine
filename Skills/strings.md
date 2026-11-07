@@ -68,7 +68,7 @@ All text is UTF-8 in `char`. There is no other character type in engine code.
   page.
 - **Wide strings** only in Windows `.cpp` files at Win32 calls. Always call the
   `W` form of a Win32 function. Convert with `Utf8ToWide` and `WideToUtf8`
-  (`Core/src/Misc/WindowsStrings.h`).
+  (`Core/src/Strings/WindowsStrings.h`).
 - **No `u8"..."` literals.** In C++20 they are `char8_t`. Plain `"..."` literals
   are UTF-8: the source files are UTF-8, and MSVC builds with `/utf-8`.
 - **Numbers:** parse with `StringUtils::ParseAs`, which uses `std::from_chars`

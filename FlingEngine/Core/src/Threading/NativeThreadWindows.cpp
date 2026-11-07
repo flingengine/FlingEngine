@@ -2,8 +2,8 @@
 
 #if FLING_WINDOWS
 
-#include "Misc/WindowsStrings.h"
 #include "Strings/String.h"
+#include "Strings/WindowsStrings.h"
 #include "Threading/NativeThread.h"
 
 #include <memory>
