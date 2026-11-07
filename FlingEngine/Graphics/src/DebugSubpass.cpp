@@ -1,7 +1,5 @@
 #include "CommandBuffer.h"
-#include "Components/Transform.h"
 #include "DebugSubpass.h"
-#include "TransformUtil.h"
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
 #include "FrameBuffer.h"
@@ -10,8 +8,7 @@
 #include "Logger.h"
 #include "LogicalDevice.h"
 #include "Material.h"
-#include "MeshRenderer.h"
-#include "MeshRendererGpu.h"
+#include "Buffer.h"
 #include "Model.h"
 #include "PhyscialDevice.h"
 #include "SwapChain.h"
@@ -24,7 +21,6 @@ namespace Fling
 	DebugSubpass::DebugSubpass(
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
-		Fling::EntityStorage& t_reg,
 		VkRenderPass t_GlobalRenderPass,
 		FirstPersonCamera* t_Cam,
 		std::shared_ptr<Fling::Shader> t_Vert,
@@ -33,8 +29,6 @@ namespace Fling
 		, m_GlobalRenderPass(t_GlobalRenderPass)
 		, m_Camera(t_Cam)
 	{
-		t_reg.OnAdd<MeshRenderer>().Connect<&DebugSubpass::OnMeshRendererAdded>(*this);
-
 		PrepareAttachments();
 	}
 
@@ -43,53 +37,35 @@ namespace Fling
 		
 	}
 
-	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime)
+	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime)
 	{
-		// For every mesh bind it's model and descriptor set info.
-		// View instead of owning group so assign<Transform>() references stay valid.
-		auto RenderView = t_reg.View<Transform, MeshRenderer, DebugRenderTag>();
+		ReleaseRetiredMeshResources();
+		SyncProxies(t_Snapshot);
 
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
 		m_Ubo.Projection[1][1] *= -1.0f;
 		VkDeviceSize offsets[1] = { 0 };
 
-		RenderView.Each([&](Fling::Entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
 		{
-			Fling::Model* Model = t_MeshRend.m_Model;
-			if (!Model)
+			const GpuMesh& Mesh = m_GpuMeshes[m_ItemSlots[i]];
+			if (!Mesh.Drawn || Mesh.MeshModel == nullptr)
 			{
-				return;
+				continue;
 			}
+			Fling::Model* Model = Mesh.MeshModel;
 
-			// Update the UBO
-			const LocalToWorld* World = t_reg.TryGet<LocalToWorld>(ent);
-			m_Ubo.Model = World ? World->Value : TransformUtil::LocalMatrix(t_trans);
+			m_Ubo.Model = t_Snapshot.Meshes[i].World;
+			memcpy(Mesh.Ubo->m_MappedMem, &m_Ubo, sizeof(m_Ubo));
 
-			// Memcpy to the buffer
-			Buffer* buf = t_MeshRend.m_UniformBuffer;
-			memcpy(
-				buf->m_MappedMem,
-				&m_Ubo,
-				buf->GetSize()
-			);
-
-			// If the mesh has no descriptor sets, then build them
-			// #TODO Investigate a better way to do this, probably by just moving the 
-			// descriptors off of the mesh
-			if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
-			{
-				CreateMeshDescriptorSet(t_MeshRend);
-			}
-
-			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(
 				t_CmdBuf.GetHandle(),
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
 				1,
-				&MeshRendererDescriptorSet(t_MeshRend),
+				&Mesh.Set,
 				0,
 				nullptr);
 
@@ -100,19 +76,88 @@ namespace Fling
 			vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
 			vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
-		});
+		}
 	}
 
-	void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg)
+	void DebugSubpass::SyncProxies(const RenderSnapshot& t_Snapshot)
+	{
+		MeshProxyTable::SyncResult Result = m_Proxies.Sync(t_Snapshot.Meshes);
+		m_ItemSlots = std::move(Result.ItemSlots);
+		m_GpuMeshes.resize(m_Proxies.Capacity());
+
+		for (const uint32 Slot : Result.Removed)
+		{
+			RetireGpuMesh(m_GpuMeshes[Slot]);
+		}
+
+		auto Prepare = [&](const uint32 Slot)
+		{
+			GpuMesh& Mesh = m_GpuMeshes[Slot];
+			RetireGpuMesh(Mesh);
+			const bool bHasAssets = ResolveMeshAssets(m_Proxies.At(Slot), Mesh);
+			Mesh.Drawn = bHasAssets && Mesh.MeshMaterial->GetType() == Material::Type::Debug;
+			if (!Mesh.Drawn)
+			{
+				Mesh = GpuMesh{};
+				return;
+			}
+
+			const VkDeviceSize BufferSize = sizeof(DebugUBO);
+			Mesh.Ubo = new Buffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			Mesh.Ubo->MapMemory(BufferSize);
+			CreateMeshDescriptorSet(Mesh);
+		};
+
+		for (const uint32 Slot : Result.Added)
+		{
+			Prepare(Slot);
+		}
+		for (const uint32 Slot : Result.Changed)
+		{
+			Prepare(Slot);
+		}
+	}
+
+	void DebugSubpass::RetireGpuMesh(GpuMesh& t_Mesh)
+	{
+		if (t_Mesh.Set != VK_NULL_HANDLE)
+		{
+			m_RetiredDescriptorSets.emplace_back(t_Mesh.Set);
+		}
+		if (t_Mesh.Ubo != nullptr)
+		{
+			m_RetiredUniformBuffers.emplace_back(t_Mesh.Ubo);
+		}
+		t_Mesh = GpuMesh{};
+	}
+
+	void DebugSubpass::ReleaseRetiredMeshResources()
+	{
+		if (!m_RetiredDescriptorSets.empty() && m_DescriptorPool != VK_NULL_HANDLE)
+		{
+			VK_CHECK_RESULT(vkFreeDescriptorSets(
+				m_Device->GetVkDevice(),
+				m_DescriptorPool,
+				static_cast<uint32>(m_RetiredDescriptorSets.size()),
+				m_RetiredDescriptorSets.data()));
+		}
+		m_RetiredDescriptorSets.clear();
+
+		for (Buffer* Ubo : m_RetiredUniformBuffers)
+		{
+			delete Ubo;
+		}
+		m_RetiredUniformBuffers.clear();
+	}
+
+	void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool)
 	{
 		
 	}
 
-	void DebugSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
+	void DebugSubpass::CreateMeshDescriptorSet(GpuMesh& t_Mesh)
 	{
-		// Only allocate new descriptor sets if there are none
-		// Some may exist if the storage reuses the component
-		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
+		if (t_Mesh.Set == VK_NULL_HANDLE)
 		{
 			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
 			VkDescriptorSetAllocateInfo allocInfo = {};
@@ -122,17 +167,13 @@ namespace Fling
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layout;
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &MeshRendererDescriptorSet(t_MeshRend)));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_Mesh.Set));
 		}
 
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets =
 		{
 			// 0: UBO
-			Initializers::WriteDescriptorSetUniform(
-				t_MeshRend.m_UniformBuffer,
-				MeshRendererDescriptorSet(t_MeshRend),
-				0
-			),
+			Initializers::WriteDescriptorSetUniform(t_Mesh.Ubo, t_Mesh.Set, 0),
 		};
 
 		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
@@ -150,6 +191,8 @@ namespace Fling
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		// A mesh frees its set when it leaves the snapshot
+		poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
 		poolInfo.maxSets = to_u32(100 * m_SwapChain->GetImageViewCount());
@@ -174,34 +217,22 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
 	}
 
-	void DebugSubpass::CleanUp(Fling::EntityStorage& t_reg)
+	void DebugSubpass::CleanUp()
 	{
+		// Called after the device is idle
+		for (GpuMesh& Mesh : m_GpuMeshes)
+		{
+			RetireGpuMesh(Mesh);
+		}
+		m_GpuMeshes.clear();
+		m_Proxies.Clear();
+		m_ItemSlots.clear();
+		ReleaseRetiredMeshResources();
+
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{
 			vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
 			m_DescriptorPool = VK_NULL_HANDLE;
 		}
-	}
-
-	void DebugSubpass::OnMeshRendererAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)
-	{
-		MeshRenderer& t_MeshRend = t_Reg.Get<MeshRenderer>(t_Ent);
-		// If this mesh renderer material is set to DEBUG, then do this
-		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Debug)
-		{
-			return;
-		}
-
-		t_Reg.Add<DebugRenderTag>(t_Ent);
-
-		// Initialize and map the UBO of each mesh renderer
-		if (t_MeshRend.m_UniformBuffer == nullptr)
-		{
-			VkDeviceSize bufferSize = sizeof(DebugUBO);
-			t_MeshRend.m_UniformBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffer->MapMemory(bufferSize);
-		}
-
-		CreateMeshDescriptorSet(t_MeshRend);
 	}
 }   // namespace Fling

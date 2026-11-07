@@ -1,91 +1,32 @@
 #pragma once
 
 #include "Ecs/Component.h"
-#include "Ecs/EntityStorage.h"
 
 #include <string>
+#include <utility>
 
 namespace Fling
 {
-    class Model;
-    class Material;
-    class Buffer;
-
+    /**
+     * A mesh to draw at the entity's world matrix. Authored data only: the asset
+     * paths. The renderer keeps the GPU side (the model, material, uniform buffer,
+     * and descriptor set) in its own proxy, made from the RenderSnapshot.
+     */
     struct MeshRenderer
     {
         static constexpr ComponentInfo Component{.Name = "MeshRenderer"};
 
-        /**
-         * GPU descriptor for this mesh. Defined in the Graphics module so this
-         * header does not name a Vulkan handle.
-         */
-        struct GpuState;
+        MeshRenderer() = default;
 
-        /** Default constructor. */
-        MeshRenderer();
+        explicit MeshRenderer(std::string t_Mesh, std::string t_Material = {})
+            : Mesh(std::move(t_Mesh)), Material(std::move(t_Material))
+        {
+        }
 
-        /** Load a mesh renderer with the default material */
-        MeshRenderer(const std::string& t_MeshPath);
+        /** The model, relative to the assets folder. Empty draws nothing. */
+        std::string Mesh;
 
-        MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
-
-        /**
-         * Create a mesh renderer with the given material and model.
-         * If the material is null than it will load the default material
-         */
-        MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
-
-        /**
-         * Copy the model and the material only. The copy does not own the uniform buffer.
-         */
-        MeshRenderer(const MeshRenderer& t_Other);
-        MeshRenderer& operator=(const MeshRenderer& t_Other);
-
-        MeshRenderer(MeshRenderer&& t_Other) noexcept;
-        MeshRenderer& operator=(MeshRenderer&& t_Other) noexcept;
-
-        /**
-         * Free the uniform buffer. The model and the material stay with the resource manager.
-         */
-        ~MeshRenderer();
-
-        /** Pointer to the actual model  */
-        Model* m_Model = nullptr;
-
-        /** Pointer to the material that this mesh renderer uses */
-        Material* m_Material = nullptr;
-
-        /** We need a uniform buffer per-swap chain image */
-        Buffer* m_UniformBuffer = nullptr;
-
-        /** Descriptor set for this mesh. Null until the renderer allocates it. */
-        GpuState* m_GpuState = nullptr;
-
-        void Release();
-
-        bool operator==(const MeshRenderer& other) const;
-        bool operator!=(const MeshRenderer& other) const;
-
-        void LoadModelFromPath(const std::string& t_MeshPath);
-
-        void LoadMaterialFromPath(const std::string& t_MatPath);
-
-        /** Asset path of the assigned model, or an empty string when none is set. */
-        std::string GetModelGuidString() const;
-
-        /** Asset path of the assigned material, or an empty string when none is set. */
-        std::string GetMaterialGuidString() const;
-    };
-
-    /** Marks a mesh that the deferred (offscreen) pass draws. */
-    struct DeferredRenderTag
-    {
-        static constexpr ComponentInfo Component{.Name = "DeferredRenderTag", .Kind = ComponentKind::Tag, .Transient = true};
-    };
-
-    /** Marks a mesh that the debug pass draws. */
-    struct DebugRenderTag
-    {
-        static constexpr ComponentInfo Component{.Name = "DebugRenderTag", .Kind = ComponentKind::Tag, .Transient = true};
+        /** The material, relative to the assets folder. Empty uses the default material. */
+        std::string Material;
     };
 } // namespace Fling

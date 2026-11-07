@@ -406,7 +406,7 @@ namespace Fling
 
 			if (!m_Options.NullRender && m_World)
 			{
-				VulkanApp::Get().Shutdown(m_World->GetStorage());
+				VulkanApp::Get().ShutdownRenderer();
 			}
 		}
 

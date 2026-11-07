@@ -52,7 +52,6 @@ namespace Fling
     public:
         GeometrySubpass(const LogicalDevice* t_Dev,
                         const Swapchain* t_Swap,
-                        Fling::EntityStorage& t_reg,
                         VkRenderPass t_GlobalRenderPass,
                         FirstPersonCamera* t_Cam,
                         FrameBuffer* t_OffscreenDep,
@@ -62,21 +61,19 @@ namespace Fling
         virtual ~GeometrySubpass();
 
         void
-        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) override;
+        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime) override;
 
-        void CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) override;
+        void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 
         /**
          * @param t_FrameBuffer	The swap chain frame buffer
          */
         void CreateGraphicsPipeline() override;
 
-        virtual void OnSwapchainResized(Fling::EntityStorage& t_reg) override final;
+        virtual void OnSwapchainResized() override final;
 
     private:
-        void OnPointLightAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
-
-        void UpdateLightingUBO(Fling::EntityStorage& t_Reg, uint32 t_ActiveFrame);
+        void UpdateLightingUBO(const RenderSnapshot& t_Snapshot, uint32 t_ActiveFrame);
 
         // Global render pass for frame buffer writes
         std::shared_ptr<Model> m_QuadModel;

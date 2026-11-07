@@ -17,9 +17,15 @@ namespace Fling
 	public:
         explicit Resource(Fling::Guid t_ID)
             : m_Guid(t_ID)
-        { 
-			m_HumanReadableName = m_Guid.data();
+        {
+			// A Guid does not own its characters. Keep a copy, and point the Guid at it,
+			// so the caller's string can go away.
+			m_HumanReadableName = m_Guid.data() ? m_Guid.data() : "";
+			m_Guid = Fling::Guid{ m_HumanReadableName.c_str() };
 		}
+
+        Resource(const Resource&) = delete;
+        Resource& operator=(const Resource&) = delete;
 		
         virtual ~Resource() = default;
 

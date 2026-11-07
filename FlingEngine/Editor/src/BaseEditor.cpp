@@ -24,104 +24,44 @@ namespace Fling
 {
     namespace Widgets
     {
-        void MeshRenderer(Fling::MeshRenderer& t_MeshRend, Fling::EntityStorage& t_Reg, Fling::Entity t_Entity)
+        /** A path field with a file browser. Returns true when a new path is picked. */
+        bool AssetPicker(const char* t_Label, const char* t_Folder, const char* t_Extension, std::string& t_Path)
         {
-            // Model -----------------------
+            ImGui::PushID(t_Label);
+            ImGui::LabelText(t_Label, "%s", t_Path.empty() ? "None" : t_Path.c_str());
+
+            static ImGui::FileBrowser s_FileDialog;
+            static const char* s_OpenFor = nullptr;
+            if (ImGui::Button("Select..."))
             {
-                std::string ModelName = "None";
-                if (t_MeshRend.m_Model)
-                {
-                    ModelName = t_MeshRend.GetModelGuidString();
-                }
-
-                ImGui::LabelText("Model", ModelName.c_str(), "%s");
-
-                // Show file browser
-                static ImGui::FileBrowser fileDialog;
-                if(ImGui::Button("Select Model"))
-                {
-                    fileDialog.SetTitle("Select Model...");
-                    std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Models" };
-                    fileDialog.SetPwd(p);
-
-                    fileDialog.SetTypeFilters({ ".obj" });
-                    fileDialog.Open();
-                }
-
-                fileDialog.Display();
-                if(fileDialog.HasSelected())
-                {
-                    std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
-
-                    t_MeshRend.LoadModelFromPath(SelectedAsset);
-                    // Tell the renderer to record its draw calls again with the new model
-                    t_Reg.Replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
-
-                    fileDialog.ClearSelected();
-                }
+                s_FileDialog.SetTitle(std::string("Select ") + t_Label);
+                s_FileDialog.SetPwd(std::filesystem::path{ FlingPaths::EngineAssetsDir() + "/" + t_Folder });
+                s_FileDialog.SetTypeFilters({ t_Extension });
+                s_FileDialog.Open();
+                s_OpenFor = t_Label;
             }
 
-            // Material ----------------------
+            bool bPicked = false;
+            if (s_OpenFor == t_Label)
             {
-                std::string MaterialName = "None";
-                if (t_MeshRend.m_Material)
+                s_FileDialog.Display();
+                if (s_FileDialog.HasSelected())
                 {
-                    MaterialName = t_MeshRend.GetMaterialGuidString();
+                    t_Path = FlingPaths::ConvertAbsolutePathToRelative(s_FileDialog.GetSelected().string());
+                    s_FileDialog.ClearSelected();
+                    s_OpenFor = nullptr;
+                    bPicked = true;
                 }
-
-                const char* m = MaterialName.c_str();
-                ImGui::LabelText("Material", m, "%s");
-
-                // Show file browser
-                static ImGui::FileBrowser fileDialog;
-                if(ImGui::Button("Select Material"))
-                {
-                    fileDialog.SetTitle("Select Material...");
-                    std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Materials" };
-                    fileDialog.SetPwd(p);
-
-
-                    fileDialog.SetTypeFilters({ ".mat" });
-                    fileDialog.Open();
-                }
-
-                fileDialog.Display();
-                if(fileDialog.HasSelected())
-                {
-                    std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
-
-                    t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    // Tell the renderer to write the new textures to the descriptor set.
-                    // replace() copies the component without its GPU handles, and the
-                    // move assignment keeps the handles on the stored component.
-                    t_Reg.Replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
-
-                    fileDialog.ClearSelected();
-                }
-
-				// Material type --------
-
-				const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS" };
-				static const char* current_item = NULL;
-
-				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
-				{
-					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-					{
-						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-						if (ImGui::Selectable(items[n], is_selected))
-						{
-							current_item = items[n];
-							if (is_selected)
-							{
-								ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-
-							}
-						}
-					}
-					ImGui::EndCombo();
-				}
             }
+            ImGui::PopID();
+            return bPicked;
+        }
+
+        void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
+        {
+            // The renderer sees the new paths in the next snapshot and makes a new proxy
+            AssetPicker("Model", "Models", ".obj", t_MeshRend.Mesh);
+            AssetPicker("Material", "Materials", ".mat", t_MeshRend.Material);
         }
     }
 
@@ -153,9 +93,9 @@ namespace Fling
 
         // MeshRenderer saves asset paths by hand, so it gets file pickers.
         t_Widgets.Override<Fling::MeshRenderer>(
-            [](Fling::EntityStorage& t_Storage, Fling::Entity t_Entity, Fling::MeshRenderer& t_Mesh)
+            [](Fling::EntityStorage&, Fling::Entity, Fling::MeshRenderer& t_Mesh)
             {
-                Widgets::MeshRenderer(t_Mesh, t_Storage, t_Entity);
+                Widgets::MeshRenderer(t_Mesh);
             });
     }
 

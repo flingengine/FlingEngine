@@ -1,6 +1,8 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "GpuMesh.h"
+#include "MeshProxyTable.h"
 #include "Subpass.h"
 
 #include <memory>
@@ -11,7 +13,6 @@ namespace Fling
 	class CommandBuffer;
 	class LogicalDevice;
 	class FrameBuffer;	
-	struct MeshRenderer;
 	class Swapchain;
 	class FirstPersonCamera;
 
@@ -38,7 +39,6 @@ namespace Fling
 		OffscreenSubpass(
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
-			Fling::EntityStorage& t_reg,
 			FirstPersonCamera* t_Cam,
 			std::shared_ptr<Fling::Shader> t_Vert,
 			std::shared_ptr<Fling::Shader> t_Frag
@@ -48,7 +48,7 @@ namespace Fling
 
 		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, Fling::EntityStorage& t_reg, float DeltaTime) override final;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, const RenderSnapshot& t_Snapshot, float DeltaTime) override final;
 
 		void PrepareAttachments() override final;
 
@@ -60,39 +60,31 @@ namespace Fling
 			uint32 t_ActiveFrameIndex,
 			uint32 t_CurrentFrameInFlight) override final;
 
-		void CleanUp(Fling::EntityStorage& t_reg) override final;
+		void CleanUp() override final;
 
-		virtual void OnSwapchainResized(Fling::EntityStorage& t_reg) override final;
+		virtual void OnSwapchainResized() override final;
 
 	private:
 
-		void OnMeshRendererAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
-
 		/**
-		* The model or material changed. The descriptor set update must wait for
-		* the next Draw, because the storage calls this before it writes the new value.
+		* Match the proxies to the snapshot: release the resources of meshes that are
+		* gone, and make them for new meshes and meshes whose paths changed.
 		*/
-		void OnMeshRendererReplaced(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
+		void SyncProxies(const RenderSnapshot& t_Snapshot);
 
-		/** Any change to the set of drawn entities. The command buffers must be recorded again. */
-		void OnDrawListChanged(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
-
-		/**
-		* A MeshRenderer is about to be destroyed. Takes its descriptor set and UBO, so that
-		* ReleaseRetiredMeshResources frees them when the GPU no longer uses them.
-		*/
-		void OnMeshRendererDestroyed(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
+		/** Retire the resources of one proxy. ReleaseRetiredMeshResources frees them on the next Draw. */
+		void RetireGpuMesh(GpuMesh& t_Mesh);
 
 		/** Free the descriptor sets and UBOs of destroyed meshes */
 		void ReleaseRetiredMeshResources();
 
-		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
+		void CreateMeshDescriptorSet(GpuMesh& t_Mesh);
 
-		/** Write the UBO of each mesh whose transform changed since its last upload */
-		void UpdateMeshUniformBuffers(Fling::EntityStorage& t_reg);
+		/** Write the UBO of each mesh whose world matrix changed since its last upload */
+		void UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot);
 
-		/** Record the draw calls for every mesh into the given command buffer */
-		void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, Fling::EntityStorage& t_reg);
+		/** Record the draw calls for every drawn proxy into the given command buffer */
+		void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf);
 
 		/** Make each offscreen command buffer record again on its next use */
 		inline void InvalidateCommandBuffers() { ++m_DrawListVersion; }
@@ -124,13 +116,19 @@ namespace Fling
 		/** The m_DrawListVersion that each offscreen command buffer holds. 0 means not recorded. */
 		std::vector<uint64> m_RecordedDrawListVersions;
 
-		/** Entities with a replaced MeshRenderer. Their descriptor sets update on the next Draw. */
-		std::vector<Fling::Entity> m_ReplacedMeshes;
+		/** One proxy for each mesh in the snapshot */
+		MeshProxyTable m_Proxies;
+
+		/** The GPU side of each proxy, indexed by slot */
+		std::vector<GpuMesh> m_GpuMeshes;
+
+		/** The proxy slot of each snapshot mesh, from the last SyncProxies */
+		std::vector<uint32> m_ItemSlots;
 
 		/**
-		* Descriptor sets of destroyed meshes. A destroy can happen while a frame records
-		* (editor UI), so they are freed at the start of the next Draw. The previous frame
-		* has finished on the GPU then, and every command buffer records again.
+		* Descriptor sets of meshes that are gone. They are freed at the start of the next
+		* Draw. The previous frame has finished on the GPU then, and every command buffer
+		* records again.
 		*/
 		std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
 

@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: in progress. Phases A to D are done. Each phase heading below says what is left.
+Status: in progress. Phases A to E are done. Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -642,6 +642,14 @@ Done. The scheduler, systems, and tick loop are in [`ecs-systems.md`](ecs-system
 - Add `TransformSystem` (computes the world matrix out of the renderer). `Transform` loses its methods, which move to `TransformUtil`.
 
 ### Phase E — Renderer to proxy components
+
+Done. `Graphics.Extract` writes a `RenderSnapshot` singleton (meshes with their world matrix and `LocalToWorld` version, and the lights), and every render pass reads only the snapshot. `MeshRenderer` holds only the two asset paths, saved as reflected fields. Each pass keeps a `MeshProxyTable` and its own GPU array per slot. A mesh that leaves the snapshot frees its proxy, which fixes the UBO leak on destroy and on level load. The storage hooks, the render tags, and the renderer's writes to the world (the point light gizmo is now a snapshot item in debug builds) are gone. `GraphicsTests` checks that destroying an entity frees its proxy slot. Changes from the text below:
+
+- One snapshot, not a `SnapshotRing`: the renderer runs on the game thread. The ring comes with a render thread.
+- No `OnRemove` hooks: comparing snapshots finds removed meshes, so nothing has to tell the renderer.
+- The editor still draws in the ImGui pass with the storage. Queued edits come with the editor commands in [`ecs-features.md`](ecs-features.md).
+- Mesh and material are path strings, not an `AssetRef<T>` type yet.
+
 - Subpasses become read-only. `Extract` systems handle mesh proxy creation and write the `RenderSnapshot` (transforms filtered by `Changed<Transform>`, light data). The renderer updates its UBOs from the `SnapshotRing`, not from the world.
 - Remove both `on_construct` connections. `OnRemove` hooks release the GPU resources (fixes the leak). The editor moves to queued edits in the `Editor` phase.
 - Add a test that destroys an entity with a `MeshRenderer` and checks that the proxy pool released its slot.

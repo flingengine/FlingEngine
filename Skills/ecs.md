@@ -156,6 +156,21 @@ public:
 - Physics treats a body's `Transform` as its world pose, so a physics body
   must be a root entity.
 
+## Rendering
+
+- The renderer never reads the world. `Graphics.Extract` (a frame system in
+  the `Engine.Extract` phase) copies each `MeshRenderer` with its
+  `LocalToWorld`, and the lights, into the `RenderSnapshot` singleton. The
+  render passes read only that snapshot.
+- `MeshRenderer` is authoring data: the mesh and material asset paths. The
+  GPU side (model, material, UBO, descriptor set) is a proxy that the render
+  pass keeps in a `MeshProxyTable`. A mesh that leaves the snapshot (its
+  entity was destroyed, or lost its `MeshRenderer`) frees its proxy, so no
+  storage hook is needed.
+- A mesh UBO is written only when `LocalToWorld::Version` changes.
+- The editor's ImGui pass is the one exception: it gets the storage, because
+  the editor changes the world.
+
 ## Registration
 
 Each module has one function, `Register<Module>(ModuleRegistration&)`

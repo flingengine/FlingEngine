@@ -3,38 +3,22 @@
 #include "Lighting/PointLight.hpp"
 #include "MeshRenderer.h"
 #include "RegisterGraphics.h"
+#include "RenderSnapshot.h"
+#include "Systems/ExtractSystem.h"
 
-// The Graphics module's register file: every Graphics component type is listed here.
+// The Graphics module's register file: every Graphics component type and system is
+// listed here, and only this file includes the system headers.
 
 namespace Fling
 {
     void RegisterGraphics(ModuleRegistration& t_Modules)
     {
-        // The saved data is the two asset paths. The model and material pointers come
-        // from the resource manager on load.
         t_Modules.Component<MeshRenderer>(
             [](TypeBuilder<MeshRenderer>& t_Type)
             {
                 t_Type.Category("Rendering");
-                t_Type.Serialize(
-                    [](const MeshRenderer& t_Mesh, Json& t_Out)
-                    {
-                        t_Out.Set("mesh", t_Mesh.GetModelGuidString());
-                        t_Out.Set("material", t_Mesh.GetMaterialGuidString());
-                    },
-                    [](MeshRenderer& t_Mesh, const Json& t_In)
-                    {
-                        const std::string MeshPath = t_In.GetString("mesh");
-                        const std::string MaterialPath = t_In.GetString("material");
-                        if (!MeshPath.empty())
-                        {
-                            t_Mesh.LoadModelFromPath(MeshPath);
-                        }
-                        if (!MaterialPath.empty())
-                        {
-                            t_Mesh.LoadMaterialFromPath(MaterialPath);
-                        }
-                    });
+                t_Type.Field("mesh", &MeshRenderer::Mesh).Tooltip("A model, relative to the assets folder");
+                t_Type.Field("material", &MeshRenderer::Material).Tooltip("Empty uses the default material");
             });
 
         t_Modules.Component<DirectionalLight>(
@@ -56,7 +40,8 @@ namespace Fling
                 t_Type.Field("intensity", &PointLight::Intensity).Range(0.0f, 1000.0f);
             });
 
-        t_Modules.Component<DeferredRenderTag>();
-        t_Modules.Component<DebugRenderTag>();
+        t_Modules.Component<RenderSnapshot>();
+
+        t_Modules.System<ExtractSystem>();
     }
 } // namespace Fling

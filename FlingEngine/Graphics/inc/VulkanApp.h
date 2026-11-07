@@ -46,8 +46,14 @@ namespace Fling
          */
         struct State;
 
+        /**
+         * Make the window, the device, and the render pipelines. t_Reg is the world that
+         * the editor UI (IDebugUI) changes. The render passes never read it.
+         */
         void Init(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
-        void Shutdown(Fling::EntityStorage& t_Reg);
+
+        /** Wait for the GPU, then free the render pipelines, the device, and the window. */
+        void ShutdownRenderer();
 
         /**
          * Specify default constructible so that we have more explicit
@@ -57,9 +63,9 @@ namespace Fling
         ~VulkanApp();
 
         /**
-         * Updates all rendering buffers and sends commands to draw a frame
+         * Draw a frame from the RenderSnapshot in t_Reg (Graphics.Extract writes it).
          */
-        void Update(float DeltaTime, Fling::EntityStorage& t_Reg);
+        void Update(float DeltaTime, const Fling::EntityStorage& t_Reg);
 
         inline FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
         inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
@@ -104,7 +110,7 @@ namespace Fling
          */
         void CreateGameWindow(const uint32 t_width, const uint32 t_height);
 
-        void RecreateFrameResourcesForResize(Fling::EntityStorage& t_Reg);
+        void RecreateFrameResourcesForResize();
 
         /** Builds any render pipelines with their specific set of sub passes and shaders */
         void

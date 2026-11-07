@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
 #include "FlingMath.h"
 #include "Subpass.h"
 
@@ -29,19 +30,21 @@ namespace Fling
 
 		virtual ~ImGuiSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime) override;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) override;
+		void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 
 		void PrepareAttachments() override;
 
 		void CreateGraphicsPipeline() override;
 
-		void CleanUp(Fling::EntityStorage& t_reg) override;
+		void CleanUp() override;
 
-		void OnSwapchainResized(Fling::EntityStorage& t_reg) override;
+		void OnSwapchainResized() override;
 
 	private:
+		/** The world storage that the editor UI reads and changes. The render passes never see it. */
+		Fling::EntityStorage* m_EditorStorage = nullptr;
 
 		void PrepImGuiStyleSettings();
 

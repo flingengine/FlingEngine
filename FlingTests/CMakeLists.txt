@@ -8,7 +8,8 @@ include(Catch)
 
 # One Catch2 executable per module that owns tests. Each links Catch2 and only
 # that module; public dependencies come along transitively. An empty folder
-# adds no target, so a module with no real tests (Graphics, Editor) stays out.
+# adds no target, so a module with no real tests (Editor) stays out. Graphics
+# tests use no GPU: they test the CPU side of the renderer.
 # Extra libraries after MODULE are linked too (for example the physics provider).
 function( fling_add_module_tests MODULE )
 	file( GLOB _sources CONFIGURE_DEPENDS
@@ -54,6 +55,7 @@ endfunction()
 fling_add_module_tests( Core )
 fling_add_module_tests( Resources )
 fling_add_module_tests( Engine )
+fling_add_module_tests( Graphics )
 fling_add_module_tests( Physics Fling::DefaultPhysicsProvider )
 fling_add_module_tests( Application )
 

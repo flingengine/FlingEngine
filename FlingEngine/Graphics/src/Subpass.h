@@ -2,7 +2,7 @@
 
 #include "Shader.h"
 
-#include "Ecs/EntityStorage.h"
+#include "RenderSnapshot.h"
 #include <memory>
 #include <vector>
 
@@ -37,17 +37,21 @@ namespace Fling
 
 		virtual void CreateGraphicsPipeline() = 0;
 
-		virtual void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) = 0;
+		/**
+		 * Record this pass for one frame. A pass reads only the snapshot, never the
+		 * world, so the world can change while the frame is drawn.
+		 */
+		virtual void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime) = 0;
 
-		/** Cleanup any allocated resources that you may need a registry for */
-		virtual void CleanUp(Fling::EntityStorage& t_reg) {}
+		/** Free the resources this pass made. Called after the device is idle. */
+		virtual void CleanUp() {}
 
 		/**
-		* Given the frame buffers and the registry, create any descriptor sets that we may need
+		* Given the frame buffers, create any descriptor sets that we may need
 		*			Assumes that the frame buffer has been prepared with it's attachments already.
 		* @param t_FrameBuffer	The swap chain frame buffer
 		*/		
-		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) {};
+		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool) {};
 		
 		/**
 		 * If a subpass has a command buffer that the final swap chain presentation is dependent on,
@@ -62,7 +66,7 @@ namespace Fling
 		virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex) {}
 
 		/** Function that is called when the swap chain is resized. Put any logic that may depend on Swapchain extents */
-		virtual void OnSwapchainResized(Fling::EntityStorage& t_reg) {}
+		virtual void OnSwapchainResized() {}
 
 		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
 		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }
