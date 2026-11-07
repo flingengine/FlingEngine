@@ -1,16 +1,16 @@
 # Tutorial: your own components and systems
 
 This guide shows how to add gameplay to Fling with the ECS (entity component
-system). You make two components and two systems, register them, test them, and
-then connect them to the engine's own components: time, input, transforms,
+system). You make two components and two systems, register them, and test them.
+Then you connect them to the components of the engine: time, input, transforms,
 rendering, and physics.
 
 The example is real code. It is in
-[`FlingTests/Engine/EcsTutorialTests.cpp`](../FlingTests/Engine/EcsTutorialTests.cpp),
-and it builds and runs with the other tests. If this page and that file do not
-agree, the file is correct.
+[`FlingTests/Engine/EcsTutorialTests.cpp`](../FlingTests/Engine/EcsTutorialTests.cpp).
+It builds and runs with the other tests. If this page and that file are
+different, the file is correct.
 
-For the full list of rules and options, see [`Skills/ecs.md`](../Skills/ecs.md).
+For the full list of rules and options, read [`Skills/ecs.md`](../Skills/ecs.md).
 
 ## The idea
 
@@ -19,14 +19,13 @@ For the full list of rules and options, see [`Skills/ecs.md`](../Skills/ecs.md).
   no functions.
 - A **system** is a function that runs on every tick. It reads and writes the
   components of all entities that have them. It has no member variables.
-- Each system says which components it reads and writes (its **access list**).
-  The engine uses those lists to put the systems in order. A writer of a
-  component runs before its readers, so you seldom give an order yourself.
-  The compiler also stops a system from touching a component that is not in
-  its list.
+- Each system lists the components that it reads and writes (its **access
+  list**). The engine uses those lists to put the systems in order. A writer of
+  a component runs before its readers, so you seldom give an order yourself.
+  The compiler stops a system from using a component that is not in its list.
 
-The example: poisoned entities lose health. `PoisonSystem` asks for damage.
-`DamageSystem` is the only place where health goes down. It applies the damage
+In the example, poisoned entities lose health. `PoisonSystem` asks for damage.
+`DamageSystem` is the only place where health decreases. It applies the damage
 and destroys entities that reach 0.
 
 ## Step 1: the components
@@ -54,11 +53,16 @@ struct Poison
 ```
 
 The `Component` line makes a struct a component. `.Name` is the name that level
-files use, so do not change it after you ship. Use a prefix (`MyGame.Health`)
-so that the name is unique. Also, a component struct must not have the same
-name as any class in `namespace Fling`.
+files use. It must end with the struct's name: `"Health"` or, with a prefix that
+keeps it apart from other modules, `"MyGame.Health"`. The compiler checks this.
+If two different structs have the same saved name, the world does not start
+and tells you which two they are.
 
-There are four kinds of component. Set `.Kind` to choose one:
+To rename a component after levels use it, change the struct and `.Name`
+together, and give the old name to `FormerNames` when you register it (Step 3).
+Old levels then still load, and the next save writes the new name.
+
+There are four kinds of component. To choose one, set `.Kind`:
 
 | Kind | What it is | Example |
 |---|---|---|
@@ -103,17 +107,17 @@ struct DamageStats
 };
 ```
 
-`.Transient = true` means "never saved". Use it for runtime state such as queues
-and counters.
+`.Transient = true` means that the engine never saves the component. Use it for
+runtime state, such as queues and counters.
 
-Use Fling types in components: `uint32` and `int64`, not `uint32_t`; `String`
-for text and `Name` for identifiers; `Fling::Entity` for a reference to another
-entity. See [`Skills/strings.md`](../Skills/strings.md).
+Use Fling types in components: `uint32` and `int64`, not `uint32_t`. Use `String`
+for text and `Name` for identifiers. Use `Fling::Entity` for a reference to
+another entity. Read [`Skills/strings.md`](../Skills/strings.md).
 
 ## Step 2: the systems
 
 Each system is a header in `inc/Systems/<Name>System.h` and a body in
-`src/Systems/<Name>System.cpp`. (The tutorial file puts them in one place to keep
+`src/Systems/<Name>System.cpp`. (The tutorial file puts them in one place, to keep
 the example short.)
 
 ### A system that reads and appends
@@ -148,18 +152,18 @@ What each part does:
 - `Fling::System<PoisonSystem, Fling::Access<...>>` is the base class. The
   first argument is the system itself.
 - The access list:
-  - `Read<T>` lets you read `T`. Ask for `const T`.
+  - `Read<T>` lets you read `T`. Use `const T` in the query.
   - `Write<T>` lets you read and change `T`.
-  - `Append<Q>` lets you push to queue `Q`. Many systems can append to the same queue.
+  - `Append<Q>` lets you push to queue `Q`. Many systems can append to one queue.
   - `Consume<Q>` lets you drain queue `Q`. Only one system can consume a queue.
   - `Spawns` lets you create entities.
-- `Info` gives the system a unique name and a **phase** (when in the tick it
-  runs). Gameplay goes in `Fling::Phases::Simulation`.
-- `FixedUpdate` runs once per fixed tick (60 per second by default), so the
-  same input always gives the same result. Use `SimTime::FixedDelta` for time,
-  not a clock.
-- `ctx.Query<const Poison>()` gives every entity that has a `Poison`. Add more
-  types to get entities that have all of them:
+- `Info` gives the system a unique name and a **phase** (the part of the tick
+  where it runs). Put gameplay in `Fling::Phases::Simulation`.
+- `FixedUpdate` runs one time in each fixed tick (60 each second by default).
+  The same input always gives the same result. Use `SimTime::FixedDelta` for
+  time. Do not use a clock.
+- `ctx.Query<const Poison>()` gives every entity that has a `Poison`. To get
+  entities that have more types, add the types:
   `ctx.Query<Transform, const Velocity>()`. Filters select entities by
   components that you do not need to read:
   `ctx.Query<const Health>(Fling::With<Poison>{})` or
@@ -181,7 +185,7 @@ public:
     void FixedUpdate(Context& ctx) const;
 };
 
-// The consumer of a queue makes it, and the owner of a singleton makes it
+// The consumer of a queue makes the queue. The owner of a singleton makes the singleton.
 void DamageSystem::OnCreate(Setup& setup) const
 {
     setup.AddSingleton<DamageRequests>();
@@ -205,7 +209,7 @@ void DamageSystem::FixedUpdate(Context& ctx) const
     DamageStats& stats = ctx.Singleton<DamageStats>();
     for (const DamageRequest& request : ctx.Drain<DamageRequests>())
     {
-        // A request can point at an entity that is gone, so follow it with TryGet
+        // A request can point at an entity that is gone, so use TryGet
         Health* health = ctx.TryGet<Health>(request.Target);
         if (health == nullptr || health->Current <= 0.0f || ctx.Has<Invulnerable>(request.Target))
         {
@@ -215,51 +219,52 @@ void DamageSystem::FixedUpdate(Context& ctx) const
         health->Current -= request.Amount;
         if (health->Current <= 0.0f)
         {
-            ctx.Commands().Destroy(request.Target); // Destroy waits until the end of the tick
+            ctx.Commands().Destroy(request.Target); // Destroy waits for the end of the tick
             ++stats.Kills;
         }
     }
 }
 ```
 
-- **The state of a system goes in a singleton component.** A system cannot
-  have member variables (this does not compile). The system that writes a
+- **Put the state of a system in a singleton component.** A system cannot
+  have member variables (it does not compile). The system that writes a
   singleton makes it in `OnCreate` and removes it in `OnDestroy`.
-- **`OnPlayBegin`** runs when play starts (also when you press Play in the
-  editor). Reset per-play state there.
-- **`ctx.Drain<Q>()`** gives each request in the queue once, and then empties it.
+- **`OnPlayBegin`** runs when play starts (also when you push Play in the
+  editor). Reset the state of each play there.
+- **`ctx.Drain<Q>()`** gives each request in the queue one time. Then it empties
+  the queue.
 - **`ctx.TryGet<T>(entity)`** gives a pointer, or null if the entity is gone or
   does not have `T`. `ctx.Get<T>(entity)` is the same, but the entity must have
-  `T`. `ctx.Has<T>(entity)` checks for a component without reading it. This is
-  the only way to check a tag.
+  `T`. `ctx.Has<T>(entity)` checks for a component and does not read it. This is
+  the only way to check for a tag.
 - **Destroy is deferred.** `ctx.Commands().Destroy(e)` removes the entity
-  (and its children) at the end of the tick, so it does not change a query
-  while the query runs. `ctx.Add(e, value)` and `ctx.Remove<T>(e)` are deferred
-  in the same way.
+  (and its children) at the end of the tick. This does not change a query while
+  the query runs. `ctx.Add(e, value)` and `ctx.Remove<T>(e)` are also deferred.
 - **Spawn is immediate.** With `Spawns` in the access list,
-  `ctx.Spawn(Health{}, Poison{})` gives a new entity at once.
+  `ctx.Spawn(Health{}, Poison{})` makes a new entity at once.
 
-You do not need to say that `PoisonSystem` runs before `DamageSystem`. Every
+You do not need to set the order of `PoisonSystem` and `DamageSystem`. Every
 system that appends to a queue runs before the system that consumes it. If
-two systems write the same component and nothing orders them, the schedule
-reports an error and tells you to add `.After = "OtherSystem"` or
+two systems write the same component and nothing sets their order, the schedule
+has an error. The error tells you to add `.After = "OtherSystem"` or
 `.Before = "OtherSystem"` to `Info`.
 
 ### Frame systems
 
 `FixedUpdate` is for simulation. For work at the display rate (camera
-smoothing, UI, interpolation), put the system in a frame phase such as
-`Fling::Phases::PostSimulation` and write `Update(Context&)` in place of
-`FixedUpdate`. A frame system can read simulation components but cannot change
-them. It writes components with `.Domain = Fling::ComponentDomain::Presentation`.
-For the frame time, read `Fling::RealFrameTime`.
+smoothing, UI, interpolation), put the system in a frame phase, such as
+`Fling::Phases::PostSimulation`. Write `Update(Context&)` instead of
+`FixedUpdate`. A frame system can read simulation components, but it cannot
+change them. It writes components that have
+`.Domain = Fling::ComponentDomain::Presentation`. To get the frame time, read
+`Fling::RealFrameTime`.
 
 ## Step 3: register them
 
-Each game has one register function. The Sandbox's is
+Each game has one register function. The register function of the Sandbox is
 [`Sandbox/Gameplay/src/RegisterSandbox.cpp`](../Sandbox/Gameplay/src/RegisterSandbox.cpp)
-(`Game::Register`). An engine module has `Register<Module>`. This is the only
-file that includes the system headers.
+(`Game::Register`). An engine module has `Register<Module>`. Only this
+file includes the system headers.
 
 ```cpp
 void Game::Register(Fling::ModuleRegistration& t_Modules)
@@ -281,25 +286,35 @@ void Game::Register(Fling::ModuleRegistration& t_Modules)
 }
 ```
 
-Each `Field` line lists a field once. Level save and load, the editor
-inspector, and the editor's play snapshot all use that list. The first argument
-is the name of the field in the level file. `Range` and `Tooltip` are for the
-editor. A component with no saved fields (a tag, a queue, a transient
-singleton) is registered with no builder.
+Each `Field` line lists one field. Level save and load, the editor
+inspector, and the play snapshot of the editor all use that list. The first
+argument is the name of the field in the level file. `Range` and `Tooltip` are
+for the editor. If a component has no saved fields (a tag, a queue, a transient
+singleton), register it with no builder.
 
-Now a level file can hold the component:
+Now a level file can have the component:
 
 ```json
 { "Tutorial.Health": { "current": 40.0, "max": 80.0 } }
 ```
 
-To change a saved component later without breaking old levels, use
-`FormerNames`, `Removed`, and `Version` with `Upgrade`. See "Changing a saved
+To rename `Health` to `Vitality` later, rename the struct, set
+`.Name = "Tutorial.Vitality"`, and register the old name:
+
+```cpp
+t_Modules.Component<Vitality>([](Fling::TypeBuilder<Vitality>& t_Type) {
+    t_Type.FormerNames({"Tutorial.Health"}); // Old levels still load
+    // ...the same Field lines
+});
+```
+
+To change a saved component later and keep old levels working, use
+`FormerNames`, `Removed`, and `Version` with `Upgrade`. Read "Changing a saved
 component" in [`Skills/ecs.md`](../Skills/ecs.md#a-component).
 
 ## Step 4: test it
 
-A system is a function of its components, so a test needs no window and no
+A system is a function of its components, so a test does not need a window or a
 GPU. Make an `EntityStorage`, register the module, build the schedule, and run
 ticks:
 
@@ -331,15 +346,15 @@ TEST_CASE("Tutorial: an entity at 0 health is destroyed and counted", "[ecs][tut
 }
 ```
 
-Put the test in `FlingTests/<Module>/` (see [`Skills/testing.md`](../Skills/testing.md)).
-To test the full game, run it headless with recorded input:
-`Sandbox --null-render --unattended --frames 120 --replay-input <file>` (see
+Put the test in `FlingTests/<Module>/` (read [`Skills/testing.md`](../Skills/testing.md)).
+To test the full game, run it with no window and with recorded input:
+`Sandbox --null-render --unattended --frames 120 --replay-input <file>` (read
 [`Skills/input-playback.md`](../Skills/input-playback.md)).
 
 ## Using the engine's components and systems
 
-Your systems use engine data in the same way as their own: add the
-component to the access list, then query it or read the singleton.
+Your systems use engine data in the same way as their own data. Add the
+component to the access list. Then query it or read the singleton.
 
 ### Time
 
@@ -348,13 +363,13 @@ component to the access list, then query it or read the singleton.
 | `Fling::SimTime` | Singleton | `FixedDelta` (seconds per tick), `Tick`, `Elapsed`. `Read` only. |
 | `Fling::RealFrameTime` | Singleton | Frame systems only: the real time of this frame. |
 
-Do not call `Timing` or the global `Random` from a fixed system. A debug build
-asserts if you do, because it breaks replays and rollback.
+Do not call `Timing` or the global `Random` from a fixed system. They break
+replays and rollback. A debug build asserts if you call them.
 
 ### Input
 
-`Fling::InputState` (singleton, from `Components/InputState.h`) is this tick's
-input. `Engine.Input` writes it before gameplay runs.
+`Fling::InputState` (singleton, from `Components/InputState.h`) is the input of this tick.
+`Engine.Input` writes it before gameplay runs.
 
 ```cpp
 // Access<Fling::Read<Fling::InputState>, ...>
@@ -364,7 +379,7 @@ if (input.IsHeld(Fling::Keys::Left)) { /* every tick while it is down */ }
 const float stick = input.GetAxisValue(Fling::Keys::GamepadLeftX);
 ```
 
-A key that is pressed and released in one tick is seen only by `WasPressed`.
+If a key goes down and up in one tick, only `WasPressed` sees it.
 Example: [`BallControlSystem.cpp`](../Sandbox/Gameplay/src/Systems/BallControlSystem.cpp).
 
 ### Position, rotation, and parents
@@ -382,9 +397,9 @@ math, because `Transform` has no functions. Example:
 ### Rendering
 
 Put a `Fling::MeshRenderer` (mesh and material asset paths) and a `Transform` on
-an entity, and it draws. Lights are `Fling::PointLight` and
+an entity. The engine then draws the entity. Lights are `Fling::PointLight` and
 `Fling::DirectionalLight`. The renderer never reads the world: `Graphics.Extract`
-copies what it needs each frame, so your systems do not touch the GPU.
+copies the data that it needs in each frame. Your systems do not touch the GPU.
 
 ```cpp
 // Access<..., Fling::Write<Fling::MeshRenderer>, Fling::Write<Fling::Transform>, Fling::Spawns>
@@ -398,8 +413,8 @@ Example: [`TestSpawnSystem.cpp`](../Sandbox/Gameplay/src/Systems/TestSpawnSystem
 ### Physics
 
 Give an entity a `Transform`, a `Fling::RigidBody` (mass 0 is static), and a
-`Fling::Collider`, and physics moves it. Physics bodies must be root entities
-(no `Parent`).
+`Fling::Collider`. Physics then moves the entity. Physics bodies must be root
+entities (no `Parent`).
 
 - **To push a body**, append to the `Fling::PhysicsCommands` queue.
   `Physics.Step` consumes it, so your system runs before the step
@@ -411,14 +426,14 @@ Give an entity a `Transform`, a `Fling::RigidBody` (mass 0 is static), and a
       Fling::PhysicsCommand{entity, Fling::PhysicsCommandType::Impulse, glm::vec3(0.0f, 5.0f, 0.0f)});
   ```
 
-- **To react to hits**, read the `Fling::ContactEvents` singleton. It holds the
+- **To react to hits**, read the `Fling::ContactEvents` singleton. It has the
   contacts of the last step. Example:
   [`FirstHitSystem.cpp`](../Sandbox/Gameplay/src/Systems/FirstHitSystem.cpp).
 
 ### Asking the application for something
 
-Gameplay cannot close the window. It appends a request to `Fling::AppRequests`,
-and the application does it after the tick:
+Gameplay cannot close the window. It appends a request to `Fling::AppRequests`.
+The application does the request after the tick:
 
 ```cpp
 // Access<..., Fling::Append<Fling::AppRequests>>
@@ -429,8 +444,8 @@ Example: [`AppKeysSystem.cpp`](../Sandbox/Gameplay/src/Systems/AppKeysSystem.cpp
 
 ### Phases
 
-The engine's phases run in this order. Put your system in one, and use
-`.After` / `.Before` with system names to order it inside the phase.
+The phases of the engine run in this order. Put your system in one phase. To set
+its order inside the phase, use `.After` and `.Before` with system names.
 
 | Rate | Phase | What runs |
 |---|---|---|
@@ -460,7 +475,9 @@ The access checks are `static_assert`s. The message tells you what to change:
 | "A frame rate system cannot write a Simulation component" | Write a `Presentation` component, or move the system to a fixed phase |
 | "Only a writer of a singleton makes it" | `AddSingleton<T>` needs `Write<T>` |
 | "is not a Fling::Component" | Add the `static constexpr Fling::ComponentInfo Component{...}` line |
+| "saved .Name must end with its C++ type name" | Make `.Name` end with the struct name. If you renamed the struct, add the old `.Name` to `FormerNames` |
 
-If the schedule has an error (two writers with no order, a cycle), the build
-fails when it links Sandbox and prints the report. `--dump-schedule` shows it
-too.
+If the schedule has an error (two writers with no order, a cycle), or two
+component types have names that a level cannot tell apart, the build fails
+when it links Sandbox and prints the report. `--dump-schedule` also shows
+the error.

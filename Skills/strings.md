@@ -28,22 +28,22 @@ All text is UTF-8 in `char`. There is no other character type in engine code.
 - A process-wide table from hash to text makes names readable. `ToView()` gives
   the text, and `fmt` logs a `Name` as its text. Literal names are in the table
   before `main`. A `Name` made from runtime text adds its text.
-- Two different texts with the same hash are an error: builds without
-  `FLING_SHIPPING` stop.
+- If two different texts have the same hash, builds without `FLING_SHIPPING`
+  stop with an error.
 - `Name::WithoutText(Text)` makes the `Name` without adding the text. Use it to
   look up text that may not be a name (user input, a key from a file), so that
   text that is not found does not stay in the table.
-- Names are case-sensitive and compare the exact bytes. `operator<` orders by
-  hash: the same on every machine, but not alphabetical. To sort for display,
-  compare `ToView()`.
+- Names are case-sensitive. They compare the exact bytes. `operator<` orders by
+  hash. The order is the same on every machine, but it is not alphabetical. To
+  sort for display, compare `ToView()`.
 - JSON stores a `Name` as its text (`JsonArchive` does this), so files stay
   readable and give the same hash when they are loaded.
 - Do not:
   - Show a `Name` to the player. Use `DisplayText`.
   - Use a `Name` as the identity of an object. Use `Entity` or `EntityGuid`.
     `NameComponent` is a label.
-  - Make a `Name` from text that has no limit (chat, player names). The table
-    keeps every text until the process exits.
+  - Make a `Name` from text that has no size limit (chat, player names). The
+    table keeps every text until the process ends.
   - Make a `Name` from runtime text in a tick, or on each key press in the
     editor. Make it when the edit ends (see `EntityEditorPanel`).
 
@@ -61,7 +61,7 @@ All text is UTF-8 in `char`. There is no other character type in engine code.
   than the call. Never return a `StringView` to a temporary.
 - `const char*` only at a C API call (Win32, GLFW, Vulkan, ImGui ids and labels,
   `argv`) and in `constexpr` tables of literals.
-- When a body needs a terminating null, make a `String` from the view at that
+- If the function needs a terminating null, make a `String` from the view at that
   call.
 - **Files:** open with `PathFromUtf8(Path)` and read paths back with
   `PathToUtf8`. On Windows, a path made from a `std::string` reads the ANSI code
@@ -81,7 +81,7 @@ All text is UTF-8 in `char`. There is no other character type in engine code.
   segments, `..` resolved, case kept. `./Materials\Default.mat` and
   `Materials/Default.mat` are the same asset.
 - `AssetId` is an opaque wrapper around the `Name` of the canonical path. Only
-  `AssetPath` makes one. Do not compute it another way: it may later become an id
+  `AssetPath` makes one. Do not compute it another way. It can change later to an id
   that the tools assign.
 - `Create` functions of resources take an `AssetPath`. `ResourceManager` keys on
   `AssetId` and loads each asset once.
@@ -107,8 +107,8 @@ DisplayText Left = DisplayText::Format(DisplayText::FromTable("UI"_name, "Hud.En
 
 - `DisplayText` has no conversion from `String` or a literal, and no
   `operator==`. Compare the `Name` keys.
-- It keeps its source and resolves on each `Resolve()`, so text changes when the
-  language changes. `Localization::GetRevision()` changes with each change, for
+- It keeps its source and resolves it on each `Resolve()`. The text changes when
+  the language changes. `Localization::GetRevision()` changes with each change, for
   UI that keeps resolved text.
 - `AsNumber` and `AsDate` format in the current language: 12345 is "12,345" in
   English and "12.345" in German.
@@ -116,17 +116,19 @@ DisplayText Left = DisplayText::Format(DisplayText::FromTable("UI"_name, "Hud.En
 ### Patterns
 
 - `{Key}` is replaced by the argument with that key. `{{` and `}}` give `{` and
-  `}`. Text that is not a known argument or form is kept as it is.
+  `}`. The engine does not change text that is not a known argument or form.
 - Plural forms (ICU MessageFormat style):
   `{Count, plural, =0 {No enemies} one {# enemy left} other {# enemies left}}`.
-  - An `=N` case is used first, then the case of the number's plural category in
-    the current language (`zero`, `one`, `two`, `few`, `many`, `other`; see
-    `GetPluralCategory`), then `other`.
+  - The engine uses an `=N` case first. If there is none, it uses the case for
+    the plural category of the number in the current language (`zero`, `one`,
+    `two`, `few`, `many`, `other`; see `GetPluralCategory`). If there is none, it
+    uses `other`.
   - `#` is the number, formatted in the current language.
   - Each translation lists the categories of its own language: Russian uses
     `one`, `few`, `many`; Arabic uses all six; Japanese only `other`.
 - Select forms: `{Gender, select, female {She won} male {He won} other {They won}}`.
-  The case that matches the argument's text is used, then `other`.
+  The engine uses the case that matches the text of the argument. If there is
+  none, it uses `other`.
 - Forms can be nested.
 
 ### String tables
@@ -143,7 +145,7 @@ DisplayText Left = DisplayText::Format(DisplayText::FromTable("UI"_name, "Hud.En
   `DecimalSeparator`, `GroupSeparator`, `MinimumGroupingDigits`, and
   `DatePattern`. Anything it does not set comes from
   `DefaultDisplayLanguageFor(code)`.
-- Core does not depend on Resources: `Localization::SetActive` sets a table
+- Core does not depend on Resources. `Localization::SetActive` sets a table
   resolver and the current `DisplayLanguage` in Core.
 
 ### Tools
@@ -166,23 +168,24 @@ All of these run with no window, do their work, and exit.
 - In a right-to-left language, `Format` puts each argument between U+2068 and
   U+2069 (direction isolates), so a left-to-right name or number does not
   reorder the sentence. No marks are added in left-to-right languages.
-- Reordering for display (the Unicode bidirectional algorithm) and Arabic
-  shaping are the job of a text renderer, which the engine does not have yet.
+- A text renderer does the reordering for display (the Unicode bidirectional
+  algorithm) and the Arabic shaping. The engine does not have a text renderer
+  yet.
   The developer UI (ImGui) shows right-to-left text in the wrong order.
 
 ## Logging
 
 - Format strings are plain UTF-8 literals with fmt `{}` placeholders. `Name`,
   `AssetId`, `AssetPath`, and `DisplayText` log as their text.
-- Each `F_LOG_*` macro is one statement, so it is safe in an `if` with no
+- Each `F_LOG_*` macro is one statement. You can use it in an `if` with no
   braces.
 - On Windows the console uses the UTF-8 code page, so text that is not ASCII
   shows correctly.
 
 ## Rules for simulation code
 
-These hold in code that runs during a tick, and most of all in code that runs
-again in a rollback resimulation.
+These rules apply to code that runs during a tick. They apply most to code that
+runs again in a rollback resimulation.
 
 - Identifiers in state are `Name`. A `Name` is stable, so snapshots, checksums,
   and saves hold it as it is.
