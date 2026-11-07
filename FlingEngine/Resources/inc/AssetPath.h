@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlingIntegers.h"
 #include "spdlog/fmt/fmt.h"
 #include "Strings/Name.h"
 #include "Strings/String.h"
@@ -30,10 +31,10 @@ namespace Fling
         constexpr bool IsNone() const { return m_Name.IsNone(); }
 
         /** The value to write to binary data, and to read back with FromValue. */
-        constexpr std::uint64_t GetValue() const { return m_Name.GetHash(); }
+        constexpr uint64 GetValue() const { return m_Name.GetHash(); }
 
         /** The AssetId of a value read from binary data. */
-        static constexpr AssetId FromValue(const std::uint64_t t_Value) { return AssetId(Name::FromHash(t_Value)); }
+        static constexpr AssetId FromValue(const uint64 t_Value) { return AssetId(Name::FromHash(t_Value)); }
 
         /** The asset path for logs: the text if it is known, otherwise "#<hash>". */
         String ToString() const { return m_Name.ToString(); }

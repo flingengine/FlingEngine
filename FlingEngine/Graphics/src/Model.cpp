@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Model.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -22,7 +23,7 @@ namespace Fling
 		float x = 0.0f;
 		float y = 0.0f;
 
-		//for (uint32_t i = 0; i < 3; i++)
+		//for (uint32 i = 0; i < 3; i++)
 		{
 			Vertex v0 = {};
 			v0.Pos = {x+1.0f, y+1.0f, 0.0f};

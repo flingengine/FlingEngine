@@ -1,4 +1,5 @@
 #include "FlingConfig.h"
+#include "FlingIntegers.h"
 #include "Instance.h"
 #include "Logger.h"
 #include "Utils/VkStringHelpers.h"
@@ -51,7 +52,7 @@ namespace Fling
         // Because we are using GLFW as an extension interface for window creation
         // Vulkan needs to know how many extensions are available
         std::vector<const char*> extensions = GetRequiredExtensions();
-        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        createInfo.enabledExtensionCount = static_cast<uint32>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
 
         // Determine global validation layer count
@@ -75,7 +76,7 @@ namespace Fling
         VulkanLoader::LoadInstance(m_Instance);
 
         // Find out what extensions are available
-        uint32_t extensionCount = 0;
+        uint32 extensionCount = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
         std::vector<VkExtensionProperties> vk_extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, vk_extensions.data());
@@ -268,7 +269,7 @@ namespace Fling
             int32 Score = 0;
 
             // Get the extension support of this device
-            uint32_t ExtensionPropertyCount;
+            uint32 ExtensionPropertyCount;
             vkEnumerateDeviceExtensionProperties(t_Device, nullptr, &ExtensionPropertyCount, nullptr);
             std::vector<VkExtensionProperties> ExtensionProperties(ExtensionPropertyCount);
             vkEnumerateDeviceExtensionProperties(

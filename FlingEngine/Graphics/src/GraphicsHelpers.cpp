@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "GraphicsHelpers.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
@@ -627,7 +628,7 @@ namespace Fling
             return mappedMemoryRange;
         }
 
-        VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags, uint32_t binding, uint32_t descriptorCount)
+        VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags, uint32 binding, uint32 descriptorCount)
         {
             VkDescriptorSetLayoutBinding setLayoutBinding{};
             setLayoutBinding.descriptorType = type;
@@ -637,7 +638,7 @@ namespace Fling
             return setLayoutBinding;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet dstSet, VkDescriptorType type, uint32_t binding, VkDescriptorBufferInfo* bufferInfo, uint32_t descriptorCount)
+        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet dstSet, VkDescriptorType type, uint32 binding, VkDescriptorBufferInfo* bufferInfo, uint32 descriptorCount)
         {
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -649,7 +650,7 @@ namespace Fling
             return writeDescriptorSet;
         }
 
-        VkRect2D Rect2D(int32_t width, int32_t height, int32_t offsetX, int32_t offsetY)
+        VkRect2D Rect2D(int32 width, int32 height, int32 offsetX, int32 offsetY)
         {
             VkRect2D rect2D = {};
             rect2D.extent.width = width;
@@ -680,7 +681,7 @@ namespace Fling
         {
             VkDescriptorPoolCreateInfo descriptorPoolInfo{};
             descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            descriptorPoolInfo.poolSizeCount = static_cast<uint32_t>(t_poolSizes.size());
+            descriptorPoolInfo.poolSizeCount = static_cast<uint32>(t_poolSizes.size());
             descriptorPoolInfo.pPoolSizes = t_poolSizes.data();
             descriptorPoolInfo.maxSets = t_maxSets;
             return descriptorPoolInfo;
@@ -711,7 +712,7 @@ namespace Fling
             VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
             descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             descriptorSetLayoutCreateInfo.pBindings = t_bindings.data();
-            descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(t_bindings.size());
+            descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32>(t_bindings.size());
             return descriptorSetLayoutCreateInfo;
         }
 
@@ -906,7 +907,7 @@ namespace Fling
             VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = {};
             pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             pipelineDynamicStateCreateInfo.pDynamicStates = t_pDynamicStates.data();
-            pipelineDynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(t_pDynamicStates.size());
+            pipelineDynamicStateCreateInfo.dynamicStateCount = static_cast<uint32>(t_pDynamicStates.size());
             pipelineDynamicStateCreateInfo.flags = t_flags;
             return pipelineDynamicStateCreateInfo;
         }

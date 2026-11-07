@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Strings/DisplayText.h"
 #include "Strings/Language.h"
 
@@ -79,19 +80,19 @@ TEST_CASE("Numbers use the separators of the language", "[Strings][Language]")
     const NumberFormat Spanish = DefaultDisplayLanguageFor("es"_name).Numbers;
     const NumberFormat French = DefaultDisplayLanguageFor("fr"_name).Numbers;
 
-    CHECK(FormatNumber(std::int64_t{0}, English) == "0");
-    CHECK(FormatNumber(std::int64_t{999}, English) == "999");
-    CHECK(FormatNumber(std::int64_t{1000}, English) == "1,000");
-    CHECK(FormatNumber(std::int64_t{1234567}, English) == "1,234,567");
-    CHECK(FormatNumber(std::int64_t{-1234567}, English) == "-1,234,567");
-    CHECK(FormatNumber(std::int64_t{1234567}, German) == "1.234.567");
+    CHECK(FormatNumber(int64{0}, English) == "0");
+    CHECK(FormatNumber(int64{999}, English) == "999");
+    CHECK(FormatNumber(int64{1000}, English) == "1,000");
+    CHECK(FormatNumber(int64{1234567}, English) == "1,234,567");
+    CHECK(FormatNumber(int64{-1234567}, English) == "-1,234,567");
+    CHECK(FormatNumber(int64{1234567}, German) == "1.234.567");
 
     // Spanish groups only from five digits
-    CHECK(FormatNumber(std::int64_t{1000}, Spanish) == "1000");
-    CHECK(FormatNumber(std::int64_t{10000}, Spanish) == "10.000");
+    CHECK(FormatNumber(int64{1000}, Spanish) == "1000");
+    CHECK(FormatNumber(int64{10000}, Spanish) == "10.000");
 
     // French uses a narrow no-break space (U+202F)
-    CHECK(FormatNumber(std::int64_t{12345}, French) == "12\xE2\x80\xAF"
+    CHECK(FormatNumber(int64{12345}, French) == "12\xE2\x80\xAF"
                                                        "345");
 
     CHECK(FormatNumber(1234.5, English) == "1,234.5");
@@ -114,7 +115,7 @@ TEST_CASE("Dates use the pattern of the language", "[Strings][Language]")
 
 TEST_CASE("DisplayText numbers and dates follow the current language", "[Strings][Language][DisplayText]")
 {
-    const DisplayText Big = DisplayText::AsNumber(std::int64_t{1234567});
+    const DisplayText Big = DisplayText::AsNumber(int64{1234567});
     const DisplayText Date = DisplayText::AsDate(2026, 11, 6);
     const DisplayText Score = DisplayText::Format(DisplayText::AsInvariant("Score: {Score}"), {{"Score"_name, 1500}});
 

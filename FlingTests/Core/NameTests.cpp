@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Strings/DisplayText.h"
 #include "Strings/Hash.h"
 #include "Strings/Name.h"
@@ -21,7 +22,7 @@ namespace
     struct HashVector
     {
         const char* Text;
-        std::uint64_t Hash;
+        uint64 Hash;
     };
 
     constexpr HashVector Vectors[] = {
@@ -73,7 +74,7 @@ TEST_CASE("HashText matches the xxHash64 reference values", "[Strings][Hash]")
 
 TEST_CASE("HashText gives the same value at compile time and at runtime", "[Strings][Hash]")
 {
-    constexpr std::uint64_t CompileTime = HashText("abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    constexpr uint64 CompileTime = HashText("abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     const String Runtime = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     CHECK(HashText(Runtime) == CompileTime);
 
@@ -84,7 +85,7 @@ TEST_CASE("HashText gives the same value at compile time and at runtime", "[Stri
 
 TEST_CASE("HashText gives no collisions over similar names", "[Strings][Hash]")
 {
-    std::unordered_set<std::uint64_t> Seen;
+    std::unordered_set<uint64> Seen;
     char Buffer[32] = {};
     for (int Index = 0; Index < 200000; ++Index)
     {
@@ -134,7 +135,7 @@ TEST_CASE("Names compare by hash, the same as text made at runtime", "[Strings][
     CHECK(std::hash<Name>{}("Jump"_name) == static_cast<std::size_t>(HashText("Jump")));
 
     const std::set<Name> Ordered = {"b"_name, "a"_name, "c"_name};
-    std::uint64_t Previous = 0;
+    uint64 Previous = 0;
     for (const Name Each : Ordered)
     {
         CHECK(Each.GetHash() > Previous);
@@ -157,7 +158,7 @@ TEST_CASE("The name table reports a collision and keeps the first text", "[Strin
 {
     // Two different texts cannot be made to collide on purpose, so this uses a hash
     // that is not the real hash of either text.
-    const std::uint64_t Hash = 0x0F1E2D3C4B5A6978ull;
+    const uint64 Hash = 0x0F1E2D3C4B5A6978ull;
     CHECK(Detail::RegisterNameText(Hash, "NameTests.First") == Detail::NameRegisterResult::Added);
     CHECK(Detail::RegisterNameText(Hash, "NameTests.First") == Detail::NameRegisterResult::AlreadyPresent);
     CHECK(Detail::RegisterNameText(Hash, "NameTests.Second") == Detail::NameRegisterResult::Collision);

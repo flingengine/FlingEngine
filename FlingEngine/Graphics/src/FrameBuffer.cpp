@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "FrameBuffer.h"
 #include "GraphicsHelpers.h"
 #include "LogicalDevice.h"
@@ -223,7 +224,7 @@ namespace Fling {
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         if (hasColor) {
             subpass.pColorAttachments = colorReferences.data();
-            subpass.colorAttachmentCount = static_cast<uint32_t>(colorReferences.size());
+            subpass.colorAttachmentCount = static_cast<uint32>(colorReferences.size());
         }
         if (hasDepth) {
             subpass.pDepthStencilAttachment = &depthReference;
@@ -265,7 +266,7 @@ namespace Fling {
         }
 
         // Find. max number of layers across attachments
-        uint32_t maxLayers = 0;
+        uint32 maxLayers = 0;
         for (auto& attachment : m_Attachments) {
             if (attachment->GetSubresourceRange().layerCount > maxLayers) {
                 maxLayers = attachment->GetSubresourceRange().layerCount;
@@ -276,7 +277,7 @@ namespace Fling {
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = m_RenderPass;
         framebufferInfo.pAttachments = attachmentViews.data();
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachmentViews.size());
+        framebufferInfo.attachmentCount = static_cast<uint32>(attachmentViews.size());
         framebufferInfo.width = m_Width;
         framebufferInfo.height = m_Height;
         framebufferInfo.layers = maxLayers;

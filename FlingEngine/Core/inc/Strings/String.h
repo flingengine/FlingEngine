@@ -15,7 +15,10 @@ namespace Fling
      * Use Name for identifiers and DisplayText for text that the player sees.
      * 
      * TODO: Maybe replace this with something better (not std lib), not really a focus point right now. 
-     * alias it for now to make it simple to refactor later
+     * alias it for now to make it simple to refactor later.
+     * 
+     * Reasons to eventually write our own string class mainly derive from 
+     * having better memory allocation control and reducing its size. 
      */
     using String = std::string;
 

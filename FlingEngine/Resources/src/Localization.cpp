@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Json.h"
 #include "Localization.h"
 #include "Logger.h"
@@ -205,7 +206,7 @@ namespace Fling
                 if (Doc.Contains("MinimumGroupingDigits"))
                 {
                     Info.Numbers.MinimumGroupingDigits =
-                        static_cast<std::uint8_t>(Doc.GetInt("MinimumGroupingDigits", Info.Numbers.MinimumGroupingDigits));
+                        static_cast<uint8>(Doc.GetInt("MinimumGroupingDigits", Info.Numbers.MinimumGroupingDigits));
                 }
                 if (Doc.Contains("DatePattern"))
                 {

@@ -5,6 +5,7 @@
 #include "DepthBuffer.h"
 #include "FirstPersonCamera.h"
 #include "FlingConfig.h"
+#include "FlingIntegers.h"
 #include "FlingWindow.h"
 #include "GeometrySubpass.h"
 #include "GitVersion.h"
@@ -674,7 +675,7 @@ namespace Fling
                         1,
                         &m_State->m_InFlightFences[CurrentFrameIndex],
                         VK_TRUE,
-                        std::numeric_limits<uint64_t>::max());
+                        std::numeric_limits<uint64>::max());
 
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),

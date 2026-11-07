@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Localization.h"
 #include "Logger.h"
 #include "Strings/DisplayText.h"
@@ -99,9 +100,9 @@ TEST_CASE("Localization keeps the current language when a language cannot be loa
 TEST_CASE("Localization changes its revision when text or the language changes", "[Localization]")
 {
     Localization Loc("unused", "en"_name);
-    const std::uint64_t Start = Loc.GetRevision();
+    const uint64 Start = Loc.GetRevision();
     Loc.SetEntry("fr"_name, "UI"_name, "Menu.Start"_name, "Commencer");
-    const std::uint64_t AfterEntry = Loc.GetRevision();
+    const uint64 AfterEntry = Loc.GetRevision();
     CHECK(AfterEntry != Start);
     REQUIRE(Loc.SetLanguage("fr"_name));
     CHECK(Loc.GetRevision() != AfterEntry);

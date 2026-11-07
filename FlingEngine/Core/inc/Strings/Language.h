@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "FlingIntegers.h"
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
@@ -9,7 +10,7 @@
 namespace Fling
 {
     /** The direction in which a language is read. */
-    enum class TextDirection : std::uint8_t
+    enum class TextDirection : uint8
     {
         LeftToRight,
         RightToLeft,
@@ -20,7 +21,7 @@ namespace Fling
      * rules. English uses One ("1 enemy") and Other ("2 enemies"). Russian also uses
      * Few and Many. Arabic uses all six. Japanese uses only Other.
      */
-    enum class PluralCategory : std::uint8_t
+    enum class PluralCategory : uint8
     {
         Zero,
         One,
@@ -48,11 +49,11 @@ namespace Fling
         /** Between groups of three digits: "," in English, "." in German. Empty for no groups. */
         String GroupSeparator = ",";
         /** The fewest digits a group of three needs before a separator is used: 2 in Spanish ("1000", "10.000"). */
-        std::uint8_t MinimumGroupingDigits = 1;
+        uint8 MinimumGroupingDigits = 1;
     };
 
     /** Writes a whole number with the group separator of t_Format: 12345 is "12,345" in English. */
-    CORE_API String FormatNumber(std::int64_t t_Number, const NumberFormat& t_Format);
+    CORE_API String FormatNumber(int64 t_Number, const NumberFormat& t_Format);
 
     /** Writes a number with the separators of t_Format, with the fewest digits that read back as the same value. */
     CORE_API String FormatNumber(double t_Number, const NumberFormat& t_Format);

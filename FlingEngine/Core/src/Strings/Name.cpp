@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Strings/Name.h"
 #include "Threading/Mutex.h"
 #include "Threading/ThreadSafety.h"
@@ -19,7 +20,7 @@ namespace Fling
         /** The hash is already well mixed, so the map uses it as it is. */
         struct IdentityHash
         {
-            std::size_t operator()(const std::uint64_t t_Hash) const noexcept
+            std::size_t operator()(const uint64 t_Hash) const noexcept
             {
                 return static_cast<std::size_t>(t_Hash ^ (t_Hash >> 32));
             }
@@ -75,7 +76,7 @@ namespace Fling
         struct NameShard
         {
             SharedMutex Mutex;
-            std::unordered_map<std::uint64_t, StringView, IdentityHash> Texts FLING_GUARDED_BY(Mutex);
+            std::unordered_map<uint64, StringView, IdentityHash> Texts FLING_GUARDED_BY(Mutex);
         };
 
         /**
@@ -85,7 +86,7 @@ namespace Fling
         class NameTable
         {
         public:
-            Detail::NameRegisterResult Register(const std::uint64_t t_Hash, const StringView t_Text)
+            Detail::NameRegisterResult Register(const uint64 t_Hash, const StringView t_Text)
             {
                 if (t_Hash == 0)
                 {
@@ -118,7 +119,7 @@ namespace Fling
                 return Detail::NameRegisterResult::Added;
             }
 
-            StringView Find(const std::uint64_t t_Hash)
+            StringView Find(const uint64 t_Hash)
             {
                 NameShard& Shard = GetShard(t_Hash);
                 ReadScopedLock Lock(Shard.Mutex);
@@ -138,7 +139,7 @@ namespace Fling
         private:
             static constexpr std::size_t ShardCount = 64;
 
-            NameShard& GetShard(const std::uint64_t t_Hash) { return m_Shards[t_Hash >> 58]; }
+            NameShard& GetShard(const uint64 t_Hash) { return m_Shards[t_Hash >> 58]; }
 
             std::array<NameShard, ShardCount> m_Shards;
             TextArena m_Arena;
@@ -159,17 +160,17 @@ namespace Fling
 
     namespace Detail
     {
-        NameRegisterResult RegisterNameText(const std::uint64_t t_Hash, const StringView t_Text)
+        NameRegisterResult RegisterNameText(const uint64 t_Hash, const StringView t_Text)
         {
             return GetTable().Register(t_Hash, t_Text);
         }
 
-        StringView FindNameText(const std::uint64_t t_Hash)
+        StringView FindNameText(const uint64 t_Hash)
         {
             return GetTable().Find(t_Hash);
         }
 
-        void ReportNameCollision(const std::uint64_t t_Hash, const StringView t_Text)
+        void ReportNameCollision(const uint64 t_Hash, const StringView t_Text)
         {
             // The logger may not be ready (this can run before main), so write to stderr.
             const StringView Existing = FindNameText(t_Hash);
@@ -185,7 +186,7 @@ namespace Fling
 #endif
         }
 
-        bool RegisterLiteralName(const std::uint64_t t_Hash, const StringView t_Text)
+        bool RegisterLiteralName(const uint64 t_Hash, const StringView t_Text)
         {
             if (RegisterNameText(t_Hash, t_Text) == NameRegisterResult::Collision)
             {

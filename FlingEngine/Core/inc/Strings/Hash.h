@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlingIntegers.h"
 #include "Strings/String.h"
 
 #include <bit>
@@ -12,56 +13,56 @@ namespace Fling
 {
     namespace Detail
     {
-        inline constexpr std::uint64_t XxPrime1 = 0x9E3779B185EBCA87ull;
-        inline constexpr std::uint64_t XxPrime2 = 0xC2B2AE3D27D4EB4Full;
-        inline constexpr std::uint64_t XxPrime3 = 0x165667B19E3779F9ull;
-        inline constexpr std::uint64_t XxPrime4 = 0x85EBCA77C2B2AE63ull;
-        inline constexpr std::uint64_t XxPrime5 = 0x27D4EB2F165667C5ull;
+        inline constexpr uint64 XxPrime1 = 0x9E3779B185EBCA87ull;
+        inline constexpr uint64 XxPrime2 = 0xC2B2AE3D27D4EB4Full;
+        inline constexpr uint64 XxPrime3 = 0x165667B19E3779F9ull;
+        inline constexpr uint64 XxPrime4 = 0x85EBCA77C2B2AE63ull;
+        inline constexpr uint64 XxPrime5 = 0x27D4EB2F165667C5ull;
 
         /** Reads 8 bytes as a little-endian value, on any platform. */
-        constexpr std::uint64_t XxRead64(const char* t_Bytes)
+        constexpr uint64 XxRead64(const char* t_Bytes)
         {
             if (!std::is_constant_evaluated() && std::endian::native == std::endian::little)
             {
-                std::uint64_t Value = 0;
+                uint64 Value = 0;
                 std::memcpy(&Value, t_Bytes, sizeof(Value));
                 return Value;
             }
 
-            std::uint64_t Value = 0;
+            uint64 Value = 0;
             for (int Index = 0; Index < 8; ++Index)
             {
-                Value |= static_cast<std::uint64_t>(static_cast<unsigned char>(t_Bytes[Index])) << (8 * Index);
+                Value |= static_cast<uint64>(static_cast<unsigned char>(t_Bytes[Index])) << (8 * Index);
             }
             return Value;
         }
 
         /** Reads 4 bytes as a little-endian value, on any platform. */
-        constexpr std::uint64_t XxRead32(const char* t_Bytes)
+        constexpr uint64 XxRead32(const char* t_Bytes)
         {
             if (!std::is_constant_evaluated() && std::endian::native == std::endian::little)
             {
-                std::uint32_t Value = 0;
+                uint32 Value = 0;
                 std::memcpy(&Value, t_Bytes, sizeof(Value));
                 return Value;
             }
 
-            std::uint64_t Value = 0;
+            uint64 Value = 0;
             for (int Index = 0; Index < 4; ++Index)
             {
-                Value |= static_cast<std::uint64_t>(static_cast<unsigned char>(t_Bytes[Index])) << (8 * Index);
+                Value |= static_cast<uint64>(static_cast<unsigned char>(t_Bytes[Index])) << (8 * Index);
             }
             return Value;
         }
 
-        constexpr std::uint64_t XxRound(std::uint64_t t_Acc, const std::uint64_t t_Input)
+        constexpr uint64 XxRound(uint64 t_Acc, const uint64 t_Input)
         {
             t_Acc += t_Input * XxPrime2;
             t_Acc = std::rotl(t_Acc, 31);
             return t_Acc * XxPrime1;
         }
 
-        constexpr std::uint64_t XxMergeRound(std::uint64_t t_Acc, const std::uint64_t t_Value)
+        constexpr uint64 XxMergeRound(uint64 t_Acc, const uint64 t_Value)
         {
             t_Acc ^= XxRound(0, t_Value);
             return t_Acc * XxPrime1 + XxPrime4;
@@ -76,19 +77,19 @@ namespace Fling
      * can be computed at compile time. Never change the algorithm: saved files hold
      * its values.
      */
-    constexpr std::uint64_t HashText(const StringView t_Text)
+    constexpr uint64 HashText(const StringView t_Text)
     {
         const char* Bytes = t_Text.data();
         const std::size_t Length = t_Text.size();
         const char* const End = Bytes + Length;
 
-        std::uint64_t Hash = 0;
+        uint64 Hash = 0;
         if (Length >= 32)
         {
-            std::uint64_t V1 = Detail::XxPrime1 + Detail::XxPrime2;
-            std::uint64_t V2 = Detail::XxPrime2;
-            std::uint64_t V3 = 0;
-            std::uint64_t V4 = 0 - Detail::XxPrime1;
+            uint64 V1 = Detail::XxPrime1 + Detail::XxPrime2;
+            uint64 V2 = Detail::XxPrime2;
+            uint64 V3 = 0;
+            uint64 V4 = 0 - Detail::XxPrime1;
 
             const char* const Limit = End - 32;
             do
@@ -111,7 +112,7 @@ namespace Fling
             Hash = Detail::XxPrime5;
         }
 
-        Hash += static_cast<std::uint64_t>(Length);
+        Hash += static_cast<uint64>(Length);
 
         while (End - Bytes >= 8)
         {
@@ -129,7 +130,7 @@ namespace Fling
 
         while (Bytes < End)
         {
-            Hash ^= static_cast<std::uint64_t>(static_cast<unsigned char>(*Bytes)) * Detail::XxPrime5;
+            Hash ^= static_cast<uint64>(static_cast<unsigned char>(*Bytes)) * Detail::XxPrime5;
             Hash = std::rotl(Hash, 11) * Detail::XxPrime1;
             ++Bytes;
         }

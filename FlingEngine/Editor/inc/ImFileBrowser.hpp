@@ -3,6 +3,7 @@
 // From https://github.com/AirGuanZ/imgui-filebrowser
 // MIT liscence
 
+#include "FlingIntegers.h"
 #include "Strings/String.h"
 
 #include <array>
@@ -88,7 +89,7 @@ namespace ImGui
         void SetPwdUncatched(const std::filesystem::path &pwd);
 
 #ifdef _WIN32
-        static std::uint32_t GetDrivesBitMask();
+        static uint32 GetDrivesBitMask();
 #endif
 
         ImGuiFileBrowserFlags flags_;
@@ -126,7 +127,7 @@ namespace ImGui
         std::unique_ptr<std::array<char, INPUT_NAME_BUF_SIZE>> newDirNameBuf_;
 
 #ifdef _WIN32
-        uint32_t drives_;
+        uint32 drives_;
 #endif
     };
 } // namespace ImGui
@@ -539,11 +540,11 @@ inline void ImGui::FileBrowser::SetPwdUncatched(const std::filesystem::path &pwd
 
 #ifdef _WIN32
 
-inline std::uint32_t ImGui::FileBrowser::GetDrivesBitMask()
+inline uint32 ImGui::FileBrowser::GetDrivesBitMask()
 {
     char rootName[10];
     DWORD mask = GetLogicalDrives();
-    uint32_t ret = 0;
+    uint32 ret = 0;
     for(int i = 0; i < 26; ++i)
     {
         if(!(mask & (1 << i)))

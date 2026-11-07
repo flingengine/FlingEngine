@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "FlingPaths.h"
 #include "GlfwInputDeviceInterface.h"
 #include "Input/InputDevice.h"
@@ -889,7 +890,7 @@ namespace Fling
 
         for (int Button = 0; Button <= GLFW_GAMEPAD_BUTTON_LAST; ++Button)
         {
-            const uint8_t Value = State.buttons[Button] == GLFW_PRESS ? 1 : 0;
+            const uint8 Value = State.buttons[Button] == GLFW_PRESS ? 1 : 0;
             const InputKey Key = MapGamepadButton(Button);
             // On the first poll only pressed buttons need a message
             const bool Changed = t_Slot.HasPrevious ? t_Slot.Buttons[Button] != Value : Value != 0;
