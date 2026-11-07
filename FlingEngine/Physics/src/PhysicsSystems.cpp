@@ -1,4 +1,5 @@
 #include "Components/Transform.h"
+#include "MathUtils.h"
 #include "Physics.h"
 
 #include <algorithm>
@@ -36,7 +37,7 @@ namespace Fling
             if (t_Collider.m_Shape == ColliderShape::Sphere)
             {
                 Shape.m_Type = PhysicsShapeType::Sphere;
-                Shape.m_Radius = t_Collider.m_Radius * std::max(Scale.x, std::max(Scale.y, Scale.z));
+                Shape.m_Radius = t_Collider.m_Radius * Math::Max(Scale.x, Math::Max(Scale.y, Scale.z));
             }
             else
             {
@@ -61,8 +62,8 @@ namespace Fling
             // so the order is a rule here, not whatever order the storage keeps:
             // highest entity index first (the newest entity of a fresh level first).
             std::vector<Fling::Entity> Ordered(View.begin(), View.end());
-            std::sort(Ordered.begin(), Ordered.end(),
-                      [](const Fling::Entity a, const Fling::Entity b) { return b < a; });
+            std::sort(
+                Ordered.begin(), Ordered.end(), [](const Fling::Entity a, const Fling::Entity b) { return b < a; });
 
             for (const Fling::Entity Entity : Ordered)
             {
@@ -201,8 +202,8 @@ namespace Fling
                          float t_DeltaTime,
                          std::vector<PhysicsContact>& t_OutContacts)
         {
-            const float FixedStep = std::max(t_Settings.m_FixedStep, 1e-4f);
-            t_World.m_Accumulator += std::max(t_DeltaTime, 0.0f);
+            const float FixedStep = Math::Max(t_Settings.m_FixedStep, 1e-4f);
+            t_World.m_Accumulator += Math::Max(t_DeltaTime, 0.0f);
 
             // A small tolerance, so that a delta time equal to the fixed step always runs one step
             const float Tolerance = FixedStep * 1e-3f;
@@ -223,7 +224,7 @@ namespace Fling
                 t_World.m_Scene->Step(FixedStep);
                 t_World.m_Scene->ReadContacts(t_OutContacts);
 
-                t_World.m_Accumulator = std::max(t_World.m_Accumulator - FixedStep, 0.0f);
+                t_World.m_Accumulator = Math::Max(t_World.m_Accumulator - FixedStep, 0.0f);
                 ++t_World.m_StepCount;
                 ++Steps;
             }
@@ -231,7 +232,7 @@ namespace Fling
             // Time over the step limit is dropped, so a long stall does not cause a burst of steps later
             if (Steps == t_Settings.m_MaxStepsPerTick)
             {
-                t_World.m_Accumulator = std::min(t_World.m_Accumulator, FixedStep);
+                t_World.m_Accumulator = Math::Min(t_World.m_Accumulator, FixedStep);
             }
 
             return Steps;

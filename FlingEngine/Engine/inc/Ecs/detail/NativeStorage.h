@@ -3,6 +3,8 @@
 // Only Ecs/ headers include this file. EntityStorage and the system context are
 // the API; this is the storage behind them.
 
+#include "Allocators/BlockAllocator.h"
+#include "Allocators/SlotPool.h"
 #include "Ecs/Component.h"
 #include "Ecs/Entity.h"
 #include "Ecs/TypeHash.h"
@@ -31,6 +33,10 @@ namespace Fling
         uint32 Entities = 0;
         /** Rows moved from one archetype to another, since the storage was made. */
         uint64 StructuralMoves = 0;
+        /** Bytes this storage took from the OS for chunks, Sparse values, and singletons. */
+        size_t ReservedBytes = 0;
+        /** Of ReservedBytes, the bytes in blocks that are in use. */
+        size_t UsedBytes = 0;
     };
 } // namespace Fling
 
@@ -111,26 +117,28 @@ namespace Fling::Detail
         return s_Id;
     }
 
-    /** One block of rows of one archetype: an Entity column and one column per component with data. */
+    /**
+     * One block of rows of one archetype. The header is at the start of its block from the
+     * storage's BlockAllocator, and everything else is in the same block after it: the
+     * column pointers, the enabled bits, the Entity column, and one 64-byte aligned
+     * column per component with data (structure of arrays). One allocation per chunk.
+     */
     struct Chunk
     {
-        Chunk() = default;
-        Chunk(const Chunk&) = delete;
-        Chunk& operator=(const Chunk&) = delete;
-        ~Chunk();
-
         uint32 Capacity = 0;
         uint32 Count = 0;
-        /** The alignment Memory was allocated with: 64, or more for a type that needs more. */
-        size_t Alignment = 0;
-        std::byte* Memory = nullptr;
+        /** The bytes asked of the BlockAllocator, to give the block back. */
+        uint32 BlockBytes = 0;
+        uint32 ColumnCount = 0;
+        /** Where this header is in its block. See NativeStorage::MakeChunk. */
+        uint32 BlockOffset = 0;
         Entity* Entities = nullptr;
 
         /** One base pointer per archetype column, in Archetype::Columns order. */
-        std::vector<std::byte*> Columns;
+        std::byte** Columns = nullptr;
 
-        /** One bit per row for each Enableable column, in Archetype::Columns order (empty for other columns). */
-        std::vector<std::vector<uint64>> Enabled;
+        /** One bit per row for each Enableable column, in Archetype::Columns order. Null for other columns. */
+        uint64** Enabled = nullptr;
     };
 
     /** All entities that have exactly one set of Table, Enableable, and Tag components. */
@@ -160,7 +168,8 @@ namespace Fling::Detail
         /** ComponentId -> column index. -1 for none, -2 for a tag the archetype has. */
         std::vector<int32> ColumnById;
 
-        std::vector<std::unique_ptr<Chunk>> Chunks;
+        /** The chunks, which live in the storage's BlockAllocator. Every chunk but the last is full. */
+        std::vector<Chunk*> Chunks;
 
         /** Bytes of one row: the Entity and every column. */
         size_t RowBytes = sizeof(Entity);
@@ -176,15 +185,21 @@ namespace Fling::Detail
         int32 ColumnOf(const ComponentId id) const { return id < ColumnById.size() ? ColumnById[id] : -1; }
     };
 
-    /** A Sparse component type: values beside the archetypes, each at a stable address. */
+    /** A Sparse component type: values beside the archetypes, each at a stable address in a SlotPool. */
     struct SparseSet
     {
-        SparseSet() = default;
+        SparseSet(BlockAllocator& blocks, ComponentId id, size_t bytes, size_t alignment)
+            : Id(id), Pool(blocks, bytes, alignment)
+        {
+        }
         SparseSet(const SparseSet&) = delete;
         SparseSet& operator=(const SparseSet&) = delete;
         ~SparseSet();
 
         ComponentId Id = InvalidComponentId;
+
+        /** The memory of the values. */
+        SlotPool Pool;
 
         /** Entity index -> position in Dense, plus one. 0 means none. */
         std::vector<uint32> Lookup;
@@ -202,19 +217,33 @@ namespace Fling::Detail
         Signal<void(EntityStorage&, Entity)> Removed;
     };
 
-    /** One pending add or remove for ApplyBatch. An add owns a heap object that the batch moves from and frees. */
+    /**
+     * One pending add or remove for ApplyBatch. An add has a value, which the batch moves
+     * from and destroys. The memory of the value is not the batch's: it is in the frame
+     * arena of the command buffer that made the change.
+     */
     struct PendingChange
     {
+        enum class Hook : uint8
+        {
+            None,
+            Added,
+            Replaced,
+        };
+
         ComponentId Id = InvalidComponentId;
         bool IsAdd = true;
+        /** Set by ApplyBatch: which hook to run for this change */
+        Hook Notify = Hook::None;
         void* Value = nullptr;
-        void (*Free)(void* value) = nullptr;
+        /** Run the destructor of Value. */
+        void (*Destroy)(void* value) = nullptr;
     };
 
     /**
      * Archetype storage in chunks (Plans/ecs-plan.md section 1.2). Entities with the
      * same set of Table and Tag components share an archetype, and its rows live in
-     * chunks that grow from 1 KiB to 16 KiB. Sparse components live beside the
+     * chunks that grow from 1 KiB to 128 KiB. Sparse components live beside the
      * archetypes. Adding or removing a Table component moves the entity's row, so a
      * pointer to a component is not valid after a structural change to its entity.
      */
@@ -275,8 +304,14 @@ namespace Fling::Detail
 
         void* GetSingleton(ComponentId id) const;
 
-        /** Take ownership of a heap object as the singleton, replacing any that exists. */
-        void* SetSingleton(ComponentId id, void* object, void (*free)(void*));
+        /** Memory for a singleton of the type, from the storage's blocks. Construct it, then call SetSingleton. */
+        void* AllocateSingleton(ComponentId id, size_t bytes, size_t alignment);
+
+        /**
+         * Make object (constructed in memory from AllocateSingleton) the singleton,
+         * replacing any that exists. destroy runs the destructor.
+         */
+        void* SetSingleton(ComponentId id, void* object, size_t bytes, void (*destroy)(void*));
 
         void RemoveSingleton(ComponentId id);
 
@@ -310,9 +345,23 @@ namespace Fling::Detail
         /** True for an enabled row of an Enableable column. */
         static bool RowEnabled(const Chunk& chunk, size_t column, uint32 row)
         {
-            const std::vector<uint64>& bits = chunk.Enabled[column];
-            return bits.empty() || ((bits[row / 64] >> (row % 64)) & 1u) != 0;
+            const uint64* bits = chunk.Enabled[column];
+            return bits == nullptr || ((bits[row / 64] >> (row % 64)) & 1u) != 0;
         }
+
+        /** Give the OS the memory of empty slabs (after a level unload, for example). Returns the bytes given back. */
+        size_t TrimMemory() { return m_Blocks.Trim(); }
+
+        /**
+         * Keep the row count of each archetype in archetypes, so a query can stop at the
+         * rows that existed when it was made. A stack: each call is paired with
+         * PopRowLimits in reverse order. Returns where the counts start.
+         */
+        size_t PushRowLimits(const std::vector<Archetype*>& archetypes, size_t count);
+
+        void PopRowLimits(size_t start) { m_RowLimits.resize(start); }
+
+        size_t RowLimit(size_t start, size_t index) const { return m_RowLimits[start + index]; }
 
     private:
         /**
@@ -399,7 +448,27 @@ namespace Fling::Detail
 
         void FireRemovedForAll(Entity entity);
 
+        /** A new chunk for the archetype, in one block, with the most rows that fit in bytes. */
+        Chunk* MakeChunk(const Archetype& arch, size_t bytes);
+
+        void FreeChunk(Chunk* chunk)
+        {
+            m_Blocks.Free(reinterpret_cast<std::byte*>(chunk) - chunk->BlockOffset, chunk->BlockBytes);
+        }
+
+        /** The archetype after one add (adding true) or remove of id, through the cached graph edges */
+        Archetype* Step(Archetype* from, ComponentId id, bool adding);
+
         EntityStorage& m_Owner;
+
+        /** Counts chunks made, to move each chunk's header to a different cache set. See MakeChunk. */
+        uint32 m_ChunkColor = 0;
+
+        /**
+         * The memory of every chunk, Sparse value, and singleton of this storage. Declared
+         * first, so it is destroyed last, after everything that lives in it.
+         */
+        BlockAllocator m_Blocks;
         std::vector<Slot> m_Slots;
         std::vector<uint32> m_FreeIndices;
         size_t m_AliveCount = 0;
@@ -413,7 +482,8 @@ namespace Fling::Detail
         struct SingletonSlot
         {
             void* Object = nullptr;
-            void (*Free)(void*) = nullptr;
+            size_t Bytes = 0;
+            void (*Destroy)(void*) = nullptr;
         };
         std::vector<SingletonSlot> m_Singletons;
 
@@ -422,6 +492,13 @@ namespace Fling::Detail
         std::vector<std::unique_ptr<CachedQuery>> m_Queries;
 
         uint64 m_StructuralMoves = 0;
+
+        /** The row counts that live queries keep (see PushRowLimits). It grows to the most that is needed, then stays.
+         */
+        std::vector<size_t> m_RowLimits;
+
+        /** Scratch for MakeChunk, kept so it does not allocate again */
+        std::vector<size_t> m_ColumnOffsets;
 
         const ComponentOps& CacheOps(ComponentId id) const;
 

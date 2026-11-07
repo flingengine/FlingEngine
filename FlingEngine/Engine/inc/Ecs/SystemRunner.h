@@ -99,6 +99,21 @@ namespace Fling
         /** One buffer per system, by index in the schedule. */
         std::vector<DeferredCommands> m_Commands;
 
+        /** One deferred add or remove at the flush, with the order it was made and the order its entity first appeared
+         */
+        struct FlushEntry
+        {
+            Entity Target;
+            uint32 Sequence = 0;
+            uint32 FirstSeen = 0;
+            Detail::PendingChange Change;
+        };
+
+        /** Scratch for FlushCommands. It keeps its memory, so a steady tick does not allocate. */
+        std::vector<FlushEntry> m_FlushEntries;
+        std::vector<Detail::PendingChange> m_FlushBatch;
+        std::vector<Entity> m_DestroyScratch;
+
         std::chrono::nanoseconds m_Accumulator{0};
         std::chrono::nanoseconds m_RealElapsed{0};
         uint64 m_Tick = 0;

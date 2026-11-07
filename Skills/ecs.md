@@ -41,8 +41,36 @@ Systems do not use `EntityStorage`: they use their typed context.
   it.
 - A query sees the archetypes, chunks, and rows that exist when it reaches
   them, so an entity spawned inside a loop is not seen by that loop.
-- `EntityStorage::Stats()` gives archetype, chunk, and entity counts and the
-  number of row moves.
+- `EntityStorage::Stats()` gives archetype, chunk, and entity counts, the
+  number of row moves, and the bytes the world reserved and uses.
+
+## Memory
+
+- The storage does not use `new` or `malloc` for entities or components. Each
+  `EntityStorage` owns a `BlockAllocator` (`Core/inc/Allocators/`): power-of-two
+  blocks from 1 KiB to 128 KiB, cut from slabs of OS pages, with a free list
+  per size, so a freed block is used again for the same size and memory does
+  not fragment.
+- A chunk is one block: its header, the column pointers, the enabled bits, the
+  Entity column, and one 64-byte aligned column per component (structure of
+  arrays). Big chunks start their layout at one of 16 cache lines, so the
+  headers do not all map to the same cache set.
+- Sparse components come from a `SlotPool` per type (stable addresses, a free
+  list). Singletons come from the same `BlockAllocator`.
+- Deferred `ctx.Add` values and `ctx.Defer` callables go in each command
+  buffer's `LinearArena`, which resets after the flush. The flush and
+  `ctx.Query` use scratch lists that keep their memory.
+- A steady tick takes no memory from the global heap.
+  `FlingTests/Engine/EcsAllocationTests.cpp` proves it with a counting
+  `operator new`. Keep it passing: no `std::vector`, `std::function`, or
+  `std::string` made per tick in the storage, the runner, or a query.
+  (`Drain` of a Queue component still gives up the queue's vector.)
+- The world keeps its pages while it lives. Call
+  `EntityStorage::TrimMemory()` after a big change, such as a level unload, to
+  give empty slabs back to the OS.
+- Use the `Fling::Math` helpers (`MathUtils.h`: `Min`, `Max`, `Clamp`,
+  `AlignUp`, `IsPowerOfTwo`, ...) and the Fling math types, not `std::min`,
+  `std::max`, or `std::clamp`, in engine code.
 - `scripts/EcsBenchmark/run.sh` compares the storage with EnTT 3.1 (the
   storage it replaced) on iteration, create, add, remove, destroy, and memory.
   Run it after a change to the storage.

@@ -3,6 +3,7 @@
 #include "Ecs/Component.h"
 #include "Ecs/detail/NativeStorage.h"
 #include "Ecs/Entity.h"
+#include "MathUtils.h"
 #include "Signals.h"
 
 #include <algorithm>
@@ -138,6 +139,13 @@ namespace Fling
 
         /** Destroy every entity. The Removed hooks run. Singletons stay. */
         void Clear() { m_Native.Clear(); }
+
+        /**
+         * Give the memory blocks that hold no rows back to the OS, and return the bytes
+         * freed. Storage keeps its pages while a game runs, so call this after a big
+         * change, such as when a level unloads.
+         */
+        size_t TrimMemory() { return m_Native.TrimMemory(); }
 
         /** The number of living entities. */
         size_t EntityCount() const { return m_Native.EntityCount(); }
@@ -313,8 +321,12 @@ namespace Fling
         template <typename T, typename... Args>
         T& SetSingleton(Args&&... args)
         {
-            T* object = new T(Detail::MakeValue<T>(std::forward<Args>(args)...));
-            m_Native.SetSingleton(Detail::ComponentIdOf<T>(), object, [](void* p) { delete static_cast<T*>(p); });
+            // In the storage's own memory, not the heap
+            const Detail::ComponentId id = Detail::ComponentIdOf<T>();
+            const size_t bytes = Math::Max(sizeof(T), alignof(T));
+            void* memory = m_Native.AllocateSingleton(id, sizeof(T), alignof(T));
+            T* object = Detail::ConstructAt<T>(memory, std::forward<Args>(args)...);
+            m_Native.SetSingleton(id, object, bytes, [](void* p) { static_cast<T*>(p)->~T(); });
             return *object;
         }
 
@@ -450,7 +462,7 @@ namespace Fling
 
         for (Detail::Archetype* arch : m_Native.Match(archetypeIds, {}))
         {
-            for (const std::unique_ptr<Detail::Chunk>& chunk : arch->Chunks)
+            for (const Detail::Chunk* chunk : arch->Chunks)
             {
                 for (uint32 row = 0; row < chunk->Count; ++row)
                 {

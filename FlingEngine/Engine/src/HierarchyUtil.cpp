@@ -88,13 +88,21 @@ namespace Fling::HierarchyUtil
 
     void DestroySubtree(EntityStorage& t_Storage, const Entity t_Root)
     {
+        std::vector<Entity> Order;
+        DestroySubtree(t_Storage, t_Root, Order);
+    }
+
+    void DestroySubtree(EntityStorage& t_Storage, const Entity t_Root, std::vector<Entity>& t_Scratch)
+    {
         if (!t_Storage.IsValid(t_Root))
         {
             return;
         }
 
         // Collect first, so that destroying does not change a list that is being read
-        std::vector<Entity> Order{t_Root};
+        std::vector<Entity>& Order = t_Scratch;
+        Order.clear();
+        Order.push_back(t_Root);
         for (size_t i = 0; i < Order.size(); ++i)
         {
             if (const Children* List = t_Storage.TryGet<Children>(Order[i]))

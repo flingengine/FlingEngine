@@ -3,6 +3,7 @@
 #include "Ecs/Reflection.h"
 #include "Ecs/TypeRegistry.h"
 #include "Logger.h"
+#include "MathUtils.h"
 
 #include <algorithm>
 #include <cstring>
@@ -281,7 +282,7 @@ namespace Fling
                 }
                 missing += isPadding ? 0 : gap;
             }
-            covered = std::max(covered, field->Offset + field->Size);
+            covered = Math::Max(covered, field->Offset + field->Size);
         }
         if (type.Size > covered && type.Size - covered >= type.Align)
         {

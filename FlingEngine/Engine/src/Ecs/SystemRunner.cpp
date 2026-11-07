@@ -6,10 +6,10 @@
 #include "HierarchyUtil.h"
 #include "Misc/SimulationCheck.h"
 
+#include <algorithm>
 #include <cassert>
 #include <optional>
 #include <ranges>
-#include <unordered_map>
 
 namespace Fling
 {
@@ -207,28 +207,57 @@ namespace Fling
 
     void SystemRunner::FlushCommands()
     {
-        // 1. Every system's adds and removes, grouped by entity in the order the
-        //    entities first appear, so each entity moves archetype once
-        std::vector<Entity> order;
-        std::unordered_map<Entity, std::vector<Detail::PendingChange>> byEntity;
+        // 1. Every system's adds and removes, grouped by entity, entities in the order
+        //    they first appear, so each entity moves archetype once. The scratch lists
+        //    keep their memory between ticks, and std::sort does not allocate.
+        m_FlushEntries.clear();
+        uint32 sequence = 0;
         for (const uint32 i : m_RunOrder)
         {
             for (DeferredCommands::ComponentChange& each : m_Commands[i].ComponentChanges())
             {
-                auto [it, inserted] = byEntity.try_emplace(each.Target);
-                if (inserted)
-                {
-                    order.push_back(each.Target);
-                }
-                it->second.push_back(each.Change);
-                // The batch owns the value now
+                m_FlushEntries.push_back(FlushEntry{each.Target, sequence, sequence, each.Change});
+                ++sequence;
+                // The batch destroys the value now. Its memory stays in the command buffer's arena until Clear.
                 each.Change.Value = nullptr;
             }
         }
-        for (const Entity entity : order)
+        if (!m_FlushEntries.empty())
         {
-            std::vector<Detail::PendingChange>& changes = byEntity[entity];
-            m_Storage.Native().ApplyBatch(entity, changes);
+            const auto byEntity = [](const FlushEntry& a, const FlushEntry& b)
+            {
+                return a.Target.ToBits() != b.Target.ToBits() ? a.Target.ToBits() < b.Target.ToBits()
+                                                              : a.Sequence < b.Sequence;
+            };
+            std::sort(m_FlushEntries.begin(), m_FlushEntries.end(), byEntity);
+            for (size_t i = 1; i < m_FlushEntries.size(); ++i)
+            {
+                if (m_FlushEntries[i].Target == m_FlushEntries[i - 1].Target)
+                {
+                    m_FlushEntries[i].FirstSeen = m_FlushEntries[i - 1].FirstSeen;
+                }
+            }
+            std::sort(m_FlushEntries.begin(),
+                      m_FlushEntries.end(),
+                      [](const FlushEntry& a, const FlushEntry& b)
+                      { return a.FirstSeen != b.FirstSeen ? a.FirstSeen < b.FirstSeen : a.Sequence < b.Sequence; });
+
+            size_t start = 0;
+            while (start < m_FlushEntries.size())
+            {
+                size_t end = start + 1;
+                while (end < m_FlushEntries.size() && m_FlushEntries[end].Target == m_FlushEntries[start].Target)
+                {
+                    ++end;
+                }
+                m_FlushBatch.clear();
+                for (size_t i = start; i < end; ++i)
+                {
+                    m_FlushBatch.push_back(m_FlushEntries[i].Change);
+                }
+                m_Storage.Native().ApplyBatch(m_FlushEntries[start].Target, m_FlushBatch);
+                start = end;
+            }
         }
 
         // 2. The other deferred changes, then 3. the destroys, each in schedule order
@@ -243,7 +272,7 @@ namespace Fling
         {
             for (const Entity entity : m_Commands[i].Destroys())
             {
-                HierarchyUtil::DestroySubtree(m_Storage, entity);
+                HierarchyUtil::DestroySubtree(m_Storage, entity, m_DestroyScratch);
             }
             m_Commands[i].Clear();
         }

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-// ---- Heap accounting: live bytes through every operator new/delete ----
+// ---- Memory accounting: live bytes through every operator new/delete, plus the pages a backend maps itself (OsBytes) ----
 static size_t g_Live = 0;
 static void* Track(void* p) { if (p) g_Live += malloc_usable_size(p); return p; }
 static void Untrack(void* p) { if (p) g_Live -= malloc_usable_size(p); }
@@ -54,6 +54,8 @@ template <typename T> static void Remove(World& w, Ent e) { w.remove<T>(e); }
 template <typename Fn> static void Each1(World& w, Fn fn) { w.view<Position>().each([&](Position& p) { fn(p); }); }
 template <typename Fn> static void Each2(World& w, Fn fn) { w.view<Position, Velocity>().each([&](Position& p, Velocity& v) { fn(p, v); }); }
 static void Reserve(World& w, size_t n) { w.reserve<Position>(n); w.reserve<Velocity>(n); w.reserve(n); }
+// EnTT takes all of its memory through operator new.
+static size_t OsBytes(const World&) { return 0; }
 #else
 #if FLING_RANGE_FOR
 static const char* BackendName = "fling-rangefor";
@@ -87,6 +89,8 @@ template <typename Fn> static void Each2(World& w, Fn fn)
 }
 #endif
 static void Reserve(World&, size_t) {}
+// Chunks and sparse slots come from the world's own pages, which operator new does not see.
+static size_t OsBytes(const World& w) { return w.Stats().ReservedBytes; }
 #endif
 
 using Clock = std::chrono::steady_clock;
@@ -121,7 +125,7 @@ int main(int argc, char** argv)
         }
         auto t1 = Clock::now();
         create.push_back(NsPerEntity(t0, t1, N));
-        bytesPerEntity = double(g_Live - liveBefore - N * sizeof(Ent)) / double(N);
+        bytesPerEntity = double(g_Live + OsBytes(*w) - liveBefore - N * sizeof(Ent)) / double(N);
 
         t0 = Clock::now();
         float sum = 0;
@@ -144,7 +148,7 @@ int main(int argc, char** argv)
         for (size_t i = 0; i < N; ++i) { Remove<Health>(*w, ents[i]); }
         t1 = Clock::now();
         remove.push_back(NsPerEntity(t0, t1, N));
-        bytesAfterChurn = double(g_Live - liveBefore - N * sizeof(Ent)) / double(N);
+        bytesAfterChurn = double(g_Live + OsBytes(*w) - liveBefore - N * sizeof(Ent)) / double(N);
 
         // Fragment: tags split the entities over 8 archetypes (EnTT: 3 more pools)
         for (size_t i = 0; i < N; ++i)
@@ -167,7 +171,7 @@ int main(int argc, char** argv)
     }
 
     auto median = [](std::vector<double> v) { std::sort(v.begin(), v.end()); return v[v.size() / 2]; };
-    std::printf("%s N=%zu  create %.2f  iter1 %.3f  iter2 %.3f  iter2frag %.3f  add %.2f  remove %.2f  destroy %.2f  (ns/entity)  heap %.1f B/entity  after-churn %.1f B/entity\n",
+    std::printf("%s N=%zu  create %.2f  iter1 %.3f  iter2 %.3f  iter2frag %.3f  add %.2f  remove %.2f  destroy %.2f  (ns/entity)  memory %.1f B/entity  after-churn %.1f B/entity\n",
                 BackendName, N, median(create), median(iter1), median(iter2), median(iterFrag), median(add), median(remove), median(destroy),
                 bytesPerEntity, bytesAfterChurn);
     return 0;

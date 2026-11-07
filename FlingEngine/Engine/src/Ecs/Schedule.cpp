@@ -1,5 +1,6 @@
 #include "Ecs/Schedule.h"
 #include "FlingTypes.h"
+#include "MathUtils.h"
 
 #include <algorithm>
 #include <limits>
@@ -398,7 +399,7 @@ namespace Fling
                              {first, second});
                     return;
                 }
-                m_Ordered.insert({std::min(first, second), std::max(first, second)});
+                m_Ordered.insert({Math::Min(first, second), Math::Max(first, second)});
                 AddEdge(first, second, reason, nullptr);
             }
 
@@ -796,16 +797,16 @@ namespace Fling
                 {
                     for (const Index p : pred[n])
                     {
-                        segment[n] = std::max(segment[n], segment[p] + (IsFlushEnd(nodes[p]) ? 1 : 0));
+                        segment[n] = Math::Max(segment[n], segment[p] + (IsFlushEnd(nodes[p]) ? 1 : 0));
                     }
                     for (const Index p : pred[n])
                     {
                         if (segment[p] + (IsFlushEnd(nodes[p]) ? 1 : 0) == segment[n])
                         {
-                            level[n] = std::max(level[n], level[p] + (nodes[p].Kind == NodeKind::System ? 1 : 0));
+                            level[n] = Math::Max(level[n], level[p] + (nodes[p].Kind == NodeKind::System ? 1 : 0));
                         }
                     }
-                    segmentCount = std::max(segmentCount, segment[n] + 1);
+                    segmentCount = Math::Max(segmentCount, segment[n] + 1);
                 }
 
                 std::vector<ScheduleSegment> segments(segmentCount);

@@ -3,6 +3,8 @@
 #include "Components/Transform.h"
 #include "Ecs/EntityStorage.h"
 
+#include <vector>
+
 namespace Fling::HierarchyUtil
 {
     /**
@@ -28,6 +30,9 @@ namespace Fling::HierarchyUtil
 
     /** Destroy an entity and all of its children, deepest first, and detach it from its parent. */
     void DestroySubtree(EntityStorage& t_Storage, Entity t_Root);
+
+    /** DestroySubtree with a list that the caller keeps, so a caller that destroys often does not allocate. */
+    void DestroySubtree(EntityStorage& t_Storage, Entity t_Root, std::vector<Entity>& t_Scratch);
 
     /**
      * Make every Children component again from the Parent components. A Parent that

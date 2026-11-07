@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Allocators/LinearArena.h"
 #include "Ecs/Access.h"
 #include "Ecs/Component.h"
 #include "Ecs/Entity.h"
@@ -7,6 +8,7 @@
 #include "Ecs/Phase.h"
 #include "Ecs/TypeList.h"
 #include "Input/TickInput.h"
+#include "MathUtils.h"
 
 #include <algorithm>
 #include <array>
@@ -37,11 +39,23 @@ namespace Fling
      * so each entity moves to its final archetype once, however many systems changed
      * it. Then each system's other deferred changes (Defer) run in schedule order, and
      * last the destroys.
+     *
+     * The values to add and the deferred callables live in the buffer's LinearArena,
+     * not on the heap. Clear destroys what is left and rewinds the arena; the arena
+     * keeps its pages, so a steady tick takes no new memory.
      */
     class DeferredCommands
     {
     public:
-        using StructuralFn = std::function<void(EntityStorage&)>;
+        /** A deferred change to the storage: a callable in the arena. */
+        struct StructuralFn
+        {
+            void (*Invoke)(void* callable, EntityStorage& storage) = nullptr;
+            void (*Destroy)(void* callable) = nullptr;
+            void* Callable = nullptr;
+
+            void operator()(EntityStorage& storage) const { Invoke(Callable, storage); }
+        };
 
         struct ComponentChange
         {
@@ -55,12 +69,13 @@ namespace Fling
         DeferredCommands(DeferredCommands&& other) noexcept
             : m_Destroy(std::move(other.m_Destroy)),
               m_Structural(std::move(other.m_Structural)),
-              m_Changes(std::move(other.m_Changes))
+              m_Changes(std::move(other.m_Changes)),
+              m_Arena(std::move(other.m_Arena))
         {
             other.Forget();
         }
 
-        /** Frees the values of this buffer's own unapplied adds, then takes the other buffer's. */
+        /** Destroys this buffer's own unapplied values, then takes the other buffer's. */
         DeferredCommands& operator=(DeferredCommands&& other) noexcept
         {
             if (this != &other)
@@ -69,6 +84,7 @@ namespace Fling
                 m_Destroy = std::move(other.m_Destroy);
                 m_Structural = std::move(other.m_Structural);
                 m_Changes = std::move(other.m_Changes);
+                m_Arena = std::move(other.m_Arena);
                 other.Forget();
             }
             return *this;
@@ -89,50 +105,73 @@ namespace Fling
         void AddComponent(const Entity entity, V&& value)
         {
             // A reference, not a copy: MSVC does not take a parameter aligned to more than 64 bytes by value
-            m_Changes.push_back(ComponentChange{entity,
-                                                Detail::PendingChange{Detail::ComponentIdOf<T>(),
-                                                                      true,
-                                                                      new T(std::forward<V>(value)),
-                                                                      [](void* object)
-                                                                      {
-                                                                          delete static_cast<T*>(object);
-                                                                      }}});
+            void* memory = m_Arena.Allocate(sizeof(T), alignof(T));
+            T* object = ::new (memory) T(std::forward<V>(value));
+            Detail::PendingChange change;
+            change.Id = Detail::ComponentIdOf<T>();
+            change.IsAdd = true;
+            change.Value = object;
+            change.Destroy = [](void* p)
+            {
+                static_cast<T*>(p)->~T();
+            };
+            m_Changes.push_back(ComponentChange{entity, change});
         }
 
         /** Remove a component at the flush, if the entity has it. Use the typed context call ctx.Remove. */
         template <typename T>
         void RemoveComponent(const Entity entity)
         {
-            m_Changes.push_back(
-                ComponentChange{entity, Detail::PendingChange{Detail::ComponentIdOf<T>(), false, nullptr, nullptr}});
+            Detail::PendingChange change;
+            change.Id = Detail::ComponentIdOf<T>();
+            change.IsAdd = false;
+            m_Changes.push_back(ComponentChange{entity, change});
         }
 
         std::span<ComponentChange> ComponentChanges() { return m_Changes; }
 
-        /** A change to the storage at the flush. Use the typed context call ctx.Defer. */
-        void Structural(StructuralFn fn) { m_Structural.push_back(std::move(fn)); }
+        /** A change to the storage at the flush: fn(EntityStorage&). Use the typed context call ctx.Defer. */
+        template <typename Fn>
+        void Structural(Fn&& fn)
+        {
+            using Callable = std::decay_t<Fn>;
+            void* memory = m_Arena.Allocate(sizeof(Callable), alignof(Callable));
+            ::new (memory) Callable(std::forward<Fn>(fn));
+            m_Structural.push_back(StructuralFn{[](void* callable, EntityStorage& storage)
+                                                { (*static_cast<Callable*>(callable))(storage); },
+                                                [](void* callable) { static_cast<Callable*>(callable)->~Callable(); },
+                                                memory});
+        }
 
         std::span<const StructuralFn> StructuralChanges() const { return m_Structural; }
 
         bool Empty() const { return m_Destroy.empty() && m_Structural.empty() && m_Changes.empty(); }
 
-        /** Drop everything. Values of adds that were not applied are freed. */
+        /** Drop everything: destroy the values that were not applied, and the callables, then rewind the arena. */
         void Clear()
         {
             for (ComponentChange& each : m_Changes)
             {
                 if (each.Change.Value != nullptr)
                 {
-                    each.Change.Free(each.Change.Value);
+                    each.Change.Destroy(each.Change.Value);
                 }
+            }
+            for (const StructuralFn& each : m_Structural)
+            {
+                each.Destroy(each.Callable);
             }
             m_Changes.clear();
             m_Destroy.clear();
             m_Structural.clear();
+            m_Arena.Reset();
         }
 
+        /** Bytes the arena took from the OS. */
+        size_t ReservedBytes() const { return m_Arena.ReservedBytes(); }
+
     private:
-        /** Empty the lists without freeing values: another buffer owns them now. */
+        /** Empty the lists without destroying anything: another buffer owns them now. */
         void Forget()
         {
             m_Destroy.clear();
@@ -143,6 +182,7 @@ namespace Fling
         std::vector<Entity> m_Destroy;
         std::vector<StructuralFn> m_Structural;
         std::vector<ComponentChange> m_Changes;
+        LinearArena m_Arena;
     };
 
     /** The storage a system's OnCreate and OnDestroy see. Systems use SystemSetup<Access> instead. */
@@ -245,6 +285,31 @@ namespace Fling
                                                                    ComponentInfoOf<T>.Kind == ComponentKind::Tag);
     } // namespace Detail
 
+    namespace Detail
+    {
+        /** A list of at most N component ids, inside the object: no heap. */
+        template <size_t N>
+        struct FixedIds
+        {
+            std::array<ComponentId, N == 0 ? 1 : N> Ids{};
+            uint32 Count = 0;
+
+            void push_back(const ComponentId id) { Ids[Count++] = id; }
+
+            const ComponentId* begin() const { return Ids.data(); }
+
+            const ComponentId* end() const { return Ids.data() + Count; }
+
+            ComponentId* begin() { return Ids.data(); }
+
+            ComponentId* end() { return Ids.data() + Count; }
+
+            bool empty() const { return Count == 0; }
+
+            std::span<const ComponentId> Span() const { return {Ids.data(), Count}; }
+        };
+    } // namespace Detail
+
     template <typename Gets, typename Withs, typename Withouts>
     class QueryRange;
 
@@ -288,9 +353,9 @@ namespace Fling
 
             Iterator(const QueryRange* range, const bool atEnd) : m_Range(range), m_PerRowChecks(range->m_PerRowChecks)
             {
-                if (atEnd || m_Range->m_Archetypes.empty())
+                if (atEnd || m_Range->m_ArchCount == 0)
                 {
-                    m_ArchIndex = m_Range ? m_Range->m_Archetypes.size() : 0;
+                    m_ArchIndex = m_Range ? m_Range->m_ArchCount : 0;
                     return;
                 }
                 EnterArchetype();
@@ -352,9 +417,9 @@ namespace Fling
             // Inlined, so the iterator's fields stay in registers in the caller's loop
             FLING_QUERY_INLINE void EnterArchetype()
             {
-                m_Arch = m_Range->m_Archetypes[m_ArchIndex];
+                m_Arch = (*m_Range->m_Matches)[m_ArchIndex];
                 m_ChunkCount = m_Arch->Chunks.size();
-                m_RowsLeft = m_Range->m_RowLimits[m_ArchIndex];
+                m_RowsLeft = m_Range->m_Storage->RowLimit(m_Range->m_RowStart, m_ArchIndex);
                 m_ChunkIndex = 0;
                 EnterChunk();
             }
@@ -369,10 +434,10 @@ namespace Fling
                     m_RowCount = 0;
                     return;
                 }
-                m_Chunk = m_Arch->Chunks[m_ChunkIndex].get();
+                m_Chunk = m_Arch->Chunks[m_ChunkIndex];
                 // Only the rows that existed when the query was made. Every chunk but the last is full,
                 // so the first rows of the archetype are those rows.
-                m_RowCount = static_cast<uint32>(std::min<size_t>(m_Chunk->Count, m_RowsLeft));
+                m_RowCount = static_cast<uint32>(Math::Min<size_t>(m_Chunk->Count, m_RowsLeft));
                 m_RowsLeft -= m_RowCount;
                 for (size_t i = 0; i < GetCount; ++i)
                 {
@@ -385,7 +450,7 @@ namespace Fling
             // Inlined, so the iterator's fields stay in registers in the caller's loop
             FLING_QUERY_INLINE void SkipToValid()
             {
-                while (m_ArchIndex < m_Range->m_Archetypes.size())
+                while (m_ArchIndex < m_Range->m_ArchCount)
                 {
                     while (m_Chunk != nullptr && m_Row < m_RowCount)
                     {
@@ -409,7 +474,7 @@ namespace Fling
                         continue;
                     }
                     ++m_ArchIndex;
-                    if (m_ArchIndex < m_Range->m_Archetypes.size())
+                    if (m_ArchIndex < m_Range->m_ArchCount)
                     {
                         EnterArchetype();
                     }
@@ -467,11 +532,15 @@ namespace Fling
             std::array<std::byte*, GetCount == 0 ? 1 : GetCount> m_Columns{};
         };
 
+        /**
+         * Makes no heap allocation: the ids are fixed arrays, the archetype list is the
+         * storage's cached match list, and the row counts go on the storage's query stack.
+         */
         explicit QueryRange(Detail::NativeStorage& storage)
             : m_Storage(&storage), m_GetIds{Detail::ComponentIdOf<std::remove_const_t<Ts>>()...}
         {
-            std::vector<Detail::ComponentId> required;
-            std::vector<Detail::ComponentId> excluded;
+            IdList required;
+            IdList excluded;
             (Classify<std::remove_const_t<Ts>>(required, m_SparseRequired), ...);
             (Classify<Ws>(required, m_SparseRequired), ...);
             (Classify<Xs>(excluded, m_SparseExcluded), ...);
@@ -480,12 +549,37 @@ namespace Fling
             std::sort(required.begin(), required.end());
             std::sort(excluded.begin(), excluded.end());
             m_PerRowChecks = !m_SparseRequired.empty() || !m_SparseExcluded.empty() || !m_EnableableRequired.empty();
-            // A copy, so archetypes made during the loop are not visited by it
-            m_Archetypes = storage.Match(required, excluded);
-            m_RowLimits.reserve(m_Archetypes.size());
-            for (const Detail::Archetype* arch : m_Archetypes)
+            m_Matches = &storage.Match(required.Span(), excluded.Span());
+            // Only the archetypes and rows that exist now, so the loop does not see entities spawned during it
+            m_ArchCount = m_Matches->size();
+            m_RowStart = storage.PushRowLimits(*m_Matches, m_ArchCount);
+        }
+
+        QueryRange(const QueryRange&) = delete;
+        QueryRange& operator=(const QueryRange&) = delete;
+
+        QueryRange(QueryRange&& other) noexcept
+            : m_Storage(other.m_Storage),
+              m_GetIds(other.m_GetIds),
+              m_Matches(other.m_Matches),
+              m_ArchCount(other.m_ArchCount),
+              m_RowStart(other.m_RowStart),
+              m_SparseRequired(other.m_SparseRequired),
+              m_SparseExcluded(other.m_SparseExcluded),
+              m_EnableableRequired(other.m_EnableableRequired),
+              m_PerRowChecks(other.m_PerRowChecks)
+        {
+            other.m_Storage = nullptr;
+        }
+
+        QueryRange& operator=(QueryRange&&) = delete;
+
+        /** Gives the row counts back to the storage's stack. Ranges end in the reverse order they were made. */
+        ~QueryRange()
+        {
+            if (m_Storage != nullptr)
             {
-                m_RowLimits.push_back(arch->EntityCount);
+                m_Storage->PopRowLimits(m_RowStart);
             }
         }
 
@@ -501,20 +595,20 @@ namespace Fling
         template <typename Fn>
         void Each(Fn&& fn) const
         {
-            for (size_t a = 0; a < m_Archetypes.size(); ++a)
+            for (size_t a = 0; a < m_ArchCount; ++a)
             {
-                const Detail::Archetype& arch = *m_Archetypes[a];
+                const Detail::Archetype& arch = *(*m_Matches)[a];
                 std::array<int32, GetCount == 0 ? 1 : GetCount> columns{};
                 for (size_t i = 0; i < GetCount; ++i)
                 {
                     columns[i] = arch.ColumnOf(m_GetIds[i]);
                 }
-                size_t rowsLeft = m_RowLimits[a];
+                size_t rowsLeft = m_Storage->RowLimit(m_RowStart, a);
                 const size_t chunkCount = arch.Chunks.size();
                 for (size_t c = 0; c < chunkCount && rowsLeft > 0; ++c)
                 {
                     const Detail::Chunk& chunk = *arch.Chunks[c];
-                    const uint32 count = static_cast<uint32>(std::min<size_t>(chunk.Count, rowsLeft));
+                    const uint32 count = static_cast<uint32>(Math::Min<size_t>(chunk.Count, rowsLeft));
                     rowsLeft -= count;
                     // Chunks are separate blocks, so the hardware prefetcher starts again at
                     // each one. Ask for the start of the next chunk's columns now.
@@ -647,9 +741,11 @@ namespace Fling
             return true;
         }
 
+        static constexpr size_t MaxIds = sizeof...(Ts) + sizeof...(Ws) + sizeof...(Xs);
+        using IdList = Detail::FixedIds<MaxIds>;
+
         template <typename T>
-        static void Classify(std::vector<Detail::ComponentId>& archetypeIds,
-                             std::vector<Detail::ComponentId>& sparseIds)
+        static void Classify(IdList& archetypeIds, IdList& sparseIds)
         {
             if constexpr (IsSparse<T>)
             {
@@ -672,12 +768,14 @@ namespace Fling
 
         Detail::NativeStorage* m_Storage;
         std::array<Detail::ComponentId, GetCount == 0 ? 1 : GetCount> m_GetIds;
-        std::vector<Detail::Archetype*> m_Archetypes;
-        /** The rows each archetype had when the query was made. */
-        std::vector<size_t> m_RowLimits;
-        std::vector<Detail::ComponentId> m_SparseRequired;
-        std::vector<Detail::ComponentId> m_SparseExcluded;
-        std::vector<Detail::ComponentId> m_EnableableRequired;
+        /** The storage's cached list of matching archetypes. Only the first m_ArchCount are this query's. */
+        const std::vector<Detail::Archetype*>* m_Matches = nullptr;
+        size_t m_ArchCount = 0;
+        /** Where this query's row counts start on the storage's query stack */
+        size_t m_RowStart = 0;
+        IdList m_SparseRequired;
+        IdList m_SparseExcluded;
+        IdList m_EnableableRequired;
         bool m_PerRowChecks = false;
     };
 

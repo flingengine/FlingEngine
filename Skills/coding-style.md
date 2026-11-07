@@ -115,6 +115,13 @@ signatures:
   `String` from the view at that call. Open files with `PathFromUtf8(path)`, not
   with the text, so that non-ASCII paths work on Windows.
 
+## Math
+
+- Use the Fling math types (`FlingMath.h`) and the scalar helpers in
+  `Fling::Math` (`MathUtils.h`: `Min`, `Max`, `Clamp`, `IsPowerOfTwo`,
+  `NextPowerOfTwo`, `AlignUp`, `AlignDown`, `DivideRoundUp`) in first-party
+  code, not `std::min`, `std::max`, or `std::clamp`.
+
 ## Naming / conventions to preserve
 
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are

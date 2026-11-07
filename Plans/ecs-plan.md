@@ -661,20 +661,23 @@ Done. `Ecs/detail/NativeStorage.h` is archetype storage in chunks that grow from
 - No `Changed<T>` query filter yet: `LocalToWorld::Version` covers the renderer. Change versions per column come with the editor's dirty tracking.
 - The play snapshot stays the JSON save. A chunk `memcpy` snapshot comes with world clone (Phase H).
 - Physics creates bodies in a fixed order (highest entity index first), so its results do not depend on storage order.
+- Storage memory is engine owned (see Skills/ecs.md, Memory): chunks are blocks from a per-world `BlockAllocator`, Sparse components use a `SlotPool`, and deferred values a `LinearArena`. A steady tick makes no global allocation (`EcsAllocationTests.cpp`).
 - Chunks grow to 128 KiB, not 16 KiB: 16 KiB chunks restart the hardware prefetcher every few hundred rows, which made iteration about 50% slower.
 
 **Benchmark** (`scripts/EcsBenchmark/run.sh`, Clang -O3, one core of a Ryzen 9 7950X, 1M entities with Position and Velocity, ns per entity):
 
 | | EnTT 3.1 | Native, range-for | Native, `Each` |
 |---|---|---|---|
-| Iterate one component | 0.57 | 0.81 | 0.69 |
-| Iterate two components | 1.42 | 0.91 | 0.92 |
-| Iterate two, over 8 archetypes | 1.63 | 1.19 | 1.22 |
-| Create with two components | 30 | 49 | 49 |
-| Add / remove one component | 7.4 / 3.5 | 30 / 28 | 29 / 28 |
-| Destroy | 18 | 32 | 31 |
-| Heap, bytes per entity | 45.8 | 44.7 | 44.7 |
-| Heap after an add and remove of a third component | 58.2 | 44.8 | 44.8 |
+| Iterate one component | 0.57 | 0.74 | 0.66 |
+| Iterate two components | 1.41 | 0.97 | 1.01 |
+| Iterate two, over 8 archetypes | 1.60 | 0.99 | 1.02 |
+| Create with two components | 29 | 69 | 67 |
+| Add / remove one component | 7.0 / 3.4 | 30 / 27 | 30 / 27 |
+| Destroy | 17.5 | 30 | 29.5 |
+| Memory, bytes per entity | 45.8 | 46.3 | 46.3 |
+| Memory after an add and remove of a third component | 58.2 | 50.5 | 50.5 |
+
+Memory counts the heap and the pages the world maps itself. Create includes the first touch of new pages: each run makes a new world, which maps fresh pages, while glibc gives EnTT the pages it kept from the run before. With cold pages for both, EnTT creates in 37 ns and the old heap-backed native storage in 66 ns. A world that lives keeps its pages, so a game pays this once.
 
 Multi-component iteration, the shape of most systems, is about 35% faster, and memory is smaller. Structural changes cost about 4 times as much, because a change moves the whole row. That is the trade an archetype store makes, and the reason adds and removes are deferred and batched.
 
