@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputRecording.h"
+#include "Strings/String.h"
 
 #include <memory>
 #include <string>
@@ -48,7 +49,7 @@ namespace Fling
          * @param t_OutError    Receives the reason if the file cannot be loaded
          * @return False if the file cannot be loaded. Nothing plays then
          */
-        bool Start(const std::string& t_Path, float t_StartDelay, std::string& t_OutError);
+        bool Start(StringView t_Path, float t_StartDelay, std::string& t_OutError);
 
         /** Start playback of a recording that is in memory. */
         void Start(InputRecording t_Recording, float t_StartDelay);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Strings/String.h"
+
 #include <string>
 #include <vector>
 
@@ -23,7 +25,7 @@ namespace Fling
          *                      If it does not exist, the nearest parent folder that exists is shown
          * @param t_Extension   Show only files whose name ends with this. Empty shows every file
          */
-        void Open(const std::string& t_StartPath, const std::string& t_Extension);
+        void Open(StringView t_StartPath, StringView t_Extension);
 
         /**
          * Draw the window if it is open.

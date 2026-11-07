@@ -15,7 +15,7 @@ namespace Fling
         constexpr double TimeEpsilon = 1e-6;
     } // namespace
 
-    bool InputPlayback::Start(const std::string& t_Path, float t_StartDelay, std::string& t_OutError)
+    bool InputPlayback::Start(const StringView t_Path, float t_StartDelay, std::string& t_OutError)
     {
         InputRecording Recording;
         if (!LoadInputRecording(t_Path, Recording, t_OutError))

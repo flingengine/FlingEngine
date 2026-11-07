@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "Strings/String.h"
 
 #include <memory>
 #include <string>
@@ -29,34 +30,35 @@ namespace Fling
 		static Json Array();
 
 		std::string Dump(int indent = 4) const;
-		bool LoadFromFile(const std::string& path);
-		bool SaveToFile(const std::string& path) const;
+		bool LoadFromFile(StringView path);
+		bool SaveToFile(StringView path) const;
 
-		bool Contains(const std::string& key) const;
+		bool Contains(StringView key) const;
 		std::vector<std::string> Keys() const;
 		std::size_t Size() const;
 
 		/** Missing keys return a null Json (does not insert). */
-		Json Get(const std::string& key) const;
+		Json Get(StringView key) const;
 		Json At(std::size_t index) const;
-		void Set(const std::string& key, const Json& value);
+		void Set(StringView key, const Json& value);
 		void PushBack(const Json& value);
 
-		std::string GetString(const std::string& key, const std::string& def = {}) const;
-		float GetFloat(const std::string& key, float def = 0.f) const;
-		bool GetBool(const std::string& key, bool def = false) const;
-		int GetInt(const std::string& key, int def = 0) const;
+		std::string GetString(StringView key, StringView def = {}) const;
+		float GetFloat(StringView key, float def = 0.f) const;
+		bool GetBool(StringView key, bool def = false) const;
+		int GetInt(StringView key, int def = 0) const;
 
-		glm::vec3 GetVec3(const std::string& key, const glm::vec3& def = {}) const;
-		glm::vec4 GetVec4(const std::string& key, const glm::vec4& def = {}) const;
+		glm::vec3 GetVec3(StringView key, const glm::vec3& def = {}) const;
+		glm::vec4 GetVec4(StringView key, const glm::vec4& def = {}) const;
 
-		void Set(const std::string& key, const glm::vec3& v);
-		void Set(const std::string& key, const glm::vec4& v);
-		void Set(const std::string& key, const char* v);
-		void Set(const std::string& key, const std::string& v);
-		void Set(const std::string& key, float v);
-		void Set(const std::string& key, bool v);
-		void Set(const std::string& key, int v);
+		void Set(StringView key, const glm::vec3& v);
+		void Set(StringView key, const glm::vec4& v);
+		/** Keeps a literal from picking the bool overload. */
+		void Set(StringView key, const char* v);
+		void Set(StringView key, StringView v);
+		void Set(StringView key, float v);
+		void Set(StringView key, bool v);
+		void Set(StringView key, int v);
 
 		bool IsNull() const;
 		bool IsObject() const;

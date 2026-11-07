@@ -262,7 +262,7 @@ namespace Sandbox
 		m_WantsToQuit = true;
 	}
 
-	void Game::AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
+	void Game::AddFloor(entt::registry& t_Reg, const Fling::StringView t_Model, const Fling::StringView t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
 	{
 		entt::entity e0 = t_Reg.create();
 		t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);

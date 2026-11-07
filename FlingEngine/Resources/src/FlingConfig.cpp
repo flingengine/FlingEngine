@@ -18,9 +18,9 @@ namespace Fling
     //////////////////////////////////////////////////////////////////////////
     // Config file settings
 
-    bool FlingConfig::LoadConfigFile(const std::string& t_File)
+    bool FlingConfig::LoadConfigFile(const StringView t_File)
     {
-        m_IniReader = INIReader(t_File);
+        m_IniReader = INIReader(std::string(t_File));
 
         if (m_IniReader.ParseError() != 0)
         {
@@ -34,29 +34,29 @@ namespace Fling
         return true;
     }
 
-    std::string FlingConfig::GetStringImpl(const std::string& t_Section, const std::string& t_Key, const std::string& t_Default) const
+    std::string FlingConfig::GetStringImpl(const StringView t_Section, const StringView t_Key, const StringView t_Default) const
     {
-        return m_IniReader.Get(t_Section, t_Key, t_Default);
+        return m_IniReader.Get(std::string(t_Section), std::string(t_Key), std::string(t_Default));
     }
 
-    int FlingConfig::GetIntImpl(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal/*=-1*/) const
+    int FlingConfig::GetIntImpl(const StringView t_Section, const StringView t_Key, const int t_DefaultVal/*=-1*/) const
     {
-        return m_IniReader.GetInteger(t_Section, t_Key, t_DefaultVal);
+        return m_IniReader.GetInteger(std::string(t_Section), std::string(t_Key), t_DefaultVal);
     }
 
-    bool FlingConfig::GetBoolImpl(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal /* =false */) const
+    bool FlingConfig::GetBoolImpl(const StringView t_Section, const StringView t_Key, const bool t_DefaultVal /* =false */) const
     {
-        return m_IniReader.GetBoolean(t_Section, t_Key, t_DefaultVal);
+        return m_IniReader.GetBoolean(std::string(t_Section), std::string(t_Key), t_DefaultVal);
     }
 
-    float FlingConfig::GetFloatImpl(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal /*=0.0f*/) const
+    float FlingConfig::GetFloatImpl(const StringView t_Section, const StringView t_Key, const float t_DefaultVal /*=0.0f*/) const
     {
-        return static_cast<float>(m_IniReader.GetReal(t_Section, t_Key, t_DefaultVal));
+        return static_cast<float>(m_IniReader.GetReal(std::string(t_Section), std::string(t_Key), t_DefaultVal));
     }
 
-    double FlingConfig::GetDoubleImpl(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal /*= 0.0*/) const
+    double FlingConfig::GetDoubleImpl(const StringView t_Section, const StringView t_Key, const double t_DefaultVal /*= 0.0*/) const
     {
-        return m_IniReader.GetReal(t_Section, t_Key, t_DefaultVal);
+        return m_IniReader.GetReal(std::string(t_Section), std::string(t_Key), t_DefaultVal);
     }   
 
 }   // namespace Fling

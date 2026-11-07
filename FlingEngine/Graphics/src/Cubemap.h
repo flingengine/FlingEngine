@@ -8,7 +8,7 @@
 namespace Fling
 {
     /**
-     * A cube map image made from six face images in one folder. The Guid is the folder path
+     * A cube map image made from six face images in one folder. The asset path is the folder path
      * relative to the assets directory, for example "Textures/Skybox/Garden". The folder must
      * have the files posx, negx, posy, negy, posz and negz, each with an image extension
      * (.png, .jpg, .jpeg, .tga or .bmp). All faces must be square and the same size.
@@ -16,9 +16,9 @@ namespace Fling
     class Cubemap : public Resource
     {
     public:
-        static std::shared_ptr<Fling::Cubemap> Create(Guid t_ID);
+        static std::shared_ptr<Fling::Cubemap> Create(const AssetPath& t_Path);
 
-        explicit Cubemap(Guid t_ID);
+        explicit Cubemap(const AssetPath& t_Path);
         virtual ~Cubemap();
 
         FORCEINLINE uint32 GetFaceSize() const { return m_FaceSize; }

@@ -167,9 +167,9 @@ namespace Fling
 		return nullptr;
 	}
 
-	bool CommandLine::LoadConfigFile(const std::string& FilePath)
+	bool CommandLine::LoadConfigFile(const StringView FilePath)
 	{
-		std::ifstream File(FilePath);
+		std::ifstream File(PathFromUtf8(FilePath));
 		if (!File.is_open())
 		{
 			return false;

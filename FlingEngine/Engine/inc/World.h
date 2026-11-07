@@ -5,6 +5,7 @@
 #include "Json.h"
 #include "Level.h"
 #include "Platform.h"
+#include "Strings/String.h"
 
 #include <cassert>
 #include <entt/entity/registry.hpp>
@@ -32,7 +33,7 @@ namespace Fling
 		*
 		* @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty means use the config.
 		*/
-		void Init(const std::string& t_StartLevel = {});
+		void Init(StringView t_StartLevel = {});
 
 		/**
 		 * Tick all active levels in the world and upates any Lua scripts that have Update functions
@@ -87,7 +88,7 @@ namespace Fling
 		 * @param t_LevelToLoad File path to write (relative to the assets directory)
 		 * @return True on success
 		 */
-		bool OutputLevelFile(const std::string& t_LevelToLoad);
+		bool OutputLevelFile(StringView t_LevelToLoad);
 
 		/**
 		 * Reset the current registry and load entities/components from a JSON level file.
@@ -96,7 +97,7 @@ namespace Fling
 		 * @param t_LevelToLoad File path to load (relative to the assets directory)
 		 * @return True on success
 		 */
-		bool LoadLevelFile(const std::string& t_LevelToLoad);
+		bool LoadLevelFile(StringView t_LevelToLoad);
 
 		FORCEINLINE entt::registry& GetRegistry() const { return m_Registry; }
 
@@ -143,10 +144,10 @@ namespace Fling
         void StopGame(bool t_RestoreSnapshot);
 
         /** Write all registered components on living entities to a level document */
-        bool SaveToJson(Json& t_OutDoc, const std::string& t_Title) const;
+        bool SaveToJson(Json& t_OutDoc, StringView t_Title) const;
 
         /** Remove all entities, then make the entities in a level document */
-        bool LoadFromJson(const Json& t_Doc, const std::string& t_SourceName);
+        bool LoadFromJson(const Json& t_Doc, StringView t_SourceName);
 
         WorldState m_CurrentState = WorldState::NONE;
 

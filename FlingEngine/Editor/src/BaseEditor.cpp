@@ -55,7 +55,7 @@ namespace Fling
                 std::string ModelName = "None";
                 if (t_MeshRend.m_Model)
                 {
-                    ModelName = t_MeshRend.GetModelGuidString();
+                    ModelName = t_MeshRend.GetModelPath();
                 }
 
                 ImGui::LabelText("Model", ModelName.c_str(), "%s");
@@ -90,7 +90,7 @@ namespace Fling
                 std::string MaterialName = "None";
                 if (t_MeshRend.m_Material)
                 {
-                    MaterialName = t_MeshRend.GetMaterialGuidString();
+                    MaterialName = t_MeshRend.GetMaterialPath();
                 }
 
                 const char* m = MaterialName.c_str();

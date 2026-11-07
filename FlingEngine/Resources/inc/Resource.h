@@ -1,9 +1,11 @@
 #pragma once
 
+#include "AssetPath.h"
 #include "FlingTypes.h"
 #include "Platform.h"
 
 #include <string>
+#include <utility>
 
 namespace Fling
 {
@@ -15,38 +17,23 @@ namespace Fling
 		friend class ResourceManager;
 
 	public:
-        explicit Resource(Fling::Guid t_ID)
-            : m_Guid(t_ID)
-        { 
-			m_HumanReadableName = m_Guid.data();
-		}
-		
+        explicit Resource(AssetPath t_Path) : m_Path(std::move(t_Path)) {}
+
         virtual ~Resource() = default;
 
-		/**
-		 * Get GUID handle (just an int) for this resources guid. Use this to pass around
-		 * 			to different functions instead of the whole GUID
-		 * 
-		 * @return Fling::Guid_Handle 
-		 */
-		Fling::Guid_Handle GetGuidHandle() const { return m_Guid; }
+		/** The id of this resource. Use it to pass the resource around and to look it up. */
+		AssetId GetAssetId() const { return m_Path.GetId(); }
 
-		/**
-		 * Get the human-readable string representation of this GUID
-		 * 
-		 * @return std::string 
-		 */
-		const std::string& GetGuidString() const { return m_HumanReadableName; }
+		/** The canonical path of this resource, relative to its root folder. */
+		const AssetPath& GetAssetPath() const { return m_Path; }
 
         /**
-         * Returns the full file path that is relative to the assets path based on the GUID of this resource.
+         * Returns the full file path that is relative to the assets path based on the path of this resource.
          */
         std::string GetFilepathReleativeToAssets() const;
 
     protected:
 
-        Fling::Guid m_Guid;
-
-		std::string m_HumanReadableName;
+        AssetPath m_Path;
 	};
 }	// namespace Fling

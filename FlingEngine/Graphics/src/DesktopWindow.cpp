@@ -211,11 +211,11 @@ namespace Fling
 		return m_IsMouseVisible;
 	}
 
-	void DesktopWindow::SetWindowIcon(Guid t_ID)
+	void DesktopWindow::SetWindowIcon(const AssetPath& t_Path)
 	{
 		// Decode the file here. The icon does not need a GPU texture, and a Texture
 		// does not keep its pixels after the upload.
-		const std::string Filepath = FlingPaths::EngineAssetsDir() + "/" + t_ID.data();
+		const std::string Filepath = FlingPaths::EngineAssetsDir() + "/" + t_Path.GetText();
 		int Width = 0;
 		int Height = 0;
 		int Channels = 0;

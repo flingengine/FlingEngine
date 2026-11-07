@@ -73,14 +73,14 @@ namespace Fling
 		friend class ResourceManager;
     public:
 
-		static std::shared_ptr<Fling::Shader> Create(Guid t_ID, LogicalDevice* t_Dev);
+		static std::shared_ptr<Fling::Shader> Create(const AssetPath& t_Path, LogicalDevice* t_Dev);
 
         /**
          * Load a shader from disk and compile it.
          * 
-         * @param t_ID  The GUID that represents the file path to this file.
+         * @param t_Path  The path of this shader, relative to the compiled shader folder.
          */
-        explicit Shader(Guid t_ID, LogicalDevice* t_Dev);
+        explicit Shader(const AssetPath& t_Path, LogicalDevice* t_Dev);
 
         ~Shader();
 
@@ -118,7 +118,7 @@ namespace Fling
         /**
          * Load the raw shader code in off-disk
          */
-        static std::vector<char> LoadRawBytes(const std::string& t_FilePath);
+        static std::vector<char> LoadRawBytes(StringView t_FilePath);
 
         /** The shader module created by this shader */
         VkShaderModule m_Module = VK_NULL_HANDLE;

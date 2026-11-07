@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "Misc/StringUtils.h"
+#include "Strings/String.h"
 
 #include <string> // string, stoi, to_string
 #include <string_view>  // std::string_view
@@ -83,7 +84,7 @@ namespace Fling
          * @param FilePath   Path to the ini file to load
          * @return True if the file was opened and parsed successfully
          */
-        bool LoadConfigFile(const std::string& FilePath);
+        bool LoadConfigFile(StringView FilePath);
 
         /**
          * Same as LoadConfigFile, but parses the ini data directly out of the given

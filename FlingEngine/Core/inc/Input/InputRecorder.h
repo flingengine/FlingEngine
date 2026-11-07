@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputRecording.h"
+#include "Strings/String.h"
 
 #include <memory>
 #include <optional>
@@ -45,7 +46,7 @@ namespace Fling
          * @param t_StartDelay      Seconds to wait before recording starts
          * @param t_Duration        Seconds to record. 0 means "until Stop"
          */
-        void Start(const std::string& t_Path, float t_StartDelay, float t_Duration);
+        void Start(StringView t_Path, float t_StartDelay, float t_Duration);
 
         /**
          * Stop. During the countdown this cancels and writes nothing. During recording this

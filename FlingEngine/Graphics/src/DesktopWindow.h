@@ -57,9 +57,9 @@ namespace Fling
 
 		/** 
 		* Set this window's icon.
-		* @param t_ID	the GUID of the window icon
+		* @param t_Path	the path of the window icon, relative to the assets folder
 		*/
-		void SetWindowIcon(Guid t_ID) override;
+		void SetWindowIcon(const AssetPath& t_Path) override;
 
 		/** get the current GLFW window */
 		GLFWwindow* GetGlfwWindow() const { return m_Window; }

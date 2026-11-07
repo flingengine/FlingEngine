@@ -26,7 +26,7 @@ namespace Fling
 		, m_ShouldQuit(false)
 	{ }
 
-	void World::Init(const std::string& t_StartLevel)
+	void World::Init(const StringView t_StartLevel)
 	{
 		F_LOG_TRACE("World Init!");
 		assert(m_CurrentState == WorldState::NONE);
@@ -36,7 +36,7 @@ namespace Fling
 		m_Game->Init(m_Registry);
 		ComponentTypeRegistry::Get().Seal();
 
-		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : t_StartLevel;
+		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : std::string(t_StartLevel);
 		if (!LevelToLoad.empty())
 		{
 			LoadLevelFile(LevelToLoad);
@@ -167,7 +167,7 @@ namespace Fling
         }
 	}
 
-	bool World::OutputLevelFile(const std::string& t_LevelToLoad)
+	bool World::OutputLevelFile(const StringView t_LevelToLoad)
 	{
         Json root = Json::Object();
         if (!SaveToJson(root, t_LevelToLoad))
@@ -176,12 +176,12 @@ namespace Fling
             return false;
 		}
 
-        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelToLoad;
+        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + std::string(t_LevelToLoad);
         F_LOG_TRACE("Outputting Level file to {}", FullPath);
         return root.SaveToFile(FullPath);
     }
 
-    bool World::SaveToJson(Json& t_OutDoc, const std::string& t_Title) const
+    bool World::SaveToJson(Json& t_OutDoc, const StringView t_Title) const
     {
         const ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
         if (!typeRegistry.IsSealed())
@@ -200,7 +200,7 @@ namespace Fling
 			std::string name;
 			if (m_Registry.has<NameComponent>(entity))
 			{
-				name = m_Registry.get<NameComponent>(entity).Name;
+				name = std::string(m_Registry.get<NameComponent>(entity).Name.ToView());
 			}
 			if (name.empty())
 			{
@@ -247,7 +247,7 @@ namespace Fling
         return true;
     }
 
-    bool World::LoadLevelFile(const std::string& t_LevelToLoad)
+    bool World::LoadLevelFile(const StringView t_LevelToLoad)
 	{
         if (!ComponentTypeRegistry::Get().IsSealed())
         {
@@ -255,7 +255,7 @@ namespace Fling
 			return false;
 		}
 
-        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + t_LevelToLoad;
+        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + std::string(t_LevelToLoad);
         F_LOG_TRACE("Loading Level file from {}", FullPath);
 
 		Json doc;
@@ -267,7 +267,7 @@ namespace Fling
         return LoadFromJson(doc, FullPath);
     }
 
-    bool World::LoadFromJson(const Json& t_Doc, const std::string& t_SourceName)
+    bool World::LoadFromJson(const Json& t_Doc, const StringView t_SourceName)
     {
         const ComponentTypeRegistry& typeRegistry = ComponentTypeRegistry::Get();
         if (!typeRegistry.IsSealed())
@@ -306,7 +306,7 @@ namespace Fling
 			}
 
 			NameComponent& nameComp = m_Registry.assign<NameComponent>(entity);
-			nameComp.Name = name;
+			nameComp.Name = Name(name);
 
 			auto LoadNamedComponent = [&](const std::string& key)
 			{

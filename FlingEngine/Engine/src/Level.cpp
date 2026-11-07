@@ -4,7 +4,7 @@
 
 namespace Fling
 {
-	Level::Level(const std::string& t_LevelFile, World* t_OwningWorld)
+	Level::Level(const StringView t_LevelFile, World* t_OwningWorld)
 		: m_LevelFileName(t_LevelFile)
 		, m_OwningWorld(t_OwningWorld)
 	{

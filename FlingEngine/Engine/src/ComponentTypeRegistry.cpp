@@ -11,9 +11,9 @@ namespace Fling
 		return instance;
 	}
 
-	bool ComponentTypeRegistry::CanRegister(const char* name)
+	bool ComponentTypeRegistry::CanRegister(const StringView name)
 	{
-		if (!name || name[0] == '\0')
+		if (name.empty())
 		{
 			F_LOG_ERROR("ComponentTypeRegistry::Register called with an empty type name");
 			return false;
@@ -25,7 +25,7 @@ namespace Fling
 			return false;
 		}
 
-		if (m_NameToIndex.find(name) != m_NameToIndex.end())
+		if (m_NameToIndex.find(Name::WithoutText(name)) != m_NameToIndex.end())
 		{
 			F_LOG_WARN("Duplicate component type name '{}', ignoring", name);
 			return false;
@@ -34,11 +34,12 @@ namespace Fling
 		return true;
 	}
 
-	void ComponentTypeRegistry::AddType(const char* name, ComponentTypeInfo info)
+	void ComponentTypeRegistry::AddType(const StringView name, ComponentTypeInfo info)
 	{
 		m_NameStorage.emplace_back(name);
 		info.name = m_NameStorage.back().c_str();
-		m_NameToIndex.emplace(m_NameStorage.back(), m_Types.size());
+		info.TypeName = Name(m_NameStorage.back());
+		m_NameToIndex.emplace(info.TypeName, m_Types.size());
 		m_Types.push_back(std::move(info));
 	}
 
@@ -56,9 +57,9 @@ namespace Fling
 		}
 	}
 
-	void ComponentTypeRegistry::SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity))
+	void ComponentTypeRegistry::SetEditorWidget(const StringView name, void(*fn)(entt::registry&, entt::entity))
 	{
-		const auto it = m_NameToIndex.find(name);
+		const auto it = m_NameToIndex.find(Name::WithoutText(name));
 		if (it == m_NameToIndex.end())
 		{
 			F_LOG_WARN("ComponentTypeRegistry::SetEditorWidget('{}') called before the type was registered", name);
@@ -90,9 +91,10 @@ namespace Fling
 		m_Sealed = true;
 	}
 
-	const ComponentTypeInfo* ComponentTypeRegistry::Find(const std::string& name) const
+	const ComponentTypeInfo* ComponentTypeRegistry::Find(const StringView name) const
 	{
-		const auto it = m_NameToIndex.find(name);
+		// Text from a file may not be a type name, so do not add it to the name table.
+		const auto it = m_NameToIndex.find(Name::WithoutText(name));
 		if (it == m_NameToIndex.end())
 		{
 			return nullptr;

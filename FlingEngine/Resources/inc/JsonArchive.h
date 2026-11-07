@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Json.h"
+#include "Strings/Name.h"
 
 #include <string>
 #include <type_traits>
@@ -103,6 +104,19 @@ namespace Fling
 			else
 			{
 				field.Value = m_Doc.GetString(field.Name, field.Value);
+			}
+		}
+		else if constexpr (std::is_same_v<T, Name>)
+		{
+			// A Name is saved as its text, so files stay readable. Loading it makes the
+			// same hash on every machine.
+			if (IsSaving())
+			{
+				m_Doc.Set(field.Name, std::string(field.Value.ToView()));
+			}
+			else
+			{
+				field.Value = Name(m_Doc.GetString(field.Name, std::string(field.Value.ToView())));
 			}
 		}
 		else if constexpr (std::is_same_v<T, glm::vec3>)

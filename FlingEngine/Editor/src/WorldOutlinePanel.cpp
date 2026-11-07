@@ -45,9 +45,9 @@ namespace Fling
 				const bool bIsSelected = (m_SelectedEntity == entity);
 
 				std::string label;
-				if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.empty())
+				if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.IsNone())
 				{
-					label = t_Reg.get<NameComponent>(entity).Name;
+					label = std::string(t_Reg.get<NameComponent>(entity).Name.ToView());
 				}
 				else
 				{

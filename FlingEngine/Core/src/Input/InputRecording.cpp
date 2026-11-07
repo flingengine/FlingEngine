@@ -866,19 +866,19 @@ namespace Fling
         return true;
     }
 
-    bool LoadInputRecording(const std::string& t_Path, InputRecording& t_Out, std::string& t_OutError)
+    bool LoadInputRecording(const StringView t_Path, InputRecording& t_Out, std::string& t_OutError)
     {
-        std::ifstream File(t_Path, std::ios::binary);
+        std::ifstream File(PathFromUtf8(t_Path), std::ios::binary);
         if (!File)
         {
-            t_OutError = "cannot open '" + t_Path + "'";
+            t_OutError = "cannot open '" + std::string(t_Path) + "'";
             return false;
         }
         std::ostringstream Buffer;
         Buffer << File.rdbuf();
         if (!ParseInputRecording(Buffer.str(), t_Out, t_OutError))
         {
-            t_OutError = t_Path + ": " + t_OutError;
+            t_OutError = std::string(t_Path) + ": " + t_OutError;
             return false;
         }
         return true;
@@ -966,11 +966,11 @@ namespace Fling
         return Text;
     }
 
-    bool SaveInputRecording(const std::string& t_Path, const InputRecording& t_Recording, std::string& t_OutError)
+    bool SaveInputRecording(const StringView t_Path, const InputRecording& t_Recording, std::string& t_OutError)
     {
         namespace fs = std::filesystem;
         std::error_code Code;
-        const fs::path Path(t_Path);
+        const fs::path Path = PathFromUtf8(t_Path);
         if (Path.has_parent_path())
         {
             fs::create_directories(Path.parent_path(), Code);
@@ -980,17 +980,17 @@ namespace Fling
                 return false;
             }
         }
-        std::ofstream File(t_Path, std::ios::binary | std::ios::trunc);
+        std::ofstream File(Path, std::ios::binary | std::ios::trunc);
         if (!File)
         {
-            t_OutError = "cannot write '" + t_Path + "'";
+            t_OutError = "cannot write '" + std::string(t_Path) + "'";
             return false;
         }
         File << WriteInputRecording(t_Recording);
         File.flush();
         if (!File)
         {
-            t_OutError = "error while writing '" + t_Path + "'";
+            t_OutError = "error while writing '" + std::string(t_Path) + "'";
             return false;
         }
         return true;

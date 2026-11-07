@@ -1,6 +1,7 @@
 #pragma once
 
 #include "JsonArchive.h"
+#include "Strings/String.h"
 
 #include <entt/entity/registry.hpp>
 #include <string>
@@ -23,9 +24,9 @@ namespace Fling
         MeshRenderer();
 
         /** Load a mesh renderer with the default material */
-        MeshRenderer(const std::string& t_MeshPath);
+        MeshRenderer(StringView t_MeshPath);
 
-        MeshRenderer(const std::string& t_MeshPath, const std::string& t_MaterialPath);
+        MeshRenderer(StringView t_MeshPath, StringView t_MaterialPath);
 
         /**
          * Create a mesh renderer with the given material and model.
@@ -66,14 +67,14 @@ namespace Fling
 
         void Serialize(JsonArchive& Ar);
 
-        void LoadModelFromPath(const std::string& t_MeshPath);
+        void LoadModelFromPath(StringView t_MeshPath);
 
-        void LoadMaterialFromPath(const std::string& t_MatPath);
+        void LoadMaterialFromPath(StringView t_MatPath);
 
         /** Asset path of the assigned model, or an empty string when none is set. */
-        std::string GetModelGuidString() const;
+        std::string GetModelPath() const;
 
         /** Asset path of the assigned material, or an empty string when none is set. */
-        std::string GetMaterialGuidString() const;
+        std::string GetMaterialPath() const;
     };
 } // namespace Fling

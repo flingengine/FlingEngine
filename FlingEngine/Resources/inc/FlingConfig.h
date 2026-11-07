@@ -2,6 +2,7 @@
 
 #include "FlingWarnings.h"
 #include "Singleton.hpp"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -33,32 +34,32 @@ namespace Fling
         * 
         * @return True if file was read successfully
         */
-        bool LoadConfigFile(const std::string& t_File);
+        bool LoadConfigFile(StringView t_File);
 
-		static std::string GetString(const std::string& t_Section, const std::string& t_Key, std::string t_Default = "INVALID") { return FlingConfig::Get().GetStringImpl(t_Section, t_Key, t_Default); }
+		static std::string GetString(StringView t_Section, StringView t_Key, StringView t_Default = "INVALID") { return FlingConfig::Get().GetStringImpl(t_Section, t_Key, t_Default); }
 
-		static int GetInt(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) { return FlingConfig::Get().GetIntImpl(t_Section, t_Key); }
+		static int GetInt(StringView t_Section, StringView t_Key, const int t_DefaultVal = -1) { return FlingConfig::Get().GetIntImpl(t_Section, t_Key, t_DefaultVal); }
 
-		static bool GetBool(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal = false) { return FlingConfig::Get().GetBoolImpl(t_Section, t_Key); }
+		static bool GetBool(StringView t_Section, StringView t_Key, const bool t_DefaultVal = false) { return FlingConfig::Get().GetBoolImpl(t_Section, t_Key, t_DefaultVal); }
 
-		static float GetFloat(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) { return FlingConfig::Get().GetFloatImpl(t_Section, t_Key); }
+		static float GetFloat(StringView t_Section, StringView t_Key, const float t_DefaultVal = 0.0f) { return FlingConfig::Get().GetFloatImpl(t_Section, t_Key, t_DefaultVal); }
 
-		static double GetDouble(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) { return FlingConfig::Get().GetDoubleImpl(t_Section, t_Key); }
+		static double GetDouble(StringView t_Section, StringView t_Key, const double t_DefaultVal = 0.0) { return FlingConfig::Get().GetDoubleImpl(t_Section, t_Key, t_DefaultVal); }
         
     private:
 
         /** Ini config file reader */
         static INIReader m_IniReader;
 
-		std::string GetStringImpl(const std::string& t_Section, const std::string& t_Key, const std::string& t_Default) const;
+		std::string GetStringImpl(StringView t_Section, StringView t_Key, StringView t_Default) const;
 
-		int GetIntImpl(const std::string& t_Section, const std::string& t_Key, const int t_DefaultVal = -1) const;
+		int GetIntImpl(StringView t_Section, StringView t_Key, const int t_DefaultVal = -1) const;
 
-		bool GetBoolImpl(const std::string& t_Section, const std::string& t_Key, const bool t_DefaultVal = false) const;
+		bool GetBoolImpl(StringView t_Section, StringView t_Key, const bool t_DefaultVal = false) const;
 
-		float GetFloatImpl(const std::string& t_Section, const std::string& t_Key, const float t_DefaultVal = 0.0f) const;
+		float GetFloatImpl(StringView t_Section, StringView t_Key, const float t_DefaultVal = 0.0f) const;
 
-		double GetDoubleImpl(const std::string& t_Section, const std::string& t_Key, const double t_DefaultVal = 0.0) const;
+		double GetDoubleImpl(StringView t_Section, StringView t_Key, const double t_DefaultVal = 0.0) const;
 
     };
 

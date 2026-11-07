@@ -2,6 +2,7 @@
 
 #include "FlingMath.h"
 #include "Game.h"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -51,7 +52,7 @@ namespace Sandbox
 		bool m_DoRotations = false;
 		bool m_MovePointLights = false;
 
-		void AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
+		void AddFloor(entt::registry& t_Reg, Fling::StringView t_Model, Fling::StringView t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
 
 		void ToggleRotation();
 

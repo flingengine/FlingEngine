@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Strings/String.h"
+
 
 #include <string>
 
@@ -21,7 +23,7 @@ namespace Fling
 		* Loads this level based on the given file name. 
 		* @param t_LevelFile		The path to the level file (should be a full path, NOT relative to assets dir)
 		*/
-        explicit Level(const std::string& t_LevelFile, World* t_OwningWorld);
+        explicit Level(StringView t_LevelFile, World* t_OwningWorld);
         ~Level();
 
         /**

@@ -9,7 +9,7 @@
 #if WITH_INPUT_RECORDING
 namespace Fling
 {
-    void InputRecorder::Start(const std::string& t_Path, float t_StartDelay, float t_Duration)
+    void InputRecorder::Start(const StringView t_Path, float t_StartDelay, float t_Duration)
     {
         if (IsActive())
         {

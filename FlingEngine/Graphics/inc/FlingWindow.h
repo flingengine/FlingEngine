@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AssetPath.h"
 #include "FlingTypes.h"
 
 #include <string>
@@ -78,9 +79,9 @@ namespace Fling
 
 		/** 
 		* Set this window's icon.
-		* @param t_ID	the GUID of the window icon
+		* @param t_Path	the path of the window icon, relative to the assets folder
 		*/
-		virtual void SetWindowIcon(Guid t_ID) = 0;
+		virtual void SetWindowIcon(const AssetPath& t_Path) = 0;
 		
 		/**
 		* Check if this window is currently minimized

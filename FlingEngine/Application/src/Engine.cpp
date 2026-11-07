@@ -7,6 +7,7 @@
 #include "FlingWindow.h"
 #include "Input/GlfwInput.h"
 #include "Input/Input.h"
+#include "Localization.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CrashHandler.h"
 #include "Physics.h"
@@ -18,11 +19,125 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <random>
 #include <thread>
 
 namespace Fling
 {
+    ExitCode Engine::StartLocalization()
+	{
+		const std::string Folder = FlingConfig::GetString("Localization", "Folder", "Localization");
+		const Name SourceLanguage(FlingConfig::GetString("Localization", "SourceLanguage", "en"));
+		auto Loc = std::make_shared<Localization>(PathFromUtf8(FlingPaths::EngineAssetsDir() + "/" + Folder), SourceLanguage);
+
+		Loc->LoadLanguage(SourceLanguage);
+		const std::string Language = !m_Options.Language.empty()
+			? m_Options.Language
+			: FlingConfig::GetString("Localization", "Language", std::string(SourceLanguage.ToView()));
+		Loc->SetLanguage(Name(Language));
+		F_LOG_TRACE("Language: {} (source {}), {}", Loc->GetLanguage(), SourceLanguage,
+			Loc->GetTextDirection() == TextDirection::RightToLeft ? "right to left" : "left to right");
+		Localization::SetActive(Loc);
+
+		if (!m_Options.LocImport.empty())
+		{
+			const std::string ImportPath = FlingPaths::ResolveProjectPath(m_Options.LocImport);
+			std::ifstream File(PathFromUtf8(ImportPath), std::ios::binary);
+			if (!File)
+			{
+				F_LOG_ERROR("Cannot read {}", ImportPath);
+				return ExitCode::Failure;
+			}
+			const std::string Csv((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+
+			// Load every language first, so the saved tables keep the entries that the
+			// file does not have.
+			for (const Name OnDisk : Loc->FindLanguagesOnDisk())
+			{
+				Loc->LoadLanguage(OnDisk);
+			}
+
+			std::string Error;
+			std::vector<Name> Languages;
+			if (!Loc->ImportCsv(Csv, Error, &Languages))
+			{
+				F_LOG_ERROR("Cannot import {}: {}", ImportPath, Error);
+				return ExitCode::Failure;
+			}
+			for (const Name Imported : Languages)
+			{
+				if (!Loc->SaveLanguage(Imported, Error))
+				{
+					F_LOG_ERROR("Cannot save language {}: {}", Imported, Error);
+					return ExitCode::Failure;
+				}
+				const size_t MissingCount = Loc->FindMissing(Imported).size();
+				F_LOG_TRACE("Imported language {} ({} entries missing)", Imported, MissingCount);
+			}
+		}
+
+		if (!m_Options.LocGather.empty())
+		{
+			const std::string Folder = FlingPaths::ResolveProjectPath(m_Options.LocGather);
+			std::error_code Error;
+			std::vector<GatheredEntry> Entries;
+			for (auto It = std::filesystem::recursive_directory_iterator(PathFromUtf8(Folder), Error);
+				 !Error && It != std::filesystem::recursive_directory_iterator(); It.increment(Error))
+			{
+				const std::filesystem::path Extension = It->path().extension();
+				if (!It->is_regular_file() || (Extension != ".cpp" && Extension != ".h" && Extension != ".hpp" && Extension != ".inl"))
+				{
+					continue;
+				}
+				std::ifstream File(It->path(), std::ios::binary);
+				const std::string Code((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+				const std::string Location = PathToUtf8(std::filesystem::relative(It->path(), PathFromUtf8(Folder), Error));
+				for (GatheredEntry& Entry : Localization::GatherFromCode(Code, Location))
+				{
+					Entries.push_back(std::move(Entry));
+				}
+			}
+			if (Error)
+			{
+				F_LOG_ERROR("Cannot search {}: {}", Folder, Error.message());
+				return ExitCode::Failure;
+			}
+
+			const GatherResult Result = Loc->AddGathered(Entries);
+			std::string SaveError;
+			if (Result.Added > 0 && !Loc->SaveLanguage(SourceLanguage, SaveError))
+			{
+				F_LOG_ERROR("Cannot save language {}: {}", SourceLanguage, SaveError);
+				return ExitCode::Failure;
+			}
+			F_LOG_TRACE("Gathered {} string table uses from {}: {} added, {} with different text, {} with no text",
+				Entries.size(), Folder, Result.Added, Result.Mismatched, Result.MissingText);
+		}
+
+		if (!m_Options.LocExport.empty())
+		{
+			for (const Name OnDisk : Loc->FindLanguagesOnDisk())
+			{
+				Loc->LoadLanguage(OnDisk);
+			}
+
+			const std::string ExportPath = FlingPaths::ResolveProjectPath(m_Options.LocExport);
+			std::ofstream File(PathFromUtf8(ExportPath), std::ios::binary);
+			File << Loc->ExportCsv();
+			if (!File)
+			{
+				F_LOG_ERROR("Cannot write {}", ExportPath);
+				return ExitCode::Failure;
+			}
+			F_LOG_TRACE("Exported string tables to {}", ExportPath);
+		}
+
+		return ExitCode::Success;
+	}
+
     ExitCode Engine::Startup(int argc, const char* argv[])
 	{
 		m_StartTime = std::chrono::steady_clock::now();
@@ -102,6 +217,11 @@ namespace Fling
 		// fallback, so systems can query CommandLine::GetValueAs for values that were
 		// only set in the config file. Command line args passed directly still win.
 		CommandLine::Get().LoadConfigFile(EngineConfigPath);
+
+		if (const ExitCode LocalizationCode = StartLocalization(); LocalizationCode != ExitCode::Success)
+		{
+			return LocalizationCode;
+		}
 
 #if WITH_INPUT_RECORDING
 		// Start input replay and recording before the world exists. A file that cannot
@@ -352,6 +472,7 @@ namespace Fling
 				m_InputWindow = WindowHandle{};
 			}
 			Input::Get().Shutdown();
+			Localization::SetActive(nullptr);
 			ResourceManager::Get().Shutdown();
 			FlingConfig::Get().Shutdown();
 			Timing::Get().Shutdown();

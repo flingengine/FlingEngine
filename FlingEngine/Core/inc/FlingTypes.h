@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <entt/core/hashed_string.hpp>
 #include <entt/entity/helper.hpp>
 #include <inttypes.h>
 #include <limits>
@@ -17,16 +16,6 @@ typedef int8_t                  int8;
 typedef signed short            int16;
 typedef int32_t                 int32;
 typedef int64_t                 int64;
-
-#define HS(str) entt::hashed_string { (str) }
-
-namespace Fling
-{
-    // Use hashed strings as Guid's
-    typedef entt::hashed_string                     Guid;
-    typedef entt::hashed_string::hash_type          Guid_Handle;
-    static Guid INVALID_GUID = { "INVALID_GUID"_hs };
-}
 
 /**
  * Helper function to check size_t is correctly converted to uint32_t
