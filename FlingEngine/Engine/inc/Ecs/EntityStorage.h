@@ -1,19 +1,18 @@
 #pragma once
 
 #include "Ecs/Component.h"
-#include "Ecs/detail/EnttBridge.h"
+#include "Ecs/detail/NativeStorage.h"
 #include "Ecs/Entity.h"
-#include "Ecs/TypeHash.h"
 #include "Signals.h"
 
+#include <algorithm>
+#include <array>
+#include <cassert>
 #include <cstddef>
-#include <iterator>
-#include <memory>
 #include <tuple>
 #include <type_traits>
-#include <typeindex>
-#include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace Fling
 {
@@ -22,85 +21,77 @@ namespace Fling
     /** The callback type for component hooks: the storage and the entity that changed. */
     using EntityHookSignature = void(EntityStorage&, Entity);
 
+    namespace Detail
+    {
+        /** Construct a T at memory, with () when T has a matching constructor and {} otherwise (aggregates). */
+        template <typename T, typename... Args>
+        T* ConstructAt(void* memory, Args&&... args)
+        {
+            if constexpr (std::is_constructible_v<T, Args...>)
+            {
+                return ::new (memory) T(std::forward<Args>(args)...);
+            }
+            else
+            {
+                return ::new (memory) T{std::forward<Args>(args)...};
+            }
+        }
+
+        template <typename T, typename... Args>
+        T MakeValue(Args&&... args)
+        {
+            if constexpr (std::is_constructible_v<T, Args...>)
+            {
+                return T(std::forward<Args>(args)...);
+            }
+            else
+            {
+                return T{std::forward<Args>(args)...};
+            }
+        }
+    } // namespace Detail
+
     /**
-     * Every entity that has all of the Ts. Made by EntityStorage::View.
+     * Every entity that has all of the Ts, found when the view is made. Made by
+     * EntityStorage::View, for code outside systems (systems use ctx.Query).
      *
-     * Iterate it with a range-for (each element is an Entity), or call Each. Empty
-     * types (tags) filter the entities but are not passed to the Each callback.
+     * The list of entities is taken when the view is made, so the loop body may add
+     * and remove components. Iterate it with a range-for (each element is an Entity),
+     * or call Each. Empty types (tags) filter the entities but are not passed to Each.
      */
     template <typename... Ts>
     class EntityView
     {
     public:
-        explicit EntityView(entt::registry& registry) : m_View(registry.view<Ts...>()) {}
-
-        class Iterator
+        EntityView(EntityStorage& storage, std::vector<Entity> entities)
+            : m_Storage(&storage), m_Entities(std::move(entities))
         {
-        public:
-            using Inner = decltype(std::declval<entt::basic_view<entt::entity, Ts...>&>().begin());
-            using iterator_category = std::forward_iterator_tag;
-            using value_type = Entity;
-            using difference_type = std::ptrdiff_t;
-            using pointer = void;
-            using reference = Entity;
-
-            explicit Iterator(Inner inner) : m_Inner(inner) {}
-
-            Entity operator*() const { return Detail::FromEntt(*m_Inner); }
-
-            Iterator& operator++()
-            {
-                ++m_Inner;
-                return *this;
-            }
-
-            bool operator==(const Iterator& other) const { return m_Inner == other.m_Inner; }
-
-            bool operator!=(const Iterator& other) const { return m_Inner != other.m_Inner; }
-
-        private:
-            Inner m_Inner;
-        };
-
-        Iterator begin() const { return Iterator{m_View.begin()}; }
-
-        Iterator end() const { return Iterator{m_View.end()}; }
-
-        bool Empty() const { return begin() == end(); }
-
-        /** The number of entities in the view. It walks the view. */
-        size_t Size() const
-        {
-            size_t count = 0;
-            for (auto it = begin(); it != end(); ++it)
-            {
-                ++count;
-            }
-            return count;
         }
 
-        /** True if the entity has every T. */
-        bool Contains(const Entity entity) const { return m_View.contains(Detail::ToEntt(entity)); }
+        auto begin() const { return m_Entities.begin(); }
+
+        auto end() const { return m_Entities.end(); }
+
+        bool Empty() const { return m_Entities.empty(); }
+
+        size_t Size() const { return m_Entities.size(); }
+
+        /** True if the entity was in the view when it was made. */
+        bool Contains(const Entity entity) const
+        {
+            return std::find(m_Entities.begin(), m_Entities.end(), entity) != m_Entities.end();
+        }
 
         /** A component of an entity in the view. */
         template <typename T>
-        T& Get(const Entity entity) const
-        {
-            return GetFromView<T>(Detail::ToEntt(entity));
-        }
+        T& Get(const Entity entity) const;
 
         /**
-         * Call fn for each entity. fn takes (Entity, T&...) or (T&...), where the Ts
-         * are the view's types that are not empty, in order.
+         * Call fn for each entity that still has every T. fn takes (Entity, T&...) or
+         * (T&...), where the Ts are the view's types that are not empty, in order.
          */
         template <typename Fn>
-        void Each(Fn&& fn) const
-        {
-            for (const entt::entity e : m_View)
-            {
-                CallWithData(fn, e, DataTypes{});
-            }
-        }
+        void Each(Fn&& fn) const;
 
     private:
         template <typename T>
@@ -108,42 +99,21 @@ namespace Fling
 
         using DataTypes = decltype(std::tuple_cat(std::declval<KeepIfData<Ts>>()...));
 
-        /** A view of one type has a get with no template argument. */
-        template <typename T>
-        T& GetFromView(const entt::entity e) const
-        {
-            if constexpr (sizeof...(Ts) == 1)
-            {
-                return m_View.get(e);
-            }
-            else
-            {
-                return m_View.template get<T>(e);
-            }
-        }
-
         template <typename Fn, typename... Ds>
-        void CallWithData(Fn& fn, const entt::entity e, std::tuple<Ds...>) const
-        {
-            if constexpr (std::is_invocable_v<Fn&, Entity, Ds&...>)
-            {
-                fn(Detail::FromEntt(e), GetFromView<Ds>(e)...);
-            }
-            else
-            {
-                fn(GetFromView<Ds>(e)...);
-            }
-        }
+        void CallWithData(Fn& fn, Entity entity, std::tuple<Ds...>) const;
 
-        entt::basic_view<entt::entity, Ts...> m_View;
+        EntityStorage* m_Storage;
+        std::vector<Entity> m_Entities;
     };
 
     /**
      * The entities and components of one world, and the world's singletons.
      *
      * This is the one API that engine code uses to read and change entities. The
-     * storage behind it is EnTT for now. The native backend replaces it without
-     * changes to callers.
+     * storage behind it is archetypes in chunks (Detail::NativeStorage). Adding or
+     * removing a Table component moves the entity to another archetype, so a
+     * reference to one of its components is not valid after that. Keep the Entity,
+     * and Get the component again.
      *
      * Systems do not use this class. They use their typed context, which the
      * compiler checks against the system's access list.
@@ -151,79 +121,104 @@ namespace Fling
     class EntityStorage
     {
     public:
-        EntityStorage() = default;
+        EntityStorage() : m_Native(*this) {}
         EntityStorage(const EntityStorage&) = delete;
         EntityStorage& operator=(const EntityStorage&) = delete;
         ~EntityStorage() = default;
 
         // Entities -------------------------------------------------------------------
 
-        Entity Create() { return Detail::FromEntt(m_Registry.create()); }
+        Entity Create() { return m_Native.Create(); }
 
         /** Destroy the entity and all of its components. A stale or null handle is ignored. */
-        void Destroy(const Entity entity)
-        {
-            if (IsValid(entity))
-            {
-                m_Registry.destroy(Detail::ToEntt(entity));
-            }
-        }
+        void Destroy(const Entity entity) { m_Native.Destroy(entity); }
 
         /** True if the handle points at a living entity. */
-        bool IsValid(const Entity entity) const
-        {
-            const entt::entity e = Detail::ToEntt(entity);
-            return e != entt::null && m_Registry.valid(e);
-        }
+        bool IsValid(const Entity entity) const { return m_Native.IsValid(entity); }
 
-        /** Destroy every entity. Singletons stay. */
-        void Clear() { m_Registry.reset(); }
+        /** Destroy every entity. The Removed hooks run. Singletons stay. */
+        void Clear() { m_Native.Clear(); }
 
         /** The number of living entities. */
-        size_t EntityCount() const { return m_Registry.alive(); }
+        size_t EntityCount() const { return m_Native.EntityCount(); }
 
-        /** Call fn(Entity) for each living entity. */
+        /** Call fn(Entity) for each living entity. The list is taken first, so fn may change the storage. */
         template <typename Fn>
         void EachEntity(Fn&& fn) const
         {
-            m_Registry.each([&](const entt::entity e) { fn(Detail::FromEntt(e)); });
+            for (const Entity entity : m_Native.AllEntities())
+            {
+                fn(entity);
+            }
         }
 
         // Components ------------------------------------------------------------------
 
-        /** Add a T to the entity. The entity must not have one. */
+        /** Add a T to the entity. The entity must not have one. Returns the new component (nothing for a tag). */
         template <typename T, typename... Args>
         decltype(auto) Add(const Entity entity, Args&&... args)
         {
-            return m_Registry.assign<T>(Detail::ToEntt(entity), std::forward<Args>(args)...);
+            const Detail::ComponentId id = Detail::ComponentIdOf<T>();
+            void* memory = m_Native.BeginAdd(entity, id);
+            if constexpr (std::is_empty_v<T>)
+            {
+                (void)memory;
+                m_Native.EndAdd(entity, id);
+            }
+            else
+            {
+                Detail::ConstructAt<T>(memory, std::forward<Args>(args)...);
+                m_Native.EndAdd(entity, id);
+                // A hook may move the entity, so find the component again
+                return *static_cast<T*>(m_Native.Get(entity, id));
+            }
         }
 
         /** Add a T to the entity, or replace the one it has. */
         template <typename T, typename... Args>
         decltype(auto) AddOrReplace(const Entity entity, Args&&... args)
         {
-            return m_Registry.assign_or_replace<T>(Detail::ToEntt(entity), std::forward<Args>(args)...);
+            if (Has<T>(entity))
+            {
+                return Replace<T>(entity, std::forward<Args>(args)...);
+            }
+            return Add<T>(entity, std::forward<Args>(args)...);
         }
 
         /** Replace the entity's T. The entity must have one. */
         template <typename T, typename... Args>
         decltype(auto) Replace(const Entity entity, Args&&... args)
         {
-            return m_Registry.replace<T>(Detail::ToEntt(entity), std::forward<Args>(args)...);
+            const Detail::ComponentId id = Detail::ComponentIdOf<T>();
+            if constexpr (std::is_empty_v<T>)
+            {
+                m_Native.NotifyReplaced(entity, id);
+            }
+            else
+            {
+                T& existing = *static_cast<T*>(m_Native.Get(entity, id));
+                existing = Detail::MakeValue<T>(std::forward<Args>(args)...);
+                m_Native.NotifyReplaced(entity, id);
+                return *static_cast<T*>(m_Native.Get(entity, id));
+            }
         }
 
         /** The entity's T. Adds a default T first if the entity has none. */
         template <typename T>
         T& GetOrAdd(const Entity entity)
         {
-            return m_Registry.get_or_assign<T>(Detail::ToEntt(entity));
+            if (T* existing = TryGet<T>(entity))
+            {
+                return *existing;
+            }
+            return Add<T>(entity);
         }
 
         /** Remove the entity's T. The entity must have one. */
         template <typename T>
         void Remove(const Entity entity)
         {
-            m_Registry.remove<T>(Detail::ToEntt(entity));
+            m_Native.Remove(entity, Detail::ComponentIdOf<T>());
         }
 
         /** Remove the entity's T if it has one. */
@@ -240,47 +235,66 @@ namespace Fling
         template <typename... Ts>
         bool Has(const Entity entity) const
         {
-            return m_Registry.has<Ts...>(Detail::ToEntt(entity));
+            return (m_Native.Has(entity, Detail::ComponentIdOf<Ts>()) && ...);
         }
 
         /** The entity's T. The entity must have one. */
         template <typename T>
         T& Get(const Entity entity)
         {
-            return m_Registry.get<T>(Detail::ToEntt(entity));
+            T* component = TryGet<T>(entity);
+            assert(component != nullptr && "Get on an entity that does not have the component");
+            return *component;
         }
 
         template <typename T>
         const T& Get(const Entity entity) const
         {
-            return m_Registry.get<T>(Detail::ToEntt(entity));
+            const T* component = TryGet<T>(entity);
+            assert(component != nullptr && "Get on an entity that does not have the component");
+            return *component;
         }
 
         /** The entity's T, or null if it has none. */
         template <typename T>
         T* TryGet(const Entity entity)
         {
-            return m_Registry.try_get<T>(Detail::ToEntt(entity));
+            return static_cast<T*>(m_Native.Get(entity, Detail::ComponentIdOf<T>()));
         }
 
         template <typename T>
         const T* TryGet(const Entity entity) const
         {
-            return m_Registry.try_get<T>(Detail::ToEntt(entity));
+            return static_cast<const T*>(m_Native.Get(entity, Detail::ComponentIdOf<T>()));
         }
 
         /** The number of entities with a T. */
         template <typename T>
         size_t Count() const
         {
-            return m_Registry.size<T>();
+            return m_Native.Count(Detail::ComponentIdOf<T>());
         }
 
-        /** Every entity that has all of the Ts. */
+        /** Turn an Enableable component on or off. It stays on the entity, and the entity does not move. */
+        template <typename T>
+        void SetEnabled(const Entity entity, const bool enabled)
+        {
+            static_assert(ComponentInfoOf<T>.Storage == ComponentStorage::Enableable,
+                          "SetEnabled needs a component with .Storage = ComponentStorage::Enableable.");
+            m_Native.SetEnabled(entity, Detail::ComponentIdOf<T>(), enabled);
+        }
+
+        template <typename T>
+        bool IsEnabled(const Entity entity) const
+        {
+            return m_Native.IsEnabled(entity, Detail::ComponentIdOf<T>());
+        }
+
+        /** Every entity that has all of the Ts (and, for Enableable ones, has them on). */
         template <typename... Ts>
         EntityView<Ts...> View()
         {
-            return EntityView<Ts...>{m_Registry};
+            return EntityView<Ts...>(*this, Gather<Ts...>());
         }
 
         // Singletons ------------------------------------------------------------------
@@ -289,40 +303,46 @@ namespace Fling
         template <typename T, typename... Args>
         T& SetSingleton(Args&&... args)
         {
-            return m_Registry.set<T>(std::forward<Args>(args)...);
+            T* object = new T(Detail::MakeValue<T>(std::forward<Args>(args)...));
+            m_Native.SetSingleton(Detail::ComponentIdOf<T>(), object, [](void* p) { delete static_cast<T*>(p); });
+            return *object;
         }
 
         /** The world's T. It must exist. */
         template <typename T>
         T& Singleton()
         {
-            return m_Registry.ctx<T>();
+            T* object = TryGetSingleton<T>();
+            assert(object != nullptr && "Singleton: the world has none");
+            return *object;
         }
 
         template <typename T>
         const T& Singleton() const
         {
-            return m_Registry.ctx<T>();
+            const T* object = TryGetSingleton<T>();
+            assert(object != nullptr && "Singleton: the world has none");
+            return *object;
         }
 
         /** The world's T, or null if there is none. */
         template <typename T>
         T* TryGetSingleton()
         {
-            return m_Registry.try_ctx<T>();
+            return static_cast<T*>(m_Native.GetSingleton(Detail::ComponentIdOf<T>()));
         }
 
         template <typename T>
         const T* TryGetSingleton() const
         {
-            return m_Registry.try_ctx<T>();
+            return static_cast<const T*>(m_Native.GetSingleton(Detail::ComponentIdOf<T>()));
         }
 
         /** Remove the world's T, if there is one. */
         template <typename T>
         void RemoveSingleton()
         {
-            m_Registry.unset<T>();
+            m_Native.RemoveSingleton(Detail::ComponentIdOf<T>());
         }
 
         // Hooks -----------------------------------------------------------------------
@@ -331,72 +351,138 @@ namespace Fling
         template <typename T>
         Sink<EntityHookSignature> OnAdd()
         {
-            return Sink<EntityHookSignature>{HooksFor<T>().Added};
+            return Sink<EntityHookSignature>{m_Native.Hooks(Detail::ComponentIdOf<T>()).Added};
         }
 
-        /** Runs after an entity's T is replaced. */
+        /** Runs after an entity's T is replaced (AddOrReplace or Replace). */
         template <typename T>
         Sink<EntityHookSignature> OnReplace()
         {
-            return Sink<EntityHookSignature>{HooksFor<T>().Replaced};
+            return Sink<EntityHookSignature>{m_Native.Hooks(Detail::ComponentIdOf<T>()).Replaced};
         }
 
         /** Runs before a T is removed from an entity, and before an entity with a T is destroyed. */
         template <typename T>
         Sink<EntityHookSignature> OnRemove()
         {
-            return Sink<EntityHookSignature>{HooksFor<T>().Removed};
+            return Sink<EntityHookSignature>{m_Native.Hooks(Detail::ComponentIdOf<T>()).Removed};
         }
 
-        // Backend ---------------------------------------------------------------------
+        // Telemetry and backend ---------------------------------------------------------
 
-        /** The EnTT registry behind this storage. Only Ecs/ code uses it. It goes away with EnTT. */
-        entt::registry& Native() { return m_Registry; }
+        /** Archetype, chunk, and entity counts, and how many rows have moved. */
+        EcsStats Stats() const { return m_Native.Stats(); }
 
-        const entt::registry& Native() const { return m_Registry; }
+        /** The storage behind this API. Only Ecs/ code uses it. */
+        Detail::NativeStorage& Native() { return m_Native; }
+
+        const Detail::NativeStorage& Native() const { return m_Native; }
 
     private:
-        struct HookSet
+        template <typename... Ts>
+        std::vector<Entity> Gather();
+
+        mutable Detail::NativeStorage m_Native;
+    };
+
+    template <typename... Ts>
+    std::vector<Entity> EntityStorage::Gather()
+    {
+        const std::array<Detail::ComponentId, sizeof...(Ts)> ids{Detail::ComponentIdOf<Ts>()...};
+
+        std::vector<Detail::ComponentId> archetypeIds;
+        std::vector<Detail::ComponentId> sparseIds;
+        std::vector<Detail::ComponentId> enableableIds;
+        for (const Detail::ComponentId id : ids)
         {
-            EntityStorage* Owner = nullptr;
-            Signal<EntityHookSignature> Added;
-            Signal<EntityHookSignature> Replaced;
-            Signal<EntityHookSignature> Removed;
-        };
-
-        template <typename T>
-        struct TypedHooks : HookSet
-        {
-            void OnConstruct(const entt::entity e, entt::registry&, T&) { Added.Publish(*Owner, Detail::FromEntt(e)); }
-
-            void OnUpdate(const entt::entity e, entt::registry&, T&) { Replaced.Publish(*Owner, Detail::FromEntt(e)); }
-
-            void OnDestroy(const entt::entity e, entt::registry&) { Removed.Publish(*Owner, Detail::FromEntt(e)); }
-        };
-
-        template <typename T>
-        HookSet& HooksFor()
-        {
-            static_assert(!std::is_empty_v<T>, "Hooks on tags are not supported");
-            const std::type_index key{typeid(T)};
-            auto found = m_Hooks.find(key);
-            if (found != m_Hooks.end())
+            const ComponentStorage kind = Detail::GetComponentOps(id).Storage;
+            (kind == ComponentStorage::Sparse ? sparseIds : archetypeIds).push_back(id);
+            if (kind == ComponentStorage::Enableable)
             {
-                return *found->second;
+                enableableIds.push_back(id);
             }
-            auto hooks = std::make_unique<TypedHooks<T>>();
-            hooks->Owner = this;
-            m_Registry.on_construct<T>().template connect<&TypedHooks<T>::OnConstruct>(*hooks);
-            m_Registry.on_replace<T>().template connect<&TypedHooks<T>::OnUpdate>(*hooks);
-            m_Registry.on_destroy<T>().template connect<&TypedHooks<T>::OnDestroy>(*hooks);
-            HookSet& result = *hooks;
-            m_Hooks.emplace(key, std::move(hooks));
+        }
+        std::sort(archetypeIds.begin(), archetypeIds.end());
+
+        std::vector<Entity> result;
+        auto accept = [&](const Entity entity)
+        {
+            for (const Detail::ComponentId id : sparseIds)
+            {
+                if (!m_Native.Has(entity, id))
+                {
+                    return;
+                }
+            }
+            for (const Detail::ComponentId id : enableableIds)
+            {
+                if (!m_Native.IsEnabled(entity, id))
+                {
+                    return;
+                }
+            }
+            result.push_back(entity);
+        };
+
+        if (archetypeIds.empty() && !sparseIds.empty())
+        {
+            // Only sparse types: walk the first set
+            if (const Detail::SparseSet* set = m_Native.FindSparse(sparseIds.front()))
+            {
+                const std::vector<Entity> dense = set->Dense;
+                for (const Entity entity : dense)
+                {
+                    accept(entity);
+                }
+            }
             return result;
         }
 
-        entt::registry m_Registry;
+        for (Detail::Archetype* arch : m_Native.Match(archetypeIds, {}))
+        {
+            for (const std::unique_ptr<Detail::Chunk>& chunk : arch->Chunks)
+            {
+                for (uint32 row = 0; row < chunk->Count; ++row)
+                {
+                    accept(chunk->Entities[row]);
+                }
+            }
+        }
+        return result;
+    }
 
-        /** Destroyed before the registry. Destroying a registry calls no hooks. */
-        std::unordered_map<std::type_index, std::unique_ptr<HookSet>> m_Hooks;
-    };
+    template <typename... Ts>
+    template <typename T>
+    T& EntityView<Ts...>::Get(const Entity entity) const
+    {
+        return m_Storage->template Get<T>(entity);
+    }
+
+    template <typename... Ts>
+    template <typename Fn>
+    void EntityView<Ts...>::Each(Fn&& fn) const
+    {
+        for (const Entity entity : m_Entities)
+        {
+            // A change made by an earlier call can remove a type from this entity
+            if (m_Storage->IsValid(entity) && m_Storage->template Has<Ts...>(entity))
+            {
+                CallWithData(fn, entity, DataTypes{});
+            }
+        }
+    }
+
+    template <typename... Ts>
+    template <typename Fn, typename... Ds>
+    void EntityView<Ts...>::CallWithData(Fn& fn, const Entity entity, std::tuple<Ds...>) const
+    {
+        if constexpr (std::is_invocable_v<Fn&, Entity, Ds&...>)
+        {
+            fn(entity, m_Storage->template Get<Ds>(entity)...);
+        }
+        else
+        {
+            fn(m_Storage->template Get<Ds>(entity)...);
+        }
+    }
 } // namespace Fling

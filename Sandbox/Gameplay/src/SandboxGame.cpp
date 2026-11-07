@@ -104,17 +104,21 @@ namespace Sandbox
 			glm::vec3 max = { 15.0f, 1.0f, 15.0f };
 			const glm::vec3 startPos = Fling::Random::GetRandomVec3(min, max);
 
-			// The renderer adds a Transform to a new PointLight, but there is no renderer
-			// under --null-render. get_or_assign works in both cases.
-            PointLight& Light = t_Reg.Add<PointLight>(e0);
-			Transform& t0 = t_Reg.GetOrAdd<Transform>(e0);
-			t0.Position = startPos;
-            Mover& m0 = t_Reg.Add<Mover>(e0);
+            // Each Add moves the entity to a new archetype, so build each component
+            // whole and add it, instead of keeping a reference across adds
+            Transform t0;
+            t0.Position = startPos;
+            t_Reg.AddOrReplace<Transform>(e0, t0);
+
+            Mover m0;
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
-            
+            t_Reg.Add<Mover>(e0, m0);
+
+            PointLight Light;
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
             Light.Intensity = 5.0f;
             Light.Range = 3.0f;
+            t_Reg.Add<PointLight>(e0, Light);
         };
 
 		

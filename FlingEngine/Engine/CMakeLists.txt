@@ -11,7 +11,5 @@ fling_add_module(Engine
 	PUBLIC_DEPS
 		Core
 		Resources	# Reflection saves and loads Json
-	PUBLIC_LIBS
-		FlingExt::entt	# Storage behind World until the native backend replaces it
 )
 

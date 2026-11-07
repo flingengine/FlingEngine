@@ -9,6 +9,7 @@
 #include <cassert>
 #include <optional>
 #include <ranges>
+#include <unordered_map>
 
 namespace Fling
 {
@@ -206,18 +207,45 @@ namespace Fling
 
     void SystemRunner::FlushCommands()
     {
+        // 1. Every system's adds and removes, grouped by entity in the order the
+        //    entities first appear, so each entity moves archetype once
+        std::vector<Entity> order;
+        std::unordered_map<Entity, std::vector<Detail::PendingChange>> byEntity;
         for (const uint32 i : m_RunOrder)
         {
-            DeferredCommands& commands = m_Commands[i];
-            for (const DeferredCommands::StructuralFn& change : commands.StructuralChanges())
+            for (DeferredCommands::ComponentChange& each : m_Commands[i].ComponentChanges())
+            {
+                auto [it, inserted] = byEntity.try_emplace(each.Target);
+                if (inserted)
+                {
+                    order.push_back(each.Target);
+                }
+                it->second.push_back(each.Change);
+                // The batch owns the value now
+                each.Change.Value = nullptr;
+            }
+        }
+        for (const Entity entity : order)
+        {
+            std::vector<Detail::PendingChange>& changes = byEntity[entity];
+            m_Storage.Native().ApplyBatch(entity, changes);
+        }
+
+        // 2. The other deferred changes, then 3. the destroys, each in schedule order
+        for (const uint32 i : m_RunOrder)
+        {
+            for (const DeferredCommands::StructuralFn& change : m_Commands[i].StructuralChanges())
             {
                 change(m_Storage);
             }
-            for (const Entity entity : commands.Destroys())
+        }
+        for (const uint32 i : m_RunOrder)
+        {
+            for (const Entity entity : m_Commands[i].Destroys())
             {
                 HierarchyUtil::DestroySubtree(m_Storage, entity);
             }
-            commands.Clear();
+            m_Commands[i].Clear();
         }
     }
 

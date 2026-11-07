@@ -5,8 +5,9 @@ Status: work items 1 to 6 (with 3b, open phases, §3.8) are done (branch
 
 This plan is the first step of [`ecs-plan.md`](ecs-plan.md). It adds the
 system interface, component declarations, access declarations, and the
-schedule builder. They run **beside EnTT**: the storage is still
-`entt::registry` until the native backend replaces it (`ecs-plan.md` Phase F).
+schedule builder. They ran **beside EnTT** at first. EnTT is gone now
+(`ecs-plan.md` Phases F and G), and the storage is native. Sections below that
+name EnTT describe how the slice was first built.
 
 Companion plans:
 

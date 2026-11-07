@@ -3,7 +3,6 @@
 #include "Ecs/TypeHash.h"
 #include "FlingTypes.h"
 
-#include <entt/core/type_traits.hpp>
 #include <string_view>
 #include <type_traits>
 
@@ -31,6 +30,20 @@ namespace Fling
         Presentation,
     };
 
+    /** Where the storage keeps a Table component (Plans/ecs-plan.md section 1.10). */
+    enum class ComponentStorage : uint8
+    {
+        /** A column in the entity's archetype. Fastest to iterate. Adding or removing it moves the entity. */
+        Table,
+        /** A column with an enabled flag per entity. Turning it on or off does not move the entity. */
+        Enableable,
+        /**
+         * Beside the archetypes, in its own set. Adding or removing it never moves the entity,
+         * and its address is stable. For components that come and go often on few entities.
+         */
+        Sparse,
+    };
+
     /**
      * The declaration on a component type. Put it on the struct as
      * `static constexpr Fling::ComponentInfo Component { .Name = "Mover" };`.
@@ -43,6 +56,8 @@ namespace Fling
         ComponentDomain Domain = ComponentDomain::Simulation;
         /** True if the type is never saved to a level (proxies, caches, queues). */
         bool Transient = false;
+        /** Table components only: how the storage keeps it. */
+        ComponentStorage Storage = ComponentStorage::Table;
     };
 
     namespace Detail
@@ -94,22 +109,3 @@ namespace Fling
     inline constexpr bool IsSingletonComponent =
         ComponentInfoOf<T>.Kind == ComponentKind::Singleton || ComponentInfoOf<T>.Kind == ComponentKind::Queue;
 } // namespace Fling
-
-/**
- * EnTT 3.1 gives each unnamed type a number from a counter (entt::family). That
- * counter is a pair of inline variables whose dynamic initialization order is not
- * specified, so a build can give several types the same number, and then they
- * share one storage pool. Clang Release builds do this.
- *
- * A named type does not use the counter. This makes every Fling::Component a
- * named type, with an id made from its saved name. It is in this header so that
- * every file that sees a component also sees its id.
- */
-// clang-format off
-template <typename T>
-    requires Fling::Component<T>
-struct entt::named_type_traits<T>
-    : std::integral_constant<ENTT_ID_TYPE, static_cast<ENTT_ID_TYPE>(Fling::TypeHashOf<T> ^ (Fling::TypeHashOf<T> >> 32))>
-{
-};
-// clang-format on

@@ -1,5 +1,4 @@
 #include "Components/Transform.h"
-#include "Ecs/detail/EnttBridge.h"
 #include "Physics.h"
 
 #include <algorithm>
@@ -57,7 +56,15 @@ namespace Fling
             std::vector<PhysicsBodyDesc> Descs;
 
             auto View = t_Reg.View<Transform, RigidBody, Collider>();
-            for (const Fling::Entity Entity : View)
+
+            // Physics libraries give different results for a different creation order,
+            // so the order is a rule here, not whatever order the storage keeps:
+            // highest entity index first (the newest entity of a fresh level first).
+            std::vector<Fling::Entity> Ordered(View.begin(), View.end());
+            std::sort(Ordered.begin(), Ordered.end(),
+                      [](const Fling::Entity a, const Fling::Entity b) { return b < a; });
+
+            for (const Fling::Entity Entity : Ordered)
             {
                 if (t_Reg.Has<PhysicsBody>(Entity))
                 {

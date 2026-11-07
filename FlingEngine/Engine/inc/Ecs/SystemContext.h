@@ -2,13 +2,14 @@
 
 #include "Ecs/Access.h"
 #include "Ecs/Component.h"
-#include "Ecs/detail/EnttBridge.h"
 #include "Ecs/Entity.h"
 #include "Ecs/EntityStorage.h"
 #include "Ecs/Phase.h"
 #include "Ecs/TypeList.h"
 #include "Input/TickInput.h"
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <functional>
@@ -22,13 +23,29 @@ namespace Fling
 {
     /**
      * Changes that wait until the end of the fixed tick. Each system has its own buffer.
-     * At the flush, each system's structural changes run in the order they were
-     * recorded, then its destroys. Systems flush in schedule order.
+     *
+     * At the flush, the typed adds and removes of every system are grouped by entity,
+     * so each entity moves to its final archetype once, however many systems changed
+     * it. Then each system's other deferred changes (Defer) run in schedule order, and
+     * last the destroys.
      */
     class DeferredCommands
     {
     public:
         using StructuralFn = std::function<void(EntityStorage&)>;
+
+        struct ComponentChange
+        {
+            Entity Target;
+            Detail::PendingChange Change;
+        };
+
+        DeferredCommands() = default;
+        DeferredCommands(const DeferredCommands&) = delete;
+        DeferredCommands& operator=(const DeferredCommands&) = delete;
+        DeferredCommands(DeferredCommands&& other) noexcept = default;
+        DeferredCommands& operator=(DeferredCommands&& other) noexcept = default;
+        ~DeferredCommands() { Clear(); }
 
         /**
          * Destroys the entity, and its children, at the end of the tick. Destruction is
@@ -38,15 +55,48 @@ namespace Fling
 
         std::span<const Entity> Destroys() const { return m_Destroy; }
 
-        /** A change to the storage at the flush. Use the typed context calls (Add, Remove, Defer). */
+        /** Add (or replace) a component at the flush. Use the typed context call ctx.Add. */
+        template <typename T>
+        void AddComponent(const Entity entity, T value)
+        {
+            m_Changes.push_back(ComponentChange{entity,
+                                                Detail::PendingChange{Detail::ComponentIdOf<T>(),
+                                                                      true,
+                                                                      new T(std::move(value)),
+                                                                      [](void* object)
+                                                                      {
+                                                                          delete static_cast<T*>(object);
+                                                                      }}});
+        }
+
+        /** Remove a component at the flush, if the entity has it. Use the typed context call ctx.Remove. */
+        template <typename T>
+        void RemoveComponent(const Entity entity)
+        {
+            m_Changes.push_back(
+                ComponentChange{entity, Detail::PendingChange{Detail::ComponentIdOf<T>(), false, nullptr, nullptr}});
+        }
+
+        std::span<ComponentChange> ComponentChanges() { return m_Changes; }
+
+        /** A change to the storage at the flush. Use the typed context call ctx.Defer. */
         void Structural(StructuralFn fn) { m_Structural.push_back(std::move(fn)); }
 
         std::span<const StructuralFn> StructuralChanges() const { return m_Structural; }
 
-        bool Empty() const { return m_Destroy.empty() && m_Structural.empty(); }
+        bool Empty() const { return m_Destroy.empty() && m_Structural.empty() && m_Changes.empty(); }
 
+        /** Drop everything. Values of adds that were not applied are freed. */
         void Clear()
         {
+            for (ComponentChange& each : m_Changes)
+            {
+                if (each.Change.Value != nullptr)
+                {
+                    each.Change.Free(each.Change.Value);
+                }
+            }
+            m_Changes.clear();
             m_Destroy.clear();
             m_Structural.clear();
         }
@@ -54,6 +104,7 @@ namespace Fling
     private:
         std::vector<Entity> m_Destroy;
         std::vector<StructuralFn> m_Structural;
+        std::vector<ComponentChange> m_Changes;
     };
 
     /** The storage a system's OnCreate and OnDestroy see. Systems use SystemSetup<Access> instead. */
@@ -162,12 +213,22 @@ namespace Fling
     /**
      * The entities that have every component in Ts and pass the filters. Each item is
      * std::tuple<Entity, T&...>, so write `for (auto [entity, a, b] : ctx.Query<A, const B>())`.
+     *
+     * It walks the matching archetypes chunk by chunk over raw column pointers. The
+     * archetypes, chunks, and rows to visit are fixed when each one is reached, so an
+     * entity spawned during the loop is not seen by this loop (later systems see it).
      */
     template <typename... Ts, typename... Ws, typename... Xs>
     class QueryRange<TypeList<Ts...>, TypeList<Ws...>, TypeList<Xs...>>
     {
-        using View = entt::basic_view<entt::entity, std::remove_const_t<Ts>..., Ws...>;
-        using ViewIterator = decltype(std::declval<const View&>().begin());
+        static constexpr size_t GetCount = sizeof...(Ts);
+
+        template <typename T>
+        static constexpr bool IsSparse = ComponentInfoOf<std::remove_const_t<T>>.Storage == ComponentStorage::Sparse;
+
+        template <typename T>
+        static constexpr bool IsEnableable =
+            ComponentInfoOf<std::remove_const_t<T>>.Storage == ComponentStorage::Enableable;
 
     public:
         using Item = std::tuple<Entity, Ts&...>;
@@ -175,58 +236,208 @@ namespace Fling
         class Iterator
         {
         public:
-            Iterator(entt::registry& registry, ViewIterator it, ViewIterator end)
-                : m_Registry(&registry), m_It(it), m_End(end)
+            Iterator() = default;
+
+            Iterator(const QueryRange* range, const bool atEnd) : m_Range(range)
             {
-                SkipExcluded();
+                if (atEnd || m_Range->m_Archetypes.empty())
+                {
+                    m_ArchIndex = m_Range ? m_Range->m_Archetypes.size() : 0;
+                    return;
+                }
+                EnterArchetype();
+                SkipToValid();
             }
 
-            Item operator*() const
-            {
-                const entt::entity e = *m_It;
-                return Item{Detail::FromEntt(e), m_Registry->template get<std::remove_const_t<Ts>>(e)...};
-            }
+            Item operator*() const { return MakeItem(std::index_sequence_for<Ts...>{}); }
 
             Iterator& operator++()
             {
-                ++m_It;
-                SkipExcluded();
+                ++m_Row;
+                SkipToValid();
                 return *this;
             }
 
-            bool operator==(const Iterator& other) const { return m_It == other.m_It; }
+            bool operator==(const Iterator& other) const
+            {
+                return m_ArchIndex == other.m_ArchIndex && m_ChunkIndex == other.m_ChunkIndex && m_Row == other.m_Row;
+            }
 
-            bool operator!=(const Iterator& other) const { return m_It != other.m_It; }
+            bool operator!=(const Iterator& other) const { return !(*this == other); }
 
         private:
-            void SkipExcluded()
+            template <size_t... I>
+            Item MakeItem(std::index_sequence<I...>) const
             {
-                if constexpr (sizeof...(Xs) > 0)
+                const Entity entity = m_Chunk->Entities[m_Row];
+                return Item{entity, Column<Ts, I>(entity)...};
+            }
+
+            template <typename T, size_t I>
+            T& Column(const Entity entity) const
+            {
+                if constexpr (IsSparse<T>)
                 {
-                    while (m_It != m_End && (m_Registry->template has<Xs>(*m_It) || ...))
-                    {
-                        ++m_It;
-                    }
+                    return *static_cast<T*>(m_Range->m_Storage->Get(entity, m_Range->m_GetIds[I]));
+                }
+                else
+                {
+                    return *reinterpret_cast<T*>(m_Columns[I] + m_Row * sizeof(std::remove_const_t<T>));
                 }
             }
 
-            entt::registry* m_Registry;
-            ViewIterator m_It;
-            ViewIterator m_End;
+            void EnterArchetype()
+            {
+                m_Arch = m_Range->m_Archetypes[m_ArchIndex];
+                m_ChunkCount = m_Arch->Chunks.size();
+                m_ChunkIndex = 0;
+                EnterChunk();
+            }
+
+            void EnterChunk()
+            {
+                m_Row = 0;
+                if (m_ChunkIndex >= m_ChunkCount || m_ChunkIndex >= m_Arch->Chunks.size())
+                {
+                    m_Chunk = nullptr;
+                    m_RowCount = 0;
+                    return;
+                }
+                m_Chunk = m_Arch->Chunks[m_ChunkIndex].get();
+                m_RowCount = m_Chunk->Count;
+                for (size_t i = 0; i < GetCount; ++i)
+                {
+                    const int32 column = m_Arch->ColumnOf(m_Range->m_GetIds[i]);
+                    m_Columns[i] = column >= 0 ? m_Chunk->Columns[static_cast<size_t>(column)] : nullptr;
+                }
+            }
+
+            /** Move to the next row that passes the per-row checks (Sparse and Enableable types). */
+            void SkipToValid()
+            {
+                while (m_ArchIndex < m_Range->m_Archetypes.size())
+                {
+                    while (m_Chunk != nullptr && m_Row < m_RowCount)
+                    {
+                        if (RowPasses())
+                        {
+                            return;
+                        }
+                        ++m_Row;
+                    }
+                    if (m_Chunk != nullptr && m_ChunkIndex + 1 < m_ChunkCount)
+                    {
+                        ++m_ChunkIndex;
+                        EnterChunk();
+                        continue;
+                    }
+                    ++m_ArchIndex;
+                    if (m_ArchIndex < m_Range->m_Archetypes.size())
+                    {
+                        EnterArchetype();
+                    }
+                }
+                // At the end: the same state as end()
+                m_ChunkIndex = 0;
+                m_Row = 0;
+            }
+
+            bool RowPasses() const
+            {
+                const QueryRange& range = *m_Range;
+                if (range.m_PerRowChecks)
+                {
+                    const Entity entity = m_Chunk->Entities[m_Row];
+                    for (const Detail::ComponentId id : range.m_SparseRequired)
+                    {
+                        if (!range.m_Storage->Has(entity, id))
+                        {
+                            return false;
+                        }
+                    }
+                    for (const Detail::ComponentId id : range.m_SparseExcluded)
+                    {
+                        if (range.m_Storage->Has(entity, id))
+                        {
+                            return false;
+                        }
+                    }
+                    for (const Detail::ComponentId id : range.m_EnableableRequired)
+                    {
+                        const int32 column = m_Arch->ColumnOf(id);
+                        if (column >= 0 &&
+                            !Detail::NativeStorage::RowEnabled(*m_Chunk, static_cast<size_t>(column), m_Row))
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            const QueryRange* m_Range = nullptr;
+            size_t m_ArchIndex = 0;
+            Detail::Archetype* m_Arch = nullptr;
+            size_t m_ChunkIndex = 0;
+            size_t m_ChunkCount = 0;
+            Detail::Chunk* m_Chunk = nullptr;
+            uint32 m_Row = 0;
+            uint32 m_RowCount = 0;
+            std::array<std::byte*, GetCount == 0 ? 1 : GetCount> m_Columns{};
         };
 
-        explicit QueryRange(entt::registry& registry)
-            : m_Registry(registry), m_View(registry.template view<std::remove_const_t<Ts>..., Ws...>())
+        explicit QueryRange(Detail::NativeStorage& storage)
+            : m_Storage(&storage), m_GetIds{Detail::ComponentIdOf<std::remove_const_t<Ts>>()...}
         {
+            std::vector<Detail::ComponentId> required;
+            std::vector<Detail::ComponentId> excluded;
+            (Classify<std::remove_const_t<Ts>>(required, m_SparseRequired), ...);
+            (Classify<Ws>(required, m_SparseRequired), ...);
+            (Classify<Xs>(excluded, m_SparseExcluded), ...);
+            (AddEnableable<std::remove_const_t<Ts>>(), ...);
+            (AddEnableable<Ws>(), ...);
+            std::sort(required.begin(), required.end());
+            std::sort(excluded.begin(), excluded.end());
+            m_PerRowChecks = !m_SparseRequired.empty() || !m_SparseExcluded.empty() || !m_EnableableRequired.empty();
+            // A copy, so archetypes made during the loop are not visited by it
+            m_Archetypes = storage.Match(required, excluded);
         }
 
-        Iterator begin() const { return Iterator(m_Registry, m_View.begin(), m_View.end()); }
+        Iterator begin() const { return Iterator(this, false); }
 
-        Iterator end() const { return Iterator(m_Registry, m_View.end(), m_View.end()); }
+        Iterator end() const { return Iterator(this, true); }
 
     private:
-        entt::registry& m_Registry;
-        View m_View;
+        template <typename T>
+        static void Classify(std::vector<Detail::ComponentId>& archetypeIds,
+                             std::vector<Detail::ComponentId>& sparseIds)
+        {
+            if constexpr (IsSparse<T>)
+            {
+                sparseIds.push_back(Detail::ComponentIdOf<T>());
+            }
+            else
+            {
+                archetypeIds.push_back(Detail::ComponentIdOf<T>());
+            }
+        }
+
+        template <typename T>
+        void AddEnableable()
+        {
+            if constexpr (IsEnableable<T>)
+            {
+                m_EnableableRequired.push_back(Detail::ComponentIdOf<T>());
+            }
+        }
+
+        Detail::NativeStorage* m_Storage;
+        std::array<Detail::ComponentId, GetCount == 0 ? 1 : GetCount> m_GetIds;
+        std::vector<Detail::Archetype*> m_Archetypes;
+        std::vector<Detail::ComponentId> m_SparseRequired;
+        std::vector<Detail::ComponentId> m_SparseExcluded;
+        std::vector<Detail::ComponentId> m_EnableableRequired;
+        bool m_PerRowChecks = false;
     };
 
     /** Pushes requests into one queue. A queue component keeps its requests in a container named Requests. */
@@ -411,8 +622,8 @@ namespace Fling
 
         /**
          * Makes an entity now, with the given components. Creation is immediate, so the
-         * handle works this tick. Needs Spawns, and Write<T> for each component. Do
-         * not spawn a component type that a loop in this call is iterating.
+         * handle works this tick. Needs Spawns, and Write<T> for each component. A
+         * loop that is running when the entity is spawned does not see it.
          */
         template <typename... Cs>
         Entity Spawn(Cs&&... components)
@@ -461,14 +672,7 @@ namespace Fling
         void Add(const Entity entity, T value)
         {
             static_assert(Allows<A, AccessMode::Write, T>, "Add needs Write<T> in the access list.");
-            Commands().Structural(
-                [entity, value = std::move(value)](EntityStorage& storage) mutable
-                {
-                    if (storage.IsValid(entity))
-                    {
-                        storage.template AddOrReplace<T>(entity, std::move(value));
-                    }
-                });
+            Commands().template AddComponent<T>(entity, std::move(value));
         }
 
         /** Remove the entity's T, if it has one, at the end of the tick. Needs Write<T>. Fixed phases only. */
@@ -476,14 +680,7 @@ namespace Fling
         void Remove(const Entity entity)
         {
             static_assert(Allows<A, AccessMode::Write, T>, "Remove needs Write<T> in the access list.");
-            Commands().Structural(
-                [entity](EntityStorage& storage)
-                {
-                    if (storage.IsValid(entity))
-                    {
-                        storage.template RemoveIfPresent<T>(entity);
-                    }
-                });
+            Commands().template RemoveComponent<T>(entity);
         }
 
         /**
@@ -554,30 +751,27 @@ namespace Fling
     namespace Detail
     {
         template <typename E>
-        void PrepareOne(entt::registry& registry)
+        void PrepareOne()
         {
             if constexpr (std::is_base_of_v<AccessItemBase, E>)
             {
-                using T = typename E::Type;
-                if constexpr (!IsSingletonComponent<T>)
-                {
-                    registry.template reserve<T>(0);
-                }
+                // Give the type its ComponentId before the first tick, not in the middle of one
+                (void)ComponentIdOf<typename E::Type>();
             }
         }
 
         template <typename... Es>
-        void PrepareAll(entt::registry& registry, TypeList<Es...>)
+        void PrepareAll(TypeList<Es...>)
         {
-            (PrepareOne<Es>(registry), ...);
+            (PrepareOne<Es>(), ...);
         }
 
-        /** Makes the EnTT storage for each Table and Tag component in A. EnTT 3.1 would make it on first use otherwise.
-         */
+        /** Registers each component type in A with the storage. */
         template <typename A>
         void PrepareStorage(SystemSetupBase& setup)
         {
-            PrepareAll(setup.Storage().Native(), typename A::Items{});
+            (void)setup;
+            PrepareAll(typename A::Items{});
         }
     } // namespace Detail
 } // namespace Fling

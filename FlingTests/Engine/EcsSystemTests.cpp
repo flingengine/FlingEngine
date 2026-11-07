@@ -285,39 +285,37 @@ TEST_CASE("Describe is made from Info and the access list", "[ecs][system]")
     REQUIRE(ResolveSpawnSystem{}.Describe().Spawns);
 }
 
-TEST_CASE("Entity converts to and from EnTT", "[ecs][system]")
+TEST_CASE("A destroyed entity's handle goes stale when its slot is used again", "[ecs][system]")
 {
     Fling::EntityStorage storage;
-    entt::registry& registry = storage.Native();
-    const entt::entity first = registry.create();
-    registry.destroy(first);
-    const entt::entity reused = registry.create(); // Same index, next version.
+    const Entity first = storage.Create();
+    storage.Destroy(first);
+    const Entity reused = storage.Create(); // Same index, next generation
 
-    const Entity handle = Detail::FromEntt(reused);
-    REQUIRE(handle.Index == Detail::FromEntt(first).Index);
-    REQUIRE(handle.Generation == Detail::FromEntt(first).Generation + 1);
-    REQUIRE(Detail::ToEntt(handle) == reused);
-    REQUIRE(Detail::FromEntt(entt::null).IsNull());
-    const bool nullMaps = Detail::ToEntt(Entity::Null) == entt::null;
-    REQUIRE(nullMaps);
-    REQUIRE(storage.IsValid(handle));
-    REQUIRE_FALSE(storage.IsValid(Detail::FromEntt(first)));
+    REQUIRE(reused.Index == first.Index);
+    REQUIRE(reused.Generation == first.Generation + 1);
+    REQUIRE(storage.IsValid(reused));
+    REQUIRE_FALSE(storage.IsValid(first));
+    REQUIRE_FALSE(storage.IsValid(Entity::Null));
+    // A stale handle is ignored
+    storage.Destroy(first);
+    REQUIRE(storage.IsValid(reused));
 }
 
-TEST_CASE("Each component has its own EnTT type id and storage", "[ecs][system]")
+TEST_CASE("Each component has its own type id and storage", "[ecs][system]")
 {
-    // EnTT 3.1's type counter can give two types the same id in an optimized
-    // build. Component.h makes every component a named type to avoid it.
-    STATIC_REQUIRE(entt::is_named_type_v<Position>);
-    STATIC_REQUIRE(entt::is_named_type_v<Bounds>);
-    REQUIRE(entt::registry::type<Position>() != entt::registry::type<Velocity>());
-    REQUIRE(entt::registry::type<Velocity>() != entt::registry::type<Frozen>());
+    REQUIRE(Detail::ComponentIdOf<Position>() != Detail::ComponentIdOf<Velocity>());
+    REQUIRE(Detail::ComponentIdOf<Velocity>() != Detail::ComponentIdOf<Frozen>());
+    // The id comes from the saved name, so asking again gives the same one
+    REQUIRE(Detail::ComponentIdOf<Position>() == Detail::ComponentIdOf<const Position>());
+    REQUIRE(Detail::GetComponentOps(Detail::ComponentIdOf<Position>()).Key == TypeHashOf<Position>);
 
     Fling::EntityStorage storage;
-    const Fling::Entity e = storage.Create();
+    const Entity e = storage.Create();
     storage.Add<Position>(e, Position{1.0f});
-    REQUIRE_FALSE(storage.Has<Velocity>(e));
-    REQUIRE(storage.Count<Velocity>() == 0);
+    storage.Add<Velocity>(e, Velocity{2.0f});
+    REQUIRE(storage.Get<Position>(e).X == 1.0f);
+    REQUIRE(storage.Get<Velocity>(e).X == 2.0f);
 }
 
 TEST_CASE("OnCreate and OnDestroy make and remove singletons", "[ecs][system]")

@@ -1,6 +1,5 @@
 #include "Components/Transform.h"
 #include "DefaultPhysicsProvider.h"
-#include "Ecs/detail/EnttBridge.h"
 #include "Physics.h"
 #include "Threading/ThreadManager.h"
 #include "TransformUtil.h"

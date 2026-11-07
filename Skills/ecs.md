@@ -9,9 +9,32 @@ GDC 2017.
 The code is in `FlingEngine/Engine/inc/Ecs/`. Each `World` owns one
 `EntityStorage` (`Ecs/EntityStorage.h`): the entities, components, and
 singletons of that world. Code outside a system (the renderer, physics, the
-editor, tests) takes an `EntityStorage&`. It never takes a global registry, and
-it never names EnTT. Systems do not use `EntityStorage`: they use their typed
-context.
+editor, tests) takes an `EntityStorage&`. It never takes a global registry.
+Systems do not use `EntityStorage`: they use their typed context.
+
+## Storage
+
+- Entities with the same set of Table and Tag components share an
+  archetype. Its rows are in chunks that grow from 1 KiB to 16 KiB, one
+  column per component (`Ecs/detail/NativeStorage.h`).
+- **Adding or removing a Table component moves the entity's row.** A
+  reference to one of its components is not valid after that. Keep the
+  `Entity`, and `Get` the component again. Build a component whole and add it,
+  instead of adding it and then writing through the reference after more adds.
+- Pick the storage on the declaration with `.Storage`:
+  - `Table` (the default): the fastest to iterate.
+  - `Enableable`: `SetEnabled<T>(e, false)` turns it off without a move.
+    Queries and views skip entities where it is off.
+  - `Sparse`: beside the archetypes, at a stable address. Adding and removing it
+    never moves the entity. For components that come and go often on few
+    entities.
+- Deferred `ctx.Add` and `ctx.Remove` from every system are grouped by entity
+  at the flush, so an entity moves once per tick however many systems changed
+  it.
+- A query sees the archetypes, chunks, and rows that exist when it reaches
+  them, so an entity spawned inside a loop is not seen by that loop.
+- `EntityStorage::Stats()` gives archetype, chunk, and entity counts and the
+  number of row moves.
 
 ## The rules
 

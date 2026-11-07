@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: in progress. Phases A to E are done. Each phase heading below says what is left.
+Status: Phases A to G are done: EnTT is gone. Phase H (features on the new core) is next, with ecs-features.md and ecs-parallel.md. Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -655,6 +655,14 @@ Done. `Graphics.Extract` writes a `RenderSnapshot` singleton (meshes with their 
 - Add a test that destroys an entity with a `MeshRenderer` and checks that the proxy pool released its slot.
 
 ### Phase F — Native backend (can be built in parallel from Phase B on)
+
+Done. `Ecs/detail/NativeStorage.h` is archetype storage in chunks that grow from 1 KiB to 16 KiB, with a location table, an archetype graph of add and remove edges, a query cache that takes in new archetypes, and swap-and-pop rows. `ComponentInfo::Storage` picks `Table`, `Enableable` (an enabled bit per row, no move to turn it off), or `Sparse` (a set beside the archetypes, at a stable address). Systems iterate chunks over raw column pointers. Deferred adds and removes from all systems are grouped by entity, so an entity moves archetype once per flush. `EntityStorage::Stats()` reports archetypes, chunks, entities, and row moves. `EcsStorageTests.cpp` covers the verification list, and `[!benchmark]` cases measure iteration and create/destroy. Changes from the text below:
+
+- No `FLING_ECS_BACKEND` option and no CI run on both backends: the full suite, ASan and UBSan, and the headless Sandbox checksums were compared on both backends locally before EnTT was deleted.
+- No `Changed<T>` query filter yet: `LocalToWorld::Version` covers the renderer. Change versions per column come with the editor's dirty tracking.
+- The play snapshot stays the JSON save. A chunk `memcpy` snapshot comes with world clone (Phase H).
+- Physics creates bodies in a fixed order (highest entity index first), so its results do not depend on storage order.
+
 - Implement the archetypes, chunks (growing 1→16 KiB), Enableable and Sparse storage, the query cache, change versions, snapshot, and ECS telemetry (§1.2, §1.4, §1.10) in `Engine/src/Ecs/` (see [`ecs-systems.md`](ecs-systems.md) §1). The EnTT backend maps Enableable to add/remove and Sparse to its own storage, so both backends behave the same.
 - Add an archetype/move budget check: a headless run of a fixed number of Sandbox frames.
 - Add a CMake option `FLING_ECS_BACKEND=entt|native` for the transition. CI runs FlingTests on both backends.
@@ -662,6 +670,9 @@ Done. `Graphics.Extract` writes a `RenderSnapshot` singleton (meshes with their 
 - Switch the default to `native` once the tests pass and the benchmarks hold.
 
 ### Phase G — Delete EnTT
+
+Done. The submodule, the CMake external, the Engine link, the bridge, and the named-type workaround are gone. `NOMINMAX` stays, because `windows.h` macros break `std::min` and `std::max` everywhere, not just in EnTT. The GCC 13 and Clang 16 floor stays as the oldest compilers CI tests. `grep -ri entt FlingEngine Sandbox FlingTests CMake` finds only words such as "ComponentType".
+
 - Remove `EnttBackend.cpp`, the backend option, `fling_add_external(entt ...)` (`CMake/FlingExternals.cmake:29`), the link at `FlingEngine/CMakeLists.txt`, the EnTT `NOMINMAX` workaround (`FlingTargets.cmake`), and the `external/entt` submodule.
 - Revisit the GCC 13 / Clang 16 floor that EnTT forced (root `CMakeLists.txt:42-52`).
 - Update `module-split-plan.md` (its module table lists entt), `architecture.md`, and the `ecs-architecture` skill's notes about Fling.

@@ -63,7 +63,7 @@ function(fling_configure_target TARGET)
 	)
 
 	if(MSVC)
-		# NOMINMAX: Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
+		# NOMINMAX: windows.h min and max macros break std::min and std::max
 		target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
 	endif()
 
