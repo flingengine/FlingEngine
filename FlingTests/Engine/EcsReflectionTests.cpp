@@ -62,7 +62,7 @@ namespace
     /** A component that refers to another entity. */
     struct Follow
     {
-        static constexpr ComponentInfo Component{.Name = "Test.Follow"};
+        static constexpr ComponentInfo Component{.Name = "ReflectionTest.Follow"};
         Entity Leader = Entity::Null;
         float Distance = 2.0f;
     };

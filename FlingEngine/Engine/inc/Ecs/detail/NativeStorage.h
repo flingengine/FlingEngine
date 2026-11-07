@@ -57,9 +57,16 @@ namespace Fling::Detail
         void (*Destroy)(void* object) = nullptr;
     };
 
-    /** Give a type its ComponentId, or return the one it has. Thread safe. */
+    /**
+     * Give a type its ComponentId, or return the one it has. Thread safe. Two types
+     * with the same key must have the same shape (a debug build asserts this).
+     */
     ComponentId RegisterComponentType(const ComponentOps& ops);
 
+    /**
+     * The ops of a registered type. Thread safe. The reference stays valid while
+     * other threads register types, because the table never moves an entry.
+     */
     const ComponentOps& GetComponentOps(ComponentId id);
 
     template <typename T>
@@ -110,6 +117,8 @@ namespace Fling::Detail
 
         uint32 Capacity = 0;
         uint32 Count = 0;
+        /** The alignment Memory was allocated with: 64, or more for a type that needs more. */
+        size_t Alignment = 0;
         std::byte* Memory = nullptr;
         Entity* Entities = nullptr;
 
@@ -209,7 +218,7 @@ namespace Fling::Detail
         void Destroy(Entity entity);
         bool IsValid(Entity entity) const;
 
-        /** Destroy every entity (the Removed hooks run). Singletons stay. */
+        /** Destroy every entity (the Removed hooks run). Singletons stay. Entities that a hook makes stay too. */
         void Clear();
 
         size_t EntityCount() const { return m_AliveCount; }
@@ -237,7 +246,14 @@ namespace Fling::Detail
         /** Run the Replaced hooks. */
         void NotifyReplaced(Entity entity, ComponentId id);
 
-        /** Apply several adds and removes to one entity with a single archetype move. */
+        /**
+         * Apply several adds and removes to one entity with a single archetype move.
+         * The last change to each type wins: remove then add of a type the entity has
+         * is a replace, and add then remove of a type it does not have does nothing.
+         * The Removed hooks run first, then the changes, then the Added and Replaced
+         * hooks, in the order the changes were recorded. The batch frees every value,
+         * also when the entity is dead or a hook destroys it.
+         */
         void ApplyBatch(Entity entity, std::span<PendingChange> changes);
 
         size_t Count(ComponentId id) const;
@@ -281,6 +297,8 @@ namespace Fling::Detail
         {
             uint32 Generation = 0;
             bool Alive = false;
+            /** True while Destroy runs the Removed hooks, so a hook cannot destroy the entity again. */
+            bool Dying = false;
             Archetype* Arch = nullptr;
             uint32 ChunkIndex = 0;
             uint32 Row = 0;
@@ -306,16 +324,27 @@ namespace Fling::Detail
 
         /**
          * Move the entity's row to another archetype. Columns both archetypes have are
-         * moved. Columns only the old one has are destroyed (unless keepDropped).
+         * moved. Columns only the old one has are destroyed. Columns only the new one
+         * has are raw memory: the caller constructs them.
          */
         void MoveRow(Slot& slot, Archetype* to);
 
-        /** Destroy (if destroyValues) and remove the row at slot, filling the hole with the last row. */
-        void RemoveRow(Slot& slot, bool destroyValues);
+        /** Destroy the values of the row at slot and remove the row. */
+        void RemoveRow(Slot& slot);
+
+        /**
+         * Fill the row, whose values are already destroyed or moved out, with the
+         * archetype's last row, so every chunk but the last stays full. Frees the
+         * last chunk when it becomes empty.
+         */
+        void FillHole(Archetype* arch, uint32 chunkIndex, uint32 row);
 
         void* ColumnAddress(const Slot& slot, ComponentId id) const;
 
         SparseSet& SparseFor(ComponentId id);
+
+        /** Make room for the entity's value in a sparse set, and return the raw memory. No hooks run. */
+        void* AddSparse(Entity entity, ComponentId id);
 
         /** Destroy and remove the entity's value from a sparse set. No hooks run. */
         void EraseSparse(SparseSet& set, Entity entity);

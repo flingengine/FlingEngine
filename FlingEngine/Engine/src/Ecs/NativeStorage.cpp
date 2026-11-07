@@ -72,6 +72,10 @@ namespace Fling::Detail
         const auto found = table.ByKey.find(ops.Key);
         if (found != table.ByKey.end())
         {
+            // Two types with the same saved name share an id, so they must have the same shape
+            [[maybe_unused]] const ComponentOps& existing = table.Ops[found->second];
+            assert(existing.Size == ops.Size && existing.Align == ops.Align && existing.Storage == ops.Storage &&
+                   existing.Empty == ops.Empty && "Two component types have the same name but a different shape");
             return found->second;
         }
         const ComponentId id = static_cast<ComponentId>(table.Ops.size());
@@ -89,7 +93,10 @@ namespace Fling::Detail
 
     Chunk::~Chunk()
     {
-        ::operator delete(Memory, std::align_val_t{ColumnAlignment});
+        if (Memory != nullptr)
+        {
+            ::operator delete(Memory, std::align_val_t{Alignment});
+        }
     }
 
     SparseSet::~SparseSet()
@@ -190,18 +197,21 @@ namespace Fling::Detail
         {
             return;
         }
-        // Copy, because a hook may change the entity
+        // Copy, because a hook may change the entity. A type that a hook removed
+        // already had its Removed hook run, so check that the entity still has it.
         const std::vector<ComponentId> types = slot->Arch->Types;
         for (const ComponentId id : types)
         {
-            if (HasHooks(id) && IsValid(entity))
+            if (HasHooks(id) && Has(entity, id))
             {
                 m_Hooks[id]->Removed.Publish(m_Owner, entity);
             }
         }
-        for (const std::unique_ptr<SparseSet>& set : m_Sparse)
+        // By index: a hook may add a Sparse type that is new, which grows m_Sparse
+        for (size_t i = 0; i < m_Sparse.size(); ++i)
         {
-            if (set && HasHooks(set->Id) && set->Find(entity) != nullptr)
+            const SparseSet* set = m_Sparse[i].get();
+            if (set != nullptr && HasHooks(set->Id) && set->Find(entity) != nullptr)
             {
                 m_Hooks[set->Id]->Removed.Publish(m_Owner, entity);
             }
@@ -210,18 +220,18 @@ namespace Fling::Detail
 
     void NativeStorage::Destroy(const Entity entity)
     {
-        if (FindSlot(entity) == nullptr)
+        Slot* slot = FindSlot(entity);
+        if (slot == nullptr || slot->Dying)
         {
+            // Dead, or a Removed hook destroys the entity that is being destroyed: the outer call finishes it
             return;
         }
+        slot->Dying = true;
         FireRemovedForAll(entity);
 
-        Slot* slot = FindSlot(entity);
-        if (slot == nullptr)
-        {
-            return;
-        }
-        // The Removed hooks already ran
+        // A hook may make entities, which moves m_Slots
+        slot = FindSlot(entity);
+        // The Removed hooks already ran. Values a hook added are destroyed with no hook.
         for (const std::unique_ptr<SparseSet>& set : m_Sparse)
         {
             if (set && set->Find(entity) != nullptr)
@@ -230,7 +240,8 @@ namespace Fling::Detail
             }
         }
 
-        RemoveRow(*slot, true);
+        RemoveRow(*slot);
+        slot->Dying = false;
         slot->Alive = false;
         slot->Arch = nullptr;
         ++slot->Generation;
@@ -389,16 +400,20 @@ namespace Fling::Detail
 
             auto chunk = std::make_unique<Chunk>();
             chunk->Capacity = capacity;
+            // The offsets are aligned from the start of the block, so the block needs the largest alignment
+            chunk->Alignment = ColumnAlignment;
             size_t offset = AlignUp(capacity * sizeof(Entity), ColumnAlignment);
             std::vector<size_t> offsets;
             for (const Archetype::Column& column : arch->Columns)
             {
-                offset = AlignUp(offset, std::max(ColumnAlignment, column.Align));
+                const size_t align = std::max(ColumnAlignment, column.Align);
+                chunk->Alignment = std::max(chunk->Alignment, align);
+                offset = AlignUp(offset, align);
                 offsets.push_back(offset);
                 offset += capacity * column.Size;
             }
             chunk->Memory = static_cast<std::byte*>(
-                ::operator new(std::max<size_t>(offset, ColumnAlignment), std::align_val_t{ColumnAlignment}));
+                ::operator new(std::max<size_t>(offset, ColumnAlignment), std::align_val_t{chunk->Alignment}));
             chunk->Entities = reinterpret_cast<Entity*>(chunk->Memory);
             chunk->Columns.reserve(offsets.size());
             chunk->Enabled.resize(arch->Columns.size());
@@ -429,21 +444,9 @@ namespace Fling::Detail
         slot.Row = row;
     }
 
-    void NativeStorage::RemoveRow(Slot& slot, const bool destroyValues)
+    void NativeStorage::FillHole(Archetype* arch, const uint32 chunkIndex, const uint32 row)
     {
-        Archetype* arch = slot.Arch;
-        Chunk& chunk = *arch->Chunks[slot.ChunkIndex];
-        const uint32 row = slot.Row;
-
-        if (destroyValues)
-        {
-            for (size_t c = 0; c < arch->Columns.size(); ++c)
-            {
-                GetComponentOps(arch->Columns[c].Id).Destroy(chunk.Columns[c] + row * arch->Columns[c].Size);
-            }
-        }
-
-        // Fill the hole with the archetype's last row, so every chunk but the last is full
+        Chunk& chunk = *arch->Chunks[chunkIndex];
         Chunk& last = *arch->Chunks.back();
         const uint32 lastRow = last.Count - 1;
         const bool isLast = (&last == &chunk) && (lastRow == row);
@@ -464,7 +467,7 @@ namespace Fling::Detail
             const Entity moved = last.Entities[lastRow];
             chunk.Entities[row] = moved;
             Slot& movedSlot = m_Slots[moved.Index];
-            movedSlot.ChunkIndex = slot.ChunkIndex;
+            movedSlot.ChunkIndex = chunkIndex;
             movedSlot.Row = row;
         }
 
@@ -472,16 +475,30 @@ namespace Fling::Detail
         --arch->EntityCount;
         if (last.Count == 0)
         {
+            // Frees last, so no reference into it is used after this
             arch->Chunks.pop_back();
         }
+    }
+
+    void NativeStorage::RemoveRow(Slot& slot)
+    {
+        Archetype* arch = slot.Arch;
+        Chunk& chunk = *arch->Chunks[slot.ChunkIndex];
+        for (size_t c = 0; c < arch->Columns.size(); ++c)
+        {
+            GetComponentOps(arch->Columns[c].Id).Destroy(chunk.Columns[c] + slot.Row * arch->Columns[c].Size);
+        }
+        FillHole(arch, slot.ChunkIndex, slot.Row);
     }
 
     void NativeStorage::MoveRow(Slot& slot, Archetype* to)
     {
         Archetype* from = slot.Arch;
-        Slot oldLocation = slot;
+        assert(from != to && "MoveRow to the archetype the entity is in");
+        const Slot oldLocation = slot;
         const Entity entity = from->Chunks[slot.ChunkIndex]->Entities[slot.Row];
 
+        // AddRow may add a chunk to `to`, so take the chunk references after it
         AddRow(to, entity, slot);
         Chunk& oldChunk = *from->Chunks[oldLocation.ChunkIndex];
         Chunk& newChunk = *to->Chunks[slot.ChunkIndex];
@@ -506,39 +523,7 @@ namespace Fling::Detail
             ops.Destroy(src);
         }
 
-        // The old row's values are destroyed, so only fill the hole
-        Slot hole = oldLocation;
-        hole.Arch = from;
-        Archetype* arch = from;
-        Chunk& last = *arch->Chunks.back();
-        const uint32 lastRow = last.Count - 1;
-        const bool isLast = (&last == &oldChunk) && (lastRow == hole.Row);
-        if (!isLast)
-        {
-            for (size_t c = 0; c < arch->Columns.size(); ++c)
-            {
-                const ComponentOps& ops = GetComponentOps(arch->Columns[c].Id);
-                std::byte* dst = oldChunk.Columns[c] + hole.Row * arch->Columns[c].Size;
-                std::byte* src = last.Columns[c] + lastRow * arch->Columns[c].Size;
-                ops.MoveConstruct(dst, src);
-                ops.Destroy(src);
-                if (!oldChunk.Enabled[c].empty())
-                {
-                    SetBit(oldChunk.Enabled[c], hole.Row, NativeStorage::RowEnabled(last, c, lastRow));
-                }
-            }
-            const Entity moved = last.Entities[lastRow];
-            oldChunk.Entities[hole.Row] = moved;
-            Slot& movedSlot = m_Slots[moved.Index];
-            movedSlot.ChunkIndex = hole.ChunkIndex;
-            movedSlot.Row = hole.Row;
-        }
-        --last.Count;
-        --arch->EntityCount;
-        if (last.Count == 0)
-        {
-            arch->Chunks.pop_back();
-        }
+        FillHole(from, oldLocation.ChunkIndex, oldLocation.Row);
         ++m_StructuralMoves;
     }
 
@@ -587,23 +572,28 @@ namespace Fling::Detail
         assert(slot != nullptr && "Add on an entity that is not alive");
         assert(!Has(entity, id) && "Add on an entity that already has the component");
 
-        const ComponentOps& ops = GetComponentOps(id);
-        if (ops.Storage == ComponentStorage::Sparse)
+        if (GetComponentOps(id).Storage == ComponentStorage::Sparse)
         {
-            SparseSet& set = SparseFor(id);
-            if (entity.Index >= set.Lookup.size())
-            {
-                set.Lookup.resize(entity.Index + 1, 0);
-            }
-            void* memory = AllocateValue(ops);
-            set.Dense.push_back(entity);
-            set.Values.push_back(memory);
-            set.Lookup[entity.Index] = static_cast<uint32>(set.Dense.size());
-            return memory;
+            return AddSparse(entity, id);
         }
 
         MoveRow(*slot, WithType(slot->Arch, id));
         return ColumnAddress(*slot, id);
+    }
+
+    void* NativeStorage::AddSparse(const Entity entity, const ComponentId id)
+    {
+        const ComponentOps& ops = GetComponentOps(id);
+        SparseSet& set = SparseFor(id);
+        if (entity.Index >= set.Lookup.size())
+        {
+            set.Lookup.resize(entity.Index + 1, 0);
+        }
+        void* memory = AllocateValue(ops);
+        set.Dense.push_back(entity);
+        set.Values.push_back(memory);
+        set.Lookup[entity.Index] = static_cast<uint32>(set.Dense.size());
+        return memory;
     }
 
     void NativeStorage::EndAdd(const Entity entity, const ComponentId id)
@@ -650,130 +640,142 @@ namespace Fling::Detail
 
     void NativeStorage::ApplyBatch(const Entity entity, const std::span<PendingChange> changes)
     {
-        Slot* slot = FindSlot(entity);
-        if (slot == nullptr)
+        // Frees the values the batch still owns, on every way out of this function
+        struct FreeValues
         {
-            for (PendingChange& change : changes)
+            std::span<PendingChange> Changes;
+
+            void Run()
             {
-                if (change.Value != nullptr)
+                for (PendingChange& change : Changes)
                 {
-                    change.Free(change.Value);
+                    if (change.Value != nullptr)
+                    {
+                        change.Free(change.Value);
+                        change.Value = nullptr;
+                    }
                 }
             }
+
+            ~FreeValues() { Run(); }
+        } freeValues{changes};
+
+        if (FindSlot(entity) == nullptr)
+        {
             return;
         }
 
-        // Sparse types do not move the entity: apply them one at a time
-        // Archetype types: find the final set, and the value that wins for each type
-        std::vector<ComponentId> finalTypes = slot->Arch->Types;
-        std::unordered_map<ComponentId, PendingChange*> lastAdd;
-        for (PendingChange& change : changes)
+        // The last change to each type wins
+        std::unordered_map<ComponentId, const PendingChange*> winner;
+        for (const PendingChange& change : changes)
         {
-            const ComponentOps& ops = GetComponentOps(change.Id);
-            if (ops.Storage == ComponentStorage::Sparse)
+            winner[change.Id] = &change;
+        }
+        const auto wins = [&](const PendingChange& change)
+        {
+            return winner[change.Id] == &change;
+        };
+
+        // 1. Removed hooks, while the components are still there
+        for (const PendingChange& change : changes)
+        {
+            if (!change.IsAdd && wins(change) && HasHooks(change.Id) && Has(entity, change.Id))
+            {
+                m_Hooks[change.Id]->Removed.Publish(m_Owner, entity);
+                if (!IsValid(entity))
+                {
+                    return;
+                }
+            }
+        }
+
+        // 2. One move to the final archetype. Start from what the entity has now,
+        //    because a hook may have changed it.
+        Slot* slot = FindSlot(entity);
+        Archetype* from = slot->Arch;
+        std::vector<ComponentId> finalTypes = from->Types;
+        for (const auto& [id, change] : winner)
+        {
+            if (GetComponentOps(id).Storage == ComponentStorage::Sparse)
             {
                 continue;
             }
-            const auto at = std::find(finalTypes.begin(), finalTypes.end(), change.Id);
-            if (change.IsAdd)
+            const auto at = std::find(finalTypes.begin(), finalTypes.end(), id);
+            if (change->IsAdd && at == finalTypes.end())
             {
-                if (at == finalTypes.end())
-                {
-                    finalTypes.push_back(change.Id);
-                }
-                lastAdd[change.Id] = &change;
+                finalTypes.push_back(id);
             }
-            else
+            else if (!change->IsAdd && at != finalTypes.end())
             {
-                if (at != finalTypes.end())
-                {
-                    finalTypes.erase(at);
-                }
-                lastAdd.erase(change.Id);
+                finalTypes.erase(at);
             }
         }
-
-        const std::vector<ComponentId> before = slot->Arch->Types;
-        Archetype* to = FindOrMakeArchetype(finalTypes);
-
-        // Removed hooks run while the components are still there
-        for (const ComponentId id : before)
-        {
-            if (!to->Has(id) && HasHooks(id))
-            {
-                m_Hooks[id]->Removed.Publish(m_Owner, entity);
-            }
-        }
-        slot = FindSlot(entity);
-        if (slot == nullptr)
-        {
-            return;
-        }
-
-        if (to != slot->Arch)
+        Archetype* to = FindOrMakeArchetype(std::move(finalTypes));
+        if (to != from)
         {
             MoveRow(*slot, to);
         }
 
-        // In the order the changes were recorded, so the hooks run in a fixed order
+        // 3. The values, in the order the changes were recorded. No hooks run here.
         std::vector<std::pair<ComponentId, bool>> notify;
-        for (PendingChange& each : changes)
+        for (PendingChange& change : changes)
         {
-            const auto winner = lastAdd.find(each.Id);
-            if (winner == lastAdd.end() || winner->second != &each)
+            if (!wins(change))
             {
                 continue;
             }
-            const ComponentId id = each.Id;
-            PendingChange* change = &each;
-            const ComponentOps& ops = GetComponentOps(id);
-            const bool existed = std::find(before.begin(), before.end(), id) != before.end();
-            if (!ops.Empty)
+            const ComponentOps& ops = GetComponentOps(change.Id);
+            if (ops.Storage == ComponentStorage::Sparse)
             {
-                void* address = ColumnAddress(*slot, id);
+                SparseSet* set = FindSparse(change.Id);
+                void* address = set != nullptr ? set->Find(entity) : nullptr;
+                const bool existed = address != nullptr;
+                if (!change.IsAdd)
+                {
+                    if (existed)
+                    {
+                        EraseSparse(*set, entity);
+                    }
+                    continue;
+                }
                 if (existed)
                 {
                     ops.Destroy(address);
                 }
-                ops.MoveConstruct(address, change->Value);
-            }
-            notify.emplace_back(id, existed);
-        }
-
-        for (PendingChange& change : changes)
-        {
-            if (GetComponentOps(change.Id).Storage == ComponentStorage::Sparse)
-            {
-                if (change.IsAdd)
+                else
                 {
-                    const ComponentOps& ops = GetComponentOps(change.Id);
-                    const bool existed = Has(entity, change.Id);
-                    void* address = existed ? Get(entity, change.Id) : BeginAdd(entity, change.Id);
-                    if (existed)
-                    {
-                        ops.Destroy(address);
-                    }
-                    ops.MoveConstruct(address, change.Value);
-                    notify.emplace_back(change.Id, existed);
+                    address = AddSparse(entity, change.Id);
                 }
-                else if (Has(entity, change.Id))
-                {
-                    Remove(entity, change.Id);
-                }
+                ops.MoveConstruct(address, change.Value);
+                notify.emplace_back(change.Id, existed);
+                continue;
             }
-        }
 
-        for (PendingChange& change : changes)
-        {
-            if (change.Value != nullptr)
+            if (!change.IsAdd)
             {
-                change.Free(change.Value);
-                change.Value = nullptr;
+                continue;
             }
+            const bool existed = from->Has(change.Id);
+            if (!ops.Empty)
+            {
+                void* address = ColumnAddress(*slot, change.Id);
+                if (existed)
+                {
+                    ops.Destroy(address);
+                }
+                ops.MoveConstruct(address, change.Value);
+            }
+            notify.emplace_back(change.Id, existed);
         }
+        freeValues.Run();
 
+        // 4. Added and Replaced hooks. An earlier hook may have removed the type, or destroyed the entity.
         for (const auto& [id, existed] : notify)
         {
+            if (!Has(entity, id))
+            {
+                continue;
+            }
             if (existed)
             {
                 NotifyReplaced(entity, id);

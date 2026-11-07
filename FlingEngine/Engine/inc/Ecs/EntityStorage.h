@@ -154,7 +154,11 @@ namespace Fling
 
         // Components ------------------------------------------------------------------
 
-        /** Add a T to the entity. The entity must not have one. Returns the new component (nothing for a tag). */
+        /**
+         * Add a T to the entity. The entity must not have one. Returns the new component
+         * (nothing for a tag). An Added hook must not remove the T or destroy the entity,
+         * because the reference is to the component after the hooks ran.
+         */
         template <typename T, typename... Args>
         decltype(auto) Add(const Entity entity, Args&&... args)
         {
@@ -162,7 +166,11 @@ namespace Fling
             void* memory = m_Native.BeginAdd(entity, id);
             if constexpr (std::is_empty_v<T>)
             {
-                (void)memory;
+                // A Table tag has no memory. A Sparse tag has a value, which must be constructed.
+                if (memory != nullptr)
+                {
+                    Detail::ConstructAt<T>(memory, std::forward<Args>(args)...);
+                }
                 m_Native.EndAdd(entity, id);
             }
             else
@@ -170,7 +178,9 @@ namespace Fling
                 Detail::ConstructAt<T>(memory, std::forward<Args>(args)...);
                 m_Native.EndAdd(entity, id);
                 // A hook may move the entity, so find the component again
-                return *static_cast<T*>(m_Native.Get(entity, id));
+                T* added = static_cast<T*>(m_Native.Get(entity, id));
+                assert(added != nullptr && "An Added hook removed the component or destroyed the entity");
+                return *added;
             }
         }
 

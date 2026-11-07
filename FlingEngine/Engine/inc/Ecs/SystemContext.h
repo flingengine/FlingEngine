@@ -43,8 +43,28 @@ namespace Fling
         DeferredCommands() = default;
         DeferredCommands(const DeferredCommands&) = delete;
         DeferredCommands& operator=(const DeferredCommands&) = delete;
-        DeferredCommands(DeferredCommands&& other) noexcept = default;
-        DeferredCommands& operator=(DeferredCommands&& other) noexcept = default;
+        DeferredCommands(DeferredCommands&& other) noexcept
+            : m_Destroy(std::move(other.m_Destroy)),
+              m_Structural(std::move(other.m_Structural)),
+              m_Changes(std::move(other.m_Changes))
+        {
+            other.Forget();
+        }
+
+        /** Frees the values of this buffer's own unapplied adds, then takes the other buffer's. */
+        DeferredCommands& operator=(DeferredCommands&& other) noexcept
+        {
+            if (this != &other)
+            {
+                Clear();
+                m_Destroy = std::move(other.m_Destroy);
+                m_Structural = std::move(other.m_Structural);
+                m_Changes = std::move(other.m_Changes);
+                other.Forget();
+            }
+            return *this;
+        }
+
         ~DeferredCommands() { Clear(); }
 
         /**
@@ -102,6 +122,14 @@ namespace Fling
         }
 
     private:
+        /** Empty the lists without freeing values: another buffer owns them now. */
+        void Forget()
+        {
+            m_Destroy.clear();
+            m_Structural.clear();
+            m_Changes.clear();
+        }
+
         std::vector<Entity> m_Destroy;
         std::vector<StructuralFn> m_Structural;
         std::vector<ComponentChange> m_Changes;
@@ -215,8 +243,10 @@ namespace Fling
      * std::tuple<Entity, T&...>, so write `for (auto [entity, a, b] : ctx.Query<A, const B>())`.
      *
      * It walks the matching archetypes chunk by chunk over raw column pointers. The
-     * archetypes, chunks, and rows to visit are fixed when each one is reached, so an
-     * entity spawned during the loop is not seen by this loop (later systems see it).
+     * archetypes, and the number of rows to visit in each, are fixed when the query is
+     * made. So an entity spawned during the loop is not seen by this loop, whichever
+     * archetype it lands in (later systems see it). Spawning only appends rows, so the
+     * rows the loop visits do not move.
      */
     template <typename... Ts, typename... Ws, typename... Xs>
     class QueryRange<TypeList<Ts...>, TypeList<Ws...>, TypeList<Xs...>>
@@ -290,6 +320,7 @@ namespace Fling
             {
                 m_Arch = m_Range->m_Archetypes[m_ArchIndex];
                 m_ChunkCount = m_Arch->Chunks.size();
+                m_RowsLeft = m_Range->m_RowLimits[m_ArchIndex];
                 m_ChunkIndex = 0;
                 EnterChunk();
             }
@@ -297,14 +328,17 @@ namespace Fling
             void EnterChunk()
             {
                 m_Row = 0;
-                if (m_ChunkIndex >= m_ChunkCount || m_ChunkIndex >= m_Arch->Chunks.size())
+                if (m_RowsLeft == 0 || m_ChunkIndex >= m_ChunkCount || m_ChunkIndex >= m_Arch->Chunks.size())
                 {
                     m_Chunk = nullptr;
                     m_RowCount = 0;
                     return;
                 }
                 m_Chunk = m_Arch->Chunks[m_ChunkIndex].get();
-                m_RowCount = m_Chunk->Count;
+                // Only the rows that existed when the query was made. Every chunk but the last is full,
+                // so the first rows of the archetype are those rows.
+                m_RowCount = static_cast<uint32>(std::min<size_t>(m_Chunk->Count, m_RowsLeft));
+                m_RowsLeft -= m_RowCount;
                 for (size_t i = 0; i < GetCount; ++i)
                 {
                     const int32 column = m_Arch->ColumnOf(m_Range->m_GetIds[i]);
@@ -380,6 +414,7 @@ namespace Fling
             Detail::Archetype* m_Arch = nullptr;
             size_t m_ChunkIndex = 0;
             size_t m_ChunkCount = 0;
+            size_t m_RowsLeft = 0;
             Detail::Chunk* m_Chunk = nullptr;
             uint32 m_Row = 0;
             uint32 m_RowCount = 0;
@@ -401,6 +436,11 @@ namespace Fling
             m_PerRowChecks = !m_SparseRequired.empty() || !m_SparseExcluded.empty() || !m_EnableableRequired.empty();
             // A copy, so archetypes made during the loop are not visited by it
             m_Archetypes = storage.Match(required, excluded);
+            m_RowLimits.reserve(m_Archetypes.size());
+            for (const Detail::Archetype* arch : m_Archetypes)
+            {
+                m_RowLimits.push_back(arch->EntityCount);
+            }
         }
 
         Iterator begin() const { return Iterator(this, false); }
@@ -434,6 +474,8 @@ namespace Fling
         Detail::NativeStorage* m_Storage;
         std::array<Detail::ComponentId, GetCount == 0 ? 1 : GetCount> m_GetIds;
         std::vector<Detail::Archetype*> m_Archetypes;
+        /** The rows each archetype had when the query was made. */
+        std::vector<size_t> m_RowLimits;
         std::vector<Detail::ComponentId> m_SparseRequired;
         std::vector<Detail::ComponentId> m_SparseExcluded;
         std::vector<Detail::ComponentId> m_EnableableRequired;

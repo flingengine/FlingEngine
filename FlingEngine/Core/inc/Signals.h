@@ -23,12 +23,29 @@ namespace Fling
     class Signal<void(Args...)>
     {
     public:
-        /** Call every connected callback, in the order they were connected. */
+        /**
+         * Call every connected callback, in the order they were connected. A callback
+         * may connect and disconnect callbacks. A callback that is disconnected during
+         * the publish is not called after that. A callback that is connected during the
+         * publish is called from the next publish (if no callback was also disconnected).
+         */
         void Publish(Args... InArgs) const
         {
-            for (const Slot& Each : m_Slots)
+            // By index, with a copy of each slot: a callback may change the list
+            size_t End = m_Slots.size();
+            for (size_t i = 0; i < End && i < m_Slots.size();)
             {
+                const Slot Each = m_Slots[i];
                 Each.Call(Each.Instance, InArgs...);
+                if (i < m_Slots.size() && m_Slots[i] == Each)
+                {
+                    ++i;
+                }
+                else
+                {
+                    // This callback, or one before it, was disconnected, so the next one is at i now
+                    --End;
+                }
             }
         }
 

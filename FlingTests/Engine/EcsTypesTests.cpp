@@ -13,13 +13,13 @@ namespace
 {
     struct Position
     {
-        static constexpr Fling::ComponentInfo Component{.Name = "Test.Position"};
+        static constexpr Fling::ComponentInfo Component{.Name = "TypesTest.Position"};
         float X = 0.0f;
     };
 
     struct Velocity
     {
-        static constexpr Fling::ComponentInfo Component{.Name = "Test.Velocity"};
+        static constexpr Fling::ComponentInfo Component{.Name = "TypesTest.Velocity"};
         float X = 0.0f;
     };
 
@@ -100,7 +100,7 @@ TEST_CASE("HashName is FNV-1a and runs at compile time", "[ecs]")
     STATIC_REQUIRE(HashName("") == uint64{0xcbf29ce484222325});
     STATIC_REQUIRE(HashName("a") == uint64{0xaf63dc4c8601ec8c});
     STATIC_REQUIRE(HashName("foobar") == uint64{0x85944171f73967e8});
-    STATIC_REQUIRE(TypeHashOf<Position> == HashName("Test.Position"));
+    STATIC_REQUIRE(TypeHashOf<Position> == HashName("TypesTest.Position"));
     STATIC_REQUIRE(TypeHashOf<Position> != TypeHashOf<Velocity>);
 }
 
