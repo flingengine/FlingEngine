@@ -11,6 +11,8 @@ fling_add_module(Engine
 	PUBLIC_DEPS
 		Core
 		Resources	# ComponentTypeRegistry.h exposes JsonArchive
+	PUBLIC_LIBS
+		FlingExt::entt	# Storage behind World until the native backend replaces it
 )
 
 # Test-only API (ComponentTypeRegistry::ResetForTests) is compiled in only when

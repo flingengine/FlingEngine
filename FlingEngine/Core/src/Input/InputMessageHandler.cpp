@@ -220,11 +220,11 @@ namespace Fling
             }
             if (Event.Connected)
             {
-                m_OnDeviceConnected.publish(*Device);
+                m_OnDeviceConnected.Publish(*Device);
             }
             else
             {
-                m_OnDeviceDisconnected.publish(*Device);
+                m_OnDeviceDisconnected.Publish(*Device);
             }
         }
     }

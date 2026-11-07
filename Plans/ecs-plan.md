@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: proposal for review. Nothing here is implemented yet.
+Status: in progress. Phase A is done. Phase D is mostly done through [`ecs-systems.md`](ecs-systems.md). Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -601,6 +601,9 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 **Strategy: strangler facade.** First, move every caller onto the *new Fling API* while EnTT still backs it. Then swap the backend underneath. Every phase is one or more PRs off `main` that keep Sandbox and FlingTests green on all CI platforms. Coordinate with `module-split-plan.md`, so that ECS code lands in the module targets that plan defines.
 
 ### Phase A — Remove the EnTT usage that is not ECS (small, low risk)
+
+Done. `Fling::HashedString` (`Core/inc/HashedString.h`) backs `Guid`, and `Fling::Signal`/`Sink` (`Core/inc/Signal.h`) replace `entt::sigh` in the input handler. Core no longer links EnTT or cereal, and the cereal submodule is gone. Engine links EnTT until Phase G. There is no `_hs` literal, because it would clash with EnTT's own until EnTT is gone. Use `HS("...")`.
+
 - Add `Fling::HashedString` (constexpr FNV-1a, same algorithm as EnTT 3.1) in Core. Make `Guid`/`Guid_Handle`/`HS()`/`_hs` use it (`Core/inc/FlingTypes.h`). Callers in Resources and Graphics don't change.
 - Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `InputState`).
 - Remove `<entt/...>` from `FlingTypes.h`. Delete the dead cereal include `Core/inc/Serilization.h` and the `FlingExt::cereal` link.

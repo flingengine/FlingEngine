@@ -134,9 +134,9 @@ namespace Fling
         /** Every connected device. */
         std::vector<std::shared_ptr<InputDevice>> GetDevices() const;
 
-        entt::sink<void(const InputDevice&)> OnDeviceConnected() { return m_Handler->OnDeviceConnected(); }
+        Sink<void(const InputDevice&)> OnDeviceConnected() { return m_Handler->OnDeviceConnected(); }
 
-        entt::sink<void(const InputDevice&)> OnDeviceDisconnected() { return m_Handler->OnDeviceDisconnected(); }
+        Sink<void(const InputDevice&)> OnDeviceDisconnected() { return m_Handler->OnDeviceDisconnected(); }
 
         /** Make a new consumer of the message queue. After Shutdown it reads nothing (IsValid is false). */
         InputMessageProcessor CreateProcessor() const;

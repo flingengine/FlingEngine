@@ -1,8 +1,8 @@
 #pragma once
 
+#include "HashedString.h"
+
 #include <cstdint>
-#include <entt/core/hashed_string.hpp>
-#include <entt/entity/helper.hpp>
 #include <inttypes.h>
 #include <limits>
 #include <stdexcept>
@@ -18,14 +18,14 @@ typedef signed short            int16;
 typedef int32_t                 int32;
 typedef int64_t                 int64;
 
-#define HS(str) entt::hashed_string { (str) }
+#define HS(str) ::Fling::HashedString { (str) }
 
 namespace Fling
 {
     // Use hashed strings as Guid's
-    typedef entt::hashed_string                     Guid;
-    typedef entt::hashed_string::hash_type          Guid_Handle;
-    static Guid INVALID_GUID = { "INVALID_GUID"_hs };
+    typedef HashedString                            Guid;
+    typedef HashedString::HashType                  Guid_Handle;
+    inline constexpr Guid INVALID_GUID = { "INVALID_GUID" };
 }
 
 /**

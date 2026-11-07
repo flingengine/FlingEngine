@@ -201,8 +201,8 @@ TEST_CASE("Input device factory", "[Input]")
     SECTION("Deferred events fire only on dispatch, in order, once")
     {
         Listener Events;
-        Handler->OnDeviceConnected().connect<&Listener::OnConnected>(Events);
-        Handler->OnDeviceDisconnected().connect<&Listener::OnDisconnected>(Events);
+        Handler->OnDeviceConnected().Connect<&Listener::OnConnected>(Events);
+        Handler->OnDeviceDisconnected().Connect<&Listener::OnDisconnected>(Events);
 
         const InputDeviceId A = Virtual->CreateDevice(MakeInfo(InputDeviceType::Virtual, "a"));
         const InputDeviceId B = Virtual->CreateDevice(MakeInfo(InputDeviceType::Virtual, "b"));

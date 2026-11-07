@@ -30,6 +30,5 @@ fling_add_external(entt          INCLUDE_DIRS "${_ext}/entt/src")
 fling_add_external(json          INCLUDE_DIRS "${_ext}/json/single_include")
 fling_add_external(stb           INCLUDE_DIRS "${_ext}/stb")
 fling_add_external(tinyobjloader INCLUDE_DIRS "${_ext}/tinyobjloader")
-fling_add_external(cereal        INCLUDE_DIRS "${_ext}/cereal/include")
 
 unset(_ext)

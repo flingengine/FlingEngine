@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "Platform.h"
 
+#include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
 
