@@ -1,3 +1,4 @@
+#include "Strings/String.h"
 #include "Threading/CommandQueue.h"
 #include "Threading/CommandRunnable.h"
 #include "Threading/Thread.h"
@@ -11,9 +12,11 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <string>
 #include <thread>
 #include <vector>
+
+using Fling::String;
+using Fling::StringView;
 
 using namespace Fling;
 
@@ -45,7 +48,7 @@ namespace
 
         void Exit() override { Record("Exit"); }
 
-        std::vector<std::string> Calls()
+        std::vector<String> Calls()
         {
             std::lock_guard<std::mutex> Lock(m_Mutex);
             return m_Calls;
@@ -61,7 +64,7 @@ namespace
         const bool m_InitResult;
         std::atomic<bool> m_Stop{false};
         std::mutex m_Mutex;
-        std::vector<std::string> m_Calls;
+        std::vector<String> m_Calls;
     };
 
     /** Counts its Tick calls. */
@@ -92,10 +95,10 @@ TEST_CASE("Thread names and IDs", "[Threading]")
 
     std::latch Release(1);
     ThreadId SeenId = InvalidThreadId;
-    std::string SeenName;
+    String SeenName;
     bool SeenGame = true;
 
-    const std::string LongName = "A thread name that is longer than fifteen bytes";
+    const String LongName = "A thread name that is longer than fifteen bytes";
     std::shared_ptr<Thread> Worker = Thread::Create({.Name = LongName},
                                                     [&]()
                                                     {
@@ -159,7 +162,7 @@ TEST_CASE("Runnable lifecycle", "[Threading]")
 
         Worker->Kill();
         REQUIRE_FALSE(Worker->IsRunning());
-        REQUIRE(Work->Calls() == std::vector<std::string>{"Init", "Run", "Exit"});
+        REQUIRE(Work->Calls() == std::vector<String>{"Init", "Run", "Exit"});
     }
 
     SECTION("Init that returns false stops the thread before Run")
@@ -167,7 +170,7 @@ TEST_CASE("Runnable lifecycle", "[Threading]")
         auto Work = std::make_shared<RecordingRunnable>(false);
         std::shared_ptr<Thread> Worker = Thread::Create(Work, {.Name = "Init fails"});
         REQUIRE_FALSE(Worker);
-        REQUIRE(Work->Calls() == std::vector<std::string>{"Init"});
+        REQUIRE(Work->Calls() == std::vector<String>{"Init"});
     }
 
     SECTION("A null Runnable starts no thread")

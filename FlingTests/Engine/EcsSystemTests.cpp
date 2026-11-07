@@ -5,6 +5,7 @@
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <catch2/catch_all.hpp>
@@ -275,7 +276,7 @@ TEST_CASE("Describe is made from Info and the access list", "[ecs][system]")
 {
     const MoveSystem system;
     const SystemDesc& desc = system.Describe();
-    REQUIRE(std::string(desc.Info.Name) == "Test.Move");
+    REQUIRE(String(desc.Info.Name) == "Test.Move");
     REQUIRE(&desc.Info.Phase.Get() == &Phases::Simulation);
     REQUIRE(desc.Access.size() == 4);
     REQUIRE(desc.Access[3].Hash == TypeHashOf<Position>);

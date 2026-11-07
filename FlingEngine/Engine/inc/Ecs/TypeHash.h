@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <string_view>
 
@@ -11,7 +12,7 @@ namespace Fling
     using TypeHash = uint64;
 
     /** 64-bit FNV-1a hash of a name. It runs at compile time. */
-    constexpr TypeHash HashName(std::string_view name)
+    constexpr TypeHash HashName(StringView name)
     {
         TypeHash hash = TypeHash{0xcbf29ce484222325};
         for (const char c : name)

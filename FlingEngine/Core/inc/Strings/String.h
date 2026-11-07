@@ -13,12 +13,21 @@ namespace Fling
      * text. It has the small string optimization, so short text does not allocate.
      *
      * Use Name for identifiers and DisplayText for text that the player sees.
+     * 
+     * TODO: Maybe replace this with something better (not std lib), not really a focus point right now. 
+     * alias it for now to make it simple to refactor later.
+     * 
+     * Reasons to eventually write our own string class mainly derive from 
+     * having better memory allocation control and reducing its size. 
      */
     using String = std::string;
 
     /**
      * A non-owning view of UTF-8 text. It is the parameter type for all read-only
      * text: it takes a literal, a String, or part of one, without a copy.
+     * 
+     * TODO: Maybe replace this with something better (not std lib), not really a focus point right now. 
+     * alias it for now to make it simple to refactor later
      */
     using StringView = std::string_view;
 

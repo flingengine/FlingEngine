@@ -23,7 +23,7 @@ namespace Fling
 
     namespace Internal
     {
-        static inline uint32_t clz(uint32_t x)
+        static inline uint32 clz(uint32 x)
         {
             unsigned long result;
             if (_BitScanReverse(&result, x))
@@ -32,7 +32,7 @@ namespace Fling
                 return 32;
         }
 
-        static inline uint32_t ctz(uint32_t x)
+        static inline uint32 ctz(uint32 x)
         {
             unsigned long result;
             if (_BitScanForward(&result, x))

@@ -3,6 +3,7 @@
 #include "FlingTypes.h"
 #include "HierarchyUtil.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "WorldOutlinePanel.h"
 
 #include <imgui.h>
@@ -13,12 +14,12 @@ namespace Fling
 {
 	namespace
 	{
-		std::string LabelOf(const Fling::EntityStorage& t_Reg, const Fling::Entity t_Entity)
+		String LabelOf(const Fling::EntityStorage& t_Reg, const Fling::Entity t_Entity)
 		{
 			const NameComponent* Label = t_Reg.TryGet<NameComponent>(t_Entity);
 			if (Label && !Label->Name.IsNone())
 			{
-				return std::string(Label->Name.ToView());
+				return String(Label->Name.ToView());
 			}
 			return "Entity " + std::to_string(t_Entity.Index);
 		}
@@ -47,7 +48,7 @@ namespace Fling
 		}
 		ImGui::SameLine();
 
-		const std::string Label = LabelOf(t_Reg, t_Entity);
+		const String Label = LabelOf(t_Reg, t_Entity);
 		const bool bOpen = ImGui::TreeNodeEx(Label.c_str(), Flags);
 		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 		{

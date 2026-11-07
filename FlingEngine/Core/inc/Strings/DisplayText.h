@@ -1,12 +1,12 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "FlingIntegers.h"
 #include "spdlog/fmt/fmt.h"
 #include "Strings/Language.h"
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
-#include <cstdint>
 #include <initializer_list>
 #include <memory>
 
@@ -58,7 +58,7 @@ namespace Fling
         static DisplayText AsInvariant(String t_Text);
 
         /** A number, written with the separators of the current language: 12345 is "12,345" in English and "12.345" in German. */
-        static DisplayText AsNumber(std::int64_t t_Number);
+        static DisplayText AsNumber(int64 t_Number);
         static DisplayText AsNumber(double t_Number);
 
         /** A date, written with the date pattern of the current language. */
@@ -116,7 +116,7 @@ namespace Fling
     {
         DisplayTextArg(Name t_Key, DisplayText t_Value);
         /** A number argument. It is formatted in the current language, and a plural form can use it. */
-        DisplayTextArg(Name t_Key, std::int64_t t_Value);
+        DisplayTextArg(Name t_Key, int64 t_Value);
         DisplayTextArg(Name t_Key, int t_Value);
         DisplayTextArg(Name t_Key, double t_Value);
 

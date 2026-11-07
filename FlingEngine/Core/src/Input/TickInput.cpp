@@ -1,5 +1,6 @@
 #include "Input/InputMessageHandler.h"
 #include "Input/TickInput.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cmath>
@@ -115,7 +116,7 @@ namespace Fling
         std::sort(t_Out.Keys.begin(),
                   t_Out.Keys.end(),
                   [](const auto& t_A, const auto& t_B)
-                  { return std::string_view(t_A.first.GetName()) < std::string_view(t_B.first.GetName()); });
+                  { return StringView(t_A.first.GetName()) < StringView(t_B.first.GetName()); });
 
         m_Processor.ClearEdges();
     }

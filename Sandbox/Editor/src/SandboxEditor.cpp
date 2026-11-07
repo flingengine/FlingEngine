@@ -3,6 +3,7 @@
 #include "FirstPersonCamera.h"
 #include "Logger.h"
 #include "SandboxEditor.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 #include "World.h"
 
@@ -36,14 +37,14 @@ namespace Sandbox
 		ImGui::End();
     }
 
-	void SandboxEditor::OnLoadLevel(std::string t_FileName)
+	void SandboxEditor::OnLoadLevel(Fling::String t_FileName)
 	{
 		F_LOG_TRACE("Load file {}", t_FileName);
 
 		m_OwningWorld->LoadLevelFile(t_FileName);
 	}
 
-	void SandboxEditor::OnSaveLevel(std::string t_FileName)
+	void SandboxEditor::OnSaveLevel(Fling::String t_FileName)
 	{
 		// File pop up to load the level file 
 		F_LOG_TRACE("Save to file {}", t_FileName);

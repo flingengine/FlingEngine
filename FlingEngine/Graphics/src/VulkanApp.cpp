@@ -5,6 +5,7 @@
 #include "DepthBuffer.h"
 #include "FirstPersonCamera.h"
 #include "FlingConfig.h"
+#include "FlingIntegers.h"
 #include "FlingWindow.h"
 #include "GeometrySubpass.h"
 #include "GitVersion.h"
@@ -17,6 +18,7 @@
 #include "PhyscialDevice.h"
 #include "RenderPipeline.h"
 #include "SkyboxSubpass.h"
+#include "Strings/String.h"
 #include "SwapChain.h"
 #include "Version.h"
 #include "RenderSnapshot.h"
@@ -25,14 +27,13 @@
 #include "VulkanLoader.h"
 
 #include <stdexcept>
-#include <string>
 
 namespace
 {
-    [[noreturn]] void StopForMissingVulkan(const std::string& t_Detail)
+    [[noreturn]] void StopForMissingVulkan(const Fling::StringView t_Detail)
     {
         const bool Untrusted =
-            t_Detail.find("not signed") != std::string::npos || t_Detail.find("not trusted") != std::string::npos;
+            t_Detail.find("not signed") != Fling::StringView::npos || t_Detail.find("not trusted") != Fling::StringView::npos;
         const char* Message = Untrusted ? "Vulkan loader was found, but its signature is not trusted"
                                         : "Vulkan runtime not found: install a GPU driver with Vulkan support";
         if (const auto Console = Fling::Logger::GetCurrentConsole())
@@ -100,7 +101,7 @@ namespace Fling
         return *m_State;
     }
 
-    std::string VulkanApp::GetPhysicalDeviceName() const
+    String VulkanApp::GetPhysicalDeviceName() const
     {
         if (m_PhysicalDevice == nullptr)
         {
@@ -112,7 +113,7 @@ namespace Fling
     void VulkanApp::Init(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
     {
         // Open the loader before Prepare. Prepare calls glfwInit.
-        std::string LoaderError;
+        String LoaderError;
         if (!VulkanLoader::LoadLoader(&LoaderError))
         {
             StopForMissingVulkan(LoaderError);
@@ -129,7 +130,7 @@ namespace Fling
         // Set the window icon for this application
         if (m_CurrentWindow)
         {
-            std::string IconPath = FlingConfig::GetString("Game", "WindowIcon", "Icons/Fling_Logo.png");
+            String IconPath = FlingConfig::GetString("Game", "WindowIcon", "Icons/Fling_Logo.png");
             m_CurrentWindow->SetWindowIcon(AssetPath(IconPath));
         }
 
@@ -344,7 +345,7 @@ namespace Fling
         }
 
         // Get the window title
-        std::string Title = FlingConfig::GetString("Engine", "WindowTitle");
+        String Title = FlingConfig::GetString("Engine", "WindowTitle");
 
         if (FlingConfig::GetBool("Engine", "DisplayVersionInfoInTitle", true))
         {
@@ -353,7 +354,7 @@ namespace Fling
 
         if (FlingConfig::GetBool("Engine", "DisplayBuildInfoInTitle", true))
         {
-            Title += " // Built from " + (std::string)(GIT_BRANCH) + " @ " + GIT_COMMIT_HASH;
+            Title += " // Built from " + (String)(GIT_BRANCH) + " @ " + GIT_COMMIT_HASH;
         }
 
         Props.m_Title = Title;
@@ -438,7 +439,7 @@ namespace Fling
             // Draws before the geometry pass, which discards the pixels that have no geometry
             if (t_Conf & PipelineFlags::CUBEMAP)
             {
-                const std::string SkyboxPath = FlingConfig::GetString("Graphics", "Skybox", "Textures/Skybox/Garden");
+                const String SkyboxPath = FlingConfig::GetString("Graphics", "Skybox", "Textures/Skybox/Garden");
                 std::shared_ptr<Cubemap> Sky = SkyboxPath.empty() ? nullptr : Cubemap::Create(AssetPath(SkyboxPath));
                 if (Sky && Sky->IsValid())
                 {
@@ -679,7 +680,7 @@ namespace Fling
                         1,
                         &m_State->m_InFlightFences[CurrentFrameIndex],
                         VK_TRUE,
-                        std::numeric_limits<uint64_t>::max());
+                        std::numeric_limits<uint64>::max());
 
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),

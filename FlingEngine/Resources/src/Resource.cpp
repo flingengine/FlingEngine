@@ -1,10 +1,11 @@
 #include "FlingPaths.h"
 #include "Logger.h"
 #include "Resource.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
-    std::string Resource::GetFilepathReleativeToAssets() const
+    String Resource::GetFilepathReleativeToAssets() const
     {
 #ifndef FLING_SHIPPING
         // A path with the wrong case loads on Windows and fails on Linux. Warn on every

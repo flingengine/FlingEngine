@@ -1,8 +1,10 @@
+#include "FlingIntegers.h"
 #include "Model.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "Logger.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 
 #include <tiny_obj_loader.h>
@@ -21,7 +23,7 @@ namespace Fling
 		float x = 0.0f;
 		float y = 0.0f;
 
-		//for (uint32_t i = 0; i < 3; i++)
+		//for (uint32 i = 0; i < 3; i++)
 		{
 			Vertex v0 = {};
 			v0.Pos = {x+1.0f, y+1.0f, 0.0f};
@@ -100,12 +102,12 @@ namespace Fling
 
 	void Model::LoadModel()
 	{
-		const std::string FilePath = GetFilepathReleativeToAssets();
+		const String FilePath = GetFilepathReleativeToAssets();
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
-		std::string warn;
-		std::string err;
+		String warn;
+		String err;
 
 		// Load the model from tiny obj
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, FilePath.c_str()))

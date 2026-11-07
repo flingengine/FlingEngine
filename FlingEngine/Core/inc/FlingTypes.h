@@ -1,23 +1,13 @@
 #pragma once
 
+#include "FlingIntegers.h"
+
 #include <cstdint>
-#include <inttypes.h>
 #include <limits>
 #include <stdexcept>
 
-// Integer typedefs for ease of use
-typedef uint8_t                 uint8;
-typedef unsigned short          uint16;
-typedef uint32_t                uint32;
-typedef uint64_t                uint64;
-
-typedef int8_t                  int8;
-typedef signed short            int16;
-typedef int32_t                 int32;
-typedef int64_t                 int64;
-
 /**
- * Helper function to check size_t is correctly converted to uint32_t
+ * Helper function to check size_t is correctly converted to uint32
  * @param value Value of type @ref size_t to convert
  * @return An @ref uint32 representation of the same value
  */

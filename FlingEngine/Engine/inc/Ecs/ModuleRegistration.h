@@ -4,6 +4,7 @@
 #include "Ecs/EntityStorage.h"
 #include "Ecs/Reflection.h"
 #include "Ecs/SystemRegistry.h"
+#include "Strings/String.h"
 
 #include <functional>
 #include <string>
@@ -16,7 +17,7 @@ namespace Fling
     /** A component type that was deleted. Load ignores it without a warning, or converts it. */
     struct RemovedComponentDesc
     {
-        std::string Name;
+        String Name;
 
         /** Optional: turn the old saved object into components on the entity. */
         std::function<void(EntityStorage&, Entity, const Json&)> Convert;

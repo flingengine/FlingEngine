@@ -3,9 +3,13 @@
 #include "Ecs/TypeRegistry.h"
 #include "Physics.h"
 #include "PhysicsComponents.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <type_traits>
+
+using Fling::String;
+using Fling::StringView;
 
 // Tests of the Physics module itself (the clock, the request queue, and the
 // entity <-> body bookkeeping). They use the null provider, so they do not
@@ -95,7 +99,7 @@ namespace
     public:
         explicit RecordingProvider(std::shared_ptr<RecordingLog> t_Log) : m_Log(std::move(t_Log)) {}
 
-        std::string_view GetName() const override { return "Recording"; }
+        StringView GetName() const override { return "Recording"; }
 
         PhysicsCapability GetCapabilities() const override { return PhysicsCapability::None; }
 

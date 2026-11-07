@@ -3,7 +3,6 @@
 #include "Platform.h"
 #include "Strings/String.h"
 
-#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -16,42 +15,42 @@ namespace Fling
     struct CORE_API FlingPaths
     {
         /** Returns directory where engine config files are kept */
-        static const std::string& EngineConfigDir();
+        static const String& EngineConfigDir();
         
         /** Returns directory where engine assets are kept */
-        static const std::string& EngineAssetsDir();
+        static const String& EngineAssetsDir();
 
         /**
          * Returns directory where the build writes compiled SPIR-V shaders.
          * @see CMake/FlingShaders.cmake
          */
-        static const std::string& CompiledShaderDir();
+        static const String& CompiledShaderDir();
 
         /** Returns directory where your current binary is */
-        static const std::string& BinaryDir();
+        static const String& BinaryDir();
 
         /** Returns directory where engine log files are kept */
-        static const std::string& EngineLogDir();
+        static const String& EngineLogDir();
 
         /** Returns directory where the engine source files are kept */
-        static const std::string& EngineSourceDir();
+        static const String& EngineSourceDir();
 
         /** The project root. Relative project paths start here. Empty in shipping builds (the working directory). */
-        static const std::string& ProjectDir();
+        static const String& ProjectDir();
 
         /**
          * The project's Saved folder, for files the engine writes at runtime (input
          * recordings, caches). It is not in source control.
          */
-        static const std::string& ProjectSavedDir();
+        static const String& ProjectSavedDir();
 
         /** An absolute path is returned as it is. A relative path is made relative to ProjectDir. */
-        static std::string ResolveProjectPath(StringView t_Path);
+        static String ResolveProjectPath(StringView t_Path);
 
         /**
          * Convert a full absolute path to one relative to the engine assets directory.
          */
-        static std::string ConvertAbsolutePathToRelative(StringView t_FullPath);
+        static String ConvertAbsolutePathToRelative(StringView t_FullPath);
 
         /**
          * Makes a directory given the specified path. 

@@ -2,6 +2,7 @@
 
 #include "Ecs/TypeHash.h"
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <string_view>
 #include <type_traits>
@@ -97,7 +98,7 @@ namespace Fling
     /** True if the declaration of T is complete and agrees with the shape of the struct. */
     template <Component T>
     inline constexpr bool IsWellFormedComponent =
-        ComponentInfoOf<T>.Name != nullptr && !std::string_view(ComponentInfoOf<T>.Name).empty() &&
+        ComponentInfoOf<T>.Name != nullptr && !StringView(ComponentInfoOf<T>.Name).empty() &&
         (ComponentInfoOf<T>.Kind == ComponentKind::Tag) == std::is_empty_v<T>;
 
     /** The stable id of T, made from its saved name at compile time. */

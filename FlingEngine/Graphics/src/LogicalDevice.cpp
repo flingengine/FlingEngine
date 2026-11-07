@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Instance.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
@@ -32,7 +33,7 @@ namespace Fling
 		std::optional<uint32> computeFamily;
 		std::optional<uint32> transferFamily;
 
-		for (uint32_t i = 0; i < QueueFamilyCount; ++i)
+		for (uint32 i = 0; i < QueueFamilyCount; ++i)
 		{
 			// Check for graphics support.
 			if (QueueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)

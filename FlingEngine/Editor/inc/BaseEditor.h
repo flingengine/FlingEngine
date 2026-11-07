@@ -4,13 +4,13 @@
 #include "EntityEditorPanel.h"
 #include "IDebugUI.h"
 #include "InputDevicesPanel.h"
+#include "Strings/String.h"
 #include "WorldOutlinePanel.h"
 #include "WorldSingletonsPanel.h"
 
 #include <array>
 #include "Ecs/EntityStorage.h"
 #include <imgui.h>
-#include <string>
 
 namespace Fling
 {
@@ -41,9 +41,9 @@ namespace Fling
 
     protected:
 
-        virtual void OnLoadLevel(std::string t_FileName);
+        virtual void OnLoadLevel(String t_FileName);
 
-        virtual void OnSaveLevel(std::string t_FileName);
+        virtual void OnSaveLevel(String t_FileName);
 
 		std::array<float, 400> fpsGraph {};
 		float m_FrameTimeMin = 9999.0f;

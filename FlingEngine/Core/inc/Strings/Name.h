@@ -1,13 +1,13 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "FlingIntegers.h"
 #include "spdlog/fmt/fmt.h"
 #include "Strings/Hash.h"
 #include "Strings/String.h"
 
 #include <compare>
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <type_traits>
 
@@ -16,7 +16,7 @@ namespace Fling
     namespace Detail
     {
         /** The result of adding a text to the name table. */
-        enum class NameRegisterResult : std::uint8_t
+        enum class NameRegisterResult : uint8
         {
             /** The text was not in the table, and is now. */
             Added,
@@ -30,16 +30,16 @@ namespace Fling
          * Adds the text of a hash to the name table. Name calls this. Tests call it
          * directly to make a collision on purpose.
          */
-        CORE_API NameRegisterResult RegisterNameText(std::uint64_t t_Hash, StringView t_Text);
+        CORE_API NameRegisterResult RegisterNameText(uint64 t_Hash, StringView t_Text);
 
         /** The text of a hash, or an empty view if the table does not have it. */
-        CORE_API StringView FindNameText(std::uint64_t t_Hash);
+        CORE_API StringView FindNameText(uint64 t_Hash);
 
         /** Reports a collision. In builds without FLING_SHIPPING it stops the program. */
-        CORE_API void ReportNameCollision(std::uint64_t t_Hash, StringView t_Text);
+        CORE_API void ReportNameCollision(uint64 t_Hash, StringView t_Text);
 
         /** Adds the text of a literal name, and reports a collision. Returns true. */
-        CORE_API bool RegisterLiteralName(std::uint64_t t_Hash, StringView t_Text);
+        CORE_API bool RegisterLiteralName(uint64 t_Hash, StringView t_Text);
 
         /** A string literal as a template argument, for operator""_name. */
         template <std::size_t N>
@@ -128,14 +128,14 @@ namespace Fling
          * The Name of a hash read from binary data. It does not add text: the data
          * that held the hash also holds a table of its texts.
          */
-        static constexpr Name FromHash(const std::uint64_t t_Hash)
+        static constexpr Name FromHash(const uint64 t_Hash)
         {
             Name Result;
             Result.m_Hash = t_Hash;
             return Result;
         }
 
-        constexpr std::uint64_t GetHash() const { return m_Hash; }
+        constexpr uint64 GetHash() const { return m_Hash; }
         constexpr bool IsNone() const { return m_Hash == 0; }
 
         /**
@@ -157,7 +157,7 @@ namespace Fling
     private:
         CORE_API void Register(StringView t_Text) const;
 
-        std::uint64_t m_Hash = 0;
+        uint64 m_Hash = 0;
     };
 
     inline namespace NameLiterals

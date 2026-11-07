@@ -1,5 +1,6 @@
 #include "Ecs/EntityStorage.h"
 #include "Ecs/SystemContext.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <cstdint>
@@ -21,7 +22,7 @@ namespace
         static inline int Live = 0;
 
         int Value = 0;
-        std::string Heap;
+        String Heap;
 
         Counted() { ++Live; }
 
@@ -46,13 +47,13 @@ namespace
     struct EdgeB
     {
         static constexpr ComponentInfo Component{.Name = "Edge.B"};
-        std::string Text;
+        String Text;
     };
 
     struct EdgeSparse
     {
         static constexpr ComponentInfo Component{.Name = "Edge.Sparse", .Storage = ComponentStorage::Sparse};
-        std::string Text;
+        String Text;
     };
 
     /** Used for the first time inside a hook, so the storage makes its sparse set then. */
@@ -524,7 +525,7 @@ namespace
     struct StressText
     {
         static constexpr ComponentInfo Component{.Name = "Stress.Text"};
-        std::string Value;
+        String Value;
     };
 
     struct StressTag
@@ -559,7 +560,7 @@ namespace
     /** What the storage should hold for one entity. */
     struct ModelEntity
     {
-        std::optional<std::string> Text;
+        std::optional<String> Text;
         bool Tag = false;
         std::optional<int> Sparse;
         std::optional<int> Enable;
@@ -605,8 +606,7 @@ namespace
         switch (type)
         {
         case 0:
-            m.Text = value ? std::optional<std::string>("text-" + std::to_string(*value) + std::string(24, 't'))
-                           : std::nullopt;
+            m.Text = value ? std::optional<String>("text-" + std::to_string(*value) + String(24, 't')) : std::nullopt;
             break;
         case 1:
             m.Tag = value.has_value();
@@ -636,7 +636,7 @@ namespace
         {
         case 0:
         {
-            StressText text{"text-" + std::to_string(value) + std::string(24, 't')};
+            StressText text{"text-" + std::to_string(value) + String(24, 't')};
             replace ? (void)s.AddOrReplace<StressText>(e, std::move(text))
                     : (void)s.Add<StressText>(e, std::move(text));
             break;
@@ -696,7 +696,7 @@ namespace
         switch (type)
         {
         case 0:
-            c.AddComponent<StressText>(e, StressText{"text-" + std::to_string(value) + std::string(24, 't')});
+            c.AddComponent<StressText>(e, StressText{"text-" + std::to_string(value) + String(24, 't')});
             break;
         case 1:
             c.AddComponent<StressTag>(e, StressTag{});

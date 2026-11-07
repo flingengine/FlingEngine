@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingEditorPanel.h"
+#include "Strings/String.h"
 
 #if WITH_INPUT_RECORDING
 #include "FileBrowserPopup.h"
@@ -63,10 +64,10 @@ namespace Fling
         float m_PlaybackDelay = 0.0f;
 
         /** The playback file path, as typed or picked. */
-        std::string m_PlaybackPath;
+        String m_PlaybackPath;
 
         /** The reason the last playback start failed. */
-        std::string m_PlaybackError;
+        String m_PlaybackError;
 
         /** The recorder save count that the panel has seen. */
         uint32 m_SeenSaveCount = 0;

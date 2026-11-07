@@ -58,7 +58,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   parameter, `DisplayText` the only type for text the player sees. Localization
   (string tables, plural forms, `--language`, `--loc-gather`, `--loc-export`,
   `--loc-import`) and the rules for strings in simulation code:
-  [`Skills/strings.md`](Skills/strings.md).
+  [`Skills/strings.md`](Skills/strings.md). `python3 scripts/check_string_types.py`
+  (run in CI) rejects `std::string` and `const String&` parameters.
 - Applies to first-party code only (`FlingEngine/`, `Sandbox/`, `FlingTests/`).
   **Never edit code under `external/`** — it's vendored third-party code.
 

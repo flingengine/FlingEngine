@@ -2,6 +2,7 @@
 #include "Timing.h"
 
 #include <cassert>
+#include <chrono>
 #include <cmath>
 
 namespace Fling

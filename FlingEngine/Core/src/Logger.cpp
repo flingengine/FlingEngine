@@ -46,11 +46,11 @@ namespace Fling
 			}
 
 		private:
-			static void Append(spdlog::memory_buf_t& t_Dest, const char* t_Str)
+			static void Append(spdlog::memory_buf_t& t_Dest, const StringView t_Str)
 			{
-				for (; *t_Str != '\0'; ++t_Str)
+				for (const char C : t_Str)
 				{
-					t_Dest.push_back(*t_Str);
+					t_Dest.push_back(C);
 				}
 			}
 		};

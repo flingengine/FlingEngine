@@ -4,6 +4,7 @@
 #include "Ecs/TypeRegistry.h"
 #include "Logger.h"
 #include "MathUtils.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cstring>
@@ -70,7 +71,7 @@ namespace Fling
         void SaveField(const FieldDesc& field, const void* object, Json& out, const SaveContext& context)
         {
             const void* address = field.Address(object);
-            const std::string& key = field.Name;
+            const StringView key = field.Name;
             switch (field.Kind)
             {
             case FieldKind::Bool:
@@ -95,7 +96,7 @@ namespace Fling
                 out.SetDouble(key, *static_cast<const double*>(address));
                 break;
             case FieldKind::String:
-                out.Set(key, *static_cast<const std::string*>(address));
+                out.Set(key, *static_cast<const String*>(address));
                 break;
             case FieldKind::Name:
                 out.Set(key, static_cast<const Name*>(address)->ToView());
@@ -142,7 +143,7 @@ namespace Fling
 
         /** Load one field from the given key. False if the key is not there. */
         bool LoadFieldFrom(
-            const FieldDesc& field, void* object, const Json& in, const std::string& key, const LoadContext& context)
+            const FieldDesc& field, void* object, const Json& in, const StringView key, const LoadContext& context)
         {
             if (!in.Contains(key))
             {
@@ -173,7 +174,7 @@ namespace Fling
                 field.Of<double>(object) = in.GetDouble(key, field.Of<double>(object));
                 break;
             case FieldKind::String:
-                field.Of<std::string>(object) = in.GetString(key, field.Of<std::string>(object));
+                field.Of<String>(object) = in.GetString(key, field.Of<String>(object));
                 break;
             case FieldKind::Name:
                 // Loading makes the same hash from the text on every machine
@@ -195,7 +196,7 @@ namespace Fling
             {
                 if (in.IsString(key))
                 {
-                    const std::string name = in.GetString(key);
+                    const String name = in.GetString(key);
                     const auto entry = std::find_if(field.EnumEntries.begin(),
                                                     field.EnumEntries.end(),
                                                     [&](const EnumEntry& e) { return e.Name == name; });
@@ -238,7 +239,7 @@ namespace Fling
             return true;
         }
 
-        bool IsKnownKey(const TypeDesc& type, const std::string& key)
+        bool IsKnownKey(const TypeDesc& type, const StringView key)
         {
             if (key == VersionKey || type.FindField(key) != nullptr)
             {
@@ -291,7 +292,7 @@ namespace Fling
         return missing;
     }
 
-    const FieldDesc* TypeDesc::FindField(const std::string& name) const
+    const FieldDesc* TypeDesc::FindField(const StringView name) const
     {
         for (const FieldDesc& field : Fields)
         {
@@ -350,7 +351,7 @@ namespace Fling
         // Former names come second, so a current name always wins.
         for (size_t i = 0; i < registry.m_Types.size(); ++i)
         {
-            for (const std::string& former : registry.m_Types[i].FormerNames)
+            for (const String& former : registry.m_Types[i].FormerNames)
             {
                 registry.m_ByName.emplace(former, i);
             }
@@ -358,9 +359,9 @@ namespace Fling
         return registry;
     }
 
-    const TypeDesc* TypeRegistry::Find(const std::string_view name) const
+    const TypeDesc* TypeRegistry::Find(const StringView name) const
     {
-        const auto found = m_ByName.find(std::string(name));
+        const auto found = m_ByName.find(String(name));
         return found == m_ByName.end() ? nullptr : &m_Types[found->second];
     }
 
@@ -370,7 +371,7 @@ namespace Fling
         return found == m_ByHash.end() ? nullptr : &m_Types[found->second];
     }
 
-    const RemovedComponentDesc* TypeRegistry::FindRemoved(const std::string_view name) const
+    const RemovedComponentDesc* TypeRegistry::FindRemoved(const StringView name) const
     {
         for (const RemovedComponentDesc& removed : m_Removed)
         {
@@ -455,7 +456,7 @@ namespace Fling
                 {
                     continue;
                 }
-                for (const std::string& former : field.FormerNames)
+                for (const String& former : field.FormerNames)
                 {
                     if (LoadFieldFrom(field, object, *source, former, context))
                     {
@@ -464,7 +465,7 @@ namespace Fling
                 }
             }
 
-            for (const std::string& key : source->Keys())
+            for (const StringView key : source->Keys())
             {
                 if (!IsKnownKey(type, key))
                 {

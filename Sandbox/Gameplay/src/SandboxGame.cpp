@@ -8,6 +8,7 @@
 #include "Random.h"
 #include "SandboxGame.h"
 #include "Stats.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 #include "World.h"
 // For getting some lighting info
@@ -137,8 +138,8 @@ namespace Sandbox
 		
 		for (int32 i = 0; i < GridSize; i++)
 		{
-			std::string ModelPath = "Models/sphere.obj";
-			std::string MatPath = "Materials/DeferredBronzeMat.mat";
+			Fling::String ModelPath = "Models/sphere.obj";
+			Fling::String MatPath = "Materials/DeferredBronzeMat.mat";
 
 			for (int32 j = 0; j < GridSize; j++)
 			{

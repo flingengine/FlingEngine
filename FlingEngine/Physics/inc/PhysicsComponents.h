@@ -3,8 +3,7 @@
 #include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "FlingTypes.h"
-
-#include <string>
+#include "Strings/String.h"
 
 namespace Fling
 {

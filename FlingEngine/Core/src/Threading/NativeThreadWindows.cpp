@@ -2,11 +2,11 @@
 
 #if FLING_WINDOWS
 
-#include "Misc/WindowsStrings.h"
+#include "Strings/String.h"
+#include "Strings/WindowsStrings.h"
 #include "Threading/NativeThread.h"
 
 #include <memory>
-#include <string>
 
 namespace Fling
 {
@@ -101,7 +101,7 @@ namespace Fling
         return SetThreadPriority(m_Handle, WindowsPriority(t_Priority)) != 0;
     }
 
-    void NativeThread::SetCurrentName(std::string_view t_Name)
+    void NativeThread::SetCurrentName(StringView t_Name)
     {
         static const SetThreadDescriptionFn SetDescription = FindSetThreadDescription();
         if (SetDescription == nullptr)

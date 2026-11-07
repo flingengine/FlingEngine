@@ -1,11 +1,11 @@
 #pragma once
 
+#include "FlingIntegers.h"
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
 
 #include <array>
-#include <cstdint>
 #include <memory>
 
 struct GLFWwindow;
@@ -55,7 +55,7 @@ namespace Fling
         {
             InputDeviceId Device;
             bool HasPrevious = false;
-            std::array<uint8_t, 15> Buttons{};
+            std::array<uint8, 15> Buttons{};
             std::array<float, 6> Axes{};
         };
 

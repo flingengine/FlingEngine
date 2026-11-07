@@ -3,10 +3,10 @@
 #include "FlingTypes.h"
 #include "Input/InputDevice.h"
 #include "Input/InputDeviceTypes.h"
+#include "Strings/String.h"
 
 #include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace Fling
@@ -60,7 +60,7 @@ namespace Fling
     private:
         struct Record
         {
-            std::string InterfaceName;
+            String InterfaceName;
             std::shared_ptr<InputDevice> Device;
         };
 

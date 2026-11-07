@@ -5,6 +5,7 @@
 #include "Ecs/ModuleRegistration.h"
 #include "Ecs/Reflection.h"
 #include "Json.h"
+#include "Strings/String.h"
 
 #include <string>
 #include <string_view>
@@ -30,7 +31,7 @@ namespace Fling
         static TypeRegistry Build(const ModuleRegistration& modules);
 
         /** The type with this saved name or former name. Null if there is none. */
-        const TypeDesc* Find(std::string_view name) const;
+        const TypeDesc* Find(StringView name) const;
 
         const TypeDesc* Find(TypeHash hash) const;
 
@@ -41,7 +42,7 @@ namespace Fling
         }
 
         /** A deleted type with this name. Null if there is none. */
-        const RemovedComponentDesc* FindRemoved(std::string_view name) const;
+        const RemovedComponentDesc* FindRemoved(StringView name) const;
 
         const std::vector<TypeDesc>& All() const { return m_Types; }
 
@@ -50,7 +51,7 @@ namespace Fling
     private:
         std::vector<TypeDesc> m_Types;
         std::vector<RemovedComponentDesc> m_Removed;
-        std::unordered_map<std::string, size_t> m_ByName;
+        std::unordered_map<String, size_t> m_ByName;
         std::unordered_map<TypeHash, size_t> m_ByHash;
     };
 
@@ -68,7 +69,7 @@ namespace Fling
         const std::unordered_map<uint64, Entity>* GuidToEntity = nullptr;
 
         /** The file name, for warnings. */
-        std::string SourceName;
+        String SourceName;
     };
 
     /**

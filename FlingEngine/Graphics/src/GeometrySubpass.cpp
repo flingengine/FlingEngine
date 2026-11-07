@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
+#include "Strings/String.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 #include "VulkanApp.h"

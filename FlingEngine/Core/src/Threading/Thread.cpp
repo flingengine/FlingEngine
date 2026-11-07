@@ -1,3 +1,4 @@
+#include "Strings/String.h"
 #include "Threading/CommandRunnable.h"
 #include "Threading/ConditionVariable.h"
 #include "Threading/Mutex.h"
@@ -14,7 +15,7 @@ namespace Fling
     namespace
     {
         thread_local ThreadId t_CurrentId = InvalidThreadId;
-        thread_local std::string t_CurrentName;
+        thread_local String t_CurrentName;
 
         /** The Runnable of the lambda form of Thread::Create. */
         class LambdaRunnable final : public Runnable
@@ -181,10 +182,10 @@ namespace Fling
         return true;
     }
 
-    void Thread::InitGameThread(std::string_view t_Name)
+    void Thread::InitGameThread(StringView t_Name)
     {
         t_CurrentId = GameThreadId;
-        t_CurrentName = std::string(t_Name);
+        t_CurrentName = String(t_Name);
         NativeThread::SetCurrentName(t_Name);
         ThreadManager::Register(GameThreadId, t_Name, NativeThread::CurrentNativeId());
     }
@@ -194,7 +195,7 @@ namespace Fling
         return t_CurrentId;
     }
 
-    const std::string& Thread::CurrentName()
+    const String& Thread::CurrentName()
     {
         return t_CurrentName;
     }

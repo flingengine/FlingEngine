@@ -2,8 +2,7 @@
 
 #include "AssetPath.h"
 #include "FlingTypes.h"
-
-#include <string>
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -21,7 +20,7 @@ namespace Fling
 	{
 		uint32 m_Width = 800;
 		uint32 m_Height = 600;
-		std::string m_Title = "Fling Engine";
+		String m_Title = "Fling Engine";
 	};
 
 	/**

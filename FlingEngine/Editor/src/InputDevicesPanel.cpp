@@ -1,6 +1,7 @@
 #include "FlingPaths.h"
 #include "Input/Input.h"
 #include "InputDevicesPanel.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <ctime>
@@ -8,7 +9,6 @@
 #include <iomanip>
 #include <memory>
 #include <sstream>
-#include <string>
 #include <vector>
 
 namespace Fling
@@ -44,7 +44,7 @@ namespace Fling
         }
 
         /** The name of the interface that owns a device, or "-" if it is disconnected. */
-        std::string OwnerName(const InputDevice& t_Device)
+        String OwnerName(const InputDevice& t_Device)
         {
             if (const std::shared_ptr<IInputDeviceInterface> Owner = Input::Get().FindInterface(t_Device.GetOwner()))
             {
@@ -55,7 +55,7 @@ namespace Fling
 
 #if WITH_INPUT_RECORDING
         /** A new file path for a recording, named with the local time. */
-        std::string MakeRecordingPath()
+        String MakeRecordingPath()
         {
             const std::time_t Now = std::time(nullptr);
             std::tm LocalTime = {};
@@ -121,7 +121,7 @@ namespace Fling
     void InputDevicesPanel::DrawLogLevelButton()
     {
         const InputLogLevel Level = Input::Get().GetLogLevel();
-        const std::string Label = std::string("Input log: ") + ToLabel(Level);
+        const String Label = String("Input log: ") + ToLabel(Level);
         if (ImGui::Button(Label.c_str()))
         {
             Input::Get().SetLogLevel(NextLevel(Level));
@@ -266,7 +266,7 @@ namespace Fling
             ImGui::SameLine();
             if (ImGui::Button("Browse..."))
             {
-                const std::string Start =
+                const String Start =
                     m_PlaybackPath.empty() ? FlingPaths::ProjectSavedDir() + "/InputRecordings" : m_PlaybackPath;
                 m_FileBrowser.Open(FlingPaths::ResolveProjectPath(Start), ".jsonl");
             }
@@ -315,7 +315,7 @@ namespace Fling
             }
         }
 
-        std::string Picked;
+        String Picked;
         if (m_FileBrowser.Draw("Select an input recording", Picked))
         {
             m_PlaybackPath = Picked;
@@ -368,14 +368,14 @@ namespace Fling
 
         if (ImGui::BeginChild(t_Id, ImVec2(0.0f, 180.0f), ImGuiChildFlags_Borders))
         {
-            const std::deque<std::string>& Lines = t_Log.GetLines();
+            const std::deque<String>& Lines = t_Log.GetLines();
             const bool WasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
 
             if (m_HideMouseMove)
             {
-                for (const std::string& Line : Lines)
+                for (const String& Line : Lines)
                 {
-                    if (Line.find("MouseMove") == std::string::npos)
+                    if (Line.find("MouseMove") == String::npos)
                     {
                         ImGui::TextUnformatted(Line.c_str());
                     }
@@ -410,7 +410,7 @@ namespace Fling
         const std::vector<std::shared_ptr<IInputDeviceInterface>> Interfaces = Handler->GetInterfaces();
         const std::vector<std::shared_ptr<InputDevice>> Devices = Handler->GetDeviceFactory().GetDevices();
 
-        const std::string Header = "Interfaces (" + std::to_string(Interfaces.size()) + ")";
+        const String Header = "Interfaces (" + std::to_string(Interfaces.size()) + ")";
         if (!ImGui::CollapsingHeader(Header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
             return;
@@ -436,7 +436,7 @@ namespace Fling
                 }
             }
 
-            const std::string Label = std::string(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) +
+            const String Label = String(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) +
                                       ", " + std::to_string(Owned) + " devices" +
                                       (Interface->IsSimulated() ? ", simulated" : "") + ")";
             if (ImGui::TreeNodeEx(Label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -467,7 +467,7 @@ namespace Fling
         const std::vector<std::shared_ptr<InputDevice>> Devices =
             Input::Get().GetHandler()->GetDeviceFactory().GetDevices();
 
-        const std::string Header = "Devices (" + std::to_string(Devices.size()) + ")";
+        const String Header = "Devices (" + std::to_string(Devices.size()) + ")";
         if (!ImGui::CollapsingHeader(Header.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
             return;
@@ -499,7 +499,7 @@ namespace Fling
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            const std::string& Name = Device->GetInfo().DisplayName;
+            const String& Name = Device->GetInfo().DisplayName;
             const bool Open =
                 ImGui::TreeNodeEx(Name.empty() ? "(no name)" : Name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
 
@@ -565,7 +565,7 @@ namespace Fling
             ImGui::Text("Pointer         (%.1f, %.1f)", State->PointerX, State->PointerY);
         }
 
-        std::string HeldKeys;
+        String HeldKeys;
         std::vector<std::pair<InputKey, float>> Axes;
         for (const auto& Entry : State->Keys)
         {

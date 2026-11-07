@@ -1,8 +1,12 @@
 #include "PhysicsProvider.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <memory>
 #include <vector>
+
+using Fling::String;
+using Fling::StringView;
 
 // An example provider: bodies fall with gravity and take impulses, but they do
 // not collide. It is the smallest provider that moves bodies, to show what a
@@ -119,7 +123,7 @@ namespace ExampleGame
     class ExamplePhysicsProvider final : public Fling::PhysicsProvider
     {
     public:
-        std::string_view GetName() const override { return "Example"; }
+        StringView GetName() const override { return "Example"; }
 
         Fling::PhysicsCapability GetCapabilities() const override { return Fling::PhysicsCapability::Deterministic; }
 

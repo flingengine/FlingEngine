@@ -4,6 +4,7 @@
 #include "Ecs/SystemRegistry.h"
 #include "Game.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
@@ -180,7 +181,7 @@ TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
     REQUIRE_FALSE(TestWorld.IsReadyForPlay());
     REQUIRE(TestWorld.GetSchedule() == nullptr);
     REQUIRE(TestWorld.GetScheduleErrors().find("Test.Conflicting and Test.PlayCounter both write Test.WorldCounters") !=
-            std::string::npos);
+            String::npos);
 
     // No system ran OnCreate
     REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);

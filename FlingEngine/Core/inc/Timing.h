@@ -7,7 +7,6 @@
 #include "Platform.h"
 #include "Singleton.hpp"
 
-#include <chrono>
 
 namespace Fling
 {

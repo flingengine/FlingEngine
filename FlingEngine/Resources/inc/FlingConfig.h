@@ -4,8 +4,6 @@
 #include "Singleton.hpp"
 #include "Strings/String.h"
 
-#include <string>
-
 // inih's header-only parser uses a deliberately bounded strncpy. SYSTEM includes
 // don't hide it because GCC reports it after inlining into our own code (seen on MinGW).
 F_WARNING_PUSH
@@ -36,7 +34,7 @@ namespace Fling
         */
         bool LoadConfigFile(StringView t_File);
 
-		static std::string GetString(StringView t_Section, StringView t_Key, StringView t_Default = "INVALID") { return FlingConfig::Get().GetStringImpl(t_Section, t_Key, t_Default); }
+		static String GetString(StringView t_Section, StringView t_Key, StringView t_Default = "INVALID") { return FlingConfig::Get().GetStringImpl(t_Section, t_Key, t_Default); }
 
 		static int GetInt(StringView t_Section, StringView t_Key, const int t_DefaultVal = -1) { return FlingConfig::Get().GetIntImpl(t_Section, t_Key, t_DefaultVal); }
 
@@ -51,7 +49,7 @@ namespace Fling
         /** Ini config file reader */
         static INIReader m_IniReader;
 
-		std::string GetStringImpl(StringView t_Section, StringView t_Key, StringView t_Default) const;
+		String GetStringImpl(StringView t_Section, StringView t_Key, StringView t_Default) const;
 
 		int GetIntImpl(StringView t_Section, StringView t_Key, const int t_DefaultVal = -1) const;
 

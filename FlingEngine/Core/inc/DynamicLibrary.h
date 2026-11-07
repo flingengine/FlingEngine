@@ -1,10 +1,9 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "Strings/String.h"
 
 #include <span>
-#include <string>
-#include <string_view>
 
 namespace Fling
 {
@@ -41,7 +40,7 @@ namespace Fling
          * null, write the platform message there on failure. Clear t_Error
          * on success.
          */
-        static DynamicLibrary Open(std::string_view t_Name, std::string* t_Error = nullptr);
+        static DynamicLibrary Open(StringView t_Name, String* t_Error = nullptr);
 
         /**
          * Open t_Name only when Windows trusts its Authenticode signature.
@@ -53,7 +52,7 @@ namespace Fling
          * loaded alone. A missing file sets "The shared library was not found".
          * On Linux this calls Open.
          */
-        static DynamicLibrary OpenSigned(std::string_view t_Name, std::string* t_Error = nullptr);
+        static DynamicLibrary OpenSigned(StringView t_Name, String* t_Error = nullptr);
 
         /**
          * Open the first library in t_Names that loads.
@@ -61,7 +60,7 @@ namespace Fling
          * When every name fails and t_Error is not null, write the last
          * platform message.
          */
-        static DynamicLibrary OpenFirst(std::span<const std::string_view> t_Names, std::string* t_Error = nullptr);
+        static DynamicLibrary OpenFirst(std::span<const StringView> t_Names, String* t_Error = nullptr);
 
         /** True when a library is open. */
         explicit operator bool() const;
@@ -70,14 +69,14 @@ namespace Fling
          * Return the address of t_Name.
          * Return null when the library is closed or the symbol is missing.
          */
-        void* Symbol(std::string_view t_Name) const;
+        void* Symbol(StringView t_Name) const;
 
         /**
          * Return the address of t_Name as T_Fn.
          * Return null when the library is closed or the symbol is missing.
          */
         template <typename T_Fn>
-        T_Fn SymbolAs(std::string_view t_Name) const
+        T_Fn SymbolAs(StringView t_Name) const
         {
             return reinterpret_cast<T_Fn>(Symbol(t_Name));
         }

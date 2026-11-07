@@ -1,6 +1,7 @@
 #include "Ecs/Schedule.h"
 #include "FlingTypes.h"
 #include "MathUtils.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <limits>
@@ -16,9 +17,9 @@ namespace Fling
         using Index = uint32;
         constexpr Index NoIndex = std::numeric_limits<Index>::max();
 
-        std::string_view NameOf(const char* name)
+        StringView NameOf(const char* name)
         {
-            return name != nullptr ? std::string_view(name) : std::string_view();
+            return name != nullptr ? StringView(name) : StringView();
         }
 
         bool IsWriteMode(const AccessMode mode)
@@ -26,9 +27,9 @@ namespace Fling
             return mode == AccessMode::Write || mode == AccessMode::Consume || mode == AccessMode::Append;
         }
 
-        std::string Quote(const std::string_view name)
+        String Quote(const StringView name)
         {
-            return "\"" + std::string(name) + "\"";
+            return "\"" + String(name) + "\"";
         }
 
         bool SameNames(const NameList& a, const NameList& b)
@@ -54,14 +55,14 @@ namespace Fling
                    SameNames(a.Before, b.Before);
         }
 
-        std::string EdgeLabel(const ScheduleEdge& edge)
+        String EdgeLabel(const ScheduleEdge& edge)
         {
             switch (edge.Reason)
             {
             case EdgeReason::WriteRead:
-                return std::string("writes ") + edge.TypeName;
+                return String("writes ") + edge.TypeName;
             case EdgeReason::AppendConsume:
-                return std::string("appends ") + edge.TypeName;
+                return String("appends ") + edge.TypeName;
             case EdgeReason::After:
                 return ".After";
             case EdgeReason::Before:
@@ -121,9 +122,9 @@ namespace Fling
 
             Index Count() const { return static_cast<Index>(m_Result.Value.Systems.size()); }
 
-            std::string SystemName(const Index i) const { return std::string(NameOf(Desc(i).Info.Name)); }
+            String SystemName(const Index i) const { return String(NameOf(Desc(i).Info.Name)); }
 
-            std::string PhaseName(const Index p) const { return std::string(NameOf(m_Phases[p]->Name)); }
+            String PhaseName(const Index p) const { return String(NameOf(m_Phases[p]->Name)); }
 
             UpdateRate RateOfPhase(const Index p) const { return m_Phases[p]->UpdateRate; }
 
@@ -131,7 +132,7 @@ namespace Fling
 
             UpdateRate RateOfSystem(const Index i) const { return RateOfPhase(m_SystemPhase[i]); }
 
-            void AddError(const ScheduleErrorKind kind, std::string message, std::vector<Index> systems = {})
+            void AddError(const ScheduleErrorKind kind, String message, std::vector<Index> systems = {})
             {
                 m_Result.Errors.push_back(ScheduleError{kind, std::move(message), std::move(systems)});
             }
@@ -139,7 +140,7 @@ namespace Fling
             /** Adds a phase, or finds the one with its name. Returns NoIndex if it has no name. */
             Index AddPhase(const PhaseInfo& phase)
             {
-                const std::string_view name = NameOf(phase.Name);
+                const StringView name = NameOf(phase.Name);
                 if (name.empty())
                 {
                     if (m_NamelessPhases.insert(&phase).second)
@@ -175,7 +176,7 @@ namespace Fling
                 for (Index i = 0; i < Count(); ++i)
                 {
                     const SystemInfo& info = Desc(i).Info;
-                    const std::string_view name = NameOf(info.Name);
+                    const StringView name = NameOf(info.Name);
                     if (name.empty())
                     {
                         AddError(
@@ -195,7 +196,7 @@ namespace Fling
                     if (!info.Phase.IsSet())
                     {
                         AddError(ScheduleErrorKind::MissingPhase,
-                                 "System " + std::string(name) +
+                                 "System " + String(name) +
                                      " has no phase. Set .Phase in its SystemInfo, for example "
                                      "Fling::Phases::Simulation.",
                                  {i});
@@ -211,7 +212,7 @@ namespace Fling
 
             // ---- Phase order -----------------------------------------------------------------
 
-            void AddPhaseEdge(const Index from, const Index to, std::string why)
+            void AddPhaseEdge(const Index from, const Index to, String why)
             {
                 if (m_PhaseEdgeSet.insert({from, to}).second)
                 {
@@ -274,8 +275,8 @@ namespace Fling
             {
                 for (const ScheduleOrder& order : m_Input.Orders)
                 {
-                    const std::string_view first = NameOf(order.First);
-                    const std::string_view second = NameOf(order.Second);
+                    const StringView first = NameOf(order.First);
+                    const StringView second = NameOf(order.Second);
                     const auto firstSystem = m_SystemByName.find(first);
                     const auto secondSystem = m_SystemByName.find(second);
                     const auto firstPhase = m_PhaseByName.find(first);
@@ -392,7 +393,7 @@ namespace Fling
                 if (RateOfSystem(first) != RateOfSystem(second))
                 {
                     AddError(ScheduleErrorKind::OrderAcrossUpdateRates,
-                             std::string(field) + " orders " + SystemName(first) + " (" +
+                             String(field) + " orders " + SystemName(first) + " (" +
                                  UpdateRateName(RateOfSystem(first)) + ") against " + SystemName(second) + " (" +
                                  UpdateRateName(RateOfSystem(second)) +
                                  "). Fixed systems and frame systems are not ordered against each other.",
@@ -510,7 +511,7 @@ namespace Fling
                 return SystemName(a) <= SystemName(b) ? std::pair{a, b} : std::pair{b, a};
             }
 
-            std::string WhereIs(const Index system) const { return "phase " + PhaseName(m_SystemPhase[system]); }
+            String WhereIs(const Index system) const { return "phase " + PhaseName(m_SystemPhase[system]); }
 
             /**
              * A conflict is an error only if nothing orders the two systems: no chain of
@@ -577,9 +578,9 @@ namespace Fling
             void ReportConflict(const ScheduleErrorKind kind, const Index a, const Index b, const char* typeName)
             {
                 const auto [first, second] = ByName(a, b);
-                const std::string firstName = SystemName(first);
-                const std::string secondName = SystemName(second);
-                const std::string where =
+                const String firstName = SystemName(first);
+                const String secondName = SystemName(second);
+                const String where =
                     m_SystemPhase[first] == m_SystemPhase[second]
                         ? "in " + WhereIs(first)
                         : "in " + WhereIs(first) + " and " + WhereIs(second) + ", which nothing orders";
@@ -637,7 +638,7 @@ namespace Fling
                     const Index fixedSystem = writers.Fixed.front();
                     const Index frameSystem = writers.Frame.front();
                     AddError(ScheduleErrorKind::FixedAndFrameWrite,
-                             std::string(writers.Name) + " is written by " + SystemName(fixedSystem) + " (" +
+                             String(writers.Name) + " is written by " + SystemName(fixedSystem) + " (" +
                                  WhereIs(fixedSystem) + ", fixed rate) and by " + SystemName(frameSystem) + " (" +
                                  WhereIs(frameSystem) +
                                  ", frame rate). The simulation must not depend on the frame rate. Write it from "
@@ -661,14 +662,14 @@ namespace Fling
                 /** A system index, or a phase index for the markers. */
                 Index Item = 0;
                 /** The tie-break key and the name in messages. */
-                std::string Key;
+                String Key;
             };
 
             struct GraphEdge
             {
                 Index From = 0;
                 Index To = 0;
-                std::string Why;
+                String Why;
             };
 
             /**
@@ -732,7 +733,7 @@ namespace Fling
                 }
 
                 // Kahn's algorithm. The ready node with the smallest name goes next, so the order is stable.
-                std::set<std::pair<std::string, Index>> ready;
+                std::set<std::pair<String, Index>> ready;
                 for (Index n = 0; n < nodeCount; ++n)
                 {
                     if (inDegree[n] == 0)
@@ -858,7 +859,7 @@ namespace Fling
                 // Start at the first remaining system by name, or the first marker if no system remains.
                 const auto rank = [&](const Index n)
                 {
-                    return std::pair{nodes[n].Kind != NodeKind::System, std::string_view(nodes[n].Key)};
+                    return std::pair{nodes[n].Kind != NodeKind::System, StringView(nodes[n].Key)};
                 };
                 Index start = NoIndex;
                 for (Index n = 0; n < nodes.size(); ++n)
@@ -902,7 +903,7 @@ namespace Fling
                                const std::vector<Node>& nodes,
                                const std::vector<const GraphEdge*>& loop)
             {
-                std::string message = "The " + std::string(UpdateRateName(rate)) + " phases and systems make a loop: ";
+                String message = "The " + String(UpdateRateName(rate)) + " phases and systems make a loop: ";
                 std::vector<Index> systems;
                 for (const GraphEdge* edge : loop)
                 {
@@ -958,23 +959,23 @@ namespace Fling
             {
                 Index From = 0;
                 Index To = 0;
-                std::string Why;
+                String Why;
             };
 
             const ScheduleInput& m_Input;
             ScheduleResult m_Result;
 
             std::vector<const PhaseInfo*> m_Phases;
-            std::map<std::string_view, Index> m_PhaseByName;
+            std::map<StringView, Index> m_PhaseByName;
             std::vector<bool> m_PhaseHasSystems;
             std::set<const PhaseInfo*> m_NamelessPhases;
-            std::set<std::string_view> m_ReportedPhases;
+            std::set<StringView> m_ReportedPhases;
             std::vector<PhaseEdge> m_PhaseEdges;
             std::set<std::pair<Index, Index>> m_PhaseEdgeSet;
             std::vector<std::vector<bool>> m_Reach;
 
             std::vector<Index> m_SystemPhase;
-            std::map<std::string_view, Index> m_SystemByName;
+            std::map<StringView, Index> m_SystemByName;
             std::set<std::pair<Index, Index>> m_Ordered;
             std::set<std::pair<Index, Index>> m_EdgeSet;
 
@@ -988,7 +989,7 @@ namespace Fling
             std::vector<PendingConflict> m_PendingConflicts;
         };
 
-        std::string Pad(std::string text, const std::size_t width)
+        String Pad(String text, const std::size_t width)
         {
             if (text.size() < width)
             {
@@ -1019,9 +1020,9 @@ namespace Fling
         return order;
     }
 
-    std::string Schedule::Dump() const
+    String Schedule::Dump() const
     {
-        std::string out;
+        String out;
         for (std::size_t r = 0; r < UpdateRateCount; ++r)
         {
             const UpdateRate rate = static_cast<UpdateRate>(r);
@@ -1030,15 +1031,15 @@ namespace Fling
             {
                 continue;
             }
-            out += std::string(UpdateRateName(rate)) +
+            out += String(UpdateRateName(rate)) +
                    (rate == UpdateRate::Fixed ? " (once per tick)\n" : " (once per frame)\n");
 
-            std::string phases;
+            String phases;
             for (const PhaseInfo* phase : Phases)
             {
                 if (phase->UpdateRate == rate)
                 {
-                    phases += (phases.empty() ? "" : ", ") + std::string(phase->Name);
+                    phases += (phases.empty() ? "" : ", ") + String(phase->Name);
                 }
             }
             out += "  phases: " + phases + "\n";
@@ -1050,15 +1051,15 @@ namespace Fling
                     for (const uint32 i : segment.Stages[s].Systems)
                     {
                         const SystemDesc& desc = *Systems[i];
-                        std::string line = "  stage " + std::to_string(s) + "  " + Pad(desc.Info.Name, 28) +
-                                           Pad("[" + std::string(Phases[SystemPhase[i]]->Name) + "]", 26);
+                        String line = "  stage " + std::to_string(s) + "  " + Pad(desc.Info.Name, 28) +
+                                      Pad("[" + String(Phases[SystemPhase[i]]->Name) + "]", 26);
 
-                        std::string writes;
+                        String writes;
                         for (const AccessEntry& entry : desc.Access)
                         {
                             if (IsWriteMode(entry.Mode))
                             {
-                                writes += (writes.empty() ? "" : ", ") + std::string(entry.Name);
+                                writes += (writes.empty() ? "" : ", ") + String(entry.Name);
                             }
                         }
                         if (!writes.empty())
@@ -1077,14 +1078,14 @@ namespace Fling
                             {
                                 continue;
                             }
-                            out += "             after " + std::string(Systems[edge.From]->Info.Name) + ": ";
+                            out += "             after " + String(Systems[edge.From]->Info.Name) + ": ";
                             switch (edge.Reason)
                             {
                             case EdgeReason::WriteRead:
-                                out += std::string("it writes ") + edge.TypeName + "\n";
+                                out += String("it writes ") + edge.TypeName + "\n";
                                 break;
                             case EdgeReason::AppendConsume:
-                                out += std::string("it appends ") + edge.TypeName + ", consumed here\n";
+                                out += String("it appends ") + edge.TypeName + ", consumed here\n";
                                 break;
                             case EdgeReason::After:
                                 out += ".After\n";
@@ -1101,7 +1102,7 @@ namespace Fling
                 }
                 if (segment.FlushPhase != nullptr)
                 {
-                    out += "  flush: end of phase " + std::string(segment.FlushPhase->Name) + "\n";
+                    out += "  flush: end of phase " + String(segment.FlushPhase->Name) + "\n";
                 }
             }
             if (rate == UpdateRate::Fixed)
@@ -1112,9 +1113,9 @@ namespace Fling
         return out;
     }
 
-    std::string ScheduleResult::ErrorReport() const
+    String ScheduleResult::ErrorReport() const
     {
-        std::string out;
+        String out;
         for (const ScheduleError& error : Errors)
         {
             out += "error: " + error.Message + "\n";

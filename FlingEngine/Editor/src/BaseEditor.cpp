@@ -2,6 +2,7 @@
 
 #include "BaseEditor.h"
 #include "FirstPersonCamera.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
@@ -25,7 +26,7 @@ namespace Fling
     namespace Widgets
     {
         /** A path field with a file browser. Returns true when a new path is picked. */
-        bool AssetPicker(const char* t_Label, const char* t_Folder, const char* t_Extension, std::string& t_Path)
+        bool AssetPicker(const char* t_Label, const char* t_Folder, const char* t_Extension, String& t_Path)
         {
             ImGui::PushID(t_Label);
             ImGui::LabelText(t_Label, "%s", t_Path.empty() ? "None" : t_Path.c_str());
@@ -34,7 +35,7 @@ namespace Fling
             static const char* s_OpenFor = nullptr;
             if (ImGui::Button("Select..."))
             {
-                s_FileDialog.SetTitle(std::string("Select ") + t_Label);
+                s_FileDialog.SetTitle(String("Select ") + t_Label);
                 s_FileDialog.SetPwd(std::filesystem::path{ FlingPaths::EngineAssetsDir() + "/" + t_Folder });
                 s_FileDialog.SetTypeFilters({ t_Extension });
                 s_FileDialog.Open();
@@ -256,7 +257,7 @@ namespace Fling
                 fileDialog.Display();
                 if (fileDialog.HasSelected())
                 {
-                    std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     if (ShouldLoadLevel)
                     {
@@ -338,7 +339,7 @@ namespace Fling
         }
     }
 
-    void BaseEditor::OnLoadLevel(std::string t_FileName)
+    void BaseEditor::OnLoadLevel(String t_FileName)
     {
         assert(m_OwningWorld);
 
@@ -348,7 +349,7 @@ namespace Fling
         m_OwningWorld->LoadLevelFile(t_FileName);
     }
 
-    void BaseEditor::OnSaveLevel(std::string t_FileName)
+    void BaseEditor::OnSaveLevel(String t_FileName)
     {
         assert(m_OwningWorld);
 
@@ -365,7 +366,7 @@ namespace Fling
 
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-		const std::string DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
+		const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
         ImGui::Text("Device: %s", DeviceName.c_str());
 
         // Update fps graph

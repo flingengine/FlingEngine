@@ -3,10 +3,9 @@
 #include "FlingTypes.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
+#include "Strings/String.h"
 
 #include <chrono>
-#include <string>
-#include <string_view>
 
 namespace Fling
 {
@@ -105,7 +104,7 @@ namespace Fling
      * @param t_DeviceName  The display name of the message's device, or empty
      * @param t_StartNs     Times are shown in seconds after this time
      */
-    std::string DescribeInputMessage(const InputMessage& t_Message, std::string_view t_DeviceName, int64 t_StartNs);
+    String DescribeInputMessage(const InputMessage& t_Message, StringView t_DeviceName, int64 t_StartNs);
 
     /**
      * The current time for input messages, in nanoseconds from a steady clock.

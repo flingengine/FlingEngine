@@ -1,13 +1,15 @@
 #include "Components/Transform.h"
 #include "DefaultPhysicsProvider.h"
 #include "Physics.h"
+#include "Strings/String.h"
 #include "Threading/ThreadManager.h"
 #include "TransformUtil.h"
 
 #include <bit>
 #include <catch2/catch_all.hpp>
-#include <cstring>
-#include <string>
+
+using Fling::String;
+using Fling::StringView;
 
 // Tests that every physics provider must pass. They run against the provider of
 // this build (FLING_PHYSICS_PROVIDER). A provider for another library (for
@@ -23,7 +25,7 @@ namespace
     /** Skip the test when this build has no physics library (FLING_PHYSICS_PROVIDER=None). */
     std::shared_ptr<PhysicsProvider> GetProviderOrSkip()
     {
-        if (std::string(DefaultPhysicsProviderName) == "None")
+        if (String(DefaultPhysicsProviderName) == "None")
         {
             SKIP("FLING_PHYSICS_PROVIDER is None");
         }

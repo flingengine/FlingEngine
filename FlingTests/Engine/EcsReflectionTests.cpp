@@ -8,6 +8,7 @@
 #include "Game.h"
 #include "Json.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
@@ -42,7 +43,7 @@ namespace
         uint64 Id = 0;
         float Speed = 0.0f;
         double Precise = 0.0;
-        std::string Label;
+        String Label;
         glm::vec2 Uv{0.0f};
         glm::vec3 Pos{0.0f};
         glm::vec4 Color{0.0f};
@@ -279,8 +280,8 @@ TEST_CASE("Versioning: upgrades, former names, and removed fields", "[reflection
 TEST_CASE("The world saves entity references and loads them into the new entities", "[reflection][world]")
 {
     QuietLogger();
-    const std::string LevelPath = "Levels/_reflection_test.json";
-    const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + LevelPath;
+    const String LevelPath = "Levels/_reflection_test.json";
+    const String FullPath = FlingPaths::EngineAssetsDir() + "/" + LevelPath;
 
     Json levelData;
     {
@@ -349,8 +350,8 @@ TEST_CASE("The world saves entity references and loads them into the new entitie
 TEST_CASE("Removed and renamed components in a level", "[reflection][world]")
 {
     QuietLogger();
-    const std::string LevelPath = "Levels/_reflection_removed_test.json";
-    const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + LevelPath;
+    const String LevelPath = "Levels/_reflection_removed_test.json";
+    const String FullPath = FlingPaths::EngineAssetsDir() + "/" + LevelPath;
 
     const Json level = Json::Parse(R"({
         "version": 1,
@@ -399,8 +400,8 @@ TEST_CASE("Level_1 loads, and saves the same components again", "[reflection][wo
     REQUIRE(original.LoadFromFile(FlingPaths::EngineAssetsDir() + "/Levels/Level_1.json"));
     REQUIRE(world.LoadLevelFile("Levels/Level_1.json"));
 
-    const std::string LevelPath = "Levels/_level1_roundtrip_test.json";
-    const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + LevelPath;
+    const String LevelPath = "Levels/_level1_roundtrip_test.json";
+    const String FullPath = FlingPaths::EngineAssetsDir() + "/" + LevelPath;
     REQUIRE(world.OutputLevelFile(LevelPath));
     Json saved;
     REQUIRE(saved.LoadFromFile(FullPath));

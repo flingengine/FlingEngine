@@ -2,6 +2,7 @@
 #include "Ecs/SystemBase.h"
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <catch2/catch_all.hpp>
@@ -28,7 +29,7 @@ namespace
     struct Label
     {
         static constexpr ComponentInfo Component{.Name = "Storage.Label"};
-        std::string Text;
+        String Text;
     };
 
     struct Marked
@@ -225,7 +226,7 @@ TEST_CASE("Hooks run on add, replace, remove, and destroy", "[ecs][storage]")
 {
     struct Log
     {
-        std::vector<std::string> Calls;
+        std::vector<String> Calls;
         void Added(EntityStorage&, Entity) { Calls.push_back("add"); }
         void Replaced(EntityStorage&, Entity) { Calls.push_back("replace"); }
         void Removed(EntityStorage& s, Entity e) { Calls.push_back(s.Has<Label>(e) ? "remove" : "remove-gone"); }
@@ -243,7 +244,7 @@ TEST_CASE("Hooks run on add, replace, remove, and destroy", "[ecs][storage]")
     storage.Add<Label>(e, Label{"z"});
     storage.Destroy(e);
     // Removed runs while the component is still there
-    REQUIRE(log.Calls == std::vector<std::string>{"add", "replace", "remove", "add", "remove"});
+    REQUIRE(log.Calls == std::vector<String>{"add", "replace", "remove", "add", "remove"});
 }
 
 TEST_CASE("Five systems each adding a component to one entity cause one archetype move", "[ecs][storage]")

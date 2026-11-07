@@ -1,10 +1,13 @@
 #include "Input/InputMessageHandler.h"
 #include "Input/VirtualInputDeviceInterface.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <functional>
 #include <memory>
-#include <string>
+
+using Fling::String;
+using Fling::StringView;
 
 namespace
 {
@@ -397,8 +400,8 @@ TEST_CASE("Devices and messages of a virtual interface are simulated", "[Input][
     CHECK(Read[0].Simulated);
     CHECK(Read[1].Device == HardwareId);
     CHECK_FALSE(Read[1].Simulated);
-    CHECK(DescribeInputMessage(Read[0], "Pad", 0).find("[simulated]") != std::string::npos);
-    CHECK(DescribeInputMessage(Read[1], "Pad", 0).find("[simulated]") == std::string::npos);
+    CHECK(DescribeInputMessage(Read[0], "Pad", 0).find("[simulated]") != String::npos);
+    CHECK(DescribeInputMessage(Read[1], "Pad", 0).find("[simulated]") == String::npos);
 }
 
 TEST_CASE("Virtual devices have (Simulated) at the end of their name", "[Input][Interface]")

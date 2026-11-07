@@ -1,4 +1,5 @@
 #include "EditorWidgets.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cstring>
@@ -18,7 +19,7 @@ namespace Fling
             return ImGui::DragFloat(field.Name.c_str(), value, 0.05f);
         }
 
-        bool DrawString(const FieldDesc& field, std::string* value)
+        bool DrawString(const FieldDesc& field, String* value)
         {
             char buffer[256] = {};
             std::strncpy(buffer, value->c_str(), sizeof(buffer) - 1);
@@ -116,7 +117,7 @@ namespace Fling
             case FieldKind::Double:
                 return ImGui::InputScalar(label, ImGuiDataType_Double, address);
             case FieldKind::String:
-                return DrawString(field, static_cast<std::string*>(address));
+                return DrawString(field, static_cast<String*>(address));
             case FieldKind::Name:
                 return DrawName(field, static_cast<Name*>(address));
             case FieldKind::Vec2:

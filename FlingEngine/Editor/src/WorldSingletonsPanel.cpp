@@ -1,5 +1,6 @@
 #include "Ecs/TypeRegistry.h"
 #include "Json.h"
+#include "Strings/String.h"
 #include "World.h"
 #include "WorldSingletonsPanel.h"
 
@@ -42,7 +43,7 @@ namespace Fling
                     bAny = true;
 
                     const void* Object = Type.GetSingletonConst ? Type.GetSingletonConst(t_Reg) : nullptr;
-                    const std::string Label = Type.Name + "  (" + KindName(Type.Kind) +
+                    const String Label = Type.Name + "  (" + KindName(Type.Kind) +
                                               (Type.Transient ? ", transient" : ", saved") +
                                               (Object ? ")" : ", not in the world)");
 

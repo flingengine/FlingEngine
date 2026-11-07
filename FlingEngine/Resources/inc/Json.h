@@ -1,12 +1,11 @@
 #pragma once
 
+#include "FlingIntegers.h"
 #include "FlingMath.h"
 #include "Strings/String.h"
 
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <string_view>
 #include <vector>
 
 namespace Fling
@@ -26,16 +25,16 @@ namespace Fling
 		Json& operator=(Json&& other) noexcept;
 		~Json();
 
-		static Json Parse(std::string_view text);
+		static Json Parse(StringView text);
 		static Json Object();
 		static Json Array();
 
-		std::string Dump(int indent = 4) const;
+		String Dump(int indent = 4) const;
 		bool LoadFromFile(StringView path);
 		bool SaveToFile(StringView path) const;
 
 		bool Contains(StringView key) const;
-		std::vector<std::string> Keys() const;
+		std::vector<String> Keys() const;
 		std::size_t Size() const;
 
 		/** Missing keys return a null Json (does not insert). */
@@ -44,14 +43,14 @@ namespace Fling
 		void Set(StringView key, const Json& value);
 		void PushBack(const Json& value);
 
-		std::string GetString(StringView key, StringView def = {}) const;
+		String GetString(StringView key, StringView def = {}) const;
 		float GetFloat(StringView key, float def = 0.f) const;
 		bool GetBool(StringView key, bool def = false) const;
 		int GetInt(StringView key, int def = 0) const;
 
 		/** Whole numbers. A value that is not a whole number, or does not fit, gives def. */
-		int64_t GetInt64(StringView key, int64_t def = 0) const;
-		uint64_t GetUInt64(StringView key, uint64_t def = 0) const;
+		int64 GetInt64(StringView key, int64 def = 0) const;
+		uint64 GetUInt64(StringView key, uint64 def = 0) const;
 		double GetDouble(StringView key, double def = 0.0) const;
 
 		glm::vec2 GetVec2(StringView key, const glm::vec2& def = {}) const;
@@ -71,8 +70,8 @@ namespace Fling
 		void Set(StringView key, float v);
 		void Set(StringView key, bool v);
 		void Set(StringView key, int v);
-		void SetInt64(StringView key, int64_t v);
-		void SetUInt64(StringView key, uint64_t v);
+		void SetInt64(StringView key, int64 v);
+		void SetUInt64(StringView key, uint64 v);
 		void SetDouble(StringView key, double v);
 		void SetQuat(StringView key, const glm::quat& v);
 

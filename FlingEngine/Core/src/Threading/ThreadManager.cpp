@@ -1,3 +1,4 @@
+#include "Strings/String.h"
 #include "Threading/Mutex.h"
 #include "Threading/ThreadManager.h"
 #include "Threading/ThreadSafety.h"
@@ -33,11 +34,11 @@ namespace Fling
             return GetRegistry().NextId.fetch_add(1, std::memory_order_relaxed);
         }
 
-        void Register(ThreadId t_Id, std::string_view t_Name, uint64 t_NativeId)
+        void Register(ThreadId t_Id, StringView t_Name, uint64 t_NativeId)
         {
             Registry& Reg = GetRegistry();
             ScopedLock Lock(Reg.ThreadsMutex);
-            Reg.Threads[t_Id] = ThreadInfo{t_Id, std::string(t_Name), t_NativeId};
+            Reg.Threads[t_Id] = ThreadInfo{t_Id, String(t_Name), t_NativeId};
         }
 
         void Unregister(ThreadId t_Id)
@@ -47,12 +48,12 @@ namespace Fling
             Reg.Threads.erase(t_Id);
         }
 
-        std::string GetThreadName(ThreadId t_Id)
+        String GetThreadName(ThreadId t_Id)
         {
             Registry& Reg = GetRegistry();
             ScopedLock Lock(Reg.ThreadsMutex);
             const auto It = Reg.Threads.find(t_Id);
-            return It != Reg.Threads.end() ? It->second.Name : std::string();
+            return It != Reg.Threads.end() ? It->second.Name : String();
         }
 
         std::vector<ThreadInfo> GetThreads()

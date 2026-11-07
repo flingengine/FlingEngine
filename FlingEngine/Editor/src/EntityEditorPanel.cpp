@@ -1,6 +1,7 @@
 #include "Components/Name.hpp"
 #include "EditorWidgets.h"
 #include "EntityEditorPanel.h"
+#include "Strings/String.h"
 #include "World.h"
 #include "FlingTypes.h"
 
@@ -120,7 +121,7 @@ namespace Fling
 					ImGui::SameLine();
 				}
 
-				const std::string Header = type.Transient ? type.Name + " (transient)" : type.Name;
+				const String Header = type.Transient ? type.Name + " (transient)" : type.Name;
 				if (ImGui::CollapsingHeader(Header.c_str()))
 				{
 					ImGui::Indent(30.f);
@@ -148,7 +149,7 @@ namespace Fling
 					{
 						return a->Category != b->Category ? a->Category < b->Category : a->Name < b->Name;
 					});
-					std::string currentCategory = "\x01";
+					String currentCategory = "\x01";
 					for (const TypeDesc* type : missing)
 					{
 						if (type->Category != currentCategory)

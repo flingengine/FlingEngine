@@ -9,9 +9,9 @@
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
 #include "Signals.h"
+#include "Strings/String.h"
 
 #include <memory>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -88,7 +88,7 @@ namespace Fling
         }
 
         /** The first interface with this name, or null. */
-        std::shared_ptr<IInputDeviceInterface> FindInterface(std::string_view t_Name) const;
+        std::shared_ptr<IInputDeviceInterface> FindInterface(StringView t_Name) const;
 
         /** Every interface that was added, in the order they were added. */
         std::vector<std::shared_ptr<IInputDeviceInterface>> GetInterfaces() const;

@@ -5,6 +5,7 @@
 #include "FlingTypes.h"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
+#include "Strings/String.h"
 
 #include <string>
 #include <vector>
@@ -18,8 +19,8 @@ namespace Fling
         uint64 Key = 0;
 
         /** Asset paths, relative to the assets folder. An empty material uses the default material. */
-        std::string Mesh;
-        std::string Material;
+        String Mesh;
+        String Material;
 
         glm::mat4 World{1.0f};
 

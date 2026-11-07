@@ -6,7 +6,6 @@
 #include "Strings/String.h"
 
 #include <memory>
-#include <string>
 #include <unordered_map>
 
 // Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)
@@ -49,7 +48,7 @@ namespace Fling
          * @param t_OutError    Receives the reason if the file cannot be loaded
          * @return False if the file cannot be loaded. Nothing plays then
          */
-        bool Start(StringView t_Path, float t_StartDelay, std::string& t_OutError);
+        bool Start(StringView t_Path, float t_StartDelay, String& t_OutError);
 
         /** Start playback of a recording that is in memory. */
         void Start(InputRecording t_Recording, float t_StartDelay);
@@ -83,7 +82,7 @@ namespace Fling
         double GetLength() const { return m_Recording.GetLength(); }
 
         /** The file that plays now or played last. Empty for a recording from memory. */
-        const std::string& GetPath() const { return m_Path; }
+        const String& GetPath() const { return m_Path; }
 
         /** The number of messages sent so far, and the total. */
         size_t GetSentCount() const { return m_NextMessage; }
@@ -117,7 +116,7 @@ namespace Fling
 
         InputEventLog m_Log;
 
-        std::string m_Path;
+        String m_Path;
 
         InputPlaybackState m_State = InputPlaybackState::Idle;
 

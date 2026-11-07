@@ -8,6 +8,7 @@
 #include "FlingTypes.h"
 #include "Json.h"
 #include "Strings/Name.h"
+#include "Strings/String.h"
 
 #include <cstddef>
 #include <functional>
@@ -47,8 +48,8 @@ namespace Fling
     /**
      * How a field type is saved. Specialize this for a type of your own: set
      * `static constexpr FieldKind Kind = FieldKind::Custom;` and add
-     * `static void Save(const T&, Json& object, const std::string& key)` and
-     * `static bool Load(T&, const Json& object, const std::string& key)` (true if the key was found).
+     * `static void Save(const T&, Json& object, const StringView key)` and
+     * `static bool Load(T&, const Json& object, const StringView key)` (true if the key was found).
      */
     template <typename T, typename = void>
     struct FieldTraits
@@ -72,7 +73,7 @@ namespace Fling
     template <> struct FieldTraits<uint64> : Detail::FieldKindIs<FieldKind::UInt64> {};
     template <> struct FieldTraits<float> : Detail::FieldKindIs<FieldKind::Float> {};
     template <> struct FieldTraits<double> : Detail::FieldKindIs<FieldKind::Double> {};
-    template <> struct FieldTraits<std::string> : Detail::FieldKindIs<FieldKind::String> {};
+    template <> struct FieldTraits<String> : Detail::FieldKindIs<FieldKind::String> {};
     template <> struct FieldTraits<Name> : Detail::FieldKindIs<FieldKind::Name> {};
     template <> struct FieldTraits<glm::vec2> : Detail::FieldKindIs<FieldKind::Vec2> {};
     template <> struct FieldTraits<glm::vec3> : Detail::FieldKindIs<FieldKind::Vec3> {};
@@ -91,7 +92,7 @@ namespace Fling
     /** One name and value of an enum field. */
     struct EnumEntry
     {
-        std::string Name;
+        String Name;
         int64 Value = 0;
     };
 
@@ -99,10 +100,10 @@ namespace Fling
     struct FieldDesc
     {
         /** The saved name. Level files use it, so do not change it. Use FormerNames to rename. */
-        std::string Name;
+        String Name;
 
         /** Names this field had before. Load tries them after Name. Save writes only Name. */
-        std::vector<std::string> FormerNames;
+        std::vector<String> FormerNames;
 
         /** The byte offset of the member in the component. */
         size_t Offset = 0;
@@ -126,7 +127,7 @@ namespace Fling
         float Max = 0.0f;
         bool HasRange = false;
 
-        std::string Tooltip;
+        String Tooltip;
 
         /** Not shown in the editor. Still saved. */
         bool Hidden = false;
@@ -141,8 +142,8 @@ namespace Fling
         bool Color = false;
 
         /** Custom fields: save and load the member. */
-        void (*CustomSave)(const void* field, Json& object, const std::string& key) = nullptr;
-        bool (*CustomLoad)(void* field, const Json& object, const std::string& key) = nullptr;
+        void (*CustomSave)(const void* field, Json& object, const StringView key) = nullptr;
+        bool (*CustomLoad)(void* field, const Json& object, const StringView key) = nullptr;
 
         template <typename T>
         T& Of(void* object) const
@@ -162,10 +163,10 @@ namespace Fling
      */
     struct TypeDesc
     {
-        std::string Name;
+        String Name;
 
         /** Names this type had before. A level that uses one still loads. */
-        std::vector<std::string> FormerNames;
+        std::vector<String> FormerNames;
 
         TypeHash Hash = 0;
         ComponentKind Kind = ComponentKind::Table;
@@ -178,7 +179,7 @@ namespace Fling
         uint32 Version = 1;
 
         /** The group in the editor's Add Component menu. */
-        std::string Category;
+        String Category;
 
         /** True if the type reflects only some of its members on purpose. */
         bool Partial = false;
@@ -191,7 +192,7 @@ namespace Fling
         std::vector<FieldDesc> Fields;
 
         /** Field names that were removed. Load ignores them without a warning. */
-        std::vector<std::string> RemovedFields;
+        std::vector<String> RemovedFields;
 
         /** Each upgrade rewrites the saved object of FromVersion into FromVersion + 1. */
         struct Upgrade
@@ -237,7 +238,7 @@ namespace Fling
         bool IsSaved() const { return !Transient; }
 
         /** The field with this name or a former name. Null if there is none. */
-        const FieldDesc* FindField(const std::string& name) const;
+        const FieldDesc* FindField(const StringView name) const;
     };
 
     /**
@@ -378,11 +379,11 @@ namespace Fling
             }
             if constexpr (FieldTraits<M>::Kind == FieldKind::Custom)
             {
-                field.CustomSave = [](const void* value, Json& object, const std::string& key)
+                field.CustomSave = [](const void* value, Json& object, const StringView key)
                 {
                     FieldTraits<M>::Save(*static_cast<const M*>(value), object, key);
                 };
-                field.CustomLoad = [](void* value, const Json& object, const std::string& key) -> bool
+                field.CustomLoad = [](void* value, const Json& object, const StringView key) -> bool
                 {
                     return FieldTraits<M>::Load(*static_cast<M*>(value), object, key);
                 };

@@ -1,7 +1,10 @@
 #include "Input/InputMessage.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
-#include <string>
+
+using Fling::String;
+using Fling::StringView;
 
 TEST_CASE("Input message descriptions", "[Input]")
 {
@@ -49,7 +52,7 @@ TEST_CASE("Input message descriptions", "[Input]")
     SECTION("A very long device name is cut, not overrun")
     {
         Message.Type = InputMessageType::DeviceConnected;
-        const std::string LongName(500, 'x');
+        const String LongName(500, 'x');
         REQUIRE(DescribeInputMessage(Message, LongName, 0).size() < 400);
     }
 
@@ -57,7 +60,7 @@ TEST_CASE("Input message descriptions", "[Input]")
     {
         for (int Type = 0; Type <= static_cast<int>(InputMessageType::FocusGained); ++Type)
         {
-            REQUIRE(std::string(ToString(static_cast<InputMessageType>(Type))) != "Unknown");
+            REQUIRE(String(ToString(static_cast<InputMessageType>(Type))) != "Unknown");
         }
     }
 }
@@ -66,7 +69,7 @@ TEST_CASE("Input device type and capability names", "[Input]")
 {
     using namespace Fling;
 
-    REQUIRE(std::string(ToString(InputDeviceType::Gamepad)) == "Gamepad");
+    REQUIRE(String(ToString(InputDeviceType::Gamepad)) == "Gamepad");
     REQUIRE(ToString(InputDeviceCapabilities::None) == "None");
     REQUIRE(ToString(InputDeviceCapabilities::Keys | InputDeviceCapabilities::Haptics) == "Keys, Haptics");
 }
@@ -75,6 +78,6 @@ TEST_CASE("DescribeInputMessage shows simulated messages once", "[Input][Message
 {
     Fling::InputMessage Message;
     Message.Simulated = true;
-    CHECK(Fling::DescribeInputMessage(Message, "Pad", 0).find("[simulated]") != std::string::npos);
-    CHECK(Fling::DescribeInputMessage(Message, "Pad (Simulated)", 0).find("[simulated]") == std::string::npos);
+    CHECK(Fling::DescribeInputMessage(Message, "Pad", 0).find("[simulated]") != String::npos);
+    CHECK(Fling::DescribeInputMessage(Message, "Pad (Simulated)", 0).find("[simulated]") == String::npos);
 }

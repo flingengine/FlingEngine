@@ -3,13 +3,15 @@
 // From https://github.com/AirGuanZ/imgui-filebrowser
 // MIT liscence
 
+#include "FlingIntegers.h"
+#include "Strings/String.h"
+
 #include <array>
 #include <cstring>
 #include <filesystem>
 #include <functional>
 #include <imgui.h>
 #include <memory>
-#include <string>
 #include <vector>
 
 #ifndef IMGUI_VERSION
@@ -43,7 +45,7 @@ namespace ImGui
         FileBrowser &operator=(const FileBrowser &copyFrom);
 
         // set the window title text
-        void SetTitle(std::string title);
+        void SetTitle(Fling::String title);
 
         // open the browsing window
         void Open();
@@ -87,33 +89,33 @@ namespace ImGui
         void SetPwdUncatched(const std::filesystem::path &pwd);
 
 #ifdef _WIN32
-        static std::uint32_t GetDrivesBitMask();
+        static uint32 GetDrivesBitMask();
 #endif
 
         ImGuiFileBrowserFlags flags_;
 
-        std::string title_;
-        std::string openLabel_;
+        Fling::String title_;
+        Fling::String openLabel_;
 
         bool openFlag_;
         bool closeFlag_;
         bool isOpened_;
         bool ok_;
 
-        std::string statusStr_;
+        Fling::String statusStr_;
 
         std::vector<const char*> typeFilters_;
         int typeFilterIndex_;
 
         std::filesystem::path pwd_;
-        std::string selectedFilename_;
+        Fling::String selectedFilename_;
 
         struct FileRecord
         {
             bool isDir = false;
-            std::string name;
-            std::string showName;
-            std::string extension;
+            Fling::String name;
+            Fling::String showName;
+            Fling::String extension;
         };
         std::vector<FileRecord> fileRecords_;
 
@@ -121,11 +123,11 @@ namespace ImGui
         static constexpr size_t INPUT_NAME_BUF_SIZE = 512;
         std::unique_ptr<std::array<char, INPUT_NAME_BUF_SIZE>> inputNameBuf_;
 
-        std::string openNewDirLabel_;
+        Fling::String openNewDirLabel_;
         std::unique_ptr<std::array<char, INPUT_NAME_BUF_SIZE>> newDirNameBuf_;
 
 #ifdef _WIN32
-        uint32_t drives_;
+        uint32 drives_;
 #endif
     };
 } // namespace ImGui
@@ -133,11 +135,11 @@ namespace ImGui
 namespace ImGuiFileBrowserDetail
 {
     // path::u8string() returns std::u8string since C++20, but ImGui takes UTF-8 as plain char strings
-    inline std::string ToUtf8String(const std::filesystem::path &p)
+    inline Fling::String ToUtf8String(const std::filesystem::path &p)
     {
 #if defined(__cpp_char8_t)
         const std::u8string s = p.u8string();
-        return std::string(s.begin(), s.end());
+        return Fling::String(s.begin(), s.end());
 #else
         return p.u8string();
 #endif
@@ -197,7 +199,7 @@ inline ImGui::FileBrowser &ImGui::FileBrowser::operator=(const FileBrowser &copy
     return *this;
 }
 
-inline void ImGui::FileBrowser::SetTitle(std::string title)
+inline void ImGui::FileBrowser::SetTitle(Fling::String title)
 {
     title_ = std::move(title);
     openLabel_ = title_ + "##filebrowser_" + std::to_string(reinterpret_cast<size_t>(this));
@@ -207,7 +209,7 @@ inline void ImGui::FileBrowser::SetTitle(std::string title)
 inline void ImGui::FileBrowser::Open()
 {
     ClearSelected();
-    statusStr_ = std::string();
+    statusStr_ = Fling::String();
     openFlag_ = true;
     closeFlag_ = false;
 #ifdef _WIN32
@@ -218,7 +220,7 @@ inline void ImGui::FileBrowser::Open()
 inline void ImGui::FileBrowser::Close()
 {
     ClearSelected();
-    statusStr_ = std::string();
+    statusStr_ = Fling::String();
     closeFlag_ = true;
     openFlag_ = false;
 }
@@ -346,7 +348,7 @@ inline void ImGui::FileBrowser::Display()
                 if(create_directory(pwd_ / newDirNameBuf_->data()))
                     SetPwd(pwd_);
                 else
-                    statusStr_ = "failed to create " + std::string(newDirNameBuf_->data());
+                    statusStr_ = "failed to create " + Fling::String(newDirNameBuf_->data());
             }
         }
     }
@@ -377,7 +379,7 @@ inline void ImGui::FileBrowser::Display()
             {
                 if(selected)
                 {
-                    selectedFilename_ = std::string();
+                    selectedFilename_ = Fling::String();
                     (*inputNameBuf_)[0] = '\0';
                 }
                 else if(rsc.name != "..")
@@ -471,7 +473,7 @@ inline bool ImGui::FileBrowser::SetPwd(const std::filesystem::path &pwd)
     }
     catch(const std::exception &err)
     {
-        statusStr_ = std::string("last error: ") + err.what();
+        statusStr_ = Fling::String("last error: ") + err.what();
     }
     catch(...)
     {
@@ -489,7 +491,7 @@ inline std::filesystem::path ImGui::FileBrowser::GetSelected() const
 
 inline void ImGui::FileBrowser::ClearSelected()
 {
-    selectedFilename_ = std::string();
+    selectedFilename_ = Fling::String();
     (*inputNameBuf_)[0] = '\0';
     ok_ = false;
 }
@@ -532,17 +534,17 @@ inline void ImGui::FileBrowser::SetPwdUncatched(const std::filesystem::path &pwd
     });
 
     pwd_ = absolute(pwd);
-    selectedFilename_ = std::string();
+    selectedFilename_ = Fling::String();
     (*inputNameBuf_)[0] = '\0';
 }
 
 #ifdef _WIN32
 
-inline std::uint32_t ImGui::FileBrowser::GetDrivesBitMask()
+inline uint32 ImGui::FileBrowser::GetDrivesBitMask()
 {
     char rootName[10];
     DWORD mask = GetLogicalDrives();
-    uint32_t ret = 0;
+    uint32 ret = 0;
     for(int i = 0; i < 26; ++i)
     {
         if(!(mask & (1 << i)))

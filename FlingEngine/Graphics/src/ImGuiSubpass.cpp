@@ -4,6 +4,7 @@
 #include "CommandBuffer.h"
 #include "Components/Transform.h"
 #include "FirstPersonCamera.h"
+#include "FlingIntegers.h"
 #include "FlingVulkan.h"
 #include "FlingWindow.h"
 #include "FrameBuffer.h"
@@ -381,7 +382,7 @@ namespace Fling {
         pipelineCreateInfo.pViewportState = &viewportState;
         pipelineCreateInfo.pDepthStencilState = &depthStencilState;
         pipelineCreateInfo.pDynamicState = &dynamicState;
-        pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+        pipelineCreateInfo.stageCount = static_cast<uint32>(shaderStages.size());
         pipelineCreateInfo.pStages = shaderStages.data();
 
         // Vertex bindings an attributes based on imgui vertex definitions
@@ -399,9 +400,9 @@ namespace Fling {
         };
 
         VkPipelineVertexInputStateCreateInfo vertexInputState = Initializers::PiplineVertexInptStateCreateInfo();
-        vertexInputState.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexInputBindings.size());
+        vertexInputState.vertexBindingDescriptionCount = static_cast<uint32>(vertexInputBindings.size());
         vertexInputState.pVertexBindingDescriptions = vertexInputBindings.data();
-        vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
+        vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32>(vertexInputAttributes.size());
         vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
         pipelineCreateInfo.pVertexInputState = &vertexInputState;

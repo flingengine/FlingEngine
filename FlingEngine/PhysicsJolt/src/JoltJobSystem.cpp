@@ -1,8 +1,8 @@
 #include "JoltJobSystem.h"
 #include "Logger.h"
+#include "Strings/String.h"
 
 #include <algorithm>
-#include <string>
 #include <thread>
 
 namespace Fling

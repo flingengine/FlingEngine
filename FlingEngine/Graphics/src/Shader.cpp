@@ -1,19 +1,21 @@
+#include "FlingIntegers.h"
 #include "FlingPaths.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
 #include "ResourceManager.h"
 #include "Shader.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
 	// https://www.khronos.org/registry/spir-v/specs/1.0/SPIRV.pdf
 	struct Id
 	{
-		uint32_t opcode{};
-		uint32_t typeId{};
-		uint32_t storageClass{};
-		uint32_t binding{};
-		uint32_t set{};
+		uint32 opcode{};
+		uint32 typeId{};
+		uint32 storageClass{};
+		uint32 binding{};
+		uint32 set{};
 	};
 
     std::shared_ptr<Fling::Shader> Shader::Create(const AssetPath& t_Path, LogicalDevice* t_Dev)
@@ -28,7 +30,7 @@ namespace Fling
     {
 		assert(m_Device);
         // Shaders are compiled by the build, not stored in Assets
-        const std::string FilePath = FlingPaths::CompiledShaderDir() + "/" + GetAssetPath().GetText();
+        const String FilePath = FlingPaths::CompiledShaderDir() + "/" + GetAssetPath().GetText();
         std::vector<char> RawCode = LoadRawBytes(FilePath);
 
         if (CreateShaderModule(RawCode) != VK_SUCCESS)
@@ -213,7 +215,7 @@ namespace Fling
 
 				assert((m_ResourceMask & (1 << id.binding)) == 0);
 
-				uint32_t typeKind = ids[ids[id.typeId].typeId].opcode;
+				uint32 typeKind = ids[ids[id.typeId].typeId].opcode;
 
 				switch (typeKind)
 				{
@@ -314,7 +316,7 @@ namespace Fling
 		VkDescriptorSetLayoutCreateInfo setCreateInfo = {};
 		setCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		setCreateInfo.flags = t_SupportPushDescriptor ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR : 0;
-		setCreateInfo.bindingCount = uint32_t(setBindings.size());
+		setCreateInfo.bindingCount = uint32(setBindings.size());
 		setCreateInfo.pBindings = setBindings.data();
 
 		VkDescriptorSetLayout setLayout = 0;

@@ -5,6 +5,7 @@
 #include "FlingPaths.h"
 #include "Json.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "World.h"
 
 #include <algorithm>
@@ -20,7 +21,7 @@ namespace Fling
 {
 	namespace
 	{
-		bool IsReservedEntityKey(const std::string& key)
+		bool IsReservedEntityKey(const StringView key)
 		{
 			return key == "name" || key == "title" || key == "version" || key == "NameComponent";
 		}
@@ -93,7 +94,7 @@ namespace Fling
 
 		// A component that a system uses and that is saved (not Transient) must be
 		// registered, or levels and the play snapshot lose it
-		std::set<std::string> Reported;
+		std::set<String> Reported;
 		for (const SystemDesc* Desc : m_Systems.Descs())
 		{
 			for (const AccessEntry& Entry : Desc->Access)
@@ -116,7 +117,7 @@ namespace Fling
 		m_Runner->SetTickInputSource(m_TickInputSource);
 		m_Runner->Create();
 
-		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : std::string(t_StartLevel);
+		const String LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : String(t_StartLevel);
 		if (!LevelToLoad.empty())
 		{
 			LoadLevelFile(LevelToLoad);
@@ -315,7 +316,7 @@ namespace Fling
             return false;
 		}
 
-        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + std::string(t_LevelToLoad);
+        const String FullPath = FlingPaths::EngineAssetsDir() + "/" + String(t_LevelToLoad);
         F_LOG_TRACE("Outputting Level file to {}", FullPath);
         return root.SaveToFile(FullPath);
     }
@@ -366,17 +367,17 @@ namespace Fling
         }
 
         const SaveContext Context{ &m_Storage };
-        std::vector<std::pair<std::string, Json>> entityEntries;
+        std::vector<std::pair<String, Json>> entityEntries;
 		std::size_t unnamedIndex = 0;
 
 		m_Storage.EachEntity([&](const Fling::Entity entity)
 		{
 			Json entityJson = Json::Object();
 
-			std::string name;
+			String name;
 			if (m_Storage.Has<NameComponent>(entity))
 			{
-				name = std::string(m_Storage.Get<NameComponent>(entity).Name.ToView());
+				name = String(m_Storage.Get<NameComponent>(entity).Name.ToView());
 			}
 			if (name.empty())
 			{
@@ -408,7 +409,7 @@ namespace Fling
 		});
 
 		std::stable_sort(entityEntries.begin(), entityEntries.end(),
-			[](const std::pair<std::string, Json>& a, const std::pair<std::string, Json>& b)
+			[](const std::pair<String, Json>& a, const std::pair<String, Json>& b)
 			{
 				return a.first < b.first;
 			});
@@ -457,7 +458,7 @@ namespace Fling
 			return false;
 		}
 
-        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + std::string(t_LevelToLoad);
+        const String FullPath = FlingPaths::EngineAssetsDir() + "/" + String(t_LevelToLoad);
         F_LOG_TRACE("Loading Level file from {}", FullPath);
 
 		Json doc;
@@ -487,7 +488,7 @@ namespace Fling
         // Fires the destroy signals, so the renderer lets go of the old entities
         m_Storage.Clear();
 
-        const std::string title = t_Doc.GetString("title", t_SourceName);
+        const String title = t_Doc.GetString("title", t_SourceName);
         F_LOG_TRACE("Level Title: {}", title);
 
         // Pass 1: make every entity and read its id, so that an Entity field can
@@ -496,7 +497,7 @@ namespace Fling
         {
             Fling::Entity Entity;
             Json Data;
-            std::string Name;
+            String Name;
         };
         std::vector<PendingEntity> Pending;
         std::unordered_map<uint64, Fling::Entity> GuidToEntity;
@@ -512,7 +513,7 @@ namespace Fling
 			}
 
 			const Fling::Entity entity = m_Storage.Create();
-			std::string name = entityJson.GetString("name");
+			String name = entityJson.GetString("name");
 			if (name.empty())
 			{
 				name = "Entity_" + std::to_string(i);
@@ -529,13 +530,13 @@ namespace Fling
 		}
 
         // Pass 2: the components
-        const LoadContext Context{ &GuidToEntity, std::string(t_SourceName) };
+        const LoadContext Context{ &GuidToEntity, String(t_SourceName) };
         for (PendingEntity& Each : Pending)
         {
             NameComponent& nameComp = m_Storage.Add<NameComponent>(Each.Entity);
             nameComp.Name = Name(Each.Name);
 
-			auto LoadNamedComponent = [&](const std::string& key)
+			auto LoadNamedComponent = [&](const StringView key)
 			{
 				if (IsReservedEntityKey(key) || !Each.Data.Contains(key))
 				{
@@ -573,7 +574,7 @@ namespace Fling
 			// otherwise construct before Transform. Load pose first so renderer
 			// hooks and later components see the authored transform.
 			LoadNamedComponent("Transform");
-			for (const std::string& key : Each.Data.Keys())
+			for (const String& key : Each.Data.Keys())
 			{
 				if (key == "Transform")
 				{
@@ -590,7 +591,7 @@ namespace Fling
         const Json singletons = t_Doc.Get("singletons");
         if (singletons.IsObject())
         {
-            for (const std::string& key : singletons.Keys())
+            for (const String& key : singletons.Keys())
             {
                 const TypeDesc* type = m_Types.Find(key);
                 if (!type || !type->IsSingleton() || !type->EmplaceSingleton)

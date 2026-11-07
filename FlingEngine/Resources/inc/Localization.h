@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlingIntegers.h"
 #include "Strings/DisplayText.h"
 #include "Strings/Name.h"
 #include "Strings/String.h"
@@ -7,7 +8,6 @@
 #include "Threading/ThreadSafety.h"
 
 #include <atomic>
-#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -139,7 +139,7 @@ namespace Fling
          * A number that changes each time the current language or any text changes. UI
          * that keeps resolved text can compare it to know when to resolve again.
          */
-        std::uint64_t GetRevision() const { return m_Revision.load(std::memory_order_acquire); }
+        uint64 GetRevision() const { return m_Revision.load(std::memory_order_acquire); }
 
         /** Sets the text of one entry in memory. SaveLanguage writes it to disk. */
         void SetEntry(Name t_Language, Name t_Table, Name t_Key, String t_Text);
@@ -223,6 +223,6 @@ namespace Fling
         /** The LanguageInfo of a code from the built-in defaults. */
         static LanguageInfo DefaultInfoFor(Name t_Language);
 
-        std::atomic<std::uint64_t> m_Revision{0};
+        std::atomic<uint64> m_Revision{0};
     };
 } // namespace Fling

@@ -6,6 +6,7 @@
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 
 #include <cmath>
 
@@ -38,7 +39,7 @@ namespace Fling
 
     void HDRImage::LoadVulkanImage()
     {
-        const std::string Filepath = GetFilepathReleativeToAssets();
+        const String Filepath = GetFilepathReleativeToAssets();
         int Width = 0;
         int Height = 0;
         m_PixelData = stbi_loadf(

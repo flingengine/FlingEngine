@@ -1,4 +1,5 @@
 #include "Input/Input.h"
+#include "Strings/String.h"
 
 #include <cmath>
 
@@ -56,7 +57,7 @@ namespace Fling
         return m_Handler ? m_Handler->FindInterface(t_Id) : nullptr;
     }
 
-    std::shared_ptr<IInputDeviceInterface> Input::FindInterface(std::string_view t_Name) const
+    std::shared_ptr<IInputDeviceInterface> Input::FindInterface(StringView t_Name) const
     {
         return m_Handler ? m_Handler->FindInterface(t_Name) : nullptr;
     }

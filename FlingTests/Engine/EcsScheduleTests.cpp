@@ -1,6 +1,7 @@
 #include "Ecs/Schedule.h"
 #include "Ecs/SystemRegistry.h"
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <catch2/catch_all.hpp>
@@ -74,15 +75,15 @@ namespace
     }
 
     /** The names in each stage of one update rate, for every segment in order. */
-    std::vector<std::vector<std::string>> StageNames(const Schedule& schedule,
+    std::vector<std::vector<String>> StageNames(const Schedule& schedule,
                                                      const UpdateRate rate = UpdateRate::Fixed)
     {
-        std::vector<std::vector<std::string>> stages;
+        std::vector<std::vector<String>> stages;
         for (const ScheduleSegment& segment : schedule.GetSegments(rate))
         {
             for (const ScheduleStage& stage : segment.Stages)
             {
-                std::vector<std::string>& names = stages.emplace_back();
+                std::vector<String>& names = stages.emplace_back();
                 for (const uint32 i : stage.Systems)
                 {
                     names.emplace_back(schedule.Systems[i]->Info.Name);
@@ -93,9 +94,9 @@ namespace
     }
 
     /** The system names of one update rate in run order. */
-    std::vector<std::string> RunNames(const Schedule& schedule, const UpdateRate rate = UpdateRate::Fixed)
+    std::vector<String> RunNames(const Schedule& schedule, const UpdateRate rate = UpdateRate::Fixed)
     {
-        std::vector<std::string> names;
+        std::vector<String> names;
         for (const uint32 i : schedule.RunOrder(rate))
         {
             names.emplace_back(schedule.Systems[i]->Info.Name);
@@ -103,9 +104,9 @@ namespace
         return names;
     }
 
-    bool HasText(const ScheduleResult& result, const std::string& text)
+    bool HasText(const ScheduleResult& result, const StringView text)
     {
-        return result.ErrorReport().find(text) != std::string::npos;
+        return result.ErrorReport().find(text) != String::npos;
     }
 
     bool HasError(const ScheduleResult& result, const ScheduleErrorKind kind)
@@ -114,7 +115,7 @@ namespace
             result.Errors.begin(), result.Errors.end(), [kind](const ScheduleError& e) { return e.Kind == kind; });
     }
 
-    using Stages = std::vector<std::vector<std::string>>;
+    using Stages = std::vector<std::vector<String>>;
 } // namespace
 
 TEST_CASE("A writer runs before a reader", "[ecs][schedule]")
@@ -165,9 +166,9 @@ TEST_CASE("Two writers with no order are an error", "[ecs][schedule]")
     REQUIRE(result.Errors.size() == 1);
     REQUIRE(result.Errors[0].Kind == ScheduleErrorKind::WriteConflict);
 
-    const std::string& message = result.Errors[0].Message;
-    REQUIRE(message.find("Test.Mover and Test.Rotator both write Transform") != std::string::npos);
-    REQUIRE(message.find(".After = \"Test.Mover\" to Test.Rotator") != std::string::npos);
+    const String& message = result.Errors[0].Message;
+    REQUIRE(message.find("Test.Mover and Test.Rotator both write Transform") != String::npos);
+    REQUIRE(message.find(".After = \"Test.Mover\" to Test.Rotator") != String::npos);
 }
 
 TEST_CASE("An order through a third system orders two writers", "[ecs][schedule]")
@@ -182,7 +183,7 @@ TEST_CASE("An order through a third system orders two writers", "[ecs][schedule]
 
     const ScheduleResult result = systems.Build();
     REQUIRE(result.ErrorReport() == "");
-    REQUIRE(RunNames(result.Value) == std::vector<std::string>{"Test.Spawn", "Test.Rotator", "Test.Mover"});
+    REQUIRE(RunNames(result.Value) == std::vector<String>{"Test.Spawn", "Test.Rotator", "Test.Mover"});
 }
 
 TEST_CASE("Two writers in worlds that never meet are not an error", "[ecs][schedule]")
@@ -261,22 +262,22 @@ TEST_CASE("A cycle is reported with its path", "[ecs][schedule]")
     const ScheduleError& error = result.Errors[0];
     REQUIRE(error.Kind == ScheduleErrorKind::Cycle);
     REQUIRE(error.Systems.size() == 3);
-    REQUIRE(error.Message.find("Test.A -> Test.C -> Test.B -> Test.A") != std::string::npos);
-    REQUIRE(error.Message.find("Test.A before Test.C (writes X)") != std::string::npos);
-    REQUIRE(error.Message.find("Test.B before Test.A (writes Y)") != std::string::npos);
+    REQUIRE(error.Message.find("Test.A -> Test.C -> Test.B -> Test.A") != String::npos);
+    REQUIRE(error.Message.find("Test.A before Test.C (writes X)") != String::npos);
+    REQUIRE(error.Message.find("Test.B before Test.A (writes Y)") != String::npos);
 }
 
 TEST_CASE("Ties are broken by name, whatever the add order", "[ecs][schedule]")
 {
-    const std::vector<std::string> names{"Test.D", "Test.A", "Test.C", "Test.B"};
-    std::vector<std::string> order = names;
+    const std::vector<String> names{"Test.D", "Test.A", "Test.C", "Test.B"};
+    std::vector<String> order = names;
     std::sort(order.begin(), order.end());
 
     Stages first;
     do
     {
         FakeSystems systems;
-        for (const std::string& name : order)
+        for (const StringView name : order)
         {
             // The descriptions keep a pointer to the name, so point into names, not order.
             const char* stored = std::find(names.begin(), names.end(), name)->c_str();
@@ -351,7 +352,7 @@ TEST_CASE("A component written at both update rates is an error", "[ecs][schedul
 
     const ScheduleResult result = systems.Build();
     REQUIRE(HasError(result, ScheduleErrorKind::FixedAndFrameWrite));
-    REQUIRE(result.ErrorReport().find("Transform is written by Test.Mover") != std::string::npos);
+    REQUIRE(result.ErrorReport().find("Transform is written by Test.Mover") != String::npos);
 }
 
 TEST_CASE("Phases keep their own stages", "[ecs][schedule]")
@@ -366,12 +367,12 @@ TEST_CASE("Phases keep their own stages", "[ecs][schedule]")
     REQUIRE(result.Ok());
     REQUIRE(result.Value.Edges.empty());
 
-    std::vector<std::string> run;
+    std::vector<String> run;
     for (const uint32 i : result.Value.RunOrder())
     {
         run.emplace_back(result.Value.Systems[i]->Info.Name);
     }
-    REQUIRE(run == std::vector<std::string>{"Test.Input", "Test.Move", "Test.Extract"});
+    REQUIRE(run == std::vector<String>{"Test.Input", "Test.Move", "Test.Extract"});
 }
 
 TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
@@ -385,15 +386,15 @@ TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
     const ScheduleResult result = systems.Build();
     REQUIRE(result.Ok());
 
-    const std::string dump = result.Value.Dump();
-    REQUIRE(dump.find("Fixed (once per tick)\n") != std::string::npos);
-    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred, Engine.Transform\n") != std::string::npos);
-    REQUIRE(dump.find("Frame (once per frame)") == std::string::npos);
-    REQUIRE(dump.find("[Engine.Simulation]") != std::string::npos);
-    REQUIRE(dump.find("writes Mover, Transform") != std::string::npos);
-    REQUIRE(dump.find("stage 2  Sandbox.Rotator") != std::string::npos);
-    REQUIRE(dump.find("after Sandbox.Mover: .After") != std::string::npos);
-    REQUIRE(dump.find("flush: end of tick") != std::string::npos);
+    const String dump = result.Value.Dump();
+    REQUIRE(dump.find("Fixed (once per tick)\n") != String::npos);
+    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred, Engine.Transform\n") != String::npos);
+    REQUIRE(dump.find("Frame (once per frame)") == String::npos);
+    REQUIRE(dump.find("[Engine.Simulation]") != String::npos);
+    REQUIRE(dump.find("writes Mover, Transform") != String::npos);
+    REQUIRE(dump.find("stage 2  Sandbox.Rotator") != String::npos);
+    REQUIRE(dump.find("after Sandbox.Mover: .After") != String::npos);
+    REQUIRE(dump.find("flush: end of tick") != String::npos);
 }
 
 // ---- Open phases (Plans/ecs-systems.md 3.8) ------------------------------------------------
@@ -442,7 +443,7 @@ TEST_CASE("Two modules' phases are ordered by the data they share", "[ecs][sched
 
     // Gameplay is in Simulation, which both phases follow. ModA writes what ModB reads.
     REQUIRE(RunNames(result.Value) ==
-            std::vector<std::string>{"Engine.Gameplay", "ModA.CooldownSystem", "ModB.ComboSystem"});
+            std::vector<String>{"Engine.Gameplay", "ModA.CooldownSystem", "ModB.ComboSystem"});
     REQUIRE(result.Value.Edges.size() == 1);
     REQUIRE(result.Value.Edges[0].Reason == EdgeReason::WriteRead);
 }
@@ -481,7 +482,7 @@ TEST_CASE("Order from outside fixes a conflict between two modules", "[ecs][sche
 
         const ScheduleResult result = systems.Build();
         REQUIRE(result.ErrorReport() == "");
-        REQUIRE(RunNames(result.Value) == std::vector<std::string>{"ModB.Mover", "ModA.Mover"});
+        REQUIRE(RunNames(result.Value) == std::vector<String>{"ModB.Mover", "ModA.Mover"});
     }
 
     SECTION("Order two systems")
@@ -493,7 +494,7 @@ TEST_CASE("Order from outside fixes a conflict between two modules", "[ecs][sche
 
         const ScheduleResult result = systems.Build();
         REQUIRE(result.ErrorReport() == "");
-        REQUIRE(RunNames(result.Value) == std::vector<std::string>{"ModB.Mover", "ModA.Mover"});
+        REQUIRE(RunNames(result.Value) == std::vector<String>{"ModB.Mover", "ModA.Mover"});
         REQUIRE(result.Value.Edges[0].Reason == EdgeReason::Order);
     }
 
@@ -516,7 +517,7 @@ TEST_CASE("Phase order wins over a data edge that points back", "[ecs][schedule]
     const ScheduleResult result = systems.Build();
     REQUIRE(result.ErrorReport() == "");
     REQUIRE(result.Value.Edges.empty());
-    REQUIRE(RunNames(result.Value) == std::vector<std::string>{"Engine.Reader", "Game.LateWriter"});
+    REQUIRE(RunNames(result.Value) == std::vector<String>{"Engine.Reader", "Game.LateWriter"});
 }
 
 TEST_CASE("A system After can cross phases of one update rate", "[ecs][schedule][phases]")
@@ -598,7 +599,7 @@ TEST_CASE("A FlushAfter phase splits the tick into segments", "[ecs][schedule][p
     REQUIRE(segments[0].FlushPhase == &FlushPhase);
     REQUIRE(segments[1].FlushPhase == nullptr);
     REQUIRE(StageNames(result.Value) == Stages{{"Engine.Gameplay"}, {"Game.Flushing"}, {"Engine.Resolve"}});
-    REQUIRE(result.Value.Dump().find("flush: end of phase Game.Flush") != std::string::npos);
+    REQUIRE(result.Value.Dump().find("flush: end of phase Game.Flush") != String::npos);
 }
 
 TEST_CASE("A FlushAfter phase must be ordered against every phase with systems", "[ecs][schedule][phases]")
@@ -621,12 +622,12 @@ TEST_CASE("Phases are listed in run order", "[ecs][schedule][phases]")
     const ScheduleResult result = systems.Build();
     REQUIRE(result.Ok());
 
-    std::vector<std::string> names;
+    std::vector<String> names;
     for (const PhaseInfo* phase : result.Value.Phases)
     {
         names.emplace_back(phase->Name);
     }
-    REQUIRE(names == std::vector<std::string>{"Engine.Input",
+    REQUIRE(names == std::vector<String>{"Engine.Input",
                                               "Engine.Simulation",
                                               "ModA.Abilities",
                                               "Engine.ResolveDeferred",

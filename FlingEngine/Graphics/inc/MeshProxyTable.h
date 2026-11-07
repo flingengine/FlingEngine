@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "RenderSnapshot.h"
+#include "Strings/String.h"
 
 #include <span>
 #include <string>
@@ -27,8 +28,8 @@ namespace Fling
         struct Slot
         {
             uint64 Key = 0;
-            std::string Mesh;
-            std::string Material;
+            String Mesh;
+            String Material;
             bool Live = false;
         };
 

@@ -4,11 +4,14 @@
 #include "Ecs/RegisterEngine.h"
 #include "Game.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
-#include <string>
 #include <vector>
+
+using Fling::String;
+using Fling::StringView;
 
 namespace
 {
@@ -50,7 +53,7 @@ namespace
 
         void Shutdown(Fling::EntityStorage&) override { Calls.push_back("Shutdown"); }
 
-        std::vector<std::string> Calls;
+        std::vector<String> Calls;
         int SpawnCount = 3;
         int Updates = 0;
         int EntitiesAtStop = -1;
@@ -65,7 +68,7 @@ namespace
     }
 
     /** Makes one named entity with a transform at t_X */
-    Fling::Entity MakeAuthoredEntity(Fling::EntityStorage& t_Reg, const std::string& t_Name, float t_X)
+    Fling::Entity MakeAuthoredEntity(Fling::EntityStorage& t_Reg, const StringView t_Name, float t_X)
     {
         const Fling::Entity Entity = t_Reg.Create();
         t_Reg.Add<Fling::NameComponent>(Entity).Name = Fling::Name(t_Name);
@@ -73,7 +76,7 @@ namespace
         return Entity;
     }
 
-    int CountNamed(Fling::EntityStorage& t_Reg, const std::string& t_Name)
+    int CountNamed(Fling::EntityStorage& t_Reg, const StringView t_Name)
     {
         int Count = 0;
         t_Reg.View<Fling::NameComponent>().Each(
@@ -154,7 +157,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
             REQUIRE(Reg.Count<NameComponent>() == 1);
         }
 
-        const std::vector<std::string> Expected = {
+        const std::vector<String> Expected = {
             "Init",
             "OnStartGame",
             "OnStopGame",
@@ -174,7 +177,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
 
         TestWorld.Update(0.016f);
         REQUIRE(TestWorld.IsReadyForPlay());
-        REQUIRE(TestGame.Calls == std::vector<std::string>{"Init"});
+        REQUIRE(TestGame.Calls == std::vector<String>{"Init"});
     }
 
     SECTION("Requests in the wrong state have no effect")
@@ -221,7 +224,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         TestWorld.Update(0.016f);
         TestWorld.Shutdown();
 
-        const std::vector<std::string> Expected = {"Init", "OnStartGame", "OnStopGame", "Shutdown"};
+        const std::vector<String> Expected = {"Init", "OnStartGame", "OnStopGame", "Shutdown"};
         REQUIRE(TestGame.Calls == Expected);
         REQUIRE(CountNamed(Reg, "Spawned") == 3);
     }
@@ -229,7 +232,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
     SECTION("Shutdown when not playing does not call OnStopGame")
     {
         TestWorld.Shutdown();
-        const std::vector<std::string> Expected = {"Init", "Shutdown"};
+        const std::vector<String> Expected = {"Init", "Shutdown"};
         REQUIRE(TestGame.Calls == Expected);
     }
 

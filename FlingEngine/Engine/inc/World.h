@@ -69,7 +69,7 @@ namespace Fling
 		std::vector<AppRequest> TakeAppRequests() { return std::exchange(m_AppRequestsForApp, {}); }
 
 		/** The schedule errors from Init. Empty if the schedule is valid. */
-		const std::string& GetScheduleErrors() const { return m_ScheduleErrors; }
+		const String& GetScheduleErrors() const { return m_ScheduleErrors; }
 
 		/**
 		* Initializes the world: registers components and systems, builds the system
@@ -244,7 +244,7 @@ namespace Fling
 		std::unique_ptr<SystemRunner> m_Runner;
 
 		/** @see GetScheduleErrors */
-		std::string m_ScheduleErrors;
+		String m_ScheduleErrors;
 
 		/** @see TakeAppRequests */
 		std::vector<AppRequest> m_AppRequestsForApp;

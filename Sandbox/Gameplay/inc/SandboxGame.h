@@ -4,8 +4,6 @@
 #include "Game.h"
 #include "Strings/String.h"
 
-#include <string>
-
 namespace Sandbox
 {
 	/**

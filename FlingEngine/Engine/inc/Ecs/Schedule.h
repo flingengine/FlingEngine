@@ -3,6 +3,7 @@
 #include "Ecs/Phase.h"
 #include "Ecs/System.h"
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <array>
 #include <span>
@@ -84,7 +85,7 @@ namespace Fling
         std::vector<uint32> RunOrder() const;
 
         /** A readable listing of each update rate, segment, stage, and system, and why each edge exists. */
-        std::string Dump() const;
+        String Dump() const;
     };
 
     enum class ScheduleErrorKind : uint8
@@ -123,7 +124,7 @@ namespace Fling
     {
         ScheduleErrorKind Kind = ScheduleErrorKind::Cycle;
         /** A full sentence that names the systems or phases, the type, and the fix. */
-        std::string Message;
+        String Message;
         /** The systems involved, as indices into Schedule::Systems. */
         std::vector<uint32> Systems;
     };
@@ -136,7 +137,7 @@ namespace Fling
         bool Ok() const { return Errors.empty(); }
 
         /** All error messages, one per line. Empty when Ok(). */
-        std::string ErrorReport() const;
+        String ErrorReport() const;
     };
 
     /** Everything BuildSchedule reads. The engine phases are always added. */
