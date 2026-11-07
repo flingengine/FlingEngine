@@ -375,3 +375,45 @@ TEST_CASE("_language.json can set number and date formats", "[Localization][Lang
     CHECK(Big.Resolve() == "1'234'567.5");
     CHECK(Date.Resolve() == "6.3.2026");
 }
+
+TEST_CASE("Localization gathers string table entries from source code", "[Localization][Gather]")
+{
+    const String Code =
+        "#include \"Strings/DisplayText.h\"\n"
+        "void Draw()\n"
+        "{\n"
+        "    const DisplayText Start = DisplayText::FromTable(\"UI\"_name, \"Menu.Start\"_name, \"Start Game\");\n"
+        "    const DisplayText Quit = DisplayText::FromTable( \"UI\"_name ,\n"
+        "        \"Menu.Quit\"_name );\n"
+        "    const DisplayText Quote = DisplayText::FromTable(\"UI\"_name, \"Hud.Quote\"_name, \"Say "
+        "\\\"hi\\\"\\nnow\");\n"
+        "    const DisplayText Dynamic = DisplayText::FromTable(TableName, KeyName, \"Not found\");\n"
+        "}\n";
+
+    const std::vector<GatheredEntry> Entries = Localization::GatherFromCode(Code, "Menu.cpp");
+    REQUIRE(Entries.size() == 3);
+    CHECK(Entries[0].Table == "UI"_name);
+    CHECK(Entries[0].Key == "Menu.Start"_name);
+    CHECK(Entries[0].SourceText == "Start Game");
+    CHECK(Entries[0].Location == "Menu.cpp:4");
+    CHECK(Entries[1].Key == "Menu.Quit"_name);
+    CHECK(Entries[1].SourceText.empty());
+    CHECK(Entries[1].Location == "Menu.cpp:5");
+    CHECK(Entries[2].SourceText == "Say \"hi\"\nnow");
+
+    InitLogger();
+    Localization Loc("unused", "en"_name);
+    Loc.SetEntry("en"_name, "UI"_name, "Hud.Quote"_name, "Different text");
+
+    const GatherResult Result = Loc.AddGathered(Entries);
+    CHECK(Result.Added == 1);
+    CHECK(Result.Mismatched == 1);
+    CHECK(Result.MissingText == 1);
+    CHECK(Loc.FindIn("en"_name, "UI"_name, "Menu.Start"_name) == String("Start Game"));
+    // The table text is kept when the code differs.
+    CHECK(Loc.FindIn("en"_name, "UI"_name, "Hud.Quote"_name) == String("Different text"));
+    CHECK(Loc.FindIn("en"_name, "UI"_name, "Menu.Quit"_name) == std::nullopt);
+
+    // Gathering again adds nothing.
+    CHECK(Loc.AddGathered(Entries).Added == 0);
+}

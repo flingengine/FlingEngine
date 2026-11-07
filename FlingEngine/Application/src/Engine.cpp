@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <random>
@@ -76,6 +77,44 @@ namespace Fling
 				const size_t MissingCount = Loc->FindMissing(Imported).size();
 				F_LOG_TRACE("Imported language {} ({} entries missing)", Imported, MissingCount);
 			}
+		}
+
+		if (!m_Options.LocGather.empty())
+		{
+			const std::string Folder = FlingPaths::ResolveProjectPath(m_Options.LocGather);
+			std::error_code Error;
+			std::vector<GatheredEntry> Entries;
+			for (auto It = std::filesystem::recursive_directory_iterator(PathFromUtf8(Folder), Error);
+				 !Error && It != std::filesystem::recursive_directory_iterator(); It.increment(Error))
+			{
+				const std::filesystem::path Extension = It->path().extension();
+				if (!It->is_regular_file() || (Extension != ".cpp" && Extension != ".h" && Extension != ".hpp" && Extension != ".inl"))
+				{
+					continue;
+				}
+				std::ifstream File(It->path(), std::ios::binary);
+				const std::string Code((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+				const std::string Location = PathToUtf8(std::filesystem::relative(It->path(), PathFromUtf8(Folder), Error));
+				for (GatheredEntry& Entry : Localization::GatherFromCode(Code, Location))
+				{
+					Entries.push_back(std::move(Entry));
+				}
+			}
+			if (Error)
+			{
+				F_LOG_ERROR("Cannot search {}: {}", Folder, Error.message());
+				return ExitCode::Failure;
+			}
+
+			const GatherResult Result = Loc->AddGathered(Entries);
+			std::string SaveError;
+			if (Result.Added > 0 && !Loc->SaveLanguage(SourceLanguage, SaveError))
+			{
+				F_LOG_ERROR("Cannot save language {}: {}", SourceLanguage, SaveError);
+				return ExitCode::Failure;
+			}
+			F_LOG_TRACE("Gathered {} string table uses from {}: {} added, {} with different text, {} with no text",
+				Entries.size(), Folder, Result.Added, Result.Mismatched, Result.MissingText);
 		}
 
 		if (!m_Options.LocExport.empty())

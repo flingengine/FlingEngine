@@ -4,6 +4,7 @@
 #include "Strings/DisplayText.h"
 
 #include <algorithm>
+#include <regex>
 #include <system_error>
 #include <utility>
 
@@ -590,6 +591,74 @@ namespace Fling
             }
         }
         return true;
+    }
+
+    std::vector<GatheredEntry> Localization::GatherFromCode(const StringView t_Code, const StringView t_Location)
+    {
+        // FromTable("Table"_name, "Key"_name) or FromTable("Table"_name, "Key"_name, "Source text")
+        static const std::regex Call(
+            R"re(FromTable\s*\(\s*"([^"\\]*)"_name\s*,\s*"([^"\\]*)"_name\s*(?:,\s*"((?:[^"\\]|\\.)*)"\s*)?\))re");
+
+        std::vector<GatheredEntry> Entries;
+        const String Code(t_Code);
+        for (auto It = std::sregex_iterator(Code.begin(), Code.end(), Call); It != std::sregex_iterator(); ++It)
+        {
+            const std::smatch& Match = *It;
+            GatheredEntry Entry;
+            Entry.Table = Name(Match[1].str());
+            Entry.Key = Name(Match[2].str());
+
+            // Read the escapes that a C++ string literal can have in game text.
+            const String Literal = Match[3].str();
+            for (std::size_t Index = 0; Index < Literal.size(); ++Index)
+            {
+                if (Literal[Index] == '\\' && Index + 1 < Literal.size())
+                {
+                    const char Escaped = Literal[++Index];
+                    Entry.SourceText += Escaped == 'n' ? '\n' : Escaped == 't' ? '\t' : Escaped;
+                }
+                else
+                {
+                    Entry.SourceText += Literal[Index];
+                }
+            }
+
+            const std::size_t Line =
+                1 + static_cast<std::size_t>(std::count(Code.begin(), Code.begin() + Match.position(0), '\n'));
+            Entry.Location = String(t_Location) + ":" + std::to_string(Line);
+            Entries.push_back(std::move(Entry));
+        }
+        return Entries;
+    }
+
+    GatherResult Localization::AddGathered(const std::vector<GatheredEntry>& t_Entries)
+    {
+        GatherResult Result;
+        for (const GatheredEntry& Entry : t_Entries)
+        {
+            const std::optional<String> Existing = FindIn(m_SourceLanguage, Entry.Table, Entry.Key);
+            if (Existing)
+            {
+                if (!Entry.SourceText.empty() && *Existing != Entry.SourceText)
+                {
+                    ++Result.Mismatched;
+                    F_LOG_WARN("{}: {}.{} has the text \"{}\" in code, and \"{}\" in the {} table. The table is kept.",
+                               Entry.Location, Entry.Table, Entry.Key, Entry.SourceText, *Existing, m_SourceLanguage);
+                }
+            }
+            else if (Entry.SourceText.empty())
+            {
+                ++Result.MissingText;
+                F_LOG_WARN("{}: {}.{} is not in the {} tables, and the code gives no source text", Entry.Location,
+                           Entry.Table, Entry.Key, m_SourceLanguage);
+            }
+            else
+            {
+                SetEntry(m_SourceLanguage, Entry.Table, Entry.Key, Entry.SourceText);
+                ++Result.Added;
+            }
+        }
+        return Result;
     }
 
     void Localization::SetActive(std::shared_ptr<Localization> t_Localization)

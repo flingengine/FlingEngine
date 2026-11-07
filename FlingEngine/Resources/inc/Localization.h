@@ -17,6 +17,28 @@
 namespace Fling
 {
     /** A string table entry that one language does not have. */
+    /** A string table entry found in source code by Localization::GatherFromCode. */
+    struct GatheredEntry
+    {
+        Name Table;
+        Name Key;
+        /** The source text written in the code. Empty if the code gives none. */
+        String SourceText;
+        /** Where the entry was found, "File.cpp:12", for messages. */
+        String Location;
+    };
+
+    /** What Localization::AddGathered did. */
+    struct GatherResult
+    {
+        /** Entries added to the source language. */
+        std::size_t Added = 0;
+        /** Entries whose source text in code differs from the table. The table is kept. */
+        std::size_t Mismatched = 0;
+        /** Entries that the source language does not have, and the code gives no text for. */
+        std::size_t MissingText = 0;
+    };
+
     struct MissingLocalizedEntry
     {
         Name Table;
@@ -148,6 +170,22 @@ namespace Fling
          * @param t_OutLanguages  Set to the language columns of the file.
          */
         bool ImportCsv(StringView t_Csv, String& t_OutError, std::vector<Name>* t_OutLanguages = nullptr);
+
+        /**
+         * Finds the string table entries that C++ source code uses: each call of the form
+         * DisplayText::FromTable("Table"_name, "Key"_name, "Source text") with literal
+         * arguments. The source text is optional. Calls with other arguments are not found.
+         *
+         * @param t_Location  The file name, for GatheredEntry::Location.
+         */
+        static std::vector<GatheredEntry> GatherFromCode(StringView t_Code, StringView t_Location);
+
+        /**
+         * Adds gathered entries that the source language does not have, with their source
+         * text. Logs a warning for an entry whose source text differs from the table, and
+         * for a new entry with no source text.
+         */
+        GatherResult AddGathered(const std::vector<GatheredEntry>& t_Entries);
 
         /** Writes every table of a language to its folder, one JSON file per table. */
         bool SaveLanguage(Name t_Language, String& t_OutError) const;

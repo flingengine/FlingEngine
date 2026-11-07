@@ -82,8 +82,15 @@ namespace Fling
          */
         std::string LocImport;
 
+        /**
+         * A source folder to search for string table entries (--loc-gather). Entries that
+         * the source language does not have are added to its tables, with the source text
+         * from the code. The engine writes them and exits, with no window.
+         */
+        std::string LocGather;
+
         /** True when a localization flag asks the engine to do its work and exit. */
-        bool IsLocalizationTool() const { return !LocExport.empty() || !LocImport.empty(); }
+        bool IsLocalizationTool() const { return !LocExport.empty() || !LocImport.empty() || !LocGather.empty(); }
 
         /**
          * Read the launch flags from a command line. Flags that are not given keep

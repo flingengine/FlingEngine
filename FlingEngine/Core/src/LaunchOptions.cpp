@@ -21,6 +21,7 @@ namespace Fling
         constexpr std::string_view LanguageFlag = "language";
         constexpr std::string_view LocExportFlag = "loc-export";
         constexpr std::string_view LocImportFlag = "loc-import";
+        constexpr std::string_view LocGatherFlag = "loc-gather";
 
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
         bool ReadPath(const CommandLine& t_CmdLine, std::string_view t_Flag, std::string& t_Out, std::string& t_OutError)
@@ -184,7 +185,8 @@ namespace Fling
         }
 
         if (!ReadPath(t_CmdLine, LocExportFlag, t_Out.LocExport, t_OutError) ||
-            !ReadPath(t_CmdLine, LocImportFlag, t_Out.LocImport, t_OutError))
+            !ReadPath(t_CmdLine, LocImportFlag, t_Out.LocImport, t_OutError) ||
+            !ReadPath(t_CmdLine, LocGatherFlag, t_Out.LocGather, t_OutError))
         {
             return false;
         }

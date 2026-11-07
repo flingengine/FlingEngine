@@ -89,6 +89,12 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE(ImportOptions.LocImport == "Strings.csv");
         REQUIRE(ImportOptions.NullRender);
 
+        LaunchOptions GatherOptions;
+        REQUIRE(ParseArgs({"--loc-gather", "Sandbox"}, GatherOptions, Error));
+        REQUIRE(GatherOptions.LocGather == "Sandbox");
+        REQUIRE(GatherOptions.IsLocalizationTool());
+        REQUIRE(GatherOptions.NullRender);
+
         REQUIRE_FALSE(ParseArgs({"--loc-export"}, Options, Error));
         REQUIRE(Error.find("--loc-export needs a file path") != std::string::npos);
     }

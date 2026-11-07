@@ -1,4 +1,4 @@
 {
-    "Hud.EnemiesLeft": "Il reste {Count} ennemis",
+    "Hud.EnemiesLeft": "{Count, plural, one {Il reste # ennemi} other {Il reste # ennemis}}",
     "Menu.Start": "Commencer"
 }

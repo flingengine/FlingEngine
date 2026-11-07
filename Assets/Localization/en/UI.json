@@ -1,5 +1,5 @@
 {
-    "Hud.EnemiesLeft": "{Count} enemies left",
+    "Hud.EnemiesLeft": "{Count, plural, one {# enemy left} other {# enemies left}}",
     "Menu.Quit": "Quit",
     "Menu.Start": "Start Game"
 }
