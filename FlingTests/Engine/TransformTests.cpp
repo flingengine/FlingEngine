@@ -218,3 +218,55 @@ TEST_CASE("RebuildChildren makes Children from Parent and drops bad links", "[hi
     REQUIRE(storage.Get<Children>(parent).Value == std::vector<Entity>{child});
     REQUIRE_FALSE(storage.Has<Parent>(orphan));
 }
+
+TEST_CASE("RebuildChildren clears old Children and breaks a loop of Parent links", "[hierarchy]")
+{
+    QuietLogger();
+    EntityStorage storage;
+    const Entity a = storage.Create();
+    const Entity b = storage.Create();
+    const Entity stale = storage.Create();
+
+    // A Children list with no Parent link behind it goes away
+    storage.Add<Children>(stale, Children{{a}});
+
+    // a -> b -> a has no root
+    storage.Add<Parent>(a, Parent{b});
+    storage.Add<Parent>(b, Parent{a});
+    HierarchyUtil::RebuildChildren(storage);
+
+    REQUIRE_FALSE(storage.Has<Children>(stale));
+    REQUIRE(storage.Has<Parent>(a) != storage.Has<Parent>(b)); // One link is removed
+    const Entity root = storage.Has<Parent>(a) ? b : a;
+    const Entity leaf = root == a ? b : a;
+    REQUIRE(HierarchyUtil::GetParent(storage, leaf) == root);
+    REQUIRE(storage.Get<Children>(root).Value == std::vector<Entity>{leaf});
+    REQUIRE_FALSE(storage.Has<Children>(leaf));
+}
+
+TEST_CASE("SetParent refuses dead entities, and the same parent is no change", "[hierarchy]")
+{
+    QuietLogger();
+    EntityStorage storage;
+    const Entity parent = storage.Create();
+    const Entity child = storage.Create();
+    const Entity dead = storage.Create();
+    storage.Destroy(dead);
+
+    REQUIRE_FALSE(HierarchyUtil::SetParent(storage, dead, parent));
+    REQUIRE_FALSE(HierarchyUtil::SetParent(storage, child, dead));
+    REQUIRE_FALSE(storage.Has<Parent>(child));
+
+    REQUIRE(HierarchyUtil::SetParent(storage, child, parent));
+    REQUIRE(HierarchyUtil::SetParent(storage, child, parent));
+    REQUIRE(storage.Get<Children>(parent).Value == std::vector<Entity>{child});
+
+    // A null parent detaches, and the parent's empty Children goes away
+    REQUIRE(HierarchyUtil::SetParent(storage, child, Entity::Null));
+    REQUIRE_FALSE(storage.Has<Parent>(child));
+    REQUIRE_FALSE(storage.Has<Children>(parent));
+
+    // Destroying a dead root does nothing
+    HierarchyUtil::DestroySubtree(storage, dead);
+    REQUIRE(storage.IsValid(parent));
+}

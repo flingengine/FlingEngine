@@ -18,7 +18,22 @@
 // values and callables from each command buffer's arena. The counting operator new
 // below replaces the global one for the whole EngineTests executable. It counts only
 // while a test turns it on.
+//
+// ThreadSanitizer has its own global operator new, and two definitions do not link.
+// A TSan build leaves the counter out and skips the test.
 
+#if defined(__SANITIZE_THREAD__)
+#define FLING_TEST_COUNT_ALLOCATIONS 0
+#elif defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define FLING_TEST_COUNT_ALLOCATIONS 0
+#endif
+#endif
+#ifndef FLING_TEST_COUNT_ALLOCATIONS
+#define FLING_TEST_COUNT_ALLOCATIONS 1
+#endif
+
+#if FLING_TEST_COUNT_ALLOCATIONS
 namespace
 {
     std::atomic<bool> g_CountAllocations{false};
@@ -161,6 +176,13 @@ void operator delete[](void* memory, std::align_val_t, const std::nothrow_t&) no
 {
     FreeAligned(memory);
 }
+#else
+namespace
+{
+    std::atomic<bool> g_CountAllocations{false};
+    std::atomic<size_t> g_Allocations{0};
+} // namespace
+#endif
 
 using namespace Fling;
 
@@ -275,6 +297,10 @@ namespace
 
 TEST_CASE("A steady tick takes no memory from the global heap", "[ecs][memory]")
 {
+    if (!FLING_TEST_COUNT_ALLOCATIONS)
+    {
+        SKIP("This build has no counting operator new (ThreadSanitizer)");
+    }
     EntityStorage storage;
     SystemRegistry systems;
     systems.Add<MoveSystem>();

@@ -871,6 +871,23 @@ namespace Fling
         /** True if the entity is alive. */
         bool IsAlive(const Entity entity) const { return m_Core.Storage().IsValid(entity); }
 
+        /**
+         * True if the entity is alive and has T. Use it for a Tag, which TryGet cannot
+         * return. T needs Read<T> (or Write<T>).
+         */
+        template <typename T>
+        bool Has(const Entity entity) const
+        {
+            using Type = std::remove_const_t<T>;
+            static_assert(Detail::IsTableComponent<Type> || ComponentInfoOf<Type>.Kind == ComponentKind::Tag,
+                          "Has checks Table and Tag components only.");
+            static_assert(CanUse<const Type>(),
+                          "This system checks a component that its Access<...> does not allow. Add Read<T>.");
+
+            const EntityStorage& storage = m_Core.Storage();
+            return storage.IsValid(entity) && storage.template Has<Type>(entity);
+        }
+
         /** The singleton T. T needs Write<T>; const T needs Read<T>. The owner makes it in OnCreate. */
         template <typename T>
         T& Singleton()

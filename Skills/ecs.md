@@ -1,5 +1,8 @@
 # ECS: components, systems, and the schedule
 
+A step-by-step guide with a worked example, for people new to the ECS:
+[`Docs/ecs-tutorial.md`](../Docs/ecs-tutorial.md). This page is the reference.
+
 How to write gameplay and engine code in Fling's ECS. The design and its
 history are in [`Plans/ecs-systems.md`](../Plans/ecs-systems.md) (the first
 slice) and [`Plans/ecs-plan.md`](../Plans/ecs-plan.md) (the full plan). The
@@ -82,9 +85,6 @@ Systems do not use `EntityStorage`: they use their typed context.
 - Use the `Fling::Math` helpers (`MathUtils.h`: `Min`, `Max`, `Clamp`,
   `AlignUp`, `IsPowerOfTwo`, ...) and the Fling math types, not `std::min`,
   `std::max`, or `std::clamp`, in engine code.
-- `scripts/EcsBenchmark/run.sh` compares the storage with EnTT 3.1 (the
-  storage it replaced) on iteration, create, add, remove, destroy, and memory.
-  Run it after a change to the storage.
 
 ## The rules
 
@@ -143,7 +143,7 @@ description.
 - `.Transient = true`: never saved. Register it with
   `t_Modules.Component<T>()` and no fields.
 - **Field types:** `bool`, `int32`, `uint32`, `int64`, `uint64`, `float`,
-  `double`, `std::string`, `glm::vec2/3/4`, `glm::quat`, enums, and `Entity`.
+  `double`, `String`, `Name`, `glm::vec2/3/4`, `glm::quat`, enums, and `Entity`.
   For another type, specialize `Fling::FieldTraits` (`Kind = Custom`, with
   `Save` and `Load`). `TypeBuilder::Serialize(save, load)` is the escape hatch
   for a whole type (`MeshRenderer` uses it for its asset paths).
@@ -191,6 +191,9 @@ public:
 - **Access list.** `Read<T>`, `Write<T>` (implies read), `Append<Q>`,
   `Consume<Q>`, `Spawns`, and, for engine bridges to a subsystem only,
   `RawStorage`. Each type once.
+- **One entity.** `ctx.TryGet<T>(e)` (null if the entity is gone or has no
+  `T`) and `ctx.Get<T>(e)` return Table components. `ctx.Has<T>(e)` checks a
+  Table or Tag component and needs only `Read<T>`.
 - **The context checks the list at compile time.** `ctx.Query<T>()` needs
   `Write<T>`, and `ctx.Query<const T>()` needs `Read<T>`. The same applies to
   `Get`, `TryGet`, `Singleton`, `Queue`, `Drain`, `Spawn`, and `RawStorage`.

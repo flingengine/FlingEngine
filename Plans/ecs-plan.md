@@ -664,7 +664,7 @@ Done. `Ecs/detail/NativeStorage.h` is archetype storage in chunks that grow from
 - Storage memory is engine owned (see Skills/ecs.md, Memory): chunks are blocks from a per-world `BlockAllocator`, Sparse components use a `SlotPool`, and deferred values a `LinearArena`. A steady tick makes no global allocation (`EcsAllocationTests.cpp`).
 - Chunks grow to 128 KiB, not 16 KiB: 16 KiB chunks restart the hardware prefetcher every few hundred rows, which made iteration about 50% slower.
 
-**Benchmark** (`scripts/EcsBenchmark/run.sh`, Clang -O3, one core of a Ryzen 9 7950X, 1M entities with Position and Velocity, ns per entity):
+**Benchmark** (a temporary benchmark, since removed; Clang -O3, one core of a Ryzen 9 7950X, 1M entities with Position and Velocity, ns per entity):
 
 | | EnTT 3.1 | Native, range-for | Native, `Each` |
 |---|---|---|---|

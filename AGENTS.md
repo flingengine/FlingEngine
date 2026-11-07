@@ -74,6 +74,9 @@ platform setup (Vulkan SDK, GLFW, etc.).
   the rules that keep them out of the ECS: [`Skills/threading.md`](Skills/threading.md).
 - ECS components, systems, phases, and the schedule (how to write and test a
   system, the update-rate rules, `--dump-schedule`): [`Skills/ecs.md`](Skills/ecs.md).
+  A tutorial for people, with a tested worked example (a component, a system,
+  registration, a test, and the engine's own components):
+  [`Docs/ecs-tutorial.md`](Docs/ecs-tutorial.md).
 
 ## Plans
 

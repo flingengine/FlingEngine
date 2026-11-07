@@ -470,3 +470,58 @@ TEST_CASE("A frame system reads RealFrameTime and writes Presentation", "[ecs][s
     REQUIRE(h.Storage.Get<Display>(e).LastDelta == Catch::Approx(0.02f));
     REQUIRE(h.Storage.Singleton<RealFrameTime>().Elapsed == Catch::Approx(0.02));
 }
+
+namespace
+{
+    /** A module phase with no systems yet, after Simulation. */
+    inline constexpr PhaseInfo LatePhase{
+        .Name = "Test.Late", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Simulation"};
+
+    class FirstWriterSystem final : public System<FirstWriterSystem, Access<Write<Position>>>
+    {
+    public:
+        static constexpr SystemInfo Info{.Name = "Test.FirstWriter", .Phase = Phases::Simulation};
+
+        void FixedUpdate(Context& ctx) const
+        {
+            for (auto [entity, position] : ctx.Query<Position>())
+            {
+                position.X = 1.0f;
+            }
+        }
+    };
+
+    class SecondWriterSystem final : public System<SecondWriterSystem, Access<Write<Position>>>
+    {
+    public:
+        static constexpr SystemInfo Info{.Name = "Test.SecondWriter", .Phase = Phases::Simulation};
+
+        void FixedUpdate(Context& ctx) const
+        {
+            for (auto [entity, position] : ctx.Query<Position>())
+            {
+                position.X *= 2.0f;
+            }
+        }
+    };
+} // namespace
+
+TEST_CASE("SystemRegistry::Order orders two writers, and AddPhase adds an empty phase", "[ecs][system]")
+{
+    SystemRegistry unordered;
+    unordered.Add<SecondWriterSystem>();
+    unordered.Add<FirstWriterSystem>();
+    REQUIRE_FALSE(unordered.BuildSchedule().Ok());
+
+    Harness h;
+    h.Systems.Add<SecondWriterSystem>();
+    h.Systems.Add<FirstWriterSystem>();
+    h.Systems.Order("Test.FirstWriter", "Test.SecondWriter");
+    h.Systems.AddPhase(LatePhase);
+    h.Start();
+
+    const Entity e = h.Storage.Create();
+    h.Storage.Add<Position>(e, Position{5.0f});
+    h.Runner->RunTick(WorldRole::Play);
+    REQUIRE(h.Storage.Get<Position>(e).X == 2.0f);
+}

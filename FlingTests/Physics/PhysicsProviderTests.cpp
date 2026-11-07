@@ -1,5 +1,9 @@
 #include "Components/Transform.h"
 #include "DefaultPhysicsProvider.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/SystemBase.h"
+#include "Ecs/SystemRegistry.h"
+#include "Ecs/SystemRunner.h"
 #include "Physics.h"
 #include "Strings/String.h"
 #include "Threading/ThreadManager.h"
@@ -7,6 +11,7 @@
 
 #include <bit>
 #include <catch2/catch_all.hpp>
+#include <memory>
 
 using Fling::String;
 using Fling::StringView;
@@ -452,4 +457,64 @@ TEST_CASE("Provider: the pyramid scene matches the saved result on every platfor
     const uint64 Hash = HashBodies(Reg);
     INFO("Provider " << Provider->GetName() << ", " << WorkerCount << " workers, hash 0x" << std::hex << Hash);
     REQUIRE(Hash == 0x6b3a55f789760cf8ull);
+}
+
+namespace
+{
+    /** A body that PushSystem pushes on +X each tick. */
+    struct Pushed
+    {
+        static constexpr Fling::ComponentInfo Component{.Name = "PhysicsTest.Pushed"};
+        float Impulse = 1.0f;
+    };
+
+    /** Asks for an impulse on each Pushed body, every tick, the way gameplay does. */
+    class PushSystem final
+        : public Fling::System<PushSystem, Fling::Access<Fling::Read<Pushed>, Fling::Append<Fling::PhysicsCommands>>>
+    {
+    public:
+        static constexpr Fling::SystemInfo Info{.Name = "PhysicsTest.Push", .Phase = Fling::Phases::Simulation};
+
+        void FixedUpdate(Context& ctx) const
+        {
+            for (auto [entity, pushed] : ctx.Query<const Pushed>())
+            {
+                ctx.Queue<Fling::PhysicsCommands>().Push(Fling::PhysicsCommand{
+                    entity, Fling::PhysicsCommandType::Impulse, glm::vec3(pushed.Impulse, 0.0f, 0.0f)});
+            }
+        }
+    };
+} // namespace
+
+TEST_CASE("Physics.Step runs in the schedule, after the systems that append commands", "[physics][provider]")
+{
+    std::shared_ptr<PhysicsProvider> Provider = GetProviderOrSkip();
+
+    Fling::EntityStorage Reg;
+    Fling::SystemRegistry Systems;
+    Fling::ModuleRegistration Modules(Systems);
+    RegisterPhysics(Modules);
+    Modules.Component<Pushed>();
+    Modules.System<PushSystem>();
+
+    Fling::ScheduleResult Schedule = Systems.BuildSchedule();
+    REQUIRE(Schedule.ErrorReport() == "");
+    Fling::SystemRunner Runner(Systems, std::move(Schedule.Value), Reg);
+    Runner.Create();
+    Physics::InitWorld(Reg, Provider);
+    Reg.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
+
+    const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
+    Reg.Add<Pushed>(Box);
+
+    Runner.RunTick(Fling::WorldRole::Play);
+    Runner.RunTick(Fling::WorldRole::Play);
+
+    // One impulse of 1 per tick on a mass of 1
+    REQUIRE(Reg.Has<PhysicsBody>(Box));
+    REQUIRE(Reg.Get<RigidBody>(Box).m_Velocity.x == Catch::Approx(2.0f).epsilon(1e-3));
+    REQUIRE(Reg.Singleton<PhysicsCommands>().Requests.empty());
+
+    Physics::ShutdownWorld(Reg);
+    Runner.Destroy();
 }

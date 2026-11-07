@@ -488,3 +488,207 @@ TEST_CASE("UnreflectedBytes tells padding from forgotten fields", "[reflection]"
     REQUIRE(UnreflectedBytes(*all.Find<AllKinds>()) == 0);
     REQUIRE(UnreflectedBytes(*all.Find<Runner>()) == 0);
 }
+
+namespace
+{
+    enum class Wide16 : int16
+    {
+        Low = -300,
+        High = 300,
+    };
+
+    enum class Wide32 : uint32
+    {
+        Big = 4000000000u,
+    };
+
+    enum class Wide64 : int64
+    {
+        Huge = -9000000000ll,
+    };
+
+    /** A field type with its own save and load (FieldTraits Kind = Custom). */
+    struct Rgb
+    {
+        uint8 R = 0;
+        uint8 G = 0;
+        uint8 B = 0;
+    };
+
+    /** Enums of each size, a Name, and a custom field type. */
+    struct EdgeKinds
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.EdgeKinds"};
+        Wide16 Small = Wide16::Low;
+        Wide32 Medium = Wide32::Big;
+        Wide64 Large = Wide64::Huge;
+        Wide16 Untabled = Wide16::High;
+        Name Label;
+        Rgb Tint;
+    };
+
+    /** Saved as one string by TypeBuilder::Serialize, not field by field. */
+    struct Packed
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.Packed"};
+        int32 A = 0;
+        int32 B = 0;
+    };
+
+    /** Version 3, with an upgrade from 2 only: a version 1 file has a missing step. */
+    struct Gapped
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.Gapped"};
+        float Value = 0.0f;
+    };
+
+    void RegisterEdgeTypes(ModuleRegistration& t_Modules)
+    {
+        t_Modules.Component<EdgeKinds>(
+            [](TypeBuilder<EdgeKinds>& t_Type)
+            {
+                t_Type.Field("small", &EdgeKinds::Small).Enum<Wide16>({{"low", Wide16::Low}, {"high", Wide16::High}});
+                t_Type.Field("medium", &EdgeKinds::Medium).Enum<Wide32>({{"big", Wide32::Big}});
+                t_Type.Field("large", &EdgeKinds::Large).Enum<Wide64>({{"huge", Wide64::Huge}});
+                t_Type.Field("untabled", &EdgeKinds::Untabled);
+                t_Type.Field("label", &EdgeKinds::Label);
+                t_Type.Field("tint", &EdgeKinds::Tint);
+            });
+        t_Modules.Component<Packed>(
+            [](TypeBuilder<Packed>& t_Type)
+            {
+                t_Type.Serialize([](const Packed& t_Value, Json& t_Out)
+                                 { t_Out.SetInt64("ab", (int64(t_Value.A) << 32) | int64(uint32(t_Value.B))); },
+                                 [](Packed& t_Value, const Json& t_In)
+                                 {
+                                     const int64 packed = t_In.GetInt64("ab");
+                                     t_Value.A = int32(packed >> 32);
+                                     t_Value.B = int32(uint32(packed));
+                                 });
+            });
+        t_Modules.Component<Gapped>(
+            [](TypeBuilder<Gapped>& t_Type)
+            {
+                t_Type.Version(3);
+                t_Type.Field("value", &Gapped::Value);
+                t_Type.Upgrade(2, [](Json& t_Data) { t_Data.Set("value", t_Data.GetFloat("value") * 2.0f); });
+            });
+    }
+} // namespace
+
+template <>
+struct Fling::FieldTraits<Rgb>
+{
+    static constexpr FieldKind Kind = FieldKind::Custom;
+
+    static void Save(const Rgb& t_Value, Json& t_Object, const StringView t_Key)
+    {
+        t_Object.SetInt64(t_Key, (int64(t_Value.R) << 16) | (int64(t_Value.G) << 8) | int64(t_Value.B));
+    }
+
+    static bool Load(Rgb& t_Value, const Json& t_Object, const StringView t_Key)
+    {
+        if (!t_Object.Contains(t_Key))
+        {
+            return false;
+        }
+        const int64 packed = t_Object.GetInt64(t_Key);
+        t_Value = Rgb{uint8(packed >> 16), uint8(packed >> 8), uint8(packed)};
+        return true;
+    }
+};
+
+TEST_CASE("Enums of every size, Names, and custom field types save and load", "[reflection]")
+{
+    QuietLogger();
+    SystemRegistry systems;
+    ModuleRegistration modules(systems);
+    RegisterEdgeTypes(modules);
+    const TypeRegistry types = TypeRegistry::Build(modules);
+    const TypeDesc& type = *types.Find<EdgeKinds>();
+
+    EdgeKinds source;
+    source.Small = Wide16::High;
+    source.Label = Name("Tutorial.Label");
+    source.Tint = Rgb{1, 2, 3};
+
+    Json saved = Json::Object();
+    SaveObject(type, &source, saved, {});
+    REQUIRE(saved.GetString("small") == "high");
+    REQUIRE(saved.GetString("medium") == "big");
+    REQUIRE(saved.GetString("large") == "huge");
+    REQUIRE(saved.GetInt64("untabled") == 300); // No table, so it saves as a number
+    REQUIRE(saved.GetString("label") == "Tutorial.Label");
+    REQUIRE(saved.GetInt64("tint") == 0x010203);
+
+    EdgeKinds loaded;
+    loaded.Medium = static_cast<Wide32>(0);
+    loaded.Large = static_cast<Wide64>(0);
+    loaded.Untabled = Wide16::Low;
+    LoadObject(type, &loaded, Json::Parse(saved.Dump()), {});
+    REQUIRE(loaded.Small == Wide16::High);
+    REQUIRE(loaded.Medium == Wide32::Big);
+    REQUIRE(loaded.Large == Wide64::Huge);
+    REQUIRE(loaded.Untabled == Wide16::High);
+    REQUIRE(loaded.Label == Name("Tutorial.Label"));
+    REQUIRE(loaded.Tint.R == 1);
+    REQUIRE(loaded.Tint.G == 2);
+    REQUIRE(loaded.Tint.B == 3);
+
+    // A custom field with no key keeps its value
+    EdgeKinds kept;
+    kept.Tint = Rgb{9, 9, 9};
+    LoadObject(type, &kept, Json::Object(), {});
+    REQUIRE(kept.Tint.R == 9);
+}
+
+TEST_CASE("A whole-type Serialize replaces the fields", "[reflection]")
+{
+    QuietLogger();
+    SystemRegistry systems;
+    ModuleRegistration modules(systems);
+    RegisterEdgeTypes(modules);
+    const TypeRegistry types = TypeRegistry::Build(modules);
+    const TypeDesc& type = *types.Find<Packed>();
+
+    const Packed source{4, -5};
+    Json saved = Json::Object();
+    SaveObject(type, &source, saved, {});
+    REQUIRE(saved.Contains("ab"));
+    REQUIRE_FALSE(saved.Contains("a"));
+
+    Packed loaded;
+    LoadObject(type, &loaded, saved, {});
+    REQUIRE(loaded.A == 4);
+    REQUIRE(loaded.B == -5);
+}
+
+TEST_CASE("A newer saved version, or a missing upgrade step, still loads fields by name", "[reflection]")
+{
+    QuietLogger();
+    SystemRegistry systems;
+    ModuleRegistration modules(systems);
+    RegisterEdgeTypes(modules);
+    const TypeRegistry types = TypeRegistry::Build(modules);
+    const TypeDesc& type = *types.Find<Gapped>();
+
+    // Saved by a newer build: no upgrade runs
+    Json newer = Json::Object();
+    newer.SetInt64("$v", 9);
+    newer.Set("value", 1.5f);
+    Gapped fromNewer;
+    LoadObject(type, &fromNewer, newer, {});
+    REQUIRE(fromNewer.Value == 1.5f);
+
+    // Version 1 has no step to 2, so only the 2 -> 3 step runs
+    Json old = Json::Object();
+    old.Set("value", 1.5f);
+    Gapped fromOld;
+    LoadObject(type, &fromOld, old, {});
+    REQUIRE(fromOld.Value == 3.0f);
+
+    // Version 3 saves its version
+    Json saved = Json::Object();
+    SaveObject(type, &fromOld, saved, {});
+    REQUIRE(saved.GetInt64("$v") == 3);
+}
