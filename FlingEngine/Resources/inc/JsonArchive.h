@@ -2,6 +2,7 @@
 
 #include "Json.h"
 #include "Strings/Name.h"
+#include "Strings/String.h"
 
 #include <string>
 #include <type_traits>
@@ -95,7 +96,7 @@ namespace Fling
 				field.Value = m_Doc.GetBool(field.Name, field.Value);
 			}
 		}
-		else if constexpr (std::is_same_v<T, std::string>)
+		else if constexpr (std::is_same_v<T, String>)
 		{
 			if (IsSaving())
 			{
@@ -112,11 +113,11 @@ namespace Fling
 			// same hash on every machine.
 			if (IsSaving())
 			{
-				m_Doc.Set(field.Name, std::string(field.Value.ToView()));
+				m_Doc.Set(field.Name, String(field.Value.ToView()));
 			}
 			else
 			{
-				field.Value = Name(m_Doc.GetString(field.Name, std::string(field.Value.ToView())));
+				field.Value = Name(m_Doc.GetString(field.Name, String(field.Value.ToView())));
 			}
 		}
 		else if constexpr (std::is_same_v<T, glm::vec3>)

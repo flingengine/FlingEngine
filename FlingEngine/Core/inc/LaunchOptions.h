@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "Input/InputMessage.h"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -58,36 +59,36 @@ namespace Fling
         InputLogLevel InputLog = InputLogLevel::Off;
 
         /** The level to load at start (--level), relative to the assets folder. Empty means use the config. */
-        std::string Level;
+        String Level;
 
         /** The input file to play (--replay-input). Empty means no replay. */
-        std::string ReplayInput;
+        String ReplayInput;
 
         /** The file to save an input recording to (--record-input). Empty means no recording. */
-        std::string RecordInput;
+        String RecordInput;
 
         /** The language code to show text in (--language), for example "fr". Empty means use the config. */
-        std::string Language;
+        String Language;
 
         /**
          * A CSV file to write every string table entry to (--loc-export), for translators.
          * The engine writes it and exits, with no window.
          */
-        std::string LocExport;
+        String LocExport;
 
         /**
          * A CSV file of translations to read into the string tables (--loc-import). The
          * engine writes the JSON tables of each language in the file and exits, with no
          * window.
          */
-        std::string LocImport;
+        String LocImport;
 
         /**
          * A source folder to search for string table entries (--loc-gather). Entries that
          * the source language does not have are added to its tables, with the source text
          * from the code. The engine writes them and exits, with no window.
          */
-        std::string LocGather;
+        String LocGather;
 
         /** True when a localization flag asks the engine to do its work and exit. */
         bool IsLocalizationTool() const { return !LocExport.empty() || !LocImport.empty() || !LocGather.empty(); }
@@ -101,6 +102,6 @@ namespace Fling
          * @param t_OutError    Receives a message for the first flag that is not valid
          * @return False if a flag has a value that is not valid
          */
-        static bool Parse(const CommandLine& t_CmdLine, LaunchOptions& t_Out, std::string& t_OutError);
+        static bool Parse(const CommandLine& t_CmdLine, LaunchOptions& t_Out, String& t_OutError);
     };
 } // namespace Fling

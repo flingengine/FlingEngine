@@ -49,6 +49,11 @@ All text is UTF-8 in `char`. There is no other character type in engine code.
 
 ## `String` and `StringView`
 
+- Spell them `String` and `StringView`, not `std::string` and
+  `std::string_view`. Outside `namespace Fling`, write `Fling::String`, or add
+  `using Fling::String;` in a test file. `python3 scripts/check_string_types.py`
+  checks this, and CI runs it.
+
 - A read-only parameter is `StringView`. Not `const std::string&`, and not
   `const char*`.
 - A parameter that the function keeps is `String` by value, then `std::move`.

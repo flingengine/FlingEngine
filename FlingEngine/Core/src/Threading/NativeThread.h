@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Platform.h"
+#include "Strings/String.h"
 #include "Threading/ThreadTypes.h"
 
 #include <memory>
@@ -37,7 +38,7 @@ namespace Fling
         bool SetPriority(ThreadPriority t_Priority, uint64 t_NativeId);
 
         /** Give the calling thread an OS name for debuggers and profilers. */
-        static void SetCurrentName(std::string_view t_Name);
+        static void SetCurrentName(StringView t_Name);
 
         static bool SetCurrentPriority(ThreadPriority t_Priority);
 

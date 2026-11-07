@@ -1,14 +1,18 @@
 #include "LaunchOptions.h"
 #include "Misc/CommandLine.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <string>
 #include <vector>
 
+using Fling::String;
+using Fling::StringView;
+
 namespace
 {
     /** Parse launch options from the given args. The first arg is the executable name. */
-    bool ParseArgs(std::vector<const char*> t_Args, Fling::LaunchOptions& t_Out, std::string& t_OutError)
+    bool ParseArgs(std::vector<const char*> t_Args, Fling::LaunchOptions& t_Out, String& t_OutError)
     {
         t_Args.insert(t_Args.begin(), "FlingEngine.exe");
         REQUIRE(Fling::CommandLine::Get().Init(static_cast<int>(t_Args.size()), t_Args.data()));
@@ -21,7 +25,7 @@ TEST_CASE("Launch Options", "[Launch Options]")
     using namespace Fling;
 
     LaunchOptions Options;
-    std::string Error;
+    String Error;
 
     SECTION("Defaults with no flags")
     {
@@ -61,7 +65,7 @@ TEST_CASE("Launch Options", "[Launch Options]")
     SECTION("Level with no path is an error")
     {
         REQUIRE_FALSE(ParseArgs({"--level"}, Options, Error));
-        REQUIRE(Error.find("--level needs a file path") != std::string::npos);
+        REQUIRE(Error.find("--level needs a file path") != String::npos);
     }
 
     SECTION("Language")
@@ -74,7 +78,7 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE_FALSE(Options.IsLocalizationTool());
 
         REQUIRE_FALSE(ParseArgs({"--language"}, Options, Error));
-        REQUIRE(Error.find("--language needs a language code") != std::string::npos);
+        REQUIRE(Error.find("--language needs a language code") != String::npos);
     }
 
     SECTION("Localization tools run with no window")
@@ -96,7 +100,7 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE(GatherOptions.NullRender);
 
         REQUIRE_FALSE(ParseArgs({"--loc-export"}, Options, Error));
-        REQUIRE(Error.find("--loc-export needs a file path") != std::string::npos);
+        REQUIRE(Error.find("--loc-export needs a file path") != String::npos);
     }
 
     SECTION("Equals syntax")

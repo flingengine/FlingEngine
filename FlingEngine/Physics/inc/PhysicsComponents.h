@@ -3,6 +3,7 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "JsonArchive.h"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -76,7 +77,7 @@ namespace Fling
 
         void Serialize(JsonArchive& Ar)
         {
-            std::string Shape = (m_Shape == ColliderShape::Sphere) ? "sphere" : "box";
+            String Shape = (m_Shape == ColliderShape::Sphere) ? "sphere" : "box";
             Ar << MakeNVP("shape", Shape);
             if (Ar.IsLoading())
             {

@@ -29,6 +29,9 @@ Trivial members/accessors can use a one-line `/** ... */`.
 
 ## Enforcement — check before considering work done
 
+- **String types**: `python3 scripts/check_string_types.py` — rejects
+  `std::string` and `std::string_view` (use `String` and `StringView`) and
+  `const String&` parameters (use `StringView`). See [`strings.md`](strings.md).
 - **Comment content**: `python3 scripts/check_comment_style.py` — rejects leftover
   `@brief` / `/*!` in first-party sources. Run this after adding or editing any
   doc comment.

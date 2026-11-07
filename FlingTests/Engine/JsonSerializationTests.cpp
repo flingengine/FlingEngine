@@ -6,11 +6,15 @@
 #include "Json.h"
 #include "JsonArchive.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
 #include <cstdio>
 #include <string>
+
+using Fling::String;
+using Fling::StringView;
 
 namespace {
     class JsonTestGame : public Fling::Game {
@@ -40,11 +44,11 @@ namespace {
         Fling::Logger::GetCurrentLogFile()->set_level(spdlog::level::off);
     }
 
-    std::string TestLevelRelativePath() {
+    String TestLevelRelativePath() {
         return "Levels/_json_serialization_test.json";
     }
 
-    std::string TestLevelFullPath() {
+    String TestLevelFullPath() {
         return Fling::FlingPaths::EngineAssetsDir() + "/" + TestLevelRelativePath();
     }
 

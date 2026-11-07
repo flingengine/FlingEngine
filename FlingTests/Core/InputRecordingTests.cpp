@@ -4,6 +4,7 @@
 #include "Input/InputRecorder.h"
 #include "Input/InputRecording.h"
 #include "Input/VirtualInputDeviceInterface.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <filesystem>
@@ -11,6 +12,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+using Fling::String;
+using Fling::StringView;
 
 #if WITH_INPUT_RECORDING
 namespace
@@ -24,25 +28,25 @@ namespace
     /** A header line with no devices and a duration of 1 second. */
     const char* const Header = "{\"format\":\"fling-input\",\"version\":1,\"duration\":1.0}\n";
 
-    InputRecording MustParse(const std::string& t_Text)
+    InputRecording MustParse(const StringView t_Text)
     {
         InputRecording Recording;
-        std::string Error;
+        String Error;
         INFO(t_Text);
         REQUIRE(ParseInputRecording(t_Text, Recording, Error));
         REQUIRE(Error.empty());
         return Recording;
     }
 
-    std::string ParseError(const std::string& t_Text)
+    String ParseError(const StringView t_Text)
     {
         InputRecording Recording;
-        std::string Error;
+        String Error;
         REQUIRE_FALSE(ParseInputRecording(t_Text, Recording, Error));
         return Error;
     }
 
-    std::string TempFile(const std::string& t_Name)
+    String TempFile(const StringView t_Name)
     {
         const std::filesystem::path Dir = std::filesystem::temp_directory_path() / "FlingInputRecordingTests";
         std::filesystem::create_directories(Dir);
@@ -105,7 +109,7 @@ namespace
 
 TEST_CASE("InputRecording parses the documented example", "[Input][Recording]")
 {
-    const std::string Text = "{\"format\":\"fling-input\",\"version\":1,\"duration\":4.0}\n"
+    const String Text = "{\"format\":\"fling-input\",\"version\":1,\"duration\":4.0}\n"
                              "# Walk forward for one second, then strafe left\n"
                              "{\"t\":0.0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
                              "{\"t\":1.0,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
@@ -145,7 +149,7 @@ TEST_CASE("InputRecording picks a device for a message", "[Input][Recording]")
     SECTION("No devices listed: devices come from the keys")
     {
         const InputRecording Recording =
-            MustParse(std::string(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
+            MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
                                             "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
                                             "{\"t\":0,\"type\":\"MouseMove\",\"dx\":1}\n"
                                             "{\"t\":0,\"type\":\"Char\",\"codepoint\":65}\n"
@@ -182,16 +186,16 @@ TEST_CASE("InputRecording picks a device for a message", "[Input][Recording]")
 
     SECTION("A device ID that is not in the header is an error")
     {
-        const std::string Error =
-            ParseError(std::string(Header) + "{\"t\":0,\"device\":5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+        const String Error =
+            ParseError(String(Header) + "{\"t\":0,\"device\":5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
         CHECK_THAT(Error, StartsWith("line 2:"));
         CHECK_THAT(Error, ContainsSubstring("5"));
     }
 
     SECTION("An unknown device type name is an error")
     {
-        const std::string Error =
-            ParseError(std::string(Header) + "{\"t\":0,\"device\":\"Toaster\",\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+        const String Error =
+            ParseError(String(Header) + "{\"t\":0,\"device\":\"Toaster\",\"type\":\"KeyDown\",\"key\":\"W\"}\n");
         CHECK_THAT(Error, StartsWith("line 2:"));
     }
 }
@@ -201,7 +205,7 @@ TEST_CASE("InputRecording expands Press", "[Input][Recording]")
     SECTION("With a duration")
     {
         const InputRecording Recording =
-            MustParse(std::string(Header) + "{\"t\":1.0,\"type\":\"Press\",\"key\":\"Space\",\"duration\":0.25}\n");
+            MustParse(String(Header) + "{\"t\":1.0,\"type\":\"Press\",\"key\":\"Space\",\"duration\":0.25}\n");
         REQUIRE(Recording.Messages.size() == 2);
         CHECK(Recording.Messages[0].Message.Type == InputMessageType::KeyDown);
         CHECK(Recording.Messages[0].TimeSeconds == Catch::Approx(1.0));
@@ -212,7 +216,7 @@ TEST_CASE("InputRecording expands Press", "[Input][Recording]")
     SECTION("With no duration, both happen at the same time")
     {
         const InputRecording Recording =
-            MustParse(std::string(Header) + "{\"t\":1.0,\"type\":\"Press\",\"key\":\"Space\"}\n");
+            MustParse(String(Header) + "{\"t\":1.0,\"type\":\"Press\",\"key\":\"Space\"}\n");
         REQUIRE(Recording.Messages.size() == 2);
         CHECK(Recording.Messages[0].Message.Type == InputMessageType::KeyDown);
         CHECK(Recording.Messages[1].Message.Type == InputMessageType::KeyUp);
@@ -232,7 +236,7 @@ TEST_CASE("InputRecording expands Press", "[Input][Recording]")
 TEST_CASE("InputRecording expands text into Char messages", "[Input][Recording]")
 {
     const InputRecording Recording =
-        MustParse(std::string(Header) + "{\"t\":0.5,\"type\":\"Char\",\"text\":\"h\xC3\xA9y\"}\n");
+        MustParse(String(Header) + "{\"t\":0.5,\"type\":\"Char\",\"text\":\"h\xC3\xA9y\"}\n");
     REQUIRE(Recording.Messages.size() == 3);
     CHECK(Recording.Messages[0].Message.CodePoint == 0x68);
     CHECK(Recording.Messages[1].Message.CodePoint == 0xE9);
@@ -243,7 +247,7 @@ TEST_CASE("InputRecording expands text into Char messages", "[Input][Recording]"
 TEST_CASE("InputRecording gives mouse moves a position", "[Input][Recording]")
 {
     const InputRecording Recording =
-        MustParse(std::string(Header) + "{\"t\":0.1,\"type\":\"MouseMove\",\"dx\":3,\"dy\":4}\n"
+        MustParse(String(Header) + "{\"t\":0.1,\"type\":\"MouseMove\",\"dx\":3,\"dy\":4}\n"
                                         "{\"t\":0.2,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1}\n"
                                         "{\"t\":0.3,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1,\"x\":100,\"y\":50}\n");
     REQUIRE(Recording.Messages.size() == 3);
@@ -280,49 +284,49 @@ TEST_CASE("InputRecording errors name the line", "[Input][Recording]")
 
     SECTION("An unknown key")
     {
-        const std::string Error =
-            ParseError(std::string(Header) + "# comment\n{\"t\":0,\"type\":\"KeyDown\",\"key\":\"NoSuchKey\"}\n");
+        const String Error =
+            ParseError(String(Header) + "# comment\n{\"t\":0,\"type\":\"KeyDown\",\"key\":\"NoSuchKey\"}\n");
         CHECK_THAT(Error, StartsWith("line 3:"));
         CHECK_THAT(Error, ContainsSubstring("NoSuchKey"));
     }
 
     SECTION("An unknown message type")
     {
-        CHECK_THAT(ParseError(std::string(Header) + "{\"t\":0,\"type\":\"Explode\"}\n"), StartsWith("line 2:"));
+        CHECK_THAT(ParseError(String(Header) + "{\"t\":0,\"type\":\"Explode\"}\n"), StartsWith("line 2:"));
     }
 
     SECTION("Both t and tick")
     {
-        CHECK_THAT(ParseError(std::string(Header) + "\n{\"t\":0,\"tick\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n"),
+        CHECK_THAT(ParseError(String(Header) + "\n{\"t\":0,\"tick\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n"),
                    StartsWith("line 3:"));
     }
 
     SECTION("Neither t nor tick")
     {
-        CHECK_THAT(ParseError(std::string(Header) + "{\"type\":\"KeyDown\",\"key\":\"W\"}\n"), StartsWith("line 2:"));
+        CHECK_THAT(ParseError(String(Header) + "{\"type\":\"KeyDown\",\"key\":\"W\"}\n"), StartsWith("line 2:"));
     }
 
     SECTION("A key that is not an axis in an Axis message")
     {
-        CHECK_THAT(ParseError(std::string(Header) + "{\"t\":0,\"type\":\"Axis\",\"key\":\"W\",\"value\":1}\n"),
+        CHECK_THAT(ParseError(String(Header) + "{\"t\":0,\"type\":\"Axis\",\"key\":\"W\",\"value\":1}\n"),
                    StartsWith("line 2:"));
     }
 
     SECTION("An Axis message with no value")
     {
-        CHECK_THAT(ParseError(std::string(Header) + "{\"t\":0,\"type\":\"Axis\",\"key\":\"GamepadLeftX\"}\n"),
+        CHECK_THAT(ParseError(String(Header) + "{\"t\":0,\"type\":\"Axis\",\"key\":\"GamepadLeftX\"}\n"),
                    StartsWith("line 2:"));
     }
 
     SECTION("A message line that is not valid JSON")
     {
-        CHECK_THAT(ParseError(std::string(Header) + "{\"t\":0,\n"), StartsWith("line 2:"));
+        CHECK_THAT(ParseError(String(Header) + "{\"t\":0,\n"), StartsWith("line 2:"));
     }
 
     SECTION("A file that is missing")
     {
         InputRecording Recording;
-        std::string Error;
+        String Error;
         CHECK_FALSE(LoadInputRecording(TempFile("does_not_exist.input.jsonl"), Recording, Error));
         CHECK_FALSE(Error.empty());
     }
@@ -330,7 +334,7 @@ TEST_CASE("InputRecording errors name the line", "[Input][Recording]")
 
 TEST_CASE("InputRecording sorts messages by time", "[Input][Recording]")
 {
-    const InputRecording Recording = MustParse(std::string(Header) + "{\"t\":2,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
+    const InputRecording Recording = MustParse(String(Header) + "{\"t\":2,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
                                                                      "{\"t\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
     REQUIRE(Recording.Messages.size() == 2);
     CHECK(Recording.Messages[0].Message.Type == InputMessageType::KeyDown);
@@ -394,7 +398,7 @@ TEST_CASE("InputRecording write and parse round trip", "[Input][Recording]")
     Add(2.5, Focus);
     Add(3.0, MakeKey(InputDeviceId{4}, Keys::W, false));
 
-    const std::string Text = WriteInputRecording(Recording);
+    const String Text = WriteInputRecording(Recording);
     const InputRecording Parsed = MustParse(Text);
 
     CHECK(Parsed.Duration == Catch::Approx(3.5));
@@ -433,9 +437,9 @@ TEST_CASE("InputRecording write and parse round trip", "[Input][Recording]")
 
 TEST_CASE("InputRecording saves and loads a file", "[Input][Recording]")
 {
-    const std::string Path = TempFile("nested/folder/save_load.input.jsonl");
-    InputRecording Recording = MustParse(std::string(Header) + "{\"t\":0.5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
-    std::string Error;
+    const String Path = TempFile("nested/folder/save_load.input.jsonl");
+    InputRecording Recording = MustParse(String(Header) + "{\"t\":0.5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+    String Error;
     REQUIRE(SaveInputRecording(Path, Recording, Error));
     InputRecording Loaded;
     REQUIRE(LoadInputRecording(Path, Loaded, Error));
@@ -480,7 +484,7 @@ TEST_CASE("InputRecorder records messages to a file", "[Input][Recorder]")
 {
     RecorderFixture Fixture;
     InputRecorder Recorder(Fixture.Handler);
-    const std::string Path = TempFile("recorder_basic.input.jsonl");
+    const String Path = TempFile("recorder_basic.input.jsonl");
 
     Recorder.Start(Path, 0.0f, 0.0f);
     REQUIRE(Recorder.GetState() == InputRecorderState::Recording);
@@ -499,7 +503,7 @@ TEST_CASE("InputRecorder records messages to a file", "[Input][Recorder]")
     CHECK_FALSE(Recorder.GetLog().GetLines().empty());
 
     InputRecording Loaded;
-    std::string Error;
+    String Error;
     REQUIRE(LoadInputRecording(Path, Loaded, Error));
     REQUIRE(Loaded.Messages.size() == 2);
     CHECK(Loaded.Messages[0].Message.Type == InputMessageType::KeyDown);
@@ -532,12 +536,12 @@ TEST_CASE("InputRecorder writes held keys at time 0", "[Input][Recorder]")
     Fixture.Send(Keys::W, true);
 
     InputRecorder Recorder(Fixture.Handler);
-    const std::string Path = TempFile("recorder_held.input.jsonl");
+    const String Path = TempFile("recorder_held.input.jsonl");
     Recorder.Start(Path, 0.0f, 0.0f);
     REQUIRE(Recorder.Stop());
 
     InputRecording Loaded;
-    std::string Error;
+    String Error;
     REQUIRE(LoadInputRecording(Path, Loaded, Error));
     REQUIRE(Loaded.Messages.size() == 1);
     CHECK(Loaded.Messages[0].Message.Type == InputMessageType::KeyDown);
@@ -549,7 +553,7 @@ TEST_CASE("InputRecorder counts down before it records", "[Input][Recorder]")
 {
     RecorderFixture Fixture;
     InputRecorder Recorder(Fixture.Handler);
-    const std::string Path = TempFile("recorder_countdown.input.jsonl");
+    const String Path = TempFile("recorder_countdown.input.jsonl");
 
     Recorder.Start(Path, 0.5f, 0.0f);
     CHECK(Recorder.GetState() == InputRecorderState::Countdown);
@@ -565,7 +569,7 @@ TEST_CASE("InputRecorder counts down before it records", "[Input][Recorder]")
     SECTION("Stop during the countdown writes nothing")
     {
         InputRecorder Other(Fixture.Handler);
-        const std::string OtherPath = TempFile("recorder_cancelled.input.jsonl");
+        const String OtherPath = TempFile("recorder_cancelled.input.jsonl");
         Other.Start(OtherPath, 5.0f, 0.0f);
         CHECK(Other.Stop());
         CHECK(Other.GetState() == InputRecorderState::Idle);
@@ -579,7 +583,7 @@ TEST_CASE("InputRecorder stops by itself at the duration", "[Input][Recorder]")
 {
     RecorderFixture Fixture;
     InputRecorder Recorder(Fixture.Handler);
-    const std::string Path = TempFile("recorder_duration.input.jsonl");
+    const String Path = TempFile("recorder_duration.input.jsonl");
 
     Recorder.Start(Path, 0.0f, 0.1f);
     Fixture.Send(Keys::W, true);
@@ -596,7 +600,7 @@ TEST_CASE("InputRecorder reports a save that fails", "[Input][Recorder]")
     RecorderFixture Fixture;
     InputRecorder Recorder(Fixture.Handler);
     // A folder cannot be written as a file.
-    const std::string Path = std::filesystem::temp_directory_path().string();
+    const String Path = std::filesystem::temp_directory_path().string();
     Recorder.Start(Path, 0.0f, 0.0f);
     CHECK_FALSE(Recorder.Stop());
     CHECK_FALSE(Recorder.GetLastError().empty());
@@ -652,7 +656,7 @@ TEST_CASE("InputPlayback waits for the start delay", "[Input][Playback]")
     InputMessageProcessor Processor = Handler->CreateProcessor();
     InputPlayback Playback(Handler);
 
-    Playback.Start(MustParse(std::string(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"), 0.5f);
+    Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"), 0.5f);
     CHECK(Playback.GetState() == InputPlaybackState::Countdown);
     CHECK(Handler->FindInterface(InputPlayback::InterfaceName) == nullptr);
 
@@ -679,7 +683,7 @@ TEST_CASE("InputPlayback makes one device for each recorded device", "[Input][Pl
 {
     const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
     InputPlayback Playback(Handler);
-    Playback.Start(MustParse(std::string(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
+    Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
                                                    "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
                                                    "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n"),
                    0.0f);
@@ -699,13 +703,13 @@ TEST_CASE("InputPlayback loads a file and reports a bad one", "[Input][Playback]
 {
     const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
     InputPlayback Playback(Handler);
-    std::string Error;
+    String Error;
 
     CHECK_FALSE(Playback.Start(TempFile("missing.input.jsonl"), 0.0f, Error));
     CHECK_FALSE(Error.empty());
     CHECK(Playback.GetState() == InputPlaybackState::Idle);
 
-    const std::string Path = TempFile("playback_file.input.jsonl");
+    const String Path = TempFile("playback_file.input.jsonl");
     {
         std::ofstream File(Path);
         File << Header << "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n";
@@ -727,7 +731,7 @@ TEST_CASE("Input Poll drives playback and recording", "[Input][Playback][Recorde
     } InputGuard;
 
     Input& Singleton = Input::Get();
-    const std::string Path = TempFile("singleton_record.input.jsonl");
+    const String Path = TempFile("singleton_record.input.jsonl");
     Singleton.GetRecorder().Start(Path, 0.0f, 0.0f);
 
     Singleton.GetPlayback().Start(MustParse("{\"format\":\"fling-input\",\"version\":1,\"duration\":0.2}\n"
@@ -764,7 +768,7 @@ TEST_CASE("A recording of a playback plays on the same ticks", "[Input][Playback
     Input& Singleton = Input::Get();
 
     /** Poll at 60 ticks per second until playback ends, and keep the tick of each W press. */
-    const auto PlayAndRecordPressTicks = [&](const InputRecording& t_Recording, const std::string& t_RecordPath)
+    const auto PlayAndRecordPressTicks = [&](const InputRecording& t_Recording, const StringView t_RecordPath)
     {
         std::vector<int> PressTicks;
         if (!t_RecordPath.empty())
@@ -796,12 +800,12 @@ TEST_CASE("A recording of a playback plays on the same ticks", "[Input][Playback
                                               "{\"tick\":59,\"type\":\"Press\",\"key\":\"W\"}\n"
                                               "{\"tick\":281,\"type\":\"Press\",\"key\":\"W\"}\n");
 
-    const std::string Path = TempFile("rerecord.input.jsonl");
+    const String Path = TempFile("rerecord.input.jsonl");
     const std::vector<int> FirstTicks = PlayAndRecordPressTicks(Original, Path);
     CHECK(FirstTicks == std::vector<int>{0, 1, 7, 59, 281});
 
     InputRecording Recorded;
-    std::string Error;
+    String Error;
     REQUIRE(LoadInputRecording(Path, Recorded, Error));
     const std::vector<int> SecondTicks = PlayAndRecordPressTicks(Recorded, "");
     CHECK(SecondTicks == FirstTicks);
@@ -830,7 +834,7 @@ TEST_CASE("InputRecorder can remove the click that stopped it", "[Input][Recorde
     };
 
     InputRecorder Recorder(Handler);
-    const std::string Path = TempFile("trim_click.input.jsonl");
+    const String Path = TempFile("trim_click.input.jsonl");
     Recorder.Start(Path, 0.0f, 0.0f);
     Queue(Keyboard, InputMessageType::KeyDown, Keys::W);
     Queue(Mouse, InputMessageType::MouseMove, Keys::Invalid);
@@ -843,7 +847,7 @@ TEST_CASE("InputRecorder can remove the click that stopped it", "[Input][Recorde
 
     REQUIRE(Recorder.Stop(true));
     InputRecording Saved;
-    std::string Error;
+    String Error;
     REQUIRE(LoadInputRecording(Path, Saved, Error));
     REQUIRE(Saved.Messages.size() == 2);
     CHECK(Saved.Messages[0].Message.Key == Keys::W);

@@ -2,6 +2,7 @@
 
 #include "BaseEditor.h"
 #include "FirstPersonCamera.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
@@ -52,7 +53,7 @@ namespace Fling
         {
             // Model -----------------------
             {
-                std::string ModelName = "None";
+                String ModelName = "None";
                 if (t_MeshRend.m_Model)
                 {
                     ModelName = t_MeshRend.GetModelPath();
@@ -75,7 +76,7 @@ namespace Fling
                 fileDialog.Display();
                 if(fileDialog.HasSelected())
                 {
-                    std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadModelFromPath(SelectedAsset);
                     // Tell the renderer to record its draw calls again with the new model
@@ -87,7 +88,7 @@ namespace Fling
 
             // Material ----------------------
             {
-                std::string MaterialName = "None";
+                String MaterialName = "None";
                 if (t_MeshRend.m_Material)
                 {
                     MaterialName = t_MeshRend.GetMaterialPath();
@@ -112,7 +113,7 @@ namespace Fling
                 fileDialog.Display();
                 if(fileDialog.HasSelected())
                 {
-                    std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     t_MeshRend.LoadMaterialFromPath(SelectedAsset);
                     // Tell the renderer to write the new textures to the descriptor set.
@@ -355,7 +356,7 @@ namespace Fling
                 fileDialog.Display();
                 if (fileDialog.HasSelected())
                 {
-                    std::string SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
+                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
 
                     if (ShouldLoadLevel)
                     {
@@ -436,7 +437,7 @@ namespace Fling
         }
     }
 
-    void BaseEditor::OnLoadLevel(std::string t_FileName)
+    void BaseEditor::OnLoadLevel(String t_FileName)
     {
         assert(m_OwningWorld);
 
@@ -446,7 +447,7 @@ namespace Fling
         m_OwningWorld->LoadLevelFile(t_FileName);
     }
 
-    void BaseEditor::OnSaveLevel(std::string t_FileName)
+    void BaseEditor::OnSaveLevel(String t_FileName)
     {
         assert(m_OwningWorld);
 
@@ -463,7 +464,7 @@ namespace Fling
 
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-		const std::string DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
+		const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
         ImGui::Text("Device: %s", DeviceName.c_str());
 
         // Update fps graph

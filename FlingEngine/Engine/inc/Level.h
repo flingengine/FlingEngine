@@ -52,7 +52,7 @@ namespace Fling
         // std::vector<Actor> m_ActiveActors;
 
 		/** The path to the level file (should be a full path, NOT relative to assets dir) */
-        std::string m_LevelFileName = "UNLOADED";
+        String m_LevelFileName = "UNLOADED";
 
         /**
          * Load the level based on the current file name!

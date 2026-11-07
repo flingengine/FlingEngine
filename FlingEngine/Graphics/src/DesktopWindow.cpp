@@ -3,6 +3,7 @@
 #include "FlingConfig.h"
 #include "FlingPaths.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 #include "stb_image.h"
 
@@ -215,7 +216,7 @@ namespace Fling
 	{
 		// Decode the file here. The icon does not need a GPU texture, and a Texture
 		// does not keep its pixels after the upload.
-		const std::string Filepath = FlingPaths::EngineAssetsDir() + "/" + t_Path.GetText();
+		const String Filepath = FlingPaths::EngineAssetsDir() + "/" + t_Path.GetText();
 		int Width = 0;
 		int Height = 0;
 		int Channels = 0;

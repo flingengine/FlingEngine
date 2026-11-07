@@ -4,6 +4,7 @@
 #include "Input/InputDeviceFactory.h"
 #include "Input/InputMessageHandler.h"
 #include "Logger.h"
+#include "Strings/String.h"
 
 #include <cmath>
 #include <cstring>
@@ -133,8 +134,8 @@ namespace Fling
             }
             auto ReadLittleEndian16 = [t_Guid](size_t t_Offset)
             {
-                const std::string Low(t_Guid + t_Offset, 2);
-                const std::string High(t_Guid + t_Offset + 2, 2);
+                const String Low(t_Guid + t_Offset, 2);
+                const String High(t_Guid + t_Offset + 2, 2);
                 return static_cast<uint16>(std::stoul(High + Low, nullptr, 16));
             };
             t_OutVendor = ReadLittleEndian16(8);
@@ -453,7 +454,7 @@ namespace Fling
         }
         s_Loaded = true;
 
-        const std::string Path = FlingPaths::EngineConfigDir() + "/gamecontrollerdb.txt";
+        const String Path = FlingPaths::EngineConfigDir() + "/gamecontrollerdb.txt";
         std::ifstream File(Path);
         if (!File)
         {
@@ -851,7 +852,7 @@ namespace Fling
         Info.DisplayName = Name ? Name : "Gamepad";
         // Two pads of the same model have the same GUID. On Windows, all XInput pads have the same
         // GUID. The slot makes the path different for each connected pad.
-        Info.HardwarePath = std::string("glfw:") + (Guid ? Guid : "") + ":" + std::to_string(t_JoystickId);
+        Info.HardwarePath = String("glfw:") + (Guid ? Guid : "") + ":" + std::to_string(t_JoystickId);
         ReadIdsFromGuid(Guid, Info.VendorId, Info.ProductId);
         Info.Capabilities =
             InputDeviceCapabilities::Buttons | InputDeviceCapabilities::Thumbsticks | InputDeviceCapabilities::Triggers;

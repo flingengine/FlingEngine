@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "Strings/String.h"
 #include "Threading/ThreadTypes.h"
 
 #include <string>
@@ -13,7 +14,7 @@ namespace Fling
     struct ThreadInfo
     {
         ThreadId Id = InvalidThreadId;
-        std::string Name;
+        String Name;
         uint64 NativeId = 0;
     };
 
@@ -30,12 +31,12 @@ namespace Fling
         CORE_API ThreadId AllocateId();
 
         /** Add t_Id, or replace its entry. */
-        CORE_API void Register(ThreadId t_Id, std::string_view t_Name, uint64 t_NativeId);
+        CORE_API void Register(ThreadId t_Id, StringView t_Name, uint64 t_NativeId);
 
         CORE_API void Unregister(ThreadId t_Id);
 
         /** The name of t_Id, or an empty string when t_Id is not running. */
-        CORE_API std::string GetThreadName(ThreadId t_Id);
+        CORE_API String GetThreadName(ThreadId t_Id);
 
         /** A copy of every entry, in ID order. */
         CORE_API std::vector<ThreadInfo> GetThreads();

@@ -82,22 +82,22 @@ namespace Fling
      * @param t_OutError    Receives "line N: <reason>" for the first line that is not valid
      * @return False if the text is not a valid recording
      */
-    bool ParseInputRecording(std::string_view t_Text, InputRecording& t_Out, std::string& t_OutError);
+    bool ParseInputRecording(StringView t_Text, InputRecording& t_Out, String& t_OutError);
 
     /** Read an input recording from a file. See ParseInputRecording. */
-    bool LoadInputRecording(StringView t_Path, InputRecording& t_Out, std::string& t_OutError);
+    bool LoadInputRecording(StringView t_Path, InputRecording& t_Out, String& t_OutError);
 
     /** Write an input recording as JSON Lines text: a header line, then one line for each message. */
-    std::string WriteInputRecording(const InputRecording& t_Recording);
+    String WriteInputRecording(const InputRecording& t_Recording);
 
     /** Write an input recording to a file. Makes the parent folders if they do not exist. */
-    bool SaveInputRecording(StringView t_Path, const InputRecording& t_Recording, std::string& t_OutError);
+    bool SaveInputRecording(StringView t_Path, const InputRecording& t_Recording, String& t_OutError);
 
     /**
      * A one-line description of a recorded message for the recorder and playback logs,
      * for example "1.250s  Keyboard  KeyDown W".
      */
-    std::string DescribeRecordedMessage(double t_TimeSeconds, std::string_view t_DeviceName, const InputMessage& t_Message);
+    String DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message);
 
     /** The newest lines that the recorder or the playback logged. Old lines are removed first. */
     class InputEventLog
@@ -107,17 +107,17 @@ namespace Fling
 
         explicit InputEventLog(size_t t_MaxLines = DefaultMaxLines) : m_MaxLines(t_MaxLines) {}
 
-        void Add(std::string t_Line);
+        void Add(String t_Line);
 
         void Clear();
 
-        const std::deque<std::string>& GetLines() const { return m_Lines; }
+        const std::deque<String>& GetLines() const { return m_Lines; }
 
         /** The number of lines added since the last Clear, including lines that were removed. */
         uint64 GetTotalAdded() const { return m_TotalAdded; }
 
     private:
-        std::deque<std::string> m_Lines;
+        std::deque<String> m_Lines;
 
         size_t m_MaxLines = DefaultMaxLines;
 

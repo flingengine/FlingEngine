@@ -9,6 +9,7 @@
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 #include "Texture.h"
 #include "VulkanApp.h"
 
@@ -42,7 +43,7 @@ namespace Fling
 
     void Texture::LoadVulkanImage()
     {
-        const std::string Filepath = GetFilepathReleativeToAssets();
+        const String Filepath = GetFilepathReleativeToAssets();
 
         // Load the image from STB
         int Width = 0;

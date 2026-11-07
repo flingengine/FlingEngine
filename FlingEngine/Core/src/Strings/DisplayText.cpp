@@ -86,7 +86,7 @@ namespace Fling
             return StringView::npos;
         }
 
-        void AppendIsolated(String& t_Out, const String& t_Text, const DisplayLanguage& t_Language)
+        void AppendIsolated(String& t_Out, const StringView t_Text, const DisplayLanguage& t_Language)
         {
             if (t_Language.Direction == TextDirection::RightToLeft)
             {

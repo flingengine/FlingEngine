@@ -3,6 +3,7 @@
 #include "LogicalDevice.h"
 #include "ResourceManager.h"
 #include "Shader.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -28,7 +29,7 @@ namespace Fling
     {
 		assert(m_Device);
         // Shaders are compiled by the build, not stored in Assets
-        const std::string FilePath = FlingPaths::CompiledShaderDir() + "/" + GetAssetPath().GetText();
+        const String FilePath = FlingPaths::CompiledShaderDir() + "/" + GetAssetPath().GetText();
         std::vector<char> RawCode = LoadRawBytes(FilePath);
 
         if (CreateShaderModule(RawCode) != VK_SUCCESS)

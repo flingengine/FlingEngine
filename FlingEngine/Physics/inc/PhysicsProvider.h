@@ -3,6 +3,7 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "PhysicsAPI.h"
+#include "Strings/String.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
@@ -231,7 +232,7 @@ namespace Fling
     public:
         virtual ~PhysicsProvider() = default;
 
-        virtual std::string_view GetName() const = 0;
+        virtual StringView GetName() const = 0;
 
         virtual PhysicsCapability GetCapabilities() const = 0;
 

@@ -2,86 +2,86 @@
 
 namespace Fling
 {
-    const std::string& FlingPaths::BinaryDir()
+    const String& FlingPaths::BinaryDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string BinDir = "";
+        static String BinDir = "";
     #else
-        static std::string BinDir = "";
+        static String BinDir = "";
     #endif
         return BinDir;
     }
     
-    std::string FlingPaths::ConvertAbsolutePathToRelative(const StringView t_FullPath)
+    String FlingPaths::ConvertAbsolutePathToRelative(const StringView t_FullPath)
     {
-        return std::string(t_FullPath.substr( FlingPaths::EngineAssetsDir().length() + 1 ));
+        return String(t_FullPath.substr( FlingPaths::EngineAssetsDir().length() + 1 ));
     }
 
-    const std::string& FlingPaths::EngineAssetsDir()
+    const String& FlingPaths::EngineAssetsDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string AssetPath = "Assets";
+        static String AssetPath = "Assets";
     #else
-        static std::string AssetPath = "@FLING_ROOT_DIR@/Assets";
+        static String AssetPath = "@FLING_ROOT_DIR@/Assets";
     #endif
         return AssetPath;
     }
 
-    const std::string& FlingPaths::CompiledShaderDir()
+    const String& FlingPaths::CompiledShaderDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string ShaderPath = "Shaders";
+        static String ShaderPath = "Shaders";
     #else
-        static std::string ShaderPath = "@FLING_SHADER_OUTPUT_DIR@";
+        static String ShaderPath = "@FLING_SHADER_OUTPUT_DIR@";
     #endif
         return ShaderPath;
     }
 
-    const std::string& FlingPaths::EngineLogDir()
+    const String& FlingPaths::EngineLogDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string LogPath = "Logs";
+        static String LogPath = "Logs";
     #else
-        static std::string LogPath = "@FLING_ROOT_DIR@/Logs";
+        static String LogPath = "@FLING_ROOT_DIR@/Logs";
     #endif
         return LogPath;
     }
 
-    const std::string& FlingPaths::EngineConfigDir()
+    const String& FlingPaths::EngineConfigDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string ConfigPath = "Config";
+        static String ConfigPath = "Config";
     #else
-        static std::string ConfigPath = "@FLING_ROOT_DIR@/Config";
+        static String ConfigPath = "@FLING_ROOT_DIR@/Config";
     #endif
         return ConfigPath;
     }
 
-    const std::string& FlingPaths::EngineSourceDir()
+    const String& FlingPaths::EngineSourceDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string SourceDir = "";
+        static String SourceDir = "";
     #else
-        static std::string SourceDir = "@FLING_ENGINE_SOURCE_PATH@";
+        static String SourceDir = "@FLING_ENGINE_SOURCE_PATH@";
     #endif
         return SourceDir;
     }
-    const std::string& FlingPaths::ProjectDir()
+    const String& FlingPaths::ProjectDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string ProjectPath = "";
+        static String ProjectPath = "";
     #else
-        static std::string ProjectPath = "@FLING_ROOT_DIR@";
+        static String ProjectPath = "@FLING_ROOT_DIR@";
     #endif
         return ProjectPath;
     }
 
-    const std::string& FlingPaths::ProjectSavedDir()
+    const String& FlingPaths::ProjectSavedDir()
     {
     #ifdef FLING_SHIPPING
-        static std::string SavedPath = "Saved";
+        static String SavedPath = "Saved";
     #else
-        static std::string SavedPath = ProjectDir() + "/Saved";
+        static String SavedPath = ProjectDir() + "/Saved";
     #endif
         return SavedPath;
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreAPI.h"
+#include "Strings/String.h"
 #include "Threading/ConditionVariable.h"
 #include "Threading/Mutex.h"
 #include "Threading/Runnable.h"
@@ -62,7 +63,7 @@ namespace Fling
 
         ThreadId GetId() const { return m_Id; }
 
-        const std::string& GetName() const { return m_Desc.Name; }
+        const String& GetName() const { return m_Desc.Name; }
 
         /** The OS ID (gettid on Linux, GetCurrentThreadId on Windows), for debuggers and logs. */
         uint64 GetNativeId() const { return m_NativeId; }
@@ -83,13 +84,13 @@ namespace Fling
          * Give the calling thread GameThreadId and the name t_Name. Call this once,
          * at the start of the process, on the thread that runs the game loop.
          */
-        CORE_API static void InitGameThread(std::string_view t_Name = "Game Thread");
+        CORE_API static void InitGameThread(StringView t_Name = "Game Thread");
 
         /** The engine ID of the calling thread, or InvalidThreadId when the engine did not start it. */
         CORE_API static ThreadId CurrentId();
 
         /** The engine name of the calling thread, or an empty string. */
-        CORE_API static const std::string& CurrentName();
+        CORE_API static const String& CurrentName();
 
         static bool IsGameThread() { return CurrentId() == GameThreadId; }
 

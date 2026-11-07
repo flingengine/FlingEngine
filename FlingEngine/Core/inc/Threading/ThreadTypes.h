@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <chrono>
 #include <string>
@@ -89,7 +90,7 @@ namespace Fling
     struct ThreadDesc
     {
         /** The full name is kept in the engine. The OS name can be shorter (15 bytes on Linux). */
-        std::string Name;
+        String Name;
 
         /** Stack size in bytes. 0 uses the platform default. */
         uint32 StackSize = 0;

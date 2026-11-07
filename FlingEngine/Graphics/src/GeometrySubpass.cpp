@@ -11,6 +11,7 @@
 #include "Model.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
+#include "Strings/String.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 #include "VulkanApp.h"
@@ -294,8 +295,8 @@ namespace Fling
 		t.SetScale(glm::vec3{ 0.1f });
 
 #if FLING_DEBUG
-		static std::string PointLightMesh = "Models/sphere.obj";
-		static std::string MaterialPath = "Materials/White.mat";
+		static String PointLightMesh = "Models/sphere.obj";
+		static String MaterialPath = "Materials/White.mat";
 
 		if (!t_Reg.has<MeshRenderer>(t_Ent))
 		{

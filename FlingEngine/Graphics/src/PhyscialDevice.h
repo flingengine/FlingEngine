@@ -2,6 +2,7 @@
 
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
+#include "Strings/String.h"
 
 #include <string>
 #include <vector>
@@ -41,7 +42,7 @@ namespace Fling
         /**
          * Formatted string of this device's type, ID, vendor, and API version.
          */
-        std::string ToString() const;
+        String ToString() const;
 
     private:
         /** The Vulkan physical device */

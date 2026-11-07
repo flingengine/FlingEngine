@@ -34,7 +34,7 @@ namespace Fling
          * @param t_OutPath     Receives the absolute path of the selected file
          * @return True on the frame that a file is selected
          */
-        bool Draw(const char* t_Title, std::string& t_OutPath);
+        bool Draw(const char* t_Title, String& t_OutPath);
 
         bool IsOpen() const { return m_IsOpen; }
 
@@ -42,18 +42,18 @@ namespace Fling
         /** Read the folders and files of m_CurrentDir. */
         void Refresh();
 
-        std::string m_CurrentDir;
+        String m_CurrentDir;
 
-        std::string m_Extension;
+        String m_Extension;
 
         /** The file name that is selected in the list, or typed. */
-        std::string m_Selected;
+        String m_Selected;
 
-        std::vector<std::string> m_Folders;
+        std::vector<String> m_Folders;
 
-        std::vector<std::string> m_Files;
+        std::vector<String> m_Files;
 
-        std::string m_Error;
+        String m_Error;
 
         bool m_IsOpen = false;
 

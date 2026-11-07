@@ -104,7 +104,7 @@ namespace Fling
 		// A deque (not vector) so that growing it never relocates existing
 		// elements, which would dangle the const char* pointers ComponentTypeInfo
 		// entries hold into these strings via .c_str().
-		std::deque<std::string> m_NameStorage;
+		std::deque<String> m_NameStorage;
 
 		std::unordered_map<Name, std::size_t> m_NameToIndex;
 		std::vector<IComponentRegistrar*> m_Registrars;

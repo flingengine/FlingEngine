@@ -1,11 +1,15 @@
 #include "Localization.h"
 #include "Logger.h"
 #include "Strings/DisplayText.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <fstream>
 #include <string>
+
+using Fling::String;
+using Fling::StringView;
 
 using namespace Fling;
 
@@ -24,7 +28,7 @@ namespace
     {
     public:
         explicit TempTables(const char* t_Name)
-            : m_Root(std::filesystem::temp_directory_path() / (std::string("FlingLocTests_") + t_Name))
+            : m_Root(std::filesystem::temp_directory_path() / (String("FlingLocTests_") + t_Name))
         {
             std::filesystem::remove_all(m_Root);
             std::filesystem::create_directories(m_Root);
@@ -36,10 +40,10 @@ namespace
             std::filesystem::remove_all(m_Root, Error);
         }
 
-        void Write(const char* t_Language, const char* t_Table, const std::string& t_Json) const
+        void Write(const char* t_Language, const char* t_Table, const StringView t_Json) const
         {
             std::filesystem::create_directories(m_Root / t_Language);
-            std::ofstream File(m_Root / t_Language / (std::string(t_Table) + ".json"), std::ios::binary);
+            std::ofstream File(m_Root / t_Language / (String(t_Table) + ".json"), std::ios::binary);
             File << t_Json;
         }
 

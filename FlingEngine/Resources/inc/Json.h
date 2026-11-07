@@ -25,16 +25,16 @@ namespace Fling
 		Json& operator=(Json&& other) noexcept;
 		~Json();
 
-		static Json Parse(std::string_view text);
+		static Json Parse(StringView text);
 		static Json Object();
 		static Json Array();
 
-		std::string Dump(int indent = 4) const;
+		String Dump(int indent = 4) const;
 		bool LoadFromFile(StringView path);
 		bool SaveToFile(StringView path) const;
 
 		bool Contains(StringView key) const;
-		std::vector<std::string> Keys() const;
+		std::vector<String> Keys() const;
 		std::size_t Size() const;
 
 		/** Missing keys return a null Json (does not insert). */
@@ -43,7 +43,7 @@ namespace Fling
 		void Set(StringView key, const Json& value);
 		void PushBack(const Json& value);
 
-		std::string GetString(StringView key, StringView def = {}) const;
+		String GetString(StringView key, StringView def = {}) const;
 		float GetFloat(StringView key, float def = 0.f) const;
 		bool GetBool(StringView key, bool def = false) const;
 		int GetInt(StringView key, int def = 0) const;

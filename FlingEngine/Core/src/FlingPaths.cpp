@@ -1,5 +1,6 @@
 #include "FlingPaths.h"
 #include "Logger.h"
+#include "Strings/String.h"
 
 #include <cstring>
 #include <filesystem>
@@ -10,7 +11,7 @@ namespace Fling
     int FlingPaths::MakeDir(const StringView t_Dir)
     {
         int Res = 0;
-        const std::string Dir(t_Dir);
+        const String Dir(t_Dir);
 
 #if FLING_WINDOWS
         Res = _mkdir(Dir.c_str());
@@ -25,7 +26,7 @@ namespace Fling
     {
         struct stat info;
 
-        const std::string Dir(t_Dir);
+        const String Dir(t_Dir);
         int statRC = stat( Dir.c_str(), &info );
         if( statRC != 0 )
         {
@@ -80,17 +81,17 @@ namespace Fling
 #endif	// FLING_LINUX
     }
 
-    std::string FlingPaths::ResolveProjectPath(const StringView t_Path)
+    String FlingPaths::ResolveProjectPath(const StringView t_Path)
     {
-        const std::string& Root = ProjectDir();
+        const String& Root = ProjectDir();
         if (t_Path.empty() || Root.empty())
         {
-            return std::string(t_Path);
+            return String(t_Path);
         }
         const std::filesystem::path Path = PathFromUtf8(t_Path);
         if (Path.is_absolute())
         {
-            return std::string(t_Path);
+            return String(t_Path);
         }
         return PathToUtf8(PathFromUtf8(Root) / Path);
     }

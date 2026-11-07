@@ -1,6 +1,7 @@
 #include "DynamicLibrary.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "Strings/String.h"
 #include "VulkanLoader.h"
 
 #include <stdexcept>
@@ -28,7 +29,7 @@ namespace
 {
     Fling::DynamicLibrary g_Loader;
 
-    [[noreturn]] void FatalVulkan(const std::string& t_Message)
+    [[noreturn]] void FatalVulkan(const Fling::StringView t_Message)
     {
         if (const auto Console = Fling::Logger::GetCurrentConsole())
         {
@@ -39,7 +40,7 @@ namespace
         {
             File->error(t_Message);
         }
-        throw std::runtime_error(t_Message);
+        throw std::runtime_error(Fling::String(t_Message));
     }
 
     template <typename T_Fn>
@@ -47,7 +48,7 @@ namespace
     {
         // Vulkan 1.0 and 1.1 do not return this pointer from itself.
         // DynamicLibrary::Symbol already stored the export.
-        if (std::string_view(t_Name) == "vkGetInstanceProcAddr")
+        if (Fling::StringView(t_Name) == "vkGetInstanceProcAddr")
         {
             return;
         }
@@ -71,7 +72,7 @@ namespace
     {
         if (t_Fn == nullptr)
         {
-            FatalVulkan(std::string("Required Vulkan function is null: ") + t_Name);
+            FatalVulkan(Fling::String("Required Vulkan function is null: ") + t_Name);
         }
     }
 
@@ -84,12 +85,12 @@ namespace
 
 namespace Fling
 {
-    bool VulkanLoader::LoadLoader(std::string* t_Error)
+    bool VulkanLoader::LoadLoader(String* t_Error)
     {
 #if FLING_WINDOWS
         DynamicLibrary Library = DynamicLibrary::OpenSigned("vulkan-1.dll", t_Error);
 #elif FLING_LINUX
-        const std::string_view Names[] = {"libvulkan.so.1", "libvulkan.so"};
+        const StringView Names[] = {"libvulkan.so.1", "libvulkan.so"};
         DynamicLibrary Library = DynamicLibrary::OpenFirst(Names, t_Error);
 #else
 #error VulkanLoader supports Windows and Linux only
@@ -131,7 +132,7 @@ namespace Fling
 
         if (Missing != nullptr)
         {
-            const std::string Message = std::string("Required Vulkan function is null: ") + Missing;
+            const String Message = String("Required Vulkan function is null: ") + Missing;
             UnloadLoader();
             FatalVulkan(Message);
         }

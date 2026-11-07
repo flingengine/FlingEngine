@@ -1,6 +1,7 @@
 #include "Components/Name.hpp"
 #include "FlingTypes.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "WorldOutlinePanel.h"
 
 #include <imgui.h>
@@ -44,10 +45,10 @@ namespace Fling
 
 				const bool bIsSelected = (m_SelectedEntity == entity);
 
-				std::string label;
+				String label;
 				if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.IsNone())
 				{
-					label = std::string(t_Reg.get<NameComponent>(entity).Name.ToView());
+					label = String(t_Reg.get<NameComponent>(entity).Name.ToView());
 				}
 				else
 				{

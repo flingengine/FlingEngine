@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseEditor.h"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -16,9 +17,9 @@ namespace Sandbox
 
     protected:
 
-		void OnLoadLevel(std::string t_FileName) override;
+		void OnLoadLevel(Fling::String t_FileName) override;
 
-		void OnSaveLevel(std::string t_FileName) override;
+		void OnSaveLevel(Fling::String t_FileName) override;
 
     };
 }   // namespace Sandbox

@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "Material.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 
 #include <unordered_map>
 
@@ -35,7 +36,7 @@ namespace Fling
         try
         {
             // Load Shaders -------------
-            std::string PipelineName = m_JsonData.GetString("pipeline", "DEFAULT");
+            String PipelineName = m_JsonData.GetString("pipeline", "DEFAULT");
 			m_Type = GetTypeFromStr(PipelineName);
 
 			if (m_Type != Material::Type::Default)
@@ -45,19 +46,19 @@ namespace Fling
 
             // Load Textures -------------
             // Albedo
-            const std::string AlbedoPath = m_JsonData.GetString("albedo");
+            const String AlbedoPath = m_JsonData.GetString("albedo");
             m_Textures.m_AlbedoTexture = Texture::Create(AssetPath(AlbedoPath)).get();
 
             // Normal
-            const std::string NormalPath = m_JsonData.GetString("normal");
+            const String NormalPath = m_JsonData.GetString("normal");
             m_Textures.m_NormalTexture = Texture::Create(AssetPath(NormalPath)).get();
 
             // Metal
-            const std::string MetalPath = m_JsonData.GetString("metal");
+            const String MetalPath = m_JsonData.GetString("metal");
             m_Textures.m_MetalTexture = Texture::Create(AssetPath(MetalPath)).get();
 
             // Rough
-            const std::string RoughPath = m_JsonData.GetString("rough");
+            const String RoughPath = m_JsonData.GetString("rough");
             m_Textures.m_RoughnessTexture = Texture::Create(AssetPath(RoughPath)).get();
         }
         catch (std::exception& e)

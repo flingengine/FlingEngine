@@ -1,8 +1,12 @@
 #include "Misc/StringUtils.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <string>
 #include <string_view>
+
+using Fling::String;
+using Fling::StringView;
 
 TEST_CASE("String Utils", "[String Utils]") {
     using namespace Fling;
@@ -60,12 +64,12 @@ TEST_CASE("String Utils", "[String Utils]") {
     }
 
     SECTION("Parse string") {
-        REQUIRE(StringUtils::ParseAs<std::string>("I like this format", "default") == "I like this format");
+        REQUIRE(StringUtils::ParseAs<String>("I like this format", "default") == "I like this format");
     }
 
     SECTION("Empty input falls back to default") {
         REQUIRE(StringUtils::ParseAs<int>("", 42) == 42);
         REQUIRE(StringUtils::ParseAs<double>("", 3.5) == Catch::Approx(3.5));
-        REQUIRE(StringUtils::ParseAs<std::string>("", "default") == "default");
+        REQUIRE(StringUtils::ParseAs<String>("", "default") == "default");
     }
 }

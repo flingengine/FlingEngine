@@ -4,6 +4,7 @@
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputMessage.h"
+#include "Strings/String.h"
 
 #include <memory>
 #include <string>
@@ -31,7 +32,7 @@ namespace Fling
          * @param t_Name    The interface name. It is part of each device's identity, so two
          *                  interfaces with different names never share device IDs
          */
-        explicit VirtualInputDeviceInterface(std::string t_Name = InterfaceName) : m_Name(std::move(t_Name)) {}
+        explicit VirtualInputDeviceInterface(String t_Name = InterfaceName) : m_Name(std::move(t_Name)) {}
 
         const char* GetName() const override { return m_Name.c_str(); }
 
@@ -67,7 +68,7 @@ namespace Fling
         const std::vector<InputDeviceId>& GetDevices() const { return m_Devices; }
 
     private:
-        std::string m_Name;
+        String m_Name;
 
         std::weak_ptr<InputMessageHandler> m_Handler;
 

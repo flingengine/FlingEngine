@@ -1,4 +1,5 @@
 #include "Input/InputKey.h"
+#include "Strings/String.h"
 
 #include <array>
 #include <string_view>
@@ -33,11 +34,11 @@ namespace Fling
         return GetKeyTable()[Index];
     }
 
-    InputKey InputKey::FromName(std::string_view t_Name)
+    InputKey InputKey::FromName(StringView t_Name)
     {
-        static const std::unordered_map<std::string_view, InputKeyId> NameMap = []
+        static const std::unordered_map<StringView, InputKeyId> NameMap = []
         {
-            std::unordered_map<std::string_view, InputKeyId> Map;
+            std::unordered_map<StringView, InputKeyId> Map;
             const auto& Table = GetKeyTable();
             for (std::size_t i = 1; i < KeyCount; ++i)
             {

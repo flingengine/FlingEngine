@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <cstddef>
 #include <functional>
@@ -89,7 +90,7 @@ namespace Fling
         bool IsModifier() const { return HasFlag(InputKeyFlags::Modifier); }
 
         /** Find a key by its name (case sensitive). Returns an invalid key if no key has this name. */
-        static InputKey FromName(std::string_view t_Name);
+        static InputKey FromName(StringView t_Name);
 
         constexpr bool operator==(const InputKey& t_Other) const { return m_Id == t_Other.m_Id; }
 

@@ -1,5 +1,6 @@
 #include "Input/InputMessageHandler.h"
 #include "Logger.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -135,7 +136,7 @@ namespace Fling
         return nullptr;
     }
 
-    std::shared_ptr<IInputDeviceInterface> InputMessageHandler::FindInterface(std::string_view t_Name) const
+    std::shared_ptr<IInputDeviceInterface> InputMessageHandler::FindInterface(StringView t_Name) const
     {
         for (const InterfaceEntry& Entry : m_Interfaces)
         {
@@ -262,8 +263,8 @@ namespace Fling
         }
 
         const std::shared_ptr<InputDevice> Device = m_Factory.Find(t_Message.Device);
-        const std::string_view Name = Device != nullptr ? std::string_view(Device->GetInfo().DisplayName) : "";
-        std::string Line = DescribeInputMessage(t_Message, Name, m_StartNs);
+        const StringView Name = Device != nullptr ? StringView(Device->GetInfo().DisplayName) : "";
+        String Line = DescribeInputMessage(t_Message, Name, m_StartNs);
 
         // A connect or disconnect also gives what the device is, to help find device problems
         if (Device != nullptr && (t_Message.Type == InputMessageType::DeviceConnected ||
@@ -272,7 +273,7 @@ namespace Fling
             const InputDeviceInfo& Info = Device->GetInfo();
             char Ids[16];
             std::snprintf(Ids, sizeof(Ids), "%04X:%04X", Info.VendorId, Info.ProductId);
-            Line += std::string(" (") + ToString(Info.Type) + ", " + Ids + ", " +
+            Line += String(" (") + ToString(Info.Type) + ", " + Ids + ", " +
                     (Info.HardwarePath.empty() ? "no hardware path" : Info.HardwarePath) + ")";
         }
         F_LOG_TRACE("[Input] {}", Line);

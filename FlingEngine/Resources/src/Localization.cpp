@@ -2,6 +2,7 @@
 #include "Localization.h"
 #include "Logger.h"
 #include "Strings/DisplayText.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <regex>
@@ -214,7 +215,7 @@ namespace Fling
             }
 
             Table& Entries = Loaded[Name(PathToUtf8(Entry.path().stem()))];
-            for (const std::string& Key : Doc.Keys())
+            for (const String& Key : Doc.Keys())
             {
                 Entries[Name(Key)] = Doc.GetString(Key);
             }

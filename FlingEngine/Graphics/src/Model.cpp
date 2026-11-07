@@ -3,6 +3,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "Logger.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 
 #include <tiny_obj_loader.h>
@@ -100,12 +101,12 @@ namespace Fling
 
 	void Model::LoadModel()
 	{
-		const std::string FilePath = GetFilepathReleativeToAssets();
+		const String FilePath = GetFilepathReleativeToAssets();
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
-		std::string warn;
-		std::string err;
+		String warn;
+		String err;
 
 		// Load the model from tiny obj
 		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, FilePath.c_str()))

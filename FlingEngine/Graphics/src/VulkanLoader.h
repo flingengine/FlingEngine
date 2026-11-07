@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingVulkan.h"
+#include "Strings/String.h"
 
 #include <string>
 
@@ -22,7 +23,7 @@ namespace Fling
          * vkGetInstanceProcAddr is missing. A null required command stops the
          * process.
          */
-        static bool LoadLoader(std::string* t_Error = nullptr);
+        static bool LoadLoader(String* t_Error = nullptr);
 
         /** Load the instance commands. A null required command stops the process. */
         static void LoadInstance(VkInstance t_Instance);

@@ -83,19 +83,19 @@ namespace Fling
         float GetDuration() const { return m_Duration; }
 
         /** The file that the current or the last recording writes to. */
-        const std::string& GetPath() const { return m_Path; }
+        const String& GetPath() const { return m_Path; }
 
         /** The number of messages in the current recording. */
         size_t GetMessageCount() const { return m_Recording.Messages.size(); }
 
         /** The file of the last recording that was saved. Empty if none was saved. */
-        const std::string& GetLastSavedPath() const { return m_LastSavedPath; }
+        const String& GetLastSavedPath() const { return m_LastSavedPath; }
 
         /** Increases by 1 for each saved recording, so UI can see that a new file exists. */
         uint32 GetSaveCount() const { return m_SaveCount; }
 
         /** The reason the last save failed. Empty if it did not fail. */
-        const std::string& GetLastError() const { return m_LastError; }
+        const String& GetLastError() const { return m_LastError; }
 
         /** One line for each message that was recorded, and lines for start, stop and save. */
         InputEventLog& GetLog() { return m_Log; }
@@ -123,11 +123,11 @@ namespace Fling
 
         InputEventLog m_Log;
 
-        std::string m_Path;
+        String m_Path;
 
-        std::string m_LastSavedPath;
+        String m_LastSavedPath;
 
-        std::string m_LastError;
+        String m_LastError;
 
         InputRecorderState m_State = InputRecorderState::Idle;
 

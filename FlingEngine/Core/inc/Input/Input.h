@@ -11,6 +11,7 @@
 #include "Input/InputPlayback.h"
 #include "Input/InputRecorder.h"
 #include "Singleton.hpp"
+#include "Strings/String.h"
 
 #include <limits>
 #include <memory>
@@ -61,7 +62,7 @@ namespace Fling
             return std::dynamic_pointer_cast<T>(FindInterface(t_Id));
         }
 
-        std::shared_ptr<IInputDeviceInterface> FindInterface(std::string_view t_Name) const;
+        std::shared_ptr<IInputDeviceInterface> FindInterface(StringView t_Name) const;
 
         void NotifyWindowCreated(WindowHandle t_Window);
 

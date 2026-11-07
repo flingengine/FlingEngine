@@ -4,6 +4,7 @@
 #include "FlingPaths.h"
 #include "Json.h"
 #include "Logger.h"
+#include "Strings/String.h"
 #include "World.h"
 
 #include <algorithm>
@@ -14,7 +15,7 @@ namespace Fling
 {
 	namespace
 	{
-		bool IsReservedEntityKey(const std::string& key)
+		bool IsReservedEntityKey(const StringView key)
 		{
 			return key == "name" || key == "title" || key == "version" || key == "NameComponent";
 		}
@@ -36,7 +37,7 @@ namespace Fling
 		m_Game->Init(m_Registry);
 		ComponentTypeRegistry::Get().Seal();
 
-		const std::string LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : std::string(t_StartLevel);
+		const String LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : String(t_StartLevel);
 		if (!LevelToLoad.empty())
 		{
 			LoadLevelFile(LevelToLoad);
@@ -176,7 +177,7 @@ namespace Fling
             return false;
 		}
 
-        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + std::string(t_LevelToLoad);
+        const String FullPath = FlingPaths::EngineAssetsDir() + "/" + String(t_LevelToLoad);
         F_LOG_TRACE("Outputting Level file to {}", FullPath);
         return root.SaveToFile(FullPath);
     }
@@ -190,17 +191,17 @@ namespace Fling
             return false;
         }
 
-        std::vector<std::pair<std::string, Json>> entityEntries;
+        std::vector<std::pair<String, Json>> entityEntries;
 		std::size_t unnamedIndex = 0;
 
 		m_Registry.each([&](const entt::entity entity)
 		{
 			Json entityJson = Json::Object();
 
-			std::string name;
+			String name;
 			if (m_Registry.has<NameComponent>(entity))
 			{
-				name = std::string(m_Registry.get<NameComponent>(entity).Name.ToView());
+				name = String(m_Registry.get<NameComponent>(entity).Name.ToView());
 			}
 			if (name.empty())
 			{
@@ -229,7 +230,7 @@ namespace Fling
 		});
 
 		std::sort(entityEntries.begin(), entityEntries.end(),
-			[](const std::pair<std::string, Json>& a, const std::pair<std::string, Json>& b)
+			[](const std::pair<String, Json>& a, const std::pair<String, Json>& b)
 			{
 				return a.first < b.first;
 			});
@@ -255,7 +256,7 @@ namespace Fling
 			return false;
 		}
 
-        const std::string FullPath = FlingPaths::EngineAssetsDir() + "/" + std::string(t_LevelToLoad);
+        const String FullPath = FlingPaths::EngineAssetsDir() + "/" + String(t_LevelToLoad);
         F_LOG_TRACE("Loading Level file from {}", FullPath);
 
 		Json doc;
@@ -286,7 +287,7 @@ namespace Fling
         // Fires the destroy signals, so the renderer lets go of the old entities
         m_Registry.reset();
 
-        const std::string title = t_Doc.GetString("title", t_SourceName);
+        const String title = t_Doc.GetString("title", t_SourceName);
         F_LOG_TRACE("Level Title: {}", title);
 
         for (std::size_t i = 0; i < entities.Size(); ++i)
@@ -299,7 +300,7 @@ namespace Fling
 			}
 
 			entt::entity entity = m_Registry.create();
-			std::string name = entityJson.GetString("name");
+			String name = entityJson.GetString("name");
 			if (name.empty())
 			{
 				name = "Entity_" + std::to_string(i);
@@ -308,7 +309,7 @@ namespace Fling
 			NameComponent& nameComp = m_Registry.assign<NameComponent>(entity);
 			nameComp.Name = Name(name);
 
-			auto LoadNamedComponent = [&](const std::string& key)
+			auto LoadNamedComponent = [&](const StringView key)
 			{
 				if (IsReservedEntityKey(key) || !entityJson.Contains(key))
 				{
@@ -329,7 +330,7 @@ namespace Fling
 			// otherwise construct before Transform. Load pose first so renderer
 			// hooks and later components see the authored transform.
 			LoadNamedComponent("Transform");
-			for (const std::string& key : entityJson.Keys())
+			for (const String& key : entityJson.Keys())
 			{
 				if (key == "Transform")
 				{

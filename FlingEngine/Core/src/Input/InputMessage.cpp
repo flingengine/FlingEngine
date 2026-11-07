@@ -1,4 +1,5 @@
 #include "Input/InputMessage.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -8,7 +9,7 @@ namespace Fling
     namespace
     {
         /** Append the output of snprintf. A result that did not fit is cut at the end of the buffer. */
-        void AppendPrinted(std::string& t_Out, const char* t_Buffer, size_t t_Size, int t_Length)
+        void AppendPrinted(String& t_Out, const char* t_Buffer, size_t t_Size, int t_Length)
         {
             if (t_Length > 0)
             {
@@ -47,13 +48,13 @@ namespace Fling
         return "Unknown";
     }
 
-    std::string DescribeInputMessage(const InputMessage& t_Message, std::string_view t_DeviceName, int64 t_StartNs)
+    String DescribeInputMessage(const InputMessage& t_Message, StringView t_DeviceName, int64 t_StartNs)
     {
         char Buffer[192];
         const double Seconds = static_cast<double>(t_Message.TimeNs - t_StartNs) / 1e9;
-        const std::string Device(t_DeviceName.empty() ? std::string_view("Device") : t_DeviceName);
+        const String Device(t_DeviceName.empty() ? StringView("Device") : t_DeviceName);
         // Virtual devices have "(Simulated)" in their name already
-        const bool ShowSimulatedTag = t_Message.Simulated && Device.find("(Simulated)") == std::string::npos;
+        const bool ShowSimulatedTag = t_Message.Simulated && Device.find("(Simulated)") == String::npos;
 
         int Length = std::snprintf(Buffer,
                                    sizeof(Buffer),
@@ -64,7 +65,7 @@ namespace Fling
                                    static_cast<unsigned>(t_Message.Device.Value),
                                    ShowSimulatedTag ? " [simulated]" : "",
                                    ToString(t_Message.Type));
-        std::string Result;
+        String Result;
         AppendPrinted(Result, Buffer, sizeof(Buffer), Length);
 
         switch (t_Message.Type)

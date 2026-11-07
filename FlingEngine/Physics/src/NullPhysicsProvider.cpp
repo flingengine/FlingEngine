@@ -1,4 +1,5 @@
 #include "PhysicsProvider.h"
+#include "Strings/String.h"
 
 #include <memory>
 #include <unordered_set>
@@ -55,7 +56,7 @@ namespace Fling
     class NullPhysicsProvider final : public PhysicsProvider
     {
     public:
-        std::string_view GetName() const override { return "None"; }
+        StringView GetName() const override { return "None"; }
 
         PhysicsCapability GetCapabilities() const override { return PhysicsCapability::Deterministic; }
 

@@ -1,6 +1,7 @@
 #include "Input/IInputDeviceInterface.h"
 #include "Input/InputDeviceFactory.h"
 #include "Input/InputMessageHandler.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -22,7 +23,7 @@ namespace Fling
     std::shared_ptr<InputDevice> InputDeviceFactory::CreateDevice(const InputDeviceInfo& t_Info,
                                                                   const IInputDeviceInterface& t_Owner)
     {
-        const std::string InterfaceName = t_Owner.GetName();
+        const String InterfaceName = t_Owner.GetName();
 
         for (auto& Entry : m_Devices)
         {

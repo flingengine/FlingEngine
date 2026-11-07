@@ -2,16 +2,17 @@
 
 #include "FileBrowser.h"
 #include "FlingPaths.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
-    FileBrowser::FileBrowser(std::string t_Title)
+    FileBrowser::FileBrowser(String t_Title)
 		: m_Title(t_Title)
     {
 		m_CurrentWorkingDir = FlingPaths::EngineAssetsDir();
     }
 
-	void FileBrowser::SetTitle(std::string t_Title)
+	void FileBrowser::SetTitle(String t_Title)
 	{
 		m_Title = t_Title;
 	}
@@ -24,7 +25,7 @@ namespace Fling
 	void FileBrowser::ClearSelected()
 	{
 		m_HasSelected = false;
-		m_SelectedFile = std::string();
+		m_SelectedFile = String();
 	}
 
 	void FileBrowser::Display()
@@ -39,9 +40,9 @@ namespace Fling
 			// For each file in 
 			for (const auto& entry : fs::directory_iterator(m_CurrentWorkingDir))
 			{
-				std::string FilePath = entry.path().generic_string();
+				String FilePath = entry.path().generic_string();
 				const bool IsSelected = m_SelectedFile == FilePath;
-				std::string DisplayName = (entry.is_directory() ? "[D] " : "[F] ") + FilePath;
+				String DisplayName = (entry.is_directory() ? "[D] " : "[F] ") + FilePath;
 				if (ImGui::Selectable(DisplayName.c_str(), IsSelected, ImGuiSelectableFlags_DontClosePopups))
 				{
 					if (entry.is_directory())
@@ -52,7 +53,7 @@ namespace Fling
 					}
 					else if (entry.is_regular_file())
 					{
-						m_SelectedFile = std::string(FilePath);
+						m_SelectedFile = String(FilePath);
 					}
 				}
 			}

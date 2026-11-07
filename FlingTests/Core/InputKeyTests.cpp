@@ -1,8 +1,12 @@
 #include "Input/InputKey.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <string>
 #include <unordered_map>
+
+using Fling::String;
+using Fling::StringView;
 
 TEST_CASE("Input key names", "[Input]")
 {
@@ -30,13 +34,13 @@ TEST_CASE("Input key names", "[Input]")
     SECTION("Invalid key has the Invalid details")
     {
         REQUIRE_FALSE(Keys::Invalid.IsValid());
-        REQUIRE(std::string(Keys::Invalid.GetName()) == "Invalid");
-        REQUIRE(std::string(InputKey(InputKeyId::Count).GetName()) == "Invalid");
+        REQUIRE(String(Keys::Invalid.GetName()) == "Invalid");
+        REQUIRE(String(InputKey(InputKeyId::Count).GetName()) == "Invalid");
     }
 
     SECTION("Names")
     {
-        REQUIRE(std::string(Keys::LeftShift.GetName()) == "LeftShift");
+        REQUIRE(String(Keys::LeftShift.GetName()) == "LeftShift");
         REQUIRE(InputKey::FromName("W") == Keys::W);
     }
 }

@@ -1,9 +1,13 @@
 #include "Json.h"
 #include "JsonArchive.h"
 #include "Logger.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <string>
+
+using Fling::String;
+using Fling::StringView;
 
 namespace {
     void InitLogger() {
@@ -95,7 +99,7 @@ TEST_CASE("JsonArchive save and load round-trip", "[json]") {
         float Speed = 0.f;
         int Count = 0;
         bool Flag = false;
-        std::string Name;
+        String Name;
         glm::vec3 Pos{};
         glm::vec4 Color{};
 

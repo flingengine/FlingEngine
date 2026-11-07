@@ -1,4 +1,5 @@
 #include "Misc/CommandLine.h"
+#include "Strings/String.h"
 
 #include <fstream>
 #include <sstream>
@@ -8,30 +9,30 @@ namespace Fling
 	namespace
 	{
 		/** The ini section that command line style console variables are read from, UE-style. */
-		const std::string ConsoleVariablesSectionName = "ConsoleVariables";
+		const String ConsoleVariablesSectionName = "ConsoleVariables";
 
 		/** Strips a single pair of surrounding double quotes from a value, e.g. "\"foo bar\"" -> "foo bar" */
-		std::string StripSurroundingQuotes(const std::string& Value)
+		String StripSurroundingQuotes(const StringView Value)
 		{
 			if (Value.size() >= 2 && Value.front() == '"' && Value.back() == '"')
 			{
-				return Value.substr(1, Value.size() - 2);
+				return String(Value.substr(1, Value.size() - 2));
 			}
 
-			return Value;
+			return String(Value);
 		}
 
 		/** Strips leading/trailing whitespace (spaces and tabs) from a string */
-		std::string Trim(const std::string& Value)
+		String Trim(const StringView Value)
 		{
 			const std::size_t First = Value.find_first_not_of(" \t");
-			if (First == std::string::npos)
+			if (First == String::npos)
 			{
 				return "";
 			}
 
 			const std::size_t Last = Value.find_last_not_of(" \t");
-			return Value.substr(First, Last - First + 1);
+			return String(Value.substr(First, Last - First + 1));
 		}
 	}
 
@@ -63,7 +64,7 @@ namespace Fling
 		// Start at 1 to exclude the first argument(the executable name)
 		for(int32 i = 1; i < argc; ++i)
 		{
-			std::string Arg = argv[i];
+			String Arg = argv[i];
 
 			CmdStream << Arg;
 
@@ -85,7 +86,7 @@ namespace Fling
 			const std::size_t FirstNonDash = Arg.find_first_not_of('-');
 			if (FirstNonDash != 0)
 			{
-				Arg.erase(0, FirstNonDash == std::string::npos ? Arg.size() : FirstNonDash);
+				Arg.erase(0, FirstNonDash == String::npos ? Arg.size() : FirstNonDash);
 			}
 
 			if (Arg.empty())
@@ -94,14 +95,14 @@ namespace Fling
 			}
 
 			const std::size_t EqualsPos = Arg.find('=');
-			if (EqualsPos != std::string::npos)
+			if (EqualsPos != String::npos)
 			{
-				const std::string Key = Arg.substr(0, EqualsPos);
-				const std::string Value = StripSurroundingQuotes(Arg.substr(EqualsPos + 1));
+				const String Key = Arg.substr(0, EqualsPos);
+				const String Value = StripSurroundingQuotes(Arg.substr(EqualsPos + 1));
 				ParsedArgs[Key] = Value;
 			}
 			else if (FirstNonDash == 2 && i + 1 < argc && argv[i + 1][0] != '\0' && argv[i + 1][0] != '-'
-					 && std::string_view(argv[i + 1]).size() <= MaxArgLength)
+					 && StringView(argv[i + 1]).size() <= MaxArgLength)
 			{
 				// "--frames 300": a double dash key with no "=" takes the next arg as
 				// its value, if that arg is not a flag itself
@@ -124,12 +125,12 @@ namespace Fling
 		return true;
 	}
 
-	bool CommandLine::HasParam(const std::string_view Param) const
+	bool CommandLine::HasParam(const StringView Param) const
 	{
 		return FindValue(Param) != nullptr;
 	}
 
-	const char* CommandLine::GetValueAsString(const std::string_view Param) const
+	const char* CommandLine::GetValueAsString(const StringView Param) const
 	{
 		// Some examples of allowed syntax:
 		// -myFlag=false
@@ -138,18 +139,18 @@ namespace Fling
 		// -numericValue=-1123.56
 		// -BoolFlag              (implicitly "true")
 
-		const std::string* Value = FindValue(Param);
+		const String* Value = FindValue(Param);
 		return Value != nullptr ? Value->c_str() : nullptr;
 	}
 
-	std::string_view CommandLine::GetCommandLineData() const
+	StringView CommandLine::GetCommandLineData() const
 	{
 		return CurrentCommandLineData;
 	}
 
-	const std::string* CommandLine::FindValue(const std::string_view Param) const
+	const String* CommandLine::FindValue(const StringView Param) const
 	{
-		const std::string Key(Param);
+		const String Key(Param);
 
 		// Values passed directly on the command line always win over ones loaded from a config file
 		auto Iter = ParsedArgs.find(Key);
@@ -181,13 +182,13 @@ namespace Fling
 		return LoadConfigVarsFromString(Buffer.str());
 	}
 
-	bool CommandLine::LoadConfigVarsFromString(const std::string_view IniContent)
+	bool CommandLine::LoadConfigVarsFromString(const StringView IniContent)
 	{
 		ConfigArgs.clear();
 
-		std::string CurrentSection;
-		std::istringstream Stream{ std::string(IniContent) };
-		std::string Line;
+		String CurrentSection;
+		std::istringstream Stream{ String(IniContent) };
+		String Line;
 
 		while (std::getline(Stream, Line))
 		{
@@ -197,7 +198,7 @@ namespace Fling
 				Line.pop_back();
 			}
 
-			const std::string Trimmed = Trim(Line);
+			const String Trimmed = Trim(Line);
 			if (Trimmed.empty() || Trimmed.front() == ';' || Trimmed.front() == '#')
 			{
 				// Blank line or comment
@@ -217,13 +218,13 @@ namespace Fling
 			}
 
 			const std::size_t EqualsPos = Trimmed.find('=');
-			if (EqualsPos == std::string::npos)
+			if (EqualsPos == String::npos)
 			{
 				continue;
 			}
 
-			const std::string Key = Trim(Trimmed.substr(0, EqualsPos));
-			const std::string Value = StripSurroundingQuotes(Trim(Trimmed.substr(EqualsPos + 1)));
+			const String Key = Trim(Trimmed.substr(0, EqualsPos));
+			const String Value = StripSurroundingQuotes(Trim(Trimmed.substr(EqualsPos + 1)));
 
 			if (!Key.empty())
 			{

@@ -287,3 +287,6 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check documentation comment style
         run: python3 scripts/check_comment_style.py
+      # String and StringView, not std::string; StringView for read-only text parameters (Skills/strings.md)
+      - name: Check string types
+        run: python3 scripts/check_string_types.py
