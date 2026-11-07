@@ -5,7 +5,7 @@ Check that ECS system headers are included only where the rules allow
 a file may include "Systems/<Name>System.h" only if it is:
 
   - that system's own .cpp: src/Systems/<Name>System.cpp,
-  - a module register file: Register*Systems.cpp,
+  - a module register file: Register<Module>.cpp,
   - a test under FlingTests/.
 
 Also checks the layout: each file in inc/Systems/ is <Name>System.h, and each
@@ -23,7 +23,7 @@ ROOTS = ("FlingEngine", "Sandbox", "FlingTests")
 EXTENSIONS = {".h", ".hpp", ".inl", ".cpp", ".cc", ".cxx"}
 
 INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]Systems/([^">]+)[">]')
-REGISTER_FILE = re.compile(r"^Register\w*Systems\.cpp$")
+REGISTER_FILE = re.compile(r"^Register\w*\.cpp$")
 SYSTEM_HEADER = re.compile(r"^\w+System\.h$")
 SYSTEM_SOURCE = re.compile(r"^\w+System\.cpp$")
 
