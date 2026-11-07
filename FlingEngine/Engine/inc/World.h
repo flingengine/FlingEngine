@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Components/AppRequests.h"
+#include "Ecs/SystemRegistry.h"
+#include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
 #include "Game.h"
 #include "Json.h"
@@ -8,7 +11,14 @@
 #include "Strings/String.h"
 
 #include <cassert>
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/TypeRegistry.h"
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Fling
 {
@@ -24,18 +34,57 @@ namespace Fling
 		World& operator=(const World&) = delete;
 
 
-		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
+		explicit World(Fling::Game* t_Game);
+		~World();
 
 		/**
-		* Initializes the world. Loads the StartLevel that is specified in the config.
+		 * What the modules add to this world: component types and systems. Call each
+		 * module's register function with it before Init. Init then calls Game::Register,
+		 * builds the TypeRegistry, and builds the schedule.
+		 */
+		ModuleRegistration& GetModules() { return m_Modules; }
+
+		/** The ECS systems this world runs. Modules add them through GetModules. */
+		SystemRegistry& GetSystems() { return m_Systems; }
+
+		/** Every component type this world knows. Empty before Init. */
+		const TypeRegistry& GetTypes() const { return m_Types; }
+
+		/** How the fixed tick runs (step length, one tick per frame). Set it before Init. */
+		void SetSystemRunnerConfig(const SystemRunnerConfig& t_Config) { m_RunnerConfig = t_Config; }
+
+		/**
+		 * Set the function that fills each fixed tick's input (see SystemRunner). Set it
+		 * before Init. With none (for example in tests), ticks have no input.
+		 */
+		void SetTickInputSource(std::function<void(TickInput&)> t_Source) { m_TickInputSource = std::move(t_Source); }
+
+		/** The schedule that Init built. Null before Init. */
+		const Schedule* GetSchedule() const;
+
+		/**
+		 * The AppRequests from this frame's systems that the application handles (all but
+		 * Quit, which the world handles). Clears the list.
+		 */
+		std::vector<AppRequest> TakeAppRequests() { return std::exchange(m_AppRequestsForApp, {}); }
+
+		/** The schedule errors from Init. Empty if the schedule is valid. */
+		const String& GetScheduleErrors() const { return m_ScheduleErrors; }
+
+		/**
+		* Initializes the world: registers components and systems, builds the system
+		* schedule, calls each system's OnCreate, then loads the StartLevel that is
+		* specified in the config.
 		* @note		Keep explicit Init and Shutdown functions to make the startup order more readable
 		*
 		* @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty means use the config.
+		* @return False if the system schedule has errors (see GetScheduleErrors). The world is then not ready for play.
 		*/
-		void Init(StringView t_StartLevel = {});
+		bool Init(StringView t_StartLevel = {});
 
 		/**
-		 * Tick all active levels in the world and upates any Lua scripts that have Update functions
+		 * Run one frame: the fixed system ticks that are due, then Game::Update, then the
+		 * frame systems. Systems run in the Play role during play and the Edit role otherwise.
 		 *
 		 * @param t_DeltaTime   Time between previous frame and the current one.
 		 */
@@ -91,14 +140,17 @@ namespace Fling
 
 		/**
 		 * Reset the current registry and load entities/components from a JSON level file.
-		 * Requires ComponentTypeRegistry to be sealed.
+		 * Requires Init, which builds the type registry.
 		 *
 		 * @param t_LevelToLoad File path to load (relative to the assets directory)
 		 * @return True on success
 		 */
 		bool LoadLevelFile(StringView t_LevelToLoad);
 
-		FORCEINLINE entt::registry& GetRegistry() const { return m_Registry; }
+		/** The entities, components, and singletons of this world. */
+		FORCEINLINE EntityStorage& GetStorage() { return m_Storage; }
+
+		FORCEINLINE const EntityStorage& GetStorage() const { return m_Storage; }
 
 		// The current state of the game, is it playing, stopped, paused, etc
 		enum class WorldState : uint8
@@ -142,8 +194,14 @@ namespace Fling
          */
         void StopGame(bool t_RestoreSnapshot);
 
-        /** Write all registered components on living entities to a level document */
-        bool SaveToJson(Json& t_OutDoc, StringView t_Title) const;
+        /**
+         * Write all saved components on living entities to a level document. Gives each
+         * entity an EntityGuid first if it has none, so references between entities save.
+         */
+        bool SaveToJson(Json& t_OutDoc, StringView t_Title);
+
+        /** A new random EntityGuid value that no entity in this world uses. */
+        uint64 MakeEntityGuid() const;
 
         /** Remove all entities, then make the entities in a level document */
         bool LoadFromJson(const Json& t_Doc, StringView t_SourceName);
@@ -161,8 +219,38 @@ namespace Fling
         /** @see SetGameQuitStopsPlay */
         bool m_GameQuitStopsPlay = false;
 
-        /** The registry and represents all active entities in this world */
-		entt::registry& m_Registry;
+        /** All entities in this world. Declared before the systems and runner, so it is destroyed after them. */
+		EntityStorage m_Storage;
+
+		/** The systems this world runs. */
+		SystemRegistry m_Systems;
+
+		/** @see GetModules. Declared after m_Systems, which it refers to. */
+		ModuleRegistration m_Modules{ m_Systems };
+
+		/** @see GetTypes. Built by Init. */
+		TypeRegistry m_Types;
+
+		/** True after Init built m_Types. A level cannot load or save before that. */
+		bool m_TypesBuilt = false;
+
+		/** @see SetSystemRunnerConfig */
+		SystemRunnerConfig m_RunnerConfig;
+
+		/** @see SetTickInputSource */
+		std::function<void(TickInput&)> m_TickInputSource;
+
+		/** Runs the schedule. Made by Init when the schedule has no errors. */
+		std::unique_ptr<SystemRunner> m_Runner;
+
+		/** @see GetScheduleErrors */
+		String m_ScheduleErrors;
+
+		/** @see TakeAppRequests */
+		std::vector<AppRequest> m_AppRequestsForApp;
+
+		/** Take the AppRequests queue: handle Quit, and keep the rest for the application. */
+		void ProcessAppRequests();
 
 		/** The game will allow users to specify their own update/read/write functions */
 		Fling::Game* m_Game = nullptr;

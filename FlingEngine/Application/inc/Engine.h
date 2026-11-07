@@ -16,7 +16,6 @@
 
 #include <chrono>
 #include <csignal>
-#include <entt/entity/registry.hpp>
 #include <memory>
 #include <type_traits>
 
@@ -94,9 +93,12 @@ namespace Fling
 
 		/**
 		* Run the main loop until the window closes, the world quits, or --frames
-		* ticks have run
+		* ticks have run. With --dump-schedule or --validate-schedule, start the world,
+		* report the system schedule, and return without running the loop.
+		*
+		* @return ExitCode::Failure if the system schedule has errors, otherwise ExitCode::Success
 		*/
-		void Tick();
+		ExitCode Tick();
 
 		/** True while the main loop must run one more tick. */
 		bool ShouldTick() const;
@@ -114,9 +116,6 @@ namespace Fling
 
 		/** Persistent world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
-
-		/** Global registry that stores entities and components */
-		entt::registry g_Registry;
 
 		/** The implementation of the game that this engine is running. @see Fling::Game */
 		Fling::Game* m_GameImpl = nullptr;
@@ -169,13 +168,13 @@ namespace Fling
 		// #TODO Use a pool allocator for new
 		m_GameImpl = new T_GameType();
 
-		const ExitCode StartupCode = Startup(argc, argv);
+		ExitCode Code = Startup(argc, argv);
 		// A localization tool (--loc-export, --loc-import) does its work in Startup
-		if (StartupCode == ExitCode::Success && !m_Options.IsLocalizationTool())
+		if (Code == ExitCode::Success && !m_Options.IsLocalizationTool())
 		{
-			Tick();
+			Code = Tick();
 		}
 
-		return ToInt(Shutdown(StartupCode));
+		return ToInt(Shutdown(Code));
 	}
 }	// namespace Fling

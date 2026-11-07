@@ -58,8 +58,6 @@ These are git submodules. Each one keeps its own license file, listed here.
 | --- | --- | --- | --- |
 | [Bullet Physics](https://github.com/bulletphysics/bullet3) (our fork: [flingengine/bullet3](https://github.com/flingengine/bullet3)) | Physics provider when `FLING_PHYSICS_PROVIDER=Bullet` (LinearMath, BulletCollision, BulletDynamics only) | zlib | `external/bullet3/LICENSE.txt` |
 | [Catch2](https://github.com/catchorg/Catch2) | Unit tests | Boost Software License 1.0 | `external/Catch2/LICENSE.txt` |
-| [cereal](https://github.com/USCiLab/cereal) | Serialization | BSD 3-Clause | `external/cereal/LICENSE` |
-| [EnTT](https://github.com/skypjack/entt) | Entity component system, signals | MIT | `external/entt/LICENSE` |
 | [GLFW](https://www.glfw.org/) | Windows and input | zlib | `external/glfw/LICENSE.md` |
 | [GLM](https://github.com/g-truc/glm) | Math | MIT (or the Happy Bunny License) | `external/glm/copying.txt` |
 | [Dear ImGui](https://github.com/ocornut/imgui) | Editor and debug UI | MIT | `external/imgui/LICENSE.txt` |

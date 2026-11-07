@@ -8,7 +8,8 @@ include(Catch)
 
 # One Catch2 executable per module that owns tests. Each links Catch2 and only
 # that module; public dependencies come along transitively. An empty folder
-# adds no target, so a module with no real tests (Graphics, Editor) stays out.
+# adds no target, so a module with no real tests (Editor) stays out. Graphics
+# tests use no GPU: they test the CPU side of the renderer.
 # Extra libraries after MODULE are linked too (for example the physics provider).
 function( fling_add_module_tests MODULE )
 	file( GLOB _sources CONFIGURE_DEPENDS
@@ -54,6 +55,7 @@ endfunction()
 fling_add_module_tests( Core )
 fling_add_module_tests( Resources )
 fling_add_module_tests( Engine )
+fling_add_module_tests( Graphics )
 fling_add_module_tests( Physics Fling::DefaultPhysicsProvider )
 fling_add_module_tests( Application )
 
@@ -116,6 +118,46 @@ fling_add_isolation_test( ApplicationCannotSeeEditor Fling::Application "BaseEdi
 if( WITH_EDITOR_FLAG )
 	fling_add_isolation_test( EditorHeaders        Fling::Editor    "BaseEditor.h"      VISIBLE )
 endif()
+
+# ECS compile checks. Each case builds EcsCompileFail.cpp with one
+# FLING_ECS_CASE_<Name> defined, and passes only if the build fails with that
+# rule's static_assert message (Plans/ecs-systems.md section 3.6). The "Good"
+# case defines nothing and must build.
+function( fling_add_ecs_compile_check CASE MESSAGE )
+	set( _target "EcsCompileFail_${CASE}" )
+	add_executable( ${_target} EXCLUDE_FROM_ALL EcsCompileFail/EcsCompileFail.cpp )
+	target_link_libraries( ${_target} PRIVATE Fling::Engine )
+	if( NOT CASE STREQUAL "Good" )
+		target_compile_definitions( ${_target} PRIVATE "FLING_ECS_CASE_${CASE}" )
+	endif()
+	fling_configure_target( ${_target} )
+	set_target_properties( ${_target} PROPERTIES FOLDER "FlingTests/EcsCompileFail" )
+
+	add_test( NAME "ECS compile check: ${CASE}"
+		COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target ${_target} --config $<CONFIG>
+	)
+	set_tests_properties( "ECS compile check: ${CASE}" PROPERTIES RESOURCE_LOCK "fling-engine-build" )
+	if( NOT CASE STREQUAL "Good" )
+		set_tests_properties( "ECS compile check: ${CASE}" PROPERTIES PASS_REGULAR_EXPRESSION "${MESSAGE}" )
+	endif()
+endfunction()
+
+fling_add_ecs_compile_check( Good                   "" )
+fling_add_ecs_compile_check( QueryUndeclared        "queries a component that its Access<...> does not allow" )
+fling_add_ecs_compile_check( WriteThroughRead       "queries a component that its Access<...> does not allow" )
+fling_add_ecs_compile_check( SpawnUndeclared        "Add Fling::Spawns to the access list" )
+fling_add_ecs_compile_check( RawStorageUndeclared   "Add Fling::RawStorage to the access list" )
+fling_add_ecs_compile_check( FrameCommands          "Only a fixed phase system has Commands" )
+fling_add_ecs_compile_check( MemberState            "A system cannot have member state" )
+fling_add_ecs_compile_check( WrongUpdateRate        "A fixed phase system implements FixedUpdate" )
+fling_add_ecs_compile_check( FixedReadsRealTime     "A fixed rate system cannot read RealFrameTime" )
+fling_add_ecs_compile_check( FixedReadsPresentation "A fixed rate system cannot read a Presentation component" )
+fling_add_ecs_compile_check( FrameWritesSimulation  "A frame rate system cannot write a Simulation component" )
+fling_add_ecs_compile_check( WritesSimTime          "No system writes SimTime or RealFrameTime" )
+fling_add_ecs_compile_check( SingletonNotOwned      "Only a writer of a singleton makes it" )
+fling_add_ecs_compile_check( QueueRead              "A queue is not read or written directly" )
+fling_add_ecs_compile_check( NotAComponent          "is not a Fling::Component" )
+fling_add_ecs_compile_check( DuplicateAccess        "A type appears more than once in Access" )
 
 # Every first-party vk* call must be named in VulkanFunctions.inl.
 add_test(NAME "Vulkan calls are listed"

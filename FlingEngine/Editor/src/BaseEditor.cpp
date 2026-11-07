@@ -7,7 +7,7 @@
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
-#include "ComponentTypeRegistry.h"
+#include "EditorWidgets.h"
 #include "FlingPaths.h"
 #include "ImFileBrowser.hpp"
 #include "Lighting/DirectionalLight.hpp"
@@ -15,6 +15,7 @@
 #include "Logger.h"
 #include "MeshRenderer.h"
 #include "Timing.h"
+#include "TransformUtil.h"
 #include "World.h"
 
 #include <stdio.h>
@@ -24,183 +25,82 @@ namespace Fling
 {
     namespace Widgets
     {
-        void Transform(Fling::Transform& t)
+        /** A path field with a file browser. Returns true when a new path is picked. */
+        bool AssetPicker(const char* t_Label, const char* t_Folder, const char* t_Extension, String& t_Path)
         {
-            bool bChanged = ImGui::InputFloat3( "Position", ( float* ) &t.m_Pos );
-            bChanged |= ImGui::InputFloat3( "Scale", ( float* )  &t.m_Scale );
-            bChanged |= ImGui::InputFloat3( "Rotation", ( float* )  &t.m_Rotation );
-            if (bChanged)
+            ImGui::PushID(t_Label);
+            ImGui::LabelText(t_Label, "%s", t_Path.empty() ? "None" : t_Path.c_str());
+
+            static ImGui::FileBrowser s_FileDialog;
+            static const char* s_OpenFor = nullptr;
+            if (ImGui::Button("Select..."))
             {
-                t.MarkDirty();
-            }
-        }
-
-        void PointLight(Fling::PointLight& t_Light)
-        {
-            ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-            ImGui::InputFloat( "Range", &t_Light.Range );
-            ImGui::InputFloat( "Intensity", &t_Light.Intensity );
-        }
-
-        void DirectionalLight(Fling::DirectionalLight& t_Light)
-        {
-            ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-            ImGui::InputFloat3( "Direction", ( float* ) &t_Light.Direction );
-            ImGui::InputFloat( "Intensity", &t_Light.Intensity );
-        }
-
-        void MeshRenderer(Fling::MeshRenderer& t_MeshRend, entt::registry& t_Reg, entt::entity t_Entity)
-        {
-            // Model -----------------------
-            {
-                String ModelName = "None";
-                if (t_MeshRend.m_Model)
-                {
-                    ModelName = t_MeshRend.GetModelPath();
-                }
-
-                ImGui::LabelText("Model", ModelName.c_str(), "%s");
-
-                // Show file browser
-                static ImGui::FileBrowser fileDialog;
-                if(ImGui::Button("Select Model"))
-                {
-                    fileDialog.SetTitle("Select Model...");
-                    std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Models" };
-                    fileDialog.SetPwd(p);
-
-                    fileDialog.SetTypeFilters({ ".obj" });
-                    fileDialog.Open();
-                }
-
-                fileDialog.Display();
-                if(fileDialog.HasSelected())
-                {
-                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
-
-                    t_MeshRend.LoadModelFromPath(SelectedAsset);
-                    // Tell the renderer to record its draw calls again with the new model
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
-
-                    fileDialog.ClearSelected();
-                }
+                s_FileDialog.SetTitle(String("Select ") + t_Label);
+                s_FileDialog.SetPwd(std::filesystem::path{ FlingPaths::EngineAssetsDir() + "/" + t_Folder });
+                s_FileDialog.SetTypeFilters({ t_Extension });
+                s_FileDialog.Open();
+                s_OpenFor = t_Label;
             }
 
-            // Material ----------------------
+            bool bPicked = false;
+            if (s_OpenFor == t_Label)
             {
-                String MaterialName = "None";
-                if (t_MeshRend.m_Material)
+                s_FileDialog.Display();
+                if (s_FileDialog.HasSelected())
                 {
-                    MaterialName = t_MeshRend.GetMaterialPath();
+                    t_Path = FlingPaths::ConvertAbsolutePathToRelative(s_FileDialog.GetSelected().string());
+                    s_FileDialog.ClearSelected();
+                    s_OpenFor = nullptr;
+                    bPicked = true;
                 }
-
-                const char* m = MaterialName.c_str();
-                ImGui::LabelText("Material", m, "%s");
-
-                // Show file browser
-                static ImGui::FileBrowser fileDialog;
-                if(ImGui::Button("Select Material"))
-                {
-                    fileDialog.SetTitle("Select Material...");
-                    std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Materials" };
-                    fileDialog.SetPwd(p);
-
-
-                    fileDialog.SetTypeFilters({ ".mat" });
-                    fileDialog.Open();
-                }
-
-                fileDialog.Display();
-                if(fileDialog.HasSelected())
-                {
-                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
-
-                    t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    // Tell the renderer to write the new textures to the descriptor set.
-                    // replace() copies the component without its GPU handles, and the
-                    // move assignment keeps the handles on the stored component.
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
-
-                    fileDialog.ClearSelected();
-                }
-
-				// Material type --------
-
-				const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS" };
-				static const char* current_item = NULL;
-
-				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
-				{
-					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-					{
-						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-						if (ImGui::Selectable(items[n], is_selected))
-						{
-							current_item = items[n];
-							if (is_selected)
-							{
-								ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-
-							}
-						}
-					}
-					ImGui::EndCombo();
-				}
             }
+            ImGui::PopID();
+            return bPicked;
+        }
+
+        void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
+        {
+            // The renderer sees the new paths in the next snapshot and makes a new proxy
+            AssetPicker("Model", "Models", ".obj", t_MeshRend.Mesh);
+            AssetPicker("Material", "Materials", ".mat", t_MeshRend.Material);
         }
     }
 
-    void BaseEditor::Init(entt::registry& t_Reg, World* t_World, Game* t_Game)
+    void BaseEditor::Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game)
     {
         m_OwningWorld = t_World;
+        m_WorldSingletons.SetWorld(t_World);
         m_Game = t_Game;
-        RegisterComponents(t_Reg);
-    }
-
-    void BaseEditor::RegisterComponents(entt::registry& t_Reg)
-    {
+        m_EntityEditor.SetWorld(t_World, &m_Widgets);
         (void)t_Reg;
-
-        // Transform, NameComponent, MeshRenderer, DirectionalLight, and PointLight are
-        // already known to ComponentTypeRegistry (RegisterEngineComponents /
-        // RegisterGraphicsComponents); we're just attaching an ImGui draw callback for
-        // each so EntityEditorPanel can render them.
-        ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
-
-        Registry.SetEditorWidget("Transform",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::Transform>(e);
-                Widgets::Transform(t);
-            }
-        );
-
-        Registry.SetEditorWidget("PointLight",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::PointLight>(e);
-                Widgets::PointLight(t);
-            }
-        );
-
-        Registry.SetEditorWidget("DirectionalLight",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::DirectionalLight>(e);
-                Widgets::DirectionalLight(t);
-            }
-        );
-
-        Registry.SetEditorWidget("MeshRenderer",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::MeshRenderer>(e);
-                Widgets::MeshRenderer(t, reg, e);
-            }
-        );
+        RegisterWidgets(m_Widgets);
     }
 
-    void BaseEditor::Draw(entt::registry& t_Reg, float DeltaTime)
+    void BaseEditor::RegisterWidgets(EditorWidgets& t_Widgets)
+    {
+        // The other components use the inspector made from their reflected fields.
+        // Transform stores a quaternion, so it is edited as Euler angles in degrees.
+        t_Widgets.Override<Fling::Transform>(
+            [](Fling::EntityStorage&, Fling::Entity, Fling::Transform& t_Trans)
+            {
+                ImGui::DragFloat3("Position", &t_Trans.Position.x, 0.05f);
+                glm::vec3 Degrees = TransformUtil::ToEulerDegrees(t_Trans.Rotation);
+                if (ImGui::DragFloat3("Rotation", &Degrees.x, 0.5f))
+                {
+                    t_Trans.Rotation = TransformUtil::FromEulerDegrees(Degrees);
+                }
+                ImGui::DragFloat3("Scale", &t_Trans.Scale.x, 0.05f);
+            });
+
+        // MeshRenderer saves asset paths by hand, so it gets file pickers.
+        t_Widgets.Override<Fling::MeshRenderer>(
+            [](Fling::EntityStorage&, Fling::Entity, Fling::MeshRenderer& t_Mesh)
+            {
+                Widgets::MeshRenderer(t_Mesh);
+            });
+    }
+
+    void BaseEditor::Draw(Fling::EntityStorage& t_Reg, float DeltaTime)
     {
         DrawFileMenu();
 
@@ -230,6 +130,7 @@ namespace Fling
         }
 
         m_InputDevices.Draw(t_Reg);
+        m_WorldSingletons.Draw(t_Reg);
     }
 
     void BaseEditor::DrawCameraOptions()
@@ -251,12 +152,12 @@ namespace Fling
 		ImGui::End();
     }
 
-    void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
+    void BaseEditor::DrawWorldOutline(Fling::EntityStorage& t_Reg)
     {
         m_WorldOutline.Draw(t_Reg);
     }
 
-    void BaseEditor::DrawEntityEditor(entt::registry& t_Reg)
+    void BaseEditor::DrawEntityEditor(Fling::EntityStorage& t_Reg)
     {
         // Spawn the entity editor for whatever is currently selected in the outline
         m_EntityEditor.SetTargetEntity(m_WorldOutline.GetSelectedEntity());
@@ -387,6 +288,7 @@ namespace Fling
                 ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
 				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
 				ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
+				ImGui::Checkbox("World Singletons", &m_WorldSingletons.ShowWindowFlag());
                 ImGui::EndMenu();
             }
 

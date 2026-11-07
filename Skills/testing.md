@@ -10,7 +10,7 @@ Graphics relinks `ApplicationTests` and leaves `CoreTests` alone.
 | --- | --- | --- |
 | `CoreTests` | `Fling::Core` | `FlingTests/Core/` — string utils, command line, launch options, timing, random, logger, allocators, circular buffer |
 | `ResourcesTests` | `Fling::Resources` | `FlingTests/Resources/` — `ResourceManager` / `FlingConfig`, `Json`, `JsonArchive` |
-| `EngineTests` | `Fling::Engine` | `FlingTests/Engine/` — `ComponentTypeRegistry`, world save/load, `Transform` / entt views |
+| `EngineTests` | `Fling::Engine` | `FlingTests/Engine/` — reflection, the type registry, world save/load, `Transform`, ECS systems |
 | `PhysicsTests` | `Fling::Physics` + the selected provider | `FlingTests/Physics/` — `PhysicsCoreTests.cpp`: the clock, requests, and body bookkeeping, with a recording provider. `PhysicsProviderTests.cpp`: tests every provider must pass, including determinism, save/restore, and a golden hash that must match on every platform |
 | `ApplicationTests` | `Fling::Application` | `FlingTests/Application/` — `Fling::Engine` smoke test (`Engine.h` lives in Application) |
 

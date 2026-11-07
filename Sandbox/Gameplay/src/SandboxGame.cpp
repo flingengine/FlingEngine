@@ -4,7 +4,7 @@
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "MeshRenderer.h"
-#include "Physics.h"
+#include "PhysicsComponents.h"
 #include "Random.h"
 #include "SandboxGame.h"
 #include "Stats.h"
@@ -12,7 +12,6 @@
 #include "VulkanApp.h"
 #include "World.h"
 // For getting some lighting info
-#include "ComponentTypeRegistry.h"
 #include "Lighting/DeferredLightSettings.h"
 #include "Mover.h"
 
@@ -26,83 +25,7 @@ namespace Sandbox
 {
     using namespace Fling;
 
-    namespace
-    {
-        /**
-         * Push and jump each BallControl body with the player's input. The requests
-         * are queued, and physics applies them in this tick's physics step.
-         * Reads: BallControl, Input. Writes: PhysicsCommands.
-         */
-        void BallControlSystem(entt::registry& t_Reg, const Input& t_Input)
-        {
-            glm::vec3 Dir(0.0f);
-            if (t_Input.IsHeld(Keys::Up) || t_Input.IsHeld(Keys::GamepadDPadUp))
-            {
-                Dir.z -= 1.0f;
-            }
-            if (t_Input.IsHeld(Keys::Down) || t_Input.IsHeld(Keys::GamepadDPadDown))
-            {
-                Dir.z += 1.0f;
-            }
-            if (t_Input.IsHeld(Keys::Left) || t_Input.IsHeld(Keys::GamepadDPadLeft))
-            {
-                Dir.x -= 1.0f;
-            }
-            if (t_Input.IsHeld(Keys::Right) || t_Input.IsHeld(Keys::GamepadDPadRight))
-            {
-                Dir.x += 1.0f;
-            }
-            const bool bJump = t_Input.WasPressed(Keys::Space) || t_Input.WasPressed(Keys::GamepadFaceBottom);
-
-            t_Reg.view<BallControl>().each([&](entt::entity t_Entity, const BallControl& t_Control)
-            {
-                if (glm::length(Dir) > 0.0f)
-                {
-                    Physics::ApplyForce(t_Reg, t_Entity, glm::normalize(Dir) * t_Control.m_PushForce);
-                }
-                if (bJump)
-                {
-                    Physics::ApplyImpulse(t_Reg, t_Entity, glm::vec3(0.0f, t_Control.m_JumpImpulse, 0.0f));
-                }
-            });
-        }
-
-        /**
-         * Log the first time that a BallControl body hits another moving body. The
-         * headless physics test level looks for this line.
-         * Reads: ContactEvents (from the last physics step), BallControl, RigidBody.
-         * Writes: SandboxPhysicsState.
-         */
-        void LogFirstHitSystem(entt::registry& t_Reg)
-        {
-            SandboxPhysicsState* State = t_Reg.try_ctx<SandboxPhysicsState>();
-            const ContactEvents* Contacts = t_Reg.try_ctx<ContactEvents>();
-            if (State == nullptr || Contacts == nullptr || State->m_HasLoggedHit)
-            {
-                return;
-            }
-
-            auto IsMovingBody = [&t_Reg](entt::entity t_Entity)
-            {
-                return t_Reg.valid(t_Entity) && t_Reg.has<RigidBody>(t_Entity) && t_Reg.get<RigidBody>(t_Entity).m_Mass > 0.0f;
-            };
-
-            for (const ContactEvent& Contact : Contacts->m_Contacts)
-            {
-                const bool bAIsBall = t_Reg.valid(Contact.m_A) && t_Reg.has<BallControl>(Contact.m_A);
-                const bool bBIsBall = t_Reg.valid(Contact.m_B) && t_Reg.has<BallControl>(Contact.m_B);
-                const entt::entity Other = bAIsBall ? Contact.m_B : Contact.m_A;
-                if ((bAIsBall || bBIsBall) && !(bAIsBall && bBIsBall) && IsMovingBody(Other))
-                {
-                    F_LOG_TRACE("PhysicsTest: ball hit cube on tick {}", State->m_Tick);
-                    State->m_HasLoggedHit = true;
-                    return;
-                }
-            }
-        }
-    } // namespace
-
-    void Game::Init(entt::registry& t_Reg)
+    void Game::Init(Fling::EntityStorage& t_Reg)
     {
         // Lets create an entity! 
         F_LOG_TRACE("Sandbox Init!");
@@ -120,124 +43,24 @@ namespace Sandbox
 		F_LOG_TRACE("Done cmd line testing");
     }
 
-	void Game::RegisterComponents()
-	{
-		Fling::ComponentTypeRegistry::Get().Register<Mover>("Mover");
-		Fling::ComponentTypeRegistry::Get().Register<Rotator>("Rotator");
-		Fling::ComponentTypeRegistry::Get().Register<BallControl>("BallControl");
-	}
-
-	void Game::OnStartGame(entt::registry& t_Reg)
+	void Game::OnStartGame(Fling::EntityStorage& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
-        // Play can start many times in one editor run, so each play starts from the same state
-        ResetPlayState();
-        t_Reg.set<SandboxPhysicsState>();
-
         // A level with physics bodies (for example Levels/PhysicsTest.json) is a
         // scene of its own. Only an empty level gets the lighting test grid.
-        if (t_Reg.view<RigidBody>().empty())
+        if (t_Reg.View<RigidBody>().Empty())
         {
             LightingTest(t_Reg);
         }
 	}
 
-    void Game::Update(entt::registry& t_Reg, float DeltaTime)
-    {
-        const Input& GameInput = Input::Get();
-
-        // Each action has a keyboard key and a gamepad button (Xbox names in the comments)
-        auto WasPressed = [&GameInput](InputKey t_Key, InputKey t_GamepadButton)
-        {
-            return GameInput.WasPressed(t_Key) || GameInput.WasPressed(t_GamepadButton);
-        };
-
-        // Quit with Escape or View
-        if (WasPressed(Keys::Escape, Keys::GamepadBack))
-        {
-            OnQuitPressed();
-        }
-
-        // Toggle cursor/mouse visibility with M or Menu
-        if (WasPressed(Keys::M, Keys::GamepadStart))
-        {
-            ToggleCursorVisibility();
-        }
-
-        // Toggle model rotation with T or X
-        if (WasPressed(Keys::T, Keys::GamepadFaceLeft))
-        {
-            ToggleRotation();
-        }
-
-        // Physics test level: the arrow keys push the ball and Space jumps.
-        // ContactEvents is from the physics step of the last tick.
-        const bool bHasBall = !t_Reg.view<BallControl>().empty();
-        if (bHasBall)
-        {
-            BallControlSystem(t_Reg, GameInput);
-            LogFirstHitSystem(t_Reg);
-        }
-        if (SandboxPhysicsState* PhysicsState = t_Reg.try_ctx<SandboxPhysicsState>())
-        {
-            ++PhysicsState->m_Tick;
-        }
-
-        // Toggle moving lights with Space or A (Space jumps when there is a ball)
-        if (!bHasBall && WasPressed(Keys::Space, Keys::GamepadFaceBottom))
-        {
-            OnToggleMoveLights();
-        }
-
-        // Spawn a test entity with 0 or Y
-        if (WasPressed(Keys::Zero, Keys::GamepadFaceTop))
-        {
-            OnTestSpawn();
-        }
-
-        if (m_DoRotations)
-        {
-            glm::vec3 RotOffset(0.0f, 15.0f * DeltaTime, 0.0f);
-
-            // For each active mesh renderer
-            t_Reg.view<Transform, Rotator>().each([&](auto ent, Transform& t_Trans, Rotator& t_MeshRend)
-            {
-                const glm::vec3& curRot = t_Trans.GetRotation();
-                t_Trans.SetRotation(curRot + RotOffset);
-            });
-        }
-
-        if (m_MovePointLights)
-        {
-            t_Reg.view<Transform, Mover>().each([&](auto ent, Transform& t_Trans, Mover& t_Mover)
-            {
-                glm::vec3 curPos = t_Trans.GetPos();
-
-                glm::vec3 DistanceToTarget = curPos - t_Mover.TargetPos;
-
-                // Move in a direction between two points and the speed
-                if(glm::length(DistanceToTarget) <= 0.5f)
-                {
-                    t_Mover.TargetPos = glm::vec3(-1.0f * t_Mover.TargetPos);
-                }
-
-                // Lerp towards the target position
-                glm::vec3 newPos = glm::lerp(curPos, t_Mover.TargetPos,  t_Mover.Speed * DeltaTime);
-                t_Trans.SetPos(newPos);
-            });
-        }
-    }
-
-	void Game::OnStopGame(entt::registry& t_Reg)
+	void Game::OnStopGame(Fling::EntityStorage& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox OnStopGame!");
 
-        // The world removes the entities that play made. Only state outside the
-        // registry is cleaned up here.
-        ResetPlayState();
-
-        // Play can hide the cursor (M). Show it again for the editor.
+        // The world removes the entities that play made. The Sandbox systems reset their
+        // singletons in OnPlayBegin. Play can hide the cursor (M): show it again for the editor.
         FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
         if (CurrentWindow && !CurrentWindow->GetMouseVisible())
         {
@@ -245,55 +68,58 @@ namespace Sandbox
         }
     }
 
-    void Game::ResetPlayState()
-    {
-        m_DoRotations = false;
-        m_MovePointLights = false;
-        m_TestSpawnX = -1.0f;
-    }
-
-    void Game::Shutdown(entt::registry& t_Reg)
+    void Game::Shutdown(Fling::EntityStorage& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox Shutdown!");
+
+		// A checksum of every transform, to check that a change to gameplay code gives the same motion
+		double Checksum = 0.0;
+		std::size_t Count = 0;
+		t_Reg.View<Transform>().Each([&](auto, Transform& t_Trans)
+		{
+			const glm::vec3 Pos = t_Trans.Position;
+			const glm::quat Rot = t_Trans.Rotation;
+			Checksum += Pos.x + 3.0 * Pos.y + 7.0 * Pos.z + 11.0 * Rot.x + 13.0 * Rot.y + 17.0 * Rot.z + 19.0 * Rot.w;
+			++Count;
+		});
+		F_LOG_TRACE("Sandbox: {} transforms, checksum {:.9f}", Count, Checksum);
 	}
 
-	void Game::OnQuitPressed()
+	void Game::AddFloor(Fling::EntityStorage& t_Reg, const Fling::StringView t_Model, const Fling::StringView t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
 	{
-		F_LOG_TRACE("The Sandbox game wants to quit!");
-		m_WantsToQuit = true;
+		Fling::Entity e0 = t_Reg.Create();
+		t_Reg.Add<MeshRenderer>(e0, MeshRenderer(Fling::String(t_Model), Fling::String(t_Mat)));
+		Transform& t0 = t_Reg.Add<Transform>(e0);
+		t0.Position = glm::vec3(0.0f, -1.0f, 0.0f);
+		t0.Scale = t_Scale;
 	}
 
-	void Game::AddFloor(entt::registry& t_Reg, const Fling::StringView t_Model, const Fling::StringView t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
-	{
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-		Transform& t0 = t_Reg.assign<Transform>(e0);
-		t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
-		t0.SetScale(t_Scale);
-	}
-
-    void Game::LightingTest(entt::registry& t_Reg)
+    void Game::LightingTest(Fling::EntityStorage& t_Reg)
     {
         
         auto AddRandomPointLight = [&]()
         {
-            entt::entity e0 = t_Reg.create();
+            Fling::Entity e0 = t_Reg.Create();
 
             glm::vec3 min = { -15.0f, 0.2f, -15.0f };
 			glm::vec3 max = { 15.0f, 1.0f, 15.0f };
 			const glm::vec3 startPos = Fling::Random::GetRandomVec3(min, max);
 
-			// The renderer adds a Transform to a new PointLight, but there is no renderer
-			// under --null-render. get_or_assign works in both cases.
-            PointLight& Light = t_Reg.assign<PointLight>(e0);
-			Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
-			t0.SetPos(startPos);
-            Mover& m0 = t_Reg.assign<Mover>(e0);
+            // Each Add moves the entity to a new archetype, so build each component
+            // whole and add it, instead of keeping a reference across adds
+            Transform t0;
+            t0.Position = startPos;
+            t_Reg.AddOrReplace<Transform>(e0, t0);
+
+            Mover m0;
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
-            
+            t_Reg.Add<Mover>(e0, m0);
+
+            PointLight Light;
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
             Light.Intensity = 5.0f;
             Light.Range = 3.0f;
+            t_Reg.Add<PointLight>(e0, Light);
         };
 
 		
@@ -363,48 +189,13 @@ namespace Sandbox
 					ModelPath = "Models/sphere.obj";
 				}
 
-				entt::entity e0 = t_Reg.create();
-				t_Reg.assign<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
-				t_Reg.assign<Rotator>(e0);
-				Transform& t0 = t_Reg.assign<Transform>(e0);
-				t0.SetPos(
-					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
-				);
+				Fling::Entity e0 = t_Reg.Create();
+				t_Reg.Add<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
+				t_Reg.Add<Rotator>(e0);
+				Transform& t0 = t_Reg.Add<Transform>(e0);
+				t0.Position =
+					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing );
 			}
 		}
     }
-
-    void Game::ToggleCursorVisibility()
-    {
-		// You have to include VulkanApp for this
-        FlingWindow* CurrentWindow = VulkanApp::Get().GetCurrentWindow();
-        if (CurrentWindow)
-        {
-            CurrentWindow->SetMouseVisible(!CurrentWindow->GetMouseVisible());
-        }
-    }
-
-    void Game::OnToggleMoveLights()
-    {
-        m_MovePointLights = !m_MovePointLights;
-    }
-
-    void Game::ToggleRotation()
-    {
-        m_DoRotations = !m_DoRotations;
-    }
-
-	void Game::OnTestSpawn()
-	{
-		entt::registry& t_Reg = m_OwningWorld->GetRegistry();
-
-        m_TestSpawnX -= 1.0f;
-
-        entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, "Models/sphere.obj", "Materials/DeferredBronzeMat.mat");
-		t_Reg.assign<Rotator>(e0);
-		Transform& t0 = t_Reg.assign<Transform>(e0);
-        t0.SetPos(glm::vec3(m_TestSpawnX, 0.0f, 0.0f));
-        F_LOG_TRACE("Spawn a sphere to the left!");
-	}
 }	// namespace Sandbox

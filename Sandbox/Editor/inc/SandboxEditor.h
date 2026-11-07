@@ -11,7 +11,7 @@ namespace Sandbox
         SandboxEditor() = default;
         ~SandboxEditor() = default;
     
-        virtual void Draw(entt::registry& t_Reg, float DeltaTime) override;
+        virtual void Draw(Fling::EntityStorage& t_Reg, float DeltaTime) override;
 
     protected:
 

@@ -1,6 +1,5 @@
 #include "Buffer.h"
 #include "CommandBuffer.h"
-#include "Components/Transform.h"
 #include "FirstPersonCamera.h"
 #include "FlingIntegers.h"
 #include "FlingVulkan.h"
@@ -10,8 +9,6 @@
 #include "Logger.h"
 #include "LogicalDevice.h"
 #include "Material.h"
-#include "MeshRenderer.h"
-#include "MeshRendererGpu.h"
 #include "Model.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
@@ -23,20 +20,12 @@ namespace Fling
 	OffscreenSubpass::OffscreenSubpass(
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
-		entt::registry& t_reg,
 		FirstPersonCamera* t_Cam,
 		std::shared_ptr<Fling::Shader> t_Vert,
 		std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 		, m_Camera(t_Cam)
 	{
-		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
-		t_reg.on_replace<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
-		t_reg.on_destroy<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
-		// The render view needs a Transform, so adding or removing one changes what we draw
-		t_reg.on_construct<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
-		t_reg.on_destroy<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
-
 		// Set the clear values for the G Buffer
 		m_ClearValues.resize(6);
 		m_ClearValues[0].color = m_ClearValues[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
@@ -99,7 +88,7 @@ namespace Fling
 	void OffscreenSubpass::Draw(
 		CommandBuffer& t_CmdBuf,
 		uint32 t_ActiveSwapImage,
-		entt::registry& t_reg,
+		const RenderSnapshot& t_Snapshot,
 		float DeltaTime)
 	{
 		assert(m_GraphicsPipeline);
@@ -110,21 +99,8 @@ namespace Fling
 		// The previous frame is done on the GPU, so the resources of destroyed meshes can go
 		ReleaseRetiredMeshResources();
 
-		// Write the descriptor sets of replaced meshes now that entt has stored the new values
-		if (!m_ReplacedMeshes.empty())
-		{
-			for (entt::entity Ent : m_ReplacedMeshes)
-			{
-				if (t_reg.valid(Ent) && t_reg.has<MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>(Ent))
-				{
-					MeshRenderer& MeshRend = t_reg.get<MeshRenderer>(Ent);
-					CreateMeshDescriptorSet(MeshRend);
-					MarkMeshRendererUboDirty(MeshRend);
-				}
-			}
-			m_ReplacedMeshes.clear();
-			InvalidateCommandBuffers();
-		}
+		// The meshes in this frame's snapshot: new ones get a proxy, gone ones release theirs
+		SyncProxies(t_Snapshot);
 
 		// The camera moves on most frames, but it is only one small write
 		OffscreenCameraUBO CameraUBO = {};
@@ -134,49 +110,107 @@ namespace Fling
 		CameraUBO.View = m_Camera->GetViewMatrix();
 		memcpy(m_CameraUboBuffer->m_MappedMem, &CameraUBO, sizeof(CameraUBO));
 
-		UpdateMeshUniformBuffers(t_reg);
+		UpdateMeshUniformBuffers(t_Snapshot);
 
 		// The command buffer holds only draw calls and descriptor bindings, not
 		// UBO data. Keep the last recording if the draw list did not change.
 		if (m_RecordedDrawListVersions[t_ActiveSwapImage] != m_DrawListVersion)
 		{
-			BuildOffscreenCommandBuffer(*OffscreenCmdBuf, t_reg);
+			BuildOffscreenCommandBuffer(*OffscreenCmdBuf);
 			m_RecordedDrawListVersions[t_ActiveSwapImage] = m_DrawListVersion;
 		}
 	}
 
-	void OffscreenSubpass::UpdateMeshUniformBuffers(entt::registry& t_reg)
+	void OffscreenSubpass::SyncProxies(const RenderSnapshot& t_Snapshot)
 	{
-		// Use a view, not an owning group. group<Transform>(MeshRenderer, ...) packs
-		// Transform and can swap it out from under assign<Transform>() references.
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
+		MeshProxyTable::SyncResult Result = m_Proxies.Sync(t_Snapshot.Meshes);
+		m_ItemSlots = std::move(Result.ItemSlots);
+		m_GpuMeshes.resize(m_Proxies.Capacity());
 
-		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		// Removed first: a removed slot can be used again by an added mesh
+		for (const uint32 Slot : Result.Removed)
 		{
-			Buffer* buf = t_MeshRend.m_UniformBuffer;
-			if (!buf || t_MeshRend.m_GpuState == nullptr)
+			RetireGpuMesh(m_GpuMeshes[Slot]);
+		}
+
+		auto Prepare = [&](const uint32 Slot)
+		{
+			GpuMesh& Mesh = m_GpuMeshes[Slot];
+			const bool bHasAssets = ResolveMeshAssets(m_Proxies.At(Slot), Mesh);
+			Mesh.Drawn = bHasAssets && Mesh.MeshMaterial->GetType() == Material::Type::Default;
+			if (!Mesh.Drawn)
 			{
+				// Another pass draws it (a debug material), or there is no model
+				RetireGpuMesh(Mesh);
 				return;
 			}
 
-			bool& bUboDirty = t_MeshRend.m_GpuState->m_UboDirty;
-			if (!bUboDirty && !t_trans.IsDirty())
+			if (Mesh.Ubo == nullptr)
 			{
-				return;
+				const VkDeviceSize BufferSize = sizeof(OffscreenUBO);
+				Mesh.Ubo = new Buffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				Mesh.Ubo->MapMemory(BufferSize);
 			}
+			CreateMeshDescriptorSet(Mesh);
+			Mesh.UploadedVersion = 0;
+		};
 
-			Transform::CalculateWorldMatrix(t_trans);
+		for (const uint32 Slot : Result.Added)
+		{
+			Prepare(Slot);
+		}
+		for (const uint32 Slot : Result.Changed)
+		{
+			// The descriptor set may be in a recorded command buffer, so take a new one
+			RetireGpuMesh(m_GpuMeshes[Slot]);
+			Prepare(Slot);
+		}
 
-			OffscreenUBO MeshUBO = {};
-			MeshUBO.Model = t_trans.GetWorldMat();
-			MeshUBO.ObjPos = t_trans.GetPos();
-
-			memcpy(buf->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
-			bUboDirty = false;
-		});
+		if (Result.DrawListChanged())
+		{
+			InvalidateCommandBuffers();
+		}
 	}
 
-	void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, entt::registry& t_reg)
+	void OffscreenSubpass::RetireGpuMesh(GpuMesh& t_Mesh)
+	{
+		if (t_Mesh.Set != VK_NULL_HANDLE)
+		{
+			m_RetiredDescriptorSets.emplace_back(t_Mesh.Set);
+		}
+		if (t_Mesh.Ubo != nullptr)
+		{
+			m_RetiredUniformBuffers.emplace_back(t_Mesh.Ubo);
+		}
+		t_Mesh = GpuMesh{};
+	}
+
+	void OffscreenSubpass::UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot)
+	{
+		for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
+		{
+			const MeshDrawItem& Item = t_Snapshot.Meshes[i];
+			GpuMesh& Mesh = m_GpuMeshes[m_ItemSlots[i]];
+			if (!Mesh.Drawn || Mesh.Ubo == nullptr)
+			{
+				continue;
+			}
+
+			// Version 0 has no LocalToWorld yet, so its matrix can change on any frame
+			if (Item.WorldVersion != 0 && Item.WorldVersion == Mesh.UploadedVersion)
+			{
+				continue;
+			}
+
+			OffscreenUBO MeshUBO = {};
+			MeshUBO.Model = Item.World;
+			MeshUBO.ObjPos = glm::vec3(Item.World[3]);
+			memcpy(Mesh.Ubo->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
+			Mesh.UploadedVersion = Item.WorldVersion;
+		}
+	}
+
+	void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf)
 	{
 		// Set viewport and scissors to the offscreen frame buffer
 		VkViewport viewport = Initializers::Viewport(
@@ -202,24 +236,21 @@ namespace Fling
 
 		VkDeviceSize offsets[1] = { 0 };
 
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
-
-		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		for (const GpuMesh& Mesh : m_GpuMeshes)
 		{
-			Fling::Model* Model = t_MeshRend.m_Model;
-			if (!Model)
+			if (!Mesh.Drawn || Mesh.MeshModel == nullptr || Mesh.Set == VK_NULL_HANDLE)
 			{
-				return;
+				continue;
 			}
+			Fling::Model* Model = Mesh.MeshModel;
 
-			// Bind the descriptor set for rendering a mesh using the dynamic offset
 			vkCmdBindDescriptorSets(
 				t_CmdBuf.GetHandle(),
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_GraphicsPipeline->GetPipelineLayout(),
 				0,
 				1,
-				&MeshRendererDescriptorSet(t_MeshRend),
+				&Mesh.Set,
 				0,
 				nullptr);
 
@@ -228,71 +259,44 @@ namespace Fling
 			vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
 			vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
-		});
+		}
 
 		t_CmdBuf.EndRenderPass();
 
 		t_CmdBuf.End();
 	}
 
-	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
+	void OffscreenSubpass::CreateMeshDescriptorSet(GpuMesh& t_Mesh)
 	{
-		// Only allocate new descriptor sets if there are none
-		// Some may exist if entt decides to re-use the component
-		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
+		if (t_Mesh.Set == VK_NULL_HANDLE)
 		{
 			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			// If we have specified a specific pool then use that, otherwise use the one on the mesh
 			allocInfo.descriptorPool = m_DescriptorPool;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &layout;
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &MeshRendererDescriptorSet(t_MeshRend)));
+			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_Mesh.Set));
 		}
 
-		// Ensure that we have a material to try and sample from
-		if (t_MeshRend.m_Material == nullptr)
-		{
-			t_MeshRend.m_Material = Material::GetDefaultMat().get();
-		}
-		
+		const PBRTextures& Textures = t_Mesh.MeshMaterial->GetPBRTextures();
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets =
 		{
 			// 0: UBO
-			Initializers::WriteDescriptorSetUniform(
-				t_MeshRend.m_UniformBuffer,
-				MeshRendererDescriptorSet(t_MeshRend),
-				0
-			),
-			// 1: Color map 
-			Initializers::WriteDescriptorSetImage(
-				t_MeshRend.m_Material->GetPBRTextures().m_AlbedoTexture,
-				MeshRendererDescriptorSet(t_MeshRend),
-				1),
+			Initializers::WriteDescriptorSetUniform(t_Mesh.Ubo, t_Mesh.Set, 0),
+			// 1: Color map
+			Initializers::WriteDescriptorSetImage(Textures.m_AlbedoTexture, t_Mesh.Set, 1),
 			// 2: Normal map
-			Initializers::WriteDescriptorSetImage(
-				t_MeshRend.m_Material->GetPBRTextures().m_NormalTexture,
-				MeshRendererDescriptorSet(t_MeshRend),
-				2),
+			Initializers::WriteDescriptorSetImage(Textures.m_NormalTexture, t_Mesh.Set, 2),
 			// 3: Metal map
-			Initializers::WriteDescriptorSetImage(
-				t_MeshRend.m_Material->GetPBRTextures().m_MetalTexture,
-				MeshRendererDescriptorSet(t_MeshRend),
-				3),
+			Initializers::WriteDescriptorSetImage(Textures.m_MetalTexture, t_Mesh.Set, 3),
 			// 4: Roughness map
-			Initializers::WriteDescriptorSetImage(
-				t_MeshRend.m_Material->GetPBRTextures().m_RoughnessTexture,
-				MeshRendererDescriptorSet(t_MeshRend),
-				4),
+			Initializers::WriteDescriptorSetImage(Textures.m_RoughnessTexture, t_Mesh.Set, 4),
 			// Any other PBR textures or other samplers go HERE and you add to the MRT shader
 
 			// 5: Camera UBO
-			Initializers::WriteDescriptorSetUniform(
-				m_CameraUboBuffer,
-				MeshRendererDescriptorSet(t_MeshRend),
-				5)
+			Initializers::WriteDescriptorSetUniform(m_CameraUboBuffer, t_Mesh.Set, 5)
 		};
 
 		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
@@ -436,25 +440,19 @@ namespace Fling
 		t_Deps.emplace_back(m_OffscreenSemaphores[t_CurrentFrameInFlight]);
 	}
 
-	void OffscreenSubpass::CleanUp(entt::registry& t_reg)
+	void OffscreenSubpass::CleanUp()
 	{
 		assert(m_Device != nullptr);
 
-		// Stop listening, the descriptor pool and mesh buffers are about to go away
-		t_reg.on_construct<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
-		t_reg.on_replace<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
-		t_reg.on_destroy<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
-		t_reg.on_construct<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
-		t_reg.on_destroy<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
-		m_ReplacedMeshes.clear();
-
 		// Called after the device is idle, so nothing uses these now
-		ReleaseRetiredMeshResources();
-
-		t_reg.view<MeshRenderer>().each([](MeshRenderer& t_Mesh)
+		for (GpuMesh& Mesh : m_GpuMeshes)
 		{
-			t_Mesh.Release();
-		});
+			RetireGpuMesh(Mesh);
+		}
+		m_GpuMeshes.clear();
+		m_Proxies.Clear();
+		m_ItemSlots.clear();
+		ReleaseRetiredMeshResources();
 
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{
@@ -463,7 +461,7 @@ namespace Fling
 		}
 	}
 
-	void OffscreenSubpass::OnSwapchainResized(entt::registry& t_reg)
+	void OffscreenSubpass::OnSwapchainResized()
 	{
 		const VkExtent2D NewSize = m_SwapChain->GetExtents();
 		if (m_OffscreenFrameBuf)
@@ -474,64 +472,6 @@ namespace Fling
 		}
 
 		// The old recordings use the old frame buffer and pipeline
-		InvalidateCommandBuffers();
-
-		(void)t_reg;
-	}
-
-	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
-	{
-		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Default)
-		{
-			return;
-		}
-
-		t_Reg.assign<entt::tag<entt::hashed_string::to_value("Default")>>(t_Ent);
-
-		// Initialize and map the UBO of each mesh renderer
-		if (t_MeshRend.m_UniformBuffer == nullptr)
-		{
-			VkDeviceSize bufferSize = sizeof(OffscreenUBO);
-			t_MeshRend.m_UniformBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffer->MapMemory(bufferSize);
-		}
-		
-		// I would love to create some descriptor sets here		
-		CreateMeshDescriptorSet(t_MeshRend);
-		MarkMeshRendererUboDirty(t_MeshRend);
-		InvalidateCommandBuffers();
-	}
-
-	void OffscreenSubpass::OnMeshRendererReplaced(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
-	{
-		m_ReplacedMeshes.emplace_back(t_Ent);
-		InvalidateCommandBuffers();
-	}
-
-	void OffscreenSubpass::OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg)
-	{
-		InvalidateCommandBuffers();
-	}
-
-	void OffscreenSubpass::OnMeshRendererDestroyed(entt::entity t_Ent, entt::registry& t_Reg)
-	{
-		// entt sends this before it removes the component, so it is still valid
-		MeshRenderer& MeshRend = t_Reg.get<MeshRenderer>(t_Ent);
-
-		if (MeshRend.m_GpuState != nullptr && MeshRend.m_GpuState->m_DescriptorSet != VK_NULL_HANDLE)
-		{
-			m_RetiredDescriptorSets.emplace_back(MeshRend.m_GpuState->m_DescriptorSet);
-			MeshRend.m_GpuState->m_DescriptorSet = VK_NULL_HANDLE;
-		}
-
-		// Take the UBO, so that the MeshRenderer destructor does not delete it
-		// while a command buffer can still use it
-		if (MeshRend.m_UniformBuffer != nullptr)
-		{
-			m_RetiredUniformBuffers.emplace_back(MeshRend.m_UniformBuffer);
-			MeshRend.m_UniformBuffer = nullptr;
-		}
-
 		InvalidateCommandBuffers();
 	}
 

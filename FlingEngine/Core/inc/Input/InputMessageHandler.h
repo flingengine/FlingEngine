@@ -8,9 +8,9 @@
 #include "Input/InputMessage.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
+#include "Signals.h"
 #include "Strings/String.h"
 
-#include <entt/signal/sigh.hpp>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -139,10 +139,10 @@ namespace Fling
         uint64 GetLatestSequence() const { return m_LastSequence; }
 
         /** Fired by DispatchDeferredEvents for each device that connected. */
-        entt::sink<void(const InputDevice&)> OnDeviceConnected() { return entt::sink{m_OnDeviceConnected}; }
+        Sink<void(const InputDevice&)> OnDeviceConnected() { return Sink<void(const InputDevice&)>{ m_OnDeviceConnected }; }
 
         /** Fired by DispatchDeferredEvents for each device that disconnected. */
-        entt::sink<void(const InputDevice&)> OnDeviceDisconnected() { return entt::sink{m_OnDeviceDisconnected}; }
+        Sink<void(const InputDevice&)> OnDeviceDisconnected() { return Sink<void(const InputDevice&)>{ m_OnDeviceDisconnected }; }
 
     private:
         friend class InputDeviceFactory;
@@ -200,8 +200,8 @@ namespace Fling
         /** Log times are shown in seconds after this time. */
         int64 m_StartNs = InputNowNs();
 
-        entt::sigh<void(const InputDevice&)> m_OnDeviceConnected;
+        Signal<void(const InputDevice&)> m_OnDeviceConnected;
 
-        entt::sigh<void(const InputDevice&)> m_OnDeviceDisconnected;
+        Signal<void(const InputDevice&)> m_OnDeviceDisconnected;
     };
 } // namespace Fling

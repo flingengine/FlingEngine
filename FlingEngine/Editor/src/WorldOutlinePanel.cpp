@@ -1,16 +1,97 @@
 #include "Components/Name.hpp"
+#include "Components/Transform.h"
 #include "FlingTypes.h"
+#include "HierarchyUtil.h"
 #include "Logger.h"
 #include "Strings/String.h"
 #include "WorldOutlinePanel.h"
 
 #include <imgui.h>
-#include <sstream>
+#include <string>
 #include <vector>
 
 namespace Fling
 {
-	void WorldOutlinePanel::Draw(entt::registry& t_Reg)
+	namespace
+	{
+		String LabelOf(const Fling::EntityStorage& t_Reg, const Fling::Entity t_Entity)
+		{
+			const NameComponent* Label = t_Reg.TryGet<NameComponent>(t_Entity);
+			if (Label && !Label->Name.IsNone())
+			{
+				return String(Label->Name.ToView());
+			}
+			return "Entity " + std::to_string(t_Entity.Index);
+		}
+	} // namespace
+
+	void WorldOutlinePanel::DrawNode(Fling::EntityStorage& t_Reg, const Fling::Entity t_Entity)
+	{
+		const Children* Kids = t_Reg.TryGet<Children>(t_Entity);
+		const bool bHasChildren = Kids && !Kids->Value.empty();
+
+		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+		if (!bHasChildren)
+		{
+			Flags |= ImGuiTreeNodeFlags_Leaf;
+		}
+		if (m_SelectedEntity == t_Entity)
+		{
+			Flags |= ImGuiTreeNodeFlags_Selected;
+		}
+
+		ImGui::PushID(static_cast<int>(t_Entity.Index));
+
+		if (ImGui::SmallButton(" - "))
+		{
+			m_EntityToDestroy = t_Entity;
+		}
+		ImGui::SameLine();
+
+		const String Label = LabelOf(t_Reg, t_Entity);
+		const bool bOpen = ImGui::TreeNodeEx(Label.c_str(), Flags);
+		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+		{
+			m_SelectedEntity = t_Entity;
+		}
+
+		// Drag an entity onto another to make it a child. Drop on the empty area to detach.
+		if (ImGui::BeginDragDropSource())
+		{
+			ImGui::SetDragDropPayload("FLING_ENTITY", &t_Entity, sizeof(t_Entity));
+			ImGui::TextUnformatted(Label.c_str());
+			ImGui::EndDragDropSource();
+		}
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload("FLING_ENTITY"))
+			{
+				m_PendingParent = { *static_cast<const Fling::Entity*>(Payload->Data), t_Entity };
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		if (bOpen)
+		{
+			if (bHasChildren)
+			{
+				// Copy, because a child can be changed while it is drawn
+				const std::vector<Fling::Entity> ChildList = Kids->Value;
+				for (const Fling::Entity Child : ChildList)
+				{
+					if (t_Reg.IsValid(Child))
+					{
+						DrawNode(t_Reg, Child);
+					}
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		ImGui::PopID();
+	}
+
+	void WorldOutlinePanel::Draw(Fling::EntityStorage& t_Reg)
 	{
 		if (!m_ShowWindow)
 		{
@@ -24,74 +105,52 @@ namespace Fling
 
 			if (ImGui::Button("+ Add Entity", ImVec2(ImGui::GetWindowWidth(), 0.f)))
 			{
-				m_SelectedEntity = t_Reg.create();
+				m_SelectedEntity = t_Reg.Create();
 			}
 
 			ImGui::Separator();
 
-			std::vector<entt::entity> entities;
-			t_Reg.each([&](entt::entity entity)
+			m_EntityToDestroy = Fling::Entity::Null;
+			m_PendingParent = {};
+
+			// Roots only. DrawNode draws each subtree from Children.
+			std::vector<Fling::Entity> Roots;
+			t_Reg.EachEntity([&](const Fling::Entity t_Entity)
 			{
-				entities.push_back(entity);
+				if (HierarchyUtil::GetParent(t_Reg, t_Entity).IsNull())
+				{
+					Roots.push_back(t_Entity);
+				}
 			});
-
-			entt::entity entityToDestroy = entt::null;
-			for (entt::entity entity : entities)
+			for (const Fling::Entity Root : Roots)
 			{
-				if (!t_Reg.valid(entity))
-				{
-					continue;
-				}
-
-				const bool bIsSelected = (m_SelectedEntity == entity);
-
-				String label;
-				if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.IsNone())
-				{
-					label = String(t_Reg.get<NameComponent>(entity).Name.ToView());
-				}
-				else
-				{
-					std::ostringstream os;
-					os << "Entity " << static_cast<uint64>(entity);
-					label = os.str();
-				}
-
-				ImGui::PushID(static_cast<int>(entity));
-
-				if (ImGui::Button(" - "))
-				{
-					F_LOG_TRACE("Delete {}", label);
-					entityToDestroy = entity;
-				}
-
-				ImGui::SameLine();
-
-				if (bIsSelected)
-				{
-					ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
-				}
-
-				if (ImGui::Button(label.c_str(), ImVec2(ImGui::GetWindowWidth(), 0.f)))
-				{
-					m_SelectedEntity = entity;
-				}
-
-				if (bIsSelected)
-				{
-					ImGui::PopStyleColor(1);
-				}
-
-				ImGui::PopID();
+				DrawNode(t_Reg, Root);
 			}
 
-			if (entityToDestroy != entt::null)
+			// The rest of the window is a drop target that detaches
+			ImGui::Dummy(ImGui::GetContentRegionAvail());
+			if (ImGui::BeginDragDropTarget())
 			{
-				if (m_SelectedEntity == entityToDestroy)
+				if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload("FLING_ENTITY"))
 				{
-					m_SelectedEntity = entt::null;
+					m_PendingParent = { *static_cast<const Fling::Entity*>(Payload->Data), Fling::Entity::Null };
 				}
-				t_Reg.destroy(entityToDestroy);
+				ImGui::EndDragDropTarget();
+			}
+
+			if (!m_PendingParent.first.IsNull())
+			{
+				HierarchyUtil::SetParent(t_Reg, m_PendingParent.first, m_PendingParent.second);
+			}
+
+			if (!m_EntityToDestroy.IsNull())
+			{
+				F_LOG_TRACE("Delete {} and its children", LabelOf(t_Reg, m_EntityToDestroy));
+				if (HierarchyUtil::IsAncestorOf(t_Reg, m_EntityToDestroy, m_SelectedEntity))
+				{
+					m_SelectedEntity = Fling::Entity::Null;
+				}
+				HierarchyUtil::DestroySubtree(t_Reg, m_EntityToDestroy);
 			}
 		}
 		ImGui::End();

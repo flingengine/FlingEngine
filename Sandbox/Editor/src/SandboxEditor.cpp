@@ -9,7 +9,7 @@
 
 namespace Sandbox
 {
-    void SandboxEditor::Draw(entt::registry& t_Reg, float DeltaTime)
+    void SandboxEditor::Draw(Fling::EntityStorage& t_Reg, float DeltaTime)
     {
 		Fling::BaseEditor::Draw(t_Reg, DeltaTime);
 

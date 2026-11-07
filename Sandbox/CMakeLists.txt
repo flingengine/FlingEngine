@@ -18,6 +18,9 @@ fling_set_bin_output( ${PROJECT_NAME} )
 
 target_include_directories( ${PROJECT_NAME} PRIVATE Gameplay/inc )
 
+# A schedule error fails the build (--validate-schedule after each link)
+fling_validate_schedule( ${PROJECT_NAME} )
+
 if( WITH_EDITOR_FLAG )
     target_include_directories( ${PROJECT_NAME} PRIVATE Editor/inc )
     target_link_libraries( ${PROJECT_NAME} PRIVATE Fling::EditorStack )
@@ -53,6 +56,29 @@ if( FLING_BUILD_TESTS )
         )
         set_tests_properties( "Sandbox: physics test level" PROPERTIES
             PASS_REGULAR_EXPRESSION "PhysicsTest: ball hit cube on tick"
+            TIMEOUT 120
+        )
+    endif()
+
+    # The ECS system schedule is valid, and --dump-schedule lists it and exits
+    add_test( NAME "Sandbox: system schedule"
+        COMMAND ${PROJECT_NAME} --null-render --unattended --dump-schedule
+        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+    )
+    set_tests_properties( "Sandbox: system schedule" PROPERTIES
+        PASS_REGULAR_EXPRESSION "Fling exit: code=0 ticks=0"
+    )
+
+    # The Rotator and Mover systems run headless. The checksum line at exit lets a
+    # change to gameplay code be compared with the run before it.
+    if( NOT DEFINE_SHIPPING )
+        add_test( NAME "Sandbox: systems move the lighting test"
+            COMMAND ${PROJECT_NAME} --null-render --unattended --frames 120 --seed 1
+                    --replay-input Sandbox/Tests/Input/toggle_rotate_and_lights.input.jsonl
+            WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+        )
+        set_tests_properties( "Sandbox: systems move the lighting test" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Sandbox: 754 transforms, checksum .*Fling exit: code=0 ticks=120"
             TIMEOUT 120
         )
     endif()
@@ -113,6 +139,7 @@ if( FLING_BUILD_TESTS )
         "Sandbox: headless run"
         "Sandbox: headless json logs"
         "Sandbox: bad launch argument"
+        "Sandbox: system schedule"
         "Sandbox: no Vulkan import"
         PROPERTIES TIMEOUT 120
     )

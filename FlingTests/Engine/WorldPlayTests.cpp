@@ -1,6 +1,7 @@
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
-#include "ComponentTypeRegistry.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/RegisterEngine.h"
 #include "Game.h"
 #include "Logger.h"
 #include "Strings/String.h"
@@ -18,24 +19,23 @@ namespace
     class PlayTestGame : public Fling::Game
     {
     public:
-        void Init(entt::registry&) override { Calls.push_back("Init"); }
+        void Init(Fling::EntityStorage&) override { Calls.push_back("Init"); }
 
-        void RegisterComponents() override
+        void Register(Fling::ModuleRegistration& t_Modules) override
         {
-            Fling::ComponentTypeRegistry::Get().Register<Fling::Transform>("Transform");
-            Fling::ComponentTypeRegistry::Get().Register<Fling::NameComponent>("NameComponent");
+            Fling::RegisterEngine(t_Modules);
         }
 
-        void OnStartGame(entt::registry& t_Reg) override
+        void OnStartGame(Fling::EntityStorage& t_Reg) override
         {
             Calls.push_back("OnStartGame");
             for (int i = 0; i < SpawnCount; ++i)
             {
-                t_Reg.assign<Fling::NameComponent>(t_Reg.create()).Name = Fling::Name("Spawned");
+                t_Reg.Add<Fling::NameComponent>(t_Reg.Create()).Name = Fling::Name("Spawned");
             }
         }
 
-        void Update(entt::registry&, float) override
+        void Update(Fling::EntityStorage&, float) override
         {
             ++Updates;
             if (QuitOnUpdate)
@@ -44,14 +44,14 @@ namespace
             }
         }
 
-        void OnStopGame(entt::registry& t_Reg) override
+        void OnStopGame(Fling::EntityStorage& t_Reg) override
         {
             Calls.push_back("OnStopGame");
             // The entities that play made still exist during this call
-            EntitiesAtStop = static_cast<int>(t_Reg.size<Fling::NameComponent>());
+            EntitiesAtStop = static_cast<int>(t_Reg.Count<Fling::NameComponent>());
         }
 
-        void Shutdown(entt::registry&) override { Calls.push_back("Shutdown"); }
+        void Shutdown(Fling::EntityStorage&) override { Calls.push_back("Shutdown"); }
 
         std::vector<String> Calls;
         int SpawnCount = 3;
@@ -68,18 +68,18 @@ namespace
     }
 
     /** Makes one named entity with a transform at t_X */
-    entt::entity MakeAuthoredEntity(entt::registry& t_Reg, const StringView t_Name, float t_X)
+    Fling::Entity MakeAuthoredEntity(Fling::EntityStorage& t_Reg, const StringView t_Name, float t_X)
     {
-        const entt::entity Entity = t_Reg.create();
-        t_Reg.assign<Fling::NameComponent>(Entity).Name = Fling::Name(t_Name);
-        t_Reg.assign<Fling::Transform>(Entity).SetPos(glm::vec3(t_X, 0.0f, 0.0f));
+        const Fling::Entity Entity = t_Reg.Create();
+        t_Reg.Add<Fling::NameComponent>(Entity).Name = Fling::Name(t_Name);
+        t_Reg.Add<Fling::Transform>(Entity).Position = glm::vec3(t_X, 0.0f, 0.0f);
         return Entity;
     }
 
-    int CountNamed(entt::registry& t_Reg, const StringView t_Name)
+    int CountNamed(Fling::EntityStorage& t_Reg, const StringView t_Name)
     {
         int Count = 0;
-        t_Reg.view<Fling::NameComponent>().each(
+        t_Reg.View<Fling::NameComponent>().Each(
             [&](auto, Fling::NameComponent& t_NameComp)
             {
                 if (t_NameComp.Name.ToView() == t_Name)
@@ -95,16 +95,15 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
 {
     using namespace Fling;
     InitTestLogger();
-    ComponentTypeRegistry::Get().ResetForTests();
 
-    entt::registry Reg;
     PlayTestGame TestGame;
-    World TestWorld(Reg, &TestGame);
+    World TestWorld(&TestGame);
+    Fling::EntityStorage& Reg = TestWorld.GetStorage();
     TestWorld.Init();
     REQUIRE(TestWorld.IsReadyForPlay());
 
     MakeAuthoredEntity(Reg, "Authored", 2.0f);
-    REQUIRE(Reg.size<NameComponent>() == 1);
+    REQUIRE(Reg.Count<NameComponent>() == 1);
 
     SECTION("Requests run on the next update")
     {
@@ -132,8 +131,8 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         REQUIRE(CountNamed(Reg, "Spawned") == 3);
 
         // Play changes an authored entity
-        Reg.view<NameComponent, Transform>().each([](auto, NameComponent&, Transform& t_Trans)
-                                                  { t_Trans.SetPos(glm::vec3(99.0f, 0.0f, 0.0f)); });
+        Reg.View<NameComponent, Transform>().Each([](auto, NameComponent&, Transform& t_Trans)
+                                                  { t_Trans.Position = glm::vec3(99.0f, 0.0f, 0.0f); });
 
         TestWorld.RequestGameStop();
         TestWorld.Update(0.016f);
@@ -141,8 +140,8 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         REQUIRE(TestGame.EntitiesAtStop == 4);
         REQUIRE(CountNamed(Reg, "Spawned") == 0);
         REQUIRE(CountNamed(Reg, "Authored") == 1);
-        Reg.view<NameComponent, Transform>().each([](auto, NameComponent&, Transform& t_Trans)
-                                                  { REQUIRE(t_Trans.GetPos().x == Catch::Approx(2.0f)); });
+        Reg.View<NameComponent, Transform>().Each([](auto, NameComponent&, Transform& t_Trans)
+                                                  { REQUIRE(t_Trans.Position.x == Catch::Approx(2.0f)); });
     }
 
     SECTION("Play can start and stop many times")
@@ -155,7 +154,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
 
             TestWorld.RequestGameStop();
             TestWorld.Update(0.016f);
-            REQUIRE(Reg.size<NameComponent>() == 1);
+            REQUIRE(Reg.Count<NameComponent>() == 1);
         }
 
         const std::vector<String> Expected = {
@@ -237,5 +236,4 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         REQUIRE(TestGame.Calls == Expected);
     }
 
-    ComponentTypeRegistry::Get().ResetForTests();
 }

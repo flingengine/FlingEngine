@@ -1,8 +1,10 @@
 #pragma once
 
+#include "FlingIntegers.h"
 #include "FlingMath.h"
 #include "Strings/String.h"
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -46,8 +48,19 @@ namespace Fling
 		bool GetBool(StringView key, bool def = false) const;
 		int GetInt(StringView key, int def = 0) const;
 
+		/** Whole numbers. A value that is not a whole number, or does not fit, gives def. */
+		int64 GetInt64(StringView key, int64 def = 0) const;
+		uint64 GetUInt64(StringView key, uint64 def = 0) const;
+		double GetDouble(StringView key, double def = 0.0) const;
+
+		glm::vec2 GetVec2(StringView key, const glm::vec2& def = {}) const;
 		glm::vec3 GetVec3(StringView key, const glm::vec3& def = {}) const;
 		glm::vec4 GetVec4(StringView key, const glm::vec4& def = {}) const;
+
+		/** A quaternion saved as [x, y, z, w]. */
+		glm::quat GetQuat(StringView key, const glm::quat& def = glm::quat(1.f, 0.f, 0.f, 0.f)) const;
+
+		void Set(StringView key, const glm::vec2& v);
 
 		void Set(StringView key, const glm::vec3& v);
 		void Set(StringView key, const glm::vec4& v);
@@ -57,6 +70,16 @@ namespace Fling
 		void Set(StringView key, float v);
 		void Set(StringView key, bool v);
 		void Set(StringView key, int v);
+		void SetInt64(StringView key, int64 v);
+		void SetUInt64(StringView key, uint64 v);
+		void SetDouble(StringView key, double v);
+		void SetQuat(StringView key, const glm::quat& v);
+
+		/** Remove a key from an object. Does nothing if the key is missing. */
+		void Remove(StringView key);
+
+		/** True if the key holds a string. */
+		bool IsString(StringView key) const;
 
 		bool IsNull() const;
 		bool IsObject() const;

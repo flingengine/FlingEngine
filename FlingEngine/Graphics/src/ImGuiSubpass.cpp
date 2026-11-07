@@ -27,13 +27,14 @@
 namespace Fling {
     ImGuiSubpass::ImGuiSubpass(const LogicalDevice* t_Dev,
                                const Swapchain* t_Swap,
-                               entt::registry& t_reg,
+                               Fling::EntityStorage& t_reg,
                                FlingWindow* t_Window,
                                VkRenderPass t_GlobalRenderPass,
                                std::shared_ptr<Fling::IDebugUI> t_DebugUI,
                                std::shared_ptr<Fling::Shader> t_Vert,
                                std::shared_ptr<Fling::Shader> t_Frag)
         : Subpass(t_Dev, t_Swap, t_Vert, t_Frag),
+          m_EditorStorage(&t_reg),
           m_Window(t_Window),
           m_DebugUI(t_DebugUI),
           m_GlobalRenderPass(t_GlobalRenderPass) {
@@ -76,14 +77,16 @@ namespace Fling {
     }
 
     void
-    ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) {
+    ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime) {
         InternalImGui::UpdateImGuiIO(m_Window);
 
         ImGui::NewFrame();
         InternalImGui::UpdateInputCapture();
 
+        (void)t_Snapshot;
         if (m_DebugUI) {
-            m_DebugUI->Draw(t_reg, DeltaTime);
+            // The editor is the one part of the renderer that changes the world
+            m_DebugUI->Draw(*m_EditorStorage, DeltaTime);
         }
 
         ImGui::Render();
@@ -156,7 +159,7 @@ namespace Fling {
         }
     }
 
-    void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) {
+    void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool) {
     }
 
     void ImGuiSubpass::PrepareAttachments() {
@@ -303,8 +306,7 @@ namespace Fling {
         CreateUiPipeline();
     }
 
-    void ImGuiSubpass::OnSwapchainResized(entt::registry& t_reg) {
-        (void)t_reg;
+    void ImGuiSubpass::OnSwapchainResized() {
 
         m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
         if (m_pipeLine != VK_NULL_HANDLE) {
@@ -411,7 +413,7 @@ namespace Fling {
         }
     }
 
-    void ImGuiSubpass::CleanUp(entt::registry& t_reg) {
+    void ImGuiSubpass::CleanUp() {
         // Do we need this?
     }
 

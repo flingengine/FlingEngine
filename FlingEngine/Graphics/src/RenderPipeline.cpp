@@ -3,13 +3,12 @@
 #include "GraphicsHelpers.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
-#include "MeshRenderer.h"
 #include "RenderPipeline.h"
 #include "SwapChain.h"
 
 namespace Fling
 {
-	RenderPipeline::RenderPipeline(entt::registry& t_Reg, LogicalDevice* t_Dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses)
+	RenderPipeline::RenderPipeline(LogicalDevice* t_Dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses)
 		: m_Subpasses ( std::move(t_Subpasses) )
 		, m_Device(t_Dev)
 		, m_SwapChain(t_Swap)
@@ -24,7 +23,7 @@ namespace Fling
 		F_LOG_TRACE("Render pipeline Graphics Pipelines created...");
 
 		// Build Descriptor sets -------
-		CreateDescriptors(t_Reg);
+		CreateDescriptors();
 
 		F_LOG_TRACE("Render pipeline Creation done!");
 	}
@@ -39,7 +38,7 @@ namespace Fling
 		m_Subpasses.clear();
 	}
 
-	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_Reg, float DeltaTime)
+	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -49,7 +48,7 @@ namespace Fling
 			m_Subpasses[i]->Draw(
 				t_CmdBuf, 
 				t_ActiveFrameInFlight, 
-				t_Reg,
+				t_Snapshot,
 				DeltaTime
 			);
 		}
@@ -71,23 +70,23 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::CleanUp(entt::registry& t_reg)
+	void RenderPipeline::CleanUp()
 	{
 		for (const auto& Sub : m_Subpasses)
 		{
-			Sub->CleanUp(t_reg);
+			Sub->CleanUp();
 		}
 	}
 
-	void RenderPipeline::OnSwapchainResized(entt::registry& t_reg)
+	void RenderPipeline::OnSwapchainResized()
 	{
 		for (const auto& Sub : m_Subpasses)
 		{
-			Sub->OnSwapchainResized(t_reg);
+			Sub->OnSwapchainResized();
 		}
 	}
 
-	void RenderPipeline::CreateDescriptors(entt::registry& t_Reg)
+	void RenderPipeline::CreateDescriptors()
 	{
 		// Create the descriptor pool for us to use -------
 		const uint32 SwapImageCount = static_cast<uint32>(m_SwapChain->GetImageCount());
@@ -116,7 +115,7 @@ namespace Fling
 
 		for (std::unique_ptr<Subpass>& Pass : m_Subpasses)
 		{	
-			Pass->CreateDescriptorSets(m_DescriptorPool, t_Reg);
+			Pass->CreateDescriptorSets(m_DescriptorPool);
 		}
 	}
 }

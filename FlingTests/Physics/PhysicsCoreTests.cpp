@@ -1,5 +1,8 @@
 #include "Components/Transform.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/TypeRegistry.h"
 #include "Physics.h"
+#include "PhysicsComponents.h"
 #include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
@@ -18,12 +21,12 @@ namespace
 
     constexpr float Dt = 1.0f / 60.0f;
 
-    entt::entity AddBody(entt::registry& t_Reg, ColliderShape t_Shape, const glm::vec3& t_Pos, float t_Mass)
+    Fling::Entity AddBody(Fling::EntityStorage& t_Reg, ColliderShape t_Shape, const glm::vec3& t_Pos, float t_Mass)
     {
-        const entt::entity Entity = t_Reg.create();
-        t_Reg.assign<Transform>(Entity).SetPos(t_Pos);
-        t_Reg.assign<RigidBody>(Entity).m_Mass = t_Mass;
-        t_Reg.assign<Collider>(Entity).m_Shape = t_Shape;
+        const Fling::Entity Entity = t_Reg.Create();
+        t_Reg.Add<Transform>(Entity).Position = t_Pos;
+        t_Reg.Add<RigidBody>(Entity).m_Mass = t_Mass;
+        t_Reg.Add<Collider>(Entity).m_Shape = t_Shape;
         return Entity;
     }
 
@@ -113,47 +116,47 @@ namespace
 
 TEST_CASE("Physics Tick without InitWorld does nothing", "[physics]")
 {
-    entt::registry Reg;
-    const entt::entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
+    Fling::EntityStorage Reg;
+    const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
 
     Physics::Tick(Reg, Dt);
 
-    REQUIRE_FALSE(Reg.has<PhysicsBody>(Ball));
+    REQUIRE_FALSE(Reg.Has<PhysicsBody>(Ball));
     REQUIRE(Physics::GetBodyCount(Reg) == 0);
     REQUIRE(Physics::GetProvider(Reg) == nullptr);
 }
 
 TEST_CASE("Physics InitWorld with no provider uses the null provider", "[physics]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, nullptr);
     REQUIRE(Physics::GetProvider(Reg)->GetName() == "None");
 
-    const entt::entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
+    const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
     Physics::Tick(Reg, Dt);
 
     // The body exists, but the null provider never moves it
-    REQUIRE(Reg.has<PhysicsBody>(Ball));
+    REQUIRE(Reg.Has<PhysicsBody>(Ball));
     REQUIRE(Physics::GetBodyCount(Reg) == 1);
-    REQUIRE(Reg.get<Transform>(Ball).GetPos().y == Catch::Approx(5.0f));
+    REQUIRE(Reg.Get<Transform>(Ball).Position.y == Catch::Approx(5.0f));
 
     Physics::ShutdownWorld(Reg);
-    REQUIRE_FALSE(Reg.has<PhysicsBody>(Ball));
+    REQUIRE_FALSE(Reg.Has<PhysicsBody>(Ball));
     REQUIRE(Physics::GetProvider(Reg) == nullptr);
 }
 
 TEST_CASE("Physics gives the provider a body desc from the components", "[physics]")
 {
     auto Log = std::make_shared<RecordingLog>();
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, std::make_shared<RecordingProvider>(Log));
 
-    const entt::entity Floor = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f, -1.0f, 0.0f), 0.0f);
-    Reg.get<Transform>(Floor).SetScale(glm::vec3(40.0f, 0.1f, 40.0f));
+    const Fling::Entity Floor = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f, -1.0f, 0.0f), 0.0f);
+    Reg.Get<Transform>(Floor).Scale = glm::vec3(40.0f, 0.1f, 40.0f);
 
-    const entt::entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(1.0f, 2.0f, 3.0f), 5.0f);
-    Reg.get<Transform>(Ball).SetScale(glm::vec3(2.0f, 1.0f, 1.0f));
-    Reg.get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
+    const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(1.0f, 2.0f, 3.0f), 5.0f);
+    Reg.Get<Transform>(Ball).Scale = glm::vec3(2.0f, 1.0f, 1.0f);
+    Reg.Get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
 
     Physics::Tick(Reg, Dt);
 
@@ -182,7 +185,7 @@ TEST_CASE("Physics gives the provider a body desc from the components", "[physic
 TEST_CASE("Physics runs whole fixed steps from the tick time", "[physics]")
 {
     auto Log = std::make_shared<RecordingLog>();
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, std::make_shared<RecordingProvider>(Log));
 
     // A frame shorter than a step runs no step. The time is kept.
@@ -196,34 +199,34 @@ TEST_CASE("Physics runs whole fixed steps from the tick time", "[physics]")
     REQUIRE(Log->m_Steps.size() == 4);
     for (const float Step : Log->m_Steps)
     {
-        REQUIRE(Step == Reg.ctx<PhysicsSettings>().m_FixedStep);
+        REQUIRE(Step == Reg.Singleton<PhysicsSettings>().m_FixedStep);
     }
 
     // A long stall runs at most m_MaxStepsPerTick steps, and the rest of the time is dropped
     Log->m_Steps.clear();
     Physics::Tick(Reg, 10.0f);
-    REQUIRE(Log->m_Steps.size() == static_cast<size_t>(Reg.ctx<PhysicsSettings>().m_MaxStepsPerTick));
+    REQUIRE(Log->m_Steps.size() == static_cast<size_t>(Reg.Singleton<PhysicsSettings>().m_MaxStepsPerTick));
     Log->m_Steps.clear();
     Physics::Tick(Reg, 0.0f);
     REQUIRE(Log->m_Steps.size() <= 1);
 
-    REQUIRE(Reg.ctx<PhysicsWorld>().m_StepCount >= 4 + 4);
+    REQUIRE(Reg.Singleton<PhysicsWorld>().m_StepCount >= 4 + 4);
 }
 
 TEST_CASE("Physics changes forces to impulses of force * tick time", "[physics]")
 {
     auto Log = std::make_shared<RecordingLog>();
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, std::make_shared<RecordingProvider>(Log));
 
-    const entt::entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
+    const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
     Physics::Tick(Reg, Dt);
-    const PhysicsBodyId Id = Reg.get<PhysicsBody>(Box).m_Id;
+    const PhysicsBodyId Id = Reg.Get<PhysicsBody>(Box).m_Id;
 
     // Requests made in a tick that runs no step wait for the next step
     Physics::ApplyForce(Reg, Box, glm::vec3(60.0f, 0.0f, 0.0f));
     Physics::Tick(Reg, Dt * 0.25f);
-    REQUIRE(Reg.ctx<PhysicsCommands>().m_Commands.empty());
+    REQUIRE(Reg.Singleton<PhysicsCommands>().Requests.empty());
     REQUIRE(Log->m_Commands.empty());
 
     Physics::ApplyImpulse(Reg, Box, glm::vec3(0.0f, 2.0f, 0.0f));
@@ -245,17 +248,17 @@ TEST_CASE("Physics changes forces to impulses of force * tick time", "[physics]"
 TEST_CASE("Physics sorts and merges contacts, whatever order the provider gives", "[physics]")
 {
     auto Log = std::make_shared<RecordingLog>();
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, std::make_shared<RecordingProvider>(Log));
 
-    const entt::entity A = Reg.create();
-    const entt::entity B = Reg.create();
-    const entt::entity C = Reg.create();
-    auto Contact = [](entt::entity t_A, entt::entity t_B, float t_Impulse, float t_X)
+    const Fling::Entity A = Reg.Create();
+    const Fling::Entity B = Reg.Create();
+    const Fling::Entity C = Reg.Create();
+    auto Contact = [](Fling::Entity t_A, Fling::Entity t_B, float t_Impulse, float t_X)
     {
         PhysicsContact Out;
-        Out.m_UserDataA = static_cast<uint64>(static_cast<std::underlying_type_t<entt::entity>>(t_A));
-        Out.m_UserDataB = static_cast<uint64>(static_cast<std::underlying_type_t<entt::entity>>(t_B));
+        Out.m_UserDataA = t_A.ToBits();
+        Out.m_UserDataB = t_B.ToBits();
         Out.m_Impulse = t_Impulse;
         Out.m_Point = glm::vec3(t_X, 0.0f, 0.0f);
         return Out;
@@ -272,7 +275,7 @@ TEST_CASE("Physics sorts and merges contacts, whatever order the provider gives"
     {
         Log->m_ContactsToReport = *Order;
         Physics::Tick(Reg, Dt);
-        Results.push_back(Reg.ctx<ContactEvents>().m_Contacts);
+        Results.push_back(Reg.Singleton<ContactEvents>().m_Contacts);
     }
 
     for (const std::vector<ContactEvent>& Events : Results)
@@ -293,18 +296,18 @@ TEST_CASE("Physics sorts and merges contacts, whatever order the provider gives"
 TEST_CASE("Physics removes the body of a destroyed entity", "[physics]")
 {
     auto Log = std::make_shared<RecordingLog>();
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, std::make_shared<RecordingProvider>(Log));
 
-    const entt::entity A = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
-    const entt::entity B = AddBody(Reg, ColliderShape::Sphere, glm::vec3(3.0f, 0.0f, 0.0f), 1.0f);
+    const Fling::Entity A = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
+    const Fling::Entity B = AddBody(Reg, ColliderShape::Sphere, glm::vec3(3.0f, 0.0f, 0.0f), 1.0f);
     Physics::Tick(Reg, Dt);
     REQUIRE(Physics::GetBodyCount(Reg) == 2);
-    const PhysicsBodyId IdA = Reg.get<PhysicsBody>(A).m_Id;
+    const PhysicsBodyId IdA = Reg.Get<PhysicsBody>(A).m_Id;
 
     // A request for a destroyed entity is dropped
     Physics::ApplyImpulse(Reg, A, glm::vec3(1.0f));
-    Reg.destroy(A);
+    Reg.Destroy(A);
     Physics::Tick(Reg, Dt);
     REQUIRE(Physics::GetBodyCount(Reg) == 1);
     REQUIRE(Log->m_Destroyed.size() == 1);
@@ -312,16 +315,16 @@ TEST_CASE("Physics removes the body of a destroyed entity", "[physics]")
     REQUIRE(Log->m_Commands.empty());
 
     // Losing the Collider also removes the body
-    Reg.remove<Collider>(B);
+    Reg.Remove<Collider>(B);
     Physics::Tick(Reg, Dt);
     REQUIRE(Physics::GetBodyCount(Reg) == 0);
-    REQUIRE_FALSE(Reg.has<PhysicsBody>(B));
+    REQUIRE_FALSE(Reg.Has<PhysicsBody>(B));
 
     // reset() (a level load) removes every body
     AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
     Physics::Tick(Reg, Dt);
     REQUIRE(Physics::GetBodyCount(Reg) == 1);
-    Reg.reset();
+    Reg.Clear();
     Physics::Tick(Reg, Dt);
     REQUIRE(Physics::GetBodyCount(Reg) == 0);
 }
@@ -336,23 +339,27 @@ TEST_CASE("Physics components round trip through JSON", "[physics]")
     Col.m_Shape = ColliderShape::Sphere;
     Col.m_Radius = 0.75f;
 
+    SystemRegistry Systems;
+    ModuleRegistration Modules(Systems);
+    RegisterPhysics(Modules);
+    const TypeRegistry Types = TypeRegistry::Build(Modules);
+    const TypeDesc* BodyType = Types.Find<RigidBody>();
+    const TypeDesc* ColType = Types.Find<Collider>();
+    REQUIRE(BodyType != nullptr);
+    REQUIRE(ColType != nullptr);
+
     Json BodyJson = Json::Object();
     Json ColJson = Json::Object();
-    {
-        JsonArchive BodyAr(BodyJson, JsonArchive::Mode::Saving);
-        Body.Serialize(BodyAr);
-        JsonArchive ColAr(ColJson, JsonArchive::Mode::Saving);
-        Col.Serialize(ColAr);
-    }
+    SaveObject(*BodyType, &Body, BodyJson, {});
+    SaveObject(*ColType, &Col, ColJson, {});
+
+    // The shape saves by name, as levels have always written it
+    REQUIRE(ColJson.GetString("shape") == "sphere");
 
     RigidBody LoadedBody;
     Collider LoadedCol;
-    {
-        JsonArchive BodyAr(BodyJson, JsonArchive::Mode::Loading);
-        LoadedBody.Serialize(BodyAr);
-        JsonArchive ColAr(ColJson, JsonArchive::Mode::Loading);
-        LoadedCol.Serialize(ColAr);
-    }
+    LoadObject(*BodyType, &LoadedBody, BodyJson, {});
+    LoadObject(*ColType, &LoadedCol, ColJson, {});
 
     REQUIRE(LoadedBody.m_Mass == Catch::Approx(5.0f));
     REQUIRE(LoadedBody.m_Velocity.x == Catch::Approx(6.0f));

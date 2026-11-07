@@ -1,6 +1,6 @@
 #pragma once
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Fling
 {
@@ -13,7 +13,7 @@ namespace Fling
 		virtual ~FlingEditorPanel() = default;
 
 		/** Draws this panel's ImGui window. Call once per frame. */
-		virtual void Draw(entt::registry& t_Reg) = 0;
+		virtual void Draw(Fling::EntityStorage& t_Reg) = 0;
 
 		void Show() { m_ShowWindow = true; }
 		void Hide() { m_ShowWindow = false; }

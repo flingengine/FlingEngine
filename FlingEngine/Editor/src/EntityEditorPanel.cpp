@@ -1,10 +1,13 @@
 #include "Components/Name.hpp"
-#include "ComponentTypeRegistry.h"
-#include "EditableComponent.h"
+#include "EditorWidgets.h"
 #include "EntityEditorPanel.h"
+#include "Strings/String.h"
+#include "World.h"
 #include "FlingTypes.h"
 
+#include <algorithm>
 #include <cstring>
+#include <string>
 #include <imgui.h>
 #include <vector>
 
@@ -14,20 +17,20 @@ namespace Fling
 	{
 		// NameComponent gets a dedicated rename field up top instead of showing up in
 		// the generic component list, so it isn't offered twice.
-		bool IsNameComponent(const ComponentTypeInfo& info)
+		bool IsNameComponent(const TypeDesc& t_Type)
 		{
-			return info.TypeName == "NameComponent"_name;
+			return t_Type.Name == NameComponent::Component.Name;
 		}
 	}
 
-	void EntityEditorPanel::Draw(entt::registry& t_Reg)
+	void EntityEditorPanel::Draw(Fling::EntityStorage& t_Reg)
 	{
 		if (!m_ShowWindow)
 		{
 			return;
 		}
 
-		const entt::entity t_Entity = m_TargetEntity;
+		const Fling::Entity t_Entity = m_TargetEntity;
 
 		if (ImGui::Begin("Entity Editor", &m_ShowWindow))
 		{
@@ -37,9 +40,9 @@ namespace Fling
 			ImGui::TextUnformatted("editing:");
 			ImGui::SameLine();
 
-			if (t_Entity != entt::null && t_Reg.valid(t_Entity))
+			if (t_Entity != Fling::Entity::Null && t_Reg.IsValid(t_Entity))
 			{
-				ImGui::Text("id: %u, v: %u", static_cast<uint32>(t_Reg.entity(t_Entity)), static_cast<uint32>(t_Reg.version(t_Entity)));
+				ImGui::Text("id: %u, v: %u", t_Entity.Index, t_Entity.Generation);
 			}
 			else
 			{
@@ -54,11 +57,11 @@ namespace Fling
 			// every partial text ("P", "Pl", ...) to the name table, which keeps them all.
 			{
 				static char NameBuf[128] = {};
-				static entt::entity BufferEntity = entt::null;
+				static Fling::Entity BufferEntity = Fling::Entity::Null;
 				static bool bEditing = false;
 				if (!bEditing || BufferEntity != t_Entity)
 				{
-					const StringView CurrentName = t_Reg.has<NameComponent>(t_Entity) ? t_Reg.get<NameComponent>(t_Entity).Name.ToView() : StringView();
+					const StringView CurrentName = t_Reg.Has<NameComponent>(t_Entity) ? t_Reg.Get<NameComponent>(t_Entity).Name.ToView() : StringView();
 					const size_t Length = std::min(CurrentName.size(), sizeof(NameBuf) - 1);
 					std::memcpy(NameBuf, CurrentName.data(), Length);
 					NameBuf[Length] = '\0';
@@ -69,58 +72,60 @@ namespace Fling
 				bEditing = ImGui::IsItemActive();
 				if (ImGui::IsItemDeactivatedAfterEdit())
 				{
-					if (!t_Reg.has<NameComponent>(t_Entity))
+					if (!t_Reg.Has<NameComponent>(t_Entity))
 					{
-						t_Reg.assign<NameComponent>(t_Entity);
+						t_Reg.Add<NameComponent>(t_Entity);
 					}
-					t_Reg.get<NameComponent>(t_Entity).Name = Name(StringView(NameBuf));
+					t_Reg.Get<NameComponent>(t_Entity).Name = Name(StringView(NameBuf));
 				}
 			}
 
 			ImGui::Separator();
 
-			const std::vector<ComponentTypeInfo>& types = ComponentTypeRegistry::Get().All();
-
-			std::vector<const ComponentTypeInfo*> missing;
-			for (const ComponentTypeInfo& info : types)
+			if (!m_World || !m_Widgets)
 			{
-				if (IsNameComponent(info))
+				ImGui::TextDisabled("no world");
+				ImGui::End();
+				return;
+			}
+
+			std::vector<const TypeDesc*> missing;
+			for (const TypeDesc& type : m_World->GetTypes().All())
+			{
+				// Singletons and queues belong to the world, not to an entity
+				if (IsNameComponent(type) || type.IsSingleton())
 				{
 					continue;
 				}
 
-				if (!info.has || !info.has(t_Reg, t_Entity))
+				if (!type.Has || !type.Has(t_Reg, t_Entity))
 				{
-					missing.push_back(&info);
+					// Transient types are runtime data that systems add, not something to author
+					if (!type.Transient)
+					{
+						missing.push_back(&type);
+					}
 					continue;
 				}
 
-				ImGui::PushID(info.name);
+				ImGui::PushID(type.Name.c_str());
 
-				if (info.destroy)
+				if (type.Remove)
 				{
 					if (ImGui::Button("-"))
 					{
-						info.destroy(t_Reg, t_Entity);
+						type.Remove(t_Reg, t_Entity);
 						ImGui::PopID();
 						continue;	// Early out to avoid touching the just-removed component
 					}
 					ImGui::SameLine();
 				}
 
-				if (ImGui::CollapsingHeader(info.name))
+				const String Header = type.Transient ? type.Name + " (transient)" : type.Name;
+				if (ImGui::CollapsingHeader(Header.c_str()))
 				{
 					ImGui::Indent(30.f);
-
-					if (info.drawEditorWidget)
-					{
-						info.drawEditorWidget(t_Reg, t_Entity);
-					}
-					else
-					{
-						ImGui::TextDisabled("missing widget to display component!");
-					}
-
+					m_Widgets->Draw(type, t_Reg, t_Entity);
 					ImGui::Unindent(30.f);
 				}
 
@@ -139,21 +144,27 @@ namespace Fling
 					ImGui::TextUnformatted("available:");
 					ImGui::Separator();
 
-					for (const ComponentTypeInfo* info : missing)
+					// Grouped by category, in name order inside each group
+					std::sort(missing.begin(), missing.end(), [](const TypeDesc* a, const TypeDesc* b)
 					{
-						if (info->create && ImGui::Selectable(info->name))
+						return a->Category != b->Category ? a->Category < b->Category : a->Name < b->Name;
+					});
+					String currentCategory = "\x01";
+					for (const TypeDesc* type : missing)
+					{
+						if (type->Category != currentCategory)
 						{
-							info->create(t_Reg, t_Entity);
+							currentCategory = type->Category;
+							ImGui::TextDisabled("%s", currentCategory.empty() ? "Other" : currentCategory.c_str());
+						}
+						if (type->Emplace && ImGui::Selectable(type->Name.c_str()))
+						{
+							type->Emplace(t_Reg, t_Entity, nullptr);
 						}
 					}
 
 					ImGui::EndPopup();
 				}
-			}
-
-			if (!t_Reg.has<EditableComponent>(t_Entity))
-			{
-				t_Reg.assign<EditableComponent>(t_Entity);
 			}
 		}
 		ImGui::End();

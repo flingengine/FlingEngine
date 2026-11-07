@@ -1,10 +1,12 @@
 #pragma once
 
+#include "Ecs/Component.h"
+#include "Ecs/Entity.h"
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "PhysicsProvider.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <memory>
 #include <vector>
 
@@ -16,12 +18,17 @@ namespace Fling
      */
     struct PhysicsBody
     {
+        static constexpr ComponentInfo Component{.Name = "PhysicsBody", .Transient = true};
+
         PhysicsBodyId m_Id;
     };
 
     /** Singleton component: settings for the physics step. */
     struct PhysicsSettings
     {
+        static constexpr ComponentInfo Component{
+            .Name = "PhysicsSettings", .Kind = ComponentKind::Singleton, .Transient = true};
+
         glm::vec3 m_Gravity{0.0f, -9.81f, 0.0f};
 
         /** The length of one physics step, in seconds. Every step has this length. */
@@ -54,26 +61,30 @@ namespace Fling
 
     struct PhysicsCommand
     {
-        entt::entity m_Entity = entt::null;
+        Entity m_Entity;
         PhysicsCommandType m_Type = PhysicsCommandType::Force;
         glm::vec3 m_Value{0.0f, 0.0f, 0.0f};
     };
 
     /**
-     * Singleton component: a queue of requests to change bodies. Gameplay adds to
-     * it with Physics::ApplyForce and the other request functions. Physics::Tick
-     * applies the requests at the next fixed step, then clears the queue.
+     * Queue component: requests to change bodies. A system appends to it with
+     * Append<PhysicsCommands> and ctx.Queue<PhysicsCommands>().Push(...). Code that
+     * is not a system uses Physics::ApplyForce and the other request functions.
+     * Physics::Tick applies the requests at the next fixed step, then clears the queue.
      */
     struct PhysicsCommands
     {
-        std::vector<PhysicsCommand> m_Commands;
+        static constexpr ComponentInfo Component{
+            .Name = "PhysicsCommands", .Kind = ComponentKind::Queue, .Transient = true};
+
+        std::vector<PhysicsCommand> Requests;
     };
 
     /** Two bodies that touched during the last Physics::Tick. */
     struct ContactEvent
     {
-        entt::entity m_A = entt::null;
-        entt::entity m_B = entt::null;
+        Entity m_A;
+        Entity m_B;
 
         /** A world position where the bodies touch. */
         glm::vec3 m_Point{0.0f, 0.0f, 0.0f};
@@ -89,13 +100,16 @@ namespace Fling
      */
     struct ContactEvents
     {
+        static constexpr ComponentInfo Component{
+            .Name = "ContactEvents", .Kind = ComponentKind::Singleton, .Transient = true};
+
         std::vector<ContactEvent> m_Contacts;
     };
 
     /** An entity that has a body in the physics scene. */
     struct PhysicsTrackedBody
     {
-        entt::entity m_Entity = entt::null;
+        Fling::Entity m_Entity = Fling::Entity::Null;
         PhysicsBodyId m_Id;
     };
 
@@ -114,6 +128,9 @@ namespace Fling
      */
     struct PhysicsWorld
     {
+        static constexpr ComponentInfo Component{
+            .Name = "PhysicsWorld", .Kind = ComponentKind::Singleton, .Transient = true};
+
         std::shared_ptr<PhysicsProvider> m_Provider;
         std::unique_ptr<PhysicsScene> m_Scene;
 

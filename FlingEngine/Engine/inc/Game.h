@@ -2,7 +2,7 @@
 
 #include "Platform.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <memory>
 
 //#include "World.h" 
@@ -13,6 +13,8 @@ namespace Fling
 
 	// Declared in the Physics module (PhysicsProvider.h). Engine only passes it on.
 	class PhysicsProvider;
+
+	class ModuleRegistration;
 
 	/**
 	 * The game class is mean to be overridden on a per-game instance.
@@ -36,13 +38,15 @@ namespace Fling
 		* Initialization of a Game called by the world. This is a good place to bind
 		* any game input callbacks, or to Load any Lua scripts that need a "Start" method
 		*/
-		virtual void Init(entt::registry& t_Reg) = 0;
+		virtual void Init(Fling::EntityStorage& t_Reg) = 0;
 
 		/**
-		 * Register game-specific serializable components. Called from World::Init
-		 * before Seal() and before the StartLevel is loaded.
+		 * Add the game's component types and systems. Called from World::Init after the
+		 * engine modules have registered, before the type registry and the schedule are
+		 * built, and before the StartLevel loads. Keep it one line per feature, in one
+		 * register file.
 		 */
-		virtual void RegisterComponents() {}
+		virtual void Register(ModuleRegistration& t_Modules) { (void)t_Modules; }
 
         /**
          * Return the physics provider that this game uses, for example a provider
@@ -58,12 +62,17 @@ namespace Fling
          * In the editor, play can start and stop many times in one run, so reset all
          * per-play state here or in OnStopGame.
          */
-        virtual void OnStartGame(entt::registry& t_Reg) = 0;
+        virtual void OnStartGame(Fling::EntityStorage& t_Reg) = 0;
 
 		/**
-		* Update is called every frame. Call any system updates for your gameplay systems inside of here
-		*/
-		virtual void Update(entt::registry& t_Reg, float DeltaTime) = 0;
+		 * Called once per frame during play, after the fixed system ticks. Optional and
+		 * legacy: put gameplay in systems (Register) instead.
+		 */
+		virtual void Update(Fling::EntityStorage& t_Reg, float DeltaTime)
+		{
+			(void)t_Reg;
+			(void)DeltaTime;
+		}
 
         /**
          * Called by the World when play stops, before the World resets its entities.
@@ -74,13 +83,13 @@ namespace Fling
          * The World also calls this at shutdown if the game is playing. It then does not
          * reset the entities.
          */
-        virtual void OnStopGame(entt::registry& t_Reg) = 0;
+        virtual void OnStopGame(Fling::EntityStorage& t_Reg) = 0;
 
 		/** 
 		* Called by the world when the entire application is shutting down. Good spot to do 
 		* cleanup of any persistent data that you may have had throughout the game lifetime. 
 		*/
-		virtual void Shutdown(entt::registry& t_Reg) = 0;
+		virtual void Shutdown(Fling::EntityStorage& t_Reg) = 0;
 
 		/**
 		 * Gets the owning world of this game. You can use the world to add entities to

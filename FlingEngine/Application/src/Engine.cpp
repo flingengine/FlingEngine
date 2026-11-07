@@ -1,5 +1,5 @@
-#include "ComponentTypeRegistry.h"
 #include "DefaultPhysicsProvider.h"
+#include "Ecs/RegisterEngine.h"
 #include "Engine.h"
 #include "File.h"
 #include "FlingConfig.h"
@@ -7,12 +7,13 @@
 #include "FlingWindow.h"
 #include "Input/GlfwInput.h"
 #include "Input/Input.h"
+#include "Input/TickInput.h"
 #include "Localization.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CrashHandler.h"
 #include "Physics.h"
 #include "Random.h"
-#include "RegisterGraphicsComponents.h"
+#include "RegisterGraphics.h"
 #include "Strings/String.h"
 #include "Threading/Thread.h"
 #include "VulkanApp.h"
@@ -246,6 +247,12 @@ namespace Fling
 		}
 #endif
 
+		// The world owns the entity storage. The renderer and physics keep a reference
+		// to it, so make the world first, and destroy it after them.
+		m_World = new World(m_GameImpl);
+		m_GameImpl->m_OwningWorld = m_World;
+		EntityStorage& Storage = m_World->GetStorage();
+
 		if (m_Options.NullRender)
 		{
 			// No window, no swapchain, and no GPU device. Graphics resources keep their
@@ -258,14 +265,16 @@ namespace Fling
 		{
 			VulkanApp::Get().Init(
 				static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP | PipelineFlags::IMGUI),
-				g_Registry,
+				Storage,
 				m_DebugUI
 			);
 		}
 
-		RegisterEngineComponents();
-		RegisterGraphicsComponents();
-		RegisterPhysicsComponents();
+		// Each linked module adds its component types and systems. World::Init adds the
+		// game's, then builds the type registry and the schedule.
+		RegisterEngine(m_World->GetModules());
+		RegisterGraphics(m_World->GetModules());
+		RegisterPhysics(m_World->GetModules());
 
 		// The game can bring its own physics provider. If it does not, use the one
 		// that this build compiled (FLING_PHYSICS_PROVIDER).
@@ -283,16 +292,27 @@ namespace Fling
 			PhysicsProviderToUse->GetName(), InitialPhysicsSettings.m_WorkerThreadCount);
 
 		// The physics scene is in the registry context, so a level load (registry.reset) keeps it
-		Physics::InitWorld(g_Registry, PhysicsProviderToUse, InitialPhysicsSettings);
+		Physics::InitWorld(Storage, PhysicsProviderToUse, InitialPhysicsSettings);
 
-		m_World = new World(g_Registry, m_GameImpl);
-		m_GameImpl->m_OwningWorld = m_World;
+		// A --null-render run has no real frame time, so it runs one fixed tick per frame.
+		SystemRunnerConfig RunnerConfig;
+		RunnerConfig.OneTickPerFrame = m_Options.NullRender;
+		m_World->SetSystemRunnerConfig(RunnerConfig);
+
+		// Each fixed tick takes the input messages that no earlier tick took, with its own
+		// cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.
+		auto TickInputs = std::make_shared<TickInputBuilder>(Input::Get().GetHandler());
+		m_World->SetTickInputSource([TickInputs](TickInput& t_Out)
+		{
+			const Input& GameInput = Input::Get();
+			TickInputs->Build(t_Out, GameInput.IsKeyboardCaptured(), GameInput.IsMouseCaptured());
+		});
 
 		// Before World::Init() seals the component type registry, so developer UI
 		// (the editor) can still attach to component types
 		if (m_DebugUI)
 		{
-			m_DebugUI->Init(g_Registry, m_World, m_GameImpl);
+			m_DebugUI->Init(Storage, m_World, m_GameImpl);
 			F_LOG_TRACE("Fling debug UI: Enabled");
 		}
 		else
@@ -311,14 +331,35 @@ namespace Fling
 		return ExitCode::Success;
 	}
 
-	void Engine::Tick()
+	ExitCode Engine::Tick()
 	{
 		assert(m_World && m_GameImpl);		// We HAVE to have a world and a game
 
 		Timing& Timing = Timing::Get();
 
 		// Once the world is initialized it allows the users to add their own components!
-		m_World->Init(m_Options.Level);
+		// A schedule with errors stops here: World::Init logged each error.
+		const bool bWorldReady = m_World->Init(m_Options.Level);
+
+		if (m_Options.DumpSchedule || m_Options.ValidateSchedule)
+		{
+			if (m_Options.DumpSchedule && m_World->GetSchedule())
+			{
+				std::fputs(m_World->GetSchedule()->Dump().c_str(), stdout);
+			}
+			if (!bWorldReady)
+			{
+				std::fputs(m_World->GetScheduleErrors().c_str(), stderr);
+			}
+			std::fflush(stdout);
+			F_LOG_TRACE("System schedule {} (--dump-schedule / --validate-schedule)", bWorldReady ? "is valid" : "has errors");
+			return bWorldReady ? ExitCode::Success : ExitCode::Failure;
+		}
+
+		if (!bWorldReady)
+		{
+			return ExitCode::Failure;
+		}
 
         // The developer UI starts the game with its "Play" button. With no developer
         // UI (a game build, or --null-render), the game starts on the first tick.
@@ -366,15 +407,24 @@ namespace Fling
 			// World update will handle the starting, updating, and stopping of game logic
 			m_World->Update(DeltaTime);
 
-			// Physics runs after the game, with the same delta. Forces that the game
-			// requested this tick are applied in this step.
-			if (m_World->IsPlaying())
-			{
-				Physics::Tick(g_Registry, DeltaTime);
-			}
+			// Physics runs inside each fixed tick now: the Physics.Step system, in the
+			// ResolveDeferred phase, after every system that requests a force.
 			++m_TicksRun;
 
 			Input::Get().EndTick();
+
+			// Requests from systems that only the application can carry out
+			for (const AppRequest Request : m_World->TakeAppRequests())
+			{
+				if (Request == AppRequest::ToggleCursor && !m_Options.NullRender)
+				{
+					FlingWindow* Window = VulkanApp::Get().GetCurrentWindow();
+					if (Window)
+					{
+						Window->SetMouseVisible(!Window->GetMouseVisible());
+					}
+				}
+			}
 
 			if(m_World->ShouldQuit())
 			{
@@ -384,7 +434,7 @@ namespace Fling
 
 			if (!m_Options.NullRender)
 			{
-				VulkanApp::Get().Update(DeltaTime, g_Registry);
+				VulkanApp::Get().Update(DeltaTime, m_World->GetStorage());
 
 				const bool bFocused = VulkanApp::Get().GetCurrentWindow()->IsFocused();
 				if (bFocused == m_FramesCapped)
@@ -410,6 +460,7 @@ namespace Fling
 
 			Timing.UpdateFps();
 		}
+		return ExitCode::Success;
 	}
 
 	bool Engine::ShouldTick() const
@@ -438,9 +489,6 @@ namespace Fling
 
     	delete m_GameImpl;
     	m_GameImpl = nullptr;
-
-    	delete m_World;
-    	m_World = nullptr;
 
 		// Cleanup any resources
 		if (m_SystemsStarted)
@@ -476,14 +524,19 @@ namespace Fling
 			FlingConfig::Get().Shutdown();
 			Timing::Get().Shutdown();
 
-			if (!m_Options.NullRender)
+			if (!m_Options.NullRender && m_World)
 			{
-				VulkanApp::Get().Shutdown(g_Registry);
+				VulkanApp::Get().ShutdownRenderer();
 			}
 		}
 
-		Physics::ShutdownWorld(g_Registry);
-		g_Registry.reset();
+		if (m_World)
+		{
+			Physics::ShutdownWorld(m_World->GetStorage());
+			m_World->GetStorage().Clear();
+			delete m_World;
+			m_World = nullptr;
+		}
 
 		PrintExitSummary(t_Code);
 

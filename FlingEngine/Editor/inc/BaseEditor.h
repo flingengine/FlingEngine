@@ -1,13 +1,15 @@
 #pragma once
 
+#include "EditorWidgets.h"
 #include "EntityEditorPanel.h"
 #include "IDebugUI.h"
 #include "InputDevicesPanel.h"
 #include "Strings/String.h"
 #include "WorldOutlinePanel.h"
+#include "WorldSingletonsPanel.h"
 
 #include <array>
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <imgui.h>
 
 namespace Fling
@@ -21,16 +23,19 @@ namespace Fling
         BaseEditor() = default;
         virtual ~BaseEditor() = default;
 
-        /** Keeps the world and game, then calls RegisterComponents(). */
-        void Init(entt::registry& t_Reg, World* t_World, Game* t_Game) override;
+        /** Keeps the world and game, then calls RegisterWidgets(). */
+        void Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game) override;
 
-		/** Register  */
-		virtual void RegisterComponents(entt::registry& t_Reg);
+        /**
+         * Add editor widget overrides for components that the generated inspector cannot
+         * edit well. Call the base version from an override, to keep the engine's.
+         */
+        virtual void RegisterWidgets(EditorWidgets& t_Widgets);
 
         /**
          * Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
          */
-        void Draw(entt::registry& t_Reg, float DeltaTime) override;
+        void Draw(Fling::EntityStorage& t_Reg, float DeltaTime) override;
 
         // #TODO: Init and shutdown functions
 
@@ -53,11 +58,17 @@ namespace Fling
 		/** Lists entities in the world and tracks which one is selected */
 		WorldOutlinePanel m_WorldOutline;
 
+		/** How each component type is drawn in the entity editor */
+		EditorWidgets m_Widgets;
+
 		/** Inspects the entity currently selected in m_WorldOutline */
 		EntityEditorPanel m_EntityEditor;
 
 		/** Lists input interfaces and devices, and changes the input log level */
 		InputDevicesPanel m_InputDevices;
+
+		/** Singleton components and the system schedule */
+		WorldSingletonsPanel m_WorldSingletons;
 
 		virtual void DrawFileMenu();
 
@@ -68,10 +79,10 @@ namespace Fling
 
         void DrawCameraOptions();
 
-        void DrawWorldOutline(entt::registry& t_Reg);
+        void DrawWorldOutline(Fling::EntityStorage& t_Reg);
 
         /** assumes that m_DisplayComponentEditor is true */
-		void DrawEntityEditor(entt::registry& t_Reg);
+		void DrawEntityEditor(Fling::EntityStorage& t_Reg);
 
 		void DrawWindowOptions();
 

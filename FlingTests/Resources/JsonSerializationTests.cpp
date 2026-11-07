@@ -1,5 +1,4 @@
 #include "Json.h"
-#include "JsonArchive.h"
 #include "Logger.h"
 #include "Strings/String.h"
 
@@ -90,69 +89,36 @@ TEST_CASE("Fling::Json parse dump Get Set", "[json]") {
     }
 }
 
-TEST_CASE("JsonArchive save and load round-trip", "[json]") {
-    using namespace Fling;
-    InitLogger();
+TEST_CASE("Fling::Json wide numbers, vec2, quat, and Remove", "[json]") {
+    using Fling::Json;
 
-    struct Sample {
-        float Speed = 0.f;
-        int Count = 0;
-        bool Flag = false;
-        String Name;
-        glm::vec3 Pos{};
-        glm::vec4 Color{};
+    Json doc = Json::Object();
+    doc.SetUInt64("big", 0xFEDCBA9876543210ull);
+    doc.SetInt64("negative", -5000000000ll);
+    doc.SetDouble("precise", 0.1);
+    doc.Set("uv", glm::vec2(0.25f, 0.75f));
+    doc.SetQuat("spin", glm::quat(0.5f, 0.1f, 0.2f, 0.3f));
+    doc.Set("text", "hello");
 
-        void Serialize(JsonArchive& Ar) {
-            Ar << MakeNVP("Speed", Speed);
-            Ar << MakeNVP("Count", Count);
-            Ar << MakeNVP("Flag", Flag);
-            Ar << MakeNVP("Name", Name);
-            Ar << MakeNVP("Pos", Pos);
-            Ar << MakeNVP("Color", Color);
-        }
-    };
+    // A round trip through text keeps every value
+    const Json parsed = Json::Parse(doc.Dump());
+    REQUIRE(parsed.GetUInt64("big") == 0xFEDCBA9876543210ull);
+    REQUIRE(parsed.GetInt64("negative") == -5000000000ll);
+    REQUIRE(parsed.GetDouble("precise") == 0.1);
+    REQUIRE(parsed.GetVec2("uv") == glm::vec2(0.25f, 0.75f));
+    const glm::quat spin = parsed.GetQuat("spin");
+    REQUIRE(spin.w == Catch::Approx(0.5f));
+    REQUIRE(spin.x == Catch::Approx(0.1f));
+    REQUIRE(spin.z == Catch::Approx(0.3f));
+    REQUIRE(parsed.IsString("text"));
+    REQUIRE_FALSE(parsed.IsString("big"));
 
-    SECTION("Round-trip") {
-        Sample src;
-        src.Speed = 3.5f;
-        src.Count = 7;
-        src.Flag = true;
-        src.Name = "hello";
-        src.Pos = glm::vec3(1.f, 2.f, 3.f);
-        src.Color = glm::vec4(0.1f, 0.2f, 0.3f, 0.4f);
+    // A value of the wrong sign or type gives the default
+    REQUIRE(parsed.GetUInt64("negative", 7) == 7);
+    REQUIRE(parsed.GetInt64("big", 7) == 7);
+    REQUIRE(parsed.GetInt64("text", 7) == 7);
 
-        Json doc = Json::Object();
-        {
-            JsonArchive ar(doc, JsonArchive::Mode::Saving);
-            src.Serialize(ar);
-        }
-
-        Sample dst;
-        {
-            JsonArchive ar(doc, JsonArchive::Mode::Loading);
-            dst.Serialize(ar);
-        }
-
-        REQUIRE(dst.Speed == Catch::Approx(3.5f));
-        REQUIRE(dst.Count == 7);
-        REQUIRE(dst.Flag == true);
-        REQUIRE(dst.Name == "hello");
-        REQUIRE(dst.Pos.x == Catch::Approx(1.f));
-        REQUIRE(dst.Pos.y == Catch::Approx(2.f));
-        REQUIRE(dst.Pos.z == Catch::Approx(3.f));
-        REQUIRE(dst.Color.w == Catch::Approx(0.4f));
-    }
-
-    SECTION("Missing keys leave member defaults") {
-        Json empty = Json::Object();
-        Sample dst;
-        dst.Speed = 99.f;
-        dst.Name = "keep";
-
-        JsonArchive ar(empty, JsonArchive::Mode::Loading);
-        dst.Serialize(ar);
-
-        REQUIRE(dst.Speed == Catch::Approx(99.f));
-        REQUIRE(dst.Name == "keep");
-    }
+    doc.Remove("text");
+    doc.Remove("not there");
+    REQUIRE_FALSE(doc.Contains("text"));
 }

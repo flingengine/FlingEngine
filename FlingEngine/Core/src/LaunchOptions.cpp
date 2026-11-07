@@ -18,6 +18,8 @@ namespace Fling
         constexpr StringView LogInputFlag = "log-input";
         constexpr StringView ReplayInputFlag = "replay-input";
         constexpr StringView RecordInputFlag = "record-input";
+        constexpr StringView DumpScheduleFlag = "dump-schedule";
+        constexpr StringView ValidateScheduleFlag = "validate-schedule";
         constexpr StringView LanguageFlag = "language";
         constexpr StringView LocExportFlag = "loc-export";
         constexpr StringView LocImportFlag = "loc-import";
@@ -112,6 +114,12 @@ namespace Fling
         }
 
         if (!ReadBool(t_CmdLine, UnattendedFlag, t_Out.Unattended, t_OutError))
+        {
+            return false;
+        }
+
+        if (!ReadBool(t_CmdLine, DumpScheduleFlag, t_Out.DumpSchedule, t_OutError) ||
+            !ReadBool(t_CmdLine, ValidateScheduleFlag, t_Out.ValidateSchedule, t_OutError))
         {
             return false;
         }

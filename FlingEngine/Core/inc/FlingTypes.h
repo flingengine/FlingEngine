@@ -3,7 +3,6 @@
 #include "FlingIntegers.h"
 
 #include <cstdint>
-#include <entt/entity/helper.hpp>
 #include <limits>
 #include <stdexcept>
 

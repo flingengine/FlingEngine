@@ -2,7 +2,7 @@
 
 namespace Sandbox
 {
-    void SandboxUI::NewFrame(entt::registry& t_Reg)
+    void SandboxUI::NewFrame(Fling::EntityStorage& t_Reg)
     {
         // Draw IMGui elements here
     }
