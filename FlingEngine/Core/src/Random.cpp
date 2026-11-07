@@ -4,14 +4,14 @@
 
 namespace Fling
 {
+	uint32 Random::MakeEntropySeed()
+	{
+		std::random_device SeedSource;
+		return SeedSource();
+	}
+
 	namespace
 	{
-		uint32 GenerateEntropySeed()
-		{
-			std::random_device seedSource;
-			return seedSource();
-		}
-
 		int Random0ToNImpl(std::mt19937& t_Engine, const int t_max)
 		{
 			assert(t_max > 0);
@@ -50,7 +50,7 @@ namespace Fling
 	}	// namespace
 
 	RandomStream::RandomStream()
-		: m_Engine(GenerateEntropySeed())
+		: m_Engine(Random::MakeEntropySeed())
 	{
 	}
 
@@ -61,7 +61,7 @@ namespace Fling
 
 	void RandomStream::Reseed()
 	{
-		m_Engine.seed(GenerateEntropySeed());
+		m_Engine.seed(Random::MakeEntropySeed());
 	}
 
 	void RandomStream::Reseed(uint32 t_Seed)
@@ -96,7 +96,7 @@ namespace Fling
 	{
 		// Seed once from a real entropy source; every call afterwards just
 		// advances the mt19937 state, which is cheap (no per-call syscalls).
-		return Init(GenerateEntropySeed());
+		return Init(Random::MakeEntropySeed());
 	}
 
 	bool Random::Init(uint32 t_Seed)

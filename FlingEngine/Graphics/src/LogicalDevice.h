@@ -3,7 +3,6 @@
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
 
-#include <vector>
 
 namespace Fling
 {

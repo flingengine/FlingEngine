@@ -6,7 +6,6 @@
 
 #include <atomic>
 #include <catch2/catch_all.hpp>
-#include <cstdint>
 #include <cstdio>
 #include <set>
 #include <thread>

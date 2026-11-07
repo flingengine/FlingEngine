@@ -18,12 +18,10 @@
 #include "VulkanApp.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-#include <random>
 #include <thread>
 
 namespace Fling
@@ -177,7 +175,7 @@ namespace Fling
 		}
 
 		// Log the seed, so that --seed can repeat a run that used a random one
-		m_Seed = m_Options.HasSeed ? m_Options.Seed : std::random_device{}();
+		m_Seed = m_Options.HasSeed ? m_Options.Seed : Random::MakeEntropySeed();
 		Random::Init(m_Seed);
 		F_LOG_TRACE("Random seed: {}", m_Seed);
 

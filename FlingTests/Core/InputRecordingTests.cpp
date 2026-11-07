@@ -9,7 +9,6 @@
 #include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <vector>
 
 using Fling::String;

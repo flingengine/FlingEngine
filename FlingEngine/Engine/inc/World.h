@@ -9,7 +9,6 @@
 
 #include <cassert>
 #include <entt/entity/registry.hpp>
-#include <string>
 
 namespace Fling
 {

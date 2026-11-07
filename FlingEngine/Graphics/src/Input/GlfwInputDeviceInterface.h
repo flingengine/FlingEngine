@@ -6,7 +6,6 @@
 #include "Input/InputKey.h"
 
 #include <array>
-#include <cstdint>
 #include <memory>
 
 struct GLFWwindow;

@@ -8,7 +8,6 @@
 #include "Threading/ThreadSafety.h"
 
 #include <atomic>
-#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>

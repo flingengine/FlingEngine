@@ -140,6 +140,12 @@ namespace Fling
 		static bool Init(uint32 t_Seed);
 
 		/**
+		* A seed from the operating system's entropy source, different on each call.
+		* Use it when no seed is given, and log it, so that the run can be repeated.
+		*/
+		static uint32 MakeEntropySeed();
+
+		/**
 		 * Get a random int in [0, t_max): inclusive of 0, exclusive of t_max.
 		 *
 		 * @param t_max Exclusive upper bound; must be greater than 0

@@ -3,7 +3,6 @@
 #include "Strings/String.h"
 
 #include <cstring>
-#include <limits>
 
 #if FLING_WINDOWS
 

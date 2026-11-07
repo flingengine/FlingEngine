@@ -7,7 +7,6 @@
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
-#include <cstdint>
 #include <initializer_list>
 #include <memory>
 

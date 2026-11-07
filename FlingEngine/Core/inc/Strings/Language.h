@@ -5,7 +5,6 @@
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
-#include <cstdint>
 
 namespace Fling
 {

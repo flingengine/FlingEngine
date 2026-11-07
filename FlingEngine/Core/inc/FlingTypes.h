@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <entt/entity/helper.hpp>
-#include <inttypes.h>
 #include <limits>
 #include <stdexcept>
 

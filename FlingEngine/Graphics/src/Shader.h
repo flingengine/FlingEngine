@@ -7,7 +7,6 @@
 #include "spirv_cross.hpp"
 #include "spirv_glsl.hpp"
 
-#include <fstream>
 #include <memory>
 #include <vector>
 

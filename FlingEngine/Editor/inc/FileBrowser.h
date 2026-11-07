@@ -2,7 +2,6 @@
 
 #include "Strings/String.h"
 
-#include <filesystem>
 
 #if WITH_IMGUI
 #include <imgui.h>

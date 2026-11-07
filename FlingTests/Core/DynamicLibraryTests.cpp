@@ -5,7 +5,6 @@
 #include <catch2/catch_all.hpp>
 #include <cstddef>
 #include <cstdio>
-#include <span>
 
 #if FLING_LINUX
 #include <unistd.h>

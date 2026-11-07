@@ -7,7 +7,6 @@
 
 #include <compare>
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <functional>
 

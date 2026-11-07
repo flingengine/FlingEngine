@@ -67,7 +67,6 @@ namespace Fling
         template<typename T>
         T GetValueAs(const StringView Param, const T& Default) const;
 
-        // TODO: make this a StringView
         const char* GetValueAsString(const StringView Param) const;
 
         [[nodiscard]] StringView GetCommandLineData() const;
