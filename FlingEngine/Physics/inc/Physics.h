@@ -1,12 +1,12 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
 #include "FlingMath.h"
 #include "PhysicsAPI.h"
 #include "PhysicsComponents.h"
 #include "PhysicsProvider.h"
 #include "PhysicsTypes.h"
 
-#include "Ecs/EntityStorage.h"
 #include <memory>
 
 namespace Fling
@@ -60,7 +60,8 @@ namespace Fling
         PHYSICS_API void ApplyTorque(Fling::EntityStorage& t_Reg, Fling::Entity t_Entity, const glm::vec3& t_Torque);
 
         /** Request a new linear velocity for an entity at the next fixed step. */
-        PHYSICS_API void SetLinearVelocity(Fling::EntityStorage& t_Reg, Fling::Entity t_Entity, const glm::vec3& t_Velocity);
+        PHYSICS_API void
+        SetLinearVelocity(Fling::EntityStorage& t_Reg, Fling::Entity t_Entity, const glm::vec3& t_Velocity);
 
         /**
          * Save the physics scene and clock of this registry, for rollback. The

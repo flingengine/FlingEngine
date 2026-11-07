@@ -36,8 +36,8 @@ namespace Fling
             if (ImGui::Button("Select..."))
             {
                 s_FileDialog.SetTitle(String("Select ") + t_Label);
-                s_FileDialog.SetPwd(std::filesystem::path{ FlingPaths::EngineAssetsDir() + "/" + t_Folder });
-                s_FileDialog.SetTypeFilters({ t_Extension });
+                s_FileDialog.SetPwd(std::filesystem::path{FlingPaths::EngineAssetsDir() + "/" + t_Folder});
+                s_FileDialog.SetTypeFilters({t_Extension});
                 s_FileDialog.Open();
                 s_OpenFor = t_Label;
             }
@@ -64,7 +64,7 @@ namespace Fling
             AssetPicker("Model", "Models", ".obj", t_MeshRend.Mesh);
             AssetPicker("Material", "Materials", ".mat", t_MeshRend.Material);
         }
-    }
+    } // namespace Widgets
 
     void BaseEditor::Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game)
     {
@@ -93,11 +93,8 @@ namespace Fling
             });
 
         // MeshRenderer saves asset paths by hand, so it gets file pickers.
-        t_Widgets.Override<Fling::MeshRenderer>(
-            [](Fling::EntityStorage&, Fling::Entity, Fling::MeshRenderer& t_Mesh)
-            {
-                Widgets::MeshRenderer(t_Mesh);
-            });
+        t_Widgets.Override<Fling::MeshRenderer>([](Fling::EntityStorage&, Fling::Entity, Fling::MeshRenderer& t_Mesh)
+                                                { Widgets::MeshRenderer(t_Mesh); });
     }
 
     void BaseEditor::Draw(Fling::EntityStorage& t_Reg, float DeltaTime)
@@ -109,12 +106,12 @@ namespace Fling
             DrawGpuInfo();
         }
 
-        if(m_DisplayWorldOutline)
+        if (m_DisplayWorldOutline)
         {
             DrawWorldOutline(t_Reg);
         }
 
-        if(m_DisplayComponentEditor)
+        if (m_DisplayComponentEditor)
         {
             DrawEntityEditor(t_Reg);
         }
@@ -124,7 +121,7 @@ namespace Fling
             DrawWindowOptions();
         }
 
-        if(m_DisplayCameraOptions)
+        if (m_DisplayCameraOptions)
         {
             DrawCameraOptions();
         }
@@ -135,21 +132,21 @@ namespace Fling
 
     void BaseEditor::DrawCameraOptions()
     {
-		ImGui::Begin("Camera Options");
+        ImGui::Begin("Camera Options");
 
-        if(FirstPersonCamera* Cam = VulkanApp::Get().GetCamera())
+        if (FirstPersonCamera* Cam = VulkanApp::Get().GetCamera())
         {
-			ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+            ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
             ImGui::InputFloat("Aspect Ratio", &Cam->m_aspectRatio);
-			ImGui::InputFloat("NearPlane", &Cam->m_nearPlane);
-			ImGui::InputFloat("FarPlane", &Cam->m_farPlane);
+            ImGui::InputFloat("NearPlane", &Cam->m_nearPlane);
+            ImGui::InputFloat("FarPlane", &Cam->m_farPlane);
             ImGui::InputFloat("FOV", &Cam->m_fieldOfView);
             ImGui::InputFloat("Gamma", &Cam->m_Gamma);
             ImGui::InputFloat("Exposure", &Cam->m_Exposure);
-			ImGui::InputFloat("Speed", &Cam->m_speed);
-		}
+            ImGui::InputFloat("Speed", &Cam->m_speed);
+        }
 
-		ImGui::End();
+        ImGui::End();
     }
 
     void BaseEditor::DrawWorldOutline(Fling::EntityStorage& t_Reg)
@@ -170,41 +167,38 @@ namespace Fling
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
         // Dropdown for windowed, borderless, etc
-		static const char* WindowOpts[] = { "Fullscreen", "Windowed", "BorderlessWindowed" };
+        static const char* WindowOpts[] = {"Fullscreen", "Windowed", "BorderlessWindowed"};
         static const char* CurSelection = nullptr;
 
-		if (ImGui::BeginCombo("Window Mode", CurSelection))
-		{
-			for (int n = 0; n < IM_ARRAYSIZE(WindowOpts); n++)
+        if (ImGui::BeginCombo("Window Mode", CurSelection))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(WindowOpts); n++)
             {
-				bool is_selected = (CurSelection == WindowOpts[n]); // You can store your selection however you want, outside or inside your objects
-				if (ImGui::Selectable(WindowOpts[n], is_selected))
+                bool is_selected =
+                    (CurSelection ==
+                     WindowOpts[n]); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(WindowOpts[n], is_selected))
                 {
                     CurSelection = WindowOpts[n];
                 }
 
                 if (is_selected)
                 {
-					ImGui::SetItemDefaultFocus();
+                    ImGui::SetItemDefaultFocus();
                 }
             }
-			ImGui::EndCombo();
-		}
+            ImGui::EndCombo();
+        }
 
         ImGui::End();
     }
 
     void BaseEditor::DrawFileMenu()
     {
-        ImGuiWindowFlags corner =
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoSavedSettings |
-            ImGuiWindowFlags_AlwaysAutoResize |
-            ImGuiWindowFlags_MenuBar |
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoBackground;
+        ImGuiWindowFlags corner = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize |
+                                  ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar |
+                                  ImGuiWindowFlags_NoBackground;
 
         bool isOpen = true;
         ImGui::Begin("File Options", &isOpen, corner);
@@ -234,10 +228,10 @@ namespace Fling
                     ShouldSaveLevel = false;
 
                     fileDialog.SetTitle("Select Level to Load...");
-                    static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+                    static std::filesystem::path p{FlingPaths::EngineAssetsDir() + "/Levels"};
                     fileDialog.SetPwd(p);
 
-                    fileDialog.SetTypeFilters({ ".json" });
+                    fileDialog.SetTypeFilters({".json"});
                     fileDialog.Open();
                 }
 
@@ -247,10 +241,10 @@ namespace Fling
                     ShouldLoadLevel = false;
 
                     fileDialog.SetTitle("Select Save Destination...");
-                    static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+                    static std::filesystem::path p{FlingPaths::EngineAssetsDir() + "/Levels"};
                     fileDialog.SetPwd(p);
 
-                    fileDialog.SetTypeFilters({ ".json" });
+                    fileDialog.SetTypeFilters({".json"});
                     fileDialog.Open();
                 }
 
@@ -286,9 +280,9 @@ namespace Fling
             if (ImGui::BeginMenu("Windows"))
             {
                 ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
-				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
-				ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
-				ImGui::Checkbox("World Singletons", &m_WorldSingletons.ShowWindowFlag());
+                ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
+                ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
+                ImGui::Checkbox("World Singletons", &m_WorldSingletons.ShowWindowFlag());
                 ImGui::EndMenu();
             }
 
@@ -366,7 +360,7 @@ namespace Fling
 
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
-		const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
+        const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
         ImGui::Text("Device: %s", DeviceName.c_str());
 
         // Update fps graph
@@ -386,10 +380,11 @@ namespace Fling
         if (m_DisplayGPUInfo)
         {
             ImGui::Text("FPS: %f", frameTime);
-            ImGui::PlotLines("FPS", &fpsGraph[0], fpsGraph.size(), 0, "", m_FrameTimeMin, m_FrameTimeMax, ImVec2(0, 80));
+            ImGui::PlotLines(
+                "FPS", &fpsGraph[0], fpsGraph.size(), 0, "", m_FrameTimeMin, m_FrameTimeMax, ImVec2(0, 80));
         }
         ImGui::End();
     }
-}   // namespace Fling
+} // namespace Fling
 
-#endif  // WITH_EDITOR
+#endif // WITH_EDITOR

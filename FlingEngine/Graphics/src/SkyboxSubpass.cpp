@@ -40,8 +40,10 @@ namespace Fling
 
     SkyboxSubpass::~SkyboxSubpass() = default;
 
-    void
-    SkyboxSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime)
+    void SkyboxSubpass::Draw(CommandBuffer& t_CmdBuf,
+                             uint32 t_ActiveFrameInFlight,
+                             const RenderSnapshot& t_Snapshot,
+                             float DeltaTime)
     {
         // Invert the projection Y to match the Vulkan clip space, like the other passes
         glm::mat4 Projection = m_Camera->GetProjectionMatrix();

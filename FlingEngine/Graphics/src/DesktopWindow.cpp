@@ -3,277 +3,286 @@
 #include "FlingConfig.h"
 #include "FlingPaths.h"
 #include "Logger.h"
+#include "stb_image.h"
 #include "Strings/String.h"
 #include "VulkanApp.h"
-#include "stb_image.h"
 
 #include <algorithm>
 
 #if FLING_WINDOWS
 // For glfwGetWin32Window. Platform.h has already included Windows.h.
-#	define GLFW_EXPOSE_NATIVE_WIN32
-#	include <GLFW/glfw3native.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #endif
 
 namespace Fling
 {
-	static bool bGlfwInitalized = false;
+    static bool bGlfwInitalized = false;
 
-	FlingWindow* FlingWindow::Create(const WindowProps& t_Props)
-	{
-		return new DesktopWindow(t_Props);
-	}
+    FlingWindow* FlingWindow::Create(const WindowProps& t_Props)
+    {
+        return new DesktopWindow(t_Props);
+    }
 
-	DesktopWindow::DesktopWindow(const WindowProps& t_Props)
-	{
-		// Initialize GLFW if we have to
-		if (!bGlfwInitalized)
-		{
-			// Give GLFW the loader that Fling opened. Call this before glfwInit.
-			glfwInitVulkanLoader(vkGetInstanceProcAddr);
-			glfwInit();
-			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-			bGlfwInitalized = true;
-		}
+    DesktopWindow::DesktopWindow(const WindowProps& t_Props)
+    {
+        // Initialize GLFW if we have to
+        if (!bGlfwInitalized)
+        {
+            // Give GLFW the loader that Fling opened. Call this before glfwInit.
+            glfwInitVulkanLoader(vkGetInstanceProcAddr);
+            glfwInit();
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+            bGlfwInitalized = true;
+        }
 
-		m_Window = glfwCreateWindow(t_Props.m_Width, t_Props.m_Height, t_Props.m_Title.c_str(), nullptr, nullptr);
+        m_Window = glfwCreateWindow(t_Props.m_Width, t_Props.m_Height, t_Props.m_Title.c_str(), nullptr, nullptr);
 
-		glfwSetFramebufferSizeCallback(m_Window, &DesktopWindow::FrameBufferResizeCallback);
+        glfwSetFramebufferSizeCallback(m_Window, &DesktopWindow::FrameBufferResizeCallback);
 
-		FitToWorkArea(t_Props.m_Width, t_Props.m_Height);
+        FitToWorkArea(t_Props.m_Width, t_Props.m_Height);
 
-		int FbW = 0, FbH = 0;
-		glfwGetFramebufferSize(m_Window, &FbW, &FbH);
-		F_LOG_TRACE("Window created: {}x{} framebuffer {}x{}", GetWindowWidth(), GetWindowHeight(), FbW, FbH);
-	}
+        int FbW = 0, FbH = 0;
+        glfwGetFramebufferSize(m_Window, &FbW, &FbH);
+        F_LOG_TRACE("Window created: {}x{} framebuffer {}x{}", GetWindowWidth(), GetWindowHeight(), FbW, FbH);
+    }
 
-	void DesktopWindow::FitToWorkArea(uint32 t_Width, uint32 t_Height)
-	{
-		GLFWmonitor* Monitor = glfwGetPrimaryMonitor();
-		if (Monitor == nullptr || t_Width == 0 || t_Height == 0)
-		{
-			return;
-		}
+    void DesktopWindow::FitToWorkArea(uint32 t_Width, uint32 t_Height)
+    {
+        GLFWmonitor* Monitor = glfwGetPrimaryMonitor();
+        if (Monitor == nullptr || t_Width == 0 || t_Height == 0)
+        {
+            return;
+        }
 
-		int WorkX = 0, WorkY = 0, WorkW = 0, WorkH = 0;
-		glfwGetMonitorWorkarea(Monitor, &WorkX, &WorkY, &WorkW, &WorkH);
+        int WorkX = 0, WorkY = 0, WorkW = 0, WorkH = 0;
+        glfwGetMonitorWorkarea(Monitor, &WorkX, &WorkY, &WorkW, &WorkH);
 
-		// Wayland reports the work area in pixels but sizes windows in scaled units. The
-		// monitor scale is rounded up to a whole number, so use the window's scale, which
-		// is the real (possibly fractional) one.
-		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
-		{
-			float ScaleX = 1.0f, ScaleY = 1.0f;
-			glfwGetWindowContentScale(m_Window, &ScaleX, &ScaleY);
-			WorkW = static_cast<int>(WorkW / ScaleX);
-			WorkH = static_cast<int>(WorkH / ScaleY);
-		}
-		if (WorkW <= 0 || WorkH <= 0)
-		{
-			return;
-		}
+        // Wayland reports the work area in pixels but sizes windows in scaled units. The
+        // monitor scale is rounded up to a whole number, so use the window's scale, which
+        // is the real (possibly fractional) one.
+        if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+        {
+            float ScaleX = 1.0f, ScaleY = 1.0f;
+            glfwGetWindowContentScale(m_Window, &ScaleX, &ScaleY);
+            WorkW = static_cast<int>(WorkW / ScaleX);
+            WorkH = static_cast<int>(WorkH / ScaleY);
+        }
+        if (WorkW <= 0 || WorkH <= 0)
+        {
+            return;
+        }
 
-		// Window managers such as GNOME maximize a new window that covers most of the work
-		// area, which makes windowed mode look like fullscreen.
-		const float MaxFraction = 0.75f;
-		const float Fit = std::min({ 1.0f,
-			(WorkW * MaxFraction) / static_cast<float>(t_Width),
-			(WorkH * MaxFraction) / static_cast<float>(t_Height) });
-		if (Fit < 1.0f)
-		{
-			const int Width = static_cast<int>(t_Width * Fit);
-			const int Height = static_cast<int>(t_Height * Fit);
-			F_LOG_WARN("Window size {}x{} is too big for the {}x{} work area, using {}x{}",
-				t_Width, t_Height, WorkW, WorkH, Width, Height);
-			glfwSetWindowSize(m_Window, Width, Height);
-		}
-	}
+        // Window managers such as GNOME maximize a new window that covers most of the work
+        // area, which makes windowed mode look like fullscreen.
+        const float MaxFraction = 0.75f;
+        const float Fit = std::min({1.0f,
+                                    (WorkW * MaxFraction) / static_cast<float>(t_Width),
+                                    (WorkH * MaxFraction) / static_cast<float>(t_Height)});
+        if (Fit < 1.0f)
+        {
+            const int Width = static_cast<int>(t_Width * Fit);
+            const int Height = static_cast<int>(t_Height * Fit);
+            F_LOG_WARN("Window size {}x{} is too big for the {}x{} work area, using {}x{}",
+                       t_Width,
+                       t_Height,
+                       WorkW,
+                       WorkH,
+                       Width,
+                       Height);
+            glfwSetWindowSize(m_Window, Width, Height);
+        }
+    }
 
-	void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
-	{
-		VulkanApp::Get().OnWindowResized(t_Width, t_Height);
-	}
+    void DesktopWindow::FrameBufferResizeCallback(GLFWwindow* t_Window, int t_Width, int t_Height)
+    {
+        VulkanApp::Get().OnWindowResized(t_Width, t_Height);
+    }
 
-	void DesktopWindow::CreateSurface(void* t_GraphicsInstance, void* t_SurfData)
-	{
-		if (glfwCreateWindowSurface((VkInstance)t_GraphicsInstance, m_Window, nullptr, (VkSurfaceKHR*)t_SurfData) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to created the window surface!");
-		}
-	}
+    void DesktopWindow::CreateSurface(void* t_GraphicsInstance, void* t_SurfData)
+    {
+        if (glfwCreateWindowSurface((VkInstance)t_GraphicsInstance, m_Window, nullptr, (VkSurfaceKHR*)t_SurfData) !=
+            VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to created the window surface!");
+        }
+    }
 
-	bool DesktopWindow::WaitForNewWindowSize()
-	{
-		// If the window is minimized then wait for it to come to the foreground before displaying it again
-		// #TODO: Handle minimizing windows asynchronously or in a way that the renderer doesn't block
-		int width = 0, height = 0;
-		glfwGetFramebufferSize(m_Window, &width, &height);
-		while (width == 0 || height == 0)
-		{
-			// A minimized window can be closed (for example from the taskbar). Its size then
-			// never comes back, so stop waiting and let the engine loop see the close.
-			if (glfwWindowShouldClose(m_Window))
-			{
-				return false;
-			}
-			glfwWaitEvents();
-			glfwGetFramebufferSize(m_Window, &width, &height);
-		}
-		return true;
-	}
+    bool DesktopWindow::WaitForNewWindowSize()
+    {
+        // If the window is minimized then wait for it to come to the foreground before displaying it again
+        // #TODO: Handle minimizing windows asynchronously or in a way that the renderer doesn't block
+        int width = 0, height = 0;
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        while (width == 0 || height == 0)
+        {
+            // A minimized window can be closed (for example from the taskbar). Its size then
+            // never comes back, so stop waiting and let the engine loop see the close.
+            if (glfwWindowShouldClose(m_Window))
+            {
+                return false;
+            }
+            glfwWaitEvents();
+            glfwGetFramebufferSize(m_Window, &width, &height);
+        }
+        return true;
+    }
 
-	DesktopWindow::~DesktopWindow()
-	{
-		glfwDestroyWindow(m_Window);
-		glfwTerminate();
-	}
+    DesktopWindow::~DesktopWindow()
+    {
+        glfwDestroyWindow(m_Window);
+        glfwTerminate();
+    }
 
-	void DesktopWindow::Update()
-	{
-		// Nothing to do. GlfwInputDeviceInterface::Poll pumps the GLFW events.
-	}
+    void DesktopWindow::Update()
+    {
+        // Nothing to do. GlfwInputDeviceInterface::Poll pumps the GLFW events.
+    }
 
-	int DesktopWindow::ShouldClose()
-	{
-		return glfwWindowShouldClose(m_Window);	
-	}
+    int DesktopWindow::ShouldClose()
+    {
+        return glfwWindowShouldClose(m_Window);
+    }
 
-	bool DesktopWindow::IsMinimized() const
-	{
-		return false;
-	}
+    bool DesktopWindow::IsMinimized() const
+    {
+        return false;
+    }
 
-	bool DesktopWindow::IsFocused() const
-	{
+    bool DesktopWindow::IsFocused() const
+    {
 #if FLING_WINDOWS
-		// Do not use GLFW_FOCUSED on Windows. GLFW reads it from GetActiveWindow, which is per
-		// thread and is true for a window that opened behind another program.
-		return GetForegroundWindow() == glfwGetWin32Window(m_Window);
+        // Do not use GLFW_FOCUSED on Windows. GLFW reads it from GetActiveWindow, which is per
+        // thread and is true for a window that opened behind another program.
+        return GetForegroundWindow() == glfwGetWin32Window(m_Window);
 #else
-		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) != 0;
+        return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) != 0;
 #endif
-	}
+    }
 
-	uint32 DesktopWindow::GetFramebufferWidth() const
-	{
-		int width, height;
-		glfwGetFramebufferSize(m_Window, &width, &height);
+    uint32 DesktopWindow::GetFramebufferWidth() const
+    {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
 
-		return width;
-	}
+        return width;
+    }
 
-	uint32 DesktopWindow::GetFramebufferHeight() const
-	{
-		int width, height;
-		glfwGetFramebufferSize(m_Window, &width, &height);
+    uint32 DesktopWindow::GetFramebufferHeight() const
+    {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
 
-		return height;
-	}
+        return height;
+    }
 
-	uint32 DesktopWindow::GetWindowWidth() const
-	{
-		int width, height;
-		glfwGetWindowSize(m_Window, &width, &height);
+    uint32 DesktopWindow::GetWindowWidth() const
+    {
+        int width, height;
+        glfwGetWindowSize(m_Window, &width, &height);
 
-		return width;
-	}
+        return width;
+    }
 
-	uint32 DesktopWindow::GetWindowHeight() const
-	{
-		int width, height;
-		glfwGetWindowSize(m_Window, &width, &height);
+    uint32 DesktopWindow::GetWindowHeight() const
+    {
+        int width, height;
+        glfwGetWindowSize(m_Window, &width, &height);
 
-		return height;
-	}
+        return height;
+    }
 
-	float DesktopWindow::GetAspectRatio() const
-	{
-		int width, height;
-		glfwGetFramebufferSize(m_Window, &width, &height);
+    float DesktopWindow::GetAspectRatio() const
+    {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
 
-		return static_cast<float>(width) / static_cast<float>(height);
-	}
+        return static_cast<float>(width) / static_cast<float>(height);
+    }
 
-	void DesktopWindow::SetMouseVisible(bool t_IsVisible)
-	{
-		m_IsMouseVisible = t_IsVisible;
-		if (t_IsVisible)
-		{
-			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		}
-		else
-		{
-			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		}
-	}
+    void DesktopWindow::SetMouseVisible(bool t_IsVisible)
+    {
+        m_IsMouseVisible = t_IsVisible;
+        if (t_IsVisible)
+        {
+            glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else
+        {
+            glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    }
 
-	bool DesktopWindow::GetMouseVisible()
-	{
-		return m_IsMouseVisible;
-	}
+    bool DesktopWindow::GetMouseVisible()
+    {
+        return m_IsMouseVisible;
+    }
 
-	void DesktopWindow::SetWindowIcon(const AssetPath& t_Path)
-	{
-		// Decode the file here. The icon does not need a GPU texture, and a Texture
-		// does not keep its pixels after the upload.
-		const String Filepath = FlingPaths::EngineAssetsDir() + "/" + t_Path.GetText();
-		int Width = 0;
-		int Height = 0;
-		int Channels = 0;
-		stbi_uc* Pixels = stbi_load(Filepath.c_str(), &Width, &Height, &Channels, STBI_rgb_alpha);
-		if (!Pixels)
-		{
-			F_LOG_ERROR("Failed to load window icon: {}", Filepath);
-			return;
-		}
+    void DesktopWindow::SetWindowIcon(const AssetPath& t_Path)
+    {
+        // Decode the file here. The icon does not need a GPU texture, and a Texture
+        // does not keep its pixels after the upload.
+        const String Filepath = FlingPaths::EngineAssetsDir() + "/" + t_Path.GetText();
+        int Width = 0;
+        int Height = 0;
+        int Channels = 0;
+        stbi_uc* Pixels = stbi_load(Filepath.c_str(), &Width, &Height, &Channels, STBI_rgb_alpha);
+        if (!Pixels)
+        {
+            F_LOG_ERROR("Failed to load window icon: {}", Filepath);
+            return;
+        }
 
-		GLFWimage GLFW_Image;
-		GLFW_Image.height = Height;
-		GLFW_Image.width = Width;
-		GLFW_Image.pixels = Pixels;
+        GLFWimage GLFW_Image;
+        GLFW_Image.height = Height;
+        GLFW_Image.width = Width;
+        GLFW_Image.pixels = Pixels;
 
-		// GLFW copies the pixels, so free them after this call
-		glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
-		stbi_image_free(Pixels);
-	}
+        // GLFW copies the pixels, so free them after this call
+        glfwSetWindowIcon(m_Window, 1, &GLFW_Image);
+        stbi_image_free(Pixels);
+    }
 
-	void DesktopWindow::SetWindowMode(WindowMode t_WindowMode)
-	{
-		//early return if nothing would change
+    void DesktopWindow::SetWindowMode(WindowMode t_WindowMode)
+    {
+        // early return if nothing would change
         if (t_WindowMode == m_WindowMode)
         {
             return;
         }
 
-        const int windowedWidth = FlingConfig::GetInt("Windowed", "WindowWidth") ? FlingConfig::GetInt("Windowed", "WindowWidth") : FLING_DEFAULT_WINDOW_WIDTH;
-        const int windowedHeight = FlingConfig::GetInt("Windowed", "WindowHeight") ? FlingConfig::GetInt("Windowed", "WindowHeight") : FLING_DEFAULT_WINDOW_HEIGHT;
+        const int windowedWidth = FlingConfig::GetInt("Windowed", "WindowWidth")
+                                      ? FlingConfig::GetInt("Windowed", "WindowWidth")
+                                      : FLING_DEFAULT_WINDOW_WIDTH;
+        const int windowedHeight = FlingConfig::GetInt("Windowed", "WindowHeight")
+                                       ? FlingConfig::GetInt("Windowed", "WindowHeight")
+                                       : FLING_DEFAULT_WINDOW_HEIGHT;
 
-		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-		switch (t_WindowMode)
-		{
-		case WindowMode::Fullscreen:
-			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
-			glfwSetWindowMonitor(m_Window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, 0);
-			break;
-		case WindowMode::Windowed:
-			glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
-			glfwSetWindowMonitor(m_Window, nullptr, 100, 100, windowedWidth, windowedHeight, 0);
+        switch (t_WindowMode)
+        {
+        case WindowMode::Fullscreen:
+            glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+            glfwSetWindowMonitor(m_Window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, 0);
+            break;
+        case WindowMode::Windowed:
+            glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+            glfwSetWindowMonitor(m_Window, nullptr, 100, 100, windowedWidth, windowedHeight, 0);
             break;
         case WindowMode::BorderlessWindowed:
             glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_FALSE);
             glfwSetWindowMonitor(m_Window, nullptr, 100, 100, windowedWidth, windowedHeight, 0);
-			break;
-		default:
-			break;	
-		}
-		m_WindowMode = t_WindowMode;
+            break;
+        default:
+            break;
+        }
+        m_WindowMode = t_WindowMode;
+    }
 
-	}
+    WindowMode DesktopWindow::GetWindowMode()
+    {
+        return m_WindowMode;
+    }
 
-	WindowMode DesktopWindow::GetWindowMode()
-	{
-		return m_WindowMode;
-	}
-
-}   // namespace Fling
+} // namespace Fling

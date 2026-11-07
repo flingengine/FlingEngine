@@ -28,172 +28,183 @@
 namespace Fling
 {
     ExitCode Engine::StartLocalization()
-	{
-		const String Folder = FlingConfig::GetString("Localization", "Folder", "Localization");
-		const Name SourceLanguage(FlingConfig::GetString("Localization", "SourceLanguage", "en"));
-		auto Loc = std::make_shared<Localization>(PathFromUtf8(FlingPaths::EngineAssetsDir() + "/" + Folder), SourceLanguage);
+    {
+        const String Folder = FlingConfig::GetString("Localization", "Folder", "Localization");
+        const Name SourceLanguage(FlingConfig::GetString("Localization", "SourceLanguage", "en"));
+        auto Loc =
+            std::make_shared<Localization>(PathFromUtf8(FlingPaths::EngineAssetsDir() + "/" + Folder), SourceLanguage);
 
-		Loc->LoadLanguage(SourceLanguage);
-		const String Language = !m_Options.Language.empty()
-			? m_Options.Language
-			: FlingConfig::GetString("Localization", "Language", String(SourceLanguage.ToView()));
-		Loc->SetLanguage(Name(Language));
-		F_LOG_TRACE("Language: {} (source {}), {}", Loc->GetLanguage(), SourceLanguage,
-			Loc->GetTextDirection() == TextDirection::RightToLeft ? "right to left" : "left to right");
-		Localization::SetActive(Loc);
+        Loc->LoadLanguage(SourceLanguage);
+        const String Language =
+            !m_Options.Language.empty()
+                ? m_Options.Language
+                : FlingConfig::GetString("Localization", "Language", String(SourceLanguage.ToView()));
+        Loc->SetLanguage(Name(Language));
+        F_LOG_TRACE("Language: {} (source {}), {}",
+                    Loc->GetLanguage(),
+                    SourceLanguage,
+                    Loc->GetTextDirection() == TextDirection::RightToLeft ? "right to left" : "left to right");
+        Localization::SetActive(Loc);
 
-		if (!m_Options.LocImport.empty())
-		{
-			const String ImportPath = FlingPaths::ResolveProjectPath(m_Options.LocImport);
-			std::ifstream File(PathFromUtf8(ImportPath), std::ios::binary);
-			if (!File)
-			{
-				F_LOG_ERROR("Cannot read {}", ImportPath);
-				return ExitCode::Failure;
-			}
-			const String Csv((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+        if (!m_Options.LocImport.empty())
+        {
+            const String ImportPath = FlingPaths::ResolveProjectPath(m_Options.LocImport);
+            std::ifstream File(PathFromUtf8(ImportPath), std::ios::binary);
+            if (!File)
+            {
+                F_LOG_ERROR("Cannot read {}", ImportPath);
+                return ExitCode::Failure;
+            }
+            const String Csv((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
 
-			// Load every language first, so the saved tables keep the entries that the
-			// file does not have.
-			for (const Name OnDisk : Loc->FindLanguagesOnDisk())
-			{
-				Loc->LoadLanguage(OnDisk);
-			}
+            // Load every language first, so the saved tables keep the entries that the
+            // file does not have.
+            for (const Name OnDisk : Loc->FindLanguagesOnDisk())
+            {
+                Loc->LoadLanguage(OnDisk);
+            }
 
-			String Error;
-			std::vector<Name> Languages;
-			if (!Loc->ImportCsv(Csv, Error, &Languages))
-			{
-				F_LOG_ERROR("Cannot import {}: {}", ImportPath, Error);
-				return ExitCode::Failure;
-			}
-			for (const Name Imported : Languages)
-			{
-				if (!Loc->SaveLanguage(Imported, Error))
-				{
-					F_LOG_ERROR("Cannot save language {}: {}", Imported, Error);
-					return ExitCode::Failure;
-				}
-				const size_t MissingCount = Loc->FindMissing(Imported).size();
-				F_LOG_TRACE("Imported language {} ({} entries missing)", Imported, MissingCount);
-			}
-		}
+            String Error;
+            std::vector<Name> Languages;
+            if (!Loc->ImportCsv(Csv, Error, &Languages))
+            {
+                F_LOG_ERROR("Cannot import {}: {}", ImportPath, Error);
+                return ExitCode::Failure;
+            }
+            for (const Name Imported : Languages)
+            {
+                if (!Loc->SaveLanguage(Imported, Error))
+                {
+                    F_LOG_ERROR("Cannot save language {}: {}", Imported, Error);
+                    return ExitCode::Failure;
+                }
+                const size_t MissingCount = Loc->FindMissing(Imported).size();
+                F_LOG_TRACE("Imported language {} ({} entries missing)", Imported, MissingCount);
+            }
+        }
 
-		if (!m_Options.LocGather.empty())
-		{
-			const String Folder = FlingPaths::ResolveProjectPath(m_Options.LocGather);
-			std::error_code Error;
-			std::vector<GatheredEntry> Entries;
-			for (auto It = std::filesystem::recursive_directory_iterator(PathFromUtf8(Folder), Error);
-				 !Error && It != std::filesystem::recursive_directory_iterator(); It.increment(Error))
-			{
-				const std::filesystem::path Extension = It->path().extension();
-				if (!It->is_regular_file() || (Extension != ".cpp" && Extension != ".h" && Extension != ".hpp" && Extension != ".inl"))
-				{
-					continue;
-				}
-				std::ifstream File(It->path(), std::ios::binary);
-				const String Code((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
-				const String Location = PathToUtf8(std::filesystem::relative(It->path(), PathFromUtf8(Folder), Error));
-				for (GatheredEntry& Entry : Localization::GatherFromCode(Code, Location))
-				{
-					Entries.push_back(std::move(Entry));
-				}
-			}
-			if (Error)
-			{
-				F_LOG_ERROR("Cannot search {}: {}", Folder, Error.message());
-				return ExitCode::Failure;
-			}
+        if (!m_Options.LocGather.empty())
+        {
+            const String Folder = FlingPaths::ResolveProjectPath(m_Options.LocGather);
+            std::error_code Error;
+            std::vector<GatheredEntry> Entries;
+            for (auto It = std::filesystem::recursive_directory_iterator(PathFromUtf8(Folder), Error);
+                 !Error && It != std::filesystem::recursive_directory_iterator();
+                 It.increment(Error))
+            {
+                const std::filesystem::path Extension = It->path().extension();
+                if (!It->is_regular_file() ||
+                    (Extension != ".cpp" && Extension != ".h" && Extension != ".hpp" && Extension != ".inl"))
+                {
+                    continue;
+                }
+                std::ifstream File(It->path(), std::ios::binary);
+                const String Code((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+                const String Location = PathToUtf8(std::filesystem::relative(It->path(), PathFromUtf8(Folder), Error));
+                for (GatheredEntry& Entry : Localization::GatherFromCode(Code, Location))
+                {
+                    Entries.push_back(std::move(Entry));
+                }
+            }
+            if (Error)
+            {
+                F_LOG_ERROR("Cannot search {}: {}", Folder, Error.message());
+                return ExitCode::Failure;
+            }
 
-			const GatherResult Result = Loc->AddGathered(Entries);
-			String SaveError;
-			if (Result.Added > 0 && !Loc->SaveLanguage(SourceLanguage, SaveError))
-			{
-				F_LOG_ERROR("Cannot save language {}: {}", SourceLanguage, SaveError);
-				return ExitCode::Failure;
-			}
-			F_LOG_TRACE("Gathered {} string table uses from {}: {} added, {} with different text, {} with no text",
-				Entries.size(), Folder, Result.Added, Result.Mismatched, Result.MissingText);
-		}
+            const GatherResult Result = Loc->AddGathered(Entries);
+            String SaveError;
+            if (Result.Added > 0 && !Loc->SaveLanguage(SourceLanguage, SaveError))
+            {
+                F_LOG_ERROR("Cannot save language {}: {}", SourceLanguage, SaveError);
+                return ExitCode::Failure;
+            }
+            F_LOG_TRACE("Gathered {} string table uses from {}: {} added, {} with different text, {} with no text",
+                        Entries.size(),
+                        Folder,
+                        Result.Added,
+                        Result.Mismatched,
+                        Result.MissingText);
+        }
 
-		if (!m_Options.LocExport.empty())
-		{
-			for (const Name OnDisk : Loc->FindLanguagesOnDisk())
-			{
-				Loc->LoadLanguage(OnDisk);
-			}
+        if (!m_Options.LocExport.empty())
+        {
+            for (const Name OnDisk : Loc->FindLanguagesOnDisk())
+            {
+                Loc->LoadLanguage(OnDisk);
+            }
 
-			const String ExportPath = FlingPaths::ResolveProjectPath(m_Options.LocExport);
-			std::ofstream File(PathFromUtf8(ExportPath), std::ios::binary);
-			File << Loc->ExportCsv();
-			if (!File)
-			{
-				F_LOG_ERROR("Cannot write {}", ExportPath);
-				return ExitCode::Failure;
-			}
-			F_LOG_TRACE("Exported string tables to {}", ExportPath);
-		}
+            const String ExportPath = FlingPaths::ResolveProjectPath(m_Options.LocExport);
+            std::ofstream File(PathFromUtf8(ExportPath), std::ios::binary);
+            File << Loc->ExportCsv();
+            if (!File)
+            {
+                F_LOG_ERROR("Cannot write {}", ExportPath);
+                return ExitCode::Failure;
+            }
+            F_LOG_TRACE("Exported string tables to {}", ExportPath);
+        }
 
-		return ExitCode::Success;
-	}
+        return ExitCode::Success;
+    }
 
     ExitCode Engine::Startup(int argc, const char* argv[])
-	{
-		m_StartTime = std::chrono::steady_clock::now();
+    {
+        m_StartTime = std::chrono::steady_clock::now();
 
-		// First, so that every later system sees this thread as GameThreadId
-		Thread::InitGameThread("Game Thread");
+        // First, so that every later system sees this thread as GameThreadId
+        Thread::InitGameThread("Game Thread");
 
-    	// Initalize the command line
-		const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);
+        // Initalize the command line
+        const bool bSuccessfulCommandLineInit = CommandLine::Get().Init(argc, argv);
 
-		// Read the launch flags before anything else starts: they decide the log
-		// format, and whether a crash may open a dialog
-		String LaunchOptionsError;
-		const bool bLaunchOptionsValid = LaunchOptions::Parse(CommandLine::Get(), m_Options, LaunchOptionsError);
+        // Read the launch flags before anything else starts: they decide the log
+        // format, and whether a crash may open a dialog
+        String LaunchOptionsError;
+        const bool bLaunchOptionsValid = LaunchOptions::Parse(CommandLine::Get(), m_Options, LaunchOptionsError);
 
-		if (m_Options.Unattended)
-		{
-			CrashHandler::InstallUnattended();
-		}
+        if (m_Options.Unattended)
+        {
+            CrashHandler::InstallUnattended();
+        }
 
-		Logger::SetFormat(m_Options.Format);
-		Logger::Get().Init();
+        Logger::SetFormat(m_Options.Format);
+        Logger::Get().Init();
 
-		F_LOG_TRACE("Command line initaliziation: {}\t", bSuccessfulCommandLineInit ? "successful" : "failed");
-		F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
+        F_LOG_TRACE("Command line initaliziation: {}\t", bSuccessfulCommandLineInit ? "successful" : "failed");
+        F_LOG_TRACE("Command line args: {}\t", CommandLine::Get().GetCommandLineData());
 
-		if (m_Options.Unattended && !CrashHandler::IsAvailable())
-		{
-			F_LOG_WARN("--unattended: this build has no crash handler (WITH_CRASH_HANDLER_FLAG=OFF). A crash can open a dialog.");
-		}
+        if (m_Options.Unattended && !CrashHandler::IsAvailable())
+        {
+            F_LOG_WARN("--unattended: this build has no crash handler (WITH_CRASH_HANDLER_FLAG=OFF). A crash can open "
+                       "a dialog.");
+        }
 
-		if (!bLaunchOptionsValid)
-		{
-			F_LOG_ERROR("Bad launch arguments: {}", LaunchOptionsError);
-			return ExitCode::BadArguments;
-		}
+        if (!bLaunchOptionsValid)
+        {
+            F_LOG_ERROR("Bad launch arguments: {}", LaunchOptionsError);
+            return ExitCode::BadArguments;
+        }
 
-		// Log the seed, so that --seed can repeat a run that used a random one
-		m_Seed = m_Options.HasSeed ? m_Options.Seed : Random::MakeEntropySeed();
-		Random::Init(m_Seed);
-		F_LOG_TRACE("Random seed: {}", m_Seed);
+        // Log the seed, so that --seed can repeat a run that used a random one
+        m_Seed = m_Options.HasSeed ? m_Options.Seed : Random::MakeEntropySeed();
+        Random::Init(m_Seed);
+        F_LOG_TRACE("Random seed: {}", m_Seed);
 
-		m_SystemsStarted = true;
+        m_SystemsStarted = true;
 
-		FlingConfig::Get().Init();
+        FlingConfig::Get().Init();
 
-		if (CommandLine::Get().GetValueAs<bool>("WaitForDebugger", false))
-		{
-			F_LOG_TRACE("-WaitForDebugger was set, breaking into the debugger now");
-			F_DEBUG_BREAK();
-		}
+        if (CommandLine::Get().GetValueAs<bool>("WaitForDebugger", false))
+        {
+            F_LOG_TRACE("-WaitForDebugger was set, breaking into the debugger now");
+            F_DEBUG_BREAK();
+        }
 
-		ResourceManager::Get().Init();
-		Timing::Get().Init();
-		Input::Get().SetLogLevel(m_Options.InputLog);
-		Input::Get().Init();
+        ResourceManager::Get().Init();
+        Timing::Get().Init();
+        Input::Get().SetLogLevel(m_Options.InputLog);
+        Input::Get().Init();
 
         F_LOG_TRACE("Fling Engine Sourcedir:  \t{}", Fling::FlingPaths::EngineSourceDir());
         F_LOG_TRACE("Fling Engine Assets dir: \t{}", Fling::FlingPaths::EngineAssetsDir());
@@ -201,165 +212,170 @@ namespace Fling
         F_LOG_TRACE("Fling Engine Config dir: \t{}", Fling::FlingPaths::EngineConfigDir());
 
 #ifdef FLING_SHIPPING
-		F_LOG_TRACE("Fling Engine Config: Shipping");
+        F_LOG_TRACE("Fling Engine Config: Shipping");
 #endif
 
         // Load command line args and any ini files
         const String EngineConfigPath = FlingPaths::EngineConfigDir() + "/EngineConf.ini";
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(EngineConfigPath);
 
-		if (!ConfigLoaded)
-		{
-			F_LOG_WARN("NO EngineConf.ini has been provided! This may result in unexpected behavior from Fling!");
-		}
+        if (!ConfigLoaded)
+        {
+            F_LOG_WARN("NO EngineConf.ini has been provided! This may result in unexpected behavior from Fling!");
+        }
 
-		// Let the command line consider the same ini's [ConsoleVariables] section as a
-		// fallback, so systems can query CommandLine::GetValueAs for values that were
-		// only set in the config file. Command line args passed directly still win.
-		CommandLine::Get().LoadConfigFile(EngineConfigPath);
+        // Let the command line consider the same ini's [ConsoleVariables] section as a
+        // fallback, so systems can query CommandLine::GetValueAs for values that were
+        // only set in the config file. Command line args passed directly still win.
+        CommandLine::Get().LoadConfigFile(EngineConfigPath);
 
-		if (const ExitCode LocalizationCode = StartLocalization(); LocalizationCode != ExitCode::Success)
-		{
-			return LocalizationCode;
-		}
+        if (const ExitCode LocalizationCode = StartLocalization(); LocalizationCode != ExitCode::Success)
+        {
+            return LocalizationCode;
+        }
 
 #if WITH_INPUT_RECORDING
-		// Start input replay and recording before the world exists. A file that cannot
-		// be read then exits with code 3, and Shutdown has no world to stop.
-		if (!m_Options.ReplayInput.empty())
-		{
-			const String ReplayPath = FlingPaths::ResolveProjectPath(m_Options.ReplayInput);
-			String ReplayError;
-			if (!Input::Get().GetPlayback().Start(ReplayPath, 0.0f, ReplayError))
-			{
-				F_LOG_ERROR("Cannot replay input: {}", ReplayError);
-				return ExitCode::BadArguments;
-			}
-			const InputPlayback& Playback = Input::Get().GetPlayback();
-			F_LOG_TRACE("Replaying input from {} ({} messages, {:.2f} s)", ReplayPath, Playback.GetMessageCount(), Playback.GetLength());
-		}
+        // Start input replay and recording before the world exists. A file that cannot
+        // be read then exits with code 3, and Shutdown has no world to stop.
+        if (!m_Options.ReplayInput.empty())
+        {
+            const String ReplayPath = FlingPaths::ResolveProjectPath(m_Options.ReplayInput);
+            String ReplayError;
+            if (!Input::Get().GetPlayback().Start(ReplayPath, 0.0f, ReplayError))
+            {
+                F_LOG_ERROR("Cannot replay input: {}", ReplayError);
+                return ExitCode::BadArguments;
+            }
+            const InputPlayback& Playback = Input::Get().GetPlayback();
+            F_LOG_TRACE("Replaying input from {} ({} messages, {:.2f} s)",
+                        ReplayPath,
+                        Playback.GetMessageCount(),
+                        Playback.GetLength());
+        }
 
-		if (!m_Options.RecordInput.empty())
-		{
-			const String RecordPath = FlingPaths::ResolveProjectPath(m_Options.RecordInput);
-			Input::Get().GetRecorder().Start(RecordPath, 0.0f, 0.0f);
-			F_LOG_TRACE("Recording input to {}", RecordPath);
-		}
+        if (!m_Options.RecordInput.empty())
+        {
+            const String RecordPath = FlingPaths::ResolveProjectPath(m_Options.RecordInput);
+            Input::Get().GetRecorder().Start(RecordPath, 0.0f, 0.0f);
+            F_LOG_TRACE("Recording input to {}", RecordPath);
+        }
 #endif
 
-		// The world owns the entity storage. The renderer and physics keep a reference
-		// to it, so make the world first, and destroy it after them.
-		m_World = new World(m_GameImpl);
-		m_GameImpl->m_OwningWorld = m_World;
-		EntityStorage& Storage = m_World->GetStorage();
+        // The world owns the entity storage. The renderer and physics keep a reference
+        // to it, so make the world first, and destroy it after them.
+        m_World = new World(m_GameImpl);
+        m_GameImpl->m_OwningWorld = m_World;
+        EntityStorage& Storage = m_World->GetStorage();
 
-		if (m_Options.NullRender)
-		{
-			// No window, no swapchain, and no GPU device. Graphics resources keep their
-			// CPU data only (see VulkanApp::HasDevice). The developer UI draws with
-			// ImGui in the renderer, so it cannot run either.
-			F_LOG_TRACE("Fling render: null (--null-render)");
-			m_DebugUI.reset();
-		}
-		else
-		{
-			VulkanApp::Get().Init(
-				static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP | PipelineFlags::IMGUI),
-				Storage,
-				m_DebugUI
-			);
-		}
+        if (m_Options.NullRender)
+        {
+            // No window, no swapchain, and no GPU device. Graphics resources keep their
+            // CPU data only (see VulkanApp::HasDevice). The developer UI draws with
+            // ImGui in the renderer, so it cannot run either.
+            F_LOG_TRACE("Fling render: null (--null-render)");
+            m_DebugUI.reset();
+        }
+        else
+        {
+            VulkanApp::Get().Init(
+                static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP | PipelineFlags::IMGUI),
+                Storage,
+                m_DebugUI);
+        }
 
-		// Each linked module adds its component types and systems. World::Init adds the
-		// game's, then builds the type registry and the schedule.
-		RegisterEngine(m_World->GetModules());
-		RegisterGraphics(m_World->GetModules());
-		RegisterPhysics(m_World->GetModules());
+        // Each linked module adds its component types and systems. World::Init adds the
+        // game's, then builds the type registry and the schedule.
+        RegisterEngine(m_World->GetModules());
+        RegisterGraphics(m_World->GetModules());
+        RegisterPhysics(m_World->GetModules());
 
-		// The game can bring its own physics provider. If it does not, use the one
-		// that this build compiled (FLING_PHYSICS_PROVIDER).
-		std::shared_ptr<PhysicsProvider> PhysicsProviderToUse = m_GameImpl->CreatePhysicsProvider();
-		if (!PhysicsProviderToUse)
-		{
-			PhysicsProviderToUse = CreateDefaultPhysicsProvider();
-		}
-		// [Physics] WorkerThreads: threads that help with each physics step. 0 (or
-		// missing) runs the step on the game thread. The result is the same either way.
-		PhysicsSettings InitialPhysicsSettings;
-		InitialPhysicsSettings.m_WorkerThreadCount =
-			static_cast<uint32>(std::max(FlingConfig::GetInt("Physics", "WorkerThreads"), 0));
-		F_LOG_TRACE("Physics provider: {} ({} worker threads)",
-			PhysicsProviderToUse->GetName(), InitialPhysicsSettings.m_WorkerThreadCount);
+        // The game can bring its own physics provider. If it does not, use the one
+        // that this build compiled (FLING_PHYSICS_PROVIDER).
+        std::shared_ptr<PhysicsProvider> PhysicsProviderToUse = m_GameImpl->CreatePhysicsProvider();
+        if (!PhysicsProviderToUse)
+        {
+            PhysicsProviderToUse = CreateDefaultPhysicsProvider();
+        }
+        // [Physics] WorkerThreads: threads that help with each physics step. 0 (or
+        // missing) runs the step on the game thread. The result is the same either way.
+        PhysicsSettings InitialPhysicsSettings;
+        InitialPhysicsSettings.m_WorkerThreadCount =
+            static_cast<uint32>(std::max(FlingConfig::GetInt("Physics", "WorkerThreads"), 0));
+        F_LOG_TRACE("Physics provider: {} ({} worker threads)",
+                    PhysicsProviderToUse->GetName(),
+                    InitialPhysicsSettings.m_WorkerThreadCount);
 
-		// The physics scene is in the registry context, so a level load (registry.reset) keeps it
-		Physics::InitWorld(Storage, PhysicsProviderToUse, InitialPhysicsSettings);
+        // The physics scene is in the registry context, so a level load (registry.reset) keeps it
+        Physics::InitWorld(Storage, PhysicsProviderToUse, InitialPhysicsSettings);
 
-		// A --null-render run has no real frame time, so it runs one fixed tick per frame.
-		SystemRunnerConfig RunnerConfig;
-		RunnerConfig.OneTickPerFrame = m_Options.NullRender;
-		m_World->SetSystemRunnerConfig(RunnerConfig);
+        // A --null-render run has no real frame time, so it runs one fixed tick per frame.
+        SystemRunnerConfig RunnerConfig;
+        RunnerConfig.OneTickPerFrame = m_Options.NullRender;
+        m_World->SetSystemRunnerConfig(RunnerConfig);
 
-		// Each fixed tick takes the input messages that no earlier tick took, with its own
-		// cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.
-		auto TickInputs = std::make_shared<TickInputBuilder>(Input::Get().GetHandler());
-		m_World->SetTickInputSource([TickInputs](TickInput& t_Out)
-		{
-			const Input& GameInput = Input::Get();
-			TickInputs->Build(t_Out, GameInput.IsKeyboardCaptured(), GameInput.IsMouseCaptured());
-		});
+        // Each fixed tick takes the input messages that no earlier tick took, with its own
+        // cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.
+        auto TickInputs = std::make_shared<TickInputBuilder>(Input::Get().GetHandler());
+        m_World->SetTickInputSource(
+            [TickInputs](TickInput& t_Out)
+            {
+                const Input& GameInput = Input::Get();
+                TickInputs->Build(t_Out, GameInput.IsKeyboardCaptured(), GameInput.IsMouseCaptured());
+            });
 
-		// Before World::Init() seals the component type registry, so developer UI
-		// (the editor) can still attach to component types
-		if (m_DebugUI)
-		{
-			m_DebugUI->Init(Storage, m_World, m_GameImpl);
-			F_LOG_TRACE("Fling debug UI: Enabled");
-		}
-		else
-		{
-			F_LOG_TRACE("Fling debug UI: Disabled");
-		}
+        // Before World::Init() seals the component type registry, so developer UI
+        // (the editor) can still attach to component types
+        if (m_DebugUI)
+        {
+            m_DebugUI->Init(Storage, m_World, m_GameImpl);
+            F_LOG_TRACE("Fling debug UI: Enabled");
+        }
+        else
+        {
+            F_LOG_TRACE("Fling debug UI: Disabled");
+        }
 
-		if (!m_Options.NullRender)
-		{
-			// The window exists now. Its events are pumped by the GLFW input interface
-			m_InputWindow = GetInputWindowHandle(VulkanApp::Get().GetCurrentWindow());
-			m_GlfwInputId = Input::Get().AddInterface(CreateGlfwInputDeviceInterface());
-			Input::Get().NotifyWindowCreated(m_InputWindow);
-		}
+        if (!m_Options.NullRender)
+        {
+            // The window exists now. Its events are pumped by the GLFW input interface
+            m_InputWindow = GetInputWindowHandle(VulkanApp::Get().GetCurrentWindow());
+            m_GlfwInputId = Input::Get().AddInterface(CreateGlfwInputDeviceInterface());
+            Input::Get().NotifyWindowCreated(m_InputWindow);
+        }
 
-		return ExitCode::Success;
-	}
+        return ExitCode::Success;
+    }
 
-	ExitCode Engine::Tick()
-	{
-		assert(m_World && m_GameImpl);		// We HAVE to have a world and a game
+    ExitCode Engine::Tick()
+    {
+        assert(m_World && m_GameImpl); // We HAVE to have a world and a game
 
-		Timing& Timing = Timing::Get();
+        Timing& Timing = Timing::Get();
 
-		// Once the world is initialized it allows the users to add their own components!
-		// A schedule with errors stops here: World::Init logged each error.
-		const bool bWorldReady = m_World->Init(m_Options.Level);
+        // Once the world is initialized it allows the users to add their own components!
+        // A schedule with errors stops here: World::Init logged each error.
+        const bool bWorldReady = m_World->Init(m_Options.Level);
 
-		if (m_Options.DumpSchedule || m_Options.ValidateSchedule)
-		{
-			if (m_Options.DumpSchedule && m_World->GetSchedule())
-			{
-				std::fputs(m_World->GetSchedule()->Dump().c_str(), stdout);
-			}
-			if (!bWorldReady)
-			{
-				std::fputs(m_World->GetScheduleErrors().c_str(), stderr);
-			}
-			std::fflush(stdout);
-			F_LOG_TRACE("System schedule {} (--dump-schedule / --validate-schedule)", bWorldReady ? "is valid" : "has errors");
-			return bWorldReady ? ExitCode::Success : ExitCode::Failure;
-		}
+        if (m_Options.DumpSchedule || m_Options.ValidateSchedule)
+        {
+            if (m_Options.DumpSchedule && m_World->GetSchedule())
+            {
+                std::fputs(m_World->GetSchedule()->Dump().c_str(), stdout);
+            }
+            if (!bWorldReady)
+            {
+                std::fputs(m_World->GetScheduleErrors().c_str(), stderr);
+            }
+            std::fflush(stdout);
+            F_LOG_TRACE("System schedule {} (--dump-schedule / --validate-schedule)",
+                        bWorldReady ? "is valid" : "has errors");
+            return bWorldReady ? ExitCode::Success : ExitCode::Failure;
+        }
 
-		if (!bWorldReady)
-		{
-			return ExitCode::Failure;
-		}
+        if (!bWorldReady)
+        {
+            return ExitCode::Failure;
+        }
 
         // The developer UI starts the game with its "Play" button. With no developer
         // UI (a game build, or --null-render), the game starts on the first tick.
@@ -371,201 +387,207 @@ namespace Fling
         }
         else
         {
-			m_World->RequestGameStart();
-		}
+            m_World->RequestGameStart();
+        }
 
-		const float NullRenderDeltaTime = 1.0f / static_cast<float>(LaunchOptions::NullRenderTickRate);
+        const float NullRenderDeltaTime = 1.0f / static_cast<float>(LaunchOptions::NullRenderTickRate);
 
-		// While the window is in the background, a frame takes at least this long. The swap
-		// chain does not wait for vsync, so with no cap a background game takes the whole GPU.
-		constexpr std::chrono::steady_clock::duration BackgroundFrameTime =
-			std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::seconds(1)) / 30;
+        // While the window is in the background, a frame takes at least this long. The swap
+        // chain does not wait for vsync, so with no cap a background game takes the whole GPU.
+        constexpr std::chrono::steady_clock::duration BackgroundFrameTime =
+            std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::seconds(1)) / 30;
 
-		while(ShouldTick())
-		{
-			const std::chrono::steady_clock::time_point FrameStart = std::chrono::steady_clock::now();
+        while (ShouldTick())
+        {
+            const std::chrono::steady_clock::time_point FrameStart = std::chrono::steady_clock::now();
 
             // Update timing
             Timing.Update();
 
-			// Under --null-render each tick has the same delta and the loop never waits
-			// on real time, so a run is as fast as the CPU allows
+            // Under --null-render each tick has the same delta and the loop never waits
+            // on real time, so a run is as fast as the CPU allows
             const float DeltaTime = m_Options.NullRender ? NullRenderDeltaTime : Timing.GetDeltaTime();
 
-			// Update FPS Counter
+            // Update FPS Counter
             Stats::Frames::TickStats(DeltaTime);
 
-			// Poll pumps the platform events (GLFW) when there is a window, so it comes before
-			// anything that reads the window state. Under --null-render there are no window
-			// devices. DeltaTime moves the input recorder and playback clocks, so a
-			// --null-render replay is the same every time.
-			Input::Get().Poll(DeltaTime);
+            // Poll pumps the platform events (GLFW) when there is a window, so it comes before
+            // anything that reads the window state. Under --null-render there are no window
+            // devices. DeltaTime moves the input recorder and playback clocks, so a
+            // --null-render replay is the same every time.
+            Input::Get().Poll(DeltaTime);
 
-			// The game sees the input up to now, and the same input for the whole tick
-			Input::Get().BeginTick();
+            // The game sees the input up to now, and the same input for the whole tick
+            Input::Get().BeginTick();
 
-			// World update will handle the starting, updating, and stopping of game logic
-			m_World->Update(DeltaTime);
+            // World update will handle the starting, updating, and stopping of game logic
+            m_World->Update(DeltaTime);
 
-			// Physics runs inside each fixed tick now: the Physics.Step system, in the
-			// ResolveDeferred phase, after every system that requests a force.
-			++m_TicksRun;
+            // Physics runs inside each fixed tick now: the Physics.Step system, in the
+            // ResolveDeferred phase, after every system that requests a force.
+            ++m_TicksRun;
 
-			Input::Get().EndTick();
+            Input::Get().EndTick();
 
-			// Requests from systems that only the application can carry out
-			for (const AppRequest Request : m_World->TakeAppRequests())
-			{
-				if (Request == AppRequest::ToggleCursor && !m_Options.NullRender)
-				{
-					FlingWindow* Window = VulkanApp::Get().GetCurrentWindow();
-					if (Window)
-					{
-						Window->SetMouseVisible(!Window->GetMouseVisible());
-					}
-				}
-			}
+            // Requests from systems that only the application can carry out
+            for (const AppRequest Request : m_World->TakeAppRequests())
+            {
+                if (Request == AppRequest::ToggleCursor && !m_Options.NullRender)
+                {
+                    FlingWindow* Window = VulkanApp::Get().GetCurrentWindow();
+                    if (Window)
+                    {
+                        Window->SetMouseVisible(!Window->GetMouseVisible());
+                    }
+                }
+            }
 
-			if(m_World->ShouldQuit())
-			{
-				F_LOG_TRACE("World should quit! Exiting engine loop...");
-				break;
-			}
+            if (m_World->ShouldQuit())
+            {
+                F_LOG_TRACE("World should quit! Exiting engine loop...");
+                break;
+            }
 
-			if (!m_Options.NullRender)
-			{
-				VulkanApp::Get().Update(DeltaTime, m_World->GetStorage());
+            if (!m_Options.NullRender)
+            {
+                VulkanApp::Get().Update(DeltaTime, m_World->GetStorage());
 
-				const bool bFocused = VulkanApp::Get().GetCurrentWindow()->IsFocused();
-				if (bFocused == m_FramesCapped)
-				{
-					m_FramesCapped = !bFocused;
-					if (m_FramesCapped)
-					{
-						F_LOG_TRACE("Window in the background: frames capped at 30 a second");
-					}
-					else
-					{
-						F_LOG_TRACE("Window in front: frames uncapped");
-					}
-				}
+                const bool bFocused = VulkanApp::Get().GetCurrentWindow()->IsFocused();
+                if (bFocused == m_FramesCapped)
+                {
+                    m_FramesCapped = !bFocused;
+                    if (m_FramesCapped)
+                    {
+                        F_LOG_TRACE("Window in the background: frames capped at 30 a second");
+                    }
+                    else
+                    {
+                        F_LOG_TRACE("Window in front: frames uncapped");
+                    }
+                }
 
-				// The game ticks with the real delta time, so it runs at the same speed, only
-				// in fewer and longer ticks
-				if (m_FramesCapped)
-				{
-					std::this_thread::sleep_until(FrameStart + BackgroundFrameTime);
-				}
-			}
+                // The game ticks with the real delta time, so it runs at the same speed, only
+                // in fewer and longer ticks
+                if (m_FramesCapped)
+                {
+                    std::this_thread::sleep_until(FrameStart + BackgroundFrameTime);
+                }
+            }
 
-			Timing.UpdateFps();
-		}
-		return ExitCode::Success;
-	}
+            Timing.UpdateFps();
+        }
+        return ExitCode::Success;
+    }
 
-	bool Engine::ShouldTick() const
-	{
-		if (m_Options.Frames > 0 && m_TicksRun >= m_Options.Frames)
-		{
-			F_LOG_TRACE("Ran {} ticks (--frames). Exiting engine loop...", m_TicksRun);
-			return false;
-		}
+    bool Engine::ShouldTick() const
+    {
+        if (m_Options.Frames > 0 && m_TicksRun >= m_Options.Frames)
+        {
+            F_LOG_TRACE("Ran {} ticks (--frames). Exiting engine loop...", m_TicksRun);
+            return false;
+        }
 
-		if (!m_Options.NullRender && VulkanApp::Get().GetCurrentWindow()->ShouldClose())
-		{
-			return false;
-		}
+        if (!m_Options.NullRender && VulkanApp::Get().GetCurrentWindow()->ShouldClose())
+        {
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	ExitCode Engine::Shutdown(ExitCode t_Code)
-	{
-		// Cleanup game play stuff
-		if(m_World)
-		{
-			m_World->Shutdown();
-		}
+    ExitCode Engine::Shutdown(ExitCode t_Code)
+    {
+        // Cleanup game play stuff
+        if (m_World)
+        {
+            m_World->Shutdown();
+        }
 
-    	delete m_GameImpl;
-    	m_GameImpl = nullptr;
+        delete m_GameImpl;
+        m_GameImpl = nullptr;
 
-		// Cleanup any resources
-		if (m_SystemsStarted)
-		{
+        // Cleanup any resources
+        if (m_SystemsStarted)
+        {
 #if WITH_INPUT_RECORDING
-			Input::Get().GetPlayback().Stop();
-			InputRecorder& Recorder = Input::Get().GetRecorder();
-			if (Recorder.IsActive())
-			{
-				const String RecordPath = Recorder.GetPath();
-				if (Recorder.Stop())
-				{
-					F_LOG_TRACE("Saved input recording to {}", RecordPath);
-				}
-				else
-				{
-					F_LOG_ERROR("Cannot save input recording to {}: {}", RecordPath, Recorder.GetLastError());
-				}
-			}
+            Input::Get().GetPlayback().Stop();
+            InputRecorder& Recorder = Input::Get().GetRecorder();
+            if (Recorder.IsActive())
+            {
+                const String RecordPath = Recorder.GetPath();
+                if (Recorder.Stop())
+                {
+                    F_LOG_TRACE("Saved input recording to {}", RecordPath);
+                }
+                else
+                {
+                    F_LOG_ERROR("Cannot save input recording to {}: {}", RecordPath, Recorder.GetLastError());
+                }
+            }
 #endif
 
-			if (m_GlfwInputId.IsValid())
-			{
-				// The window is still alive here (VulkanApp::Shutdown is below)
-				Input::Get().NotifyWindowDestroyed(m_InputWindow);
-				Input::Get().RemoveInterface(m_GlfwInputId);
-				m_GlfwInputId = InputInterfaceId{};
-				m_InputWindow = WindowHandle{};
-			}
-			Input::Get().Shutdown();
-			Localization::SetActive(nullptr);
-			ResourceManager::Get().Shutdown();
-			FlingConfig::Get().Shutdown();
-			Timing::Get().Shutdown();
+            if (m_GlfwInputId.IsValid())
+            {
+                // The window is still alive here (VulkanApp::Shutdown is below)
+                Input::Get().NotifyWindowDestroyed(m_InputWindow);
+                Input::Get().RemoveInterface(m_GlfwInputId);
+                m_GlfwInputId = InputInterfaceId{};
+                m_InputWindow = WindowHandle{};
+            }
+            Input::Get().Shutdown();
+            Localization::SetActive(nullptr);
+            ResourceManager::Get().Shutdown();
+            FlingConfig::Get().Shutdown();
+            Timing::Get().Shutdown();
 
-			if (!m_Options.NullRender && m_World)
-			{
-				VulkanApp::Get().ShutdownRenderer();
-			}
-		}
+            if (!m_Options.NullRender && m_World)
+            {
+                VulkanApp::Get().ShutdownRenderer();
+            }
+        }
 
-		if (m_World)
-		{
-			Physics::ShutdownWorld(m_World->GetStorage());
-			m_World->GetStorage().Clear();
-			delete m_World;
-			m_World = nullptr;
-		}
+        if (m_World)
+        {
+            Physics::ShutdownWorld(m_World->GetStorage());
+            m_World->GetStorage().Clear();
+            delete m_World;
+            m_World = nullptr;
+        }
 
-		PrintExitSummary(t_Code);
+        PrintExitSummary(t_Code);
 
-		// Last, so that every system above can still log while it shuts down
-		Logger::Get().Shutdown();
+        // Last, so that every system above can still log while it shuts down
+        Logger::Get().Shutdown();
 
-		return t_Code;
-	}
+        return t_Code;
+    }
 
-	void Engine::PrintExitSummary(ExitCode t_Code) const
-	{
-		const double WallSeconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - m_StartTime).count();
-		const char* Render = m_Options.NullRender ? "null" : "vulkan";
+    void Engine::PrintExitSummary(ExitCode t_Code) const
+    {
+        const double WallSeconds =
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - m_StartTime).count();
+        const char* Render = m_Options.NullRender ? "null" : "vulkan";
 
-		if (m_Options.Format == LogFormat::Json)
-		{
-			std::printf(
-				"{\"event\":\"exit\",\"code\":%d,\"ticks\":%llu,\"seed\":%u,\"render\":\"%s\",\"wallSeconds\":%.3f}\n",
-				ToInt(t_Code), static_cast<unsigned long long>(m_TicksRun), m_Seed, Render, WallSeconds
-			);
-		}
-		else
-		{
-			std::printf(
-				"Fling exit: code=%d ticks=%llu seed=%u render=%s wall=%.3fs\n",
-				ToInt(t_Code), static_cast<unsigned long long>(m_TicksRun), m_Seed, Render, WallSeconds
-			);
-		}
+        if (m_Options.Format == LogFormat::Json)
+        {
+            std::printf(
+                "{\"event\":\"exit\",\"code\":%d,\"ticks\":%llu,\"seed\":%u,\"render\":\"%s\",\"wallSeconds\":%.3f}\n",
+                ToInt(t_Code),
+                static_cast<unsigned long long>(m_TicksRun),
+                m_Seed,
+                Render,
+                WallSeconds);
+        }
+        else
+        {
+            std::printf("Fling exit: code=%d ticks=%llu seed=%u render=%s wall=%.3fs\n",
+                        ToInt(t_Code),
+                        static_cast<unsigned long long>(m_TicksRun),
+                        m_Seed,
+                        Render,
+                        WallSeconds);
+        }
 
-		std::fflush(stdout);
-	}
-}	// namespace Fling
+        std::fflush(stdout);
+    }
+} // namespace Fling

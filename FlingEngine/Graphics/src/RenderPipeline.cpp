@@ -8,114 +8,114 @@
 
 namespace Fling
 {
-	RenderPipeline::RenderPipeline(LogicalDevice* t_Dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses)
-		: m_Subpasses ( std::move(t_Subpasses) )
-		, m_Device(t_Dev)
-		, m_SwapChain(t_Swap)
-	{
-		assert(m_Device && m_SwapChain);
+    RenderPipeline::RenderPipeline(LogicalDevice* t_Dev,
+                                   Swapchain* t_Swap,
+                                   std::vector<std::unique_ptr<Subpass>>& t_Subpasses)
+        : m_Subpasses(std::move(t_Subpasses)), m_Device(t_Dev), m_SwapChain(t_Swap)
+    {
+        assert(m_Device && m_SwapChain);
 
-		// Create the graphics pipelines on each subpass now that we have render passes for them
-		for (const std::unique_ptr<Subpass>& pass : m_Subpasses)
-		{	
-			pass->CreateGraphicsPipeline();	
-		}
-		F_LOG_TRACE("Render pipeline Graphics Pipelines created...");
+        // Create the graphics pipelines on each subpass now that we have render passes for them
+        for (const std::unique_ptr<Subpass>& pass : m_Subpasses)
+        {
+            pass->CreateGraphicsPipeline();
+        }
+        F_LOG_TRACE("Render pipeline Graphics Pipelines created...");
 
-		// Build Descriptor sets -------
-		CreateDescriptors();
+        // Build Descriptor sets -------
+        CreateDescriptors();
 
-		F_LOG_TRACE("Render pipeline Creation done!");
-	}
+        F_LOG_TRACE("Render pipeline Creation done!");
+    }
 
-	RenderPipeline::~RenderPipeline()
-	{
-		assert(m_Device);
+    RenderPipeline::~RenderPipeline()
+    {
+        assert(m_Device);
 
-		vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
 
-		// Cleanup subpasses
-		m_Subpasses.clear();
-	}
+        // Cleanup subpasses
+        m_Subpasses.clear();
+    }
 
-	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime)
-	{
-		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
+    void RenderPipeline::Draw(CommandBuffer& t_CmdBuf,
+                              VkFramebuffer t_PresentFrameBuf,
+                              uint32 t_ActiveFrameInFlight,
+                              const RenderSnapshot& t_Snapshot,
+                              float DeltaTime)
+    {
+        assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
-		for (size_t i = 0; i < m_Subpasses.size(); ++i)
-		{
-			// Build the subpasses for the active frame in flight	
-			m_Subpasses[i]->Draw(
-				t_CmdBuf, 
-				t_ActiveFrameInFlight, 
-				t_Snapshot,
-				DeltaTime
-			);
-		}
-	}
+        for (size_t i = 0; i < m_Subpasses.size(); ++i)
+        {
+            // Build the subpasses for the active frame in flight
+            m_Subpasses[i]->Draw(t_CmdBuf, t_ActiveFrameInFlight, t_Snapshot, DeltaTime);
+        }
+    }
 
-	void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, uint32 t_ActiveFrameIndex, uint32 t_CurrentFrameInFlight)
-	{
-		for (const auto& subpass : m_Subpasses)
-		{
-			subpass->GatherPresentDependencies(t_CmdBuffs, t_Deps, t_ActiveFrameIndex, t_CurrentFrameInFlight);
-		}
-	}
+    void RenderPipeline::GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs,
+                                                   std::vector<VkSemaphore>& t_Deps,
+                                                   uint32 t_ActiveFrameIndex,
+                                                   uint32 t_CurrentFrameInFlight)
+    {
+        for (const auto& subpass : m_Subpasses)
+        {
+            subpass->GatherPresentDependencies(t_CmdBuffs, t_Deps, t_ActiveFrameIndex, t_CurrentFrameInFlight);
+        }
+    }
 
-	void RenderPipeline::GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex)
-	{
-		for (const auto& subpass : m_Subpasses)
-		{
-			subpass->GatherPresentBuffers(t_CmdBuffs, t_ActiveFrameIndex);
-		}
-	}
+    void RenderPipeline::GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex)
+    {
+        for (const auto& subpass : m_Subpasses)
+        {
+            subpass->GatherPresentBuffers(t_CmdBuffs, t_ActiveFrameIndex);
+        }
+    }
 
-	void RenderPipeline::CleanUp()
-	{
-		for (const auto& Sub : m_Subpasses)
-		{
-			Sub->CleanUp();
-		}
-	}
+    void RenderPipeline::CleanUp()
+    {
+        for (const auto& Sub : m_Subpasses)
+        {
+            Sub->CleanUp();
+        }
+    }
 
-	void RenderPipeline::OnSwapchainResized()
-	{
-		for (const auto& Sub : m_Subpasses)
-		{
-			Sub->OnSwapchainResized();
-		}
-	}
+    void RenderPipeline::OnSwapchainResized()
+    {
+        for (const auto& Sub : m_Subpasses)
+        {
+            Sub->OnSwapchainResized();
+        }
+    }
 
-	void RenderPipeline::CreateDescriptors()
-	{
-		// Create the descriptor pool for us to use -------
-		const uint32 SwapImageCount = static_cast<uint32>(m_SwapChain->GetImageCount());
-		uint32 DescriptorCount = 1024;
+    void RenderPipeline::CreateDescriptors()
+    {
+        // Create the descriptor pool for us to use -------
+        const uint32 SwapImageCount = static_cast<uint32>(m_SwapChain->GetImageCount());
+        uint32 DescriptorCount = 1024;
 
-		std::vector<VkDescriptorPoolSize> poolSizes =
-		{
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)
-		};
+        std::vector<VkDescriptorPoolSize> poolSizes = {
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, DescriptorCount),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, DescriptorCount),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DescriptorCount),
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, DescriptorCount)};
 
-		VkDescriptorPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
-		poolInfo.pPoolSizes = poolSizes.data();
-		// Each subpass may allocate one set for each swap chain image
-		poolInfo.maxSets = SwapImageCount * static_cast<uint32>(m_Subpasses.size());
+        VkDescriptorPoolCreateInfo poolInfo = {};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
+        poolInfo.pPoolSizes = poolSizes.data();
+        // Each subpass may allocate one set for each swap chain image
+        poolInfo.maxSets = SwapImageCount * static_cast<uint32>(m_Subpasses.size());
 
-		VK_CHECK_RESULT(vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool));
+        VK_CHECK_RESULT(vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool));
 
-		// Build all the descriptor SETS in each subpass
-		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
+        // Build all the descriptor SETS in each subpass
+        assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
-		for (std::unique_ptr<Subpass>& Pass : m_Subpasses)
-		{	
-			Pass->CreateDescriptorSets(m_DescriptorPool);
-		}
-	}
-}
+        for (std::unique_ptr<Subpass>& Pass : m_Subpasses)
+        {
+            Pass->CreateDescriptorSets(m_DescriptorPool);
+        }
+    }
+} // namespace Fling

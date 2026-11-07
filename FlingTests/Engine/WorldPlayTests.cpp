@@ -21,10 +21,7 @@ namespace
     public:
         void Init(Fling::EntityStorage&) override { Calls.push_back("Init"); }
 
-        void Register(Fling::ModuleRegistration& t_Modules) override
-        {
-            Fling::RegisterEngine(t_Modules);
-        }
+        void Register(Fling::ModuleRegistration& t_Modules) override { Fling::RegisterEngine(t_Modules); }
 
         void OnStartGame(Fling::EntityStorage& t_Reg) override
         {
@@ -235,5 +232,4 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         const std::vector<String> Expected = {"Init", "Shutdown"};
         REQUIRE(TestGame.Calls == Expected);
     }
-
 }

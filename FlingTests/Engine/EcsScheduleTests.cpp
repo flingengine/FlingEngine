@@ -75,8 +75,7 @@ namespace
     }
 
     /** The names in each stage of one update rate, for every segment in order. */
-    std::vector<std::vector<String>> StageNames(const Schedule& schedule,
-                                                     const UpdateRate rate = UpdateRate::Fixed)
+    std::vector<std::vector<String>> StageNames(const Schedule& schedule, const UpdateRate rate = UpdateRate::Fixed)
     {
         std::vector<std::vector<String>> stages;
         for (const ScheduleSegment& segment : schedule.GetSegments(rate))
@@ -388,7 +387,8 @@ TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
 
     const String dump = result.Value.Dump();
     REQUIRE(dump.find("Fixed (once per tick)\n") != String::npos);
-    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred, Engine.Transform\n") != String::npos);
+    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred, Engine.Transform\n") !=
+            String::npos);
     REQUIRE(dump.find("Frame (once per frame)") == String::npos);
     REQUIRE(dump.find("[Engine.Simulation]") != String::npos);
     REQUIRE(dump.find("writes Mover, Transform") != String::npos);
@@ -628,14 +628,14 @@ TEST_CASE("Phases are listed in run order", "[ecs][schedule][phases]")
         names.emplace_back(phase->Name);
     }
     REQUIRE(names == std::vector<String>{"Engine.Input",
-                                              "Engine.Simulation",
-                                              "ModA.Abilities",
-                                              "Engine.ResolveDeferred",
-                                              "Engine.Transform",
-                                              "Game.Late",
-                                              "Engine.PostSimulation",
-                                              "Engine.Extract",
-                                              "Engine.Editor"});
+                                         "Engine.Simulation",
+                                         "ModA.Abilities",
+                                         "Engine.ResolveDeferred",
+                                         "Engine.Transform",
+                                         "Game.Late",
+                                         "Engine.PostSimulation",
+                                         "Engine.Extract",
+                                         "Engine.Editor"});
 }
 
 namespace

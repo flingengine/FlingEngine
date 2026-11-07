@@ -93,7 +93,7 @@ TEST_CASE("Numbers use the separators of the language", "[Strings][Language]")
 
     // French uses a narrow no-break space (U+202F)
     CHECK(FormatNumber(int64{12345}, French) == "12\xE2\x80\xAF"
-                                                       "345");
+                                                "345");
 
     CHECK(FormatNumber(1234.5, English) == "1,234.5");
     CHECK(FormatNumber(1234.5, German) == "1.234,5");

@@ -72,11 +72,8 @@ namespace Fling
         }
 
         /** Read a flag that must be a whole number from 0 to the uint32 maximum. */
-        bool ReadUint32(const CommandLine& t_CmdLine,
-                        StringView t_Flag,
-                        uint32& t_Out,
-                        bool& t_OutFound,
-                        String& t_OutError)
+        bool
+        ReadUint32(const CommandLine& t_CmdLine, StringView t_Flag, uint32& t_Out, bool& t_OutFound, String& t_OutError)
         {
             t_OutFound = false;
 
@@ -92,8 +89,8 @@ namespace Fling
             if (Str.empty() || Error != std::errc() || End != Str.data() + Str.size() ||
                 Result > std::numeric_limits<uint32>::max())
             {
-                t_OutError = "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" +
-                             String(Str) + "'";
+                t_OutError =
+                    "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" + String(Str) + "'";
                 return false;
             }
 

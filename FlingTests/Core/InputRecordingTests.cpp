@@ -108,14 +108,14 @@ namespace
 TEST_CASE("InputRecording parses the documented example", "[Input][Recording]")
 {
     const String Text = "{\"format\":\"fling-input\",\"version\":1,\"duration\":4.0}\n"
-                             "# Walk forward for one second, then strafe left\n"
-                             "{\"t\":0.0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
-                             "{\"t\":1.0,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
-                             "{\"t\":1.0,\"type\":\"Press\",\"key\":\"A\",\"duration\":0.5}\n"
-                             "\n"
-                             "{\"t\":2.0,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":1.0}\n"
-                             "{\"t\":2.5,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":0.0}\n"
-                             "{\"tick\":200,\"type\":\"Press\",\"key\":\"Escape\"}\n";
+                        "# Walk forward for one second, then strafe left\n"
+                        "{\"t\":0.0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
+                        "{\"t\":1.0,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
+                        "{\"t\":1.0,\"type\":\"Press\",\"key\":\"A\",\"duration\":0.5}\n"
+                        "\n"
+                        "{\"t\":2.0,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":1.0}\n"
+                        "{\"t\":2.5,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":0.0}\n"
+                        "{\"tick\":200,\"type\":\"Press\",\"key\":\"Escape\"}\n";
     const InputRecording Recording = MustParse(Text);
 
     CHECK(Recording.Version == 1);
@@ -148,10 +148,10 @@ TEST_CASE("InputRecording picks a device for a message", "[Input][Recording]")
     {
         const InputRecording Recording =
             MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
-                                            "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
-                                            "{\"t\":0,\"type\":\"MouseMove\",\"dx\":1}\n"
-                                            "{\"t\":0,\"type\":\"Char\",\"codepoint\":65}\n"
-                                            "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n");
+                                       "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
+                                       "{\"t\":0,\"type\":\"MouseMove\",\"dx\":1}\n"
+                                       "{\"t\":0,\"type\":\"Char\",\"codepoint\":65}\n"
+                                       "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n");
         REQUIRE(Recording.Devices.size() == 3);
         CHECK(Recording.Devices[0].Info.Type == InputDeviceType::Keyboard);
         CHECK(Recording.Devices[1].Info.Type == InputDeviceType::Mouse);
@@ -184,8 +184,7 @@ TEST_CASE("InputRecording picks a device for a message", "[Input][Recording]")
 
     SECTION("A device ID that is not in the header is an error")
     {
-        const String Error =
-            ParseError(String(Header) + "{\"t\":0,\"device\":5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+        const String Error = ParseError(String(Header) + "{\"t\":0,\"device\":5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
         CHECK_THAT(Error, StartsWith("line 2:"));
         CHECK_THAT(Error, ContainsSubstring("5"));
     }
@@ -246,8 +245,8 @@ TEST_CASE("InputRecording gives mouse moves a position", "[Input][Recording]")
 {
     const InputRecording Recording =
         MustParse(String(Header) + "{\"t\":0.1,\"type\":\"MouseMove\",\"dx\":3,\"dy\":4}\n"
-                                        "{\"t\":0.2,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1}\n"
-                                        "{\"t\":0.3,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1,\"x\":100,\"y\":50}\n");
+                                   "{\"t\":0.2,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1}\n"
+                                   "{\"t\":0.3,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1,\"x\":100,\"y\":50}\n");
     REQUIRE(Recording.Messages.size() == 3);
     CHECK(Recording.Messages[0].Message.PositionX == Catch::Approx(3.0f));
     CHECK(Recording.Messages[0].Message.PositionY == Catch::Approx(4.0f));
@@ -333,7 +332,7 @@ TEST_CASE("InputRecording errors name the line", "[Input][Recording]")
 TEST_CASE("InputRecording sorts messages by time", "[Input][Recording]")
 {
     const InputRecording Recording = MustParse(String(Header) + "{\"t\":2,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
-                                                                     "{\"t\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+                                                                "{\"t\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
     REQUIRE(Recording.Messages.size() == 2);
     CHECK(Recording.Messages[0].Message.Type == InputMessageType::KeyDown);
     CHECK(Recording.Messages[1].Message.Type == InputMessageType::KeyUp);
@@ -682,8 +681,8 @@ TEST_CASE("InputPlayback makes one device for each recorded device", "[Input][Pl
     const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
     InputPlayback Playback(Handler);
     Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
-                                                   "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
-                                                   "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n"),
+                                              "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
+                                              "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n"),
                    0.0f);
 
     const auto Devices = Handler->GetDeviceFactory().GetConnectedDevices();

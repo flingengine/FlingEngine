@@ -4,7 +4,6 @@
 #include "FirstPersonCamera.h"
 #include "FrameBuffer.h"
 #include "GeometrySubpass.h"
-#include "TransformUtil.h"
 #include "GraphicsHelpers.h"
 #include "GraphicsPipeline.h"
 #include "LogicalDevice.h"
@@ -14,303 +13,273 @@
 #include "PhyscialDevice.h"
 #include "Strings/String.h"
 #include "SwapChain.h"
+#include "TransformUtil.h"
 #include "UniformBufferObject.h"
 #include "VulkanApp.h"
 #include "VulkanAppState.h"
 
 namespace Fling
 {
-	GeometrySubpass::GeometrySubpass(
-		const LogicalDevice* t_Dev,
-		const Swapchain* t_Swap,
-		VkRenderPass t_GlobalRenderPass,
-		FirstPersonCamera* t_Cam,
-		FrameBuffer* t_OffscreenDep,
-		std::shared_ptr<Fling::Shader> t_Vert,
-		std::shared_ptr<Fling::Shader> t_Frag)
-		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
-		, m_GlobalRenderPass(t_GlobalRenderPass)
-		, m_Camera(t_Cam)
-		, m_OffscreenFrameBuf(t_OffscreenDep)
-	{
-		assert(m_GlobalRenderPass != VK_NULL_HANDLE);
+    GeometrySubpass::GeometrySubpass(const LogicalDevice* t_Dev,
+                                     const Swapchain* t_Swap,
+                                     VkRenderPass t_GlobalRenderPass,
+                                     FirstPersonCamera* t_Cam,
+                                     FrameBuffer* t_OffscreenDep,
+                                     std::shared_ptr<Fling::Shader> t_Vert,
+                                     std::shared_ptr<Fling::Shader> t_Frag)
+        : Subpass(t_Dev, t_Swap, t_Vert, t_Frag),
+          m_GlobalRenderPass(t_GlobalRenderPass),
+          m_Camera(t_Cam),
+          m_OffscreenFrameBuf(t_OffscreenDep)
+    {
+        assert(m_GlobalRenderPass != VK_NULL_HANDLE);
 
-		// Set clear values
-		m_ClearValues.resize(2);
-		m_ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.2F };
-		m_ClearValues[1].depthStencil = { 1.0f, ~0U };
+        // Set clear values
+        m_ClearValues.resize(2);
+        m_ClearValues[0].color = {0.0f, 0.0f, 0.0f, 0.2F};
+        m_ClearValues[1].depthStencil = {1.0f, ~0U};
 
-		m_QuadModel = Model::Quad();
+        m_QuadModel = Model::Quad();
 
-		// Initializes the lighting UBO buffers  --------
-		static_assert (sizeof(LightingUbo) < VULKAN_MAX_UBO_SIZE, "UBO size must be within the Vulkan Spec!");
+        // Initializes the lighting UBO buffers  --------
+        static_assert(sizeof(LightingUbo) < VULKAN_MAX_UBO_SIZE, "UBO size must be within the Vulkan Spec!");
 
-		VkDeviceSize bufferSize = sizeof(m_LightingUBO);
+        VkDeviceSize bufferSize = sizeof(m_LightingUBO);
 
-		m_LightingUboBuffers.resize(m_SwapChain->GetImageCount());
-		for (size_t i = 0; i < m_LightingUboBuffers.size(); i++)
-		{
-			m_LightingUboBuffers[i] = new Buffer(
-				bufferSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_LightingUboBuffers.resize(m_SwapChain->GetImageCount());
+        for (size_t i = 0; i < m_LightingUboBuffers.size(); i++)
+        {
+            m_LightingUboBuffers[i] =
+                new Buffer(bufferSize,
+                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-			m_LightingUboBuffers[i]->MapMemory(bufferSize);
-		}
+            m_LightingUboBuffers[i]->MapMemory(bufferSize);
+        }
 
-		// Build camera UBO's
-		bufferSize = sizeof(m_CamInfoUBO);
-		m_CameraUboBuffers.resize(m_SwapChain->GetImageCount());
-		for (size_t i = 0; i < m_CameraUboBuffers.size(); i++)
-		{
-			m_CameraUboBuffers[i] = new Buffer(
-				bufferSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        // Build camera UBO's
+        bufferSize = sizeof(m_CamInfoUBO);
+        m_CameraUboBuffers.resize(m_SwapChain->GetImageCount());
+        for (size_t i = 0; i < m_CameraUboBuffers.size(); i++)
+        {
+            m_CameraUboBuffers[i] =
+                new Buffer(bufferSize,
+                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-			m_CameraUboBuffers[i]->MapMemory(bufferSize);
-		}
-	}
+            m_CameraUboBuffers[i]->MapMemory(bufferSize);
+        }
+    }
 
-	GeometrySubpass::~GeometrySubpass()
-	{
-		// Clean up any allocated UBO's 
+    GeometrySubpass::~GeometrySubpass()
+    {
+        // Clean up any allocated UBO's
 
-		auto ClearBufferVector = [&](std::vector<Buffer*>& t_Vec)
-		{
-			for (Buffer* buf : t_Vec)
-			{
-				delete buf;
-				buf = nullptr;
-			}
-			t_Vec.clear();
-		};
+        auto ClearBufferVector = [&](std::vector<Buffer*>& t_Vec)
+        {
+            for (Buffer* buf : t_Vec)
+            {
+                delete buf;
+                buf = nullptr;
+            }
+            t_Vec.clear();
+        };
 
-		ClearBufferVector(m_LightingUboBuffers);
-		ClearBufferVector(m_QuadUboBuffer);
-		ClearBufferVector(m_CameraUboBuffers);
+        ClearBufferVector(m_LightingUboBuffers);
+        ClearBufferVector(m_QuadUboBuffer);
+        ClearBufferVector(m_CameraUboBuffers);
 
-		// Clean up any allocated descriptor sets
-	}
+        // Clean up any allocated descriptor sets
+    }
 
-	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime)
-	{
-		UpdateLightingUBO(t_Snapshot, t_ActiveFrameInFlight);
+    void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf,
+                               uint32 t_ActiveFrameInFlight,
+                               const RenderSnapshot& t_Snapshot,
+                               float DeltaTime)
+    {
+        UpdateLightingUBO(t_Snapshot, t_ActiveFrameInFlight);
 
-		// Update camera UBO's		
-		{
-			m_CamInfoUBO.Projection = m_Camera->GetProjectionMatrix();
-			m_CamInfoUBO.ModelView = m_Camera->GetViewMatrix();
-			m_CamInfoUBO.CamPos = glm::vec4(m_Camera->GetPosition(), 1.0f);
-			m_CamInfoUBO.Gamma = m_Camera->GetGamma();
-			m_CamInfoUBO.Exposure = m_Camera->GetExposure();
+        // Update camera UBO's
+        {
+            m_CamInfoUBO.Projection = m_Camera->GetProjectionMatrix();
+            m_CamInfoUBO.ModelView = m_Camera->GetViewMatrix();
+            m_CamInfoUBO.CamPos = glm::vec4(m_Camera->GetPosition(), 1.0f);
+            m_CamInfoUBO.Gamma = m_Camera->GetGamma();
+            m_CamInfoUBO.Exposure = m_Camera->GetExposure();
 
-			memcpy(m_CameraUboBuffers[t_ActiveFrameInFlight]->m_MappedMem, &m_CamInfoUBO, sizeof(m_CamInfoUBO));
-		}
+            memcpy(m_CameraUboBuffers[t_ActiveFrameInFlight]->m_MappedMem, &m_CamInfoUBO, sizeof(m_CamInfoUBO));
+        }
 
-		VkDeviceSize offsets[1] = { 0 };
+        VkDeviceSize offsets[1] = {0};
 
-		// Final composition as full screen quad
-		VkBuffer vertexBuffers[1] = { m_QuadModel->GetVertexBuffer()->GetVkBuffer() };
+        // Final composition as full screen quad
+        VkBuffer vertexBuffers[1] = {m_QuadModel->GetVertexBuffer()->GetVkBuffer()};
 
-		vkCmdBindDescriptorSets(
-			t_CmdBuf.GetHandle(),
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			m_GraphicsPipeline->GetPipelineLayout(),
-			0,
-			1,
-			&m_DescriptorSets[t_ActiveFrameInFlight],
-			0,
-			nullptr
-		);
+        vkCmdBindDescriptorSets(t_CmdBuf.GetHandle(),
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                m_GraphicsPipeline->GetPipelineLayout(),
+                                0,
+                                1,
+                                &m_DescriptorSets[t_ActiveFrameInFlight],
+                                0,
+                                nullptr);
 
-		vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+        vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 
-		vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexBuffer()->GetVkBuffer(), 0, m_QuadModel->GetIndexType());
-		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexCount(), 1, 0, 0, 1);
-	}
+        vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(
+            t_CmdBuf.GetHandle(), m_QuadModel->GetIndexBuffer()->GetVkBuffer(), 0, m_QuadModel->GetIndexType());
+        vkCmdDrawIndexed(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexCount(), 1, 0, 0, 1);
+    }
 
-	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool)
-	{
-		assert(m_OffscreenFrameBuf);
+    void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool)
+    {
+        assert(m_OffscreenFrameBuf);
 
-		// We only need to do the actual allocation of sets ONCE
-		if(m_DescPool == VK_NULL_HANDLE)
-		{
-			m_DescPool = t_Pool;
-		
-			size_t ImageCount = m_SwapChain->GetImageCount();
-			m_DescriptorSets.resize(ImageCount);
+        // We only need to do the actual allocation of sets ONCE
+        if (m_DescPool == VK_NULL_HANDLE)
+        {
+            m_DescPool = t_Pool;
 
-			std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
-			VkDescriptorSetAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			// If we have specified a specific pool then use that, otherwise use the one on the mesh
-			allocInfo.descriptorPool = t_Pool;
-			allocInfo.descriptorSetCount = static_cast<uint32>(ImageCount);
-			allocInfo.pSetLayouts = layouts.data();
+            size_t ImageCount = m_SwapChain->GetImageCount();
+            m_DescriptorSets.resize(ImageCount);
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, m_DescriptorSets.data()));
-		}
+            std::vector<VkDescriptorSetLayout> layouts(ImageCount, m_GraphicsPipeline->GetDescriptorSetLayout());
+            VkDescriptorSetAllocateInfo allocInfo = {};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            // If we have specified a specific pool then use that, otherwise use the one on the mesh
+            allocInfo.descriptorPool = t_Pool;
+            allocInfo.descriptorSetCount = static_cast<uint32>(ImageCount);
+            allocInfo.pSetLayouts = layouts.data();
 
-		// Write to the sets
-		for (size_t i = 0; i < m_DescriptorSets.size(); ++i)
-		{
-			// Create the image info's for the write sets to reference
-			// that will give us access to the G-Buffer in the shaders
-			VkDescriptorImageInfo texDescriptorPosition =
-				Initializers::DescriptorImageInfo(
-					m_OffscreenFrameBuf->GetSamplerHandle(),
-					m_OffscreenFrameBuf->GetAttachmentAtIndex(0)->GetViewHandle(),
-					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, m_DescriptorSets.data()));
+        }
 
-			VkDescriptorImageInfo texDescriptorNormal =
-				Initializers::DescriptorImageInfo(
-					m_OffscreenFrameBuf->GetSamplerHandle(),
-					m_OffscreenFrameBuf->GetAttachmentAtIndex(1)->GetViewHandle(),
-					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        // Write to the sets
+        for (size_t i = 0; i < m_DescriptorSets.size(); ++i)
+        {
+            // Create the image info's for the write sets to reference
+            // that will give us access to the G-Buffer in the shaders
+            VkDescriptorImageInfo texDescriptorPosition =
+                Initializers::DescriptorImageInfo(m_OffscreenFrameBuf->GetSamplerHandle(),
+                                                  m_OffscreenFrameBuf->GetAttachmentAtIndex(0)->GetViewHandle(),
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-			VkDescriptorImageInfo texDescriptorAlbedo =
-				Initializers::DescriptorImageInfo(
-					m_OffscreenFrameBuf->GetSamplerHandle(),
-					m_OffscreenFrameBuf->GetAttachmentAtIndex(2)->GetViewHandle(),
-					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            VkDescriptorImageInfo texDescriptorNormal =
+                Initializers::DescriptorImageInfo(m_OffscreenFrameBuf->GetSamplerHandle(),
+                                                  m_OffscreenFrameBuf->GetAttachmentAtIndex(1)->GetViewHandle(),
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-			VkDescriptorImageInfo texDescriptorMetal =
-				Initializers::DescriptorImageInfo(
-					m_OffscreenFrameBuf->GetSamplerHandle(),
-					m_OffscreenFrameBuf->GetAttachmentAtIndex(3)->GetViewHandle(),
-					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            VkDescriptorImageInfo texDescriptorAlbedo =
+                Initializers::DescriptorImageInfo(m_OffscreenFrameBuf->GetSamplerHandle(),
+                                                  m_OffscreenFrameBuf->GetAttachmentAtIndex(2)->GetViewHandle(),
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-			VkDescriptorImageInfo texDescriptorRough =
-				Initializers::DescriptorImageInfo(
-					m_OffscreenFrameBuf->GetSamplerHandle(),
-					m_OffscreenFrameBuf->GetAttachmentAtIndex(4)->GetViewHandle(),
-					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            VkDescriptorImageInfo texDescriptorMetal =
+                Initializers::DescriptorImageInfo(m_OffscreenFrameBuf->GetSamplerHandle(),
+                                                  m_OffscreenFrameBuf->GetAttachmentAtIndex(3)->GetViewHandle(),
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-			std::vector<VkWriteDescriptorSet> writeDescriptorSets =
-			{
-				// 1 : Position sampler
-				Initializers::WriteDescriptorSet(
-					m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					1,
-					&texDescriptorPosition),
-				// 2 : Normal sampler
-				Initializers::WriteDescriptorSet(
-					m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					2,
-					&texDescriptorNormal),
-				// 3 : Albedo sampler
-				Initializers::WriteDescriptorSet(
-					m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					3,
-					&texDescriptorAlbedo),
+            VkDescriptorImageInfo texDescriptorRough =
+                Initializers::DescriptorImageInfo(m_OffscreenFrameBuf->GetSamplerHandle(),
+                                                  m_OffscreenFrameBuf->GetAttachmentAtIndex(4)->GetViewHandle(),
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-				// 4 : Metal sampler
-				Initializers::WriteDescriptorSet(
-					m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					4,
-					&texDescriptorMetal),
-				// 5 : Roughness sampler
-				Initializers::WriteDescriptorSet(
-					m_DescriptorSets[i],
-					VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-					5,
-					&texDescriptorRough),
+            std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+                // 1 : Position sampler
+                Initializers::WriteDescriptorSet(
+                    m_DescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &texDescriptorPosition),
+                // 2 : Normal sampler
+                Initializers::WriteDescriptorSet(
+                    m_DescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &texDescriptorNormal),
+                // 3 : Albedo sampler
+                Initializers::WriteDescriptorSet(
+                    m_DescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3, &texDescriptorAlbedo),
 
-				// 6 : Lighting UBO to the fragment shader
-				Initializers::WriteDescriptorSetUniform(
-					m_LightingUboBuffers[i],
-					m_DescriptorSets[i],
-					6
-				),
-				// 7 : Camera UBO to the fragment shader
-				Initializers::WriteDescriptorSetUniform(
-					m_CameraUboBuffers[i],
-					m_DescriptorSets[i],
-					7
-				),
-			};
+                // 4 : Metal sampler
+                Initializers::WriteDescriptorSet(
+                    m_DescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4, &texDescriptorMetal),
+                // 5 : Roughness sampler
+                Initializers::WriteDescriptorSet(
+                    m_DescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5, &texDescriptorRough),
 
-			vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
-		}
-	}
+                // 6 : Lighting UBO to the fragment shader
+                Initializers::WriteDescriptorSetUniform(m_LightingUboBuffers[i], m_DescriptorSets[i], 6),
+                // 7 : Camera UBO to the fragment shader
+                Initializers::WriteDescriptorSetUniform(m_CameraUboBuffers[i], m_DescriptorSets[i], 7),
+            };
 
-	void GeometrySubpass::CreateGraphicsPipeline()
-	{
-		// Use empty vertex descriptions here
-		VkPipelineVertexInputStateCreateInfo emptyInputState = {};
-		emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		emptyInputState.vertexAttributeDescriptionCount = 0;
-		emptyInputState.pVertexAttributeDescriptions = nullptr;
-		emptyInputState.vertexBindingDescriptionCount = 0;
-		emptyInputState.pVertexBindingDescriptions = nullptr;
+            vkUpdateDescriptorSets(m_Device->GetVkDevice(),
+                                   static_cast<uint32>(writeDescriptorSets.size()),
+                                   writeDescriptorSets.data(),
+                                   0,
+                                   nullptr);
+        }
+    }
 
-		m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = {};
-		m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = &emptyInputState;
-		m_GraphicsPipeline->m_VertexInputStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-		m_GraphicsPipeline->m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+    void GeometrySubpass::CreateGraphicsPipeline()
+    {
+        // Use empty vertex descriptions here
+        VkPipelineVertexInputStateCreateInfo emptyInputState = {};
+        emptyInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        emptyInputState.vertexAttributeDescriptionCount = 0;
+        emptyInputState.pVertexAttributeDescriptions = nullptr;
+        emptyInputState.vertexBindingDescriptionCount = 0;
+        emptyInputState.pVertexBindingDescriptions = nullptr;
 
-		// Set the rasterization state to counter clockwise and the front bit 
-		// for rendering with a single full screen triangle
-		m_GraphicsPipeline->m_RasterizationState = 
-			Initializers::PipelineRasterizationStateCreateInfo(
-				VK_POLYGON_MODE_FILL,
-				VK_CULL_MODE_FRONT_BIT,
-				VK_FRONT_FACE_COUNTER_CLOCKWISE
-			);
+        m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = {};
+        m_GraphicsPipeline->m_PipelineCreateInfo.pVertexInputState = &emptyInputState;
+        m_GraphicsPipeline->m_VertexInputStateCreateInfo = {VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+        m_GraphicsPipeline->m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
 
-		// Create it otherwise with defaults
-		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
-	}
+        // Set the rasterization state to counter clockwise and the front bit
+        // for rendering with a single full screen triangle
+        m_GraphicsPipeline->m_RasterizationState = Initializers::PipelineRasterizationStateCreateInfo(
+            VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-	void GeometrySubpass::OnSwapchainResized()
-	{
-		m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
-		CreateGraphicsPipeline();
+        // Create it otherwise with defaults
+        m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
+    }
 
-		if (m_DescPool != VK_NULL_HANDLE)
-		{
-			CreateDescriptorSets(m_DescPool);
-		}
-	}
+    void GeometrySubpass::OnSwapchainResized()
+    {
+        m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
+        CreateGraphicsPipeline();
 
-	void GeometrySubpass::UpdateLightingUBO(const RenderSnapshot& t_Snapshot, uint32 t_ActiveFrame)
-	{
-		uint32 CurLightCount = 0;
-		// Directional Lights ----------------
-		for (const DirectionalLight& Light : t_Snapshot.DirectionalLights)
-		{
-			if (CurLightCount < DeferredLightSettings::MaxDirectionalLights)
-			{
-				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
-			}
-		}
+        if (m_DescPool != VK_NULL_HANDLE)
+        {
+            CreateDescriptorSets(m_DescPool);
+        }
+    }
 
-		m_LightingUBO.DirLightCount = CurLightCount;
+    void GeometrySubpass::UpdateLightingUBO(const RenderSnapshot& t_Snapshot, uint32 t_ActiveFrame)
+    {
+        uint32 CurLightCount = 0;
+        // Directional Lights ----------------
+        for (const DirectionalLight& Light : t_Snapshot.DirectionalLights)
+        {
+            if (CurLightCount < DeferredLightSettings::MaxDirectionalLights)
+            {
+                memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
+            }
+        }
 
-		CurLightCount = 0;
+        m_LightingUBO.DirLightCount = CurLightCount;
 
-		// Point lights, with their world position already set by Extract
-		for (const PointLight& Light : t_Snapshot.PointLights)
-		{
-			if (CurLightCount < DeferredLightSettings::MaxPointLights)
-			{
-				memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light, sizeof(PointLight));
-			}
-		}
+        CurLightCount = 0;
 
-		// Memcpy to the buffer
-		m_LightingUBO.PointLightCount = CurLightCount;
-		
-		memcpy(
-			m_LightingUboBuffers[t_ActiveFrame]->m_MappedMem,
-			&m_LightingUBO,
-			sizeof(m_LightingUBO));
-	}
-}   // namespace Fling
+        // Point lights, with their world position already set by Extract
+        for (const PointLight& Light : t_Snapshot.PointLights)
+        {
+            if (CurLightCount < DeferredLightSettings::MaxPointLights)
+            {
+                memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light, sizeof(PointLight));
+            }
+        }
+
+        // Memcpy to the buffer
+        m_LightingUBO.PointLightCount = CurLightCount;
+
+        memcpy(m_LightingUboBuffers[t_ActiveFrame]->m_MappedMem, &m_LightingUBO, sizeof(m_LightingUBO));
+    }
+} // namespace Fling

@@ -17,11 +17,11 @@
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
 #include "RenderPipeline.h"
+#include "RenderSnapshot.h"
 #include "SkyboxSubpass.h"
 #include "Strings/String.h"
 #include "SwapChain.h"
 #include "Version.h"
-#include "RenderSnapshot.h"
 #include "VulkanApp.h"
 #include "VulkanAppState.h"
 #include "VulkanLoader.h"
@@ -32,8 +32,8 @@ namespace
 {
     [[noreturn]] void StopForMissingVulkan(const Fling::StringView t_Detail)
     {
-        const bool Untrusted =
-            t_Detail.find("not signed") != Fling::StringView::npos || t_Detail.find("not trusted") != Fling::StringView::npos;
+        const bool Untrusted = t_Detail.find("not signed") != Fling::StringView::npos ||
+                               t_Detail.find("not trusted") != Fling::StringView::npos;
         const char* Message = Untrusted ? "Vulkan loader was found, but its signature is not trusted"
                                         : "Vulkan runtime not found: install a GPU driver with Vulkan support";
         if (const auto Console = Fling::Logger::GetCurrentConsole())
@@ -423,8 +423,10 @@ namespace Fling
 
             // Offscreen pipeline ------
             // These shaders have vertex input and fill in the buffers that the final pass uses
-            std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(AssetPath("Deferred/mrt.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(AssetPath("Deferred/mrt.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenVert =
+                Shader::Create(AssetPath("Deferred/mrt.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenFrag =
+                Shader::Create(AssetPath("Deferred/mrt.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(
                 m_LogicalDevice, m_SwapChain, m_Camera, OffscreenVert, OffscreenFrag));
 
@@ -456,15 +458,12 @@ namespace Fling
                     F_LOG_ERROR("Skybox {} did not load, so the DEFERRED render pipeline has no skybox", SkyboxPath);
                 }
             }
-            std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(AssetPath("Deferred/deferred.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(AssetPath("Deferred/deferred.frag.spv"), m_LogicalDevice);
-            Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice,
-                                                                     m_SwapChain,
-                                                                     m_State->m_RenderPass,
-                                                                     m_Camera,
-                                                                     OffscreenBuf,
-                                                                     GeomVert,
-                                                                     GeomFrag));
+            std::shared_ptr<Fling::Shader> GeomVert =
+                Shader::Create(AssetPath("Deferred/deferred.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomFrag =
+                Shader::Create(AssetPath("Deferred/deferred.frag.spv"), m_LogicalDevice);
+            Subpasses.emplace_back(std::make_unique<GeometrySubpass>(
+                m_LogicalDevice, m_SwapChain, m_State->m_RenderPass, m_Camera, OffscreenBuf, GeomVert, GeomFrag));
 
             m_RenderPipelines.emplace_back(new Fling::RenderPipeline(m_LogicalDevice, m_SwapChain, Subpasses));
         }

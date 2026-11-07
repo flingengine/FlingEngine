@@ -6,27 +6,25 @@
 #include <unordered_map>
 
 namespace Fling
-{    
-	std::unordered_map<Name, Material::Type> Material::TypeMap =
-	{
-		{ "DEFAULT"_name,		Type::Default },
-		{ "CUBEMAP"_name,		Type::Cubemap},
-		{ "REFLECTION"_name,	Type::Reflection },
-		{ "DEBUG"_name,			Type::Debug },
-	};
-	
-	std::shared_ptr<Fling::Material> Material::Create(const AssetPath& t_Path)
+{
+    std::unordered_map<Name, Material::Type> Material::TypeMap = {
+        {"DEFAULT"_name, Type::Default},
+        {"CUBEMAP"_name, Type::Cubemap},
+        {"REFLECTION"_name, Type::Reflection},
+        {"DEBUG"_name, Type::Debug},
+    };
+
+    std::shared_ptr<Fling::Material> Material::Create(const AssetPath& t_Path)
     {
         return ResourceManager::LoadResource<Fling::Material>(t_Path);
     }
 
-	std::shared_ptr<Fling::Material> Material::GetDefaultMat()
-	{
-		return Material::Create(AssetPath("Materials/Default.mat"));
-	}
+    std::shared_ptr<Fling::Material> Material::GetDefaultMat()
+    {
+        return Material::Create(AssetPath("Materials/Default.mat"));
+    }
 
-    Material::Material(const AssetPath& t_Path)
-        : JsonFile(t_Path)
+    Material::Material(const AssetPath& t_Path) : JsonFile(t_Path)
     {
         LoadMaterial();
     }
@@ -37,12 +35,12 @@ namespace Fling
         {
             // Load Shaders -------------
             String PipelineName = m_JsonData.GetString("pipeline", "DEFAULT");
-			m_Type = GetTypeFromStr(PipelineName);
+            m_Type = GetTypeFromStr(PipelineName);
 
-			if (m_Type != Material::Type::Default)
-			{
-				return;
-			}
+            if (m_Type != Material::Type::Default)
+            {
+                return;
+            }
 
             // Load Textures -------------
             // Albedo
@@ -68,21 +66,21 @@ namespace Fling
         }
     }
 
-	Material::Type Material::GetTypeFromStr(const StringView t_Str)
-	{
-		const auto Found = TypeMap.find(Name::WithoutText(t_Str));
-		return Found != TypeMap.end() ? Found->second : Type::Default;
-	}
+    Material::Type Material::GetTypeFromStr(const StringView t_Str)
+    {
+        const auto Found = TypeMap.find(Name::WithoutText(t_Str));
+        return Found != TypeMap.end() ? Found->second : Type::Default;
+    }
 
-	StringView Material::GetStringFromType(const Material::Type t_Type)
-	{
-		auto it = std::find_if(std::begin(TypeMap), std::end(TypeMap),
-			[&t_Type](auto&& p) { return p.second == t_Type; });
+    StringView Material::GetStringFromType(const Material::Type t_Type)
+    {
+        auto it =
+            std::find_if(std::begin(TypeMap), std::end(TypeMap), [&t_Type](auto&& p) { return p.second == t_Type; });
 
-		if (it == std::end(TypeMap))
-		{
-			return "DEFAULT";
-		}
-		return it->first.ToView();
-	}
-}   // namespace Fling
+        if (it == std::end(TypeMap))
+        {
+            return "DEFAULT";
+        }
+        return it->first.ToView();
+    }
+} // namespace Fling

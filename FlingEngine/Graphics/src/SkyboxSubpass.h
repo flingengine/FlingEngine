@@ -35,8 +35,10 @@ namespace Fling
 
         virtual ~SkyboxSubpass();
 
-        void
-        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, const RenderSnapshot& t_Snapshot, float DeltaTime) override;
+        void Draw(CommandBuffer& t_CmdBuf,
+                  uint32 t_ActiveFrameInFlight,
+                  const RenderSnapshot& t_Snapshot,
+                  float DeltaTime) override;
 
         void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 

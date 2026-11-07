@@ -436,9 +436,9 @@ namespace Fling
                 }
             }
 
-            const String Label = String(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) +
-                                      ", " + std::to_string(Owned) + " devices" +
-                                      (Interface->IsSimulated() ? ", simulated" : "") + ")";
+            const String Label = String(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) + ", " +
+                                 std::to_string(Owned) + " devices" + (Interface->IsSimulated() ? ", simulated" : "") +
+                                 ")";
             if (ImGui::TreeNodeEx(Label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 if (Owned == 0)

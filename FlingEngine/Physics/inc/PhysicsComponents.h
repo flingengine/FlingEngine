@@ -40,7 +40,6 @@ namespace Fling
 
         /** Angular velocity in radians per second. The same rules as m_Velocity apply. */
         glm::vec3 m_AngularVelocity{0.0f, 0.0f, 0.0f};
-
     };
 
     enum class ColliderShape : uint8
@@ -65,6 +64,5 @@ namespace Fling
 
         /** The radius of a Sphere. A Sphere uses the largest axis of the Transform scale. */
         float m_Radius = 0.5f;
-
     };
 } // namespace Fling

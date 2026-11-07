@@ -8,7 +8,7 @@ namespace Fling
 
     /**
      * A level contains active objects and provides the environment
-     *          for the player. You should only load a level through the world. 
+     *          for the player. You should only load a level through the world.
      */
     class Level
     {
@@ -16,18 +16,18 @@ namespace Fling
         Level(const Level&) = delete;
         Level& operator=(const Level&) = delete;
 
-		/**
-		* Loads this level based on the given file name. 
-		* @param t_LevelFile		The path to the level file (should be a full path, NOT relative to assets dir)
-		*/
+        /**
+         * Loads this level based on the given file name.
+         * @param t_LevelFile		The path to the level file (should be a full path, NOT relative to assets dir)
+         */
         explicit Level(StringView t_LevelFile, World* t_OwningWorld);
         ~Level();
 
         /**
          * Update the BSP of actors and tick every active actor.
          * @see     World::Update
-         * 
-         * @param t_DeltaTime   Time between previous frame and the current one. 
+         *
+         * @param t_DeltaTime   Time between previous frame and the current one.
          */
         void Update(float t_DeltaTime);
 
@@ -38,17 +38,16 @@ namespace Fling
 
         /**
          * Get the Owning World object of this level.
-         * 
-         * @return World* 
+         *
+         * @return World*
          */
         World* GetOwningWorld() const { return m_OwningWorld; }
 
     private:
-
         // BSPTree m_Model;
         // std::vector<Actor> m_ActiveActors;
 
-		/** The path to the level file (should be a full path, NOT relative to assets dir) */
+        /** The path to the level file (should be a full path, NOT relative to assets dir) */
         String m_LevelFileName = "UNLOADED";
 
         /**
@@ -64,4 +63,4 @@ namespace Fling
         /** The owning work that this level exists in */
         World* m_OwningWorld = nullptr;
     };
-}   // namespace Fling
+} // namespace Fling

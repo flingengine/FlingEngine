@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
 #include "EditorWidgets.h"
 #include "EntityEditorPanel.h"
 #include "IDebugUI.h"
@@ -9,7 +10,6 @@
 #include "WorldSingletonsPanel.h"
 
 #include <array>
-#include "Ecs/EntityStorage.h"
 #include <imgui.h>
 
 namespace Fling
@@ -40,37 +40,36 @@ namespace Fling
         // #TODO: Init and shutdown functions
 
     protected:
-
         virtual void OnLoadLevel(String t_FileName);
 
         virtual void OnSaveLevel(String t_FileName);
 
-		std::array<float, 400> fpsGraph {};
-		float m_FrameTimeMin = 9999.0f;
+        std::array<float, 400> fpsGraph{};
+        float m_FrameTimeMin = 9999.0f;
         float m_FrameTimeMax = 0.0f;
 
-		bool m_DisplayGPUInfo = false;
-		bool m_DisplayComponentEditor = true;
-		bool m_DisplayWorldOutline = true;
-		bool m_DisplayWindowOptions = false;
+        bool m_DisplayGPUInfo = false;
+        bool m_DisplayComponentEditor = true;
+        bool m_DisplayWorldOutline = true;
+        bool m_DisplayWindowOptions = false;
         bool m_DisplayCameraOptions = false;
 
-		/** Lists entities in the world and tracks which one is selected */
-		WorldOutlinePanel m_WorldOutline;
+        /** Lists entities in the world and tracks which one is selected */
+        WorldOutlinePanel m_WorldOutline;
 
-		/** How each component type is drawn in the entity editor */
-		EditorWidgets m_Widgets;
+        /** How each component type is drawn in the entity editor */
+        EditorWidgets m_Widgets;
 
-		/** Inspects the entity currently selected in m_WorldOutline */
-		EntityEditorPanel m_EntityEditor;
+        /** Inspects the entity currently selected in m_WorldOutline */
+        EntityEditorPanel m_EntityEditor;
 
-		/** Lists input interfaces and devices, and changes the input log level */
-		InputDevicesPanel m_InputDevices;
+        /** Lists input interfaces and devices, and changes the input log level */
+        InputDevicesPanel m_InputDevices;
 
-		/** Singleton components and the system schedule */
-		WorldSingletonsPanel m_WorldSingletons;
+        /** Singleton components and the system schedule */
+        WorldSingletonsPanel m_WorldSingletons;
 
-		virtual void DrawFileMenu();
+        virtual void DrawFileMenu();
 
         /** Draws the Play and Stop buttons in the menu bar */
         void DrawPlayControls();
@@ -82,18 +81,17 @@ namespace Fling
         void DrawWorldOutline(Fling::EntityStorage& t_Reg);
 
         /** assumes that m_DisplayComponentEditor is true */
-		void DrawEntityEditor(Fling::EntityStorage& t_Reg);
+        void DrawEntityEditor(Fling::EntityStorage& t_Reg);
 
-		void DrawWindowOptions();
+        void DrawWindowOptions();
 
         class World* m_OwningWorld = nullptr;
 
         class Game* m_Game = nullptr;
-
 
         // Draw stats graph
         // Draw File Menu
         // Draw Gizmos, etc
         // Draw component editor
     };
-}   // namespace Fling
+} // namespace Fling

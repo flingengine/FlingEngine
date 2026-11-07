@@ -1,8 +1,8 @@
 #include "Components/EntityGuid.h"
 #include "Components/Name.hpp"
 #include "FlingConfig.h"
-#include "HierarchyUtil.h"
 #include "FlingPaths.h"
+#include "HierarchyUtil.h"
 #include "Json.h"
 #include "Logger.h"
 #include "Strings/String.h"
@@ -19,116 +19,112 @@
 
 namespace Fling
 {
-	namespace
-	{
-		bool IsReservedEntityKey(const StringView key)
-		{
-			return key == "name" || key == "title" || key == "version" || key == "NameComponent";
-		}
+    namespace
+    {
+        bool IsReservedEntityKey(const StringView key)
+        {
+            return key == "name" || key == "title" || key == "version" || key == "NameComponent";
+        }
 
-		/** True if the modules already have a type with this name. */
-		bool HasType(const ModuleRegistration& t_Modules, const char* t_Name)
-		{
-			for (const TypeDesc& Type : t_Modules.Types())
-			{
-				if (Type.Name == t_Name)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-	}
+        /** True if the modules already have a type with this name. */
+        bool HasType(const ModuleRegistration& t_Modules, const char* t_Name)
+        {
+            for (const TypeDesc& Type : t_Modules.Types())
+            {
+                if (Type.Name == t_Name)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    } // namespace
 
-	World::World(Fling::Game* t_Game)
-		: m_Game(t_Game)
-		, m_ShouldQuit(false)
-	{ }
+    World::World(Fling::Game* t_Game) : m_Game(t_Game), m_ShouldQuit(false)
+    {
+    }
 
-	World::~World() = default;
+    World::~World() = default;
 
-	const Schedule* World::GetSchedule() const
-	{
-		return m_Runner ? &m_Runner->GetSchedule() : nullptr;
-	}
+    const Schedule* World::GetSchedule() const
+    {
+        return m_Runner ? &m_Runner->GetSchedule() : nullptr;
+    }
 
-	bool World::Init(const StringView t_StartLevel)
-	{
-		F_LOG_TRACE("World Init!");
-		assert(m_CurrentState == WorldState::NONE);
+    bool World::Init(const StringView t_StartLevel)
+    {
+        F_LOG_TRACE("World Init!");
+        assert(m_CurrentState == WorldState::NONE);
 
-		m_Game->Register(m_Modules);
+        m_Game->Register(m_Modules);
 
-		// The level format always has the entity name and id, so every world knows these two
-		if (!HasType(m_Modules, NameComponent::Component.Name))
-		{
-			m_Modules.Component<NameComponent>([](TypeBuilder<NameComponent>& t_Type)
-			{
-				t_Type.Field("Name", &NameComponent::Name);
-			});
-		}
-		if (!HasType(m_Modules, EntityGuid::Component.Name))
-		{
-			m_Modules.Component<EntityGuid>([](TypeBuilder<EntityGuid>& t_Type)
-			{
-				t_Type.Field("value", &EntityGuid::Value).ReadOnly();
-			});
-		}
-		m_Types = TypeRegistry::Build(m_Modules);
-		m_TypesBuilt = true;
+        // The level format always has the entity name and id, so every world knows these two
+        if (!HasType(m_Modules, NameComponent::Component.Name))
+        {
+            m_Modules.Component<NameComponent>([](TypeBuilder<NameComponent>& t_Type)
+                                               { t_Type.Field("Name", &NameComponent::Name); });
+        }
+        if (!HasType(m_Modules, EntityGuid::Component.Name))
+        {
+            m_Modules.Component<EntityGuid>([](TypeBuilder<EntityGuid>& t_Type)
+                                            { t_Type.Field("value", &EntityGuid::Value).ReadOnly(); });
+        }
+        m_Types = TypeRegistry::Build(m_Modules);
+        m_TypesBuilt = true;
 
-		m_Game->Init(m_Storage);
+        m_Game->Init(m_Storage);
 
-		// Build the schedule before any level loads. A bad schedule never runs.
-		ScheduleResult Schedule = m_Systems.BuildSchedule();
-		if (!Schedule.Ok())
-		{
-			m_ScheduleErrors = Schedule.ErrorReport();
-			for (const ScheduleError& Error : Schedule.Errors)
-			{
-				F_LOG_ERROR("System schedule: {}", Error.Message);
-			}
-			return false;
-		}
-		F_LOG_TRACE("System schedule: {} systems", m_Systems.Size());
+        // Build the schedule before any level loads. A bad schedule never runs.
+        ScheduleResult Schedule = m_Systems.BuildSchedule();
+        if (!Schedule.Ok())
+        {
+            m_ScheduleErrors = Schedule.ErrorReport();
+            for (const ScheduleError& Error : Schedule.Errors)
+            {
+                F_LOG_ERROR("System schedule: {}", Error.Message);
+            }
+            return false;
+        }
+        F_LOG_TRACE("System schedule: {} systems", m_Systems.Size());
 
-		// A component that a system uses and that is saved (not Transient) must be
-		// registered, or levels and the play snapshot lose it
-		std::set<String> Reported;
-		for (const SystemDesc* Desc : m_Systems.Descs())
-		{
-			for (const AccessEntry& Entry : Desc->Access)
-			{
-				if (!Entry.Transient && Entry.Name && !m_Types.Find(Entry.Name) &&
-					Reported.insert(Entry.Name).second)
-				{
-					F_LOG_WARN("System {} uses component {}, which is saved but not registered. Add it with "
-							   "ModuleRegistration::Component<T>(), or mark it Transient.",
-							   Desc->Info.Name, Entry.Name);
-				}
-			}
-		}
+        // A component that a system uses and that is saved (not Transient) must be
+        // registered, or levels and the play snapshot lose it
+        std::set<String> Reported;
+        for (const SystemDesc* Desc : m_Systems.Descs())
+        {
+            for (const AccessEntry& Entry : Desc->Access)
+            {
+                if (!Entry.Transient && Entry.Name && !m_Types.Find(Entry.Name) && Reported.insert(Entry.Name).second)
+                {
+                    F_LOG_WARN("System {} uses component {}, which is saved but not registered. Add it with "
+                               "ModuleRegistration::Component<T>(), or mark it Transient.",
+                               Desc->Info.Name,
+                               Entry.Name);
+                }
+            }
+        }
 
-		// Systems append requests for the application. The world takes them each frame.
-		m_Storage.SetSingleton<AppRequests>();
+        // Systems append requests for the application. The world takes them each frame.
+        m_Storage.SetSingleton<AppRequests>();
 
-		// Each system makes its singletons before the first level loads
-		m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Storage, m_RunnerConfig);
-		m_Runner->SetTickInputSource(m_TickInputSource);
-		m_Runner->Create();
+        // Each system makes its singletons before the first level loads
+        m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Storage, m_RunnerConfig);
+        m_Runner->SetTickInputSource(m_TickInputSource);
+        m_Runner->Create();
 
-		const String LevelToLoad = t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : String(t_StartLevel);
-		if (!LevelToLoad.empty())
-		{
-			LoadLevelFile(LevelToLoad);
-		}
+        const String LevelToLoad =
+            t_StartLevel.empty() ? FlingConfig::GetString("Game", "StartLevel") : String(t_StartLevel);
+        if (!LevelToLoad.empty())
+        {
+            LoadLevelFile(LevelToLoad);
+        }
 
-		m_CurrentState = WorldState::Initalized;
-		return true;
-	}
+        m_CurrentState = WorldState::Initalized;
+        return true;
+    }
 
-	void World::Shutdown()
-	{
+    void World::Shutdown()
+    {
         // A request that has not run yet does not matter now
         m_PendingRequest = PlayRequest::None;
 
@@ -141,19 +137,19 @@ namespace Fling
 
         m_CurrentState = WorldState::ShuttingDown;
 
-		// Systems remove their singletons in reverse schedule order, then the game shuts down
-		if (m_Runner)
-		{
-			m_Runner->Destroy();
-			m_Runner.reset();
-		}
-		m_Game->Shutdown(m_Storage);
+        // Systems remove their singletons in reverse schedule order, then the game shuts down
+        if (m_Runner)
+        {
+            m_Runner->Destroy();
+            m_Runner.reset();
+        }
+        m_Game->Shutdown(m_Storage);
 
-		F_LOG_TRACE("World shutdown complete!");
-	}
+        F_LOG_TRACE("World shutdown complete!");
+    }
 
-	void World::RequestGameStart()
-	{
+    void World::RequestGameStart()
+    {
         if (m_CurrentState != WorldState::Initalized)
         {
             F_LOG_WARN("RequestGameStart ignored: the world is not ready for play");
@@ -211,7 +207,7 @@ namespace Fling
             m_Runner->PlayBegin(WorldRole::Play);
         }
         m_Game->OnStartGame(m_Storage);
-		m_CurrentState = WorldState::Playing;
+        m_CurrentState = WorldState::Playing;
     }
 
     void World::StopGame(bool t_RestoreSnapshot)
@@ -242,8 +238,8 @@ namespace Fling
         }
     }
 
-	void World::Update(float t_DeltaTime)
-	{
+    void World::Update(float t_DeltaTime)
+    {
         // Start and stop requests come from anywhere (the editor UI draws during
         // rendering), so they run here, before the game ticks
         ProcessPlayRequest();
@@ -260,9 +256,9 @@ namespace Fling
             ProcessAppRequests();
         }
 
-        if(bPlaying)
-		{
-			m_Game->Update(m_Storage, t_DeltaTime);
+        if (bPlaying)
+        {
+            m_Game->Update(m_Storage, t_DeltaTime);
 
             // In editor play, a game that wants to quit stops play instead
             if (m_GameQuitStopsPlay && m_Game->WantsToQuit())
@@ -276,45 +272,45 @@ namespace Fling
         {
             m_Runner->RunFrame(RealDelta, Role);
         }
-	}
+    }
 
-	void World::ProcessAppRequests()
-	{
-		AppRequests* Queue = m_Storage.TryGetSingleton<AppRequests>();
-		if (!Queue)
-		{
-			return;
-		}
+    void World::ProcessAppRequests()
+    {
+        AppRequests* Queue = m_Storage.TryGetSingleton<AppRequests>();
+        if (!Queue)
+        {
+            return;
+        }
 
-		for (const AppRequest Request : std::exchange(Queue->Requests, {}))
-		{
-			if (Request != AppRequest::Quit)
-			{
-				m_AppRequestsForApp.push_back(Request);
-			}
-			else if (m_GameQuitStopsPlay)
-			{
-				// Editor play: stop play, and keep the editor open
-				if (m_CurrentState == WorldState::Playing || m_CurrentState == WorldState::Paused)
-				{
-					m_PendingRequest = PlayRequest::Stop;
-				}
-			}
-			else
-			{
-				m_ShouldQuit = true;
-			}
-		}
-	}
+        for (const AppRequest Request : std::exchange(Queue->Requests, {}))
+        {
+            if (Request != AppRequest::Quit)
+            {
+                m_AppRequestsForApp.push_back(Request);
+            }
+            else if (m_GameQuitStopsPlay)
+            {
+                // Editor play: stop play, and keep the editor open
+                if (m_CurrentState == WorldState::Playing || m_CurrentState == WorldState::Paused)
+                {
+                    m_PendingRequest = PlayRequest::Stop;
+                }
+            }
+            else
+            {
+                m_ShouldQuit = true;
+            }
+        }
+    }
 
-	bool World::OutputLevelFile(const StringView t_LevelToLoad)
-	{
+    bool World::OutputLevelFile(const StringView t_LevelToLoad)
+    {
         Json root = Json::Object();
         if (!SaveToJson(root, t_LevelToLoad))
         {
             F_LOG_ERROR("OutputLevelFile('{}') failed", t_LevelToLoad);
             return false;
-		}
+        }
 
         const String FullPath = FlingPaths::EngineAssetsDir() + "/" + String(t_LevelToLoad);
         F_LOG_TRACE("Outputting Level file to {}", FullPath);
@@ -324,16 +320,17 @@ namespace Fling
     uint64 World::MakeEntityGuid() const
     {
         // Only level files use the id, so it does not need to be deterministic
-        static std::mt19937_64 Generator{ std::random_device{}() };
+        static std::mt19937_64 Generator{std::random_device{}()};
         while (true)
         {
             const uint64 Value = Generator();
             bool bTaken = Value == 0;
-            m_Storage.EachEntity([&](const Fling::Entity t_Entity)
-            {
-                const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
-                bTaken = bTaken || (Guid && Guid->Value == Value);
-            });
+            m_Storage.EachEntity(
+                [&](const Fling::Entity t_Entity)
+                {
+                    const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
+                    bTaken = bTaken || (Guid && Guid->Value == Value);
+                });
             if (!bTaken)
             {
                 return Value;
@@ -353,72 +350,73 @@ namespace Fling
         // Two entities that share an id (a copy) get a new one.
         std::unordered_set<uint64> UsedGuids;
         std::vector<Fling::Entity> NeedGuid;
-        m_Storage.EachEntity([&](const Fling::Entity t_Entity)
-        {
-            const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
-            if (!Guid || Guid->Value == 0 || !UsedGuids.insert(Guid->Value).second)
+        m_Storage.EachEntity(
+            [&](const Fling::Entity t_Entity)
             {
-                NeedGuid.push_back(t_Entity);
-            }
-        });
+                const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
+                if (!Guid || Guid->Value == 0 || !UsedGuids.insert(Guid->Value).second)
+                {
+                    NeedGuid.push_back(t_Entity);
+                }
+            });
         for (const Fling::Entity Entity : NeedGuid)
         {
-            m_Storage.AddOrReplace<EntityGuid>(Entity, EntityGuid{ MakeEntityGuid() });
+            m_Storage.AddOrReplace<EntityGuid>(Entity, EntityGuid{MakeEntityGuid()});
         }
 
-        const SaveContext Context{ &m_Storage };
+        const SaveContext Context{&m_Storage};
         std::vector<std::pair<String, Json>> entityEntries;
-		std::size_t unnamedIndex = 0;
+        std::size_t unnamedIndex = 0;
 
-		m_Storage.EachEntity([&](const Fling::Entity entity)
-		{
-			Json entityJson = Json::Object();
+        m_Storage.EachEntity(
+            [&](const Fling::Entity entity)
+            {
+                Json entityJson = Json::Object();
 
-			String name;
-			if (m_Storage.Has<NameComponent>(entity))
-			{
-				name = String(m_Storage.Get<NameComponent>(entity).Name.ToView());
-			}
-			if (name.empty())
-			{
-				name = "Entity_" + std::to_string(unnamedIndex);
-			}
-			++unnamedIndex;
+                String name;
+                if (m_Storage.Has<NameComponent>(entity))
+                {
+                    name = String(m_Storage.Get<NameComponent>(entity).Name.ToView());
+                }
+                if (name.empty())
+                {
+                    name = "Entity_" + std::to_string(unnamedIndex);
+                }
+                ++unnamedIndex;
 
-			entityJson.Set("name", name);
+                entityJson.Set("name", name);
 
-			for (const TypeDesc& type : m_Types.All())
-			{
-				if (!type.IsSaved() || type.IsSingleton() || IsReservedEntityKey(type.Name))
-				{
-					continue;
-				}
+                for (const TypeDesc& type : m_Types.All())
+                {
+                    if (!type.IsSaved() || type.IsSingleton() || IsReservedEntityKey(type.Name))
+                    {
+                        continue;
+                    }
 
-				if (type.Has && type.Has(m_Storage, entity))
-				{
-					Json componentJson = Json::Object();
-					if (type.GetConst)
-					{
-						SaveObject(type, type.GetConst(m_Storage, entity), componentJson, Context);
-					}
-					entityJson.Set(type.Name, componentJson);
-				}
-			}
+                    if (type.Has && type.Has(m_Storage, entity))
+                    {
+                        Json componentJson = Json::Object();
+                        if (type.GetConst)
+                        {
+                            SaveObject(type, type.GetConst(m_Storage, entity), componentJson, Context);
+                        }
+                        entityJson.Set(type.Name, componentJson);
+                    }
+                }
 
-			entityEntries.emplace_back(name, std::move(entityJson));
-		});
+                entityEntries.emplace_back(name, std::move(entityJson));
+            });
 
-		std::stable_sort(entityEntries.begin(), entityEntries.end(),
-			[](const std::pair<String, Json>& a, const std::pair<String, Json>& b)
-			{
-				return a.first < b.first;
-			});
+        std::stable_sort(entityEntries.begin(),
+                         entityEntries.end(),
+                         [](const std::pair<String, Json>& a, const std::pair<String, Json>& b)
+                         { return a.first < b.first; });
 
-		Json entities = Json::Array();
-		for (auto& entry : entityEntries)
-		{
-			entities.PushBack(entry.second);
-		}
+        Json entities = Json::Array();
+        for (auto& entry : entityEntries)
+        {
+            entities.PushBack(entry.second);
+        }
 
         t_OutDoc = Json::Object();
         t_OutDoc.Set("version", 1);
@@ -451,21 +449,21 @@ namespace Fling
     }
 
     bool World::LoadLevelFile(const StringView t_LevelToLoad)
-	{
+    {
         if (!m_TypesBuilt)
         {
-			F_LOG_ERROR("LoadLevelFile('{}') failed: call World::Init first", t_LevelToLoad);
-			return false;
-		}
+            F_LOG_ERROR("LoadLevelFile('{}') failed: call World::Init first", t_LevelToLoad);
+            return false;
+        }
 
         const String FullPath = FlingPaths::EngineAssetsDir() + "/" + String(t_LevelToLoad);
         F_LOG_TRACE("Loading Level file from {}", FullPath);
 
-		Json doc;
-		if (!doc.LoadFromFile(FullPath))
-		{
-			return false;
-		}
+        Json doc;
+        if (!doc.LoadFromFile(FullPath))
+        {
+            return false;
+        }
 
         return LoadFromJson(doc, FullPath);
     }
@@ -480,10 +478,10 @@ namespace Fling
 
         Json entities = t_Doc.Get("entities");
         if (!entities.IsArray())
-		{
+        {
             F_LOG_ERROR("Level '{}' is missing an entities array", t_SourceName);
             return false;
-		}
+        }
 
         // Fires the destroy signals, so the renderer lets go of the old entities
         m_Storage.Clear();
@@ -504,85 +502,86 @@ namespace Fling
         Pending.reserve(entities.Size());
 
         for (std::size_t i = 0; i < entities.Size(); ++i)
-		{
-			Json entityJson = entities.At(i);
-			if (!entityJson.IsObject())
-			{
-				F_LOG_WARN("Skipping non-object entity at index {}", i);
-				continue;
-			}
+        {
+            Json entityJson = entities.At(i);
+            if (!entityJson.IsObject())
+            {
+                F_LOG_WARN("Skipping non-object entity at index {}", i);
+                continue;
+            }
 
-			const Fling::Entity entity = m_Storage.Create();
-			String name = entityJson.GetString("name");
-			if (name.empty())
-			{
-				name = "Entity_" + std::to_string(i);
-			}
+            const Fling::Entity entity = m_Storage.Create();
+            String name = entityJson.GetString("name");
+            if (name.empty())
+            {
+                name = "Entity_" + std::to_string(i);
+            }
 
-			const uint64 Guid = entityJson.Get(EntityGuid::Component.Name).GetUInt64("value", 0);
-			if (Guid != 0 && !GuidToEntity.emplace(Guid, entity).second)
-			{
-				F_LOG_WARN("{}: entity '{}' has the same EntityGuid as another entity. References use the first one.",
-					t_SourceName, name);
-			}
+            const uint64 Guid = entityJson.Get(EntityGuid::Component.Name).GetUInt64("value", 0);
+            if (Guid != 0 && !GuidToEntity.emplace(Guid, entity).second)
+            {
+                F_LOG_WARN("{}: entity '{}' has the same EntityGuid as another entity. References use the first one.",
+                           t_SourceName,
+                           name);
+            }
 
-			Pending.push_back(PendingEntity{ entity, std::move(entityJson), std::move(name) });
-		}
+            Pending.push_back(PendingEntity{entity, std::move(entityJson), std::move(name)});
+        }
 
         // Pass 2: the components
-        const LoadContext Context{ &GuidToEntity, String(t_SourceName) };
+        const LoadContext Context{&GuidToEntity, String(t_SourceName)};
         for (PendingEntity& Each : Pending)
         {
             NameComponent& nameComp = m_Storage.Add<NameComponent>(Each.Entity);
             nameComp.Name = Name(Each.Name);
 
-			auto LoadNamedComponent = [&](const StringView key)
-			{
-				if (IsReservedEntityKey(key) || !Each.Data.Contains(key))
-				{
-					return;
-				}
+            auto LoadNamedComponent = [&](const StringView key)
+            {
+                if (IsReservedEntityKey(key) || !Each.Data.Contains(key))
+                {
+                    return;
+                }
 
-				const TypeDesc* type = m_Types.Find(key);
-				if (!type || type->IsSingleton())
-				{
-					if (const RemovedComponentDesc* removed = m_Types.FindRemoved(key))
-					{
-						if (removed->Convert)
-						{
-							removed->Convert(m_Storage, Each.Entity, Each.Data.Get(key));
-						}
-						return;
-					}
-					F_LOG_WARN("Unknown component '{}' on entity '{}', skipping", key, Each.Name);
-					return;
-				}
-				if (!type->IsSaved() || !type->Emplace)
-				{
-					return;
-				}
+                const TypeDesc* type = m_Types.Find(key);
+                if (!type || type->IsSingleton())
+                {
+                    if (const RemovedComponentDesc* removed = m_Types.FindRemoved(key))
+                    {
+                        if (removed->Convert)
+                        {
+                            removed->Convert(m_Storage, Each.Entity, Each.Data.Get(key));
+                        }
+                        return;
+                    }
+                    F_LOG_WARN("Unknown component '{}' on entity '{}', skipping", key, Each.Name);
+                    return;
+                }
+                if (!type->IsSaved() || !type->Emplace)
+                {
+                    return;
+                }
 
-				const Json ComponentJson = Each.Data.Get(key);
-				const std::function<void(void*)> Fill = [&](void* t_Object)
-				{
-					LoadObject(*type, t_Object, ComponentJson, Context);
-				};
-				type->Emplace(m_Storage, Each.Entity, type->IsTag() ? nullptr : &Fill);
-			};
+                const Json ComponentJson = Each.Data.Get(key);
+                const std::function<void(void*)> Fill = [&](void* t_Object)
+                {
+                    LoadObject(*type, t_Object, ComponentJson, Context);
+                };
+                type->Emplace(m_Storage, Each.Entity, type->IsTag() ? nullptr : &Fill);
+            };
 
-			// nlohmann objects iterate keys alphabetically, so MeshRenderer would
-			// otherwise construct before Transform. Load pose first so renderer
-			// hooks and later components see the authored transform.
-			LoadNamedComponent("Transform");
-			for (const String& key : Each.Data.Keys())
-			{
-				if (key == "Transform")
-				{
-					continue;
-				}
-				LoadNamedComponent(key);
-			}
-		}
+            // nlohmann objects iterate keys alphabetically, so MeshRenderer would
+            // otherwise construct before Transform. Load pose first so renderer
+            // hooks and later components see the authored transform.
+            LoadNamedComponent("Transform");
+            for (const String& key : Each.Data.Keys())
+            {
+                if (key == "Transform")
+                {
+                    continue;
+                }
+                LoadNamedComponent(key);
+            }
+        }
 
         // Children is not saved: make it from the Parent links
         HierarchyUtil::RebuildChildren(m_Storage);
@@ -615,6 +614,6 @@ namespace Fling
             }
         }
 
-		return true;
+        return true;
     }
 } // namespace Fling

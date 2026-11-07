@@ -1,10 +1,10 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
 #include "FlingTypes.h"
 #include "Singleton.hpp"
 #include "Strings/String.h"
 
-#include "Ecs/EntityStorage.h"
 #include <memory>
 #include <vector>
 
@@ -113,8 +113,9 @@ namespace Fling
         void RecreateFrameResourcesForResize();
 
         /** Builds any render pipelines with their specific set of sub passes and shaders */
-        void
-        BuildRenderPipelines(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+        void BuildRenderPipelines(PipelineFlags t_Conf,
+                                  Fling::EntityStorage& t_Reg,
+                                  std::shared_ptr<Fling::IDebugUI> t_DebugUI);
 
         /**
          * Build the frame buffers for each swap chain image along with the render pass

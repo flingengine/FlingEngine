@@ -7,8 +7,10 @@
 using Fling::String;
 using Fling::StringView;
 
-namespace {
-    void InitLogger() {
+namespace
+{
+    void InitLogger()
+    {
         Fling::Logger::Get().Init();
         // Keep startup log lines off the console so a passing run stays quiet.
         Fling::Logger::GetCurrentConsole()->set_level(spdlog::level::off);
@@ -16,11 +18,13 @@ namespace {
     }
 } // namespace
 
-TEST_CASE("Fling::Json parse dump Get Set", "[json]") {
+TEST_CASE("Fling::Json parse dump Get Set", "[json]")
+{
     using namespace Fling;
     InitLogger();
 
-    SECTION("Parse and dump round-trip") {
+    SECTION("Parse and dump round-trip")
+    {
         Json doc = Json::Parse(R"({"title":"Demo","count":3})");
         REQUIRE(doc.IsObject());
         REQUIRE(doc.Contains("title"));
@@ -32,7 +36,8 @@ TEST_CASE("Fling::Json parse dump Get Set", "[json]") {
         REQUIRE(parsedAgain.GetInt("count") == 3);
     }
 
-    SECTION("Missing keys return defaults and do not insert") {
+    SECTION("Missing keys return defaults and do not insert")
+    {
         Json doc = Json::Object();
         REQUIRE_FALSE(doc.Contains("missing"));
         REQUIRE(doc.GetString("missing", "fallback") == "fallback");
@@ -43,7 +48,8 @@ TEST_CASE("Fling::Json parse dump Get Set", "[json]") {
         REQUIRE_FALSE(doc.Contains("missing"));
     }
 
-    SECTION("Get Set glm vec round-trip") {
+    SECTION("Get Set glm vec round-trip")
+    {
         Json doc = Json::Object();
         doc.Set("position", glm::vec3(1.f, 2.f, 3.f));
         doc.Set("color", glm::vec4(0.1f, 0.2f, 0.3f, 0.4f));
@@ -72,7 +78,8 @@ TEST_CASE("Fling::Json parse dump Get Set", "[json]") {
         REQUIRE(missing.x == Catch::Approx(9.f));
     }
 
-    SECTION("Array Get Set") {
+    SECTION("Array Get Set")
+    {
         Json arr = Json::Array();
         Json a = Json::Object();
         a.Set("n", 1);
@@ -89,7 +96,8 @@ TEST_CASE("Fling::Json parse dump Get Set", "[json]") {
     }
 }
 
-TEST_CASE("Fling::Json wide numbers, vec2, quat, and Remove", "[json]") {
+TEST_CASE("Fling::Json wide numbers, vec2, quat, and Remove", "[json]")
+{
     using Fling::Json;
 
     Json doc = Json::Object();

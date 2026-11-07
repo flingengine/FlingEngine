@@ -44,8 +44,8 @@ namespace Fling
 
                     const void* Object = Type.GetSingletonConst ? Type.GetSingletonConst(t_Reg) : nullptr;
                     const String Label = Type.Name + "  (" + KindName(Type.Kind) +
-                                              (Type.Transient ? ", transient" : ", saved") +
-                                              (Object ? ")" : ", not in the world)");
+                                         (Type.Transient ? ", transient" : ", saved") +
+                                         (Object ? ")" : ", not in the world)");
 
                     if (!Object || Type.Fields.empty())
                     {
@@ -56,7 +56,7 @@ namespace Fling
                     if (ImGui::TreeNode(Type.Name.c_str(), "%s", Label.c_str()))
                     {
                         Json Value = Json::Object();
-                        SaveObject(Type, Object, Value, SaveContext{ &t_Reg });
+                        SaveObject(Type, Object, Value, SaveContext{&t_Reg});
                         ImGui::TextUnformatted(Value.Dump(2).c_str());
                         ImGui::TreePop();
                     }

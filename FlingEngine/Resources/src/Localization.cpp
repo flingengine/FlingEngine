@@ -645,14 +645,22 @@ namespace Fling
                 {
                     ++Result.Mismatched;
                     F_LOG_WARN("{}: {}.{} has the text \"{}\" in code, and \"{}\" in the {} table. The table is kept.",
-                               Entry.Location, Entry.Table, Entry.Key, Entry.SourceText, *Existing, m_SourceLanguage);
+                               Entry.Location,
+                               Entry.Table,
+                               Entry.Key,
+                               Entry.SourceText,
+                               *Existing,
+                               m_SourceLanguage);
                 }
             }
             else if (Entry.SourceText.empty())
             {
                 ++Result.MissingText;
-                F_LOG_WARN("{}: {}.{} is not in the {} tables, and the code gives no source text", Entry.Location,
-                           Entry.Table, Entry.Key, m_SourceLanguage);
+                F_LOG_WARN("{}: {}.{} is not in the {} tables, and the code gives no source text",
+                           Entry.Location,
+                           Entry.Table,
+                           Entry.Key,
+                           m_SourceLanguage);
             }
             else
             {

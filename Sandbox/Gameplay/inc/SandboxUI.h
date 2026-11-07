@@ -16,6 +16,6 @@ namespace Sandbox
         /**
          * Draw the sandbox game ImGui UI elements
          */
-        void NewFrame(Fling::EntityStorage& t_Reg); 
+        void NewFrame(Fling::EntityStorage& t_Reg);
     };
-}   // namespace Sandbox
+} // namespace Sandbox

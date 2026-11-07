@@ -95,7 +95,8 @@ namespace Fling
         const char* Name = nullptr;
         ComponentKind Kind = ComponentKind::Table;
         ComponentDomain Domain = ComponentDomain::Simulation;
-        /** True if the component is never saved. A saved component should be added with ModuleRegistration::Component. */
+        /** True if the component is never saved. A saved component should be added with ModuleRegistration::Component.
+         */
         bool Transient = false;
     };
 

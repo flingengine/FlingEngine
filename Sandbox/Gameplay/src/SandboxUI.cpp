@@ -6,4 +6,4 @@ namespace Sandbox
     {
         // Draw IMGui elements here
     }
-}   // namespace Sandbox
+} // namespace Sandbox

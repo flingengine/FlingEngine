@@ -139,10 +139,16 @@ namespace Fling
         uint64 GetLatestSequence() const { return m_LastSequence; }
 
         /** Fired by DispatchDeferredEvents for each device that connected. */
-        Sink<void(const InputDevice&)> OnDeviceConnected() { return Sink<void(const InputDevice&)>{ m_OnDeviceConnected }; }
+        Sink<void(const InputDevice&)> OnDeviceConnected()
+        {
+            return Sink<void(const InputDevice&)>{m_OnDeviceConnected};
+        }
 
         /** Fired by DispatchDeferredEvents for each device that disconnected. */
-        Sink<void(const InputDevice&)> OnDeviceDisconnected() { return Sink<void(const InputDevice&)>{ m_OnDeviceDisconnected }; }
+        Sink<void(const InputDevice&)> OnDeviceDisconnected()
+        {
+            return Sink<void(const InputDevice&)>{m_OnDeviceDisconnected};
+        }
 
     private:
         friend class InputDeviceFactory;

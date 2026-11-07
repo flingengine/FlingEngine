@@ -431,8 +431,7 @@ namespace Fling
                         InputDeviceCapabilities Capability = InputDeviceCapabilities::None;
                         if (!Item.is_string() || !ParseCapability(Item.get<String>(), Capability))
                         {
-                            return "unknown capability " +
-                                   (Item.is_string() ? Quote(Item.get<String>()) : "value");
+                            return "unknown capability " + (Item.is_string() ? Quote(Item.get<String>()) : "value");
                         }
                         Device.Info.Capabilities = Device.Info.Capabilities | Capability;
                     }
@@ -995,8 +994,7 @@ namespace Fling
         return true;
     }
 
-    String
-    DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message)
+    String DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message)
     {
         String Result;
         AppendFormatted(Result, "%.3fs  ", t_TimeSeconds);

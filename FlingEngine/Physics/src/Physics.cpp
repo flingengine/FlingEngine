@@ -10,8 +10,10 @@ namespace Fling
     namespace
     {
         /** Add a request to the PhysicsCommands queue of a registry. */
-        void
-        PushCommand(Fling::EntityStorage& t_Reg, Fling::Entity t_Entity, PhysicsCommandType t_Type, const glm::vec3& t_Value)
+        void PushCommand(Fling::EntityStorage& t_Reg,
+                         Fling::Entity t_Entity,
+                         PhysicsCommandType t_Type,
+                         const glm::vec3& t_Value)
         {
             PhysicsCommands* Commands = t_Reg.TryGetSingleton<PhysicsCommands>();
             if (Commands == nullptr)
@@ -30,8 +32,9 @@ namespace Fling
 
     namespace Physics
     {
-        void
-        InitWorld(Fling::EntityStorage& t_Reg, std::shared_ptr<PhysicsProvider> t_Provider, const PhysicsSettings& t_Settings)
+        void InitWorld(Fling::EntityStorage& t_Reg,
+                       std::shared_ptr<PhysicsProvider> t_Provider,
+                       const PhysicsSettings& t_Settings)
         {
             if (t_Reg.TryGetSingleton<PhysicsWorld>() != nullptr)
             {

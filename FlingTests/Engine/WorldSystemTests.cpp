@@ -165,7 +165,6 @@ TEST_CASE("The world runs its systems by role and calls the play hooks", "[world
     // Shutdown: OnDestroy removes the singletons
     TestWorld.Shutdown();
     REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);
-
 }
 
 TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")

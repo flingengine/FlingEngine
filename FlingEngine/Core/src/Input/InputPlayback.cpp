@@ -179,8 +179,8 @@ namespace Fling
             m_Interface->Queue(Message);
 
             const InputRecordingDevice* Device = m_Recording.FindDevice(Recorded.Message.Device.Value);
-            const String Name = (Device == nullptr || Device->Info.DisplayName.empty()) ? String("Playback")
-                                                                                             : Device->Info.DisplayName;
+            const String Name =
+                (Device == nullptr || Device->Info.DisplayName.empty()) ? String("Playback") : Device->Info.DisplayName;
             m_Log.Add(DescribeRecordedMessage(Recorded.TimeSeconds, Name, Recorded.Message));
         }
     }

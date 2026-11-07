@@ -5,7 +5,6 @@
 #include "Strings/Name.h"
 #include "Strings/String.h"
 
-
 namespace Fling
 {
     /** The direction in which a language is read. */
