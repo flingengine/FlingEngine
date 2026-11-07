@@ -85,13 +85,14 @@ namespace Fling
         std::span<const Entity> Destroys() const { return m_Destroy; }
 
         /** Add (or replace) a component at the flush. Use the typed context call ctx.Add. */
-        template <typename T>
-        void AddComponent(const Entity entity, T value)
+        template <typename T, typename V>
+        void AddComponent(const Entity entity, V&& value)
         {
+            // A reference, not a copy: MSVC does not take a parameter aligned to more than 64 bytes by value
             m_Changes.push_back(ComponentChange{entity,
                                                 Detail::PendingChange{Detail::ComponentIdOf<T>(),
                                                                       true,
-                                                                      new T(std::move(value)),
+                                                                      new T(std::forward<V>(value)),
                                                                       [](void* object)
                                                                       {
                                                                           delete static_cast<T*>(object);
@@ -909,10 +910,11 @@ namespace Fling
          * handle is ignored at the flush. Fixed phases only.
          */
         template <typename T>
-        void Add(const Entity entity, T value)
+        void Add(const Entity entity, T&& value)
         {
-            static_assert(Allows<A, AccessMode::Write, T>, "Add needs Write<T> in the access list.");
-            Commands().template AddComponent<T>(entity, std::move(value));
+            using Type = std::remove_cvref_t<T>;
+            static_assert(Allows<A, AccessMode::Write, Type>, "Add needs Write<T> in the access list.");
+            Commands().template AddComponent<Type>(entity, std::forward<T>(value));
         }
 
         /** Remove the entity's T, if it has one, at the end of the tick. Needs Write<T>. Fixed phases only. */
