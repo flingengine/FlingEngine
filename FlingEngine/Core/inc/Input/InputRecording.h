@@ -6,8 +6,6 @@
 #include "Strings/String.h"
 
 #include <deque>
-#include <string>
-#include <string_view>
 #include <vector>
 
 // Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)

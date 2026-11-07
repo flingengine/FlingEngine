@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <sched.h>
-#include <string>
+
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <unistd.h>

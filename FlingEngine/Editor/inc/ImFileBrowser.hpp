@@ -11,7 +11,7 @@
 #include <functional>
 #include <imgui.h>
 #include <memory>
-#include <string>
+
 #include <vector>
 
 #ifndef IMGUI_VERSION

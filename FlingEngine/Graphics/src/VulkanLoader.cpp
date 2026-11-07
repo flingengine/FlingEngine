@@ -5,8 +5,8 @@
 #include "VulkanLoader.h"
 
 #include <stdexcept>
-#include <string>
-#include <string_view>
+
+
 
 extern "C"
 {

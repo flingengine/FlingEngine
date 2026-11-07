@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <string_view>
+
 #include <type_traits>
 
 namespace Fling
@@ -75,7 +75,7 @@ namespace Fling
      * can be computed at compile time. Never change the algorithm: saved files hold
      * its values.
      */
-    constexpr std::uint64_t HashText(const std::string_view t_Text)
+    constexpr std::uint64_t HashText(const StringView t_Text)
     {
         const char* Bytes = t_Text.data();
         const std::size_t Length = t_Text.size();

@@ -7,7 +7,7 @@
 #include "Threading/NativeThread.h"
 
 #include <memory>
-#include <string>
+
 
 namespace Fling
 {

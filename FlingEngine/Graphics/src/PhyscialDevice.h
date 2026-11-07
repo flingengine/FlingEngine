@@ -4,7 +4,7 @@
 #include "FlingVulkan.h"
 #include "Strings/String.h"
 
-#include <string>
+
 #include <vector>
 
 namespace Fling

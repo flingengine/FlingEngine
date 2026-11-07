@@ -2,7 +2,7 @@
 #include "Logger.h"
 
 #include <algorithm>
-#include <string>
+
 #include <thread>
 
 namespace Fling

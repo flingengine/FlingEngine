@@ -3,7 +3,7 @@
 #include "Strings/String.h"
 
 #include <filesystem>
-#include <string>
+
 #if WITH_IMGUI
 #include <imgui.h>
 #endif

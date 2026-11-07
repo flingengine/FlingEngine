@@ -8,7 +8,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
 #include <span>
-#include <string_view>
+
 #include <vector>
 
 // The interface between the Physics module and a physics library (a "provider").

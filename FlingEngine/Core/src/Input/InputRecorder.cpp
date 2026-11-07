@@ -5,7 +5,7 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <string_view>
+
 
 #if WITH_INPUT_RECORDING
 namespace Fling

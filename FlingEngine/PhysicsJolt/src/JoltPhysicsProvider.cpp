@@ -24,7 +24,7 @@
 #include <Jolt/Physics/StateRecorderImpl.h>
 #include <Jolt/RegisterTypes.h>
 #include <memory>
-#include <string>
+
 #include <vector>
 
 namespace Fling

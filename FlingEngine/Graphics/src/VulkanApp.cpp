@@ -25,7 +25,7 @@
 #include "VulkanLoader.h"
 
 #include <stdexcept>
-#include <string>
+
 
 namespace
 {
