@@ -3,8 +3,12 @@
 #include "Logger.h"
 #include "ResourceManager.h"
 #include "Singleton.hpp"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
+
+using Fling::String;
+using Fling::StringView;
 
 // @see TestConf.ini
 
@@ -41,7 +45,7 @@ TEST_CASE("Engine Config File", "[resource]") {
     }
 
     SECTION("String Test") {
-        std::string Words = FlingConfig::Get().GetString("TestRead", "Words");
+        String Words = FlingConfig::Get().GetString("TestRead", "Words");
         REQUIRE(Words == "Billy Bob Joe");
     }
 

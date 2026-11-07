@@ -3,6 +3,7 @@
 #include "MeshRenderer.h"
 #include "MeshRendererGpu.h"
 #include "Model.h"
+#include "Strings/String.h"
 
 #include <entt/entity/helper.hpp>
 
@@ -67,7 +68,7 @@ namespace Fling
         Release();
     }
 
-    std::string MeshRenderer::GetModelPath() const
+    String MeshRenderer::GetModelPath() const
     {
         if (m_Model == nullptr)
         {
@@ -76,7 +77,7 @@ namespace Fling
         return m_Model->GetAssetPath().GetText();
     }
 
-    std::string MeshRenderer::GetMaterialPath() const
+    String MeshRenderer::GetMaterialPath() const
     {
         if (m_Material == nullptr)
         {
@@ -138,8 +139,8 @@ namespace Fling
 
     void MeshRenderer::Serialize(JsonArchive& Ar)
     {
-        std::string meshPath;
-        std::string materialPath;
+        String meshPath;
+        String materialPath;
 
         if (Ar.IsSaving())
         {

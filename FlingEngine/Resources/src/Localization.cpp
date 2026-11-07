@@ -1,7 +1,9 @@
+#include "FlingIntegers.h"
 #include "Json.h"
 #include "Localization.h"
 #include "Logger.h"
 #include "Strings/DisplayText.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <regex>
@@ -204,7 +206,7 @@ namespace Fling
                 if (Doc.Contains("MinimumGroupingDigits"))
                 {
                     Info.Numbers.MinimumGroupingDigits =
-                        static_cast<std::uint8_t>(Doc.GetInt("MinimumGroupingDigits", Info.Numbers.MinimumGroupingDigits));
+                        static_cast<uint8>(Doc.GetInt("MinimumGroupingDigits", Info.Numbers.MinimumGroupingDigits));
                 }
                 if (Doc.Contains("DatePattern"))
                 {
@@ -214,7 +216,7 @@ namespace Fling
             }
 
             Table& Entries = Loaded[Name(PathToUtf8(Entry.path().stem()))];
-            for (const std::string& Key : Doc.Keys())
+            for (const String& Key : Doc.Keys())
             {
                 Entries[Name(Key)] = Doc.GetString(Key);
             }

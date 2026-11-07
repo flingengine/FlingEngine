@@ -5,12 +5,12 @@
 #include "LogicalDevice.h"
 #include "ResourceManager.h"
 #include "stb_image.h"
+#include "Strings/String.h"
 #include "VulkanApp.h"
 
 #include <array>
 #include <cstring>
 #include <filesystem>
-#include <string>
 
 namespace Fling
 {
@@ -26,11 +26,11 @@ namespace Fling
         constexpr std::array<const char*, 5> FaceExtensions = {".png", ".jpg", ".jpeg", ".tga", ".bmp"};
 
         /** Find the file for one face in the folder. Returns an empty string if there is no file. */
-        std::string FindFaceFile(const std::string& t_Folder, const char* t_FaceName)
+        String FindFaceFile(const StringView t_Folder, const char* t_FaceName)
         {
             for (const char* Ext : FaceExtensions)
             {
-                std::string Path = t_Folder + "/" + t_FaceName + Ext;
+                String Path = String(t_Folder) + "/" + t_FaceName + Ext;
                 if (std::filesystem::exists(Path))
                 {
                     return Path;
@@ -69,7 +69,7 @@ namespace Fling
 
     void Cubemap::LoadVulkanImage()
     {
-        const std::string Folder = GetFilepathReleativeToAssets();
+        const String Folder = GetFilepathReleativeToAssets();
 
         // Load every face first, so that a missing or bad face makes no GPU objects
         std::array<stbi_uc*, CubemapFaceCount> Pixels = {};
@@ -84,7 +84,7 @@ namespace Fling
 
         for (uint32 Face = 0; Face < CubemapFaceCount; ++Face)
         {
-            const std::string Path = FindFaceFile(Folder, FaceNames[Face]);
+            const String Path = FindFaceFile(Folder, FaceNames[Face]);
             if (Path.empty())
             {
                 F_LOG_ERROR("Cubemap {}: cannot find face '{}'", Folder, FaceNames[Face]);

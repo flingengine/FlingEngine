@@ -2,8 +2,7 @@
 #include "CoreAPI.h"
 #include "GitVersion.h"
 #include "Platform.h"
-
-#include <string>
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -13,7 +12,7 @@ namespace Fling
 		int Minor;
 		int Patch;
 
-		std::string ToString() const;
+		String ToString() const;
 		
 		static Version EngineVersion;
 	};

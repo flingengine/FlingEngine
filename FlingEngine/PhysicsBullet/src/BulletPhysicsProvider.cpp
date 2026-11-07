@@ -1,4 +1,5 @@
 #include "PhysicsProvider.h"
+#include "Strings/String.h"
 
 #include <btBulletDynamicsCommon.h>
 #include <cassert>
@@ -368,7 +369,7 @@ namespace Fling
         class BulletPhysicsProvider final : public PhysicsProvider
         {
         public:
-            std::string_view GetName() const override { return "Bullet"; }
+            StringView GetName() const override { return "Bullet"; }
 
             PhysicsCapability GetCapabilities() const override
             {

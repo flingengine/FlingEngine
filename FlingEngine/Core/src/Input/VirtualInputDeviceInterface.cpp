@@ -1,8 +1,8 @@
 #include "Input/InputMessageHandler.h"
 #include "Input/VirtualInputDeviceInterface.h"
+#include "Strings/String.h"
 
 #include <algorithm>
-#include <string_view>
 
 namespace Fling
 {
@@ -60,7 +60,7 @@ namespace Fling
         // The name shows that the device is not hardware. A device from a recording of a
         // playback already has the suffix, so it is not added twice
         InputDeviceInfo Info = t_Info;
-        const std::string_view Suffix = SimulatedNameSuffix;
+        const StringView Suffix = SimulatedNameSuffix;
         const bool HasSuffix =
             Info.DisplayName.size() >= Suffix.size() &&
             Info.DisplayName.compare(Info.DisplayName.size() - Suffix.size(), Suffix.size(), Suffix) == 0;

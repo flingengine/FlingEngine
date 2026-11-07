@@ -13,30 +13,29 @@
 #include "Physics.h"
 #include "Random.h"
 #include "RegisterGraphicsComponents.h"
+#include "Strings/String.h"
 #include "Threading/Thread.h"
 #include "VulkanApp.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-#include <random>
 #include <thread>
 
 namespace Fling
 {
     ExitCode Engine::StartLocalization()
 	{
-		const std::string Folder = FlingConfig::GetString("Localization", "Folder", "Localization");
+		const String Folder = FlingConfig::GetString("Localization", "Folder", "Localization");
 		const Name SourceLanguage(FlingConfig::GetString("Localization", "SourceLanguage", "en"));
 		auto Loc = std::make_shared<Localization>(PathFromUtf8(FlingPaths::EngineAssetsDir() + "/" + Folder), SourceLanguage);
 
 		Loc->LoadLanguage(SourceLanguage);
-		const std::string Language = !m_Options.Language.empty()
+		const String Language = !m_Options.Language.empty()
 			? m_Options.Language
-			: FlingConfig::GetString("Localization", "Language", std::string(SourceLanguage.ToView()));
+			: FlingConfig::GetString("Localization", "Language", String(SourceLanguage.ToView()));
 		Loc->SetLanguage(Name(Language));
 		F_LOG_TRACE("Language: {} (source {}), {}", Loc->GetLanguage(), SourceLanguage,
 			Loc->GetTextDirection() == TextDirection::RightToLeft ? "right to left" : "left to right");
@@ -44,14 +43,14 @@ namespace Fling
 
 		if (!m_Options.LocImport.empty())
 		{
-			const std::string ImportPath = FlingPaths::ResolveProjectPath(m_Options.LocImport);
+			const String ImportPath = FlingPaths::ResolveProjectPath(m_Options.LocImport);
 			std::ifstream File(PathFromUtf8(ImportPath), std::ios::binary);
 			if (!File)
 			{
 				F_LOG_ERROR("Cannot read {}", ImportPath);
 				return ExitCode::Failure;
 			}
-			const std::string Csv((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+			const String Csv((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
 
 			// Load every language first, so the saved tables keep the entries that the
 			// file does not have.
@@ -60,7 +59,7 @@ namespace Fling
 				Loc->LoadLanguage(OnDisk);
 			}
 
-			std::string Error;
+			String Error;
 			std::vector<Name> Languages;
 			if (!Loc->ImportCsv(Csv, Error, &Languages))
 			{
@@ -81,7 +80,7 @@ namespace Fling
 
 		if (!m_Options.LocGather.empty())
 		{
-			const std::string Folder = FlingPaths::ResolveProjectPath(m_Options.LocGather);
+			const String Folder = FlingPaths::ResolveProjectPath(m_Options.LocGather);
 			std::error_code Error;
 			std::vector<GatheredEntry> Entries;
 			for (auto It = std::filesystem::recursive_directory_iterator(PathFromUtf8(Folder), Error);
@@ -93,8 +92,8 @@ namespace Fling
 					continue;
 				}
 				std::ifstream File(It->path(), std::ios::binary);
-				const std::string Code((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
-				const std::string Location = PathToUtf8(std::filesystem::relative(It->path(), PathFromUtf8(Folder), Error));
+				const String Code((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+				const String Location = PathToUtf8(std::filesystem::relative(It->path(), PathFromUtf8(Folder), Error));
 				for (GatheredEntry& Entry : Localization::GatherFromCode(Code, Location))
 				{
 					Entries.push_back(std::move(Entry));
@@ -107,7 +106,7 @@ namespace Fling
 			}
 
 			const GatherResult Result = Loc->AddGathered(Entries);
-			std::string SaveError;
+			String SaveError;
 			if (Result.Added > 0 && !Loc->SaveLanguage(SourceLanguage, SaveError))
 			{
 				F_LOG_ERROR("Cannot save language {}: {}", SourceLanguage, SaveError);
@@ -124,7 +123,7 @@ namespace Fling
 				Loc->LoadLanguage(OnDisk);
 			}
 
-			const std::string ExportPath = FlingPaths::ResolveProjectPath(m_Options.LocExport);
+			const String ExportPath = FlingPaths::ResolveProjectPath(m_Options.LocExport);
 			std::ofstream File(PathFromUtf8(ExportPath), std::ios::binary);
 			File << Loc->ExportCsv();
 			if (!File)
@@ -150,7 +149,7 @@ namespace Fling
 
 		// Read the launch flags before anything else starts: they decide the log
 		// format, and whether a crash may open a dialog
-		std::string LaunchOptionsError;
+		String LaunchOptionsError;
 		const bool bLaunchOptionsValid = LaunchOptions::Parse(CommandLine::Get(), m_Options, LaunchOptionsError);
 
 		if (m_Options.Unattended)
@@ -176,7 +175,7 @@ namespace Fling
 		}
 
 		// Log the seed, so that --seed can repeat a run that used a random one
-		m_Seed = m_Options.HasSeed ? m_Options.Seed : std::random_device{}();
+		m_Seed = m_Options.HasSeed ? m_Options.Seed : Random::MakeEntropySeed();
 		Random::Init(m_Seed);
 		F_LOG_TRACE("Random seed: {}", m_Seed);
 
@@ -205,7 +204,7 @@ namespace Fling
 #endif
 
         // Load command line args and any ini files
-        const std::string EngineConfigPath = FlingPaths::EngineConfigDir() + "/EngineConf.ini";
+        const String EngineConfigPath = FlingPaths::EngineConfigDir() + "/EngineConf.ini";
         bool ConfigLoaded = FlingConfig::Get().LoadConfigFile(EngineConfigPath);
 
 		if (!ConfigLoaded)
@@ -228,8 +227,8 @@ namespace Fling
 		// be read then exits with code 3, and Shutdown has no world to stop.
 		if (!m_Options.ReplayInput.empty())
 		{
-			const std::string ReplayPath = FlingPaths::ResolveProjectPath(m_Options.ReplayInput);
-			std::string ReplayError;
+			const String ReplayPath = FlingPaths::ResolveProjectPath(m_Options.ReplayInput);
+			String ReplayError;
 			if (!Input::Get().GetPlayback().Start(ReplayPath, 0.0f, ReplayError))
 			{
 				F_LOG_ERROR("Cannot replay input: {}", ReplayError);
@@ -241,7 +240,7 @@ namespace Fling
 
 		if (!m_Options.RecordInput.empty())
 		{
-			const std::string RecordPath = FlingPaths::ResolveProjectPath(m_Options.RecordInput);
+			const String RecordPath = FlingPaths::ResolveProjectPath(m_Options.RecordInput);
 			Input::Get().GetRecorder().Start(RecordPath, 0.0f, 0.0f);
 			F_LOG_TRACE("Recording input to {}", RecordPath);
 		}
@@ -451,7 +450,7 @@ namespace Fling
 			InputRecorder& Recorder = Input::Get().GetRecorder();
 			if (Recorder.IsActive())
 			{
-				const std::string RecordPath = Recorder.GetPath();
+				const String RecordPath = Recorder.GetPath();
 				if (Recorder.Stop())
 				{
 					F_LOG_TRACE("Saved input recording to {}", RecordPath);

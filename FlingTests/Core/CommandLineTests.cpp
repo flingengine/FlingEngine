@@ -1,9 +1,13 @@
 #include "Misc/CommandLine.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
+#include <optional>
 #include <cstdio>
 #include <fstream>
-#include <string_view>
+
+using Fling::String;
+using Fling::StringView;
 
 TEST_CASE("Command Line", "[Command Line]") {
     using namespace Fling;
@@ -19,7 +23,7 @@ TEST_CASE("Command Line", "[Command Line]") {
 
         // The command line should always ignore the first argument, which is
         // the application name
-        const std::string_view CurCmdLine = CommandLine::Get().GetCommandLineData();
+        const StringView CurCmdLine = CommandLine::Get().GetCommandLineData();
         REQUIRE(CurCmdLine.empty());
     }
 
@@ -120,8 +124,8 @@ TEST_CASE("Command Line", "[Command Line]") {
     }
 
     SECTION("Argument exactly at the max length is parsed") {
-        const std::string Prefix = "-longFlag=";
-        const std::string ArgAtLimit = Prefix + std::string(CommandLine::MaxArgLength - Prefix.size(), 'a');
+        const String Prefix = "-longFlag=";
+        const String ArgAtLimit = Prefix + String(CommandLine::MaxArgLength - Prefix.size(), 'a');
         REQUIRE(ArgAtLimit.size() == CommandLine::MaxArgLength);
 
         const char* Args[] = {"FlingEngine.exe", ArgAtLimit.c_str()};
@@ -132,8 +136,8 @@ TEST_CASE("Command Line", "[Command Line]") {
     }
 
     SECTION("Argument over the max length is ignored") {
-        const std::string Prefix = "-longFlag=";
-        const std::string ArgOverLimit = Prefix + std::string(CommandLine::MaxArgLength - Prefix.size() + 1, 'a');
+        const String Prefix = "-longFlag=";
+        const String ArgOverLimit = Prefix + String(CommandLine::MaxArgLength - Prefix.size() + 1, 'a');
         REQUIRE(ArgOverLimit.size() == CommandLine::MaxArgLength + 1);
 
         const char* Args[] = {"FlingEngine.exe", ArgOverLimit.c_str()};
@@ -151,8 +155,9 @@ TEST_CASE("Command Line", "[Command Line]") {
 
         REQUIRE(CommandLine::Get().HasParam("stringFlag"));
 
-        const std::string_view Value = CommandLine::Get().GetValueAsString("stringFlag");
-        REQUIRE(Value == "I like this format");
+        const std::optional<StringView> Value = CommandLine::Get().GetValueAsString("stringFlag");
+        REQUIRE(Value.has_value());
+        REQUIRE(*Value == "I like this format");
     }
 
     SECTION("Missing param falls back to default") {
@@ -162,7 +167,7 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(bWasInitalized);
 
         REQUIRE_FALSE(CommandLine::Get().HasParam("notPresent"));
-        REQUIRE(CommandLine::Get().GetValueAsString("notPresent") == nullptr);
+        REQUIRE_FALSE(CommandLine::Get().GetValueAsString("notPresent").has_value());
         REQUIRE(CommandLine::Get().GetValueAs<int32>("notPresent", 42) == 42);
     }
 
@@ -171,7 +176,7 @@ TEST_CASE("Command Line", "[Command Line]") {
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
 
-        const std::string IniContent = "[Video]\n"
+        const String IniContent = "[Video]\n"
                                        "resolutionWidth=1280\n"
                                        "\n"
                                        "[ConsoleVariables]\n"
@@ -187,8 +192,9 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<int32>("resolutionWidth", -1) == 1920);
         REQUIRE(CommandLine::Get().GetValueAs<bool>("fullscreen", false) == true);
 
-        const std::string_view Title = CommandLine::Get().GetValueAsString("windowTitle");
-        REQUIRE(Title == "Fling Engine");
+        const std::optional<StringView> Title = CommandLine::Get().GetValueAsString("windowTitle");
+        REQUIRE(Title.has_value());
+        REQUIRE(*Title == "Fling Engine");
 
         // Keys from other sections should not be picked up
         REQUIRE_FALSE(CommandLine::Get().HasParam("nonConsoleVariableKey"));
@@ -199,15 +205,16 @@ TEST_CASE("Command Line", "[Command Line]") {
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
 
-        const std::string IniContent = "[ConsoleVariables]\n"
+        const String IniContent = "[ConsoleVariables]\n"
                                        "windowTitle=FromConfigFile\n"
                                        "onlyInConfig=42\n";
 
         REQUIRE(CommandLine::Get().LoadConfigVarsFromString(IniContent));
 
         // The command line explicitly set windowTitle, so it should win over the ini value
-        const std::string_view Title = CommandLine::Get().GetValueAsString("windowTitle");
-        REQUIRE(Title == "FromCommandLine");
+        const std::optional<StringView> Title = CommandLine::Get().GetValueAsString("windowTitle");
+        REQUIRE(Title.has_value());
+        REQUIRE(*Title == "FromCommandLine");
 
         // Values only present in the ini file should still be picked up
         REQUIRE(CommandLine::Get().HasParam("onlyInConfig"));
@@ -219,7 +226,7 @@ TEST_CASE("Command Line", "[Command Line]") {
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
 
-        const std::string TempFilePath = "CommandLineTests_Temp.ini";
+        const String TempFilePath = "CommandLineTests_Temp.ini";
         {
             std::ofstream OutFile(TempFilePath);
             OutFile << "[ConsoleVariables]\n";

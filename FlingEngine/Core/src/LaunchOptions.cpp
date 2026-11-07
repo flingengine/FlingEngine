@@ -1,59 +1,59 @@
 #include "LaunchOptions.h"
 #include "Misc/CommandLine.h"
+#include "Strings/String.h"
 
 #include <charconv>
 #include <limits>
-#include <string_view>
 
 namespace Fling
 {
     namespace
     {
-        constexpr std::string_view NullRenderFlag = "null-render";
-        constexpr std::string_view UnattendedFlag = "unattended";
-        constexpr std::string_view FramesFlag = "frames";
-        constexpr std::string_view SeedFlag = "seed";
-        constexpr std::string_view LogFormatFlag = "log-format";
-        constexpr std::string_view LevelFlag = "level";
-        constexpr std::string_view LogInputFlag = "log-input";
-        constexpr std::string_view ReplayInputFlag = "replay-input";
-        constexpr std::string_view RecordInputFlag = "record-input";
-        constexpr std::string_view LanguageFlag = "language";
-        constexpr std::string_view LocExportFlag = "loc-export";
-        constexpr std::string_view LocImportFlag = "loc-import";
-        constexpr std::string_view LocGatherFlag = "loc-gather";
+        constexpr StringView NullRenderFlag = "null-render";
+        constexpr StringView UnattendedFlag = "unattended";
+        constexpr StringView FramesFlag = "frames";
+        constexpr StringView SeedFlag = "seed";
+        constexpr StringView LogFormatFlag = "log-format";
+        constexpr StringView LevelFlag = "level";
+        constexpr StringView LogInputFlag = "log-input";
+        constexpr StringView ReplayInputFlag = "replay-input";
+        constexpr StringView RecordInputFlag = "record-input";
+        constexpr StringView LanguageFlag = "language";
+        constexpr StringView LocExportFlag = "loc-export";
+        constexpr StringView LocImportFlag = "loc-import";
+        constexpr StringView LocGatherFlag = "loc-gather";
 
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
-        bool ReadPath(const CommandLine& t_CmdLine, std::string_view t_Flag, std::string& t_Out, std::string& t_OutError)
+        bool ReadPath(const CommandLine& t_CmdLine, StringView t_Flag, String& t_Out, String& t_OutError)
         {
-            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
-            if (Value == nullptr)
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
             {
                 return true;
             }
 
-            const std::string_view Str = Value;
+            const StringView Str = *Value;
             // A flag with no value has the value "true"
             if (Str.empty() || Str == "true")
             {
-                t_OutError = "--" + std::string(t_Flag) + " needs a file path";
+                t_OutError = "--" + String(t_Flag) + " needs a file path";
                 return false;
             }
 
-            t_Out = std::string(Str);
+            t_Out = String(Str);
             return true;
         }
 
         /** Read a bool flag. A flag with no value is "true". */
-        bool ReadBool(const CommandLine& t_CmdLine, std::string_view t_Flag, bool& t_Out, std::string& t_OutError)
+        bool ReadBool(const CommandLine& t_CmdLine, StringView t_Flag, bool& t_Out, String& t_OutError)
         {
-            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
-            if (Value == nullptr)
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
             {
                 return true;
             }
 
-            const std::string_view Str = Value;
+            const StringView Str = *Value;
             if (Str == "true" || Str == "1")
             {
                 t_Out = true;
@@ -65,33 +65,33 @@ namespace Fling
                 return true;
             }
 
-            t_OutError = "--" + std::string(t_Flag) + " must be true or false, not '" + std::string(Str) + "'";
+            t_OutError = "--" + String(t_Flag) + " must be true or false, not '" + String(Str) + "'";
             return false;
         }
 
         /** Read a flag that must be a whole number from 0 to the uint32 maximum. */
         bool ReadUint32(const CommandLine& t_CmdLine,
-                        std::string_view t_Flag,
+                        StringView t_Flag,
                         uint32& t_Out,
                         bool& t_OutFound,
-                        std::string& t_OutError)
+                        String& t_OutError)
         {
             t_OutFound = false;
 
-            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
-            if (Value == nullptr)
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
             {
                 return true;
             }
 
-            const std::string_view Str = Value;
+            const StringView Str = *Value;
             uint64 Result = 0;
             const auto [End, Error] = std::from_chars(Str.data(), Str.data() + Str.size(), Result);
             if (Str.empty() || Error != std::errc() || End != Str.data() + Str.size() ||
                 Result > std::numeric_limits<uint32>::max())
             {
-                t_OutError = "--" + std::string(t_Flag) + " needs a whole number from 0 to 4294967295, not '" +
-                             std::string(Str) + "'";
+                t_OutError = "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" +
+                             String(Str) + "'";
                 return false;
             }
 
@@ -101,7 +101,7 @@ namespace Fling
         }
     } // namespace
 
-    bool LaunchOptions::Parse(const CommandLine& t_CmdLine, LaunchOptions& t_Out, std::string& t_OutError)
+    bool LaunchOptions::Parse(const CommandLine& t_CmdLine, LaunchOptions& t_Out, String& t_OutError)
     {
         t_Out = LaunchOptions{};
         t_OutError.clear();
@@ -127,9 +127,9 @@ namespace Fling
             return false;
         }
 
-        if (const char* Format = t_CmdLine.GetValueAsString(LogFormatFlag))
+        if (const std::optional<StringView> Format = t_CmdLine.GetValueAsString(LogFormatFlag))
         {
-            const std::string_view Str = Format;
+            const StringView Str = *Format;
             if (Str == "json")
             {
                 t_Out.Format = LogFormat::Json;
@@ -140,14 +140,14 @@ namespace Fling
             }
             else
             {
-                t_OutError = "--log-format must be text or json, not '" + std::string(Str) + "'";
+                t_OutError = "--log-format must be text or json, not '" + String(Str) + "'";
                 return false;
             }
         }
 
-        if (const char* Level = t_CmdLine.GetValueAsString(LogInputFlag))
+        if (const std::optional<StringView> Level = t_CmdLine.GetValueAsString(LogInputFlag))
         {
-            const std::string_view Str = Level;
+            const StringView Str = *Level;
             if (Str == "true" || Str == "1" || Str == "events")
             {
                 t_Out.InputLog = InputLogLevel::Events;
@@ -162,7 +162,7 @@ namespace Fling
             }
             else
             {
-                t_OutError = "--log-input must be events, all, or off, not '" + std::string(Str) + "'";
+                t_OutError = "--log-input must be events, all, or off, not '" + String(Str) + "'";
                 return false;
             }
         }
@@ -172,16 +172,16 @@ namespace Fling
             return false;
         }
 
-        if (const char* Language = t_CmdLine.GetValueAsString(LanguageFlag))
+        if (const std::optional<StringView> Language = t_CmdLine.GetValueAsString(LanguageFlag))
         {
-            const std::string_view Str = Language;
+            const StringView Str = *Language;
             // A flag with no value has the value "true"
             if (Str.empty() || Str == "true")
             {
                 t_OutError = "--language needs a language code, for example --language fr";
                 return false;
             }
-            t_Out.Language = std::string(Str);
+            t_Out.Language = String(Str);
         }
 
         if (!ReadPath(t_CmdLine, LocExportFlag, t_Out.LocExport, t_OutError) ||
@@ -209,11 +209,11 @@ namespace Fling
         }
 #else
         // A shipped game cannot be driven by an input file
-        for (const std::string_view Flag : {ReplayInputFlag, RecordInputFlag})
+        for (const StringView Flag : {ReplayInputFlag, RecordInputFlag})
         {
-            if (t_CmdLine.GetValueAsString(Flag) != nullptr)
+            if (t_CmdLine.GetValueAsString(Flag).has_value())
             {
-                t_OutError = "--" + std::string(Flag) + " is not available in shipping builds";
+                t_OutError = "--" + String(Flag) + " is not available in shipping builds";
                 return false;
             }
         }

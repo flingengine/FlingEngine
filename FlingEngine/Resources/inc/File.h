@@ -2,7 +2,6 @@
 
 #include "Resource.h"
 
-#include <fstream>
 #include <memory>
 #include <vector>
 

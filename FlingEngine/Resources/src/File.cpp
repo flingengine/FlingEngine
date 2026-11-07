@@ -1,6 +1,7 @@
 #include "File.h"
 #include "Logger.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -17,7 +18,7 @@ namespace Fling
 
     void File::LoadFile()
     {
-        const std::string FilePath = GetFilepathReleativeToAssets();
+        const String FilePath = GetFilepathReleativeToAssets();
         
         std::ifstream File(FilePath, std::ios::ate | std::ios::binary);
 

@@ -1,11 +1,10 @@
 #pragma once
 
 #include "FlingTypes.h"
-#include "Misc/StringUtils.h"
 #include "Strings/String.h"
+#include "Strings/StringUtils.h"
 
-#include <string> // string, stoi, to_string
-#include <string_view>  // std::string_view
+#include <optional>
 #include <unordered_map>
 
 // TODO: I think that we may gain a lot if we just use
@@ -58,7 +57,7 @@ namespace Fling
          * @param Param
          * @return
          */
-        [[nodiscard]] bool HasParam(const std::string_view Param) const;
+        [[nodiscard]] bool HasParam(const StringView Param) const;
 
         /**
          * Gets the value of the given param as the given type.
@@ -67,12 +66,16 @@ namespace Fling
          * then the given "Default" value will be returned.
          */
         template<typename T>
-        T GetValueAs(const std::string_view Param, const T& Default) const;
+        T GetValueAs(const StringView Param, const T& Default) const;
 
-        // TODO: make this a std::string_view
-        const char* GetValueAsString(const std::string_view Param) const;
+        /**
+         * The text of a param, or nullopt if it is not on the command line. A flag
+         * with no value ("-BoolFlag") has the text "true". The view is valid while
+         * the command line is not changed.
+         */
+        std::optional<StringView> GetValueAsString(const StringView Param) const;
 
-        [[nodiscard]] std::string_view GetCommandLineData() const;
+        [[nodiscard]] StringView GetCommandLineData() const;
 
         /**
          * Loads console variables from the "[ConsoleVariables]" section of an ini-style
@@ -94,26 +97,26 @@ namespace Fling
          * @param IniContent   Contents of an ini file to parse
          * @return True if the content was parsed successfully
          */
-        bool LoadConfigVarsFromString(const std::string_view IniContent);
+        bool LoadConfigVarsFromString(const StringView IniContent);
 
     private:
 
         /** Looks up a param, checking command line values before config file (ConsoleVariables) values. */
-        const std::string* FindValue(const std::string_view Param) const;
+        const String* FindValue(const StringView Param) const;
 
-        std::string CurrentCommandLineData;
+        String CurrentCommandLineData;
 
         /** Key/value pairs parsed out of the command line, e.g. "-foo=7" becomes ParsedArgs["foo"] = "7" */
-        std::unordered_map<std::string, std::string> ParsedArgs;
+        std::unordered_map<String, String> ParsedArgs;
 
         /** Key/value pairs parsed out of a config file's "[ConsoleVariables]" section. Lower priority than ParsedArgs. */
-        std::unordered_map<std::string, std::string> ConfigArgs;
+        std::unordered_map<String, String> ConfigArgs;
     };
 
     template<typename T>
-    T CommandLine::GetValueAs(const std::string_view Param, const T& Default) const
+    T CommandLine::GetValueAs(const StringView Param, const T& Default) const
     {
-        const std::string* Value = FindValue(Param);
+        const String* Value = FindValue(Param);
         if (Value == nullptr)
         {
             // Nothing was set on the command line or in a config file for this param,

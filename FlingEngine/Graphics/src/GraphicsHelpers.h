@@ -265,7 +265,7 @@ namespace Fling
 
 		inline VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
 			const VkDynamicState* pDynamicStates,
-			uint32_t dynamicStateCount,
+			uint32 dynamicStateCount,
 			VkPipelineDynamicStateCreateFlags flags = 0)
 		{
 			VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};
@@ -327,23 +327,23 @@ namespace Fling
         VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(
             VkDescriptorType type,
             VkShaderStageFlags stageFlags,
-            uint32_t binding,
-            uint32_t descriptorCount = 1
+            uint32 binding,
+            uint32 descriptorCount = 1
         );
 
         VkWriteDescriptorSet WriteDescriptorSet(
             VkDescriptorSet dstSet,
             VkDescriptorType type,
-            uint32_t binding,
+            uint32 binding,
             VkDescriptorBufferInfo* bufferInfo,
-            uint32_t descriptorCount = 1
+            uint32 descriptorCount = 1
         );
 
         VkRect2D Rect2D(
-            int32_t width,
-            int32_t height,
-            int32_t offsetX,
-            int32_t offsetY
+            int32 width,
+            int32 height,
+            int32 offsetX,
+            int32 offsetY
         );
     }
 

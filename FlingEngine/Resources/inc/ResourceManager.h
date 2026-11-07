@@ -4,10 +4,8 @@
 #include "Resource.h"
 #include "Singleton.hpp"
 
-#include <fstream>
 #include <map>
 #include <memory>
-#include <vector>
 
 namespace Fling
 {

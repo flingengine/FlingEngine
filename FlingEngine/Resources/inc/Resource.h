@@ -3,8 +3,8 @@
 #include "AssetPath.h"
 #include "FlingTypes.h"
 #include "Platform.h"
+#include "Strings/String.h"
 
-#include <string>
 #include <utility>
 
 namespace Fling
@@ -30,7 +30,7 @@ namespace Fling
         /**
          * Returns the full file path that is relative to the assets path based on the path of this resource.
          */
-        std::string GetFilepathReleativeToAssets() const;
+        String GetFilepathReleativeToAssets() const;
 
     protected:
 

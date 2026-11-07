@@ -1,4 +1,5 @@
 #include "Input/InputDeviceTypes.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -22,7 +23,7 @@ namespace Fling
         return "Unknown";
     }
 
-    std::string ToString(InputDeviceCapabilities t_Capabilities)
+    String ToString(InputDeviceCapabilities t_Capabilities)
     {
         struct Name
         {
@@ -45,7 +46,7 @@ namespace Fling
             {InputDeviceCapabilities::Touchpad, "Touchpad"},
         };
 
-        std::string Result;
+        String Result;
         for (const Name& Item : Names)
         {
             if ((t_Capabilities & Item.Capability) == InputDeviceCapabilities::None)

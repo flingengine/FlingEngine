@@ -1,10 +1,8 @@
 #include "DynamicLibrary.h"
 #include "Platform.h"
+#include "Strings/String.h"
 
 #include <cstring>
-#include <limits>
-#include <string>
-#include <string_view>
 
 #if FLING_WINDOWS
 
@@ -15,14 +13,14 @@
 #include <softpub.h>
 // clang-format on
 
-#include "Misc/WindowsStrings.h"
+#include "Strings/WindowsStrings.h"
 
 namespace
 {
     using Fling::Utf8ToWide;
     using Fling::WideToUtf8;
 
-    std::string WindowsErrorMessage(DWORD t_Code)
+    Fling::String WindowsErrorMessage(DWORD t_Code)
     {
         wchar_t* Buffer = nullptr;
         const DWORD Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
@@ -34,7 +32,7 @@ namespace
                                             0,
                                             nullptr);
 
-        std::string Message;
+        Fling::String Message;
         if (Length > 0 && Buffer != nullptr)
         {
             Message = WideToUtf8(std::wstring_view(Buffer, Length));
@@ -246,11 +244,11 @@ namespace
         bool m_Restore = false;
     };
 
-    std::string UntrustedMessage(LONG t_Status)
+    Fling::String UntrustedMessage(LONG t_Status)
     {
         char Hex[16] = {};
         std::snprintf(Hex, sizeof(Hex), "%08lX", static_cast<unsigned long>(t_Status));
-        return std::string("The shared library signature is not trusted (0x") + Hex + ")";
+        return Fling::String("The shared library signature is not trusted (0x") + Hex + ")";
     }
 } // namespace
 
@@ -260,7 +258,7 @@ namespace
 
 namespace
 {
-    std::string LinuxErrorMessage()
+    Fling::String LinuxErrorMessage()
     {
         const char* Error = dlerror();
         if (Error == nullptr || Error[0] == '\0')
@@ -279,7 +277,7 @@ namespace
 
 namespace
 {
-    void WriteError(std::string* t_Error, std::string t_Message)
+    void WriteError(Fling::String* t_Error, Fling::String t_Message)
     {
         if (t_Error != nullptr)
         {
@@ -287,7 +285,7 @@ namespace
         }
     }
 
-    void ClearError(std::string* t_Error)
+    void ClearError(Fling::String* t_Error)
     {
         if (t_Error != nullptr)
         {
@@ -319,7 +317,7 @@ namespace Fling
         return *this;
     }
 
-    DynamicLibrary DynamicLibrary::Open(std::string_view t_Name, std::string* t_Error)
+    DynamicLibrary DynamicLibrary::Open(StringView t_Name, String* t_Error)
     {
         if (t_Name.empty())
         {
@@ -352,7 +350,7 @@ namespace Fling
         return Library;
 
 #elif FLING_LINUX
-        const std::string Name(t_Name);
+        const String Name(t_Name);
         dlerror();
         void* Handle = dlopen(Name.c_str(), RTLD_NOW | RTLD_LOCAL);
         if (Handle == nullptr)
@@ -368,7 +366,7 @@ namespace Fling
 #endif
     }
 
-    DynamicLibrary DynamicLibrary::OpenSigned(std::string_view t_Name, std::string* t_Error)
+    DynamicLibrary DynamicLibrary::OpenSigned(StringView t_Name, String* t_Error)
     {
 #if FLING_LINUX
         return Open(t_Name, t_Error);
@@ -472,9 +470,9 @@ namespace Fling
 #endif
     }
 
-    DynamicLibrary DynamicLibrary::OpenFirst(std::span<const std::string_view> t_Names, std::string* t_Error)
+    DynamicLibrary DynamicLibrary::OpenFirst(std::span<const StringView> t_Names, String* t_Error)
     {
-        for (const std::string_view Name : t_Names)
+        for (const StringView Name : t_Names)
         {
             DynamicLibrary Library = Open(Name, t_Error);
             if (Library)
@@ -495,14 +493,14 @@ namespace Fling
         return m_Handle != nullptr;
     }
 
-    void* DynamicLibrary::Symbol(std::string_view t_Name) const
+    void* DynamicLibrary::Symbol(StringView t_Name) const
     {
         if (m_Handle == nullptr || t_Name.empty())
         {
             return nullptr;
         }
 
-        const std::string Name(t_Name);
+        const String Name(t_Name);
 
 #if FLING_WINDOWS
         const FARPROC Proc = GetProcAddress(static_cast<HMODULE>(m_Handle), Name.c_str());

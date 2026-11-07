@@ -1,10 +1,10 @@
 #include "Input/InputMessageHandler.h"
 #include "Input/InputRecorder.h"
 #include "Input/VirtualInputDeviceInterface.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cstdio>
-#include <string_view>
 
 #if WITH_INPUT_RECORDING
 namespace Fling
@@ -123,8 +123,8 @@ namespace Fling
             {
                 Entry.Info = Device->GetInfo();
                 // Playback adds the suffix again, so the file keeps the original name
-                std::string& Name = Entry.Info.DisplayName;
-                const std::string_view Suffix = VirtualInputDeviceInterface::SimulatedNameSuffix;
+                String& Name = Entry.Info.DisplayName;
+                const StringView Suffix = VirtualInputDeviceInterface::SimulatedNameSuffix;
                 if (Device->IsSimulated() && Name.size() >= Suffix.size() &&
                     Name.compare(Name.size() - Suffix.size(), Suffix.size(), Suffix) == 0)
                 {
@@ -144,8 +144,8 @@ namespace Fling
         Recorded.Message = t_Message;
 
         const InputRecordingDevice* Entry = m_Recording.FindDevice(t_Message.Device.Value);
-        const std::string& Name =
-            Entry->Info.DisplayName.empty() ? std::string(ToString(Entry->Info.Type)) : Entry->Info.DisplayName;
+        const String& Name =
+            Entry->Info.DisplayName.empty() ? String(ToString(Entry->Info.Type)) : Entry->Info.DisplayName;
         m_Log.Add(DescribeRecordedMessage(Recorded.TimeSeconds, Name, t_Message));
         m_Recording.Messages.push_back(std::move(Recorded));
     }
@@ -214,7 +214,7 @@ namespace Fling
         m_Processor.reset();
         m_State = InputRecorderState::Idle;
 
-        std::string Error;
+        String Error;
         if (SaveInputRecording(m_Path, m_Recording, Error))
         {
             m_LastSavedPath = m_Path;

@@ -2,6 +2,7 @@
 #include "CommandBuffer.h"
 #include "Components/Transform.h"
 #include "FirstPersonCamera.h"
+#include "FlingIntegers.h"
 #include "FlingVulkan.h"
 #include "FrameBuffer.h"
 #include "GraphicsHelpers.h"
@@ -406,7 +407,7 @@ namespace Fling
 		};
 
 		m_GraphicsPipeline->m_ColorBlendState.attachmentCount =
-			static_cast<uint32_t>(m_GraphicsPipeline->m_ColorBlendAttachmentStates.size());
+			static_cast<uint32>(m_GraphicsPipeline->m_ColorBlendAttachmentStates.size());
 
 		m_GraphicsPipeline->m_ColorBlendState.pAttachments = 
 			m_GraphicsPipeline->m_ColorBlendAttachmentStates.data();

@@ -2,10 +2,10 @@
 
 #include "FlingTypes.h"
 #include "Singleton.hpp"
+#include "Strings/String.h"
 
 #include <entt/entity/registry.hpp>
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace Fling
@@ -73,7 +73,7 @@ namespace Fling
         inline bool HasDevice() const { return m_LogicalDevice != nullptr; }
 
         /** Name reported by the active physical device, or empty when none is selected. */
-        std::string GetPhysicalDeviceName() const;
+        String GetPhysicalDeviceName() const;
 
         /** Vulkan state. Only Graphics translation units can see the members. */
         State& GetState();

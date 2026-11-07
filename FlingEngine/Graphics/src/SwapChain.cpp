@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "FlingWindow.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
@@ -224,7 +225,7 @@ namespace Fling
 		VkResult iRes = vkAcquireNextImageKHR(
 			Device, 
 			m_SwapChain, 
-			std::numeric_limits<uint64_t>::max(),
+			std::numeric_limits<uint64>::max(),
 			t_CompletedSemaphore,
 			VK_NULL_HANDLE,
 			&m_ActiveImageIndex

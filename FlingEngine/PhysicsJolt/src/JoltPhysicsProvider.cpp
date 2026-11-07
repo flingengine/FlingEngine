@@ -6,6 +6,7 @@
 #include "JoltJobSystem.h"
 #include "Logger.h"
 #include "PhysicsProvider.h"
+#include "Strings/String.h"
 #include "Threading/Mutex.h"
 #include "Threading/ThreadSafety.h"
 
@@ -23,7 +24,6 @@
 #include <Jolt/Physics/StateRecorderImpl.h>
 #include <Jolt/RegisterTypes.h>
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace Fling
@@ -448,7 +448,7 @@ namespace Fling
             {
                 JPH::StateRecorderImpl Recorder;
                 m_System->SaveState(Recorder);
-                const std::string Data = Recorder.GetData();
+                const String Data = Recorder.GetData();
                 t_Out.assign(Data.begin(), Data.end());
                 return true;
             }
@@ -490,7 +490,7 @@ namespace Fling
         public:
             JoltPhysicsProvider() : m_Runtime(JoltRuntime::Acquire()) {}
 
-            std::string_view GetName() const override { return "Jolt"; }
+            StringView GetName() const override { return "Jolt"; }
 
             PhysicsCapability GetCapabilities() const override
             {

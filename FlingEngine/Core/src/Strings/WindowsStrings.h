@@ -1,17 +1,16 @@
 #pragma once
 
 #include "Platform.h"
+#include "Strings/String.h"
 
 #if FLING_WINDOWS
 
 #include <limits>
-#include <string>
-#include <string_view>
 
 namespace Fling
 {
     /** UTF-8 to UTF-16 for wide Windows calls. Return an empty string when t_Text is not valid UTF-8. */
-    inline std::wstring Utf8ToWide(std::string_view t_Text)
+    inline std::wstring Utf8ToWide(StringView t_Text)
     {
         if (t_Text.empty() || t_Text.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
         {
@@ -36,7 +35,7 @@ namespace Fling
     }
 
     /** UTF-16 from a wide Windows call to UTF-8. */
-    inline std::string WideToUtf8(std::wstring_view t_Text)
+    inline String WideToUtf8(std::wstring_view t_Text)
     {
         if (t_Text.empty() || t_Text.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
         {
@@ -50,7 +49,7 @@ namespace Fling
             return {};
         }
 
-        std::string Text(static_cast<size_t>(Needed), '\0');
+        String Text(static_cast<size_t>(Needed), '\0');
         WideCharToMultiByte(CP_UTF8, 0, t_Text.data(), Size, Text.data(), Needed, nullptr, nullptr);
         return Text;
     }

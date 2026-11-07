@@ -2,11 +2,11 @@
 
 #if !FLING_WINDOWS
 
+#include "Strings/String.h"
 #include "Threading/NativeThread.h"
 
 #include <memory>
 #include <sched.h>
-#include <string>
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -101,10 +101,10 @@ namespace Fling
         return SetNice(t_Priority, t_NativeId);
     }
 
-    void NativeThread::SetCurrentName(std::string_view t_Name)
+    void NativeThread::SetCurrentName(StringView t_Name)
     {
         // The kernel limit is 16 bytes, with the terminator
-        const std::string Short(t_Name.substr(0, 15));
+        const String Short(t_Name.substr(0, 15));
         pthread_setname_np(pthread_self(), Short.c_str());
     }
 

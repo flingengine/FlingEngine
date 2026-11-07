@@ -1,16 +1,17 @@
 #include "DynamicLibrary.h"
 #include "Platform.h"
+#include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <cstddef>
 #include <cstdio>
-#include <span>
-#include <string>
-#include <string_view>
 
 #if FLING_LINUX
 #include <unistd.h>
 #endif
+
+using Fling::String;
+using Fling::StringView;
 
 namespace
 {
@@ -41,7 +42,7 @@ namespace
     }
 
 #if FLING_WINDOWS
-    std::string WideToUtf8(std::wstring_view t_Text)
+    String WideToUtf8(std::wstring_view t_Text)
     {
         if (t_Text.empty())
         {
@@ -50,7 +51,7 @@ namespace
         const int Size = static_cast<int>(t_Text.size());
         const int Needed = WideCharToMultiByte(CP_UTF8, 0, t_Text.data(), Size, nullptr, 0, nullptr, nullptr);
         REQUIRE(Needed > 0);
-        std::string Text(static_cast<size_t>(Needed), '\0');
+        String Text(static_cast<size_t>(Needed), '\0');
         WideCharToMultiByte(CP_UTF8, 0, t_Text.data(), Size, Text.data(), Needed, nullptr, nullptr);
         return Text;
     }
@@ -174,7 +175,7 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
 {
     SECTION("Open and call a symbol")
     {
-        std::string Error = "stale";
+        String Error = "stale";
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(LibraryName, &Error);
         REQUIRE(Error.empty());
         CallLoadedSymbol(Library);
@@ -184,7 +185,7 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
 
     SECTION("A missing library returns an empty object and an error")
     {
-        std::string Error;
+        String Error;
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open("fling_no_such_library_42", &Error);
         REQUIRE_FALSE(static_cast<bool>(Library));
         REQUIRE_FALSE(Error.empty());
@@ -196,8 +197,8 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
 
     SECTION("OpenFirst skips a bad name")
     {
-        const std::string_view Names[] = {"fling_no_such_library_42", LibraryName};
-        std::string Error = "stale";
+        const StringView Names[] = {"fling_no_such_library_42", LibraryName};
+        String Error = "stale";
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::OpenFirst(Names, &Error);
         REQUIRE(Error.empty());
         CallLoadedSymbol(Library);
@@ -253,16 +254,16 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         const DeleteFileGuard RemoveFile(Path);
         WriteTempBytes(Path);
 
-        std::string Error;
+        String Error;
         Fling::DynamicLibrary Signed = Fling::DynamicLibrary::OpenSigned(WideToUtf8(Path), &Error);
         REQUIRE_FALSE(static_cast<bool>(Signed));
-        REQUIRE(Error.find("not signed") != std::string::npos);
+        REQUIRE(Error.find("not signed") != String::npos);
 
-        std::string OpenError;
+        String OpenError;
         Fling::DynamicLibrary Unchecked = Fling::DynamicLibrary::Open(WideToUtf8(Path), &OpenError);
         REQUIRE_FALSE(static_cast<bool>(Unchecked));
-        REQUIRE(OpenError.find("not signed") == std::string::npos);
-        REQUIRE(OpenError.find("not trusted") == std::string::npos);
+        REQUIRE(OpenError.find("not signed") == String::npos);
+        REQUIRE(OpenError.find("not trusted") == String::npos);
     }
 
     // A file that is not a valid DLL must not open a "Bad Image" dialog. If it does,
@@ -277,7 +278,7 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         const LoaderDialogsOnGuard DialogsOn;
         REQUIRE(GetThreadErrorMode() == 0);
 
-        std::string Error;
+        String Error;
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(WideToUtf8(Path), &Error);
         REQUIRE_FALSE(static_cast<bool>(Library));
         REQUIRE_FALSE(Error.empty());
@@ -302,17 +303,17 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         REQUIRE(Cwd.Captured());
         REQUIRE(SetCurrentDirectoryW(Dir.c_str()));
 
-        std::string Error;
+        String Error;
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::OpenSigned(WideToUtf8(Bare), &Error);
         REQUIRE_FALSE(static_cast<bool>(Library));
-        REQUIRE(Error.find("not signed") == std::string::npos);
+        REQUIRE(Error.find("not signed") == String::npos);
     }
 #endif
 
 #if FLING_LINUX
     SECTION("OpenSigned calls Open")
     {
-        std::string Error = "stale";
+        String Error = "stale";
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::OpenSigned(LibraryName, &Error);
         REQUIRE(Error.empty());
         CallLoadedSymbol(Library);
@@ -320,10 +321,10 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
 
     SECTION("An absolute path to a text file fails")
     {
-        const std::string Path = "/tmp/fling_dynlib_" + std::to_string(static_cast<long>(::getpid())) + ".txt";
+        const String Path = "/tmp/fling_dynlib_" + std::to_string(static_cast<long>(::getpid())) + ".txt";
         struct RemoveFile
         {
-            std::string Path;
+            String Path;
             ~RemoveFile() { std::remove(Path.c_str()); }
         } const Guard{Path};
 
@@ -334,7 +335,7 @@ TEST_CASE("DynamicLibrary", "[core][DynamicLibrary]")
         std::fclose(File);
         REQUIRE(Written == sizeof(Bytes) - 1);
 
-        std::string Error;
+        String Error;
         Fling::DynamicLibrary Library = Fling::DynamicLibrary::Open(Path, &Error);
         REQUIRE_FALSE(static_cast<bool>(Library));
         REQUIRE_FALSE(Error.empty());

@@ -1,8 +1,8 @@
+#include "FlingIntegers.h"
 #include "Strings/DisplayText.h"
 
 #include <atomic>
 #include <charconv>
-#include <cstdio>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -11,7 +11,7 @@ namespace Fling
 {
     struct DisplayText::Data
     {
-        enum class Kind : std::uint8_t
+        enum class Kind : uint8
         {
             Table,
             Invariant,
@@ -28,7 +28,7 @@ namespace Fling
         String Text;
         DisplayText Pattern;
         std::vector<DisplayTextArg> Args;
-        std::int64_t Integer = 0;
+        int64 Integer = 0;
         double Double = 0.0;
         int Year = 0;
         int Month = 0;
@@ -86,7 +86,7 @@ namespace Fling
             return StringView::npos;
         }
 
-        void AppendIsolated(String& t_Out, const String& t_Text, const DisplayLanguage& t_Language)
+        void AppendIsolated(String& t_Out, const StringView t_Text, const DisplayLanguage& t_Language)
         {
             if (t_Language.Direction == TextDirection::RightToLeft)
             {
@@ -324,7 +324,7 @@ namespace Fling
         return DisplayText(std::move(NewData));
     }
 
-    DisplayText DisplayText::AsNumber(const std::int64_t t_Number)
+    DisplayText DisplayText::AsNumber(const int64 t_Number)
     {
         auto NewData = std::make_shared<Data>();
         NewData->Type = Data::Kind::Integer;
@@ -427,13 +427,13 @@ namespace Fling
     {
     }
 
-    DisplayTextArg::DisplayTextArg(const Name t_Key, const std::int64_t t_Value)
+    DisplayTextArg::DisplayTextArg(const Name t_Key, const int64 t_Value)
         : Key(t_Key), Value(DisplayText::AsNumber(t_Value))
     {
     }
 
     DisplayTextArg::DisplayTextArg(const Name t_Key, const int t_Value)
-        : DisplayTextArg(t_Key, static_cast<std::int64_t>(t_Value))
+        : DisplayTextArg(t_Key, static_cast<int64>(t_Value))
     {
     }
 

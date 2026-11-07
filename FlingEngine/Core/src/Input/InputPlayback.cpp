@@ -1,6 +1,7 @@
 #include "Input/InputMessageHandler.h"
 #include "Input/InputPlayback.h"
 #include "Input/VirtualInputDeviceInterface.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -15,7 +16,7 @@ namespace Fling
         constexpr double TimeEpsilon = 1e-6;
     } // namespace
 
-    bool InputPlayback::Start(const StringView t_Path, float t_StartDelay, std::string& t_OutError)
+    bool InputPlayback::Start(const StringView t_Path, float t_StartDelay, String& t_OutError)
     {
         InputRecording Recording;
         if (!LoadInputRecording(t_Path, Recording, t_OutError))
@@ -78,7 +79,7 @@ namespace Fling
             Info.HardwarePath = "playback:" + std::to_string(Device.Id);
             if (Info.DisplayName.empty())
             {
-                Info.DisplayName = std::string("Playback ") + ToString(Info.Type);
+                Info.DisplayName = String("Playback ") + ToString(Info.Type);
             }
             m_DeviceMap[Device.Id] = m_Interface->CreateDevice(Info);
         }
@@ -87,7 +88,7 @@ namespace Fling
         char Buffer[64];
         std::snprintf(
             Buffer, sizeof(Buffer), " (%zu messages, %.3f s)", m_Recording.Messages.size(), m_Recording.GetLength());
-        m_Log.Add("Playing " + (m_Path.empty() ? std::string("recording") : m_Path) + Buffer);
+        m_Log.Add("Playing " + (m_Path.empty() ? String("recording") : m_Path) + Buffer);
     }
 
     void InputPlayback::Stop()
@@ -178,7 +179,7 @@ namespace Fling
             m_Interface->Queue(Message);
 
             const InputRecordingDevice* Device = m_Recording.FindDevice(Recorded.Message.Device.Value);
-            const std::string Name = (Device == nullptr || Device->Info.DisplayName.empty()) ? std::string("Playback")
+            const String Name = (Device == nullptr || Device->Info.DisplayName.empty()) ? String("Playback")
                                                                                              : Device->Info.DisplayName;
             m_Log.Add(DescribeRecordedMessage(Recorded.TimeSeconds, Name, Recorded.Message));
         }

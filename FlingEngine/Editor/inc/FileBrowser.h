@@ -1,7 +1,8 @@
 #pragma once
 
-#include <filesystem>
-#include <string>
+#include "Strings/String.h"
+
+
 #if WITH_IMGUI
 #include <imgui.h>
 #endif
@@ -10,31 +11,31 @@ namespace Fling
     class FileBrowser
     {
     public: 
-        FileBrowser(std::string t_Title = "Open File...");
+        FileBrowser(String t_Title = "Open File...");
         ~FileBrowser() = default;
 
         /** Display the actual ImGUI info here. */
 		void Display();
 
         /** Set the text in the title bar of this file dialoag */
-		void SetTitle(std::string t_Title);
+		void SetTitle(String t_Title);
 
         /** Opens this file dialoag next time Display is called */
         void Open();
 
         bool HasSelected() const { return m_HasSelected; }
-        std::string GetSelected() const { return m_SelectedFile; }
+        String GetSelected() const { return m_SelectedFile; }
         void ClearSelected();
 
         bool IsOpen() const { return m_IsOpen; }
 
 	private:
-		std::string m_Title = "Select File...";
+		String m_Title = "Select File...";
 
         /** The selected file in this dialog */
-        std::string m_SelectedFile = std::string();
+        String m_SelectedFile = String();
 
-		std::string m_CurrentWorkingDir = std::string();
+		String m_CurrentWorkingDir = String();
 
         bool m_IsOpen = false;
 

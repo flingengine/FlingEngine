@@ -1,4 +1,5 @@
 #include "FileBrowserPopup.h"
+#include "Strings/String.h"
 
 #include <algorithm>
 #include <cctype>
@@ -12,22 +13,23 @@ namespace Fling
     {
         namespace fs = std::filesystem;
 
-        std::string ToLower(std::string t_Text)
+        String ToLower(const StringView t_Text)
         {
-            std::transform(t_Text.begin(),
-                           t_Text.end(),
-                           t_Text.begin(),
+            String Lower(t_Text);
+            std::transform(Lower.begin(),
+                           Lower.end(),
+                           Lower.begin(),
                            [](unsigned char t_Char) { return static_cast<char>(std::tolower(t_Char)); });
-            return t_Text;
+            return Lower;
         }
 
-        bool EndsWith(const std::string& t_Text, const std::string& t_Ending)
+        bool EndsWith(const StringView t_Text, const StringView t_Ending)
         {
             return t_Text.size() >= t_Ending.size() &&
                    ToLower(t_Text.substr(t_Text.size() - t_Ending.size())) == ToLower(t_Ending);
         }
 
-        bool CompareNames(const std::string& t_A, const std::string& t_B)
+        bool CompareNames(const StringView t_A, const StringView t_B)
         {
             return ToLower(t_A) < ToLower(t_B);
         }
@@ -97,7 +99,7 @@ namespace Fling
         while (It != End)
         {
             std::error_code EntryEc;
-            const std::string Name = It->path().filename().string();
+            const String Name = It->path().filename().string();
             if (It->is_directory(EntryEc))
             {
                 m_Folders.push_back(Name);
@@ -119,7 +121,7 @@ namespace Fling
         std::sort(m_Files.begin(), m_Files.end(), CompareNames);
     }
 
-    bool FileBrowserPopup::Draw(const char* t_Title, std::string& t_OutPath)
+    bool FileBrowserPopup::Draw(const char* t_Title, String& t_OutPath)
     {
         if (!m_IsOpen)
         {
@@ -161,17 +163,17 @@ namespace Fling
             const float FooterHeight = ImGui::GetFrameHeightWithSpacing() * 2.0f + ImGui::GetStyle().ItemSpacing.y;
             if (ImGui::BeginChild("FileBrowserList", ImVec2(0.0f, -FooterHeight), ImGuiChildFlags_Borders))
             {
-                std::string OpenFolder;
-                for (const std::string& Folder : m_Folders)
+                String OpenFolder;
+                for (const String& Folder : m_Folders)
                 {
-                    const std::string Label = "[dir] " + Folder + "/";
+                    const String Label = "[dir] " + Folder + "/";
                     if (ImGui::Selectable(Label.c_str(), false))
                     {
                         OpenFolder = Folder;
                     }
                 }
 
-                for (const std::string& File : m_Files)
+                for (const String& File : m_Files)
                 {
                     if (ImGui::Selectable(File.c_str(), File == m_Selected, ImGuiSelectableFlags_AllowDoubleClick))
                     {

@@ -1,12 +1,10 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <charconv>
-#include <cstdlib>
 #include <sstream>
-#include <string>
-#include <string_view>
 #include <system_error>
 #include <type_traits>
 
@@ -27,16 +25,16 @@ namespace Fling
         * @return The parsed value, or Default if Str could not be parsed as a T
         */
         template<typename T>
-        T ParseAs(const std::string_view Str, const T& Default = T{})
+        T ParseAs(const StringView Str, const T& Default = T{})
         {
             if (Str.empty())
             {
                 return Default;
             }
 
-            if constexpr (std::is_same_v<T, std::string>)
+            if constexpr (std::is_same_v<T, String>)
             {
-                return std::string(Str);
+                return String(Str);
             }
             else if constexpr (std::is_same_v<T, bool>)
             {
@@ -55,7 +53,7 @@ namespace Fling
                 // std::from_chars does not use the locale, so "3.14" reads the same on
                 // every machine. Like strtoll, skip leading spaces and a '+' sign, and
                 // read the number at the start ("776abc" reads 776).
-                std::string_view Text = Str;
+                StringView Text = Str;
                 while (!Text.empty() && (Text.front() == ' ' || Text.front() == '\t'))
                 {
                     Text.remove_prefix(1);
@@ -72,7 +70,7 @@ namespace Fling
             else
             {
                 // Fallback for any other stream-extractable type
-                std::istringstream ValueStream{ std::string(Str) };
+                std::istringstream ValueStream{ String(Str) };
                 T Value{};
                 ValueStream >> Value;
                 return ValueStream.fail() ? Default : Value;

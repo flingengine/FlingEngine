@@ -1,3 +1,4 @@
+#include "FlingIntegers.h"
 #include "Strings/Language.h"
 #include "Threading/Mutex.h"
 #include "Threading/ThreadSafety.h"
@@ -30,7 +31,7 @@ namespace Fling
             return false;
         }
 
-        bool InRange(const std::int64_t t_Value, const std::int64_t t_Low, const std::int64_t t_High)
+        bool InRange(const int64 t_Value, const int64 t_Low, const int64 t_High)
         {
             return t_Value >= t_Low && t_Value <= t_High;
         }
@@ -89,10 +90,10 @@ namespace Fling
         // the number has a fraction. Rules are for whole numbers; a fraction is Other
         // unless the language says more.
         const double Absolute = std::fabs(t_Number);
-        const std::int64_t I = static_cast<std::int64_t>(Absolute);
+        const int64 I = static_cast<int64>(Absolute);
         const bool V = Absolute != static_cast<double>(I);
-        const std::int64_t Mod10 = I % 10;
-        const std::int64_t Mod100 = I % 100;
+        const int64 Mod10 = I % 10;
+        const int64 Mod100 = I % 100;
         const StringView Code = BaseLanguage(t_Language);
 
         // Only Other: Chinese, Japanese, Korean, Thai, Vietnamese, Indonesian, Malay, Lao, Burmese, Khmer
@@ -260,7 +261,7 @@ namespace Fling
         return !V && I == 1 ? PluralCategory::One : PluralCategory::Other;
     }
 
-    String FormatNumber(const std::int64_t t_Number, const NumberFormat& t_Format)
+    String FormatNumber(const int64 t_Number, const NumberFormat& t_Format)
     {
         char Buffer[24] = {};
         const std::to_chars_result Result = std::to_chars(Buffer, Buffer + sizeof(Buffer), t_Number);

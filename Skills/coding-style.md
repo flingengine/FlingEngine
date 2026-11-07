@@ -29,6 +29,11 @@ Trivial members/accessors can use a one-line `/** ... */`.
 
 ## Enforcement — check before considering work done
 
+- **String and integer types**: `python3 scripts/check_string_types.py` — rejects
+  `std::string` and `std::string_view` (use `String` and `StringView`),
+  `const String&` parameters (use `StringView`), and `std::uint32_t` or
+  `uint32_t` style integers (use `uint8` to `uint64` and `int8` to `int64` from
+  `FlingIntegers.h`, which `FlingTypes.h` includes). See [`strings.md`](strings.md).
 - **Comment content**: `python3 scripts/check_comment_style.py` — rejects leftover
   `@brief` / `/*!` in first-party sources. Run this after adding or editing any
   doc comment.

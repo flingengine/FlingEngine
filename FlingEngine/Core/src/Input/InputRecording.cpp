@@ -1,10 +1,11 @@
 #include "Input/InputRecording.h"
+#include "Strings/String.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -59,7 +60,7 @@ namespace Fling
                                                          InputMessageType::FocusLost,
                                                          InputMessageType::FocusGained};
 
-        bool ParseDeviceType(std::string_view t_Name, InputDeviceType& t_OutType)
+        bool ParseDeviceType(StringView t_Name, InputDeviceType& t_OutType)
         {
             for (const InputDeviceType Type : DeviceTypes)
             {
@@ -72,7 +73,7 @@ namespace Fling
             return false;
         }
 
-        bool ParseCapability(std::string_view t_Name, InputDeviceCapabilities& t_OutCapability)
+        bool ParseCapability(StringView t_Name, InputDeviceCapabilities& t_OutCapability)
         {
             for (const CapabilityName& Item : CapabilityNames)
             {
@@ -109,7 +110,7 @@ namespace Fling
         }
 
         /** Decode UTF-8 into code points. Returns false for invalid UTF-8. */
-        bool DecodeUtf8(const std::string& t_Text, std::vector<uint32>& t_OutCodePoints)
+        bool DecodeUtf8(const StringView t_Text, std::vector<uint32>& t_OutCodePoints)
         {
             size_t i = 0;
             while (i < t_Text.size())
@@ -175,7 +176,7 @@ namespace Fling
         public:
             explicit RecordingParser(InputRecording& t_Out) : m_Out(t_Out) {}
 
-            std::string Run(std::string_view t_Text)
+            String Run(StringView t_Text)
             {
                 m_Out = InputRecording{};
                 bool HaveHeader = false;
@@ -184,11 +185,11 @@ namespace Fling
                 while (Pos <= t_Text.size())
                 {
                     size_t End = t_Text.find('\n', Pos);
-                    if (End == std::string_view::npos)
+                    if (End == StringView::npos)
                     {
                         End = t_Text.size();
                     }
-                    std::string_view Line = t_Text.substr(Pos, End - Pos);
+                    StringView Line = t_Text.substr(Pos, End - Pos);
                     Pos = End + 1;
                     ++LineNumber;
 
@@ -208,7 +209,7 @@ namespace Fling
                     }
 
                     const Json Value = Json::parse(Line.begin(), Line.end(), nullptr, false);
-                    std::string Error;
+                    String Error;
                     if (Value.is_discarded())
                     {
                         Error = "not valid JSON";
@@ -241,11 +242,11 @@ namespace Fling
             }
 
         private:
-            static std::string Quote(const std::string& t_Text) { return "'" + t_Text + "'"; }
+            static String Quote(const StringView t_Text) { return "'" + String(t_Text) + "'"; }
 
             /** Read an optional number field. Returns false (with t_Error set) if it is not a number. */
             static bool
-            ReadNumber(const Json& t_Object, const char* t_Name, std::optional<double>& t_Out, std::string& t_Error)
+            ReadNumber(const Json& t_Object, const char* t_Name, std::optional<double>& t_Out, String& t_Error)
             {
                 t_Out.reset();
                 const auto It = t_Object.find(t_Name);
@@ -255,7 +256,7 @@ namespace Fling
                 }
                 if (!It->is_number())
                 {
-                    t_Error = std::string("\"") + t_Name + "\" must be a number";
+                    t_Error = String("\"") + t_Name + "\" must be a number";
                     return false;
                 }
                 t_Out = It->get<double>();
@@ -266,7 +267,7 @@ namespace Fling
             static bool ReadInteger(const Json& t_Object,
                                     const char* t_Name,
                                     std::optional<int64>& t_Out,
-                                    std::string& t_Error,
+                                    String& t_Error,
                                     int64 t_Min,
                                     int64 t_Max)
             {
@@ -278,28 +279,28 @@ namespace Fling
                 }
                 if (!It->is_number_integer())
                 {
-                    t_Error = std::string("\"") + t_Name + "\" must be a whole number";
+                    t_Error = String("\"") + t_Name + "\" must be a whole number";
                     return false;
                 }
                 const int64 Value = It->get<int64>();
                 if (Value < t_Min || Value > t_Max)
                 {
-                    t_Error = std::string("\"") + t_Name + "\" is out of range";
+                    t_Error = String("\"") + t_Name + "\" is out of range";
                     return false;
                 }
                 t_Out = Value;
                 return true;
             }
 
-            std::string ParseHeader(const Json& t_Header)
+            String ParseHeader(const Json& t_Header)
             {
                 const auto Format = t_Header.find("format");
                 if (Format == t_Header.end() || !Format->is_string() ||
-                    Format->get<std::string>() != InputRecording::FormatName)
+                    Format->get<String>() != InputRecording::FormatName)
                 {
-                    return std::string("header: \"format\" must be \"") + InputRecording::FormatName + "\"";
+                    return String("header: \"format\" must be \"") + InputRecording::FormatName + "\"";
                 }
-                std::string Error;
+                String Error;
                 std::optional<int64> Version;
                 if (!ReadInteger(t_Header, "version", Version, Error, 0, std::numeric_limits<uint32>::max()))
                 {
@@ -358,13 +359,13 @@ namespace Fling
                 return {};
             }
 
-            std::string ParseDevice(const Json& t_Entry)
+            String ParseDevice(const Json& t_Entry)
             {
                 if (!t_Entry.is_object())
                 {
                     return "a device must be an object";
                 }
-                std::string Error;
+                String Error;
                 std::optional<int64> Id;
                 if (!ReadInteger(t_Entry, "id", Id, Error, 0, std::numeric_limits<uint32>::max()))
                 {
@@ -387,20 +388,20 @@ namespace Fling
                 {
                     return "device " + std::to_string(*Id) + " has no \"type\"";
                 }
-                if (!ParseDeviceType(Type->get<std::string>(), Device.Info.Type))
+                if (!ParseDeviceType(Type->get<String>(), Device.Info.Type))
                 {
-                    return "device " + std::to_string(*Id) + " has an unknown type " + Quote(Type->get<std::string>());
+                    return "device " + std::to_string(*Id) + " has an unknown type " + Quote(Type->get<String>());
                 }
 
                 const auto Name = t_Entry.find("name");
                 if (Name != t_Entry.end() && Name->is_string())
                 {
-                    Device.Info.DisplayName = Name->get<std::string>();
+                    Device.Info.DisplayName = Name->get<String>();
                 }
                 const auto Path = t_Entry.find("path");
                 if (Path != t_Entry.end() && Path->is_string())
                 {
-                    Device.Info.HardwarePath = Path->get<std::string>();
+                    Device.Info.HardwarePath = Path->get<String>();
                 }
                 std::optional<int64> Number;
                 if (!ReadInteger(t_Entry, "vendorId", Number, Error, 0, 0xFFFF))
@@ -428,10 +429,10 @@ namespace Fling
                     for (const Json& Item : *Capabilities)
                     {
                         InputDeviceCapabilities Capability = InputDeviceCapabilities::None;
-                        if (!Item.is_string() || !ParseCapability(Item.get<std::string>(), Capability))
+                        if (!Item.is_string() || !ParseCapability(Item.get<String>(), Capability))
                         {
                             return "unknown capability " +
-                                   (Item.is_string() ? Quote(Item.get<std::string>()) : "value");
+                                   (Item.is_string() ? Quote(Item.get<String>()) : "value");
                         }
                         Device.Info.Capabilities = Device.Info.Capabilities | Capability;
                     }
@@ -461,9 +462,9 @@ namespace Fling
                 return Device.Id;
             }
 
-            std::string ParseMessage(const Json& t_Line)
+            String ParseMessage(const Json& t_Line)
             {
-                std::string Error;
+                String Error;
 
                 // Time
                 std::optional<double> Seconds;
@@ -501,7 +502,7 @@ namespace Fling
                 {
                     return "missing \"type\"";
                 }
-                const std::string TypeName = TypeField->get<std::string>();
+                const String TypeName = TypeField->get<String>();
                 const bool IsPress = TypeName == "Press";
                 InputMessageType Type = InputMessageType::KeyDown;
                 bool Found = IsPress;
@@ -533,10 +534,10 @@ namespace Fling
                     {
                         return "missing \"key\"";
                     }
-                    const InputKey Key = InputKey::FromName(KeyField->get<std::string>());
+                    const InputKey Key = InputKey::FromName(KeyField->get<String>());
                     if (!Key.IsValid())
                     {
-                        return "unknown key " + Quote(KeyField->get<std::string>());
+                        return "unknown key " + Quote(KeyField->get<String>());
                     }
                     if (Type == InputMessageType::Axis && !Key.IsAxis())
                     {
@@ -553,7 +554,7 @@ namespace Fling
                 }
 
                 // Device
-                std::string DeviceError;
+                String DeviceError;
                 const std::optional<uint32> Device =
                     ResolveDevice(t_Line, Type, Message.Recorded.Message.Key, DeviceError);
                 if (!Device)
@@ -628,7 +629,7 @@ namespace Fling
                     }
                     else if (Text != t_Line.end())
                     {
-                        if (!Text->is_string() || !DecodeUtf8(Text->get<std::string>(), CodePoints))
+                        if (!Text->is_string() || !DecodeUtf8(Text->get<String>(), CodePoints))
                         {
                             return "\"text\" must be a string of valid UTF-8";
                         }
@@ -686,7 +687,7 @@ namespace Fling
             }
 
             std::optional<uint32>
-            ResolveDevice(const Json& t_Line, InputMessageType t_Type, InputKey t_Key, std::string& t_Error)
+            ResolveDevice(const Json& t_Line, InputMessageType t_Type, InputKey t_Key, String& t_Error)
             {
                 const auto Field = t_Line.find("device");
                 if (Field != t_Line.end())
@@ -705,9 +706,9 @@ namespace Fling
                     if (Field->is_string())
                     {
                         InputDeviceType Type = InputDeviceType::Unknown;
-                        if (!ParseDeviceType(Field->get<std::string>(), Type))
+                        if (!ParseDeviceType(Field->get<String>(), Type))
                         {
-                            t_Error = "unknown device type " + Quote(Field->get<std::string>());
+                            t_Error = "unknown device type " + Quote(Field->get<String>());
                             return std::nullopt;
                         }
                         return FindOrAddDevice(Type);
@@ -796,28 +797,26 @@ namespace Fling
                 m_Text += Json(t_Value).dump(-1, ' ', false, Json::error_handler_t::replace);
             }
 
-            /** A float as the shortest decimal that reads back as the same float. */
+            /**
+             * A float as the shortest decimal that reads back as the same float.
+             * std::to_chars and std::from_chars do not use the locale.
+             */
             void Add(const char* t_Name, float t_Value)
             {
                 char Buffer[32];
-                for (int Digits = 6; Digits <= 9; ++Digits)
-                {
-                    std::snprintf(Buffer, sizeof(Buffer), "%.*g", Digits, static_cast<double>(t_Value));
-                    if (std::strtof(Buffer, nullptr) == t_Value)
-                    {
-                        break;
-                    }
-                }
-                Add(t_Name, std::strtod(Buffer, nullptr));
+                const std::to_chars_result Written = std::to_chars(Buffer, Buffer + sizeof(Buffer), t_Value);
+                double Shortest = 0.0;
+                std::from_chars(Buffer, Written.ptr, Shortest);
+                Add(t_Name, Shortest);
             }
 
-            std::string Finish() { return m_Text + '}'; }
+            String Finish() { return m_Text + '}'; }
 
         private:
-            std::string m_Text;
+            String m_Text;
         };
 
-        void AppendFormatted(std::string& t_Out, const char* t_Format, ...)
+        void AppendFormatted(String& t_Out, const char* t_Format, ...)
         {
             char Buffer[160];
             va_list Args;
@@ -853,7 +852,7 @@ namespace Fling
         return nullptr;
     }
 
-    bool ParseInputRecording(std::string_view t_Text, InputRecording& t_Out, std::string& t_OutError)
+    bool ParseInputRecording(StringView t_Text, InputRecording& t_Out, String& t_OutError)
     {
         InputRecording Result;
         RecordingParser Parser(Result);
@@ -866,27 +865,27 @@ namespace Fling
         return true;
     }
 
-    bool LoadInputRecording(const StringView t_Path, InputRecording& t_Out, std::string& t_OutError)
+    bool LoadInputRecording(const StringView t_Path, InputRecording& t_Out, String& t_OutError)
     {
         std::ifstream File(PathFromUtf8(t_Path), std::ios::binary);
         if (!File)
         {
-            t_OutError = "cannot open '" + std::string(t_Path) + "'";
+            t_OutError = "cannot open '" + String(t_Path) + "'";
             return false;
         }
         std::ostringstream Buffer;
         Buffer << File.rdbuf();
         if (!ParseInputRecording(Buffer.str(), t_Out, t_OutError))
         {
-            t_OutError = std::string(t_Path) + ": " + t_OutError;
+            t_OutError = String(t_Path) + ": " + t_OutError;
             return false;
         }
         return true;
     }
 
-    std::string WriteInputRecording(const InputRecording& t_Recording)
+    String WriteInputRecording(const InputRecording& t_Recording)
     {
-        std::string Text;
+        String Text;
         LineWriter Header;
         Header.Add("format", InputRecording::FormatName);
         Header.Add("version", t_Recording.Version);
@@ -966,7 +965,7 @@ namespace Fling
         return Text;
     }
 
-    bool SaveInputRecording(const StringView t_Path, const InputRecording& t_Recording, std::string& t_OutError)
+    bool SaveInputRecording(const StringView t_Path, const InputRecording& t_Recording, String& t_OutError)
     {
         namespace fs = std::filesystem;
         std::error_code Code;
@@ -983,25 +982,25 @@ namespace Fling
         std::ofstream File(Path, std::ios::binary | std::ios::trunc);
         if (!File)
         {
-            t_OutError = "cannot write '" + std::string(t_Path) + "'";
+            t_OutError = "cannot write '" + String(t_Path) + "'";
             return false;
         }
         File << WriteInputRecording(t_Recording);
         File.flush();
         if (!File)
         {
-            t_OutError = "error while writing '" + std::string(t_Path) + "'";
+            t_OutError = "error while writing '" + String(t_Path) + "'";
             return false;
         }
         return true;
     }
 
-    std::string
-    DescribeRecordedMessage(double t_TimeSeconds, std::string_view t_DeviceName, const InputMessage& t_Message)
+    String
+    DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message)
     {
-        std::string Result;
+        String Result;
         AppendFormatted(Result, "%.3fs  ", t_TimeSeconds);
-        Result += t_DeviceName.empty() ? std::string_view("Device") : t_DeviceName;
+        Result += t_DeviceName.empty() ? StringView("Device") : t_DeviceName;
         Result += "  ";
         Result += ToString(t_Message.Type);
         switch (t_Message.Type)
@@ -1035,7 +1034,7 @@ namespace Fling
         return Result;
     }
 
-    void InputEventLog::Add(std::string t_Line)
+    void InputEventLog::Add(String t_Line)
     {
         m_Lines.push_back(std::move(t_Line));
         ++m_TotalAdded;

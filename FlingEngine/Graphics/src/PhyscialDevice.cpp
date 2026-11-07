@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "PhyscialDevice.h"
+#include "Strings/String.h"
 #include "Utils/VkStringHelpers.h"
 
 #include <algorithm>
@@ -41,7 +42,7 @@ namespace Fling
         F_LOG_TRACE("{}", ToString());
     }
 
-    std::string PhysicalDevice::ToString() const
+    String PhysicalDevice::ToString() const
     {
         return Utils::DeviceToString(m_PhysicalDevice);
     }

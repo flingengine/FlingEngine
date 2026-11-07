@@ -44,7 +44,7 @@ namespace Fling
 	template<typename T, size_t t_NumElms>
 	inline T* CircularBuffer<T, t_NumElms>::GetItem()
 	{
-		const uint32_t index = m_AllocatedIndex++;
+		const uint32 index = m_AllocatedIndex++;
 		// This bit shifting is the same as the % operator
 		// @see https://blog.molecular-matters.com/2015/09/08/job-system-2-0-lock-free-work-stealing-part-2-a-specialized-allocator/
 		// for more about that

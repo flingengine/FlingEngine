@@ -1,6 +1,7 @@
 #include "JsonFile.h"
 #include "Logger.h"
 #include "ResourceManager.h"
+#include "Strings/String.h"
 
 namespace Fling
 {
@@ -17,7 +18,7 @@ namespace Fling
 
 	void JsonFile::Write()
 	{
-		const std::string FilePath = GetFilepathReleativeToAssets();
+		const String FilePath = GetFilepathReleativeToAssets();
 		if (m_JsonData.SaveToFile(FilePath))
 		{
 			F_LOG_TRACE("Successfully Wrote JSON file {}", FilePath);

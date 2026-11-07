@@ -1,10 +1,10 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Strings/String.h"
 
 #include <cstddef>
 #include <functional>
-#include <string>
 
 namespace Fling
 {
@@ -86,7 +86,7 @@ namespace Fling
         InputDeviceType Type = InputDeviceType::Unknown;
 
         /** The name to show to a player, for example "Xbox Wireless Controller". */
-        std::string DisplayName;
+        String DisplayName;
 
         /** USB HID vendor ID. 0 if not known. */
         uint16 VendorId = 0;
@@ -99,7 +99,7 @@ namespace Fling
          * GUID, a device path, or "glfw:keyboard". Used to give a device its old ID when it
          * connects again.
          */
-        std::string HardwarePath;
+        String HardwarePath;
 
         InputDeviceCapabilities Capabilities = InputDeviceCapabilities::None;
 
@@ -129,7 +129,7 @@ namespace Fling
 
     /** The names of every capability in t_Capabilities, separated by ", ", for example "Keys, Haptics". "None" if
      * empty. */
-    std::string ToString(InputDeviceCapabilities t_Capabilities);
+    String ToString(InputDeviceCapabilities t_Capabilities);
 } // namespace Fling
 
 template <>

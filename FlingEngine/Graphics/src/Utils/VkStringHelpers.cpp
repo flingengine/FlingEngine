@@ -1,3 +1,4 @@
+#include "Strings/String.h"
 #include "VkStringHelpers.h"
 
 #include <sstream>
@@ -36,7 +37,7 @@ namespace Fling::Utils
         }
     }
 
-    std::string DeviceToString(VkPhysicalDevice t_Device)
+    String DeviceToString(VkPhysicalDevice t_Device)
     {
         if (t_Device == VK_NULL_HANDLE)
         {
