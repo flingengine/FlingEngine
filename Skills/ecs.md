@@ -15,8 +15,16 @@ Systems do not use `EntityStorage`: they use their typed context.
 ## Storage
 
 - Entities with the same set of Table and Tag components share an
-  archetype. Its rows are in chunks that grow from 1 KiB to 16 KiB, one
-  column per component (`Ecs/detail/NativeStorage.h`).
+  archetype. Its rows are in chunks that grow from 1 KiB to 128 KiB, one
+  64-byte aligned column per component (`Ecs/detail/NativeStorage.h`). Big
+  chunks keep the hardware prefetcher streaming; small archetypes stay small.
+- **Iterating is cheap. Adding and removing Table components is not.** A
+  structural change moves the whole row (about 30 ns), so do it with deferred
+  `ctx.Add` and `ctx.Remove` (batched per entity), or use `Sparse` or
+  `Enableable` for components that come and go every few ticks.
+- In a hot loop, `ctx.Query<...>().Each(fn)` is the fastest form: a plain
+  array loop per chunk, and the Entity column is read only if `fn` takes an
+  `Entity`. The range-for (`for (auto [e, a] : ctx.Query<A>())`) is close.
 - **Adding or removing a Table component moves the entity's row.** A
   reference to one of its components is not valid after that. Keep the
   `Entity`, and `Get` the component again. Build a component whole and add it,
@@ -35,6 +43,9 @@ Systems do not use `EntityStorage`: they use their typed context.
   them, so an entity spawned inside a loop is not seen by that loop.
 - `EntityStorage::Stats()` gives archetype, chunk, and entity counts and the
   number of row moves.
+- `scripts/EcsBenchmark/run.sh` compares the storage with EnTT 3.1 (the
+  storage it replaced) on iteration, create, add, remove, destroy, and memory.
+  Run it after a change to the storage.
 
 ## The rules
 

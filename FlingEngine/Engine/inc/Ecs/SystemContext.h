@@ -19,6 +19,15 @@
 #include <utility>
 #include <vector>
 
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <intrin.h>
+#define FLING_PREFETCH(address) _mm_prefetch(reinterpret_cast<const char*>(address), _MM_HINT_T0)
+#define FLING_QUERY_INLINE __forceinline
+#else
+#define FLING_PREFETCH(address) __builtin_prefetch(address)
+#define FLING_QUERY_INLINE inline __attribute__((always_inline))
+#endif
+
 namespace Fling
 {
     /**
@@ -260,6 +269,14 @@ namespace Fling
         static constexpr bool IsEnableable =
             ComponentInfoOf<std::remove_const_t<T>>.Storage == ComponentStorage::Enableable;
 
+        /**
+         * True if some row may fail a check (a Sparse type, or an Enableable one). Known
+         * from the types, so a query without checks has no calls in its loop, and the
+         * compiler keeps the loop's values in registers.
+         */
+        static constexpr bool MayCheckRows = (IsSparse<Ts> || ...) || (IsSparse<Ws> || ...) || (IsSparse<Xs> || ...) ||
+                                             (IsEnableable<Ts> || ...) || (IsEnableable<Ws> || ...);
+
     public:
         using Item = std::tuple<Entity, Ts&...>;
 
@@ -268,7 +285,7 @@ namespace Fling
         public:
             Iterator() = default;
 
-            Iterator(const QueryRange* range, const bool atEnd) : m_Range(range)
+            Iterator(const QueryRange* range, const bool atEnd) : m_Range(range), m_PerRowChecks(range->m_PerRowChecks)
             {
                 if (atEnd || m_Range->m_Archetypes.empty())
                 {
@@ -279,19 +296,34 @@ namespace Fling
                 SkipToValid();
             }
 
-            Item operator*() const { return MakeItem(std::index_sequence_for<Ts...>{}); }
+            FLING_QUERY_INLINE Item operator*() const { return MakeItem(std::index_sequence_for<Ts...>{}); }
 
-            Iterator& operator++()
+            FLING_QUERY_INLINE Iterator& operator++()
             {
-                ++m_Row;
+                // The common case: the next row of the same chunk, with no per-row checks
+                if constexpr (!MayCheckRows)
+                {
+                    if (++m_Row < m_RowCount)
+                    {
+                        return *this;
+                    }
+                }
+                else
+                {
+                    if (++m_Row < m_RowCount && !m_PerRowChecks)
+                    {
+                        return *this;
+                    }
+                }
                 SkipToValid();
                 return *this;
             }
 
-            bool operator==(const Iterator& other) const
-            {
-                return m_ArchIndex == other.m_ArchIndex && m_ChunkIndex == other.m_ChunkIndex && m_Row == other.m_Row;
-            }
+            /**
+             * Two iterators are equal at the same row of the same chunk. At the end the chunk
+             * is null and the row is 0, so the check per step is two compares.
+             */
+            bool operator==(const Iterator& other) const { return m_Row == other.m_Row && m_Chunk == other.m_Chunk; }
 
             bool operator!=(const Iterator& other) const { return !(*this == other); }
 
@@ -316,7 +348,8 @@ namespace Fling
                 }
             }
 
-            void EnterArchetype()
+            // Inlined, so the iterator's fields stay in registers in the caller's loop
+            FLING_QUERY_INLINE void EnterArchetype()
             {
                 m_Arch = m_Range->m_Archetypes[m_ArchIndex];
                 m_ChunkCount = m_Arch->Chunks.size();
@@ -325,7 +358,8 @@ namespace Fling
                 EnterChunk();
             }
 
-            void EnterChunk()
+            // Inlined, so the iterator's fields stay in registers in the caller's loop
+            FLING_QUERY_INLINE void EnterChunk()
             {
                 m_Row = 0;
                 if (m_RowsLeft == 0 || m_ChunkIndex >= m_ChunkCount || m_ChunkIndex >= m_Arch->Chunks.size())
@@ -347,15 +381,23 @@ namespace Fling
             }
 
             /** Move to the next row that passes the per-row checks (Sparse and Enableable types). */
-            void SkipToValid()
+            // Inlined, so the iterator's fields stay in registers in the caller's loop
+            FLING_QUERY_INLINE void SkipToValid()
             {
                 while (m_ArchIndex < m_Range->m_Archetypes.size())
                 {
                     while (m_Chunk != nullptr && m_Row < m_RowCount)
                     {
-                        if (RowPasses())
+                        if constexpr (!MayCheckRows)
                         {
                             return;
+                        }
+                        else
+                        {
+                            if (RowPasses())
+                            {
+                                return;
+                            }
                         }
                         ++m_Row;
                     }
@@ -373,10 +415,12 @@ namespace Fling
                 }
                 // At the end: the same state as end()
                 m_ChunkIndex = 0;
+                m_Chunk = nullptr;
                 m_Row = 0;
             }
 
-            bool RowPasses() const
+            // Inlined, so the iterator's fields stay in registers in the caller's loop
+            FLING_QUERY_INLINE bool RowPasses() const
             {
                 const QueryRange& range = *m_Range;
                 if (range.m_PerRowChecks)
@@ -410,6 +454,7 @@ namespace Fling
             }
 
             const QueryRange* m_Range = nullptr;
+            bool m_PerRowChecks = false;
             size_t m_ArchIndex = 0;
             Detail::Archetype* m_Arch = nullptr;
             size_t m_ChunkIndex = 0;
@@ -447,7 +492,160 @@ namespace Fling
 
         Iterator end() const { return Iterator(this, true); }
 
+        /**
+         * Call fn for each entity, chunk by chunk, over raw column pointers. fn takes
+         * (T&...) or (Entity, T&...). This is the fastest way through a query: the inner
+         * loop is a plain array loop, and the Entity column is read only if fn takes it.
+         */
+        template <typename Fn>
+        void Each(Fn&& fn) const
+        {
+            for (size_t a = 0; a < m_Archetypes.size(); ++a)
+            {
+                const Detail::Archetype& arch = *m_Archetypes[a];
+                std::array<int32, GetCount == 0 ? 1 : GetCount> columns{};
+                for (size_t i = 0; i < GetCount; ++i)
+                {
+                    columns[i] = arch.ColumnOf(m_GetIds[i]);
+                }
+                size_t rowsLeft = m_RowLimits[a];
+                const size_t chunkCount = arch.Chunks.size();
+                for (size_t c = 0; c < chunkCount && rowsLeft > 0; ++c)
+                {
+                    const Detail::Chunk& chunk = *arch.Chunks[c];
+                    const uint32 count = static_cast<uint32>(std::min<size_t>(chunk.Count, rowsLeft));
+                    rowsLeft -= count;
+                    // Chunks are separate blocks, so the hardware prefetcher starts again at
+                    // each one. Ask for the start of the next chunk's columns now.
+                    if (c + 1 < chunkCount)
+                    {
+                        PrefetchColumns(*arch.Chunks[c + 1], columns);
+                    }
+                    EachInChunk(fn, arch, chunk, columns, count, std::index_sequence_for<Ts...>{});
+                }
+            }
+        }
+
     private:
+        static void PrefetchColumns(const Detail::Chunk& chunk,
+                                    const std::array<int32, GetCount == 0 ? 1 : GetCount>& columns)
+        {
+            for (size_t i = 0; i < GetCount; ++i)
+            {
+                if (columns[i] >= 0)
+                {
+                    const std::byte* base = chunk.Columns[static_cast<size_t>(columns[i])];
+                    // The first four cache lines start the hardware stream
+                    for (size_t line = 0; line < 4; ++line)
+                    {
+                        FLING_PREFETCH(base + line * 64);
+                    }
+                }
+            }
+        }
+
+        template <typename Fn, size_t... I>
+        void EachInChunk(Fn& fn,
+                         const Detail::Archetype& arch,
+                         const Detail::Chunk& chunk,
+                         const std::array<int32, GetCount == 0 ? 1 : GetCount>& columns,
+                         const uint32 count,
+                         std::index_sequence<I...>) const
+        {
+            constexpr bool TakesEntity = std::is_invocable_v<Fn&, Entity, Ts&...>;
+            [[maybe_unused]] const std::tuple<std::remove_const_t<Ts>*...> bases{
+                (columns[I] >= 0 ? reinterpret_cast<std::remove_const_t<Ts>*>(chunk.Columns[columns[I]]) : nullptr)...};
+
+            if constexpr (!MayCheckRows)
+            {
+                for (uint32 row = 0; row < count; ++row)
+                {
+                    if constexpr (TakesEntity)
+                    {
+                        fn(chunk.Entities[row], std::get<I>(bases)[row]...);
+                    }
+                    else
+                    {
+                        fn(std::get<I>(bases)[row]...);
+                    }
+                }
+            }
+            else
+            {
+                EachCheckedInChunk(fn, arch, chunk, bases, count, std::index_sequence<I...>{});
+            }
+        }
+
+        /** The per-row checks of EachInChunk: Enableable flags, and Sparse types, which are not in the chunk. */
+        template <typename Fn, typename Bases, size_t... I>
+        void EachCheckedInChunk(Fn& fn,
+                                const Detail::Archetype& arch,
+                                const Detail::Chunk& chunk,
+                                const Bases& bases,
+                                const uint32 count,
+                                std::index_sequence<I...>) const
+        {
+            constexpr bool TakesEntity = std::is_invocable_v<Fn&, Entity, Ts&...>;
+            for (uint32 row = 0; row < count; ++row)
+            {
+                const Entity entity = chunk.Entities[row];
+                if (!RowPassesChecks(arch, chunk, entity, row))
+                {
+                    continue;
+                }
+                auto value = [&](auto index, auto* base) -> decltype(auto)
+                {
+                    using T = std::remove_pointer_t<decltype(base)>;
+                    if constexpr (IsSparse<T>)
+                    {
+                        return *static_cast<T*>(m_Storage->Get(entity, m_GetIds[decltype(index)::value]));
+                    }
+                    else
+                    {
+                        return base[row];
+                    }
+                };
+                if constexpr (TakesEntity)
+                {
+                    fn(entity, value(std::integral_constant<size_t, I>{}, std::get<I>(bases))...);
+                }
+                else
+                {
+                    fn(value(std::integral_constant<size_t, I>{}, std::get<I>(bases))...);
+                }
+            }
+        }
+
+        bool RowPassesChecks(const Detail::Archetype& arch,
+                             const Detail::Chunk& chunk,
+                             const Entity entity,
+                             const uint32 row) const
+        {
+            for (const Detail::ComponentId id : m_SparseRequired)
+            {
+                if (!m_Storage->Has(entity, id))
+                {
+                    return false;
+                }
+            }
+            for (const Detail::ComponentId id : m_SparseExcluded)
+            {
+                if (m_Storage->Has(entity, id))
+                {
+                    return false;
+                }
+            }
+            for (const Detail::ComponentId id : m_EnableableRequired)
+            {
+                const int32 column = arch.ColumnOf(id);
+                if (column >= 0 && !Detail::NativeStorage::RowEnabled(chunk, static_cast<size_t>(column), row))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         template <typename T>
         static void Classify(std::vector<Detail::ComponentId>& archetypeIds,
                              std::vector<Detail::ComponentId>& sparseIds)

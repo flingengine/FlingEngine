@@ -52,6 +52,9 @@ namespace Fling::Detail
         ComponentStorage Storage = ComponentStorage::Table;
         bool Empty = false;
 
+        /** Trivially copyable and destructible: a row move is a memcpy, and nothing is destroyed. */
+        bool Trivial = false;
+
         /** Construct at dst from src (moved from). dst is raw memory. */
         void (*MoveConstruct)(void* dst, void* src) = nullptr;
         void (*Destroy)(void* object) = nullptr;
@@ -86,6 +89,7 @@ namespace Fling::Detail
             ops.Key = HashName(ops.Name) ^ 0x9E3779B97F4A7C15ull;
         }
         ops.Empty = std::is_empty_v<T>;
+        ops.Trivial = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
         ops.Size = std::is_empty_v<T> ? 0 : sizeof(T);
         ops.Align = alignof(T);
         ops.MoveConstruct = [](void* dst, void* src)
@@ -138,7 +142,14 @@ namespace Fling::Detail
             size_t Size = 0;
             size_t Align = 1;
             bool Enableable = false;
+            /** Copied from the ComponentOps, so a row move needs no lookup */
+            bool Trivial = false;
+            void (*MoveConstruct)(void* dst, void* src) = nullptr;
+            void (*Destroy)(void* object) = nullptr;
         };
+
+        /** The position of this archetype in its storage's list. */
+        uint32 Index = 0;
 
         /** Sorted. Tags are in it, but have no column. */
         std::vector<ComponentId> Types;
@@ -156,8 +167,9 @@ namespace Fling::Detail
 
         size_t EntityCount = 0;
 
-        std::unordered_map<ComponentId, Archetype*> AddEdges;
-        std::unordered_map<ComponentId, Archetype*> RemoveEdges;
+        /** The archetype with one more or one less type. Few per archetype, so a short list is faster than a map. */
+        std::vector<std::pair<ComponentId, Archetype*>> AddEdges;
+        std::vector<std::pair<ComponentId, Archetype*>> RemoveEdges;
 
         bool Has(const ComponentId id) const { return id < ColumnById.size() && ColumnById[id] != -1; }
 
@@ -278,6 +290,16 @@ namespace Fling::Detail
 
         SparseSet* FindSparse(ComponentId id) const;
 
+        /** The ops of a type, from a cache in this storage, so a lookup takes no lock. */
+        const ComponentOps& Ops(ComponentId id) const
+        {
+            if (id < m_OpsCache.size() && m_OpsCache[id] != nullptr)
+            {
+                return *m_OpsCache[id];
+            }
+            return CacheOps(id);
+        }
+
         HookSet& Hooks(ComponentId id);
 
         /** True if any hook is connected for the type, so the storage must call them. */
@@ -293,15 +315,36 @@ namespace Fling::Detail
         }
 
     private:
+        /**
+         * Where an entity's row is: 12 bytes. ArchIndex is the archetype's Index plus one,
+         * and 0 for a free slot. Location packs the row (low RowBits bits), the chunk
+         * index, and the dying flag (top bit).
+         */
         struct Slot
         {
+            static constexpr uint32 RowBits = 14;
+            static constexpr uint32 RowMask = (1u << RowBits) - 1;
+            static constexpr uint32 DyingBit = 1u << 31;
+
+            uint32 ArchIndex = 0;
             uint32 Generation = 0;
-            bool Alive = false;
+            uint32 Location = 0;
+
+            bool Alive() const { return ArchIndex != 0; }
+
+            uint32 Row() const { return Location & RowMask; }
+
+            uint32 ChunkIndex() const { return (Location & ~DyingBit) >> RowBits; }
+
             /** True while Destroy runs the Removed hooks, so a hook cannot destroy the entity again. */
-            bool Dying = false;
-            Archetype* Arch = nullptr;
-            uint32 ChunkIndex = 0;
-            uint32 Row = 0;
+            bool Dying() const { return (Location & DyingBit) != 0; }
+
+            void SetPlace(const uint32 chunk, const uint32 row)
+            {
+                Location = (Location & DyingBit) | (chunk << RowBits) | row;
+            }
+
+            void SetDying(const bool dying) { Location = dying ? (Location | DyingBit) : (Location & ~DyingBit); }
         };
 
         struct CachedQuery
@@ -311,6 +354,11 @@ namespace Fling::Detail
             std::vector<Archetype*> Matches;
             size_t SeenArchetypes = 0;
         };
+
+        Archetype* ArchOf(const Slot& slot) const { return m_Archetypes[slot.ArchIndex - 1].get(); }
+
+        /** The most chunks one archetype can have, from the bits that Slot::Location has for the index. */
+        static constexpr size_t MaxChunks = size_t{1} << (31 - Slot::RowBits);
 
         Slot* FindSlot(Entity entity);
         const Slot* FindSlot(Entity entity) const;
@@ -374,5 +422,9 @@ namespace Fling::Detail
         std::vector<std::unique_ptr<CachedQuery>> m_Queries;
 
         uint64 m_StructuralMoves = 0;
+
+        const ComponentOps& CacheOps(ComponentId id) const;
+
+        mutable std::vector<const ComponentOps*> m_OpsCache;
     };
 } // namespace Fling::Detail

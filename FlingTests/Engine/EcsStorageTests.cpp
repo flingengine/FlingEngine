@@ -3,6 +3,7 @@
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
 
+#include <algorithm>
 #include <catch2/catch_all.hpp>
 #include <memory>
 #include <string>
@@ -354,4 +355,74 @@ TEST_CASE("Storage benchmarks", "[!benchmark][ecs][storage]")
         }
         return made.size();
     };
+}
+
+TEST_CASE("QueryRange Each visits the same entities as the range-for", "[ecs][storage]")
+{
+    EntityStorage storage;
+    std::vector<Entity> made;
+    for (int i = 0; i < 3000; ++i)
+    {
+        const Entity e = storage.Create();
+        storage.Add<Pos>(e, Pos{static_cast<float>(i)});
+        if (i % 2 == 0)
+        {
+            storage.Add<Vel>(e, Vel{1.0f});
+        }
+        if (i % 3 == 0)
+        {
+            storage.Add<Burning>(e, Burning{i});
+        }
+        if (i % 5 == 0)
+        {
+            storage.Add<Visible>(e, Visible{i});
+            storage.SetEnabled<Visible>(e, i % 10 == 0);
+        }
+        made.push_back(e);
+    }
+
+    auto collect = [&](auto range, bool useEach)
+    {
+        std::vector<Entity> seen;
+        if (useEach)
+        {
+            range.Each([&](const Entity e, auto&...) { seen.push_back(e); });
+        }
+        else
+        {
+            for (auto item : range)
+            {
+                seen.push_back(std::get<0>(item));
+            }
+        }
+        std::sort(seen.begin(), seen.end());
+        return seen;
+    };
+
+    using Plain = QueryRange<TypeList<const Pos, Vel>, TypeList<>, TypeList<>>;
+    using WithSparse = QueryRange<TypeList<const Pos, Burning>, TypeList<>, TypeList<>>;
+    using WithEnableable = QueryRange<TypeList<Pos>, TypeList<Visible>, TypeList<Burning>>;
+
+    for (const bool useEach : {false, true})
+    {
+        const std::vector<Entity> plain = collect(Plain(storage.Native()), useEach);
+        REQUIRE(plain.size() == 1500);
+        const std::vector<Entity> sparse = collect(WithSparse(storage.Native()), useEach);
+        REQUIRE(sparse.size() == 1000);
+        // Visible on (i % 10 == 0) and no Burning (i % 3 != 0)
+        size_t expected = 0;
+        for (int i = 0; i < 3000; ++i)
+        {
+            expected += (i % 10 == 0 && i % 3 != 0) ? 1 : 0;
+        }
+        REQUIRE(collect(WithEnableable(storage.Native()), useEach).size() == expected);
+    }
+
+    // Each passes the right values, and writes go to the storage
+    QueryRange<TypeList<Pos, const Burning>, TypeList<>, TypeList<>>(storage.Native())
+        .Each([](Pos& p, const Burning& b) { p.X = static_cast<float>(b.Ticks) + 0.5f; });
+    for (int i = 0; i < 3000; i += 3)
+    {
+        REQUIRE(storage.Get<Pos>(made[i]).X == static_cast<float>(i) + 0.5f);
+    }
 }
