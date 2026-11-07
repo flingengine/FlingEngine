@@ -588,7 +588,7 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 **Strategy: strangler facade.** First, move every caller onto the *new Fling API* while EnTT still backs it. Then swap the backend underneath. Every phase is one or more PRs off `main` that keep Sandbox and FlingTests green on all CI platforms. Coordinate with `module-split-plan.md`, so that ECS code lands in the module targets that plan defines.
 
 ### Phase A — Remove the EnTT usage that is not ECS (small, low risk)
-- Replace `Guid`/`Guid_Handle`/`HS()`/`_hs` with the Core string types in [`strings.md`](strings.md) (`Name`, a stable 64-bit hash, and `AssetPath`/`AssetId`), phases 1 and 2.
+- Done: `Guid`/`Guid_Handle`/`HS()` are replaced by the Core string types (`Name`, a stable 64-bit hash, and `AssetPath`/`AssetId`; see [`Skills/strings.md`](../Skills/strings.md)). Only the `"Default"_hs` render tags still use EnTT hashed strings; Phase B removes them.
 - Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `InputState`).
 - Remove `<entt/...>` from `FlingTypes.h`. Delete the dead cereal include `Core/inc/Serilization.h` and the `FlingExt::cereal` link.
 - After this phase, EnTT appears only in ECS code.

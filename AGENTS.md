@@ -54,6 +54,11 @@ platform setup (Vulkan SDK, GLFW, etc.).
   includes first, then `<...>` includes, each alphabetical).
 - Layout/formatting is enforced by `.clang-format` at the repo root (run
   `clang-format`, not manual formatting judgment).
+- Strings: `Name` is the default identifier, `StringView` the read-only text
+  parameter, `DisplayText` the only type for text the player sees. Localization
+  (string tables, plural forms, `--language`, `--loc-gather`, `--loc-export`,
+  `--loc-import`) and the rules for strings in simulation code:
+  [`Skills/strings.md`](Skills/strings.md).
 - Applies to first-party code only (`FlingEngine/`, `Sandbox/`, `FlingTests/`).
   **Never edit code under `external/`** — it's vendored third-party code.
 
@@ -101,11 +106,9 @@ into `Skills/`.
   [`Plans/improve-input.md`](Plans/improve-input.md).
 - Lock-free `ThreadQueue` and `ThreadManager` (MPSC node queue, a slot table
   that the crash handler can read): [`Plans/lockless-threading.md`](Plans/lockless-threading.md).
-- Strings: `Name` (the default; a stable 64-bit hash made at compile time, with
-  a reverse table for logs and the editor), `String` and `StringView` (UTF-8),
-  `DisplayText` (localizable), string tables and translator CSV
-  (`--language`, `--loc-export`, `--loc-import`), assets, logging, and the rules
-  for strings in simulation code: [`Plans/strings.md`](Plans/strings.md).
+- Work left on strings and localization (text rendering for right-to-left
+  scripts, fonts, more number and date formats) and the reasons for the design:
+  [`Plans/strings.md`](Plans/strings.md).
 - Physics: the provider interface (Jolt by default, Bullet, or a game's own
   library, picked with `FLING_PHYSICS_PROVIDER`), components, the fixed step,
   determinism and rollback, the test level, and what is next:
