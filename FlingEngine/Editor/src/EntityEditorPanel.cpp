@@ -20,14 +20,14 @@ namespace Fling
 		}
 	}
 
-	void EntityEditorPanel::Draw(entt::registry& t_Reg)
+	void EntityEditorPanel::Draw(Fling::EntityStorage& t_Reg)
 	{
 		if (!m_ShowWindow)
 		{
 			return;
 		}
 
-		const entt::entity t_Entity = m_TargetEntity;
+		const Fling::Entity t_Entity = m_TargetEntity;
 
 		if (ImGui::Begin("Entity Editor", &m_ShowWindow))
 		{
@@ -37,9 +37,9 @@ namespace Fling
 			ImGui::TextUnformatted("editing:");
 			ImGui::SameLine();
 
-			if (t_Entity != entt::null && t_Reg.valid(t_Entity))
+			if (t_Entity != Fling::Entity::Null && t_Reg.IsValid(t_Entity))
 			{
-				ImGui::Text("id: %u, v: %u", static_cast<uint32>(t_Reg.entity(t_Entity)), static_cast<uint32>(t_Reg.version(t_Entity)));
+				ImGui::Text("id: %u, v: %u", t_Entity.Index, t_Entity.Generation);
 			}
 			else
 			{
@@ -52,16 +52,16 @@ namespace Fling
 			// so just opening the editor doesn't silently attach a NameComponent.
 			{
 				char NameBuf[128] = {};
-				const std::string& CurrentName = t_Reg.has<NameComponent>(t_Entity) ? t_Reg.get<NameComponent>(t_Entity).Name : std::string();
+				const std::string& CurrentName = t_Reg.Has<NameComponent>(t_Entity) ? t_Reg.Get<NameComponent>(t_Entity).Name : std::string();
 				std::strncpy(NameBuf, CurrentName.c_str(), sizeof(NameBuf) - 1);
 
 				if (ImGui::InputText("Name", NameBuf, sizeof(NameBuf)))
 				{
-					if (!t_Reg.has<NameComponent>(t_Entity))
+					if (!t_Reg.Has<NameComponent>(t_Entity))
 					{
-						t_Reg.assign<NameComponent>(t_Entity);
+						t_Reg.Add<NameComponent>(t_Entity);
 					}
-					t_Reg.get<NameComponent>(t_Entity).Name = NameBuf;
+					t_Reg.Get<NameComponent>(t_Entity).Name = NameBuf;
 				}
 			}
 
@@ -140,9 +140,9 @@ namespace Fling
 				}
 			}
 
-			if (!t_Reg.has<EditableComponent>(t_Entity))
+			if (!t_Reg.Has<EditableComponent>(t_Entity))
 			{
-				t_Reg.assign<EditableComponent>(t_Entity);
+				t_Reg.Add<EditableComponent>(t_Entity);
 			}
 		}
 		ImGui::End();

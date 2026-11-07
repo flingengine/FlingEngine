@@ -2,7 +2,7 @@
 
 #include "FlingEditorPanel.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Fling
 {
@@ -15,13 +15,13 @@ namespace Fling
 	{
 	public:
 		/** Draws the "World Outline" window. Call this once per frame. */
-		virtual void Draw(entt::registry& t_Reg) override;
+		virtual void Draw(Fling::EntityStorage& t_Reg) override;
 
-		entt::entity GetSelectedEntity() const { return m_SelectedEntity; }
+		Fling::Entity GetSelectedEntity() const { return m_SelectedEntity; }
 
-		void SetSelectedEntity(entt::entity t_Entity) { m_SelectedEntity = t_Entity; }
+		void SetSelectedEntity(Fling::Entity t_Entity) { m_SelectedEntity = t_Entity; }
 
 	private:
-		entt::entity m_SelectedEntity = entt::null;
+		Fling::Entity m_SelectedEntity = Fling::Entity::Null;
 	};
 }	// namespace Fling

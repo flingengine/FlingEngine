@@ -10,7 +10,7 @@
 #include "Platform.h"
 
 #include <cassert>
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <functional>
 #include <memory>
 #include <string>
@@ -31,7 +31,7 @@ namespace Fling
 		World& operator=(const World&) = delete;
 
 
-		explicit World(entt::registry& t_Reg, Fling::Game* t_Game);
+		explicit World(Fling::Game* t_Game);
 		~World();
 
 		/**
@@ -137,7 +137,10 @@ namespace Fling
 		 */
 		bool LoadLevelFile(const std::string& t_LevelToLoad);
 
-		FORCEINLINE entt::registry& GetRegistry() const { return m_Registry; }
+		/** The entities, components, and singletons of this world. */
+		FORCEINLINE EntityStorage& GetStorage() { return m_Storage; }
+
+		FORCEINLINE const EntityStorage& GetStorage() const { return m_Storage; }
 
 		// The current state of the game, is it playing, stopped, paused, etc
 		enum class WorldState : uint8
@@ -200,8 +203,8 @@ namespace Fling
         /** @see SetGameQuitStopsPlay */
         bool m_GameQuitStopsPlay = false;
 
-        /** The registry and represents all active entities in this world */
-		entt::registry& m_Registry;
+        /** All entities in this world. Declared before the systems and runner, so it is destroyed after them. */
+		EntityStorage m_Storage;
 
 		/** The systems this world runs. */
 		SystemRegistry m_Systems;

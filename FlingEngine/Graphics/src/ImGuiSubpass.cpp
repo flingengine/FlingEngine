@@ -26,7 +26,7 @@
 namespace Fling {
     ImGuiSubpass::ImGuiSubpass(const LogicalDevice* t_Dev,
                                const Swapchain* t_Swap,
-                               entt::registry& t_reg,
+                               Fling::EntityStorage& t_reg,
                                FlingWindow* t_Window,
                                VkRenderPass t_GlobalRenderPass,
                                std::shared_ptr<Fling::IDebugUI> t_DebugUI,
@@ -75,7 +75,7 @@ namespace Fling {
     }
 
     void
-    ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) {
+    ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) {
         InternalImGui::UpdateImGuiIO(m_Window);
 
         ImGui::NewFrame();
@@ -155,7 +155,7 @@ namespace Fling {
         }
     }
 
-    void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) {
+    void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) {
     }
 
     void ImGuiSubpass::PrepareAttachments() {
@@ -302,7 +302,7 @@ namespace Fling {
         CreateUiPipeline();
     }
 
-    void ImGuiSubpass::OnSwapchainResized(entt::registry& t_reg) {
+    void ImGuiSubpass::OnSwapchainResized(Fling::EntityStorage& t_reg) {
         (void)t_reg;
 
         m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
@@ -410,7 +410,7 @@ namespace Fling {
         }
     }
 
-    void ImGuiSubpass::CleanUp(entt::registry& t_reg) {
+    void ImGuiSubpass::CleanUp(Fling::EntityStorage& t_reg) {
         // Do we need this?
     }
 

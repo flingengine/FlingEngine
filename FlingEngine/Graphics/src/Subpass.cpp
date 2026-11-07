@@ -26,7 +26,7 @@ namespace Fling
 		// Initialize the layouts that this subpass will use for descriptors and pipeline creation
 		std::vector<Shader*> Shaders = { m_VertexShader.get(), m_FragShader.get() };
 
-		// Add entt callbacks for handling mesh renderers
+		// Add storage hooks for handling mesh renderers
 
 		//Might want to change this per subpass?
 		m_GraphicsPipeline = new GraphicsPipeline(

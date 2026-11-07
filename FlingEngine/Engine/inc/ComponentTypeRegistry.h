@@ -4,7 +4,7 @@
 #include "JsonArchive.h"
 
 #include <deque>
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -29,31 +29,31 @@ namespace Fling
 		bool IsSingleton() const { return kind == ComponentKind::Singleton || kind == ComponentKind::Queue; }
 
 		/** Singleton types only: true if the world has the singleton. */
-		bool (*hasSingleton)(const entt::registry&) = nullptr;
+		bool (*hasSingleton)(const Fling::EntityStorage&) = nullptr;
 
 		/** Singleton types that are saved: write the singleton to a level's "singletons" object. */
-		void (*saveSingleton)(const entt::registry&, Json& out) = nullptr;
+		void (*saveSingleton)(const Fling::EntityStorage&, Json& out) = nullptr;
 
 		/** Singleton types that are saved: make or replace the singleton from a level. */
-		void (*loadSingleton)(entt::registry&, const Json& in) = nullptr;
+		void (*loadSingleton)(Fling::EntityStorage&, const Json& in) = nullptr;
 
 		// Table and Tag types only. They are null for singletons.
 
-		void (*save)(const entt::registry&, entt::entity, Json& out) = nullptr;
-		void (*load)(entt::registry&, entt::entity, const Json& in) = nullptr;
-		bool (*has)(const entt::registry&, entt::entity) = nullptr;
+		void (*save)(const Fling::EntityStorage&, Fling::Entity, Json& out) = nullptr;
+		void (*load)(Fling::EntityStorage&, Fling::Entity, const Json& in) = nullptr;
+		bool (*has)(const Fling::EntityStorage&, Fling::Entity) = nullptr;
 
 		/** Default-constructs and assigns this component type to an entity. */
-		void (*create)(entt::registry&, entt::entity) = nullptr;
+		void (*create)(Fling::EntityStorage&, Fling::Entity) = nullptr;
 
 		/** Removes this component type from an entity. */
-		void (*destroy)(entt::registry&, entt::entity) = nullptr;
+		void (*destroy)(Fling::EntityStorage&, Fling::Entity) = nullptr;
 
 		/**
 		 * Optional ImGui draw callback for editor tooling. Left null for types
 		 * that don't register one via ComponentTypeRegistry::SetEditorWidget.
 		 */
-		void (*drawEditorWidget)(entt::registry&, entt::entity) = nullptr;
+		void (*drawEditorWidget)(Fling::EntityStorage&, Fling::Entity) = nullptr;
 	};
 
 	/**
@@ -102,7 +102,7 @@ namespace Fling
 		 * editor tooling can render it without the registry knowing about ImGui
 		 * itself. No-op (with a warning) if the name hasn't been registered.
 		 */
-		void SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity));
+		void SetEditorWidget(const char* name, void(*fn)(Fling::EntityStorage&, Fling::Entity));
 
 		/** Invoke every registrar added via AddRegistrar. */
 		void RunExternalRegistrars();
@@ -159,44 +159,44 @@ namespace Fling
 	template<typename T>
 	void ComponentTypeRegistry::AddEntityFunctions(ComponentTypeInfo& info)
 	{
-		info.has = [](const entt::registry& reg, entt::entity e) -> bool
+		info.has = [](const Fling::EntityStorage& reg, Fling::Entity e) -> bool
 		{
-			return reg.has<T>(e);
+			return reg.Has<T>(e);
 		};
-		info.create = [](entt::registry& reg, entt::entity e)
+		info.create = [](Fling::EntityStorage& reg, Fling::Entity e)
 		{
-			reg.assign<T>(e);
+			reg.Add<T>(e);
 		};
-		info.destroy = [](entt::registry& reg, entt::entity e)
+		info.destroy = [](Fling::EntityStorage& reg, Fling::Entity e)
 		{
-			reg.remove<T>(e);
+			reg.Remove<T>(e);
 		};
 	}
 
 	template<typename T>
 	void ComponentTypeRegistry::AddEntitySerialize(ComponentTypeInfo& info)
 	{
-		info.save = [](const entt::registry& reg, entt::entity e, Json& out)
+		info.save = [](const Fling::EntityStorage& reg, Fling::Entity e, Json& out)
 		{
-			T comp = reg.get<T>(e);
+			T comp = reg.Get<T>(e);
 			out = Json::Object();
 			JsonArchive ar(out, JsonArchive::Mode::Saving);
 			comp.Serialize(ar);
 		};
-		info.load = [](entt::registry& reg, entt::entity e, const Json& in)
+		info.load = [](Fling::EntityStorage& reg, Fling::Entity e, const Json& in)
 		{
 			T comp{};
 			Json inCopy = in;
 			JsonArchive ar(inCopy, JsonArchive::Mode::Loading);
 			comp.Serialize(ar);
 
-			if (reg.has<T>(e))
+			if (reg.Has<T>(e))
 			{
-				reg.replace<T>(e, std::move(comp));
+				reg.Replace<T>(e, std::move(comp));
 			}
 			else
 			{
-				reg.assign<T>(e, std::move(comp));
+				reg.Add<T>(e, std::move(comp));
 			}
 		};
 	}
@@ -225,26 +225,26 @@ namespace Fling
 
 		if constexpr (IsSingletonComponent<T>)
 		{
-			info.hasSingleton = [](const entt::registry& reg) -> bool
+			info.hasSingleton = [](const Fling::EntityStorage& reg) -> bool
 			{
-				return reg.try_ctx<T>() != nullptr;
+				return reg.TryGetSingleton<T>() != nullptr;
 			};
 			if constexpr (saved)
 			{
-				info.saveSingleton = [](const entt::registry& reg, Json& out)
+				info.saveSingleton = [](const Fling::EntityStorage& reg, Json& out)
 				{
-					T comp = reg.ctx<T>();
+					T comp = reg.Singleton<T>();
 					out = Json::Object();
 					JsonArchive ar(out, JsonArchive::Mode::Saving);
 					comp.Serialize(ar);
 				};
-				info.loadSingleton = [](entt::registry& reg, const Json& in)
+				info.loadSingleton = [](Fling::EntityStorage& reg, const Json& in)
 				{
 					T comp{};
 					Json inCopy = in;
 					JsonArchive ar(inCopy, JsonArchive::Mode::Loading);
 					comp.Serialize(ar);
-					reg.set<T>(std::move(comp));
+					reg.SetSingleton<T>(std::move(comp));
 				};
 			}
 		}
@@ -253,15 +253,15 @@ namespace Fling
 			AddEntityFunctions<T>(info);
 			if constexpr (saved && declared.Kind == ComponentKind::Tag)
 			{
-				info.save = [](const entt::registry&, entt::entity, Json& out)
+				info.save = [](const Fling::EntityStorage&, Fling::Entity, Json& out)
 				{
 					out = Json::Object();
 				};
-				info.load = [](entt::registry& reg, entt::entity e, const Json&)
+				info.load = [](Fling::EntityStorage& reg, Fling::Entity e, const Json&)
 				{
-					if (!reg.has<T>(e))
+					if (!reg.Has<T>(e))
 					{
-						reg.assign<T>(e);
+						reg.Add<T>(e);
 					}
 				};
 			}

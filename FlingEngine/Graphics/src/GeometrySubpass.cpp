@@ -21,7 +21,7 @@ namespace Fling
 	GeometrySubpass::GeometrySubpass(
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
-		entt::registry& t_reg,
+		Fling::EntityStorage& t_reg,
 		VkRenderPass t_GlobalRenderPass,
 		FirstPersonCamera* t_Cam,
 		FrameBuffer* t_OffscreenDep,
@@ -70,7 +70,7 @@ namespace Fling
 			m_CameraUboBuffers[i]->MapMemory(bufferSize);
 		}
 
-		t_reg.on_construct<PointLight>().connect<&GeometrySubpass::OnPointLightAdded>(*this);
+		t_reg.OnAdd<PointLight>().Connect<&GeometrySubpass::OnPointLightAdded>(*this);
 	}
 
 	GeometrySubpass::~GeometrySubpass()
@@ -94,7 +94,7 @@ namespace Fling
 		// Clean up any allocated descriptor sets
 	}
 
-	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void GeometrySubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime)
 	{
 		UpdateLightingUBO(t_reg, t_ActiveFrameInFlight);
 
@@ -132,7 +132,7 @@ namespace Fling
 		vkCmdDrawIndexed(t_CmdBuf.GetHandle(), m_QuadModel->GetIndexCount(), 1, 0, 0, 1);
 	}
 
-	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
+	void GeometrySubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg)
 	{
 		assert(m_OffscreenFrameBuf);
 
@@ -270,7 +270,7 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
 	}
 
-	void GeometrySubpass::OnSwapchainResized(entt::registry& t_reg)
+	void GeometrySubpass::OnSwapchainResized(Fling::EntityStorage& t_reg)
 	{
 		m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
 		CreateGraphicsPipeline();
@@ -281,15 +281,15 @@ namespace Fling
 		}
 	}
 
-	void GeometrySubpass::OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light)
+	void GeometrySubpass::OnPointLightAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)/*COMP:t_Light*/
 	{		
 		// Ensure that we have a transform component before adding a light
-		if (!t_Reg.has<Transform>(t_Ent))
+		if (!t_Reg.Has<Transform>(t_Ent))
 		{
-			t_Reg.assign<Transform>(t_Ent);
+			t_Reg.Add<Transform>(t_Ent);
 		}
 
-		Transform& t = t_Reg.get<Transform>(t_Ent);
+		Transform& t = t_Reg.Get<Transform>(t_Ent);
 		// Make a cute little debug mesh on a point light	
 		t.SetScale(glm::vec3{ 0.1f });
 
@@ -297,22 +297,22 @@ namespace Fling
 		static std::string PointLightMesh = "Models/sphere.obj";
 		static std::string MaterialPath = "Materials/White.mat";
 
-		if (!t_Reg.has<MeshRenderer>(t_Ent))
+		if (!t_Reg.Has<MeshRenderer>(t_Ent))
 		{
-			t_Reg.assign<MeshRenderer>(t_Ent, PointLightMesh, MaterialPath);
+			t_Reg.Add<MeshRenderer>(t_Ent, PointLightMesh, MaterialPath);
 		}
 
 		// Ensure that we have the proper point light mesh on for a nice little gizmo
-		MeshRenderer& m = t_Reg.get<MeshRenderer>(t_Ent);
+		MeshRenderer& m = t_Reg.Get<MeshRenderer>(t_Ent);
 		m.LoadModelFromPath(PointLightMesh);
 		m.LoadMaterialFromPath(MaterialPath);
 #endif	// FLING_DEBUG
 	}
 
-	void GeometrySubpass::UpdateLightingUBO(entt::registry& t_Reg, uint32 t_ActiveFrame)
+	void GeometrySubpass::UpdateLightingUBO(Fling::EntityStorage& t_Reg, uint32 t_ActiveFrame)
 	{
-		auto PointLightView = t_Reg.view<PointLight, Transform>();
-		auto DirectionalLightView = t_Reg.view<DirectionalLight>();
+		auto PointLightView = t_Reg.View<PointLight, Transform>();
+		auto DirectionalLightView = t_Reg.View<DirectionalLight>();
 
 		uint32 CurLightCount = 0;
 		// Directional Lights ----------------
@@ -320,7 +320,7 @@ namespace Fling
 		{
 			if (CurLightCount < DeferredLightSettings::MaxDirectionalLights)
 			{
-				DirectionalLight& Light = DirectionalLightView.get(entity);
+				DirectionalLight& Light = DirectionalLightView.Get<DirectionalLight>(entity);
 				// Copy the dir light info to the buffer
 				memcpy((m_LightingUBO.DirLightBuffer + (CurLightCount++)), &Light, sizeof(DirectionalLight));
 			}
@@ -335,8 +335,8 @@ namespace Fling
 		{
 			if (CurLightCount < DeferredLightSettings::MaxPointLights)
 			{
-				PointLight& Light = PointLightView.get<PointLight>(entity);
-				Transform& Trans = PointLightView.get<Transform>(entity);
+				PointLight& Light = PointLightView.Get<PointLight>(entity);
+				Transform& Trans = PointLightView.Get<Transform>(entity);
 
 				Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
 				// Copy the point light info to the buffer

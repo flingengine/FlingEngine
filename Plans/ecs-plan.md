@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: in progress. Phase A is done. Phase D is mostly done through [`ecs-systems.md`](ecs-systems.md). Each phase heading below says what is left.
+Status: in progress. Phases A and B are done. Phase D is mostly done through [`ecs-systems.md`](ecs-systems.md). Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -610,6 +610,9 @@ Done. `Fling::HashedString` (`Core/inc/HashedString.h`) backs `Guid`, and `Fling
 - After this phase, EnTT appears only in ECS code.
 
 ### Phase B — `Fling::World` facade, still backed by EnTT
+
+Done, with one change from the text below. The facade is `Fling::EntityStorage` (`Engine/inc/Ecs/EntityStorage.h`), not a second class named `World`, because `World` already exists as the level and play owner. Each `World` owns one `EntityStorage` (`World::GetStorage()`), and `Engine::g_Registry` is gone. The renderer, physics, the editor, `Game`, and the tests take `EntityStorage&`. Component hooks are `OnAdd<T>()`, `OnReplace<T>()`, and `OnRemove<T>()` with `(EntityStorage&, Entity)` callbacks. The render tags are `DeferredRenderTag` and `DebugRenderTag`. EnTT is still in `EntityStorage.h` (as the private backend, reached only by `Ecs/` code through `Native()`) until Phase F replaces it.
+
 - Add `Ecs/Entity.h`, `Ecs/World.h`, `Ecs/Query.h`, and `Ecs/Commands.h` with the final API (§1.2, §1.5 query types). The implementation wraps `entt::registry` in `Ecs/src/EnttBackend.cpp` and keeps EnTT out of the public headers.
 - `World` **owns** its storage. `Engine::g_Registry` is removed, and `entt::registry&` parameters become `World&` / `const World&` in `Game`, `VulkanApp`, `RenderPipeline`, `Subpass`, the editor panels, Sandbox, and the tests. This is mechanical and can go in several PRs, one per area.
 - Replace the `entt::tag<"Default"_hs>` / `"Debug"_hs` tags with tag structs (`DeferredRenderTag`).

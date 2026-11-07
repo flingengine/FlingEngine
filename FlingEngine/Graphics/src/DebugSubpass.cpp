@@ -23,7 +23,7 @@ namespace Fling
 	DebugSubpass::DebugSubpass(
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
-		entt::registry& t_reg,
+		Fling::EntityStorage& t_reg,
 		VkRenderPass t_GlobalRenderPass,
 		FirstPersonCamera* t_Cam,
 		std::shared_ptr<Fling::Shader> t_Vert,
@@ -32,7 +32,7 @@ namespace Fling
 		, m_GlobalRenderPass(t_GlobalRenderPass)
 		, m_Camera(t_Cam)
 	{
-		t_reg.on_construct<MeshRenderer>().connect<&DebugSubpass::OnMeshRendererAdded>(*this);
+		t_reg.OnAdd<MeshRenderer>().Connect<&DebugSubpass::OnMeshRendererAdded>(*this);
 
 		PrepareAttachments();
 	}
@@ -42,18 +42,18 @@ namespace Fling
 		
 	}
 
-	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime)
 	{
 		// For every mesh bind it's model and descriptor set info.
 		// View instead of owning group so assign<Transform>() references stay valid.
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Debug")>>();
+		auto RenderView = t_reg.View<Transform, MeshRenderer, DebugRenderTag>();
 
 		// Invert the project value to match the proper coordinate space compared to OpenGL
 		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
 		m_Ubo.Projection[1][1] *= -1.0f;
 		VkDeviceSize offsets[1] = { 0 };
 
-		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		RenderView.Each([&](Fling::Entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)
@@ -102,7 +102,7 @@ namespace Fling
 		});
 	}
 
-	void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
+	void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg)
 	{
 		
 	}
@@ -110,7 +110,7 @@ namespace Fling
 	void DebugSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
 	{
 		// Only allocate new descriptor sets if there are none
-		// Some may exist if entt decides to re-use the component
+		// Some may exist if the storage reuses the component
 		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
 		{
 			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
@@ -173,7 +173,7 @@ namespace Fling
 		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
 	}
 
-	void DebugSubpass::CleanUp(entt::registry& t_reg)
+	void DebugSubpass::CleanUp(Fling::EntityStorage& t_reg)
 	{
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{
@@ -182,15 +182,16 @@ namespace Fling
 		}
 	}
 
-	void DebugSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	void DebugSubpass::OnMeshRendererAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)
 	{
+		MeshRenderer& t_MeshRend = t_Reg.Get<MeshRenderer>(t_Ent);
 		// If this mesh renderer material is set to DEBUG, then do this
 		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Debug)
 		{
 			return;
 		}
 
-		t_Reg.assign<entt::tag<entt::hashed_string::to_value("Debug")>>(t_Ent);
+		t_Reg.Add<DebugRenderTag>(t_Ent);
 
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)

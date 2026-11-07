@@ -13,7 +13,7 @@ namespace Sandbox
 	class Game : public Fling::Game
 	{
 
-		void Init(entt::registry& t_Reg) override final;
+		void Init(Fling::EntityStorage& t_Reg) override final;
 
 		void RegisterComponents() override final;
 
@@ -24,21 +24,21 @@ namespace Sandbox
 		 * Called before the first gameplay loop tick.
 		 * 			Do any initalization for custom gameplay systems here.
 		 */
-		void OnStartGame(entt::registry& t_Reg) override final;
+		void OnStartGame(Fling::EntityStorage& t_Reg) override final;
 
         /** Called when play stops. Resets the state that is not in the registry. */
-        void OnStopGame(entt::registry& t_Reg) override final;
+        void OnStopGame(Fling::EntityStorage& t_Reg) override final;
 
-		void Shutdown(entt::registry& t_Reg) override final;
+		void Shutdown(Fling::EntityStorage& t_Reg) override final;
 
 		/* Creates a 3D array of meshes */
-		void GenerateTestMeshes(entt::registry& t_Reg);
+		void GenerateTestMeshes(Fling::EntityStorage& t_Reg);
 
-		void LightingTest(entt::registry& t_Reg);
+		void LightingTest(Fling::EntityStorage& t_Reg);
 
 	private:
 
-		void AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
+		void AddFloor(Fling::EntityStorage& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale = glm::vec3(1.0f));
 
     };
 }	// namespace Sandbox

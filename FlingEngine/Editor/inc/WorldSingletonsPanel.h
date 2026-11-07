@@ -2,7 +2,7 @@
 
 #include "FlingEditorPanel.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Fling
 {
@@ -24,7 +24,7 @@ namespace Fling
         void SetWorld(const World* t_World) { m_World = t_World; }
 
         /** Draws the "World Singletons" window. Call this once per frame. */
-        void Draw(entt::registry& t_Reg) override;
+        void Draw(Fling::EntityStorage& t_Reg) override;
 
         /** The flag that shows or hides the window, for a menu checkbox. */
         bool& ShowWindowFlag() { return m_ShowWindow; }

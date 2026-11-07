@@ -19,7 +19,7 @@ namespace Fling
 		ImGuiSubpass(
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
-			entt::registry& t_reg,
+			Fling::EntityStorage& t_reg,
 			FlingWindow* t_Window,
 			VkRenderPass t_GlobalRenderPass,
 			std::shared_ptr<Fling::IDebugUI> t_DebugUI,
@@ -29,17 +29,17 @@ namespace Fling
 
 		virtual ~ImGuiSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) override;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+		void CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) override;
 
 		void PrepareAttachments() override;
 
 		void CreateGraphicsPipeline() override;
 
-		void CleanUp(entt::registry& t_reg) override;
+		void CleanUp(Fling::EntityStorage& t_reg) override;
 
-		void OnSwapchainResized(entt::registry& t_reg) override;
+		void OnSwapchainResized(Fling::EntityStorage& t_reg) override;
 
 	private:
 

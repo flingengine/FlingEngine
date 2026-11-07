@@ -64,7 +64,7 @@ namespace Fling
 		}
 	}
 
-	void ComponentTypeRegistry::SetEditorWidget(const char* name, void(*fn)(entt::registry&, entt::entity))
+	void ComponentTypeRegistry::SetEditorWidget(const char* name, void(*fn)(Fling::EntityStorage&, Fling::Entity))
 	{
 		const auto it = m_NameToIndex.find(name);
 		if (it == m_NameToIndex.end())

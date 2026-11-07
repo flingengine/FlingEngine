@@ -91,11 +91,11 @@ namespace
     class SystemsGame : public Game
     {
     public:
-        void Init(entt::registry&) override {}
-        void OnStartGame(entt::registry&) override {}
-        void Update(entt::registry&, float) override { ++Updates; }
-        void OnStopGame(entt::registry&) override {}
-        void Shutdown(entt::registry&) override {}
+        void Init(Fling::EntityStorage&) override {}
+        void OnStartGame(Fling::EntityStorage&) override {}
+        void Update(Fling::EntityStorage&, float) override { ++Updates; }
+        void OnStopGame(Fling::EntityStorage&) override {}
+        void Shutdown(Fling::EntityStorage&) override {}
 
         void RegisterSystems(SystemRegistry& t_Systems) override
         {
@@ -125,9 +125,9 @@ TEST_CASE("The world runs its systems by role and calls the play hooks", "[world
     QuietLogger();
     ComponentTypeRegistry::Get().ResetForTests();
 
-    entt::registry Reg;
     SystemsGame TestGame;
-    World TestWorld(Reg, &TestGame);
+    World TestWorld(&TestGame);
+    Fling::EntityStorage& Reg = TestWorld.GetStorage();
     TestWorld.SetSystemRunnerConfig(SystemRunnerConfig{.OneTickPerFrame = true});
     REQUIRE(TestWorld.Init());
     REQUIRE(TestWorld.GetSchedule() != nullptr);
@@ -135,36 +135,36 @@ TEST_CASE("The world runs its systems by role and calls the play hooks", "[world
     REQUIRE(TestWorld.GetSystems().Size() == 3);
 
     // OnCreate ran before the first update
-    REQUIRE(Reg.try_ctx<Counters>() != nullptr);
+    REQUIRE(Reg.TryGetSingleton<Counters>() != nullptr);
 
     // Not playing: the Edit role runs, the Play role does not, and Game::Update does not
     TestWorld.Update(0.016f);
-    REQUIRE(Reg.ctx<Counters>().EditTicks == 1);
-    REQUIRE(Reg.ctx<Counters>().Ticks == 0);
-    REQUIRE(Reg.ctx<FrameCount>().Frames == 1);
+    REQUIRE(Reg.Singleton<Counters>().EditTicks == 1);
+    REQUIRE(Reg.Singleton<Counters>().Ticks == 0);
+    REQUIRE(Reg.Singleton<FrameCount>().Frames == 1);
     REQUIRE(TestGame.Updates == 0);
 
     // Play: OnPlayBegin, then the Play role and the game update
     TestWorld.RequestGameStart();
     TestWorld.Update(0.016f);
-    REQUIRE(Reg.ctx<Counters>().PlayBegan == 1);
-    REQUIRE(Reg.ctx<Counters>().Ticks == 1);
-    REQUIRE(Reg.ctx<Counters>().EditTicks == 1);
-    REQUIRE(Reg.ctx<FrameCount>().Frames == 2);
+    REQUIRE(Reg.Singleton<Counters>().PlayBegan == 1);
+    REQUIRE(Reg.Singleton<Counters>().Ticks == 1);
+    REQUIRE(Reg.Singleton<Counters>().EditTicks == 1);
+    REQUIRE(Reg.Singleton<FrameCount>().Frames == 2);
     REQUIRE(TestGame.Updates == 1);
 
     // The simulation clock counts every tick, in both roles
-    REQUIRE(Reg.ctx<Counters>().LastTick == 2);
+    REQUIRE(Reg.Singleton<Counters>().LastTick == 2);
 
     // Stop: OnPlayEnd. The singletons are in the registry context, so the snapshot restore keeps them
     TestWorld.RequestGameStop();
     TestWorld.Update(0.016f);
-    REQUIRE(Reg.ctx<Counters>().PlayEnded == 1);
-    REQUIRE(Reg.ctx<Counters>().EditTicks == 2);
+    REQUIRE(Reg.Singleton<Counters>().PlayEnded == 1);
+    REQUIRE(Reg.Singleton<Counters>().EditTicks == 2);
 
     // Shutdown: OnDestroy removes the singletons
     TestWorld.Shutdown();
-    REQUIRE(Reg.try_ctx<Counters>() == nullptr);
+    REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);
 
     ComponentTypeRegistry::Get().ResetForTests();
 }
@@ -174,10 +174,10 @@ TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
     QuietLogger();
     ComponentTypeRegistry::Get().ResetForTests();
 
-    entt::registry Reg;
     SystemsGame TestGame;
     TestGame.AddConflict = true;
-    World TestWorld(Reg, &TestGame);
+    World TestWorld(&TestGame);
+    Fling::EntityStorage& Reg = TestWorld.GetStorage();
 
     REQUIRE_FALSE(TestWorld.Init());
     REQUIRE_FALSE(TestWorld.IsReadyForPlay());
@@ -186,7 +186,7 @@ TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
             std::string::npos);
 
     // No system ran OnCreate
-    REQUIRE(Reg.try_ctx<Counters>() == nullptr);
+    REQUIRE(Reg.TryGetSingleton<Counters>() == nullptr);
 
     TestWorld.Shutdown();
     ComponentTypeRegistry::Get().ResetForTests();

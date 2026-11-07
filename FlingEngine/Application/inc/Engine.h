@@ -16,7 +16,6 @@
 
 #include <chrono>
 #include <csignal>
-#include <entt/entity/registry.hpp>
 #include <memory>
 #include <type_traits>
 
@@ -109,9 +108,6 @@ namespace Fling
 
 		/** Persistent world object that can be used to load levels, entities, etc */
 		World* m_World = nullptr;
-
-		/** Global registry that stores entities and components */
-		entt::registry g_Registry;
 
 		/** The implementation of the game that this engine is running. @see Fling::Game */
 		Fling::Game* m_GameImpl = nullptr;

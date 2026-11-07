@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Ecs/Component.h"
+#include "Ecs/EntityStorage.h"
 #include "JsonArchive.h"
 
-#include <entt/entity/registry.hpp>
 #include <string>
 
 namespace Fling
@@ -78,5 +78,16 @@ namespace Fling
 
         /** Asset path of the assigned material, or an empty string when none is set. */
         std::string GetMaterialGuidString() const;
+    };
+    /** Marks a mesh that the deferred (offscreen) pass draws. */
+    struct DeferredRenderTag
+    {
+        static constexpr ComponentInfo Component{.Name = "DeferredRenderTag", .Kind = ComponentKind::Tag, .Transient = true};
+    };
+
+    /** Marks a mesh that the debug pass draws. */
+    struct DebugRenderTag
+    {
+        static constexpr ComponentInfo Component{.Name = "DebugRenderTag", .Kind = ComponentKind::Tag, .Transient = true};
     };
 } // namespace Fling

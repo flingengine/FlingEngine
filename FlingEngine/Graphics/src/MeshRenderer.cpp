@@ -4,7 +4,6 @@
 #include "MeshRendererGpu.h"
 #include "Model.h"
 
-#include <entt/entity/helper.hpp>
 
 namespace Fling
 {

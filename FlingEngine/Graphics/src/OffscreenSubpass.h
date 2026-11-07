@@ -38,7 +38,7 @@ namespace Fling
 		OffscreenSubpass(
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
-			entt::registry& t_reg,
+			Fling::EntityStorage& t_reg,
 			FirstPersonCamera* t_Cam,
 			std::shared_ptr<Fling::Shader> t_Vert,
 			std::shared_ptr<Fling::Shader> t_Frag
@@ -48,7 +48,7 @@ namespace Fling
 
 		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override final;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, Fling::EntityStorage& t_reg, float DeltaTime) override final;
 
 		void PrepareAttachments() override final;
 
@@ -60,28 +60,28 @@ namespace Fling
 			uint32 t_ActiveFrameIndex,
 			uint32 t_CurrentFrameInFlight) override final;
 
-		void CleanUp(entt::registry& t_reg) override final;
+		void CleanUp(Fling::EntityStorage& t_reg) override final;
 
-		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
+		virtual void OnSwapchainResized(Fling::EntityStorage& t_reg) override final;
 
 	private:
 
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+		void OnMeshRendererAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
 
 		/**
 		* The model or material changed. The descriptor set update must wait for
-		* the next Draw, because entt calls this before it writes the new value.
+		* the next Draw, because the storage calls this before it writes the new value.
 		*/
-		void OnMeshRendererReplaced(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+		void OnMeshRendererReplaced(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
 
 		/** Any change to the set of drawn entities. The command buffers must be recorded again. */
-		void OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg);
+		void OnDrawListChanged(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
 
 		/**
 		* A MeshRenderer is about to be destroyed. Takes its descriptor set and UBO, so that
 		* ReleaseRetiredMeshResources frees them when the GPU no longer uses them.
 		*/
-		void OnMeshRendererDestroyed(entt::entity t_Ent, entt::registry& t_Reg);
+		void OnMeshRendererDestroyed(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
 
 		/** Free the descriptor sets and UBOs of destroyed meshes */
 		void ReleaseRetiredMeshResources();
@@ -89,10 +89,10 @@ namespace Fling
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
 
 		/** Write the UBO of each mesh whose transform changed since its last upload */
-		void UpdateMeshUniformBuffers(entt::registry& t_reg);
+		void UpdateMeshUniformBuffers(Fling::EntityStorage& t_reg);
 
 		/** Record the draw calls for every mesh into the given command buffer */
-		void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, entt::registry& t_reg);
+		void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, Fling::EntityStorage& t_reg);
 
 		/** Make each offscreen command buffer record again on its next use */
 		inline void InvalidateCommandBuffers() { ++m_DrawListVersion; }
@@ -125,7 +125,7 @@ namespace Fling
 		std::vector<uint64> m_RecordedDrawListVersions;
 
 		/** Entities with a replaced MeshRenderer. Their descriptor sets update on the next Draw. */
-		std::vector<entt::entity> m_ReplacedMeshes;
+		std::vector<Fling::Entity> m_ReplacedMeshes;
 
 		/**
 		* Descriptor sets of destroyed meshes. A destroy can happen while a frame records

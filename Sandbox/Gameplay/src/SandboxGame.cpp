@@ -25,7 +25,7 @@ namespace Sandbox
 {
     using namespace Fling;
 
-    void Game::Init(entt::registry& t_Reg)
+    void Game::Init(Fling::EntityStorage& t_Reg)
     {
         // Lets create an entity! 
         F_LOG_TRACE("Sandbox Init!");
@@ -50,19 +50,19 @@ namespace Sandbox
 		Fling::ComponentTypeRegistry::Get().Register<BallControl>();
 	}
 
-	void Game::OnStartGame(entt::registry& t_Reg)
+	void Game::OnStartGame(Fling::EntityStorage& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox OnStartGame!");
 
         // A level with physics bodies (for example Levels/PhysicsTest.json) is a
         // scene of its own. Only an empty level gets the lighting test grid.
-        if (t_Reg.view<RigidBody>().empty())
+        if (t_Reg.View<RigidBody>().Empty())
         {
             LightingTest(t_Reg);
         }
 	}
 
-	void Game::OnStopGame(entt::registry& t_Reg)
+	void Game::OnStopGame(Fling::EntityStorage& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox OnStopGame!");
 
@@ -75,14 +75,14 @@ namespace Sandbox
         }
     }
 
-    void Game::Shutdown(entt::registry& t_Reg)
+    void Game::Shutdown(Fling::EntityStorage& t_Reg)
 	{
 		F_LOG_TRACE("Sandbox Shutdown!");
 
 		// A checksum of every transform, to check that a change to gameplay code gives the same motion
 		double Checksum = 0.0;
 		std::size_t Count = 0;
-		t_Reg.view<Transform>().each([&](auto, Transform& t_Trans)
+		t_Reg.View<Transform>().Each([&](auto, Transform& t_Trans)
 		{
 			const glm::vec3 Pos = t_Trans.GetPos();
 			const glm::vec3 Rot = t_Trans.GetRotation();
@@ -92,21 +92,21 @@ namespace Sandbox
 		F_LOG_TRACE("Sandbox: {} transforms, checksum {:.9f}", Count, Checksum);
 	}
 
-	void Game::AddFloor(entt::registry& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
+	void Game::AddFloor(Fling::EntityStorage& t_Reg, const std::string& t_Model, const std::string& t_Mat, const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
 	{
-		entt::entity e0 = t_Reg.create();
-		t_Reg.assign<MeshRenderer>(e0, t_Model, t_Mat);
-		Transform& t0 = t_Reg.assign<Transform>(e0);
+		Fling::Entity e0 = t_Reg.Create();
+		t_Reg.Add<MeshRenderer>(e0, t_Model, t_Mat);
+		Transform& t0 = t_Reg.Add<Transform>(e0);
 		t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
 		t0.SetScale(t_Scale);
 	}
 
-    void Game::LightingTest(entt::registry& t_Reg)
+    void Game::LightingTest(Fling::EntityStorage& t_Reg)
     {
         
         auto AddRandomPointLight = [&]()
         {
-            entt::entity e0 = t_Reg.create();
+            Fling::Entity e0 = t_Reg.Create();
 
             glm::vec3 min = { -15.0f, 0.2f, -15.0f };
 			glm::vec3 max = { 15.0f, 1.0f, 15.0f };
@@ -114,10 +114,10 @@ namespace Sandbox
 
 			// The renderer adds a Transform to a new PointLight, but there is no renderer
 			// under --null-render. get_or_assign works in both cases.
-            PointLight& Light = t_Reg.assign<PointLight>(e0);
-			Transform& t0 = t_Reg.get_or_assign<Transform>(e0);
+            PointLight& Light = t_Reg.Add<PointLight>(e0);
+			Transform& t0 = t_Reg.GetOrAdd<Transform>(e0);
 			t0.SetPos(startPos);
-            Mover& m0 = t_Reg.assign<Mover>(e0);
+            Mover& m0 = t_Reg.Add<Mover>(e0);
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
             
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
@@ -192,10 +192,10 @@ namespace Sandbox
 					ModelPath = "Models/sphere.obj";
 				}
 
-				entt::entity e0 = t_Reg.create();
-				t_Reg.assign<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
-				t_Reg.assign<Rotator>(e0);
-				Transform& t0 = t_Reg.assign<Transform>(e0);
+				Fling::Entity e0 = t_Reg.Create();
+				t_Reg.Add<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
+				t_Reg.Add<Rotator>(e0);
+				Transform& t0 = t_Reg.Add<Transform>(e0);
 				t0.SetPos(
 					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
 				);

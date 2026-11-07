@@ -2,7 +2,7 @@
 
 #include "Platform.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <memory>
 #include <string>
 //#include "World.h" 
@@ -38,7 +38,7 @@ namespace Fling
 		* Initialization of a Game called by the world. This is a good place to bind
 		* any game input callbacks, or to Load any Lua scripts that need a "Start" method
 		*/
-		virtual void Init(entt::registry& t_Reg) = 0;
+		virtual void Init(Fling::EntityStorage& t_Reg) = 0;
 
 		/**
 		 * Register game-specific serializable components. Called from World::Init
@@ -67,13 +67,13 @@ namespace Fling
          * In the editor, play can start and stop many times in one run, so reset all
          * per-play state here or in OnStopGame.
          */
-        virtual void OnStartGame(entt::registry& t_Reg) = 0;
+        virtual void OnStartGame(Fling::EntityStorage& t_Reg) = 0;
 
 		/**
 		 * Called once per frame during play, after the fixed system ticks. Optional and
 		 * legacy: put gameplay in systems (RegisterSystems) instead.
 		 */
-		virtual void Update(entt::registry& t_Reg, float DeltaTime)
+		virtual void Update(Fling::EntityStorage& t_Reg, float DeltaTime)
 		{
 			(void)t_Reg;
 			(void)DeltaTime;
@@ -88,13 +88,13 @@ namespace Fling
          * The World also calls this at shutdown if the game is playing. It then does not
          * reset the entities.
          */
-        virtual void OnStopGame(entt::registry& t_Reg) = 0;
+        virtual void OnStopGame(Fling::EntityStorage& t_Reg) = 0;
 
 		/** 
 		* Called by the world when the entire application is shutting down. Good spot to do 
 		* cleanup of any persistent data that you may have had throughout the game lifetime. 
 		*/
-		virtual void Shutdown(entt::registry& t_Reg) = 0;
+		virtual void Shutdown(Fling::EntityStorage& t_Reg) = 0;
 
 		/**
 		 * Gets the owning world of this game. You can use the world to add entities to

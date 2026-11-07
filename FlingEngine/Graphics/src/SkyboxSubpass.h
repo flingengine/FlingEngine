@@ -36,13 +36,13 @@ namespace Fling
         virtual ~SkyboxSubpass();
 
         void
-        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) override;
 
-        void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+        void CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) override;
 
         void CreateGraphicsPipeline() override;
 
-        void OnSwapchainResized(entt::registry& t_reg) override;
+        void OnSwapchainResized(Fling::EntityStorage& t_reg) override;
 
     private:
         /** Matches the UBO at binding 0 of skybox.frag */

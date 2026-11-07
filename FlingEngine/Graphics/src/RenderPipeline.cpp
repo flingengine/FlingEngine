@@ -9,7 +9,7 @@
 
 namespace Fling
 {
-	RenderPipeline::RenderPipeline(entt::registry& t_Reg, LogicalDevice* t_Dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses)
+	RenderPipeline::RenderPipeline(Fling::EntityStorage& t_Reg, LogicalDevice* t_Dev, Swapchain* t_Swap, std::vector<std::unique_ptr<Subpass>>& t_Subpasses)
 		: m_Subpasses ( std::move(t_Subpasses) )
 		, m_Device(t_Dev)
 		, m_SwapChain(t_Swap)
@@ -39,7 +39,7 @@ namespace Fling
 		m_Subpasses.clear();
 	}
 
-	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_Reg, float DeltaTime)
+	void RenderPipeline::Draw(CommandBuffer& t_CmdBuf, VkFramebuffer t_PresentFrameBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_Reg, float DeltaTime)
 	{
 		assert(!m_Subpasses.empty() && "Render pipeline should contain at least one sub-pass");
 
@@ -71,7 +71,7 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::CleanUp(entt::registry& t_reg)
+	void RenderPipeline::CleanUp(Fling::EntityStorage& t_reg)
 	{
 		for (const auto& Sub : m_Subpasses)
 		{
@@ -79,7 +79,7 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::OnSwapchainResized(entt::registry& t_reg)
+	void RenderPipeline::OnSwapchainResized(Fling::EntityStorage& t_reg)
 	{
 		for (const auto& Sub : m_Subpasses)
 		{
@@ -87,7 +87,7 @@ namespace Fling
 		}
 	}
 
-	void RenderPipeline::CreateDescriptors(entt::registry& t_Reg)
+	void RenderPipeline::CreateDescriptors(Fling::EntityStorage& t_Reg)
 	{
 		// Create the descriptor pool for us to use -------
 		const uint32 SwapImageCount = static_cast<uint32>(m_SwapChain->GetImageCount());

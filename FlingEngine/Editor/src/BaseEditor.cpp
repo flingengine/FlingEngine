@@ -48,7 +48,7 @@ namespace Fling
             ImGui::InputFloat( "Intensity", &t_Light.Intensity );
         }
 
-        void MeshRenderer(Fling::MeshRenderer& t_MeshRend, entt::registry& t_Reg, entt::entity t_Entity)
+        void MeshRenderer(Fling::MeshRenderer& t_MeshRend, Fling::EntityStorage& t_Reg, Fling::Entity t_Entity)
         {
             // Model -----------------------
             {
@@ -79,7 +79,7 @@ namespace Fling
 
                     t_MeshRend.LoadModelFromPath(SelectedAsset);
                     // Tell the renderer to record its draw calls again with the new model
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
+                    t_Reg.Replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
 
                     fileDialog.ClearSelected();
                 }
@@ -118,7 +118,7 @@ namespace Fling
                     // Tell the renderer to write the new textures to the descriptor set.
                     // replace() copies the component without its GPU handles, and the
                     // move assignment keeps the handles on the stored component.
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
+                    t_Reg.Replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
 
                     fileDialog.ClearSelected();
                 }
@@ -149,7 +149,7 @@ namespace Fling
         }
     }
 
-    void BaseEditor::Init(entt::registry& t_Reg, World* t_World, Game* t_Game)
+    void BaseEditor::Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game)
     {
         m_OwningWorld = t_World;
         m_WorldSingletons.SetWorld(t_World);
@@ -157,7 +157,7 @@ namespace Fling
         RegisterComponents(t_Reg);
     }
 
-    void BaseEditor::RegisterComponents(entt::registry& t_Reg)
+    void BaseEditor::RegisterComponents(Fling::EntityStorage& t_Reg)
     {
         (void)t_Reg;
 
@@ -168,39 +168,39 @@ namespace Fling
         ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
 
         Registry.SetEditorWidget("Transform",
-            [](entt::registry& reg, entt::entity e)
+            [](Fling::EntityStorage& reg, Fling::Entity e)
             {
-                auto& t = reg.get<Fling::Transform>(e);
+                auto& t = reg.Get<Fling::Transform>(e);
                 Widgets::Transform(t);
             }
         );
 
         Registry.SetEditorWidget("PointLight",
-            [](entt::registry& reg, entt::entity e)
+            [](Fling::EntityStorage& reg, Fling::Entity e)
             {
-                auto& t = reg.get<Fling::PointLight>(e);
+                auto& t = reg.Get<Fling::PointLight>(e);
                 Widgets::PointLight(t);
             }
         );
 
         Registry.SetEditorWidget("DirectionalLight",
-            [](entt::registry& reg, entt::entity e)
+            [](Fling::EntityStorage& reg, Fling::Entity e)
             {
-                auto& t = reg.get<Fling::DirectionalLight>(e);
+                auto& t = reg.Get<Fling::DirectionalLight>(e);
                 Widgets::DirectionalLight(t);
             }
         );
 
         Registry.SetEditorWidget("MeshRenderer",
-            [](entt::registry& reg, entt::entity e)
+            [](Fling::EntityStorage& reg, Fling::Entity e)
             {
-                auto& t = reg.get<Fling::MeshRenderer>(e);
+                auto& t = reg.Get<Fling::MeshRenderer>(e);
                 Widgets::MeshRenderer(t, reg, e);
             }
         );
     }
 
-    void BaseEditor::Draw(entt::registry& t_Reg, float DeltaTime)
+    void BaseEditor::Draw(Fling::EntityStorage& t_Reg, float DeltaTime)
     {
         DrawFileMenu();
 
@@ -252,12 +252,12 @@ namespace Fling
 		ImGui::End();
     }
 
-    void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
+    void BaseEditor::DrawWorldOutline(Fling::EntityStorage& t_Reg)
     {
         m_WorldOutline.Draw(t_Reg);
     }
 
-    void BaseEditor::DrawEntityEditor(entt::registry& t_Reg)
+    void BaseEditor::DrawEntityEditor(Fling::EntityStorage& t_Reg)
     {
         // Spawn the entity editor for whatever is currently selected in the outline
         m_EntityEditor.SetTargetEntity(m_WorldOutline.GetSelectedEntity());

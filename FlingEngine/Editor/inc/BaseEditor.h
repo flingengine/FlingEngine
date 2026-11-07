@@ -7,7 +7,7 @@
 #include "WorldSingletonsPanel.h"
 
 #include <array>
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <imgui.h>
 #include <string>
 
@@ -23,15 +23,15 @@ namespace Fling
         virtual ~BaseEditor() = default;
 
         /** Keeps the world and game, then calls RegisterComponents(). */
-        void Init(entt::registry& t_Reg, World* t_World, Game* t_Game) override;
+        void Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game) override;
 
 		/** Register  */
-		virtual void RegisterComponents(entt::registry& t_Reg);
+		virtual void RegisterComponents(Fling::EntityStorage& t_Reg);
 
         /**
          * Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
          */
-        void Draw(entt::registry& t_Reg, float DeltaTime) override;
+        void Draw(Fling::EntityStorage& t_Reg, float DeltaTime) override;
 
         // #TODO: Init and shutdown functions
 
@@ -72,10 +72,10 @@ namespace Fling
 
         void DrawCameraOptions();
 
-        void DrawWorldOutline(entt::registry& t_Reg);
+        void DrawWorldOutline(Fling::EntityStorage& t_Reg);
 
         /** assumes that m_DisplayComponentEditor is true */
-		void DrawEntityEditor(entt::registry& t_Reg);
+		void DrawEntityEditor(Fling::EntityStorage& t_Reg);
 
 		void DrawWindowOptions();
 

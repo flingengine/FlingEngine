@@ -1,6 +1,6 @@
 #pragma once
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Fling
 {
@@ -21,9 +21,9 @@ namespace Fling
 		 * Called once by the application after the world and game are created, and
 		 * before the world starts. Component types can still be registered here.
 		 */
-		virtual void Init(entt::registry& t_Reg, World* t_World, Game* t_Game) = 0;
+		virtual void Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game) = 0;
 
 		/** Draw the UI with ImGui. Called once per frame by the ImGui subpass. */
-		virtual void Draw(entt::registry& t_Reg, float t_DeltaTime) = 0;
+		virtual void Draw(Fling::EntityStorage& t_Reg, float t_DeltaTime) = 0;
 	};
 }	// namespace Fling

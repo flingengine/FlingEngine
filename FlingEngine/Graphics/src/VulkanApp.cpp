@@ -108,7 +108,7 @@ namespace Fling
         return m_PhysicalDevice->GetDeviceProps().deviceName;
     }
 
-    void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
+    void VulkanApp::Init(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
     {
         // Open the loader before Prepare. Prepare calls glfwInit.
         std::string LoaderError;
@@ -365,7 +365,7 @@ namespace Fling
         bNeedsResizing = true;
     }
 
-    void VulkanApp::RecreateFrameResourcesForResize(entt::registry& t_Reg)
+    void VulkanApp::RecreateFrameResourcesForResize(Fling::EntityStorage& t_Reg)
     {
         F_LOG_TRACE("Resizing the window!");
         if (!m_CurrentWindow->WaitForNewWindowSize())
@@ -411,7 +411,7 @@ namespace Fling
     }
 
     void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf,
-                                         entt::registry& t_Reg,
+                                         Fling::EntityStorage& t_Reg,
                                          std::shared_ptr<Fling::IDebugUI> t_DebugUI)
     {
         if (t_Conf & PipelineFlags::DEFERRED)
@@ -511,7 +511,7 @@ namespace Fling
         }
     }
 
-    void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
+    void VulkanApp::Update(float DeltaTime, Fling::EntityStorage& t_Reg)
     {
         // Prepare the frame for submission by waiting for the swap chain
         m_CurrentWindow->Update();
@@ -696,7 +696,7 @@ namespace Fling
         CurrentFrameIndex = (CurrentFrameIndex + 1) % VkConfig::MAX_FRAMES_IN_FLIGHT;
     }
 
-    void VulkanApp::Shutdown(entt::registry& t_Reg)
+    void VulkanApp::Shutdown(Fling::EntityStorage& t_Reg)
     {
         Singleton<VulkanApp>::Shutdown();
 

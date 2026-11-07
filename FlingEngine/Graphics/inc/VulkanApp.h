@@ -3,7 +3,7 @@
 #include "FlingTypes.h"
 #include "Singleton.hpp"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,8 +46,8 @@ namespace Fling
          */
         struct State;
 
-        void Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
-        void Shutdown(entt::registry& t_Reg);
+        void Init(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+        void Shutdown(Fling::EntityStorage& t_Reg);
 
         /**
          * Specify default constructible so that we have more explicit
@@ -59,7 +59,7 @@ namespace Fling
         /**
          * Updates all rendering buffers and sends commands to draw a frame
          */
-        void Update(float DeltaTime, entt::registry& t_Reg);
+        void Update(float DeltaTime, Fling::EntityStorage& t_Reg);
 
         inline FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
         inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
@@ -104,11 +104,11 @@ namespace Fling
          */
         void CreateGameWindow(const uint32 t_width, const uint32 t_height);
 
-        void RecreateFrameResourcesForResize(entt::registry& t_Reg);
+        void RecreateFrameResourcesForResize(Fling::EntityStorage& t_Reg);
 
         /** Builds any render pipelines with their specific set of sub passes and shaders */
         void
-        BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+        BuildRenderPipelines(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
 
         /**
          * Build the frame buffers for each swap chain image along with the render pass

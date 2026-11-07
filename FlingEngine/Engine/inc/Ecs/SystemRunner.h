@@ -1,12 +1,12 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
 #include "Ecs/Phase.h"
 #include "Ecs/Schedule.h"
 #include "FlingTypes.h"
 #include "Input/TickInput.h"
 
 #include <chrono>
-#include <entt/entity/fwd.hpp>
 #include <functional>
 #include <vector>
 
@@ -40,7 +40,7 @@ namespace Fling
          */
         SystemRunner(const SystemRegistry& systems,
                      Schedule schedule,
-                     entt::registry& storage,
+                     EntityStorage& storage,
                      SystemRunnerConfig config = {});
         ~SystemRunner();
 
@@ -88,7 +88,7 @@ namespace Fling
         const SystemRegistry& m_Systems;
         Schedule m_Schedule;
         std::vector<uint32> m_RunOrder;
-        entt::registry& m_Storage;
+        EntityStorage& m_Storage;
         SystemRunnerConfig m_Config;
 
         std::function<void(TickInput&)> m_TickInputSource;

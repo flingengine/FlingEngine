@@ -4,6 +4,7 @@
 #include "Ecs/Component.h"
 #include "Ecs/detail/EnttBridge.h"
 #include "Ecs/Entity.h"
+#include "Ecs/EntityStorage.h"
 #include "Ecs/Phase.h"
 #include "Ecs/TypeList.h"
 #include "Input/TickInput.h"
@@ -40,26 +41,26 @@ namespace Fling
     class SystemSetupBase
     {
     public:
-        explicit SystemSetupBase(entt::registry& registry) : m_Registry(registry) {}
+        explicit SystemSetupBase(EntityStorage& storage) : m_Storage(storage) {}
 
         /** The storage. Only Ecs/ code uses it. */
-        entt::registry& Storage() const { return m_Registry; }
+        EntityStorage& Storage() const { return m_Storage; }
 
     private:
-        entt::registry& m_Registry;
+        EntityStorage& m_Storage;
     };
 
     /** The storage and command buffer one system sees in one call. Systems use their typed Context instead. */
     class SystemContextBase
     {
     public:
-        SystemContextBase(entt::registry& registry, DeferredCommands* commands, const TickInput* tickInput = nullptr)
-            : m_Registry(registry), m_Commands(commands), m_TickInput(tickInput)
+        SystemContextBase(EntityStorage& storage, DeferredCommands* commands, const TickInput* tickInput = nullptr)
+            : m_Storage(storage), m_Commands(commands), m_TickInput(tickInput)
         {
         }
 
         /** The storage. Only Ecs/ code uses it. */
-        entt::registry& Storage() const { return m_Registry; }
+        EntityStorage& Storage() const { return m_Storage; }
 
         /** Null in a frame phase. */
         DeferredCommands* Commands() const { return m_Commands; }
@@ -68,7 +69,7 @@ namespace Fling
         const TickInput* GetTickInput() const { return m_TickInput; }
 
     private:
-        entt::registry& m_Registry;
+        EntityStorage& m_Storage;
         DeferredCommands* m_Commands = nullptr;
         const TickInput* m_TickInput = nullptr;
     };
@@ -244,7 +245,7 @@ namespace Fling
         T& AddSingleton(Args&&... args)
         {
             CheckOwner<T>();
-            return m_Core.Storage().template set<T>(std::forward<Args>(args)...);
+            return m_Core.Storage().template SetSingleton<T>(std::forward<Args>(args)...);
         }
 
         /** Removes the singleton T. */
@@ -252,7 +253,7 @@ namespace Fling
         void RemoveSingleton()
         {
             CheckOwner<T>();
-            m_Core.Storage().template unset<T>();
+            m_Core.Storage().template RemoveSingleton<T>();
         }
 
     private:
@@ -341,21 +342,16 @@ namespace Fling
                           "This system gets a component that its Access<...> does not allow. Add "
                           "Write<T>, or Read<T> and get const T.");
 
-            entt::registry& registry = m_Core.Storage();
-            const entt::entity e = Detail::ToEntt(entity);
-            if (e == entt::null || !registry.valid(e))
+            EntityStorage& storage = m_Core.Storage();
+            if (!storage.IsValid(entity))
             {
                 return nullptr;
             }
-            return registry.template try_get<std::remove_const_t<T>>(e);
+            return storage.template TryGet<std::remove_const_t<T>>(entity);
         }
 
         /** True if the entity is alive. */
-        bool IsAlive(const Entity entity) const
-        {
-            const entt::entity e = Detail::ToEntt(entity);
-            return e != entt::null && m_Core.Storage().valid(e);
-        }
+        bool IsAlive(const Entity entity) const { return m_Core.Storage().IsValid(entity); }
 
         /** The singleton T. T needs Write<T>; const T needs Read<T>. The owner makes it in OnCreate. */
         template <typename T>
@@ -369,7 +365,7 @@ namespace Fling
                           "This system uses a singleton that its Access<...> does not allow. Add "
                           "Write<T>, or Read<T> and use const T.");
 
-            U* singleton = m_Core.Storage().template try_ctx<U>();
+            U* singleton = m_Core.Storage().template TryGetSingleton<U>();
             assert(singleton != nullptr && "Singleton: nobody made it. Its writer makes it in OnCreate");
             return *singleton;
         }
@@ -407,10 +403,10 @@ namespace Fling
             static_assert((Allows<A, AccessMode::Write, std::decay_t<Cs>> && ...),
                           "Spawn adds a component that the access list does not write. Add Write<T>.");
 
-            entt::registry& registry = m_Core.Storage();
-            const entt::entity e = registry.create();
-            (registry.template assign<std::decay_t<Cs>>(e, std::forward<Cs>(components)), ...);
-            return Detail::FromEntt(e);
+            EntityStorage& storage = m_Core.Storage();
+            const Entity e = storage.Create();
+            (storage.template Add<std::decay_t<Cs>>(e, std::forward<Cs>(components)), ...);
+            return e;
         }
 
         /**
@@ -418,7 +414,7 @@ namespace Fling
          * (Physics.Step calls Physics::Tick). Needs Fling::RawStorage in the access list,
          * which must still name every type the subsystem touches. Fixed phases only.
          */
-        entt::registry& RawStorage()
+        EntityStorage& RawStorage()
         {
             static_assert(IsFixed(Derived::Info.Phase), "Only a fixed phase system uses RawStorage.");
             static_assert(A::HasRawStorage, "Add Fling::RawStorage to the access list to use ctx.RawStorage().");
@@ -475,13 +471,13 @@ namespace Fling
         template <typename Gets, typename... Ws, typename... Xs>
         QueryRange<Gets, TypeList<Ws...>, TypeList<Xs...>> MakeRange(TypeList<Ws...>, TypeList<Xs...>)
         {
-            return QueryRange<Gets, TypeList<Ws...>, TypeList<Xs...>>(m_Core.Storage());
+            return QueryRange<Gets, TypeList<Ws...>, TypeList<Xs...>>(m_Core.Storage().Native());
         }
 
         template <typename Q>
         Q& QueueComponent()
         {
-            Q* queue = m_Core.Storage().template try_ctx<Q>();
+            Q* queue = m_Core.Storage().template TryGetSingleton<Q>();
             assert(queue != nullptr && "Queue: nobody made it. Its consumer makes it in OnCreate");
             return *queue;
         }
@@ -515,7 +511,7 @@ namespace Fling
         template <typename A>
         void PrepareStorage(SystemSetupBase& setup)
         {
-            PrepareAll(setup.Storage(), typename A::Items{});
+            PrepareAll(setup.Storage().Native(), typename A::Items{});
         }
     } // namespace Detail
 } // namespace Fling

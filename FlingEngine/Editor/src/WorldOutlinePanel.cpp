@@ -9,7 +9,7 @@
 
 namespace Fling
 {
-	void WorldOutlinePanel::Draw(entt::registry& t_Reg)
+	void WorldOutlinePanel::Draw(Fling::EntityStorage& t_Reg)
 	{
 		if (!m_ShowWindow)
 		{
@@ -23,21 +23,21 @@ namespace Fling
 
 			if (ImGui::Button("+ Add Entity", ImVec2(ImGui::GetWindowWidth(), 0.f)))
 			{
-				m_SelectedEntity = t_Reg.create();
+				m_SelectedEntity = t_Reg.Create();
 			}
 
 			ImGui::Separator();
 
-			std::vector<entt::entity> entities;
-			t_Reg.each([&](entt::entity entity)
+			std::vector<Fling::Entity> entities;
+			t_Reg.EachEntity([&](Fling::Entity entity)
 			{
 				entities.push_back(entity);
 			});
 
-			entt::entity entityToDestroy = entt::null;
-			for (entt::entity entity : entities)
+			Fling::Entity entityToDestroy = Fling::Entity::Null;
+			for (Fling::Entity entity : entities)
 			{
-				if (!t_Reg.valid(entity))
+				if (!t_Reg.IsValid(entity))
 				{
 					continue;
 				}
@@ -45,18 +45,18 @@ namespace Fling
 				const bool bIsSelected = (m_SelectedEntity == entity);
 
 				std::string label;
-				if (t_Reg.has<NameComponent>(entity) && !t_Reg.get<NameComponent>(entity).Name.empty())
+				if (t_Reg.Has<NameComponent>(entity) && !t_Reg.Get<NameComponent>(entity).Name.empty())
 				{
-					label = t_Reg.get<NameComponent>(entity).Name;
+					label = t_Reg.Get<NameComponent>(entity).Name;
 				}
 				else
 				{
 					std::ostringstream os;
-					os << "Entity " << static_cast<uint64>(entity);
+					os << "Entity " << entity.Index;
 					label = os.str();
 				}
 
-				ImGui::PushID(static_cast<int>(entity));
+				ImGui::PushID(static_cast<int>(entity.Index));
 
 				if (ImGui::Button(" - "))
 				{
@@ -84,13 +84,13 @@ namespace Fling
 				ImGui::PopID();
 			}
 
-			if (entityToDestroy != entt::null)
+			if (entityToDestroy != Fling::Entity::Null)
 			{
 				if (m_SelectedEntity == entityToDestroy)
 				{
-					m_SelectedEntity = entt::null;
+					m_SelectedEntity = Fling::Entity::Null;
 				}
-				t_Reg.destroy(entityToDestroy);
+				t_Reg.Destroy(entityToDestroy);
 			}
 		}
 		ImGui::End();

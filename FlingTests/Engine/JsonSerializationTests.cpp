@@ -15,11 +15,11 @@
 namespace {
     class JsonTestGame : public Fling::Game {
     public:
-        void Init(entt::registry&) override {}
-        void OnStartGame(entt::registry&) override {}
-        void Update(entt::registry&, float) override {}
-        void OnStopGame(entt::registry&) override {}
-        void Shutdown(entt::registry&) override {}
+        void Init(Fling::EntityStorage&) override {}
+        void OnStartGame(Fling::EntityStorage&) override {}
+        void Update(Fling::EntityStorage&, float) override {}
+        void OnStopGame(Fling::EntityStorage&) override {}
+        void Shutdown(Fling::EntityStorage&) override {}
     };
 
     struct Health {
@@ -64,9 +64,9 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         ComponentTypeRegistry::Get().Seal();
         REQUIRE(ComponentTypeRegistry::Get().IsSealed());
 
-        entt::registry reg;
-        const entt::entity entity = reg.create();
-        Health& src = reg.assign<Health>(entity);
+        Fling::EntityStorage reg;
+        const Fling::Entity entity = reg.Create();
+        Health& src = reg.Add<Health>(entity);
         src.Amount = 42;
         src.Armor = 3.5f;
 
@@ -79,12 +79,12 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         REQUIRE(out.GetInt("Amount") == 42);
         REQUIRE(out.GetFloat("Armor") == Catch::Approx(3.5f));
 
-        entt::registry loaded;
-        const entt::entity loadedEntity = loaded.create();
+        Fling::EntityStorage loaded;
+        const Fling::Entity loadedEntity = loaded.Create();
         info->load(loaded, loadedEntity, out);
-        REQUIRE(loaded.has<Health>(loadedEntity));
-        REQUIRE(loaded.get<Health>(loadedEntity).Amount == 42);
-        REQUIRE(loaded.get<Health>(loadedEntity).Armor == Catch::Approx(3.5f));
+        REQUIRE(loaded.Has<Health>(loadedEntity));
+        REQUIRE(loaded.Get<Health>(loadedEntity).Amount == 42);
+        REQUIRE(loaded.Get<Health>(loadedEntity).Armor == Catch::Approx(3.5f));
     }
 
     SECTION("Register after Seal is rejected") {
@@ -95,9 +95,8 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
     }
 
     SECTION("LoadLevelFile before Seal fails") {
-        entt::registry reg;
         JsonTestGame game;
-        World world(reg, &game);
+        World world(&game);
         REQUIRE_FALSE(ComponentTypeRegistry::Get().IsSealed());
         REQUIRE_FALSE(world.LoadLevelFile("Levels/EmptyLevel.json"));
     }
@@ -131,13 +130,13 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         RemoveTestLevelFile();
         REQUIRE(root.SaveToFile(TestLevelFullPath()));
 
-        entt::registry reg;
         JsonTestGame game;
-        World world(reg, &game);
+        World world(&game);
+        Fling::EntityStorage& reg = world.GetStorage();
         REQUIRE(world.LoadLevelFile(TestLevelRelativePath()));
 
         int count = 0;
-        reg.view<Transform, NameComponent>().each([&](auto /*entity*/, Transform& t, NameComponent& name) {
+        reg.View<Transform, NameComponent>().Each([&](auto /*entity*/, Transform& t, NameComponent& name) {
             ++count;
             REQUIRE(name.Name == "Hero");
             REQUIRE(t.GetPos().x == Catch::Approx(4.f));
@@ -177,14 +176,14 @@ TEST_CASE("ComponentTypeRegistry hybrid register and seal", "[json]") {
         RemoveTestLevelFile();
         REQUIRE(root.SaveToFile(TestLevelFullPath()));
 
-        entt::registry reg;
         JsonTestGame game;
-        World world(reg, &game);
+        World world(&game);
+        Fling::EntityStorage& reg = world.GetStorage();
         REQUIRE(world.LoadLevelFile(TestLevelRelativePath()));
 
         glm::vec3 left{};
         glm::vec3 right{};
-        reg.view<Transform, NameComponent>().each([&](auto /*entity*/, Transform& t, NameComponent& name) {
+        reg.View<Transform, NameComponent>().Each([&](auto /*entity*/, Transform& t, NameComponent& name) {
             if (name.Name == "Left") {
                 left = t.GetPos();
             } else if (name.Name == "Right") {
@@ -208,35 +207,35 @@ namespace {
         int Id = 0;
     };
 
-    void SeedMeshEntities(entt::registry& reg, int count) {
+    void SeedMeshEntities(Fling::EntityStorage& reg, int count) {
         for (int i = 0; i < count; ++i) {
-            const entt::entity entity = reg.create();
+            const Fling::Entity entity = reg.Create();
             Fling::Transform t;
             t.SetPos(glm::vec3(static_cast<float>(i), 0.f, 0.f));
-            reg.assign<Fling::Transform>(entity, t);
-            reg.assign<DummyMesh>(entity);
+            reg.Add<Fling::Transform>(entity, t);
+            reg.Add<DummyMesh>(entity);
         }
     }
 
-    void SeedTransformOnly(entt::registry& reg) {
-        const entt::entity entity = reg.create();
+    void SeedTransformOnly(Fling::EntityStorage& reg) {
+        const Fling::Entity entity = reg.Create();
         Fling::Transform t;
         t.SetPos(glm::vec3(0.f, 10.f, 0.f));
-        reg.assign<Fling::Transform>(entity, t);
+        reg.Add<Fling::Transform>(entity, t);
     }
 
-    glm::vec3 SpawnMeshThenSetPos(entt::registry& reg) {
-        const entt::entity spawned = reg.create();
-        reg.assign<DummyMesh>(spawned);
-        Fling::Transform& t = reg.assign<Fling::Transform>(spawned);
+    glm::vec3 SpawnMeshThenSetPos(Fling::EntityStorage& reg) {
+        const Fling::Entity spawned = reg.Create();
+        reg.Add<DummyMesh>(spawned);
+        Fling::Transform& t = reg.Add<Fling::Transform>(spawned);
         t.SetPos(glm::vec3(99.f, 98.f, 97.f));
-        return reg.get<Fling::Transform>(spawned).GetPos();
+        return reg.Get<Fling::Transform>(spawned).GetPos();
     }
 } // namespace
 
 TEST_CASE("assign Transform reference stays valid with views", "[ecs]") {
-    entt::registry reg;
-    auto renderView = reg.view<Fling::Transform, DummyMesh>();
+    Fling::EntityStorage reg;
+    auto renderView = reg.View<Fling::Transform, DummyMesh>();
     (void)renderView;
 
     SeedMeshEntities(reg, 4);
@@ -246,16 +245,4 @@ TEST_CASE("assign Transform reference stays valid with views", "[ecs]") {
     REQUIRE(pos.x == Catch::Approx(99.f));
     REQUIRE(pos.y == Catch::Approx(98.f));
     REQUIRE(pos.z == Catch::Approx(97.f));
-}
-
-TEST_CASE("owning groups can invalidate assign Transform references", "[ecs]") {
-    entt::registry reg;
-    auto packed = reg.group<Fling::Transform>(entt::get<DummyMesh>);
-    (void)packed;
-
-    SeedMeshEntities(reg, 4);
-    SeedTransformOnly(reg);
-
-    const glm::vec3 pos = SpawnMeshThenSetPos(reg);
-    REQUIRE(pos.x != Catch::Approx(99.f));
 }

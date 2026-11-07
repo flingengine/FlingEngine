@@ -6,8 +6,12 @@ slice) and [`Plans/ecs-plan.md`](../Plans/ecs-plan.md) (the full plan). The
 rules come from Timothy Ford, *'Overwatch' Gameplay Architecture and Netcode*,
 GDC 2017.
 
-The code is in `FlingEngine/Engine/inc/Ecs/`. Storage is still EnTT 3.1, but
-no ECS header that gameplay uses names EnTT.
+The code is in `FlingEngine/Engine/inc/Ecs/`. Each `World` owns one
+`EntityStorage` (`Ecs/EntityStorage.h`): the entities, components, and
+singletons of that world. Code outside a system (the renderer, physics, the
+editor, tests) takes an `EntityStorage&`. It never takes a global registry, and
+it never names EnTT. Systems do not use `EntityStorage`: they use their typed
+context.
 
 ## The rules
 
@@ -119,7 +123,7 @@ public:
 
 ## Testing a system
 
-A system is a function of its components, so a test builds a registry, adds
+A system is a function of its components, so a test makes an `EntityStorage`, adds
 the systems to a `SystemRegistry`, makes a `SystemRunner`, and runs ticks.
 See `FlingTests/Engine/EcsSystemTests.cpp`. A rule that must not compile goes
 in `FlingTests/EcsCompileFail/EcsCompileFail.cpp`, with an

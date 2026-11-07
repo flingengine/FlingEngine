@@ -22,9 +22,8 @@ namespace Fling
 		}
 	}
 
-	World::World(entt::registry& t_Reg, Fling::Game* t_Game)
-		: m_Registry(t_Reg)
-		, m_Game(t_Game)
+	World::World(Fling::Game* t_Game)
+		: m_Game(t_Game)
 		, m_ShouldQuit(false)
 	{ }
 
@@ -43,7 +42,7 @@ namespace Fling
 		m_Game->RegisterComponents();
 		ComponentTypeRegistry::Get().RunExternalRegistrars();
 		m_Game->RegisterSystems(m_Systems);
-		m_Game->Init(m_Registry);
+		m_Game->Init(m_Storage);
 		ComponentTypeRegistry::Get().Seal();
 
 		// Build the schedule before any level loads. A bad schedule never runs.
@@ -77,10 +76,10 @@ namespace Fling
 		}
 
 		// Systems append requests for the application. The world takes them each frame.
-		m_Registry.set<AppRequests>();
+		m_Storage.SetSingleton<AppRequests>();
 
 		// Each system makes its singletons before the first level loads
-		m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Registry, m_RunnerConfig);
+		m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Storage, m_RunnerConfig);
 		m_Runner->SetTickInputSource(m_TickInputSource);
 		m_Runner->Create();
 
@@ -114,7 +113,7 @@ namespace Fling
 			m_Runner->Destroy();
 			m_Runner.reset();
 		}
-		m_Game->Shutdown(m_Registry);
+		m_Game->Shutdown(m_Storage);
 
 		F_LOG_TRACE("World shutdown complete!");
 	}
@@ -177,7 +176,7 @@ namespace Fling
         {
             m_Runner->PlayBegin(WorldRole::Play);
         }
-        m_Game->OnStartGame(m_Registry);
+        m_Game->OnStartGame(m_Storage);
 		m_CurrentState = WorldState::Playing;
     }
 
@@ -190,7 +189,7 @@ namespace Fling
         {
             m_Runner->PlayEnd(WorldRole::Play);
         }
-        m_Game->OnStopGame(m_Registry);
+        m_Game->OnStopGame(m_Storage);
         m_Game->m_WantsToQuit = false;
 
         if (t_RestoreSnapshot && m_HasPlaySnapshot)
@@ -229,7 +228,7 @@ namespace Fling
 
         if(bPlaying)
 		{
-			m_Game->Update(m_Registry, t_DeltaTime);
+			m_Game->Update(m_Storage, t_DeltaTime);
 
             // In editor play, a game that wants to quit stops play instead
             if (m_GameQuitStopsPlay && m_Game->WantsToQuit())
@@ -247,7 +246,7 @@ namespace Fling
 
 	void World::ProcessAppRequests()
 	{
-		AppRequests* Queue = m_Registry.try_ctx<AppRequests>();
+		AppRequests* Queue = m_Storage.TryGetSingleton<AppRequests>();
 		if (!Queue)
 		{
 			return;
@@ -300,14 +299,14 @@ namespace Fling
         std::vector<std::pair<std::string, Json>> entityEntries;
 		std::size_t unnamedIndex = 0;
 
-		m_Registry.each([&](const entt::entity entity)
+		m_Storage.EachEntity([&](const Fling::Entity entity)
 		{
 			Json entityJson = Json::Object();
 
 			std::string name;
-			if (m_Registry.has<NameComponent>(entity))
+			if (m_Storage.Has<NameComponent>(entity))
 			{
-				name = m_Registry.get<NameComponent>(entity).Name;
+				name = m_Storage.Get<NameComponent>(entity).Name;
 			}
 			if (name.empty())
 			{
@@ -324,10 +323,10 @@ namespace Fling
 					continue;
 				}
 
-				if (type.has && type.has(m_Registry, entity) && type.save)
+				if (type.has && type.has(m_Storage, entity) && type.save)
 				{
 					Json componentJson = Json::Object();
-					type.save(m_Registry, entity, componentJson);
+					type.save(m_Storage, entity, componentJson);
 					entityJson.Set(type.name, componentJson);
 				}
 			}
@@ -358,10 +357,10 @@ namespace Fling
         bool bHasSingletons = false;
         for (const ComponentTypeInfo& type : typeRegistry.All())
         {
-            if (type.saveSingleton && type.hasSingleton && type.hasSingleton(m_Registry))
+            if (type.saveSingleton && type.hasSingleton && type.hasSingleton(m_Storage))
             {
                 Json singletonJson = Json::Object();
-                type.saveSingleton(m_Registry, singletonJson);
+                type.saveSingleton(m_Storage, singletonJson);
                 singletons.Set(type.name, singletonJson);
                 bHasSingletons = true;
             }
@@ -410,7 +409,7 @@ namespace Fling
 		}
 
         // Fires the destroy signals, so the renderer lets go of the old entities
-        m_Registry.reset();
+        m_Storage.Clear();
 
         const std::string title = t_Doc.GetString("title", t_SourceName);
         F_LOG_TRACE("Level Title: {}", title);
@@ -424,14 +423,14 @@ namespace Fling
 				continue;
 			}
 
-			entt::entity entity = m_Registry.create();
+			Fling::Entity entity = m_Storage.Create();
 			std::string name = entityJson.GetString("name");
 			if (name.empty())
 			{
 				name = "Entity_" + std::to_string(i);
 			}
 
-			NameComponent& nameComp = m_Registry.assign<NameComponent>(entity);
+			NameComponent& nameComp = m_Storage.Add<NameComponent>(entity);
 			nameComp.Name = name;
 
 			auto LoadNamedComponent = [&](const std::string& key)
@@ -448,7 +447,7 @@ namespace Fling
 					return;
 				}
 
-				info->load(m_Registry, entity, entityJson.Get(key));
+				info->load(m_Storage, entity, entityJson.Get(key));
 			};
 
 			// nlohmann objects iterate keys alphabetically, so MeshRenderer would
@@ -477,7 +476,7 @@ namespace Fling
                     F_LOG_WARN("Unknown singleton '{}' in level '{}', skipping", key, t_SourceName);
                     continue;
                 }
-                info->loadSingleton(m_Registry, singletons.Get(key));
+                info->loadSingleton(m_Storage, singletons.Get(key));
             }
         }
 

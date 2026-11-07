@@ -2,6 +2,9 @@
 
 #include "FlingTypes.h"
 
+#include <compare>
+#include <functional>
+#include <limits>
 #include <type_traits>
 
 namespace Fling
@@ -31,9 +34,18 @@ namespace Fling
         }
 
         friend constexpr bool operator==(Entity, Entity) = default;
+
+        /** Orders by index, then generation. Use it for sorting (for example, deterministic contact order). */
+        friend constexpr auto operator<= > (Entity, Entity) = default;
     };
 
     inline constexpr Entity Entity::Null{};
 
     static_assert(sizeof(Entity) == 8 && std::is_trivially_copyable_v<Entity>);
 } // namespace Fling
+
+template <>
+struct std::hash<Fling::Entity>
+{
+    size_t operator()(const Fling::Entity e) const noexcept { return std::hash<uint64>{}(e.ToBits()); }
+};

@@ -21,7 +21,7 @@ namespace Fling
 
     SystemRunner::SystemRunner(const SystemRegistry& systems,
                                Schedule schedule,
-                               entt::registry& storage,
+                               EntityStorage& storage,
                                SystemRunnerConfig config)
         : m_Systems(systems), m_Schedule(std::move(schedule)), m_Storage(storage), m_Config(config)
     {
@@ -44,8 +44,8 @@ namespace Fling
         assert(!m_Created);
         SystemSetupBase setup(m_Storage);
 
-        m_Storage.set<SimTime>(SimTime{0, static_cast<float>(Seconds(m_Config.FixedStep)), 0.0});
-        m_Storage.set<RealFrameTime>();
+        m_Storage.SetSingleton<SimTime>(SimTime{0, static_cast<float>(Seconds(m_Config.FixedStep)), 0.0});
+        m_Storage.SetSingleton<RealFrameTime>();
 
         for (const uint32 i : m_RunOrder)
         {
@@ -70,8 +70,8 @@ namespace Fling
             m_Systems.At(i).RunDestroy(setup);
         }
 
-        m_Storage.unset<RealFrameTime>();
-        m_Storage.unset<SimTime>();
+        m_Storage.RemoveSingleton<RealFrameTime>();
+        m_Storage.RemoveSingleton<SimTime>();
         m_Created = false;
     }
 
@@ -143,7 +143,7 @@ namespace Fling
             m_TickInput.Clear();
         }
 
-        SimTime& time = m_Storage.ctx<SimTime>();
+        SimTime& time = m_Storage.Singleton<SimTime>();
         time.Tick = m_Tick;
         time.Elapsed = static_cast<double>(m_Tick) * Seconds(m_Config.FixedStep);
 
@@ -156,7 +156,7 @@ namespace Fling
         assert(m_Created);
         m_RealElapsed += realDelta;
 
-        RealFrameTime& frame = m_Storage.ctx<RealFrameTime>();
+        RealFrameTime& frame = m_Storage.Singleton<RealFrameTime>();
         frame.DeltaSeconds = static_cast<float>(Seconds(realDelta));
         frame.Elapsed = Seconds(m_RealElapsed);
         frame.TickAlpha =
@@ -210,11 +210,7 @@ namespace Fling
             DeferredCommands& commands = m_Commands[i];
             for (const Entity entity : commands.Destroys())
             {
-                const entt::entity e = Detail::ToEntt(entity);
-                if (e != entt::null && m_Storage.valid(e))
-                {
-                    m_Storage.destroy(e);
-                }
+                m_Storage.Destroy(entity);
             }
             commands.Clear();
         }

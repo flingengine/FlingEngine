@@ -6,7 +6,7 @@
 #include "FlingTypes.h"
 #include "PhysicsProvider.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 #include <memory>
 #include <vector>
 
@@ -109,7 +109,7 @@ namespace Fling
     /** An entity that has a body in the physics scene. */
     struct PhysicsTrackedBody
     {
-        entt::entity m_Entity = entt::null;
+        Fling::Entity m_Entity = Fling::Entity::Null;
         PhysicsBodyId m_Id;
     };
 

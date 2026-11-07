@@ -2,7 +2,7 @@
 
 #include "FlingEditorPanel.h"
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Fling
 {
@@ -15,12 +15,12 @@ namespace Fling
 	{
 	public:
 		/** Draws the "Entity Editor" window for the current target entity. Call once per frame. */
-		virtual void Draw(entt::registry& t_Reg) override;
+		virtual void Draw(Fling::EntityStorage& t_Reg) override;
 
-		/** Sets which entity this panel inspects. Pass entt::null to show none. */
-		void SetTargetEntity(entt::entity t_Entity) { m_TargetEntity = t_Entity; }
+		/** Sets which entity this panel inspects. Pass Fling::Entity::Null to show none. */
+		void SetTargetEntity(Fling::Entity t_Entity) { m_TargetEntity = t_Entity; }
 
 	private:
-		entt::entity m_TargetEntity = entt::null;
+		Fling::Entity m_TargetEntity = Fling::Entity::Null;
 	};
 }	// namespace Fling

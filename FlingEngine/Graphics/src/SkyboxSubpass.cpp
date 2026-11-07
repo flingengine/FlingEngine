@@ -41,7 +41,7 @@ namespace Fling
     SkyboxSubpass::~SkyboxSubpass() = default;
 
     void
-    SkyboxSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
+    SkyboxSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime)
     {
         // Invert the projection Y to match the Vulkan clip space, like the other passes
         glm::mat4 Projection = m_Camera->GetProjectionMatrix();
@@ -69,7 +69,7 @@ namespace Fling
         vkCmdDraw(t_CmdBuf.GetHandle(), 3, 1, 0, 0);
     }
 
-    void SkyboxSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
+    void SkyboxSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg)
     {
         // We only need to do the actual allocation of sets ONCE
         if (m_DescPool == VK_NULL_HANDLE)
@@ -122,7 +122,7 @@ namespace Fling
         m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
     }
 
-    void SkyboxSubpass::OnSwapchainResized(entt::registry& t_reg)
+    void SkyboxSubpass::OnSwapchainResized(Fling::EntityStorage& t_reg)
     {
         m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
         CreateGraphicsPipeline();

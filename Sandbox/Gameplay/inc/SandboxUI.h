@@ -1,6 +1,6 @@
 #pragma once
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Sandbox
 {
@@ -16,6 +16,6 @@ namespace Sandbox
         /**
          * Draw the sandbox game ImGui UI elements
          */
-        void NewFrame(entt::registry& t_Reg); 
+        void NewFrame(Fling::EntityStorage& t_Reg); 
     };
 }   // namespace Sandbox

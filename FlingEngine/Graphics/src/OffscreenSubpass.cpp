@@ -22,19 +22,19 @@ namespace Fling
 	OffscreenSubpass::OffscreenSubpass(
 		const LogicalDevice* t_Dev,
 		const Swapchain* t_Swap,
-		entt::registry& t_reg,
+		Fling::EntityStorage& t_reg,
 		FirstPersonCamera* t_Cam,
 		std::shared_ptr<Fling::Shader> t_Vert,
 		std::shared_ptr<Fling::Shader> t_Frag)
 		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
 		, m_Camera(t_Cam)
 	{
-		t_reg.on_construct<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
-		t_reg.on_replace<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
-		t_reg.on_destroy<MeshRenderer>().connect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
+		t_reg.OnAdd<MeshRenderer>().Connect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
+		t_reg.OnReplace<MeshRenderer>().Connect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
+		t_reg.OnRemove<MeshRenderer>().Connect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
 		// The render view needs a Transform, so adding or removing one changes what we draw
-		t_reg.on_construct<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
-		t_reg.on_destroy<Transform>().connect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.OnAdd<Transform>().Connect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.OnRemove<Transform>().Connect<&OffscreenSubpass::OnDrawListChanged>(*this);
 
 		// Set the clear values for the G Buffer
 		m_ClearValues.resize(6);
@@ -98,7 +98,7 @@ namespace Fling
 	void OffscreenSubpass::Draw(
 		CommandBuffer& t_CmdBuf,
 		uint32 t_ActiveSwapImage,
-		entt::registry& t_reg,
+		Fling::EntityStorage& t_reg,
 		float DeltaTime)
 	{
 		assert(m_GraphicsPipeline);
@@ -109,14 +109,14 @@ namespace Fling
 		// The previous frame is done on the GPU, so the resources of destroyed meshes can go
 		ReleaseRetiredMeshResources();
 
-		// Write the descriptor sets of replaced meshes now that entt has stored the new values
+		// Write the descriptor sets of replaced meshes now that the storage has the new values
 		if (!m_ReplacedMeshes.empty())
 		{
-			for (entt::entity Ent : m_ReplacedMeshes)
+			for (Fling::Entity Ent : m_ReplacedMeshes)
 			{
-				if (t_reg.valid(Ent) && t_reg.has<MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>(Ent))
+				if (t_reg.IsValid(Ent) && t_reg.Has<MeshRenderer, DeferredRenderTag>(Ent))
 				{
-					MeshRenderer& MeshRend = t_reg.get<MeshRenderer>(Ent);
+					MeshRenderer& MeshRend = t_reg.Get<MeshRenderer>(Ent);
 					CreateMeshDescriptorSet(MeshRend);
 					MarkMeshRendererUboDirty(MeshRend);
 				}
@@ -144,13 +144,13 @@ namespace Fling
 		}
 	}
 
-	void OffscreenSubpass::UpdateMeshUniformBuffers(entt::registry& t_reg)
+	void OffscreenSubpass::UpdateMeshUniformBuffers(Fling::EntityStorage& t_reg)
 	{
 		// Use a view, not an owning group. group<Transform>(MeshRenderer, ...) packs
 		// Transform and can swap it out from under assign<Transform>() references.
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
+		auto RenderView = t_reg.View<Transform, MeshRenderer, DeferredRenderTag>();
 
-		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		RenderView.Each([&](Fling::Entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Buffer* buf = t_MeshRend.m_UniformBuffer;
 			if (!buf || t_MeshRend.m_GpuState == nullptr)
@@ -175,7 +175,7 @@ namespace Fling
 		});
 	}
 
-	void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, entt::registry& t_reg)
+	void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, Fling::EntityStorage& t_reg)
 	{
 		// Set viewport and scissors to the offscreen frame buffer
 		VkViewport viewport = Initializers::Viewport(
@@ -201,9 +201,9 @@ namespace Fling
 
 		VkDeviceSize offsets[1] = { 0 };
 
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Default")>>();
+		auto RenderView = t_reg.View<Transform, MeshRenderer, DeferredRenderTag>();
 
-		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
+		RenderView.Each([&](Fling::Entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
 		{
 			Fling::Model* Model = t_MeshRend.m_Model;
 			if (!Model)
@@ -237,7 +237,7 @@ namespace Fling
 	void OffscreenSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
 	{
 		// Only allocate new descriptor sets if there are none
-		// Some may exist if entt decides to re-use the component
+		// Some may exist if the storage reuses the component
 		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
 		{
 			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
@@ -435,22 +435,22 @@ namespace Fling
 		t_Deps.emplace_back(m_OffscreenSemaphores[t_CurrentFrameInFlight]);
 	}
 
-	void OffscreenSubpass::CleanUp(entt::registry& t_reg)
+	void OffscreenSubpass::CleanUp(Fling::EntityStorage& t_reg)
 	{
 		assert(m_Device != nullptr);
 
 		// Stop listening, the descriptor pool and mesh buffers are about to go away
-		t_reg.on_construct<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
-		t_reg.on_replace<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
-		t_reg.on_destroy<MeshRenderer>().disconnect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
-		t_reg.on_construct<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
-		t_reg.on_destroy<Transform>().disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.OnAdd<MeshRenderer>().Disconnect<&OffscreenSubpass::OnMeshRendererAdded>(*this);
+		t_reg.OnReplace<MeshRenderer>().Disconnect<&OffscreenSubpass::OnMeshRendererReplaced>(*this);
+		t_reg.OnRemove<MeshRenderer>().Disconnect<&OffscreenSubpass::OnMeshRendererDestroyed>(*this);
+		t_reg.OnAdd<Transform>().Disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
+		t_reg.OnRemove<Transform>().Disconnect<&OffscreenSubpass::OnDrawListChanged>(*this);
 		m_ReplacedMeshes.clear();
 
 		// Called after the device is idle, so nothing uses these now
 		ReleaseRetiredMeshResources();
 
-		t_reg.view<MeshRenderer>().each([](MeshRenderer& t_Mesh)
+		t_reg.View<MeshRenderer>().Each([](MeshRenderer& t_Mesh)
 		{
 			t_Mesh.Release();
 		});
@@ -462,7 +462,7 @@ namespace Fling
 		}
 	}
 
-	void OffscreenSubpass::OnSwapchainResized(entt::registry& t_reg)
+	void OffscreenSubpass::OnSwapchainResized(Fling::EntityStorage& t_reg)
 	{
 		const VkExtent2D NewSize = m_SwapChain->GetExtents();
 		if (m_OffscreenFrameBuf)
@@ -478,14 +478,15 @@ namespace Fling
 		(void)t_reg;
 	}
 
-	void OffscreenSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	void OffscreenSubpass::OnMeshRendererAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)
 	{
+		MeshRenderer& t_MeshRend = t_Reg.Get<MeshRenderer>(t_Ent);
 		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Default)
 		{
 			return;
 		}
 
-		t_Reg.assign<entt::tag<entt::hashed_string::to_value("Default")>>(t_Ent);
+		t_Reg.Add<DeferredRenderTag>(t_Ent);
 
 		// Initialize and map the UBO of each mesh renderer
 		if (t_MeshRend.m_UniformBuffer == nullptr)
@@ -501,21 +502,22 @@ namespace Fling
 		InvalidateCommandBuffers();
 	}
 
-	void OffscreenSubpass::OnMeshRendererReplaced(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
+	void OffscreenSubpass::OnMeshRendererReplaced(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)
 	{
+		(void)t_Reg;
 		m_ReplacedMeshes.emplace_back(t_Ent);
 		InvalidateCommandBuffers();
 	}
 
-	void OffscreenSubpass::OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg)
+	void OffscreenSubpass::OnDrawListChanged(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)
 	{
 		InvalidateCommandBuffers();
 	}
 
-	void OffscreenSubpass::OnMeshRendererDestroyed(entt::entity t_Ent, entt::registry& t_Reg)
+	void OffscreenSubpass::OnMeshRendererDestroyed(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent)
 	{
-		// entt sends this before it removes the component, so it is still valid
-		MeshRenderer& MeshRend = t_Reg.get<MeshRenderer>(t_Ent);
+		// The storage calls this before it removes the component, so it is still valid
+		MeshRenderer& MeshRend = t_Reg.Get<MeshRenderer>(t_Ent);
 
 		if (MeshRend.m_GpuState != nullptr && MeshRend.m_GpuState->m_DescriptorSet != VK_NULL_HANDLE)
 		{

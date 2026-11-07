@@ -20,7 +20,7 @@ namespace Fling
 		DebugSubpass(
 			const LogicalDevice* t_Dev,
 			const Swapchain* t_Swap,
-			entt::registry& t_reg,
+			Fling::EntityStorage& t_reg,
 			VkRenderPass t_GlobalRenderPass,
 			FirstPersonCamera* t_Cam,
 			std::shared_ptr<Fling::Shader> t_Vert,
@@ -29,19 +29,19 @@ namespace Fling
 
 		virtual ~DebugSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, Fling::EntityStorage& t_reg, float DeltaTime) override;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+		void CreateDescriptorSets(VkDescriptorPool t_Pool, Fling::EntityStorage& t_reg) override;
 
 		void PrepareAttachments() override;
 
 		void CreateGraphicsPipeline() override;
 
-		void CleanUp(entt::registry& t_reg) override;
+		void CleanUp(Fling::EntityStorage& t_reg) override;
 
 	private:
 
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+		void OnMeshRendererAdded(Fling::EntityStorage& t_Reg, Fling::Entity t_Ent);
 
 		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
 

@@ -16,7 +16,7 @@ namespace Fling
         }
     } // namespace
 
-    void WorldSingletonsPanel::Draw(entt::registry& t_Reg)
+    void WorldSingletonsPanel::Draw(Fling::EntityStorage& t_Reg)
     {
         if (!m_ShowWindow)
         {

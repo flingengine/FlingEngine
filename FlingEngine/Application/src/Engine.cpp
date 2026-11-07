@@ -129,6 +129,12 @@ namespace Fling
 		}
 #endif
 
+		// The world owns the entity storage. The renderer and physics keep a reference
+		// to it, so make the world first, and destroy it after them.
+		m_World = new World(m_GameImpl);
+		m_GameImpl->m_OwningWorld = m_World;
+		EntityStorage& Storage = m_World->GetStorage();
+
 		if (m_Options.NullRender)
 		{
 			// No window, no swapchain, and no GPU device. Graphics resources keep their
@@ -141,7 +147,7 @@ namespace Fling
 		{
 			VulkanApp::Get().Init(
 				static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP | PipelineFlags::IMGUI),
-				g_Registry,
+				Storage,
 				m_DebugUI
 			);
 		}
@@ -166,10 +172,7 @@ namespace Fling
 			PhysicsProviderToUse->GetName(), InitialPhysicsSettings.m_WorkerThreadCount);
 
 		// The physics scene is in the registry context, so a level load (registry.reset) keeps it
-		Physics::InitWorld(g_Registry, PhysicsProviderToUse, InitialPhysicsSettings);
-
-		m_World = new World(g_Registry, m_GameImpl);
-		m_GameImpl->m_OwningWorld = m_World;
+		Physics::InitWorld(Storage, PhysicsProviderToUse, InitialPhysicsSettings);
 
 		// A --null-render run has no real frame time, so it runs one fixed tick per frame.
 		// Engine and module systems are added to m_World->GetSystems() here, before
@@ -193,7 +196,7 @@ namespace Fling
 		// (the editor) can still attach to component types
 		if (m_DebugUI)
 		{
-			m_DebugUI->Init(g_Registry, m_World, m_GameImpl);
+			m_DebugUI->Init(Storage, m_World, m_GameImpl);
 			F_LOG_TRACE("Fling debug UI: Enabled");
 		}
 		else
@@ -315,7 +318,7 @@ namespace Fling
 
 			if (!m_Options.NullRender)
 			{
-				VulkanApp::Get().Update(DeltaTime, g_Registry);
+				VulkanApp::Get().Update(DeltaTime, m_World->GetStorage());
 
 				const bool bFocused = VulkanApp::Get().GetCurrentWindow()->IsFocused();
 				if (bFocused == m_FramesCapped)
@@ -371,9 +374,6 @@ namespace Fling
     	delete m_GameImpl;
     	m_GameImpl = nullptr;
 
-    	delete m_World;
-    	m_World = nullptr;
-
 		// Cleanup any resources
 		if (m_SystemsStarted)
 		{
@@ -407,14 +407,19 @@ namespace Fling
 			FlingConfig::Get().Shutdown();
 			Timing::Get().Shutdown();
 
-			if (!m_Options.NullRender)
+			if (!m_Options.NullRender && m_World)
 			{
-				VulkanApp::Get().Shutdown(g_Registry);
+				VulkanApp::Get().Shutdown(m_World->GetStorage());
 			}
 		}
 
-		Physics::ShutdownWorld(g_Registry);
-		g_Registry.reset();
+		if (m_World)
+		{
+			Physics::ShutdownWorld(m_World->GetStorage());
+			m_World->GetStorage().Clear();
+			delete m_World;
+			m_World = nullptr;
+		}
 
 		PrintExitSummary(t_Code);
 

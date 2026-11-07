@@ -56,7 +56,7 @@ namespace
     class RegistrationGame : public Game
     {
     public:
-        void Init(entt::registry&) override {}
+        void Init(Fling::EntityStorage&) override {}
         void RegisterComponents() override
         {
             ComponentTypeRegistry& types = ComponentTypeRegistry::Get();
@@ -67,10 +67,10 @@ namespace
             types.Register<FrameStats>();
             types.Register<DamageQueue>();
         }
-        void OnStartGame(entt::registry&) override {}
-        void Update(entt::registry&, float) override {}
-        void OnStopGame(entt::registry&) override {}
-        void Shutdown(entt::registry&) override {}
+        void OnStartGame(Fling::EntityStorage&) override {}
+        void Update(Fling::EntityStorage&, float) override {}
+        void OnStopGame(Fling::EntityStorage&) override {}
+        void Shutdown(Fling::EntityStorage&) override {}
     };
 
     void QuietLogger()
@@ -132,38 +132,38 @@ TEST_CASE("Saved singletons and tags round-trip through the play snapshot", "[co
     QuietLogger();
     ComponentTypeRegistry::Get().ResetForTests();
 
-    entt::registry Reg;
     RegistrationGame TestGame;
-    World TestWorld(Reg, &TestGame);
+    World TestWorld(&TestGame);
+    Fling::EntityStorage& Reg = TestWorld.GetStorage();
     REQUIRE(TestWorld.Init());
 
-    const entt::entity boss = Reg.create();
-    Reg.assign<Health>(boss, Health{40});
-    Reg.assign<Boss>(boss);
-    Reg.assign<PathCache>(boss);
-    Reg.set<Difficulty>(Difficulty{5});
-    Reg.set<FrameStats>(FrameStats{1});
+    const Fling::Entity boss = Reg.Create();
+    Reg.Add<Health>(boss, Health{40});
+    Reg.Add<Boss>(boss);
+    Reg.Add<PathCache>(boss);
+    Reg.SetSingleton<Difficulty>(Difficulty{5});
+    Reg.SetSingleton<FrameStats>(FrameStats{1});
 
     TestWorld.RequestGameStart();
     TestWorld.Update(0.016f);
 
     // Play changes the state
-    Reg.ctx<Difficulty>().Level = 9;
-    Reg.ctx<FrameStats>().Count = 7;
-    Reg.view<Health>().each([](auto, Health& h) { h.Value = 1; });
+    Reg.Singleton<Difficulty>().Level = 9;
+    Reg.Singleton<FrameStats>().Count = 7;
+    Reg.View<Health>().Each([](auto, Health& h) { h.Value = 1; });
 
     TestWorld.RequestGameStop();
     TestWorld.Update(0.016f);
 
     // A saved singleton comes back from the snapshot. A transient one keeps its value.
-    REQUIRE(Reg.ctx<Difficulty>().Level == 5);
-    REQUIRE(Reg.ctx<FrameStats>().Count == 7);
+    REQUIRE(Reg.Singleton<Difficulty>().Level == 5);
+    REQUIRE(Reg.Singleton<FrameStats>().Count == 7);
 
     // The entity comes back with its saved components. The transient cache is not saved.
-    REQUIRE(Reg.view<Boss>().size() == 1);
-    const entt::entity restored = *Reg.view<Boss>().begin();
-    REQUIRE(Reg.get<Health>(restored).Value == 40);
-    REQUIRE_FALSE(Reg.has<PathCache>(restored));
+    REQUIRE(Reg.View<Boss>().Size() == 1);
+    const Fling::Entity restored = *Reg.View<Boss>().begin();
+    REQUIRE(Reg.Get<Health>(restored).Value == 40);
+    REQUIRE_FALSE(Reg.Has<PathCache>(restored));
 
     TestWorld.Shutdown();
     ComponentTypeRegistry::Get().ResetForTests();

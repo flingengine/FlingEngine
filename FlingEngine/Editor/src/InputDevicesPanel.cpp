@@ -81,7 +81,7 @@ namespace Fling
 #endif // WITH_INPUT_RECORDING
     } // namespace
 
-    void InputDevicesPanel::Draw(entt::registry& t_Reg)
+    void InputDevicesPanel::Draw(Fling::EntityStorage& t_Reg)
     {
         if (!m_ShowWindow)
         {
