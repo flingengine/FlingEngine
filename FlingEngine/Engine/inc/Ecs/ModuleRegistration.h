@@ -98,6 +98,7 @@ namespace Fling
             desc.Domain = info.Domain;
             desc.Transient = info.Transient;
             desc.Size = std::is_empty_v<T> ? 0 : sizeof(T);
+            desc.Align = alignof(T);
 
             if constexpr (IsSingletonComponent<T>)
             {

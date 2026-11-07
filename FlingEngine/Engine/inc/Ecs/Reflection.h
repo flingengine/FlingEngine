@@ -106,6 +106,9 @@ namespace Fling
         /** sizeof the member. */
         size_t Size = 0;
 
+        /** alignof the member's type. An alignas on the member can make its real alignment bigger. */
+        size_t Align = 1;
+
         FieldKind Kind = FieldKind::Float;
 
         /** Enum fields: the names. Empty means the enum is saved as a number. */
@@ -178,6 +181,9 @@ namespace Fling
 
         size_t Size = 0;
 
+        /** alignof the struct. No member is aligned more, and padding at the end is smaller. */
+        size_t Align = 1;
+
         std::vector<FieldDesc> Fields;
 
         /** Field names that were removed. Load ignores them without a warning. */
@@ -229,6 +235,12 @@ namespace Fling
         /** The field with this name or a former name. Null if there is none. */
         const FieldDesc* FindField(const std::string& name) const;
     };
+
+    /**
+     * The bytes of a type that no reflected field covers and that cannot be padding:
+     * the members a TypeBuilder forgot. TypeRegistry::Build warns when it is not 0.
+     */
+    size_t UnreflectedBytes(const TypeDesc& type);
 
     /** Sets the options of one field. Returned by TypeBuilder::Field. */
     class FieldBuilder
@@ -353,6 +365,7 @@ namespace Fling
             field.Name = name;
             field.Offset = OffsetOf(member);
             field.Size = sizeof(M);
+            field.Align = alignof(M);
             field.Kind = FieldTraits<M>::Kind;
             if constexpr (std::is_enum_v<M>)
             {

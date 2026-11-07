@@ -240,6 +240,49 @@ namespace Fling
         }
     } // namespace
 
+    /**
+     * The bytes of the struct that no reflected field covers and that cannot be
+     * padding. A gap before a field is padding only if some alignment A, with
+     * gap < A <= the struct's alignment, puts the field at its offset. (A member's
+     * alignment, alignas included, is never more than the struct's.) A gap at the
+     * end is padding only if it is smaller than the struct's alignment. Anything
+     * else is a member that was not reflected. Exact on every compiler, whatever
+     * the alignment of the math types.
+     */
+    size_t UnreflectedBytes(const TypeDesc& type)
+    {
+        std::vector<const FieldDesc*> byOffset;
+        for (const FieldDesc& field : type.Fields)
+        {
+            byOffset.push_back(&field);
+        }
+        std::sort(byOffset.begin(),
+                  byOffset.end(),
+                  [](const FieldDesc* a, const FieldDesc* b) { return a->Offset < b->Offset; });
+
+        size_t missing = 0;
+        size_t covered = 0;
+        for (const FieldDesc* field : byOffset)
+        {
+            if (field->Offset > covered)
+            {
+                const size_t gap = field->Offset - covered;
+                bool isPadding = false;
+                for (size_t align = 1; align <= type.Align; align *= 2)
+                {
+                    isPadding = isPadding || (align > gap && field->Offset % align == 0);
+                }
+                missing += isPadding ? 0 : gap;
+            }
+            covered = std::max(covered, field->Offset + field->Size);
+        }
+        if (type.Size > covered && type.Size - covered >= type.Align)
+        {
+            missing += type.Size - covered;
+        }
+        return missing;
+    }
+
     const FieldDesc* TypeDesc::FindField(const std::string& name) const
     {
         for (const FieldDesc& field : Fields)
@@ -285,19 +328,13 @@ namespace Fling
 
             if (!type.Transient && !type.Partial && !type.CustomSave && !type.IsTag() && type.Size > 0)
             {
-                size_t reflected = 0;
-                for (const FieldDesc& field : type.Fields)
+                const size_t Missing = UnreflectedBytes(type);
+                if (Missing > 0)
                 {
-                    reflected += field.Transient ? 0 : field.Size;
-                }
-                // Padding can make the struct bigger than its fields, but not twice as big.
-                if (reflected * 2 < type.Size)
-                {
-                    F_LOG_WARN("Component '{}' saves {} of its {} bytes. Reflect the missing fields, or call "
-                               "Partial() if they are not saved on purpose.",
+                    F_LOG_WARN("Component '{}' has {} bytes that are not reflected fields or padding. Reflect "
+                               "the missing fields, or call Partial() if they are not saved on purpose.",
                                type.Name,
-                               reflected,
-                               type.Size);
+                               Missing);
                 }
             }
         }

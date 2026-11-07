@@ -431,3 +431,59 @@ TEST_CASE("Level_1 loads, and saves the same components again", "[reflection][wo
     world.Shutdown();
     std::remove(FullPath.c_str());
 }
+
+namespace
+{
+    /** A big padding gap: an 8-bit enum before a 16-byte aligned member, as Collider has with aligned GLM types. */
+    struct PaddedShape
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.PaddedShape"};
+        Team Side = Team::Red;
+        alignas(16) glm::vec4 Extents{0.0f};
+        float Radius = 0.0f;
+    };
+
+    struct Forgotten
+    {
+        static constexpr ComponentInfo Component{.Name = "Test.Forgotten"};
+        float Saved = 0.0f;
+        double NotReflected = 0.0;
+        int Last = 0;
+    };
+} // namespace
+
+TEST_CASE("UnreflectedBytes tells padding from forgotten fields", "[reflection]")
+{
+    QuietLogger();
+    SystemRegistry systems;
+    ModuleRegistration modules(systems);
+    modules.Component<PaddedShape>(
+        [](TypeBuilder<PaddedShape>& t_Type)
+        {
+            t_Type.Field("side", &PaddedShape::Side);
+            t_Type.Field("extents", &PaddedShape::Extents);
+            t_Type.Field("radius", &PaddedShape::Radius);
+        });
+    modules.Component<Forgotten>(
+        [](TypeBuilder<Forgotten>& t_Type)
+        {
+            t_Type.Field("saved", &Forgotten::Saved);
+            t_Type.Field("last", &Forgotten::Last);
+        });
+    const TypeRegistry types = TypeRegistry::Build(modules);
+
+    // 15 bytes after the enum and 12 at the end are padding, not forgotten fields
+    STATIC_REQUIRE(sizeof(PaddedShape) == 48);
+    REQUIRE(UnreflectedBytes(*types.Find<PaddedShape>()) == 0);
+
+    // The 8-byte double between the reflected fields is not padding
+    REQUIRE(UnreflectedBytes(*types.Find<Forgotten>()) >= sizeof(double));
+
+    // AllKinds reflects every member, and its gaps are only padding
+    SystemRegistry systems2;
+    ModuleRegistration modules2(systems2);
+    RegisterTestTypes(modules2);
+    const TypeRegistry all = TypeRegistry::Build(modules2);
+    REQUIRE(UnreflectedBytes(*all.Find<AllKinds>()) == 0);
+    REQUIRE(UnreflectedBytes(*all.Find<Runner>()) == 0);
+}

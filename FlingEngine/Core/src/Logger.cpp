@@ -1,6 +1,7 @@
 #include "FlingPaths.h"
 #include "Logger.h"
 #include "spdlog/pattern_formatter.h"
+#include "spdlog/sinks/null_sink.h"
 
 #include <cstdio>
 
@@ -109,14 +110,29 @@ namespace Fling
 		m_FileLog = nullptr;
 	}
 
+	namespace
+	{
+		/**
+		 * A logger that drops every message. Code that logs before Logger::Init (or
+		 * after Shutdown), such as a test that does not set up logging, gets this one
+		 * instead of a null pointer.
+		 */
+		const std::shared_ptr<spdlog::logger>& NullLogger()
+		{
+			static const std::shared_ptr<spdlog::logger> s_Null =
+				std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::null_sink_mt>());
+			return s_Null;
+		}
+	} // namespace
+
 	std::shared_ptr<spdlog::logger> Logger::GetCurrentConsole()
 	{
-		return m_Console;
+		return m_Console ? m_Console : NullLogger();
 	}
 
 	std::shared_ptr<spdlog::logger> Logger::GetCurrentLogFile()
 	{
-		return m_FileLog;
+		return m_FileLog ? m_FileLog : NullLogger();
 	}
 
 }	// namespace Fling
