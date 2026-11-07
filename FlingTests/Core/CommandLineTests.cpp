@@ -2,6 +2,7 @@
 #include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
+#include <optional>
 #include <cstdio>
 #include <fstream>
 
@@ -154,8 +155,9 @@ TEST_CASE("Command Line", "[Command Line]") {
 
         REQUIRE(CommandLine::Get().HasParam("stringFlag"));
 
-        const StringView Value = CommandLine::Get().GetValueAsString("stringFlag");
-        REQUIRE(Value == "I like this format");
+        const std::optional<StringView> Value = CommandLine::Get().GetValueAsString("stringFlag");
+        REQUIRE(Value.has_value());
+        REQUIRE(*Value == "I like this format");
     }
 
     SECTION("Missing param falls back to default") {
@@ -165,7 +167,7 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(bWasInitalized);
 
         REQUIRE_FALSE(CommandLine::Get().HasParam("notPresent"));
-        REQUIRE(CommandLine::Get().GetValueAsString("notPresent") == nullptr);
+        REQUIRE_FALSE(CommandLine::Get().GetValueAsString("notPresent").has_value());
         REQUIRE(CommandLine::Get().GetValueAs<int32>("notPresent", 42) == 42);
     }
 
@@ -190,8 +192,9 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<int32>("resolutionWidth", -1) == 1920);
         REQUIRE(CommandLine::Get().GetValueAs<bool>("fullscreen", false) == true);
 
-        const StringView Title = CommandLine::Get().GetValueAsString("windowTitle");
-        REQUIRE(Title == "Fling Engine");
+        const std::optional<StringView> Title = CommandLine::Get().GetValueAsString("windowTitle");
+        REQUIRE(Title.has_value());
+        REQUIRE(*Title == "Fling Engine");
 
         // Keys from other sections should not be picked up
         REQUIRE_FALSE(CommandLine::Get().HasParam("nonConsoleVariableKey"));
@@ -209,8 +212,9 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().LoadConfigVarsFromString(IniContent));
 
         // The command line explicitly set windowTitle, so it should win over the ini value
-        const StringView Title = CommandLine::Get().GetValueAsString("windowTitle");
-        REQUIRE(Title == "FromCommandLine");
+        const std::optional<StringView> Title = CommandLine::Get().GetValueAsString("windowTitle");
+        REQUIRE(Title.has_value());
+        REQUIRE(*Title == "FromCommandLine");
 
         // Values only present in the ini file should still be picked up
         REQUIRE(CommandLine::Get().HasParam("onlyInConfig"));

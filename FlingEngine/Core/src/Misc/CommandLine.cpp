@@ -130,7 +130,7 @@ namespace Fling
 		return FindValue(Param) != nullptr;
 	}
 
-	const char* CommandLine::GetValueAsString(const StringView Param) const
+	std::optional<StringView> CommandLine::GetValueAsString(const StringView Param) const
 	{
 		// Some examples of allowed syntax:
 		// -myFlag=false
@@ -140,7 +140,7 @@ namespace Fling
 		// -BoolFlag              (implicitly "true")
 
 		const String* Value = FindValue(Param);
-		return Value != nullptr ? Value->c_str() : nullptr;
+		return Value != nullptr ? std::optional<StringView>(*Value) : std::nullopt;
 	}
 
 	StringView CommandLine::GetCommandLineData() const

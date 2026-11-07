@@ -26,13 +26,13 @@ namespace Fling
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
         bool ReadPath(const CommandLine& t_CmdLine, StringView t_Flag, String& t_Out, String& t_OutError)
         {
-            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
-            if (Value == nullptr)
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
             {
                 return true;
             }
 
-            const StringView Str = Value;
+            const StringView Str = *Value;
             // A flag with no value has the value "true"
             if (Str.empty() || Str == "true")
             {
@@ -47,13 +47,13 @@ namespace Fling
         /** Read a bool flag. A flag with no value is "true". */
         bool ReadBool(const CommandLine& t_CmdLine, StringView t_Flag, bool& t_Out, String& t_OutError)
         {
-            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
-            if (Value == nullptr)
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
             {
                 return true;
             }
 
-            const StringView Str = Value;
+            const StringView Str = *Value;
             if (Str == "true" || Str == "1")
             {
                 t_Out = true;
@@ -78,13 +78,13 @@ namespace Fling
         {
             t_OutFound = false;
 
-            const char* Value = t_CmdLine.GetValueAsString(t_Flag);
-            if (Value == nullptr)
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
             {
                 return true;
             }
 
-            const StringView Str = Value;
+            const StringView Str = *Value;
             uint64 Result = 0;
             const auto [End, Error] = std::from_chars(Str.data(), Str.data() + Str.size(), Result);
             if (Str.empty() || Error != std::errc() || End != Str.data() + Str.size() ||
@@ -127,9 +127,9 @@ namespace Fling
             return false;
         }
 
-        if (const char* Format = t_CmdLine.GetValueAsString(LogFormatFlag))
+        if (const std::optional<StringView> Format = t_CmdLine.GetValueAsString(LogFormatFlag))
         {
-            const StringView Str = Format;
+            const StringView Str = *Format;
             if (Str == "json")
             {
                 t_Out.Format = LogFormat::Json;
@@ -145,9 +145,9 @@ namespace Fling
             }
         }
 
-        if (const char* Level = t_CmdLine.GetValueAsString(LogInputFlag))
+        if (const std::optional<StringView> Level = t_CmdLine.GetValueAsString(LogInputFlag))
         {
-            const StringView Str = Level;
+            const StringView Str = *Level;
             if (Str == "true" || Str == "1" || Str == "events")
             {
                 t_Out.InputLog = InputLogLevel::Events;
@@ -172,9 +172,9 @@ namespace Fling
             return false;
         }
 
-        if (const char* Language = t_CmdLine.GetValueAsString(LanguageFlag))
+        if (const std::optional<StringView> Language = t_CmdLine.GetValueAsString(LanguageFlag))
         {
-            const StringView Str = Language;
+            const StringView Str = *Language;
             // A flag with no value has the value "true"
             if (Str.empty() || Str == "true")
             {
@@ -211,7 +211,7 @@ namespace Fling
         // A shipped game cannot be driven by an input file
         for (const StringView Flag : {ReplayInputFlag, RecordInputFlag})
         {
-            if (t_CmdLine.GetValueAsString(Flag) != nullptr)
+            if (t_CmdLine.GetValueAsString(Flag).has_value())
             {
                 t_OutError = "--" + String(Flag) + " is not available in shipping builds";
                 return false;

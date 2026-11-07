@@ -4,6 +4,7 @@
 #include "Strings/String.h"
 #include "Strings/StringUtils.h"
 
+#include <optional>
 #include <unordered_map>
 
 // TODO: I think that we may gain a lot if we just use
@@ -67,7 +68,12 @@ namespace Fling
         template<typename T>
         T GetValueAs(const StringView Param, const T& Default) const;
 
-        const char* GetValueAsString(const StringView Param) const;
+        /**
+         * The text of a param, or nullopt if it is not on the command line. A flag
+         * with no value ("-BoolFlag") has the text "true". The view is valid while
+         * the command line is not changed.
+         */
+        std::optional<StringView> GetValueAsString(const StringView Param) const;
 
         [[nodiscard]] StringView GetCommandLineData() const;
 
