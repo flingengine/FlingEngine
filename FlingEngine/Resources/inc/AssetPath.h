@@ -7,6 +7,7 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 
 namespace Fling
@@ -81,6 +82,15 @@ namespace Fling
 
         /** The canonical form of t_Text. */
         static String Canonicalize(StringView t_Text);
+
+        /**
+         * Checks that the case of each part of this path matches the files under t_Root.
+         * Windows does not care about case in file names and Linux does, so a path with
+         * the wrong case loads on Windows and fails on Linux. Returns false if a part
+         * has a different case on disk, and sets t_OutOnDisk to the path with the case of
+         * the disk. A part that does not exist is not a mismatch.
+         */
+        bool MatchesCaseOnDisk(const std::filesystem::path& t_Root, String* t_OutOnDisk = nullptr) const;
 
     private:
         String m_Text;

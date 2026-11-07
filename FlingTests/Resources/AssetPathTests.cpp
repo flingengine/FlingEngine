@@ -4,6 +4,8 @@
 #include "ResourceManager.h"
 
 #include <catch2/catch_all.hpp>
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <unordered_set>
 
@@ -87,4 +89,26 @@ TEST_CASE("ResourceManager loads each asset once, keyed by AssetId", "[resource]
     CHECK(!ResourceManager::Get().IsLoaded(AssetPath("NotLoaded.txt").GetId()));
 
     ResourceManager::Get().Shutdown();
+}
+
+TEST_CASE("AssetPath finds a case that does not match the files on disk", "[resource][AssetPath]")
+{
+    const std::filesystem::path Root = std::filesystem::temp_directory_path() / "FlingAssetCaseTests";
+    std::filesystem::remove_all(Root);
+    std::filesystem::create_directories(Root / "Textures" / "Brick");
+    std::ofstream(Root / "Textures" / "Brick" / "Albedo.png") << "x";
+
+    String OnDisk;
+    CHECK(AssetPath("Textures/Brick/Albedo.png").MatchesCaseOnDisk(Root, &OnDisk));
+    CHECK(OnDisk.empty());
+
+    CHECK(!AssetPath("textures/brick/albedo.PNG").MatchesCaseOnDisk(Root, &OnDisk));
+    CHECK(OnDisk == "Textures/Brick/Albedo.png");
+
+    // A part that does not exist with any case is not a mismatch.
+    CHECK(AssetPath("Textures/Missing/Albedo.png").MatchesCaseOnDisk(Root));
+    CHECK(!AssetPath("textures/Missing.png").MatchesCaseOnDisk(Root, &OnDisk));
+    CHECK(OnDisk == "Textures/Missing.png");
+
+    std::filesystem::remove_all(Root);
 }
