@@ -13,7 +13,7 @@ namespace Sandbox
 
         for (auto [entity, transform, mover] : ctx.Query<Fling::Transform, Mover>())
         {
-            const glm::vec3 pos = transform.GetPos();
+            const glm::vec3 pos = transform.Position;
 
             // Turn around near the target
             if (glm::length(pos - mover.TargetPos) <= 0.5f)
@@ -21,7 +21,7 @@ namespace Sandbox
                 mover.TargetPos = -1.0f * mover.TargetPos;
             }
 
-            transform.SetPos(glm::lerp(pos, mover.TargetPos, mover.Speed * dt));
+            transform.Position = glm::lerp(pos, mover.TargetPos, mover.Speed * dt);
         }
     }
 } // namespace Sandbox

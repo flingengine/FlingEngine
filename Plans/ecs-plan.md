@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: in progress. Phases A, B, and C are done. Phase D is mostly done through [`ecs-systems.md`](ecs-systems.md). Each phase heading below says what is left.
+Status: in progress. Phases A to D are done. Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -633,6 +633,9 @@ Done. `Ecs/Reflection.h` (`TypeBuilder`, `FieldBuilder`, `TypeDesc`, `FieldTrait
 - Move Sandbox's code into feature folders (`Sandbox/Gameplay/Features/Movement/`, ...) as each feature is ported.
 
 ### Phase D — `Scheduler`, systems, and the tick loop
+
+Done. The scheduler, systems, and tick loop are in [`ecs-systems.md`](ecs-systems.md). The hierarchy is in too: `Transform` is plain data with a quaternion rotation (version 2, which upgrades the Euler angles of older levels), `Parent` and `Children` are kept in step by `HierarchyUtil`, and `TransformSystem` (`Engine.Transform`, its own fixed phase after `Engine.ResolveDeferred`) writes `LocalToWorld` parents first. `TransformUtil` has the old methods. The renderer reads `LocalToWorld` and uploads a mesh only when its version changes. Systems have deferred `Add`, `Remove`, and `Defer`, and a deferred destroy takes the subtree. The editor outliner is a tree with drag-to-parent. `Transform` keeps its name, not `LocalTransform`, so code and level files keep the key `Transform`.
+
 - Add `Fling::System`, `SystemDecl`, `SystemContext`, `Schedule`, and `Scheduler` (§1.5). `modules.System<T>()` records each system. `Scheduler::Build` orders them. `--validate-schedule` plus `fling_validate_schedule()` (POST_BUILD) fails the build on a cycle, a write/write conflict, or an unknown `After` name. Add the batched `Commands` flush (§1.10).
 - `Engine::Tick` calls `world.RunFrame(tickClock, now)` (§1.5). That frame applies completed loads, replays a resim when one is pending, then runs the due ticks, each with its own `TickInput`. The tick clock and the time types come from [`improve-time.md`](improve-time.md). It stops calling `Game::Update`. Move Sandbox's Rotator and Mover logic into registered systems. `Game` keeps start/stop and quit.
 - Add `SimTime`, `RealFrameTime`, and `InputState` (from the `Input` key maps), plus `SpawnQueue` and `ResolveSpawnSystem` for `OnTestSpawn`.

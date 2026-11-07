@@ -4,6 +4,7 @@
 #include "FirstPersonCamera.h"
 #include "FrameBuffer.h"
 #include "GeometrySubpass.h"
+#include "TransformUtil.h"
 #include "GraphicsHelpers.h"
 #include "GraphicsPipeline.h"
 #include "LogicalDevice.h"
@@ -291,7 +292,7 @@ namespace Fling
 
 		Transform& t = t_Reg.Get<Transform>(t_Ent);
 		// Make a cute little debug mesh on a point light	
-		t.SetScale(glm::vec3{ 0.1f });
+		t.Scale = glm::vec3{ 0.1f };
 
 #if FLING_DEBUG
 		static std::string PointLightMesh = "Models/sphere.obj";
@@ -338,7 +339,9 @@ namespace Fling
 				PointLight& Light = PointLightView.Get<PointLight>(entity);
 				Transform& Trans = PointLightView.Get<Transform>(entity);
 
-				Light.SetPos(glm::vec4(Trans.GetPos(), 1.0f));
+				const LocalToWorld* World = t_Reg.TryGet<LocalToWorld>(entity);
+				const glm::vec3 LightPos = World ? TransformUtil::WorldPosition(*World) : Trans.Position;
+				Light.SetPos(glm::vec4(LightPos, 1.0f));
 				// Copy the point light info to the buffer
 				memcpy((m_LightingUBO.PointLightBuffer + (CurLightCount++)), &Light, sizeof(PointLight));
 			}

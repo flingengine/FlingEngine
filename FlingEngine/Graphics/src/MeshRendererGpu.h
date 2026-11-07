@@ -11,6 +11,9 @@ namespace Fling
 
         /** True when the UBO must be written even if the transform is not dirty */
         bool m_UboDirty = true;
+
+        /** The LocalToWorld version in the UBO. The UBO is written again when it changes. */
+        uint32 m_UploadedVersion = 0;
     };
 
     /** Descriptor set for a mesh, allocated the first time the renderer writes it. */

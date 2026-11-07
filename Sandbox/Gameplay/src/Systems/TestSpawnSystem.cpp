@@ -30,7 +30,7 @@ namespace Sandbox
         state.LastX -= 1.0f;
 
         Fling::Transform transform;
-        transform.SetPos(glm::vec3(state.LastX, 0.0f, 0.0f));
+        transform.Position = glm::vec3(state.LastX, 0.0f, 0.0f);
         ctx.Spawn(Fling::MeshRenderer("Models/sphere.obj", "Materials/DeferredBronzeMat.mat"), Rotator{}, transform);
         F_LOG_TRACE("Spawn a sphere to the left!");
     }

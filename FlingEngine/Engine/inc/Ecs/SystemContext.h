@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <span>
 #include <tuple>
 #include <type_traits>
@@ -19,22 +20,40 @@
 
 namespace Fling
 {
-    /** Changes that wait until the end of the fixed tick. Each system has its own buffer. */
+    /**
+     * Changes that wait until the end of the fixed tick. Each system has its own buffer.
+     * At the flush, each system's structural changes run in the order they were
+     * recorded, then its destroys. Systems flush in schedule order.
+     */
     class DeferredCommands
     {
     public:
-        /** Destroys the entity at the end of the tick. Destruction is deferred, so handles stay valid during the tick.
+        using StructuralFn = std::function<void(EntityStorage&)>;
+
+        /**
+         * Destroys the entity, and its children, at the end of the tick. Destruction is
+         * deferred, so handles stay valid during the tick.
          */
         void Destroy(const Entity entity) { m_Destroy.push_back(entity); }
 
         std::span<const Entity> Destroys() const { return m_Destroy; }
 
-        bool Empty() const { return m_Destroy.empty(); }
+        /** A change to the storage at the flush. Use the typed context calls (Add, Remove, Defer). */
+        void Structural(StructuralFn fn) { m_Structural.push_back(std::move(fn)); }
 
-        void Clear() { m_Destroy.clear(); }
+        std::span<const StructuralFn> StructuralChanges() const { return m_Structural; }
+
+        bool Empty() const { return m_Destroy.empty() && m_Structural.empty(); }
+
+        void Clear()
+        {
+            m_Destroy.clear();
+            m_Structural.clear();
+        }
 
     private:
         std::vector<Entity> m_Destroy;
+        std::vector<StructuralFn> m_Structural;
     };
 
     /** The storage a system's OnCreate and OnDestroy see. Systems use SystemSetup<Access> instead. */
@@ -432,6 +451,53 @@ namespace Fling
                           "Only a fixed phase system reads the tick input. Read InputState instead.");
             static const TickInput s_NoInput{};
             return m_Core.GetTickInput() != nullptr ? *m_Core.GetTickInput() : s_NoInput;
+        }
+
+        /**
+         * Add (or replace) the entity's T at the end of the tick. Needs Write<T>. A stale
+         * handle is ignored at the flush. Fixed phases only.
+         */
+        template <typename T>
+        void Add(const Entity entity, T value)
+        {
+            static_assert(Allows<A, AccessMode::Write, T>, "Add needs Write<T> in the access list.");
+            Commands().Structural(
+                [entity, value = std::move(value)](EntityStorage& storage) mutable
+                {
+                    if (storage.IsValid(entity))
+                    {
+                        storage.template AddOrReplace<T>(entity, std::move(value));
+                    }
+                });
+        }
+
+        /** Remove the entity's T, if it has one, at the end of the tick. Needs Write<T>. Fixed phases only. */
+        template <typename T>
+        void Remove(const Entity entity)
+        {
+            static_assert(Allows<A, AccessMode::Write, T>, "Remove needs Write<T> in the access list.");
+            Commands().Structural(
+                [entity](EntityStorage& storage)
+                {
+                    if (storage.IsValid(entity))
+                    {
+                        storage.template RemoveIfPresent<T>(entity);
+                    }
+                });
+        }
+
+        /**
+         * Run fn on the storage at the end of the tick, for a change that keeps several
+         * components in step (HierarchyUtil::SetParent). Ws are every type fn writes, and
+         * each needs Write<W>. Fixed phases only.
+         */
+        template <typename... Ws, typename Fn>
+        void Defer(Fn&& fn)
+        {
+            static_assert(sizeof...(Ws) > 0, "Name each type that the deferred change writes.");
+            static_assert((Allows<A, AccessMode::Write, Ws> && ...),
+                          "Defer writes a type that the access list does not write. Add Write<T>.");
+            Commands().Structural(std::forward<Fn>(fn));
         }
 
         /** Changes that wait until the end of the tick, such as Destroy. Fixed phases only. */

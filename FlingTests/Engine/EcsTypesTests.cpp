@@ -173,7 +173,7 @@ TEST_CASE("Phases decide the update rate", "[ecs]")
     STATIC_REQUIRE(ref.IsSet());
     STATIC_REQUIRE_FALSE(IsFixed(ref));
     STATIC_REQUIRE(ref->After.Size() == 2);
-    STATIC_REQUIRE(Phases::All.size() == 6);
+    STATIC_REQUIRE(Phases::All.size() == 7);
 }
 
 TEST_CASE("WorldRole is a bit mask", "[ecs]")

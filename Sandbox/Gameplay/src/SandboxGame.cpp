@@ -76,9 +76,9 @@ namespace Sandbox
 		std::size_t Count = 0;
 		t_Reg.View<Transform>().Each([&](auto, Transform& t_Trans)
 		{
-			const glm::vec3 Pos = t_Trans.GetPos();
-			const glm::vec3 Rot = t_Trans.GetRotation();
-			Checksum += Pos.x + 3.0 * Pos.y + 7.0 * Pos.z + 11.0 * Rot.x + 13.0 * Rot.y + 17.0 * Rot.z;
+			const glm::vec3 Pos = t_Trans.Position;
+			const glm::quat Rot = t_Trans.Rotation;
+			Checksum += Pos.x + 3.0 * Pos.y + 7.0 * Pos.z + 11.0 * Rot.x + 13.0 * Rot.y + 17.0 * Rot.z + 19.0 * Rot.w;
 			++Count;
 		});
 		F_LOG_TRACE("Sandbox: {} transforms, checksum {:.9f}", Count, Checksum);
@@ -89,8 +89,8 @@ namespace Sandbox
 		Fling::Entity e0 = t_Reg.Create();
 		t_Reg.Add<MeshRenderer>(e0, t_Model, t_Mat);
 		Transform& t0 = t_Reg.Add<Transform>(e0);
-		t0.SetPos(glm::vec3(0.0f, -1.0f, 0.0f));
-		t0.SetScale(t_Scale);
+		t0.Position = glm::vec3(0.0f, -1.0f, 0.0f);
+		t0.Scale = t_Scale;
 	}
 
     void Game::LightingTest(Fling::EntityStorage& t_Reg)
@@ -108,7 +108,7 @@ namespace Sandbox
 			// under --null-render. get_or_assign works in both cases.
             PointLight& Light = t_Reg.Add<PointLight>(e0);
 			Transform& t0 = t_Reg.GetOrAdd<Transform>(e0);
-			t0.SetPos(startPos);
+			t0.Position = startPos;
             Mover& m0 = t_Reg.Add<Mover>(e0);
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
             
@@ -188,9 +188,8 @@ namespace Sandbox
 				t_Reg.Add<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
 				t_Reg.Add<Rotator>(e0);
 				Transform& t0 = t_Reg.Add<Transform>(e0);
-				t0.SetPos(
-					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing )
-				);
+				t0.Position =
+					glm::vec3(( -(float)(GridSize / 2) + ((float)i * Spacing)), (i > GridSize / 2) ? 1.0f : 0.0f, -(float)(GridSize / 2) + float(j) * Spacing );
 			}
 		}
     }

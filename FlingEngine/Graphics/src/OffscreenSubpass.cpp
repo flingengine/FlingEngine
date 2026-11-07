@@ -13,6 +13,7 @@
 #include "MeshRendererGpu.h"
 #include "Model.h"
 #include "OffscreenSubpass.h"
+#include "TransformUtil.h"
 #include "PhyscialDevice.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
@@ -158,20 +159,23 @@ namespace Fling
 				return;
 			}
 
+			// Engine.Transform computes the world matrix on each fixed tick. Before the
+			// first tick there is none yet, so use the entity's own matrix.
 			bool& bUboDirty = t_MeshRend.m_GpuState->m_UboDirty;
-			if (!bUboDirty && !t_trans.IsDirty())
+			uint32& UploadedVersion = t_MeshRend.m_GpuState->m_UploadedVersion;
+			const LocalToWorld* World = t_reg.TryGet<LocalToWorld>(ent);
+			if (!bUboDirty && World != nullptr && World->Version == UploadedVersion)
 			{
 				return;
 			}
 
-			Transform::CalculateWorldMatrix(t_trans);
-
 			OffscreenUBO MeshUBO = {};
-			MeshUBO.Model = t_trans.GetWorldMat();
-			MeshUBO.ObjPos = t_trans.GetPos();
+			MeshUBO.Model = World ? World->Value : TransformUtil::LocalMatrix(t_trans);
+			MeshUBO.ObjPos = glm::vec3(MeshUBO.Model[3]);
 
 			memcpy(buf->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
 			bUboDirty = false;
+			UploadedVersion = World ? World->Version : 0;
 		});
 	}
 

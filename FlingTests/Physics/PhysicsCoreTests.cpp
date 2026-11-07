@@ -20,7 +20,7 @@ namespace
     Fling::Entity AddBody(Fling::EntityStorage& t_Reg, ColliderShape t_Shape, const glm::vec3& t_Pos, float t_Mass)
     {
         const Fling::Entity Entity = t_Reg.Create();
-        t_Reg.Add<Transform>(Entity).SetPos(t_Pos);
+        t_Reg.Add<Transform>(Entity).Position = t_Pos;
         t_Reg.Add<RigidBody>(Entity).m_Mass = t_Mass;
         t_Reg.Add<Collider>(Entity).m_Shape = t_Shape;
         return Entity;
@@ -134,7 +134,7 @@ TEST_CASE("Physics InitWorld with no provider uses the null provider", "[physics
     // The body exists, but the null provider never moves it
     REQUIRE(Reg.Has<PhysicsBody>(Ball));
     REQUIRE(Physics::GetBodyCount(Reg) == 1);
-    REQUIRE(Reg.Get<Transform>(Ball).GetPos().y == Catch::Approx(5.0f));
+    REQUIRE(Reg.Get<Transform>(Ball).Position.y == Catch::Approx(5.0f));
 
     Physics::ShutdownWorld(Reg);
     REQUIRE_FALSE(Reg.Has<PhysicsBody>(Ball));
@@ -148,10 +148,10 @@ TEST_CASE("Physics gives the provider a body desc from the components", "[physic
     Physics::InitWorld(Reg, std::make_shared<RecordingProvider>(Log));
 
     const Fling::Entity Floor = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f, -1.0f, 0.0f), 0.0f);
-    Reg.Get<Transform>(Floor).SetScale(glm::vec3(40.0f, 0.1f, 40.0f));
+    Reg.Get<Transform>(Floor).Scale = glm::vec3(40.0f, 0.1f, 40.0f);
 
     const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(1.0f, 2.0f, 3.0f), 5.0f);
-    Reg.Get<Transform>(Ball).SetScale(glm::vec3(2.0f, 1.0f, 1.0f));
+    Reg.Get<Transform>(Ball).Scale = glm::vec3(2.0f, 1.0f, 1.0f);
     Reg.Get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
 
     Physics::Tick(Reg, Dt);

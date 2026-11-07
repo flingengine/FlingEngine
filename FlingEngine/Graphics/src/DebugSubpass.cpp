@@ -1,6 +1,7 @@
 #include "CommandBuffer.h"
 #include "Components/Transform.h"
 #include "DebugSubpass.h"
+#include "TransformUtil.h"
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
 #include "FrameBuffer.h"
@@ -62,8 +63,8 @@ namespace Fling
 			}
 
 			// Update the UBO
-			Transform::CalculateWorldMatrix(t_trans);
-			m_Ubo.Model = t_trans.GetWorldMatrix();
+			const LocalToWorld* World = t_reg.TryGet<LocalToWorld>(ent);
+			m_Ubo.Model = World ? World->Value : TransformUtil::LocalMatrix(t_trans);
 
 			// Memcpy to the buffer
 			Buffer* buf = t_MeshRend.m_UniformBuffer;

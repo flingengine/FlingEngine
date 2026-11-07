@@ -387,7 +387,7 @@ TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
 
     const std::string dump = result.Value.Dump();
     REQUIRE(dump.find("Fixed (once per tick)\n") != std::string::npos);
-    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred\n") != std::string::npos);
+    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred, Engine.Transform\n") != std::string::npos);
     REQUIRE(dump.find("Frame (once per frame)") == std::string::npos);
     REQUIRE(dump.find("[Engine.Simulation]") != std::string::npos);
     REQUIRE(dump.find("writes Mover, Transform") != std::string::npos);
@@ -630,6 +630,7 @@ TEST_CASE("Phases are listed in run order", "[ecs][schedule][phases]")
                                               "Engine.Simulation",
                                               "ModA.Abilities",
                                               "Engine.ResolveDeferred",
+                                              "Engine.Transform",
                                               "Game.Late",
                                               "Engine.PostSimulation",
                                               "Engine.Extract",

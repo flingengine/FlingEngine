@@ -69,7 +69,7 @@ namespace
     {
         const Fling::Entity Entity = t_Reg.Create();
         t_Reg.Add<Fling::NameComponent>(Entity).Name = t_Name;
-        t_Reg.Add<Fling::Transform>(Entity).SetPos(glm::vec3(t_X, 0.0f, 0.0f));
+        t_Reg.Add<Fling::Transform>(Entity).Position = glm::vec3(t_X, 0.0f, 0.0f);
         return Entity;
     }
 
@@ -129,7 +129,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
 
         // Play changes an authored entity
         Reg.View<NameComponent, Transform>().Each([](auto, NameComponent&, Transform& t_Trans)
-                                                  { t_Trans.SetPos(glm::vec3(99.0f, 0.0f, 0.0f)); });
+                                                  { t_Trans.Position = glm::vec3(99.0f, 0.0f, 0.0f); });
 
         TestWorld.RequestGameStop();
         TestWorld.Update(0.016f);
@@ -138,7 +138,7 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
         REQUIRE(CountNamed(Reg, "Spawned") == 0);
         REQUIRE(CountNamed(Reg, "Authored") == 1);
         Reg.View<NameComponent, Transform>().Each([](auto, NameComponent&, Transform& t_Trans)
-                                                  { REQUIRE(t_Trans.GetPos().x == Catch::Approx(2.0f)); });
+                                                  { REQUIRE(t_Trans.Position.x == Catch::Approx(2.0f)); });
     }
 
     SECTION("Play can start and stop many times")

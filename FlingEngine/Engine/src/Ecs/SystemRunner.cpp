@@ -3,6 +3,7 @@
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
+#include "HierarchyUtil.h"
 #include "Misc/SimulationCheck.h"
 
 #include <cassert>
@@ -208,9 +209,13 @@ namespace Fling
         for (const uint32 i : m_RunOrder)
         {
             DeferredCommands& commands = m_Commands[i];
+            for (const DeferredCommands::StructuralFn& change : commands.StructuralChanges())
+            {
+                change(m_Storage);
+            }
             for (const Entity entity : commands.Destroys())
             {
-                m_Storage.Destroy(entity);
+                HierarchyUtil::DestroySubtree(m_Storage, entity);
             }
             commands.Clear();
         }

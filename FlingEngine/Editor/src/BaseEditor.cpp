@@ -14,6 +14,7 @@
 #include "Logger.h"
 #include "MeshRenderer.h"
 #include "Timing.h"
+#include "TransformUtil.h"
 #include "World.h"
 
 #include <stdio.h>
@@ -137,6 +138,19 @@ namespace Fling
     void BaseEditor::RegisterWidgets(EditorWidgets& t_Widgets)
     {
         // The other components use the inspector made from their reflected fields.
+        // Transform stores a quaternion, so it is edited as Euler angles in degrees.
+        t_Widgets.Override<Fling::Transform>(
+            [](Fling::EntityStorage&, Fling::Entity, Fling::Transform& t_Trans)
+            {
+                ImGui::DragFloat3("Position", &t_Trans.Position.x, 0.05f);
+                glm::vec3 Degrees = TransformUtil::ToEulerDegrees(t_Trans.Rotation);
+                if (ImGui::DragFloat3("Rotation", &Degrees.x, 0.5f))
+                {
+                    t_Trans.Rotation = TransformUtil::FromEulerDegrees(Degrees);
+                }
+                ImGui::DragFloat3("Scale", &t_Trans.Scale.x, 0.05f);
+            });
+
         // MeshRenderer saves asset paths by hand, so it gets file pickers.
         t_Widgets.Override<Fling::MeshRenderer>(
             [](Fling::EntityStorage& t_Storage, Fling::Entity t_Entity, Fling::MeshRenderer& t_Mesh)

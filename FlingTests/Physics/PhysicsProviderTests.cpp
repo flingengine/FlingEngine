@@ -3,6 +3,7 @@
 #include "Ecs/detail/EnttBridge.h"
 #include "Physics.h"
 #include "Threading/ThreadManager.h"
+#include "TransformUtil.h"
 
 #include <bit>
 #include <catch2/catch_all.hpp>
@@ -53,8 +54,8 @@ namespace
     {
         const Fling::Entity Floor = t_Reg.Create();
         Transform& Trans = t_Reg.Add<Transform>(Floor);
-        Trans.SetPos(glm::vec3(0.0f, -0.05f, 0.0f));
-        Trans.SetScale(glm::vec3(40.0f, 0.1f, 40.0f));
+        Trans.Position = glm::vec3(0.0f, -0.05f, 0.0f);
+        Trans.Scale = glm::vec3(40.0f, 0.1f, 40.0f);
         t_Reg.Add<RigidBody>(Floor).m_Mass = 0.0f;
         t_Reg.Add<Collider>(Floor).m_Shape = ColliderShape::Box;
         return Floor;
@@ -63,7 +64,7 @@ namespace
     Fling::Entity AddBody(Fling::EntityStorage& t_Reg, ColliderShape t_Shape, const glm::vec3& t_Pos, float t_Mass)
     {
         const Fling::Entity Entity = t_Reg.Create();
-        t_Reg.Add<Transform>(Entity).SetPos(t_Pos);
+        t_Reg.Add<Transform>(Entity).Position = t_Pos;
         t_Reg.Add<RigidBody>(Entity).m_Mass = t_Mass;
         t_Reg.Add<Collider>(Entity).m_Shape = t_Shape;
         return Entity;
@@ -133,7 +134,7 @@ namespace
         std::sort(Entities.begin(), Entities.end());
         for (const Fling::Entity Entity : Entities)
         {
-            const glm::vec3 Pos = t_Reg.Get<Transform>(Entity).GetPos();
+            const glm::vec3 Pos = t_Reg.Get<Transform>(Entity).Position;
             const RigidBody& Body = t_Reg.Get<RigidBody>(Entity);
             for (int a = 0; a < 3; ++a)
             {
@@ -161,7 +162,7 @@ TEST_CASE("Provider: sphere falls and rests on a static floor", "[physics][provi
 
     // It falls first
     TickFor(Reg, 10);
-    REQUIRE(Reg.Get<Transform>(Ball).GetPos().y < 3.0f);
+    REQUIRE(Reg.Get<Transform>(Ball).Position.y < 3.0f);
     REQUIRE(Reg.Get<RigidBody>(Ball).m_Velocity.y < 0.0f);
 
     // Then it touches the floor
@@ -174,10 +175,10 @@ TEST_CASE("Provider: sphere falls and rests on a static floor", "[physics][provi
     REQUIRE(bTouched);
 
     // And it rests on top of the floor (radius 0.5) and does not fall through
-    REQUIRE(Reg.Get<Transform>(Ball).GetPos().y == Catch::Approx(0.5f).margin(0.05f));
+    REQUIRE(Reg.Get<Transform>(Ball).Position.y == Catch::Approx(0.5f).margin(0.05f));
 
     // A static body never moves
-    REQUIRE(Reg.Get<Transform>(Floor).GetPos().y == Catch::Approx(-0.05f));
+    REQUIRE(Reg.Get<Transform>(Floor).Position.y == Catch::Approx(-0.05f));
 }
 
 TEST_CASE("Provider: impulse changes velocity by impulse / mass", "[physics][provider]")
@@ -195,7 +196,7 @@ TEST_CASE("Provider: impulse changes velocity by impulse / mass", "[physics][pro
     const glm::vec3 Vel = Reg.Get<RigidBody>(Box).m_Velocity;
     REQUIRE(Vel.x == Catch::Approx(2.0f).epsilon(1e-3));
     REQUIRE(Vel.y == Catch::Approx(0.0f).margin(1e-4f));
-    REQUIRE(Reg.Get<Transform>(Box).GetPos().x == Catch::Approx(2.0f * Dt).epsilon(1e-3));
+    REQUIRE(Reg.Get<Transform>(Box).Position.x == Catch::Approx(2.0f * Dt).epsilon(1e-3));
 
     // SetLinearVelocity replaces the velocity
     Physics::SetLinearVelocity(Reg, Box, glm::vec3(0.0f, 0.0f, -1.0f));
@@ -230,16 +231,16 @@ TEST_CASE("Provider: start velocity and rotation come from the components", "[ph
     Reg.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
 
     const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
-    Reg.Get<Transform>(Box).SetRotation(glm::vec3(10.0f, 30.0f, 20.0f));
+    Reg.Get<Transform>(Box).Rotation = Fling::TransformUtil::FromEulerDegrees(glm::vec3(10.0f, 30.0f, 20.0f));
     Reg.Get<RigidBody>(Box).m_Velocity = glm::vec3(0.0f, 0.0f, 3.0f);
 
     Physics::Tick(Reg, Dt);
 
     const Transform& Trans = Reg.Get<Transform>(Box);
-    REQUIRE(Trans.GetPos().z == Catch::Approx(3.0f * Dt).epsilon(1e-3));
-    REQUIRE(Trans.GetRotation().x == Catch::Approx(10.0f).margin(0.01f));
-    REQUIRE(Trans.GetRotation().y == Catch::Approx(30.0f).margin(0.01f));
-    REQUIRE(Trans.GetRotation().z == Catch::Approx(20.0f).margin(0.01f));
+    REQUIRE(Trans.Position.z == Catch::Approx(3.0f * Dt).epsilon(1e-3));
+    REQUIRE(Fling::TransformUtil::ToEulerDegrees(Trans.Rotation).x == Catch::Approx(10.0f).margin(0.01f));
+    REQUIRE(Fling::TransformUtil::ToEulerDegrees(Trans.Rotation).y == Catch::Approx(30.0f).margin(0.01f));
+    REQUIRE(Fling::TransformUtil::ToEulerDegrees(Trans.Rotation).z == Catch::Approx(20.0f).margin(0.01f));
 }
 
 TEST_CASE("Provider: sphere rolls into a cube and pushes it", "[physics][provider]")
@@ -260,7 +261,7 @@ TEST_CASE("Provider: sphere rolls into a cube and pushes it", "[physics][provide
     }
 
     REQUIRE(bHit);
-    REQUIRE(Reg.Get<Transform>(Cube).GetPos().x > 1.5f);
+    REQUIRE(Reg.Get<Transform>(Cube).Position.x > 1.5f);
 }
 
 TEST_CASE("Provider: destroyed bodies leave the scene", "[physics][provider]")
@@ -302,8 +303,8 @@ TEST_CASE("Provider: scenes of two registries are separate", "[physics][provider
         Physics::Tick(RegB, Dt);
     }
 
-    REQUIRE(RegA.Get<Transform>(BallA).GetPos().y < 4.5f);
-    REQUIRE(RegB.Get<Transform>(BallB).GetPos().y == Catch::Approx(5.0f));
+    REQUIRE(RegA.Get<Transform>(BallA).Position.y < 4.5f);
+    REQUIRE(RegB.Get<Transform>(BallB).Position.y == Catch::Approx(5.0f));
     REQUIRE(Physics::GetBodyCount(RegA) == 1);
     REQUIRE(Physics::GetBodyCount(RegB) == 1);
 }

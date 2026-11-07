@@ -8,6 +8,7 @@
 #include "Json.h"
 #include "Logger.h"
 #include "World.h"
+#include "TransformUtil.h"
 
 #include <catch2/catch_all.hpp>
 #include <cstdio>
@@ -131,10 +132,10 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
         reg.View<Transform, NameComponent>().Each([&](auto /*entity*/, Transform& t, NameComponent& name) {
             ++count;
             REQUIRE(name.Name == "Hero");
-            REQUIRE(t.GetPos().x == Catch::Approx(4.f));
-            REQUIRE(t.GetPos().y == Catch::Approx(5.f));
-            REQUIRE(t.GetPos().z == Catch::Approx(6.f));
-            REQUIRE(t.GetRotation().y == Catch::Approx(90.f));
+            REQUIRE(t.Position.x == Catch::Approx(4.f));
+            REQUIRE(t.Position.y == Catch::Approx(5.f));
+            REQUIRE(t.Position.z == Catch::Approx(6.f));
+            REQUIRE(Fling::TransformUtil::ToEulerDegrees(t.Rotation).y == Catch::Approx(90.f));
         });
         REQUIRE(count == 1);
 
@@ -175,9 +176,9 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
         glm::vec3 right{};
         reg.View<Transform, NameComponent>().Each([&](auto /*entity*/, Transform& t, NameComponent& name) {
             if (name.Name == "Left") {
-                left = t.GetPos();
+                left = t.Position;
             } else if (name.Name == "Right") {
-                right = t.GetPos();
+                right = t.Position;
             }
         });
         REQUIRE(left.x == Catch::Approx(-8.f));
@@ -200,7 +201,7 @@ namespace {
         for (int i = 0; i < count; ++i) {
             const Fling::Entity entity = reg.Create();
             Fling::Transform t;
-            t.SetPos(glm::vec3(static_cast<float>(i), 0.f, 0.f));
+            t.Position = glm::vec3(static_cast<float>(i), 0.f, 0.f);
             reg.Add<Fling::Transform>(entity, t);
             reg.Add<DummyMesh>(entity);
         }
@@ -209,7 +210,7 @@ namespace {
     void SeedTransformOnly(Fling::EntityStorage& reg) {
         const Fling::Entity entity = reg.Create();
         Fling::Transform t;
-        t.SetPos(glm::vec3(0.f, 10.f, 0.f));
+        t.Position = glm::vec3(0.f, 10.f, 0.f);
         reg.Add<Fling::Transform>(entity, t);
     }
 
@@ -217,8 +218,8 @@ namespace {
         const Fling::Entity spawned = reg.Create();
         reg.Add<DummyMesh>(spawned);
         Fling::Transform& t = reg.Add<Fling::Transform>(spawned);
-        t.SetPos(glm::vec3(99.f, 98.f, 97.f));
-        return reg.Get<Fling::Transform>(spawned).GetPos();
+        t.Position = glm::vec3(99.f, 98.f, 97.f);
+        return reg.Get<Fling::Transform>(spawned).Position;
     }
 } // namespace
 

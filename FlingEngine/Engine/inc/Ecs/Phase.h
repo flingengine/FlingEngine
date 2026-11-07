@@ -133,6 +133,10 @@ namespace Fling
         inline constexpr PhaseInfo ResolveDeferred{
             .Name = "Engine.ResolveDeferred", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Simulation"};
 
+        /** Computes LocalToWorld from Transform and Parent, after everything that moves entities. */
+        inline constexpr PhaseInfo Transform{
+            .Name = "Engine.Transform", .UpdateRate = UpdateRate::Fixed, .After = "Engine.ResolveDeferred"};
+
         /** Frame rate work that follows the simulation: camera smoothing, interpolation. */
         inline constexpr PhaseInfo PostSimulation{.Name = "Engine.PostSimulation", .UpdateRate = UpdateRate::Frame};
 
@@ -145,8 +149,8 @@ namespace Fling
             .Name = "Engine.Editor", .UpdateRate = UpdateRate::Frame, .After = "Engine.Extract"};
 
         /** Every engine phase, so that a schedule always has the anchors, even with no systems in them. */
-        inline constexpr std::array<const PhaseInfo*, 6> All{
-            &Input, &Simulation, &ResolveDeferred, &PostSimulation, &Extract, &Editor};
+        inline constexpr std::array<const PhaseInfo*, 7> All{
+            &Input, &Simulation, &ResolveDeferred, &Transform, &PostSimulation, &Extract, &Editor};
     } // namespace Phases
 
     /** The job of a world. A bit mask: a system's RunIn says which roles it runs in. */

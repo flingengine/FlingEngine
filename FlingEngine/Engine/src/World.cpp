@@ -1,6 +1,7 @@
 #include "Components/EntityGuid.h"
 #include "Components/Name.hpp"
 #include "FlingConfig.h"
+#include "HierarchyUtil.h"
 #include "FlingPaths.h"
 #include "Json.h"
 #include "Logger.h"
@@ -581,6 +582,9 @@ namespace Fling
 				LoadNamedComponent(key);
 			}
 		}
+
+        // Children is not saved: make it from the Parent links
+        HierarchyUtil::RebuildChildren(m_Storage);
 
         // The optional "singletons" object. Levels from before singletons have no such key.
         const Json singletons = t_Doc.Get("singletons");

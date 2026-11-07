@@ -1,4 +1,5 @@
 #include "Systems/RotatorSystem.h"
+#include "TransformUtil.h"
 
 namespace Sandbox
 {
@@ -10,11 +11,9 @@ namespace Sandbox
         }
 
         const float dt = ctx.Singleton<const Fling::SimTime>().FixedDelta;
-        const glm::vec3 offset(0.0f, 15.0f * dt, 0.0f);
-
         for (auto [entity, transform, rotator] : ctx.Query<Fling::Transform, const Rotator>())
         {
-            transform.SetRotation(transform.GetRotation() + offset);
+            Fling::TransformUtil::RotateAround(transform, glm::vec3(0.0f, 1.0f, 0.0f), 15.0f * dt);
         }
     }
 } // namespace Sandbox

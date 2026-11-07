@@ -131,9 +131,30 @@ public:
     `Commands`, or append to a queue.
   - No system writes `SimTime` or `RealFrameTime`.
 - **Destroy is deferred** (`ctx.Commands().Destroy(e)`, applied at the end of
-  the tick). **Spawn is immediate** (`ctx.Spawn(components...)`).
+  the tick, and it destroys the entity's children too). **Spawn is immediate**
+  (`ctx.Spawn(components...)`).
+- **Structural changes are deferred:** `ctx.Add(e, value)` and
+  `ctx.Remove<T>(e)` need `Write<T>`, and run at the end of the tick in the
+  order they were recorded. `ctx.Defer<Ws...>(fn)` runs a change that keeps
+  several types in step, and names every type it writes.
 - **Register it.** One line in the module's register file
   (`Register<Module>.cpp`): `t_Modules.System<MoverSystem>();`.
+
+## Transforms and the hierarchy
+
+- `Transform` is the local position, rotation (a quaternion), and scale. It
+  has no functions: use `TransformUtil` (`LocalMatrix`, `FromEulerDegrees`,
+  `ToEulerDegrees`, `RotateAround`, `Forward`).
+- `Parent` (saved) links a child to its parent. `Children` (transient) is made
+  from it. Change a parent only with `HierarchyUtil::SetParent` (or
+  `SetParentDeferred` from a system, with `Write<Parent>` and `Write<Children>`),
+  so the two stay in step.
+- `Engine.Transform` runs in its own phase after `Engine.ResolveDeferred`, on
+  every tick and in every world role. It writes `LocalToWorld` (the world
+  matrix, parents first) and raises its `Version` when the matrix changes.
+  Read world positions from `LocalToWorld`, not from `Transform`.
+- Physics treats a body's `Transform` as its world pose, so a physics body
+  must be a root entity.
 
 ## Registration
 

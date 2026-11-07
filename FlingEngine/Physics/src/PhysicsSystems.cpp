@@ -29,23 +29,6 @@ namespace Fling
             return Fling::Entity::FromBits(t_UserData);
         }
 
-        /** Transform rotation (Euler degrees, applied as yawPitchRoll(y, x, z)) to a quaternion. */
-        glm::quat EulerDegreesToQuat(const glm::vec3& t_Degrees)
-        {
-            return glm::quat_cast(
-                glm::yawPitchRoll(glm::radians(t_Degrees.y), glm::radians(t_Degrees.x), glm::radians(t_Degrees.z)));
-        }
-
-        /** The reverse of EulerDegreesToQuat. */
-        glm::vec3 QuatToEulerDegrees(const glm::quat& t_Rot)
-        {
-            float Yaw = 0.0f;
-            float Pitch = 0.0f;
-            float Roll = 0.0f;
-            glm::extractEulerAngleYXZ(glm::mat4_cast(t_Rot), Yaw, Pitch, Roll);
-            return glm::degrees(glm::vec3(Pitch, Yaw, Roll));
-        }
-
         PhysicsShapeDesc MakeShapeDesc(const Collider& t_Collider, const glm::vec3& t_Scale)
         {
             const glm::vec3 Scale = glm::abs(t_Scale);
@@ -85,10 +68,10 @@ namespace Fling
                 const RigidBody& Body = View.Get<RigidBody>(Entity);
 
                 PhysicsBodyDesc Desc;
-                Desc.m_Shape = MakeShapeDesc(View.Get<Collider>(Entity), Trans.GetScale());
+                Desc.m_Shape = MakeShapeDesc(View.Get<Collider>(Entity), Trans.Scale);
                 Desc.m_MotionType = (Body.m_Mass > 0.0f) ? PhysicsMotionType::Dynamic : PhysicsMotionType::Static;
-                Desc.m_Position = Trans.GetPos();
-                Desc.m_Rotation = EulerDegreesToQuat(Trans.GetRotation());
+                Desc.m_Position = Trans.Position;
+                Desc.m_Rotation = Trans.Rotation;
                 Desc.m_Mass = Body.m_Mass;
                 Desc.m_Friction = Body.m_Friction;
                 Desc.m_RollingFriction = Body.m_RollingFriction;
@@ -331,8 +314,8 @@ namespace Fling
                 }
 
                 Transform& Trans = t_Reg.Get<Transform>(Entity);
-                Trans.SetPos(State.m_Position);
-                Trans.SetRotation(QuatToEulerDegrees(State.m_Rotation));
+                Trans.Position = State.m_Position;
+                Trans.Rotation = State.m_Rotation;
 
                 RigidBody& Body = t_Reg.Get<RigidBody>(Entity);
                 Body.m_Velocity = State.m_LinearVelocity;
