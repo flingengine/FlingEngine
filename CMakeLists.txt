@@ -2,6 +2,13 @@ cmake_minimum_required ( VERSION 3.21 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
+# Single-config generators (Makefiles, Ninja) with no -DCMAKE_BUILD_TYPE get no
+# compiler flags at all, so there is no -g and a debugger cannot hit breakpoints.
+# Default to Debug. This must come before project(), which reads the build type.
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE )
+    set( CMAKE_BUILD_TYPE Debug CACHE STRING "Build type (Debug, Release, RelWithDebInfo, MinSizeRel)" FORCE )
+endif()
+
 project ( "FlingEngine" VERSION 1.0 )
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
