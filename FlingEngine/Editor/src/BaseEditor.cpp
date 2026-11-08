@@ -68,6 +68,9 @@ namespace Fling
 
     void BaseEditor::Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game)
     {
+        // A plain click on a drag field opens a text box; dragging still scrubs the value.
+        ImGui::GetIO().ConfigDragClickToInputText = true;
+
         m_OwningWorld = t_World;
         m_WorldSingletons.SetWorld(t_World);
         m_Game = t_Game;
@@ -274,6 +277,13 @@ namespace Fling
                 }
 
                 ImGui::EndDisabled();
+
+                ImGui::Separator();
+                if (ImGui::MenuItem("Exit", "Alt+F4"))
+                {
+                    assert(m_OwningWorld);
+                    m_OwningWorld->RequestQuit();
+                }
                 ImGui::EndMenu();
             }
 

@@ -120,6 +120,12 @@ namespace Fling
         void SetGameQuitStopsPlay(bool t_StopsPlay) { m_GameQuitStopsPlay = t_StopsPlay; }
 
         /**
+         * Ask the engine to exit after this frame, even in the editor (unlike the Quit
+         * AppRequest, which only stops play there).
+         */
+        void RequestQuit() { m_ShouldQuit = true; }
+
+        /**
          * Check if the world wants to exit the program.
          * @see Engine::Tick
          *
