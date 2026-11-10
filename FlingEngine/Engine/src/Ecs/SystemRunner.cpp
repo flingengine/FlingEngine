@@ -170,7 +170,7 @@ namespace Fling
         frame.TickAlpha =
             m_Config.OneTickPerFrame ? 1.0f : static_cast<float>(Seconds(m_Accumulator) / Seconds(m_Config.FixedStep));
 
-        RunSegments(UpdateRate::Frame, role);
+        RunSegments(UpdateRate::Variable, role);
     }
 
     void SystemRunner::RunSegments(const UpdateRate rate, const WorldRole role)
@@ -192,7 +192,7 @@ namespace Fling
                         continue;
                     }
 
-                    // A frame phase gets no command buffer: it cannot change the simulation.
+                    // A variable rate phase gets no command buffer: it cannot change the simulation.
                     SystemContextBase ctx(m_Storage, fixed ? &m_Commands[i] : nullptr, fixed ? &m_TickInput : nullptr);
                     if (fixed)
                     {

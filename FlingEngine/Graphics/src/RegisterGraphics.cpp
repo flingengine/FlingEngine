@@ -4,7 +4,7 @@
 #include "MeshRenderer.h"
 #include "RegisterGraphics.h"
 #include "RenderSnapshot.h"
-#include "Systems/ExtractSystem.h"
+#include "Systems/PublishSnapshotSystem.h"
 
 // The Graphics module's register file: every Graphics component type and system is
 // listed here, and only this file includes the system headers.
@@ -42,6 +42,6 @@ namespace Fling
 
         t_Modules.Component<RenderSnapshot>();
 
-        t_Modules.System<ExtractSystem>();
+        t_Modules.System<PublishSnapshotSystem>();
     }
 } // namespace Fling

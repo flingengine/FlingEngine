@@ -69,7 +69,7 @@ namespace Fling
      *         void FixedUpdate(Context& ctx) const;
      *     };
      *
-     * Write FixedUpdate for a fixed phase or Update for a frame phase, and
+     * Write FixedUpdate for a fixed phase or Update for a variable rate phase, and
      * optionally OnCreate(Setup&), OnDestroy(Setup&), OnPlayBegin(Context&), and
      * OnPlayEnd(Context&). They are not virtual: the adapter implements the ISystem
      * functions and calls yours with a context typed by the access list.
@@ -186,9 +186,9 @@ namespace Fling
                 static_assert(!fixed || !HasUpdate<T>,
                               "A fixed phase system does not implement Update. A feature that needs both is two "
                               "systems that share a component.");
-                static_assert(fixed || HasUpdate<T>, "A frame phase system implements Update(Context&).");
+                static_assert(fixed || HasUpdate<T>, "A variable rate system implements Update(Context&).");
                 static_assert(fixed || !HasFixedUpdate<T>,
-                              "A frame phase system does not implement FixedUpdate. A feature that needs both is two "
+                              "A variable rate system does not implement FixedUpdate. A feature that needs both is two "
                               "systems that share a component.");
 
                 static_assert(!Allows<A, AccessMode::Write, SimTime> && !Allows<A, AccessMode::Write, RealFrameTime>,
@@ -199,10 +199,10 @@ namespace Fling
                               "A fixed rate system cannot read a Presentation component. Drive visuals from the "
                               "simulation; do not depend on them.");
                 static_assert(fixed || !WritesSimulation<A>,
-                              "A frame rate system cannot write a Simulation component. Mark the component "
+                              "A variable rate system cannot write a Simulation component. Mark the component "
                               "Presentation, or move the system to a fixed phase.");
-                static_assert(fixed || !A::HasSpawns, "A frame rate system cannot spawn entities.");
-                static_assert(fixed || !A::HasRawStorage, "A frame rate system cannot use RawStorage.");
+                static_assert(fixed || !A::HasSpawns, "A variable rate system cannot spawn entities.");
+                static_assert(fixed || !A::HasRawStorage, "A variable rate system cannot use RawStorage.");
             }
             return true;
         }

@@ -83,7 +83,7 @@ namespace Fling
     {
         /** The systems, in the order they were given to BuildSchedule. Stages and edges index into this. */
         std::vector<const SystemDesc*> Systems;
-        /** Every phase, in run order: the fixed phases, then the frame phases. */
+        /** Every phase, in run order: the fixed phases, then the variable rate phases. */
         std::vector<const PhaseInfo*> Phases;
         /** For each system, its phase as an index into Phases. */
         std::vector<uint32> SystemPhase;
@@ -101,7 +101,7 @@ namespace Fling
         /** Every system index of one update rate in run order: segment, then stage, then name. */
         std::vector<uint32> RunOrder(UpdateRate rate) const;
 
-        /** Every system index in run order: the fixed systems, then the frame systems. */
+        /** Every system index in run order: the fixed systems, then the variable rate systems. */
         std::vector<uint32> RunOrder() const;
 
         /**
@@ -135,12 +135,12 @@ namespace Fling
         UnknownOrderName,
         /** After, Before, or Order links two systems of different update rates. */
         OrderAcrossUpdateRates,
-        /** A fixed phase system and a frame phase system both write the same component. */
-        FixedAndFrameWrite,
+        /** A fixed phase system and a variable rate system both write the same component. */
+        FixedAndVariableWrite,
         /** A FlushAfter phase is not ordered against another phase of its update rate. */
         FlushNotOrdered,
-        /** FlushAfter is set on a frame phase. Frame systems have no commands to apply. */
-        FlushInFramePhase,
+        /** FlushAfter is set on a variable rate phase. Variable rate systems have no commands to apply. */
+        FlushInVariablePhase,
     };
 
     struct ScheduleError

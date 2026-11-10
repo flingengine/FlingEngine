@@ -28,7 +28,7 @@ namespace Fling
                                                          RawStorage>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Physics.Step", .Phase = Phases::ResolveDeferred};
+        static constexpr SystemInfo Info{.Name = "Physics.Step", .Phase = Phases::Physics};
 
         void FixedUpdate(Context& ctx) const;
     };

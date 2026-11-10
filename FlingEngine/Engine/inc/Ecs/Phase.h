@@ -13,15 +13,18 @@ namespace Fling
     {
         /** Once per fixed simulation tick. Its systems implement FixedUpdate. */
         Fixed,
-        /** Once per rendered frame. Its systems implement Update. */
-        Frame,
+        /**
+         * Once per rendered frame, so the time between two runs is not constant. For what
+         * the player sees and hears. Its systems implement Update.
+         */
+        Variable,
     };
 
     inline constexpr std::size_t UpdateRateCount = 2;
 
     constexpr const char* UpdateRateName(const UpdateRate rate)
     {
-        return rate == UpdateRate::Fixed ? "Fixed" : "Frame";
+        return rate == UpdateRate::Fixed ? "Fixed" : "Variable";
     }
 
     /** A short list of system or phase names, for After and Before. Write one name or a braced list. */
@@ -119,72 +122,89 @@ namespace Fling
     /**
      * The engine's phases. They are anchors that other modules place their own
      * phases against, with After and Before. Do not rename them: other modules use the names.
+     *
+     * One fixed tick is Input, Simulation, Physics, ResolveDeferred, Finalize. A
+     * resimulation (rollback) runs Simulation, Physics, and ResolveDeferred again. It
+     * does not run Input, which is replaced by recorded input, or Finalize, which runs
+     * one time when the simulation has its last state. One frame is Presentation,
+     * Publish, Editor, after the ticks that were due.
      */
     namespace Phases
     {
         /** Turns this tick's input into InputState. */
-        inline constexpr PhaseInfo Input
-        {
+        inline constexpr PhaseInfo Input{
             .Name = "Engine.Input",
             .UpdateRate = UpdateRate::Fixed,
         };
 
         /** Gameplay. */
-        inline constexpr PhaseInfo Simulation
-        {
+        inline constexpr PhaseInfo Simulation{
             .Name = "Engine.Simulation",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.Input",
         };
 
-        /** Consumes the queues that Simulation appends to: spawns, damage, effects. */
-        inline constexpr PhaseInfo ResolveDeferred
-        {
-            .Name = "Engine.ResolveDeferred",
+        /**
+         * The physics step: moves bodies, and writes the contacts of this tick. After
+         * gameplay, which asks for forces, and before ResolveDeferred, so that its
+         * consumers see the contacts of this tick.
+         */
+        inline constexpr PhaseInfo Physics{
+            .Name = "Engine.Physics",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.Simulation",
         };
 
-        /** Computes LocalToWorld from Transform and Parent, after everything that moves entities. */
-        inline constexpr PhaseInfo Transform
-        {
-            .Name = "Engine.Transform",
+        /** Consumes the queues that Simulation appends to: spawns, damage, effects. */
+        inline constexpr PhaseInfo ResolveDeferred{
+            .Name = "Engine.ResolveDeferred",
+            .UpdateRate = UpdateRate::Fixed,
+            .After = "Engine.Physics",
+        };
+
+        /**
+         * The simulation has its last state for this tick. Systems here make the data that
+         * comes from that state, such as LocalToWorld from Transform and Parent. They do
+         * not change what the simulation decided.
+         */
+        inline constexpr PhaseInfo Finalize{
+            .Name = "Engine.Finalize",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.ResolveDeferred",
         };
 
-        /** Frame rate work that follows the simulation: camera smoothing, interpolation. */
-        inline constexpr PhaseInfo PostSimulation
-        {
-            .Name = "Engine.PostSimulation",
-            .UpdateRate = UpdateRate::Frame,
+        /**
+         * Frame rate work for what the player sees and hears: camera smoothing,
+         * interpolation, UI. Its systems write components of ComponentDomain::Presentation.
+         */
+        inline constexpr PhaseInfo Presentation{
+            .Name = "Engine.Presentation",
+            .UpdateRate = UpdateRate::Variable,
         };
 
-        /** Copies what the renderer needs out of the world. */
-        inline constexpr PhaseInfo Extract
-        {
-            .Name = "Engine.Extract",
-            .UpdateRate = UpdateRate::Frame,
-            .After = "Engine.PostSimulation",
+        /** Gives the renderer its copy of the world (RenderSnapshot). The renderer reads nothing else. */
+        inline constexpr PhaseInfo Publish{
+            .Name = "Engine.Publish",
+            .UpdateRate = UpdateRate::Variable,
+            .After = "Engine.Presentation",
         };
 
         /** Editor tools, last in the frame. */
-        inline constexpr PhaseInfo Editor
-        {
+        inline constexpr PhaseInfo Editor{
             .Name = "Engine.Editor",
-            .UpdateRate = UpdateRate::Frame,
-            .After = "Engine.Extract",
+            .UpdateRate = UpdateRate::Variable,
+            .After = "Engine.Publish",
         };
 
         /** Every engine phase, so that a schedule always has the anchors, even with no systems in them. */
-        inline constexpr std::array<const PhaseInfo*, 7> All
-        {
+        inline constexpr std::array<const PhaseInfo*, 8> All{
             &Input,
             &Simulation,
+            &Physics,
             &ResolveDeferred,
-            &Transform,
-            &PostSimulation,
-            &Extract,
+            &Finalize,
+            &Presentation,
+            &Publish,
             &Editor,
         };
     } // namespace Phases

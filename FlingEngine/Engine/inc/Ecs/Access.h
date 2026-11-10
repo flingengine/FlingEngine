@@ -318,7 +318,7 @@ namespace Fling
         }
     } // namespace Detail
 
-    /** True if the list writes, appends to, or consumes a Simulation component. A frame rate system must not. */
+    /** True if the list writes, appends to, or consumes a Simulation component. A variable rate system must not. */
     template <typename A>
     inline constexpr bool WritesSimulation = false;
 

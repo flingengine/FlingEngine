@@ -153,7 +153,7 @@ fling_add_ecs_compile_check( MemberState            "A system cannot have member
 fling_add_ecs_compile_check( WrongUpdateRate        "A fixed phase system implements FixedUpdate" )
 fling_add_ecs_compile_check( FixedReadsRealTime     "A fixed rate system cannot read RealFrameTime" )
 fling_add_ecs_compile_check( FixedReadsPresentation "A fixed rate system cannot read a Presentation component" )
-fling_add_ecs_compile_check( FrameWritesSimulation  "A frame rate system cannot write a Simulation component" )
+fling_add_ecs_compile_check( FrameWritesSimulation  "A variable rate system cannot write a Simulation component" )
 fling_add_ecs_compile_check( WritesSimTime          "No system writes SimTime or RealFrameTime" )
 fling_add_ecs_compile_check( SingletonNotOwned      "Only a writer of a singleton makes it" )
 fling_add_ecs_compile_check( QueueRead              "A queue is not read or written directly" )

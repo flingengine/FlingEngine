@@ -89,7 +89,7 @@ namespace Fling
         /** Called once per simulation tick, for a system in a fixed phase. */
         virtual void RunFixedUpdate(SystemContextBase& ctx) const = 0;
 
-        /** Called once per rendered frame, for a system in a frame phase. */
+        /** Called once per rendered frame, for a system in a variable rate phase. */
         virtual void RunUpdate(SystemContextBase& ctx) const = 0;
     };
 } // namespace Fling

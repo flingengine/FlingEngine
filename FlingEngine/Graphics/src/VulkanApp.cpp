@@ -513,7 +513,7 @@ namespace Fling
 
     void VulkanApp::Update(float DeltaTime, const Fling::EntityStorage& t_Reg)
     {
-        // The passes read only the snapshot that Graphics.Extract wrote this frame
+        // The passes read only the snapshot that Graphics.PublishSnapshot wrote this frame
         static const RenderSnapshot s_EmptySnapshot{};
         const RenderSnapshot* SnapshotPtr = t_Reg.TryGetSingleton<RenderSnapshot>();
         const RenderSnapshot& Snapshot = SnapshotPtr ? *SnapshotPtr : s_EmptySnapshot;

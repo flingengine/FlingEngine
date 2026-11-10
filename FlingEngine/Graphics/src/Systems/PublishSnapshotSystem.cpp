@@ -1,5 +1,5 @@
 #include "Platform.h"
-#include "Systems/ExtractSystem.h"
+#include "Systems/PublishSnapshotSystem.h"
 #include "TransformUtil.h"
 
 namespace Fling
@@ -26,7 +26,7 @@ namespace Fling
         }
     } // namespace
 
-    void ExtractSystem::Update(Context& ctx) const
+    void PublishSnapshotSystem::Update(Context& ctx) const
     {
         RenderSnapshot& snapshot = ctx.Singleton<RenderSnapshot>();
         snapshot.Meshes.clear();

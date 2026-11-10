@@ -215,12 +215,12 @@ namespace
         void FixedUpdate(Context& ctx) const { ctx.Singleton<Calls>().EditTicks++; }
     };
 
-    /** A frame rate system. It reads the simulation and writes a Presentation component. */
+    /** A variable rate system. It reads the simulation and writes a Presentation component. */
     class DisplaySystem final
         : public System<DisplaySystem, Access<Read<RealFrameTime>, Read<Position>, Write<Display>>>
     {
     public:
-        static constexpr SystemInfo Info{.Name = "Test.Display", .Phase = Phases::PostSimulation};
+        static constexpr SystemInfo Info{.Name = "Test.Display", .Phase = Phases::Presentation};
 
         void Update(Context& ctx) const
         {
@@ -453,7 +453,7 @@ TEST_CASE("OneTickPerFrame ignores real time", "[ecs][system]")
     REQUIRE(h.Runner->TickCount() == 2);
 }
 
-TEST_CASE("A frame system reads RealFrameTime and writes Presentation", "[ecs][system]")
+TEST_CASE("A variable rate system reads RealFrameTime and writes Presentation", "[ecs][system]")
 {
     Harness h;
     h.Systems.Add<MoveSystem>();

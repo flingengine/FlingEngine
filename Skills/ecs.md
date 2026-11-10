@@ -253,7 +253,7 @@ system made an entity and the next system could not find it.
 | `ctx.Commands().Destroy(e)` | At the end of the tick | The entity and its handle stay good for the whole tick. The next tick does not have it, and the frame that is drawn after the tick does not draw it |
 | `ctx.Add(e, c)`, `ctx.Remove<C>(e)`, `ctx.Defer` | At the end of the tick | The next tick |
 | A queue (`ctx.Queue<Q>().Push`) | When its consumer runs | This tick, if the consumer runs after the appender. The schedule makes that so, unless phase order says the opposite |
-| `LocalToWorld` | `Engine.Transform`, the last fixed phase | Frame systems and the renderer in this frame. Fixed systems in the next tick |
+| `LocalToWorld` | `Engine.Transform`, in `Finalize`, the last fixed phase | Variable rate systems and the renderer in this frame. Fixed systems in the next tick |
 
 How to keep a delay of one tick out of your code:
 
@@ -307,7 +307,7 @@ public:
   `Write<T>`, and `ctx.Query<const T>()` needs `Read<T>`. The same applies to
   `Get`, `TryGet`, `Singleton`, `Queue`, `Drain`, `Spawn`, and `RawStorage`.
 - **Hooks.** `FixedUpdate(Context&)` for a fixed phase, `Update(Context&)` for
-  a frame phase (use only one of them). Optional: `OnCreate(Setup&)`,
+  a variable rate phase (use only one of them). Optional: `OnCreate(Setup&)`,
   `OnDestroy(Setup&)`, `OnPlayBegin(Context&)`, `OnPlayEnd(Context&)`.
 - **Singletons and queues.** A system owns each singleton that it has
   `Write<T>` for, and each queue that it has `Consume<Q>` for. When the world
@@ -320,7 +320,7 @@ public:
 - **Update rates.**
   - A fixed rate system cannot read `RealFrameTime` or any `Presentation`
     component.
-  - A frame rate system cannot write a `Simulation` component, spawn, use
+  - A variable rate system cannot write a `Simulation` component, spawn, use
     `Commands`, or append to a queue.
   - No system writes `SimTime` or `RealFrameTime`.
 - **Destroy is deferred.** `ctx.Commands().Destroy(e)` destroys the entity and
@@ -345,7 +345,7 @@ public:
   `Children`. If a `Parent` was set by hand and `Children` does not agree, the
   matrices are still right, but the system uses a slower path and logs a
   warning one time.
-- `Engine.Transform` runs in its own phase after `Engine.ResolveDeferred`, on
+- `Engine.Transform` runs in the `Engine.Finalize` phase, after `Engine.ResolveDeferred`, on
   every tick and in every world role. It writes `LocalToWorld` (the world
   matrix, parents first). When the matrix changes, it increases `Version`.
   Read world positions from `LocalToWorld`, not from `Transform`.
@@ -412,8 +412,8 @@ Not done yet, and the API already allows for them:
 
 ## Rendering
 
-- The renderer never reads the world. `Graphics.Extract` (a frame system in
-  the `Engine.Extract` phase) copies each `MeshRenderer` with its
+- The renderer never reads the world. `Graphics.PublishSnapshot` (a variable rate system in
+  the `Engine.Publish` phase) copies each `MeshRenderer` with its
   `LocalToWorld`, and the lights, into the `RenderSnapshot` singleton. The
   render passes read only that snapshot.
 - `MeshRenderer` is authoring data: the mesh and material asset paths. The
@@ -442,8 +442,26 @@ more, override `BaseEditor::RegisterWidgets` and call
 ## Phases and the order
 
 - Each update rate (`Fixed`, `Frame`) is one graph. The engine phases are
-  anchors in `Fling::Phases`: `Input`, `Simulation`, `ResolveDeferred` (fixed);
-  `PostSimulation`, `Extract`, `Editor` (frame).
+  anchors in `Fling::Phases`: `Input`, `Simulation`, `Physics`,
+  `ResolveDeferred`, `Finalize` (fixed); `Presentation`, `Publish`, `Editor`
+  (frame).
+- What each one is for:
+  - `Input`: this tick's input becomes `InputState`.
+  - `Simulation`: gameplay.
+  - `Physics`: the physics step. Gameplay asks for forces before it, and the
+    contacts of this tick exist after it.
+  - `ResolveDeferred`: the consumers of queues (spawns, damage). They see the
+    contacts of this tick.
+  - `Finalize`: the simulation has its last state for this tick. Systems here
+    make the data that comes from that state (`LocalToWorld`). They do not
+    change what the simulation decided.
+  - `Presentation`: frame rate work for what the player sees and hears. Its
+    systems write `Presentation` components.
+  - `Publish`: gives the renderer its copy of the world (`RenderSnapshot`).
+  - `Editor`: editor tools, last in the frame.
+- A resimulation for rollback is planned to run `Simulation`, `Physics`, and
+  `ResolveDeferred` again, and not `Input` or `Finalize`. Put a system in the
+  phase that matches this.
 - Any module can declare a phase: an `inline constexpr Fling::PhaseInfo` with
   `.After` and `.Before`. `.FlushAfter = true` adds a sync point.
 - Inside an update rate, the order comes from the data: a writer runs before

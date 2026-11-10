@@ -85,14 +85,14 @@ namespace
         }
     };
 
-    /** A correct frame system. */
+    /** A correct variable rate system. */
     class GoodFrameSystem final
         : public Fling::System<
               GoodFrameSystem,
               Fling::Access<Fling::Read<Fling::RealFrameTime>, Fling::Read<Position>, Fling::Write<Display>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.GoodFrame", .Phase = Fling::Phases::PostSimulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.GoodFrame", .Phase = Fling::Phases::Presentation};
 
         void Update(Context& ctx) const
         {
@@ -153,7 +153,7 @@ namespace
     class BadSystem final : public Fling::System<BadSystem, Fling::Access<Fling::Write<Position>>>
     {
     public:
-        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::PostSimulation};
+        static constexpr Fling::SystemInfo Info{.Name = "Check.Bad", .Phase = Fling::Phases::Presentation};
         void Update(Context&) const {}
     };
 #elif defined(FLING_ECS_CASE_WritesSimTime)

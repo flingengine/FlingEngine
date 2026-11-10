@@ -86,7 +86,7 @@ namespace Fling
 
         /**
          * Run one frame: the fixed system ticks that are due, then Game::Update, then the
-         * frame systems. Systems run in the Play role during play and the Edit role otherwise.
+         * variable rate systems. Systems run in the Play role during play and the Edit role otherwise.
          *
          * @param t_DeltaTime   Time between previous frame and the current one.
          */

@@ -26,7 +26,7 @@ namespace Fling
     {
     public:
         static constexpr SystemInfo Info{
-            .Name = "Engine.Transform", .Phase = Phases::Transform, .RunIn = WorldRole::All};
+            .Name = "Engine.Transform", .Phase = Phases::Finalize, .RunIn = WorldRole::All};
 
         void FixedUpdate(Context& ctx) const;
     };

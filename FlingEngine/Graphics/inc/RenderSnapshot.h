@@ -29,7 +29,7 @@ namespace Fling
     };
 
     /**
-     * Everything the renderer reads in one frame. The Graphics.Extract system writes it
+     * Everything the renderer reads in one frame. The Graphics.PublishSnapshot system writes it
      * from the world at the end of each frame, and the renderer reads only this, never
      * the world. A render thread can later keep a ring of these.
      */
@@ -47,7 +47,7 @@ namespace Fling
 
         std::vector<DirectionalLight> DirectionalLights;
 
-        /** Goes up by one each time Extract runs. */
+        /** Goes up by one each time Graphics.PublishSnapshot runs. */
         uint64 Frame = 0;
     };
 } // namespace Fling

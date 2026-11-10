@@ -69,12 +69,12 @@ namespace
         void FixedUpdate(Context& ctx) const { ctx.Singleton<Counters>().EditTicks++; }
     };
 
-    /** A frame system that runs in every role. */
+    /** A variable rate system that runs in every role. */
     class FrameCounterSystem final : public System<FrameCounterSystem, Access<Write<FrameCount>>>
     {
     public:
         static constexpr SystemInfo Info{
-            .Name = "Test.FrameCounter", .Phase = Phases::PostSimulation, .RunIn = WorldRole::All};
+            .Name = "Test.FrameCounter", .Phase = Phases::Presentation, .RunIn = WorldRole::All};
 
         void OnCreate(Setup& setup) const { setup.AddSingleton<FrameCount>(); }
 

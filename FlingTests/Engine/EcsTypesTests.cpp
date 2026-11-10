@@ -155,7 +155,7 @@ TEST_CASE("A tag must be empty and a table must not be", "[ecs]")
 
 namespace
 {
-    inline constexpr PhaseInfo TestPhase{.Name = "Test.Phase", .UpdateRate = UpdateRate::Frame, .After = {"A", "B"}};
+    inline constexpr PhaseInfo TestPhase{.Name = "Test.Phase", .UpdateRate = UpdateRate::Variable, .After = {"A", "B"}};
 } // namespace
 
 TEST_CASE("Phases decide the update rate", "[ecs]")
@@ -163,8 +163,8 @@ TEST_CASE("Phases decide the update rate", "[ecs]")
     STATIC_REQUIRE(IsFixed(Phases::Input));
     STATIC_REQUIRE(IsFixed(Phases::Simulation));
     STATIC_REQUIRE(IsFixed(Phases::ResolveDeferred));
-    STATIC_REQUIRE_FALSE(IsFixed(Phases::PostSimulation));
-    STATIC_REQUIRE_FALSE(IsFixed(Phases::Extract));
+    STATIC_REQUIRE_FALSE(IsFixed(Phases::Presentation));
+    STATIC_REQUIRE_FALSE(IsFixed(Phases::Publish));
     STATIC_REQUIRE_FALSE(IsFixed(Phases::Editor));
     STATIC_REQUIRE_FALSE(IsFixed(PhaseRef{}));
 
@@ -173,7 +173,7 @@ TEST_CASE("Phases decide the update rate", "[ecs]")
     STATIC_REQUIRE(ref.IsSet());
     STATIC_REQUIRE_FALSE(IsFixed(ref));
     STATIC_REQUIRE(ref->After.Size() == 2);
-    STATIC_REQUIRE(Phases::All.size() == 7);
+    STATIC_REQUIRE(Phases::All.size() == 8);
 }
 
 TEST_CASE("WorldRole is a bit mask", "[ecs]")

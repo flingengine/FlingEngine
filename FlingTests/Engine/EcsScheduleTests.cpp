@@ -308,7 +308,7 @@ TEST_CASE("Bad names are errors", "[ecs][schedule]")
     {
         FakeSystems systems;
         systems.Add(SystemInfo{.Name = "Test.A", .Phase = Phases::Simulation, .After = "Test.Draw"}, {});
-        systems.Add(SystemInfo{.Name = "Test.Draw", .Phase = Phases::Extract}, {});
+        systems.Add(SystemInfo{.Name = "Test.Draw", .Phase = Phases::Publish}, {});
         REQUIRE(HasError(systems.Build(), ScheduleErrorKind::OrderAcrossUpdateRates));
     }
 
@@ -323,7 +323,7 @@ TEST_CASE("Bad names are errors", "[ecs][schedule]")
     {
         FakeSystems systems;
         systems.Add(Sim("Test.A"), {});
-        systems.Add(SystemInfo{.Name = "Test.A", .Phase = Phases::Extract}, {});
+        systems.Add(SystemInfo{.Name = "Test.A", .Phase = Phases::Publish}, {});
         REQUIRE(HasError(systems.Build(), ScheduleErrorKind::DuplicateName));
     }
 
@@ -347,10 +347,10 @@ TEST_CASE("A component written at both update rates is an error", "[ecs][schedul
 {
     FakeSystems systems;
     systems.Add(Sim("Test.Mover"), {{"Transform", W}});
-    systems.Add(SystemInfo{.Name = "Test.Smooth", .Phase = Phases::PostSimulation}, {{"Transform", W}});
+    systems.Add(SystemInfo{.Name = "Test.Smooth", .Phase = Phases::Presentation}, {{"Transform", W}});
 
     const ScheduleResult result = systems.Build();
-    REQUIRE(HasError(result, ScheduleErrorKind::FixedAndFrameWrite));
+    REQUIRE(HasError(result, ScheduleErrorKind::FixedAndVariableWrite));
     REQUIRE(result.ErrorReport().find("Transform is written by Test.Mover") != String::npos);
 }
 
@@ -358,7 +358,7 @@ TEST_CASE("Phases keep their own stages", "[ecs][schedule]")
 {
     // A writer in a later phase does not make an edge to a reader in an earlier one.
     FakeSystems systems;
-    systems.Add(SystemInfo{.Name = "Test.Extract", .Phase = Phases::Extract}, {{"X", R}});
+    systems.Add(SystemInfo{.Name = "Test.Publish", .Phase = Phases::Publish}, {{"X", R}});
     systems.Add(SystemInfo{.Name = "Test.Input", .Phase = Phases::Input}, {{"Input", W}});
     systems.Add(Sim("Test.Move"), {{"Input", R}, {"X", W}});
 
@@ -371,7 +371,7 @@ TEST_CASE("Phases keep their own stages", "[ecs][schedule]")
     {
         run.emplace_back(result.Value.Systems[i]->Info.Name);
     }
-    REQUIRE(run == std::vector<String>{"Test.Input", "Test.Move", "Test.Extract"});
+    REQUIRE(run == std::vector<String>{"Test.Input", "Test.Move", "Test.Publish"});
 }
 
 TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
@@ -387,9 +387,10 @@ TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
 
     const String dump = result.Value.Dump();
     REQUIRE(dump.find("Fixed (once per tick)\n") != String::npos);
-    REQUIRE(dump.find("phases: Engine.Input, Engine.Simulation, Engine.ResolveDeferred, Engine.Transform\n") !=
+    REQUIRE(dump.find(
+                "phases: Engine.Input, Engine.Simulation, Engine.Physics, Engine.ResolveDeferred, Engine.Finalize\n") !=
             String::npos);
-    REQUIRE(dump.find("Frame (once per frame)") == String::npos);
+    REQUIRE(dump.find("Variable (once per frame)") == String::npos);
     REQUIRE(dump.find("[Engine.Simulation]") != String::npos);
     REQUIRE(dump.find("writes Mover, Transform") != String::npos);
     REQUIRE(dump.find("stage 2  Sandbox.Rotator") != String::npos);
@@ -423,12 +424,12 @@ namespace
     inline constexpr PhaseInfo UnknownAnchorPhase{
         .Name = "Game.Lost", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Simulaton"};
     inline constexpr PhaseInfo WrongRatePhase{
-        .Name = "Game.WrongRate", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Extract"};
+        .Name = "Game.WrongRate", .UpdateRate = UpdateRate::Fixed, .After = "Engine.Publish"};
     inline constexpr PhaseInfo LoopA{.Name = "Game.LoopA", .UpdateRate = UpdateRate::Fixed, .After = "Game.LoopB"};
     inline constexpr PhaseInfo LoopB{.Name = "Game.LoopB", .UpdateRate = UpdateRate::Fixed, .After = "Game.LoopA"};
     inline constexpr PhaseInfo FramePhaseWithFlush{
-        .Name = "Game.FrameFlush", .UpdateRate = UpdateRate::Frame, .FlushAfter = true};
-    inline constexpr PhaseInfo SameNameAsModA{.Name = "ModA.Abilities", .UpdateRate = UpdateRate::Frame};
+        .Name = "Game.FrameFlush", .UpdateRate = UpdateRate::Variable, .FlushAfter = true};
+    inline constexpr PhaseInfo SameNameAsModA{.Name = "ModA.Abilities", .UpdateRate = UpdateRate::Variable};
 } // namespace
 
 TEST_CASE("Two modules' phases are ordered by the data they share", "[ecs][schedule][phases]")
@@ -587,7 +588,7 @@ TEST_CASE("Phase declaration errors", "[ecs][schedule][phases]")
         REQUIRE(HasText(result, "\"Engine.Simulaton\""));
     }
 
-    SECTION("A fixed phase placed against a frame phase")
+    SECTION("A fixed phase placed against a variable rate phase")
     {
         FakeSystems systems;
         systems.AddPhase(WrongRatePhase);
@@ -610,11 +611,11 @@ TEST_CASE("Phase declaration errors", "[ecs][schedule][phases]")
         REQUIRE(HasError(systems.Build(), ScheduleErrorKind::DuplicatePhase));
     }
 
-    SECTION("FlushAfter on a frame phase")
+    SECTION("FlushAfter on a variable rate phase")
     {
         FakeSystems systems;
         systems.AddPhase(FramePhaseWithFlush);
-        REQUIRE(HasError(systems.Build(), ScheduleErrorKind::FlushInFramePhase));
+        REQUIRE(HasError(systems.Build(), ScheduleErrorKind::FlushInVariablePhase));
     }
 }
 
@@ -663,12 +664,13 @@ TEST_CASE("Phases are listed in run order", "[ecs][schedule][phases]")
     }
     REQUIRE(names == std::vector<String>{"Engine.Input",
                                          "Engine.Simulation",
+                                         "Engine.Physics",
                                          "ModA.Abilities",
                                          "Engine.ResolveDeferred",
-                                         "Engine.Transform",
+                                         "Engine.Finalize",
                                          "Game.Late",
-                                         "Engine.PostSimulation",
-                                         "Engine.Extract",
+                                         "Engine.Presentation",
+                                         "Engine.Publish",
                                          "Engine.Editor"});
 }
 

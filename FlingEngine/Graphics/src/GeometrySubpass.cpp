@@ -268,7 +268,7 @@ namespace Fling
 
         CurLightCount = 0;
 
-        // Point lights, with their world position already set by Extract
+        // Point lights, with their world position already set by Graphics.PublishSnapshot
         for (const PointLight& Light : t_Snapshot.PointLights)
         {
             if (CurLightCount < DeferredLightSettings::MaxPointLights)

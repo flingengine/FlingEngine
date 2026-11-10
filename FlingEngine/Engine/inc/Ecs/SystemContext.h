@@ -203,10 +203,10 @@ namespace Fling
         /** The storage. Only Ecs/ code uses it. */
         EntityStorage& Storage() const { return m_Storage; }
 
-        /** Null in a frame phase. */
+        /** Null in a variable rate phase. */
         DeferredCommands* Commands() const { return m_Commands; }
 
-        /** This tick's input. Null in a frame phase. */
+        /** This tick's input. Null in a variable rate phase. */
         const TickInput* GetTickInput() const { return m_TickInput; }
 
     private:
@@ -395,7 +395,7 @@ namespace Fling
         QueueWriter<Q> Queue()
         {
             static_assert(IsFixed(Derived::Info.Phase),
-                          "Only a fixed phase system appends to a queue. A frame rate system cannot change the "
+                          "Only a fixed phase system appends to a queue. A variable rate system cannot change the "
                           "simulation.");
             static_assert(Allows<A, AccessMode::Append, Q>, "Add Append<Q> to the access list to push into Q.");
             return QueueWriter<Q>(QueueComponent<Q>());
@@ -496,7 +496,7 @@ namespace Fling
         DeferredCommands& Commands()
         {
             static_assert(IsFixed(Derived::Info.Phase),
-                          "Only a fixed phase system has Commands. A frame rate system cannot change the "
+                          "Only a fixed phase system has Commands. A variable rate system cannot change the "
                           "simulation.");
             assert(m_Core.Commands() != nullptr);
             return *m_Core.Commands();

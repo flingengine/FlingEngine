@@ -255,7 +255,7 @@ namespace Fling
         const auto RealDelta = std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::duration<double>(static_cast<double>(t_DeltaTime)));
 
-        // The fixed ticks that are due, then the legacy game update, then the frame systems
+        // The fixed ticks that are due, then the legacy game update, then the variable rate systems
         if (m_Runner)
         {
             m_Runner->RunFixed(RealDelta, Role);

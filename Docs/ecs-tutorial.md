@@ -248,12 +248,12 @@ two systems write the same component and nothing sets their order, the schedule
 has an error. The error tells you to add `.After = "OtherSystem"` or
 `.Before = "OtherSystem"` to `Info`.
 
-### Frame systems
+### Variable rate systems
 
 `FixedUpdate` is for simulation. For work at the display rate (camera
-smoothing, UI, interpolation), put the system in a frame phase, such as
-`Fling::Phases::PostSimulation`. Write `Update(Context&)` instead of
-`FixedUpdate`. A frame system can read simulation components, but it cannot
+smoothing, UI, interpolation), put the system in a variable rate phase, such as
+`Fling::Phases::Presentation`. Write `Update(Context&)` instead of
+`FixedUpdate`. A variable rate system can read simulation components, but it cannot
 change them. It writes components that have
 `.Domain = Fling::ComponentDomain::Presentation`. To get the frame time, read
 `Fling::RealFrameTime`.
@@ -360,7 +360,7 @@ component to the access list. Then query it or read the singleton.
 | Component | Kind | Use |
 |---|---|---|
 | `Fling::SimTime` | Singleton | `FixedDelta` (seconds per tick), `Tick`, `Elapsed`. `Read` only. |
-| `Fling::RealFrameTime` | Singleton | Frame systems only: the real time of this frame. |
+| `Fling::RealFrameTime` | Singleton | Variable rate systems only: the real time of this frame. |
 
 Do not call `Timing` or the global `Random` from a fixed system. They break
 replays and rollback. A debug build asserts if you call them.
@@ -397,7 +397,7 @@ math, because `Transform` has no functions. Example:
 
 Put a `Fling::MeshRenderer` (mesh and material asset paths) and a `Transform` on
 an entity. The engine then draws the entity. Lights are `Fling::PointLight` and
-`Fling::DirectionalLight`. The renderer never reads the world: `Graphics.Extract`
+`Fling::DirectionalLight`. The renderer never reads the world: `Graphics.PublishSnapshot`
 copies the data that it needs in each frame. Your systems do not touch the GPU.
 
 ```cpp
@@ -450,11 +450,12 @@ its order inside the phase, use `.After` and `.Before` with system names.
 |---|---|---|
 | Fixed | `Phases::Input` | Engine: fills `InputState` |
 | Fixed | `Phases::Simulation` | Your gameplay |
-| Fixed | `Phases::ResolveDeferred` | Consumers of queues: spawns, damage, physics step |
-| Fixed | `Phases::Transform` | Engine: computes `LocalToWorld` |
-| Frame | `Phases::PostSimulation` | Camera, interpolation, UI |
-| Frame | `Phases::Extract` | Engine: copies the world for the renderer |
-| Frame | `Phases::Editor` | Editor tools |
+| Fixed | `Phases::Physics` | Engine: the physics step. Moves bodies and writes the contacts of this tick |
+| Fixed | `Phases::ResolveDeferred` | Consumers of queues: spawns, damage. They see the contacts of this tick |
+| Fixed | `Phases::Finalize` | Data that comes from the last state of the tick. Engine: computes `LocalToWorld` |
+| Variable | `Phases::Presentation` | What the player sees and hears: camera, interpolation, UI |
+| Variable | `Phases::Publish` | Engine: gives the renderer its copy of the world |
+| Variable | `Phases::Editor` | Editor tools |
 
 To see the full order and the reason for each edge, run
 `Sandbox --null-render --unattended --dump-schedule`.
@@ -471,7 +472,7 @@ The access checks are `static_assert`s. The message tells you what to change:
 | "Add Fling::Spawns to the access list" | Add `Fling::Spawns` |
 | "A system cannot have member state" | Move the members to a singleton component |
 | "A fixed phase system implements FixedUpdate" | The phase and the function do not agree |
-| "A frame rate system cannot write a Simulation component" | Write a `Presentation` component, or move the system to a fixed phase |
+| "A variable rate system cannot write a Simulation component" | Write a `Presentation` component, or move the system to a fixed phase |
 | "Only a writer of a singleton makes it" | `AddSingleton<T>` needs `Write<T>` |
 | A debug assert: "Singleton: nobody made it" | No system has `Write<T>` for that singleton, or the singleton is `.External` and its module did not make it |
 | "is not a Fling::Component" | Add the `static constexpr Fling::ComponentInfo Component{...}` line |

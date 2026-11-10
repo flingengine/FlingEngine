@@ -63,7 +63,7 @@ namespace Fling
         ~VulkanApp();
 
         /**
-         * Draw a frame from the RenderSnapshot in t_Reg (Graphics.Extract writes it).
+         * Draw a frame from the RenderSnapshot in t_Reg (Graphics.PublishSnapshot writes it).
          */
         void Update(float DeltaTime, const Fling::EntityStorage& t_Reg);
 

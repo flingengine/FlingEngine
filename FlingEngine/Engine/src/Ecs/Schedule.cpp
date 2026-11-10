@@ -105,7 +105,7 @@ namespace Fling
                 CheckFlushPhases();
                 AddInferredEdges();
                 ReportUnorderedConflicts();
-                CheckFixedAndFrameWrites();
+                CheckFixedAndVariableWrites();
 
                 std::array<std::vector<Index>, UpdateRateCount> phaseOrder;
                 for (std::size_t rate = 0; rate < UpdateRateCount; ++rate)
@@ -258,7 +258,7 @@ namespace Fling
                              "Phase " + PhaseName(self) + " (" + UpdateRateName(RateOfPhase(self)) + ") has " + field +
                                  " = " + Quote(PhaseName(other)) + ", which is a " +
                                  UpdateRateName(RateOfPhase(other)) +
-                                 " phase. Fixed phases and frame phases are not ordered against each other.");
+                                 " phase. Fixed phases and variable rate phases are not ordered against each other.");
                     return;
                 }
 
@@ -292,10 +292,11 @@ namespace Fling
                     {
                         if (RateOfPhase(firstPhase->second) != RateOfPhase(secondPhase->second))
                         {
-                            AddError(ScheduleErrorKind::OrderAcrossUpdateRates,
-                                     "Order(" + Quote(first) + ", " + Quote(second) +
-                                         ") links a fixed phase and a frame phase. They are not ordered against "
-                                         "each other.");
+                            AddError(
+                                ScheduleErrorKind::OrderAcrossUpdateRates,
+                                "Order(" + Quote(first) + ", " + Quote(second) +
+                                    ") links a fixed phase and a variable rate phase. They are not ordered against "
+                                    "each other.");
                             continue;
                         }
                         AddPhaseEdge(firstPhase->second, secondPhase->second, "Order");
@@ -353,11 +354,12 @@ namespace Fling
                     {
                         continue;
                     }
-                    if (RateOfPhase(f) == UpdateRate::Frame)
+                    if (RateOfPhase(f) == UpdateRate::Variable)
                     {
-                        AddError(ScheduleErrorKind::FlushInFramePhase,
+                        AddError(ScheduleErrorKind::FlushInVariablePhase,
                                  "Phase " + PhaseName(f) +
-                                     " is a frame phase with .FlushAfter. Frame systems have no commands, so "
+                                     " is a variable rate phase with .FlushAfter. Variable rate systems have no "
+                                     "commands, so "
                                      "remove it.");
                         continue;
                     }
@@ -398,7 +400,7 @@ namespace Fling
                              String(field) + " orders " + SystemName(first) + " (" +
                                  UpdateRateName(RateOfSystem(first)) + ") against " + SystemName(second) + " (" +
                                  UpdateRateName(RateOfSystem(second)) +
-                                 "). Fixed systems and frame systems are not ordered against each other.",
+                                 "). Fixed systems and variable rate systems are not ordered against each other.",
                              {first, second});
                     return;
                 }
@@ -604,13 +606,13 @@ namespace Fling
             }
 
             /** A component that a fixed phase writes must not also be written at the frame rate. */
-            void CheckFixedAndFrameWrites()
+            void CheckFixedAndVariableWrites()
             {
                 struct Writers
                 {
                     const char* Name = nullptr;
                     std::vector<Index> Fixed;
-                    std::vector<Index> Frame;
+                    std::vector<Index> Variable;
                 };
                 std::map<TypeHash, Writers> byType;
 
@@ -626,26 +628,26 @@ namespace Fling
                         {
                             Writers& writers = byType[entry.Hash];
                             writers.Name = entry.Name;
-                            (RateOfSystem(i) == UpdateRate::Fixed ? writers.Fixed : writers.Frame).push_back(i);
+                            (RateOfSystem(i) == UpdateRate::Fixed ? writers.Fixed : writers.Variable).push_back(i);
                         }
                     }
                 }
 
                 for (const auto& [hash, writers] : byType)
                 {
-                    if (writers.Fixed.empty() || writers.Frame.empty())
+                    if (writers.Fixed.empty() || writers.Variable.empty())
                     {
                         continue;
                     }
                     const Index fixedSystem = writers.Fixed.front();
-                    const Index frameSystem = writers.Frame.front();
-                    AddError(ScheduleErrorKind::FixedAndFrameWrite,
+                    const Index variableSystem = writers.Variable.front();
+                    AddError(ScheduleErrorKind::FixedAndVariableWrite,
                              String(writers.Name) + " is written by " + SystemName(fixedSystem) + " (" +
-                                 WhereIs(fixedSystem) + ", fixed rate) and by " + SystemName(frameSystem) + " (" +
-                                 WhereIs(frameSystem) +
-                                 ", frame rate). The simulation must not depend on the frame rate. Write it from "
+                                 WhereIs(fixedSystem) + ", fixed rate) and by " + SystemName(variableSystem) + " (" +
+                                 WhereIs(variableSystem) +
+                                 ", variable rate). The simulation must not depend on the frame rate. Write it from "
                                  "one update rate only.",
-                             {fixedSystem, frameSystem});
+                             {fixedSystem, variableSystem});
                 }
             }
 
@@ -1068,7 +1070,7 @@ namespace Fling
     std::vector<uint32> Schedule::RunOrder() const
     {
         std::vector<uint32> order = RunOrder(UpdateRate::Fixed);
-        const std::vector<uint32> frame = RunOrder(UpdateRate::Frame);
+        const std::vector<uint32> frame = RunOrder(UpdateRate::Variable);
         order.insert(order.end(), frame.begin(), frame.end());
         return order;
     }

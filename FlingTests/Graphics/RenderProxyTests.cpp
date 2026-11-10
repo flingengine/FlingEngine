@@ -6,7 +6,7 @@
 #include "MeshProxyTable.h"
 #include "MeshRenderer.h"
 #include "RenderSnapshot.h"
-#include "Systems/ExtractSystem.h"
+#include "Systems/PublishSnapshotSystem.h"
 #include "Systems/TransformSystem.h"
 
 #include <catch2/catch_all.hpp>
@@ -26,17 +26,17 @@ namespace
         return item;
     }
 
-    /** A world with only Engine.Transform and Graphics.Extract. */
-    struct ExtractHarness
+    /** A world with only Engine.Transform and Graphics.PublishSnapshot. */
+    struct PublishHarness
     {
         EntityStorage Storage;
         SystemRegistry Systems;
         std::unique_ptr<SystemRunner> Runner;
 
-        ExtractHarness()
+        PublishHarness()
         {
             Systems.Add<TransformSystem>();
-            Systems.Add<ExtractSystem>();
+            Systems.Add<PublishSnapshotSystem>();
             ScheduleResult schedule = Systems.BuildSchedule();
             REQUIRE(schedule.ErrorReport() == "");
             SystemRunnerConfig config;
@@ -45,9 +45,9 @@ namespace
             Runner->Create();
         }
 
-        ~ExtractHarness() { Runner->Destroy(); }
+        ~PublishHarness() { Runner->Destroy(); }
 
-        /** One fixed tick (Engine.Transform) and the frame systems (Graphics.Extract). */
+        /** One fixed tick (Engine.Transform) and the variable rate systems (Graphics.PublishSnapshot). */
         const RenderSnapshot& Frame()
         {
             Runner->RunTick(WorldRole::Play);
@@ -98,7 +98,7 @@ TEST_CASE("MeshProxyTable adds, changes, and removes proxies", "[graphics][proxy
 
 TEST_CASE("Destroying an entity with a MeshRenderer releases its proxy slot", "[graphics][proxy]")
 {
-    ExtractHarness h;
+    PublishHarness h;
     const Entity kept = h.Storage.Create();
     h.Storage.Add<Transform>(kept, Transform{glm::vec3(1.0f, 2.0f, 3.0f)});
     h.Storage.Add<MeshRenderer>(kept, MeshRenderer("Models/cube.obj"));
@@ -122,9 +122,9 @@ TEST_CASE("Destroying an entity with a MeshRenderer releases its proxy slot", "[
     REQUIRE(proxies.SlotOf(kept.ToBits()) != MeshProxyTable::InvalidSlot);
 }
 
-TEST_CASE("An entity made after the last tick is drawn in its world place in the same frame", "[graphics][extract]")
+TEST_CASE("An entity made after the last tick is drawn in its world place in the same frame", "[graphics][publish]")
 {
-    ExtractHarness h;
+    PublishHarness h;
     const Entity parent = h.Storage.Create(Transform{glm::vec3(10.0f, 0.0f, 0.0f)});
     h.Frame();
 
@@ -144,9 +144,9 @@ TEST_CASE("An entity made after the last tick is drawn in its world place in the
     REQUIRE(h.Storage.Has<LocalToWorld>(child));
 }
 
-TEST_CASE("Extract copies world matrices and lights into the snapshot", "[graphics][extract]")
+TEST_CASE("Graphics.PublishSnapshot copies world matrices and lights into the snapshot", "[graphics][publish]")
 {
-    ExtractHarness h;
+    PublishHarness h;
     const Entity parent = h.Storage.Create();
     h.Storage.Add<Transform>(parent, Transform{glm::vec3(10.0f, 0.0f, 0.0f)});
     const Entity mesh = h.Storage.Create();

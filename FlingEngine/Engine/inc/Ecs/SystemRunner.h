@@ -27,7 +27,7 @@ namespace Fling
 
     /**
      * Runs a schedule against one world's storage. Each frame, call RunFixed (zero or
-     * more simulation ticks), then any legacy update, then RunFrame (the frame phases).
+     * more simulation ticks), then any legacy update, then RunFrame (the variable rate phases).
      *
      * One system runs at a time, in schedule order. Each system has its own command
      * buffer, merged in schedule order at the end of the tick, so a parallel
@@ -74,7 +74,7 @@ namespace Fling
         /** Runs exactly one tick: every fixed phase in schedule order, then the deferred commands. */
         void RunTick(WorldRole role);
 
-        /** Writes RealFrameTime, then runs every frame phase in schedule order. */
+        /** Writes RealFrameTime, then runs every variable rate phase in schedule order. */
         void RunFrame(std::chrono::nanoseconds realDelta, WorldRole role);
 
         const Schedule& GetSchedule() const { return m_Schedule; }
