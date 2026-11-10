@@ -236,7 +236,11 @@ TEST_CASE("Destroy runs each Removed hook once in every order of the component t
 {
     // Destroy runs the hooks in the order of the type ids. Here the hook of the later type removes
     // the earlier type, whose hook already ran. (The test above is the other order.)
-    REQUIRE(Detail::ComponentIdOf<EdgeEarly>() < Detail::ComponentIdOf<EdgeLate>());
+    // Get the ids in separate statements: the operands of < have no set evaluation order, so
+    // one expression can give EdgeLate the lower id.
+    const auto earlyId = Detail::ComponentIdOf<EdgeEarly>();
+    const auto lateId = Detail::ComponentIdOf<EdgeLate>();
+    REQUIRE(earlyId < lateId);
 
     for (const bool sparseOwner : {false, true})
     {

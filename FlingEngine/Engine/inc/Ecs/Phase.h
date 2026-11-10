@@ -129,16 +129,19 @@ namespace Fling
      * one time when the simulation has its last state. One frame is Presentation,
      * Publish, Editor, after the ticks that were due.
      */
+    // clang-format off: clang-format puts the { of a designated initializer on the line of the name.
     namespace Phases
     {
         /** Turns this tick's input into InputState. */
-        inline constexpr PhaseInfo Input{
+        inline constexpr PhaseInfo Input
+        {
             .Name = "Engine.Input",
             .UpdateRate = UpdateRate::Fixed,
         };
 
         /** Gameplay. */
-        inline constexpr PhaseInfo Simulation{
+        inline constexpr PhaseInfo Simulation
+        {
             .Name = "Engine.Simulation",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.Input",
@@ -149,14 +152,16 @@ namespace Fling
          * gameplay, which asks for forces, and before ResolveDeferred, so that its
          * consumers see the contacts of this tick.
          */
-        inline constexpr PhaseInfo Physics{
+        inline constexpr PhaseInfo Physics
+        {
             .Name = "Engine.Physics",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.Simulation",
         };
 
         /** Consumes the queues that Simulation appends to: spawns, damage, effects. */
-        inline constexpr PhaseInfo ResolveDeferred{
+        inline constexpr PhaseInfo ResolveDeferred
+        {
             .Name = "Engine.ResolveDeferred",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.Physics",
@@ -167,7 +172,8 @@ namespace Fling
          * comes from that state, such as LocalToWorld from Transform and Parent. They do
          * not change what the simulation decided.
          */
-        inline constexpr PhaseInfo Finalize{
+        inline constexpr PhaseInfo Finalize
+        {
             .Name = "Engine.Finalize",
             .UpdateRate = UpdateRate::Fixed,
             .After = "Engine.ResolveDeferred",
@@ -177,27 +183,31 @@ namespace Fling
          * Frame rate work for what the player sees and hears: camera smoothing,
          * interpolation, UI. Its systems write components of ComponentDomain::Presentation.
          */
-        inline constexpr PhaseInfo Presentation{
+        inline constexpr PhaseInfo Presentation
+        {
             .Name = "Engine.Presentation",
             .UpdateRate = UpdateRate::Variable,
         };
 
         /** Gives the renderer its copy of the world (RenderSnapshot). The renderer reads nothing else. */
-        inline constexpr PhaseInfo Publish{
+        inline constexpr PhaseInfo Publish
+        {
             .Name = "Engine.Publish",
             .UpdateRate = UpdateRate::Variable,
             .After = "Engine.Presentation",
         };
 
         /** Editor tools, last in the frame. */
-        inline constexpr PhaseInfo Editor{
+        inline constexpr PhaseInfo Editor
+        {
             .Name = "Engine.Editor",
             .UpdateRate = UpdateRate::Variable,
             .After = "Engine.Publish",
         };
 
         /** Every engine phase, so that a schedule always has the anchors, even with no systems in them. */
-        inline constexpr std::array<const PhaseInfo*, 8> All{
+        inline constexpr std::array<const PhaseInfo*, 8> All
+        {
             &Input,
             &Simulation,
             &Physics,
@@ -208,6 +218,7 @@ namespace Fling
             &Editor,
         };
     } // namespace Phases
+    // clang-format on
 
     /** The job of a world. A bit mask: a system's RunIn says which roles it runs in. */
     enum class WorldRole : uint8
