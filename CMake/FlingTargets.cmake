@@ -63,7 +63,7 @@ function(fling_configure_target TARGET)
 	)
 
 	if(MSVC)
-		# NOMINMAX: Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
+		# NOMINMAX: windows.h min and max macros break std::min and std::max
 		target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
 	endif()
 
@@ -77,5 +77,22 @@ endfunction()
 function(fling_set_bin_output TARGET)
 	set_target_properties(${TARGET} PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
+endfunction()
+
+# Checks a game's ECS system schedule after each build: runs the game headless
+# with --validate-schedule, so a schedule error (two unordered writers, a cycle,
+# a bad After name) fails `cmake --build` before anyone runs the game
+# (Plans/ecs-systems.md section 3.6). Turn it off with -DFLING_VALIDATE_SCHEDULE=OFF.
+option(FLING_VALIDATE_SCHEDULE "Check the ECS system schedule after building a game" ON)
+function(fling_validate_schedule TARGET)
+	if(NOT FLING_VALIDATE_SCHEDULE)
+		return()
+	endif()
+	add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND $<TARGET_FILE:${TARGET}> --null-render --unattended --validate-schedule
+		WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+		COMMENT "Checking the ECS system schedule of ${TARGET}"
+		VERBATIM
 	)
 endfunction()

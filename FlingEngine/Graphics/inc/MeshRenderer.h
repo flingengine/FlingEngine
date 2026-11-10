@@ -1,79 +1,36 @@
 #pragma once
 
-#include "JsonArchive.h"
+#include "Components/Transform.h"
+#include "Ecs/Component.h"
 #include "Strings/String.h"
 
-#include <entt/entity/registry.hpp>
+#include <utility>
 
 namespace Fling
 {
-    class Model;
-    class Material;
-    class Buffer;
-
+    /**
+     * A mesh to draw at the entity's world matrix. Authored data only: the asset
+     * paths. The renderer keeps the GPU side (the model, material, uniform buffer,
+     * and descriptor set) in its own proxy, made from the RenderSnapshot.
+     */
     struct MeshRenderer
     {
-        /**
-         * GPU descriptor for this mesh. Defined in the Graphics module so this
-         * header does not name a Vulkan handle.
-         */
-        struct GpuState;
+        static constexpr ComponentInfo Component{.Name = "MeshRenderer"};
 
-        /** Default constructor. */
-        MeshRenderer();
+        /** A mesh is drawn at its entity's Transform */
+        using Requires = TypeList<Transform>;
 
-        /** Load a mesh renderer with the default material */
-        MeshRenderer(StringView t_MeshPath);
+        MeshRenderer() = default;
 
-        MeshRenderer(StringView t_MeshPath, StringView t_MaterialPath);
+        explicit MeshRenderer(String t_Mesh, String t_Material = {})
+            : Mesh(std::move(t_Mesh)), Material(std::move(t_Material))
+        {
+        }
 
-        /**
-         * Create a mesh renderer with the given material and model.
-         * If the material is null than it will load the default material
-         */
-        MeshRenderer(Model* t_Model, Material* t_Mat = nullptr);
+        /** The model, relative to the assets folder. Empty draws nothing. */
+        String Mesh;
 
-        /**
-         * Copy the model and the material only. The copy does not own the uniform buffer.
-         */
-        MeshRenderer(const MeshRenderer& t_Other);
-        MeshRenderer& operator=(const MeshRenderer& t_Other);
-
-        MeshRenderer(MeshRenderer&& t_Other) noexcept;
-        MeshRenderer& operator=(MeshRenderer&& t_Other) noexcept;
-
-        /**
-         * Free the uniform buffer. The model and the material stay with the resource manager.
-         */
-        ~MeshRenderer();
-
-        /** Pointer to the actual model  */
-        Model* m_Model = nullptr;
-
-        /** Pointer to the material that this mesh renderer uses */
-        Material* m_Material = nullptr;
-
-        /** We need a uniform buffer per-swap chain image */
-        Buffer* m_UniformBuffer = nullptr;
-
-        /** Descriptor set for this mesh. Null until the renderer allocates it. */
-        GpuState* m_GpuState = nullptr;
-
-        void Release();
-
-        bool operator==(const MeshRenderer& other) const;
-        bool operator!=(const MeshRenderer& other) const;
-
-        void Serialize(JsonArchive& Ar);
-
-        void LoadModelFromPath(StringView t_MeshPath);
-
-        void LoadMaterialFromPath(StringView t_MatPath);
-
-        /** Asset path of the assigned model, or an empty string when none is set. */
-        String GetModelPath() const;
-
-        /** Asset path of the assigned material, or an empty string when none is set. */
-        String GetMaterialPath() const;
+        /** The material, relative to the assets folder. Empty uses the default material. */
+        String Material;
     };
 } // namespace Fling

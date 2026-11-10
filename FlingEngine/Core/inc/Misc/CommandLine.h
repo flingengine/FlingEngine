@@ -15,25 +15,26 @@
 namespace Fling
 {
     /**
-    * Holds onto the command line arguments passed to this application
-    * Can be used to parse arguments into different types
-    * 
-    * The syntax for specifying a command line argument is a key-value pair with a "-".
-    * For example, to specify the "foo" option with a value of 7, you could use:
-    * 
-    *   -foo=7
-    *
-    * on the command line. A key with two dashes and no "=" takes the next
-    * argument as its value, if that argument does not start with "-":
-    *
-    *   --frames 300
-    *
-    * A key with no value, for example "-BoolFlag", has the value "true".
-    */
+     * Holds onto the command line arguments passed to this application
+     * Can be used to parse arguments into different types
+     *
+     * The syntax for specifying a command line argument is a key-value pair with a "-".
+     * For example, to specify the "foo" option with a value of 7, you could use:
+     *
+     *   -foo=7
+     *
+     * on the command line. A key with two dashes and no "=" takes the next
+     * argument as its value, if that argument does not start with "-":
+     *
+     *   --frames 300
+     *
+     * A key with no value, for example "-BoolFlag", has the value "true".
+     */
     class CommandLine
     {
     public:
-        /** Maximum length, in characters, that a single command line argument may be. Any argument longer than this is ignored. */
+        /** Maximum length, in characters, that a single command line argument may be. Any argument longer than this is
+         * ignored. */
         static constexpr std::size_t MaxArgLength = 256;
 
         /**
@@ -42,14 +43,14 @@ namespace Fling
         static CommandLine& Get();
 
         /**
-        * Initalize the command line instance with the given application args.
-        * This will initalize the command line's internal data structure for keepting
-        * track of the data passed into the command line
-        *
-        * @paran ArgC   The number of command line arguements provided
-        * @param ArgV   The char values of those command line arguments
-        * @return True if successfully initalized
-        */
+         * Initalize the command line instance with the given application args.
+         * This will initalize the command line's internal data structure for keepting
+         * track of the data passed into the command line
+         *
+         * @paran ArgC   The number of command line arguements provided
+         * @param ArgV   The char values of those command line arguments
+         * @return True if successfully initalized
+         */
         bool Init(const int32 Argc, const char* ArgV[]);
 
         /**
@@ -65,7 +66,7 @@ namespace Fling
          * If the value as not specified on the command line,
          * then the given "Default" value will be returned.
          */
-        template<typename T>
+        template <typename T>
         T GetValueAs(const StringView Param, const T& Default) const;
 
         /**
@@ -100,7 +101,6 @@ namespace Fling
         bool LoadConfigVarsFromString(const StringView IniContent);
 
     private:
-
         /** Looks up a param, checking command line values before config file (ConsoleVariables) values. */
         const String* FindValue(const StringView Param) const;
 
@@ -109,11 +109,12 @@ namespace Fling
         /** Key/value pairs parsed out of the command line, e.g. "-foo=7" becomes ParsedArgs["foo"] = "7" */
         std::unordered_map<String, String> ParsedArgs;
 
-        /** Key/value pairs parsed out of a config file's "[ConsoleVariables]" section. Lower priority than ParsedArgs. */
+        /** Key/value pairs parsed out of a config file's "[ConsoleVariables]" section. Lower priority than ParsedArgs.
+         */
         std::unordered_map<String, String> ConfigArgs;
     };
 
-    template<typename T>
+    template <typename T>
     T CommandLine::GetValueAs(const StringView Param, const T& Default) const
     {
         const String* Value = FindValue(Param);
@@ -126,4 +127,4 @@ namespace Fling
 
         return StringUtils::ParseAs<T>(*Value, Default);
     }
-}   // namespace Fling
+} // namespace Fling

@@ -571,6 +571,131 @@ Rules for this:
   need `InternalImGui::SetImGuiCallbacks` from inside the input
   implementation.
 
+### Readers on more than one clock
+
+Input is not polled by a phase. The input thread reads the devices and pushes
+timestamped messages into one queue. Each clock that needs input has its own
+`InputMessageProcessor`:
+
+| Reader | Thread | Rate | Gives | Can change sim state |
+|---|---|---|---|---|
+| `Engine.Input` (fixed phase) | Game | Fixed tick | `TickInput`, then `InputState` | Yes. It is the only reader that can |
+| `Engine.FrameInput` (frame phase) | Game | Game frame | `FrameInputState`, a `Presentation` singleton | No |
+| Render-side late input | Render | Render frame | Late look and predicted cosmetic events | No |
+| ImGui and the editor | Main | Main frame | ImGui IO | No (edits are commands) |
+| Recorder | Input | Every message | The event log | No |
+
+- **No second fixed reader.** A fixed system gets input only from `InputState`,
+  so a replay gives the same result.
+- **`FrameInputState`** is for game-thread frame systems: game UI hover, and
+  debug cameras. It is a `Presentation` component, so the existing rule ("a
+  fixed rate system cannot read a Presentation component") stops simulation
+  code from reading it. The compiler checks that rule already.
+- **Render-side readers never read the world.** After the thread split, they
+  see only `RenderSnapshot`s and the queue. Before the split, the same reader
+  runs on the main thread just before the frame is drawn.
+
+### Late input handlers
+
+The render side applies input in **late input handlers**. Camera look is the
+first one. A game can add its own. Each handler is a pure function:
+
+```cpp
+// Graphics. Called on the render thread, once per frame, as late as possible:
+// after the swap chain image is acquired, before the camera UBO is written.
+struct LateInputContext
+{
+    const RenderSnapshot& Latest;                 // Newest snapshot, with LastInputSequence
+    std::span<const InputMessage> Pending;        // Messages after Latest.LastInputSequence, up to now
+    int64 NowNs;
+};
+
+using LateInputHandler = void (*)(const LateInputContext& context, LateInputOutput& out);
+```
+
+- A handler has no state. It computes its result from the latest snapshot
+  and the pending messages every frame, for the same reasons as late look
+  ("Why from scratch", above). When a newer snapshot comes, the pending list
+  gets shorter, and nothing is counted twice.
+- A handler writes only render-side data (`LateInputOutput`: the view, and
+  cosmetic events to start or cancel). It cannot write sim state, and it
+  cannot make a message that the simulation reads.
+- The data a handler needs from the simulation (`SimView`, `LookScale`, a
+  `CanFire` hint) is written to the snapshot by an `Extract` system. A handler
+  never asks the simulation directly.
+
+### Predicted cosmetic events (muzzle flash)
+
+Late look corrects itself, because the next snapshot has the true view. A
+muzzle flash is different: it is an **event** that the render side predicts,
+and the simulation can reject it (no ammo, stunned, dead, the weapon not
+ready). The render side must be able to take it back.
+
+1. **The simulation publishes what the render side needs to predict.** An
+   `Extract` system writes a `CanFire` hint for each local weapon into the
+   snapshot, from sim state (ammo, cooldown, state). With the hint, the
+   prediction is correct almost every time.
+2. **The render side predicts on the press.** The fire handler finds a fire
+   press in `Pending` (after `LastInputSequence`). If `CanFire` is true, it
+   starts the flash and remembers the message's `Sequence`. A handler has no
+   state, so the list of started effects is kept by the effect system, keyed
+   by `(weapon, sequence)`. The handler only says "start" for a sequence that
+   is not in the list.
+3. **The simulation says what happened, by sequence.** When a tick uses a fire
+   press, it writes a `FireResult{weapon, sequence, fired}` to the snapshot.
+   `TickInput` keeps the `Sequence` of each press, so the simulation knows
+   which message caused the shot.
+4. **The render side reconciles when the snapshot covers the press.** When
+   `Latest.LastInputSequence >= sequence`:
+   - **Fired:** the flash is already playing. The simulation's own effect for
+     that shot is skipped, so it does not play twice.
+   - **Not fired:** the render side cancels the flash (fade it in one frame).
+     A flash lasts about 50 ms, so a cancel is almost never seen.
+   - **No result** (the press was dropped by a hitch, or a context took it):
+     treat it as not fired.
+5. **Audio follows the same rules** on the audio thread. A sound that is
+   cancelled stops with a short fade, not a cut.
+
+Rules:
+
+- **Only short cosmetic effects are predicted:** flash, shell eject, the start
+  of a fire sound, camera kick. Tracers, impacts, decals, and hit markers come
+  from the simulation, because they depend on what was hit.
+- **Recoil is in `SimView`**, so the camera does not predict it. Camera kick
+  is a cosmetic offset on top, and it is cancelled with the flash.
+- **Replays work without change.** Playback devices push into the same queue,
+  so a replay predicts and reconciles the same way.
+- **Networked play** uses the same path. The client simulation is the
+  authority for its own prediction. A server rejection is a rollback, and
+  rollback replaces the `FireResult`.
+
+### What exists today
+
+- The only camera is `FirstPersonCamera` (Engine), a fly camera that
+  `VulkanApp` updates each frame on the main thread from the global `Input`.
+  It already reads input at frame rate, with no tick between, so it has the
+  lowest latency today. It is a debug and editor camera, not a game camera.
+- There is no camera in the simulation, and `TickInput` does not keep the
+  `Sequence` of the last message it used. Late look needs both.
+
+Work, in order:
+
+1. `TickInput::LastSequence`, and the `Sequence` of each press. The builder
+   sets them.
+2. A sim camera: a `CameraView` component (yaw, pitch, `LookScale`,
+   `LateLook`) on an entity with a `Transform`, and `Engine.CameraLook`, a
+   fixed system that applies the look input in `InputState` with `LookUtil`.
+3. `Graphics.Extract` writes the active camera and `LastInputSequence` to the
+   `RenderSnapshot`.
+4. The late input handler list in Graphics, and the late look handler. Before
+   the thread split, it runs on the main thread, before the camera UBO is
+   written. The renderer uses the snapshot camera when there is one, and
+   `FirstPersonCamera` when there is not (the editor, and levels with no game
+   camera).
+5. `Engine.FrameInput` and `FrameInputState`, when a frame system needs input.
+6. Predicted cosmetic events: `CanFire`, `FireResult`, and the reconcile step.
+   This waits for a weapon in a game.
+
 ### Haptics
 
 - Rumble is output, but it follows the same rules as audio in
@@ -659,11 +784,11 @@ on every CI platform.
 | Phase | Work | Depends on |
 |-------|------|------------|
 | **I1** | **In progress.** Device layer (`InputDevice`, `InputDeviceFactory`, `InputDeviceId`), `InputKey`, `InputMessage` (with scancodes, `KeyRepeat`, `Char`, integer mouse counts), `InputMessageQueue` with copying `Read`, `InputMessageHandler`, `InputMessageProcessor` with its own `InputDeviceStates`. `GlfwInputDeviceInterface` with callbacks replaces `WindowsInput` and `LinuxInput`. `VirtualInputDeviceInterface`. The old static `Input` is removed, with no shim. One thread. See [Phase I1 status](#phase-i1-status) | `PlatformTime` from `improve-time.md` T1 (not yet; `InputNowNs()` is used) |
-| **I2** | `TickInput` builder with edge counts and the tick assignment rules (late arrival, hitch, pause). `InputState` | `improve-time.md` T3 |
+| **I2** | `TickInput` builder with edge counts and the tick assignment rules (late arrival, hitch, pause). `InputState`. **Started:** `TickInputBuilder` (Core) and the `InputState` singleton and `Engine.Input` system exist (`ecs-systems.md` item 6). Each fixed tick takes every message that no earlier tick took. Tick assignment by time, hitch, and pause rules are still to do | `improve-time.md` T3 |
 | **I3** | Event log and `TickInput` log record and replay (`VirtualInputDeviceInterface` exists from I1). Event log record and replay is done (`Skills/input-playback.md`). The `TickInput` log is still to do | I2. Phase B in `improve-ai-iteration.md` |
 | **I4** | Gamepad support, polled by deadline at `input.poll_hz`. Raw mouse motion and cursor capture requests | I1 |
 | **I5** | Input context stack, with ImGui capture flags. UI commands into `TickCommands`. Systems read `InputState`. ImGui and the editor get their own reader | I2, `ecs-plan.md` systems |
-| **Later** | Main thread becomes the input thread. Render-side late look and UI hover. Local player slots. Chords and input buffers. Rumble. A Raw Input or GameInput backend if timestamps need to be better | Game and render threads from `improve-time.md` |
+| **Later** | Main thread becomes the input thread. Render-side late look and UI hover, late input handlers, and predicted cosmetic events (see [What exists today](#what-exists-today) for the order). Local player slots. Chords and input buffers. Rumble. A Raw Input or GameInput backend if timestamps need to be better | Game and render threads from `improve-time.md` |
 
 ### Phase I1 status
 
@@ -723,5 +848,10 @@ Not done:
 - Action mapping: hard-coded per game at first, or a config file from the
   start?
 - Should the render-side late look be on by default, or opt-in per camera?
+- Does the sim camera replace `FirstPersonCamera` in Sandbox, or does
+  `FirstPersonCamera` stay as the editor and debug camera, used when a level
+  has no game camera?
+- Should a game be able to add late input handlers from a feature, or only
+  from Graphics?
 - Chords: delay single-button actions, or let the chord cancel them? This can
   be per game.

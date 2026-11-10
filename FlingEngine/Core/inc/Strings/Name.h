@@ -122,7 +122,10 @@ namespace Fling
          * up text that may not be a name (user input, a key read from a file), so that
          * text that is not found does not stay in the table.
          */
-        static constexpr Name WithoutText(const StringView t_Text) { return FromHash(t_Text.empty() ? 0 : HashText(t_Text)); }
+        static constexpr Name WithoutText(const StringView t_Text)
+        {
+            return FromHash(t_Text.empty() ? 0 : HashText(t_Text));
+        }
 
         /**
          * The Name of a hash read from binary data. It does not add text: the data

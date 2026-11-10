@@ -11,232 +11,238 @@
 
 namespace Fling
 {
-	std::shared_ptr<Fling::Model> Model::Create(const AssetPath& t_Path)
-	{
-		return ResourceManager::LoadResource<Model>(t_Path);
-	}
+    std::shared_ptr<Fling::Model> Model::Create(const AssetPath& t_Path)
+    {
+        return ResourceManager::LoadResource<Model>(t_Path);
+    }
 
-	std::shared_ptr<Fling::Model> Model::Quad()
-	{
-		std::vector<Vertex> Verts;
+    std::shared_ptr<Fling::Model> Model::Quad()
+    {
+        std::vector<Vertex> Verts;
 
-		float x = 0.0f;
-		float y = 0.0f;
+        float x = 0.0f;
+        float y = 0.0f;
 
-		//for (uint32 i = 0; i < 3; i++)
-		{
-			Vertex v0 = {};
-			v0.Pos = {x+1.0f, y+1.0f, 0.0f};
-			v0.TexCoord = {1.0f, 1.0f};
-			v0.Color = {1.0f, 1.0f, 1.0f };
-			v0.Normal = { 0.0f, 0.0f, (float)1.0f };
+        // for (uint32 i = 0; i < 3; i++)
+        {
+            Vertex v0 = {};
+            v0.Pos = {x + 1.0f, y + 1.0f, 0.0f};
+            v0.TexCoord = {1.0f, 1.0f};
+            v0.Color = {1.0f, 1.0f, 1.0f};
+            v0.Normal = {0.0f, 0.0f, (float)1.0f};
 
-			Vertex v1 = {};
-			v1.Pos = { x,      y + 1.0f, 0.0f };
-			v1.TexCoord = { 0.0f, 1.0f };
-			v1.Color = { 1.0f, 1.0f, 1.0f };
-			v1.Normal = { 0.0f, 0.0f, (float)1.0f };
+            Vertex v1 = {};
+            v1.Pos = {x, y + 1.0f, 0.0f};
+            v1.TexCoord = {0.0f, 1.0f};
+            v1.Color = {1.0f, 1.0f, 1.0f};
+            v1.Normal = {0.0f, 0.0f, (float)1.0f};
 
-			Vertex v2 = {};
-			v2.Pos = { x,      y,      0.0f };
-			v2.TexCoord = { 0.0f, 0.0f };
-			v2.Color = { 1.0f, 1.0f, 1.0f };
-			v2.Normal = { 0.0f, 0.0f, (float)1.0f };
+            Vertex v2 = {};
+            v2.Pos = {x, y, 0.0f};
+            v2.TexCoord = {0.0f, 0.0f};
+            v2.Color = {1.0f, 1.0f, 1.0f};
+            v2.Normal = {0.0f, 0.0f, (float)1.0f};
 
-			Vertex v3 = {};
-			v3.Pos = { x+1.0f, y,      0.0f };
-			v3.TexCoord = { 1.0f, 0.0f };
-			v3.Color = { 1.0f, 1.0f, 1.0f };
-			v3.Normal = { 0.0f, 0.0f, (float)1.0f };
+            Vertex v3 = {};
+            v3.Pos = {x + 1.0f, y, 0.0f};
+            v3.TexCoord = {1.0f, 0.0f};
+            v3.Color = {1.0f, 1.0f, 1.0f};
+            v3.Normal = {0.0f, 0.0f, (float)1.0f};
 
-			Verts.push_back(v0);
-			Verts.push_back(v1);
-			Verts.push_back(v2);
-			Verts.push_back(v3);
+            Verts.push_back(v0);
+            Verts.push_back(v1);
+            Verts.push_back(v2);
+            Verts.push_back(v3);
 
-			x += 1.0f;
-			if (x > 1.0f)
-			{
-				x = 0.0f;
-				y += 1.0f;
-			}
-		}
+            x += 1.0f;
+            if (x > 1.0f)
+            {
+                x = 0.0f;
+                y += 1.0f;
+            }
+        }
 
-		//std::vector<uint32> indexBuffer = { 0,1,2, 2,3,0 };
-		std::vector<uint32> indexBuffer = { 2,3,0  ,0,1,2  };
+        // std::vector<uint32> indexBuffer = { 0,1,2, 2,3,0 };
+        std::vector<uint32> indexBuffer = {2, 3, 0, 0, 1, 2};
 
-		/*for (uint32 i = 0; i < 3; ++i)
-		{
-			uint32 indices[6] = { 0,1,2, 2,3,0 };
-			for (uint32 index : indices)
-			{
-				indexBuffer.push_back(i * 4 + index);
-			}
-		}*/
+        /*for (uint32 i = 0; i < 3; ++i)
+        {
+            uint32 indices[6] = { 0,1,2, 2,3,0 };
+            for (uint32 index : indices)
+            {
+                indexBuffer.push_back(i * 4 + index);
+            }
+        }*/
 
-		return ResourceManager::LoadResource<Model>(AssetPath("Fling_Primative_QUAD"), Verts, indexBuffer);
-	}
+        return ResourceManager::LoadResource<Model>(AssetPath("Fling_Primative_QUAD"), Verts, indexBuffer);
+    }
 
-	Model::Model(const AssetPath& t_Path)
-		: Resource(t_Path)
-	{
-		LoadModel();
-	}
+    Model::Model(const AssetPath& t_Path) : Resource(t_Path)
+    {
+        LoadModel();
+    }
 
-	Model::Model(const AssetPath& t_Path, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies)
-		: Resource(t_Path)
-	{
-		m_Verts = t_Verts;
-		m_Indices = t_Indecies;
+    Model::Model(const AssetPath& t_Path, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies)
+        : Resource(t_Path)
+    {
+        m_Verts = t_Verts;
+        m_Indices = t_Indecies;
 
-		CalculateVertexTangents(m_Verts.data(), static_cast<uint32>(m_Verts.size()), m_Indices.data(), static_cast<uint32>(m_Indices.size()));
-		CreateBuffers();
-	}
+        CalculateVertexTangents(m_Verts.data(),
+                                static_cast<uint32>(m_Verts.size()),
+                                m_Indices.data(),
+                                static_cast<uint32>(m_Indices.size()));
+        CreateBuffers();
+    }
 
-	Model::~Model()
-	{
-		// #TODO Make the buffer allocations from a pool allocator instead of new's and deletes
-		delete m_VertexBuffer;
-		delete m_IndexBuffer;
-	}
+    Model::~Model()
+    {
+        // #TODO Make the buffer allocations from a pool allocator instead of new's and deletes
+        delete m_VertexBuffer;
+        delete m_IndexBuffer;
+    }
 
-	void Model::LoadModel()
-	{
-		const String FilePath = GetFilepathReleativeToAssets();
-		tinyobj::attrib_t attrib;
-		std::vector<tinyobj::shape_t> shapes;
-		std::vector<tinyobj::material_t> materials;
-		String warn;
-		String err;
+    void Model::LoadModel()
+    {
+        const String FilePath = GetFilepathReleativeToAssets();
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        String warn;
+        String err;
 
-		// Load the model from tiny obj
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, FilePath.c_str()))
-		{
-			F_LOG_ERROR("Failed to load model: {} {}", warn, err);
-			
-			return;
-		}
+        // Load the model from tiny obj
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, FilePath.c_str()))
+        {
+            F_LOG_ERROR("Failed to load model: {} {}", warn, err);
 
-		// Parse all shapes to get the verts and indecies of this object
-		for (const tinyobj::shape_t& shape : shapes)
-		{
-			for (const tinyobj::index_t& index : shape.mesh.indices) 
-			{
-				Vertex vertex = {};
-				vertex.Pos = 
-				{
-					attrib.vertices[3 * index.vertex_index + 0],
-					attrib.vertices[3 * index.vertex_index + 1],
-					attrib.vertices[3 * index.vertex_index + 2]
-				};
+            return;
+        }
 
-				vertex.Normal = 
-				{
-					attrib.normals[3 * index.normal_index + 0],
-					attrib.normals[3 * index.normal_index + 1],
-					attrib.normals[3 * index.normal_index + 2]
-				};
+        // Parse all shapes to get the verts and indecies of this object
+        for (const tinyobj::shape_t& shape : shapes)
+        {
+            for (const tinyobj::index_t& index : shape.mesh.indices)
+            {
+                Vertex vertex = {};
+                vertex.Pos = {attrib.vertices[3 * index.vertex_index + 0],
+                              attrib.vertices[3 * index.vertex_index + 1],
+                              attrib.vertices[3 * index.vertex_index + 2]};
 
-				vertex.TexCoord = 
-				{
-					attrib.texcoords[2 * index.texcoord_index + 0],
-					attrib.texcoords[2 * index.texcoord_index + 1]
-				};
+                vertex.Normal = {attrib.normals[3 * index.normal_index + 0],
+                                 attrib.normals[3 * index.normal_index + 1],
+                                 attrib.normals[3 * index.normal_index + 2]};
 
-				vertex.Color = { 1.0f, 1.0f, 1.0f };
+                vertex.TexCoord = {attrib.texcoords[2 * index.texcoord_index + 0],
+                                   attrib.texcoords[2 * index.texcoord_index + 1]};
 
-				m_Verts.push_back(vertex);
-				m_Indices.push_back(m_Indices.size());
-			}
-		}
+                vertex.Color = {1.0f, 1.0f, 1.0f};
 
-		// Calculate our tangent vectors for this model
-		CalculateVertexTangents(m_Verts.data(), static_cast<uint32>(m_Verts.size()), m_Indices.data(), static_cast<uint32>(m_Indices.size()));
+                m_Verts.push_back(vertex);
+                m_Indices.push_back(m_Indices.size());
+            }
+        }
 
-		CreateBuffers();
-	}
+        // Calculate our tangent vectors for this model
+        CalculateVertexTangents(m_Verts.data(),
+                                static_cast<uint32>(m_Verts.size()),
+                                m_Indices.data(),
+                                static_cast<uint32>(m_Indices.size()));
 
-	void Model::CreateBuffers()
-	{
-		// Under --null-render there is no GPU device. Keep the CPU vertex and index data only.
-		if (!VulkanApp::Get().HasDevice())
-		{
-			return;
-		}
+        CreateBuffers();
+    }
 
-		// Create vertex buffer
-		VkDeviceSize VertBufferSize = sizeof(m_Verts[0]) * m_Verts.size();
-		// We use a staging buffer to get to a more optimial memory layout for the GPU
-		Buffer VertexStagingBuffer(VertBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Verts.data());
-		m_VertexBuffer = new Buffer(VertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		Buffer::CopyBuffer(&VertexStagingBuffer, m_VertexBuffer, VertBufferSize);
+    void Model::CreateBuffers()
+    {
+        // Under --null-render there is no GPU device. Keep the CPU vertex and index data only.
+        if (!VulkanApp::Get().HasDevice())
+        {
+            return;
+        }
 
-		// Create Index buffer
-		VkDeviceSize IndexBufferSize = sizeof(m_Indices[0]) * GetIndexCount();
-		Buffer IndexStagingBuffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Indices.data());
-		m_IndexBuffer = new Buffer(IndexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		Buffer::CopyBuffer(&IndexStagingBuffer, m_IndexBuffer, IndexBufferSize);
-	}
+        // Create vertex buffer
+        VkDeviceSize VertBufferSize = sizeof(m_Verts[0]) * m_Verts.size();
+        // We use a staging buffer to get to a more optimial memory layout for the GPU
+        Buffer VertexStagingBuffer(VertBufferSize,
+                                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                   m_Verts.data());
+        m_VertexBuffer = new Buffer(VertBufferSize,
+                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Buffer::CopyBuffer(&VertexStagingBuffer, m_VertexBuffer, VertBufferSize);
 
-	void Model::CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices)
-	{
-		// Calculate tangents one whole triangle at a time
-		for ( size_t i = 0; i < numVerts;)
-		{
-			// Grab indices and vertices of first triangle
-			uint32 i1 = indices [ i++ ];
-			uint32 i2 = indices [ i++ ];
-			uint32 i3 = indices [ i++ ];
-			Vertex* v1 = &verts [ i1 ];
-			Vertex* v2 = &verts [ i2 ];
-			Vertex* v3 = &verts [ i3 ];
+        // Create Index buffer
+        VkDeviceSize IndexBufferSize = sizeof(m_Indices[0]) * GetIndexCount();
+        Buffer IndexStagingBuffer(IndexBufferSize,
+                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                  m_Indices.data());
+        m_IndexBuffer = new Buffer(IndexBufferSize,
+                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Buffer::CopyBuffer(&IndexStagingBuffer, m_IndexBuffer, IndexBufferSize);
+    }
 
-			// Calculate vectors relative to triangle positions
-			float x1 = v2->Pos.x - v1->Pos.x;
-			float y1 = v2->Pos.y - v1->Pos.y;
-			float z1 = v2->Pos.z - v1->Pos.z;
+    void Model::CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices)
+    {
+        // Calculate tangents one whole triangle at a time
+        for (size_t i = 0; i < numVerts;)
+        {
+            // Grab indices and vertices of first triangle
+            uint32 i1 = indices[i++];
+            uint32 i2 = indices[i++];
+            uint32 i3 = indices[i++];
+            Vertex* v1 = &verts[i1];
+            Vertex* v2 = &verts[i2];
+            Vertex* v3 = &verts[i3];
 
-			float x2 = v3->Pos.x - v1->Pos.x;
-			float y2 = v3->Pos.y - v1->Pos.y;
-			float z2 = v3->Pos.z - v1->Pos.z;
+            // Calculate vectors relative to triangle positions
+            float x1 = v2->Pos.x - v1->Pos.x;
+            float y1 = v2->Pos.y - v1->Pos.y;
+            float z1 = v2->Pos.z - v1->Pos.z;
 
-			// Do the same for vectors relative to triangle uv's
-			float s1 = v2->TexCoord.x - v1->TexCoord.x;
-			float t1 = v2->TexCoord.y - v1->TexCoord.y;
+            float x2 = v3->Pos.x - v1->Pos.x;
+            float y2 = v3->Pos.y - v1->Pos.y;
+            float z2 = v3->Pos.z - v1->Pos.z;
 
-			float s2 = v3->TexCoord.x - v1->TexCoord.x;
-			float t2 = v3->TexCoord.y - v1->TexCoord.y;
+            // Do the same for vectors relative to triangle uv's
+            float s1 = v2->TexCoord.x - v1->TexCoord.x;
+            float t1 = v2->TexCoord.y - v1->TexCoord.y;
 
-			// Create vectors for tangent calculation
-			float r = 1.0f / ( s1 * t2 - s2 * t1 );
+            float s2 = v3->TexCoord.x - v1->TexCoord.x;
+            float t2 = v3->TexCoord.y - v1->TexCoord.y;
 
-			float tx = ( t2 * x1 - t1 * x2 ) * r;
-			float ty = ( t2 * y1 - t1 * y2 ) * r;
-			float tz = ( t2 * z1 - t1 * z2 ) * r;
+            // Create vectors for tangent calculation
+            float r = 1.0f / (s1 * t2 - s2 * t1);
 
-			// Adjust tangents of each vert of the triangle
-			v1->Tangent.x += tx;
-			v1->Tangent.y += ty;
-			v1->Tangent.z += tz;
+            float tx = (t2 * x1 - t1 * x2) * r;
+            float ty = (t2 * y1 - t1 * y2) * r;
+            float tz = (t2 * z1 - t1 * z2) * r;
 
-			v2->Tangent.x += tx;
-			v2->Tangent.y += ty;
-			v2->Tangent.z += tz;
+            // Adjust tangents of each vert of the triangle
+            v1->Tangent.x += tx;
+            v1->Tangent.y += ty;
+            v1->Tangent.z += tz;
 
-			v3->Tangent.x += tx;
-			v3->Tangent.y += ty;
-			v3->Tangent.z += tz;
-		}
+            v2->Tangent.x += tx;
+            v2->Tangent.y += ty;
+            v2->Tangent.z += tz;
 
-		// Ensure all of the tangents are orthogonal to the normals
-		for ( size_t i = 0; i < numVerts; i++ )
-		{
-			// Tangent = Normal ( T - N * Dot( N, T ) )
-			glm::vec3 norm = verts [ i ].Normal;
-			glm::vec3 tan = verts [ i ].Tangent;
+            v3->Tangent.x += tx;
+            v3->Tangent.y += ty;
+            v3->Tangent.z += tz;
+        }
 
-			tan = glm::normalize( tan - norm * glm::dot( norm, tan ) );
-			verts [ i ].Tangent = tan;
-		}
-	}
-}	// namespace Fling
+        // Ensure all of the tangents are orthogonal to the normals
+        for (size_t i = 0; i < numVerts; i++)
+        {
+            // Tangent = Normal ( T - N * Dot( N, T ) )
+            glm::vec3 norm = verts[i].Normal;
+            glm::vec3 tan = verts[i].Tangent;
+
+            tan = glm::normalize(tan - norm * glm::dot(norm, tan));
+            verts[i].Tangent = tan;
+        }
+    }
+} // namespace Fling

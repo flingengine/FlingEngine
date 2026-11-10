@@ -17,6 +17,7 @@
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
 #include "RenderPipeline.h"
+#include "RenderSnapshot.h"
 #include "SkyboxSubpass.h"
 #include "Strings/String.h"
 #include "SwapChain.h"
@@ -31,8 +32,8 @@ namespace
 {
     [[noreturn]] void StopForMissingVulkan(const Fling::StringView t_Detail)
     {
-        const bool Untrusted =
-            t_Detail.find("not signed") != Fling::StringView::npos || t_Detail.find("not trusted") != Fling::StringView::npos;
+        const bool Untrusted = t_Detail.find("not signed") != Fling::StringView::npos ||
+                               t_Detail.find("not trusted") != Fling::StringView::npos;
         const char* Message = Untrusted ? "Vulkan loader was found, but its signature is not trusted"
                                         : "Vulkan runtime not found: install a GPU driver with Vulkan support";
         if (const auto Console = Fling::Logger::GetCurrentConsole())
@@ -109,7 +110,7 @@ namespace Fling
         return m_PhysicalDevice->GetDeviceProps().deviceName;
     }
 
-    void VulkanApp::Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
+    void VulkanApp::Init(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI)
     {
         // Open the loader before Prepare. Prepare calls glfwInit.
         String LoaderError;
@@ -366,7 +367,7 @@ namespace Fling
         bNeedsResizing = true;
     }
 
-    void VulkanApp::RecreateFrameResourcesForResize(entt::registry& t_Reg)
+    void VulkanApp::RecreateFrameResourcesForResize()
     {
         F_LOG_TRACE("Resizing the window!");
         if (!m_CurrentWindow->WaitForNewWindowSize())
@@ -384,7 +385,7 @@ namespace Fling
 
         for (RenderPipeline* Pipeline : m_RenderPipelines)
         {
-            Pipeline->OnSwapchainResized(t_Reg);
+            Pipeline->OnSwapchainResized();
         }
     }
 
@@ -412,7 +413,7 @@ namespace Fling
     }
 
     void VulkanApp::BuildRenderPipelines(PipelineFlags t_Conf,
-                                         entt::registry& t_Reg,
+                                         Fling::EntityStorage& t_Reg,
                                          std::shared_ptr<Fling::IDebugUI> t_DebugUI)
     {
         if (t_Conf & PipelineFlags::DEFERRED)
@@ -422,10 +423,12 @@ namespace Fling
 
             // Offscreen pipeline ------
             // These shaders have vertex input and fill in the buffers that the final pass uses
-            std::shared_ptr<Fling::Shader> OffscreenVert = Shader::Create(AssetPath("Deferred/mrt.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> OffscreenFrag = Shader::Create(AssetPath("Deferred/mrt.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenVert =
+                Shader::Create(AssetPath("Deferred/mrt.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> OffscreenFrag =
+                Shader::Create(AssetPath("Deferred/mrt.frag.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(
-                m_LogicalDevice, m_SwapChain, t_Reg, m_Camera, OffscreenVert, OffscreenFrag));
+                m_LogicalDevice, m_SwapChain, m_Camera, OffscreenVert, OffscreenFrag));
 
             // Create geometry pass ------
             // These shaders do not have any vertex input and do the final processing to the screen
@@ -455,18 +458,14 @@ namespace Fling
                     F_LOG_ERROR("Skybox {} did not load, so the DEFERRED render pipeline has no skybox", SkyboxPath);
                 }
             }
-            std::shared_ptr<Fling::Shader> GeomVert = Shader::Create(AssetPath("Deferred/deferred.vert.spv"), m_LogicalDevice);
-            std::shared_ptr<Fling::Shader> GeomFrag = Shader::Create(AssetPath("Deferred/deferred.frag.spv"), m_LogicalDevice);
-            Subpasses.emplace_back(std::make_unique<GeometrySubpass>(m_LogicalDevice,
-                                                                     m_SwapChain,
-                                                                     t_Reg,
-                                                                     m_State->m_RenderPass,
-                                                                     m_Camera,
-                                                                     OffscreenBuf,
-                                                                     GeomVert,
-                                                                     GeomFrag));
+            std::shared_ptr<Fling::Shader> GeomVert =
+                Shader::Create(AssetPath("Deferred/deferred.vert.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> GeomFrag =
+                Shader::Create(AssetPath("Deferred/deferred.frag.spv"), m_LogicalDevice);
+            Subpasses.emplace_back(std::make_unique<GeometrySubpass>(
+                m_LogicalDevice, m_SwapChain, m_State->m_RenderPass, m_Camera, OffscreenBuf, GeomVert, GeomFrag));
 
-            m_RenderPipelines.emplace_back(new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses));
+            m_RenderPipelines.emplace_back(new Fling::RenderPipeline(m_LogicalDevice, m_SwapChain, Subpasses));
         }
 
         if (t_Conf & PipelineFlags::REFLECTIONS)
@@ -481,11 +480,11 @@ namespace Fling
 
             std::shared_ptr<Fling::Shader> DebugVert = Shader::Create(AssetPath("Debug/debug.vert.spv"),
         m_LogicalDevice); std::shared_ptr<Fling::Shader> DebugFrag = Shader::Create(AssetPath("Debug/debug.frag.spv"),
-        m_LogicalDevice); Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain, t_Reg,
+        m_LogicalDevice); Subpasses.emplace_back(std::make_unique<DebugSubpass>(m_LogicalDevice, m_SwapChain,
         m_State->m_RenderPass, m_Camera, DebugVert, DebugFrag));
 
             m_RenderPipelines.emplace_back(
-                new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses)
+                new Fling::RenderPipeline(m_LogicalDevice, m_SwapChain, Subpasses)
             );
         }*/
 
@@ -505,15 +504,20 @@ namespace Fling
                                                                   ImGuiVert,
                                                                   ImGuiFrag));
 
-            m_RenderPipelines.emplace_back(new Fling::RenderPipeline(t_Reg, m_LogicalDevice, m_SwapChain, Subpasses));
+            m_RenderPipelines.emplace_back(new Fling::RenderPipeline(m_LogicalDevice, m_SwapChain, Subpasses));
 #else
             F_LOG_ERROR("IMGUI requested but failed because the CMake flag is not set!");
 #endif
         }
     }
 
-    void VulkanApp::Update(float DeltaTime, entt::registry& t_Reg)
+    void VulkanApp::Update(float DeltaTime, const Fling::EntityStorage& t_Reg)
     {
+        // The passes read only the snapshot that Graphics.PublishSnapshot wrote this frame
+        static const RenderSnapshot s_EmptySnapshot{};
+        const RenderSnapshot* SnapshotPtr = t_Reg.TryGetSingleton<RenderSnapshot>();
+        const RenderSnapshot& Snapshot = SnapshotPtr ? *SnapshotPtr : s_EmptySnapshot;
+
         // Prepare the frame for submission by waiting for the swap chain
         m_CurrentWindow->Update();
         m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
@@ -528,7 +532,7 @@ namespace Fling
         {
             F_LOG_WARN("Swap chain out of date! ");
             bNeedsResizing = false;
-            RecreateFrameResourcesForResize(t_Reg);
+            RecreateFrameResourcesForResize();
             return;
         }
 
@@ -585,7 +589,7 @@ namespace Fling
             // Build the command buffers of the render pipelines
             for (RenderPipeline* Pipeline : m_RenderPipelines)
             {
-                Pipeline->Draw(*CmdBuf, FrameBuf, ImageIndex, t_Reg, DeltaTime);
+                Pipeline->Draw(*CmdBuf, FrameBuf, ImageIndex, Snapshot, DeltaTime);
             }
 
             CmdBuf->EndRenderPass();
@@ -686,7 +690,7 @@ namespace Fling
         {
             // If result is out of date then signal for resize
             bNeedsResizing = false;
-            RecreateFrameResourcesForResize(t_Reg);
+            RecreateFrameResourcesForResize();
         }
         else if (iResult != VK_SUCCESS)
         {
@@ -697,7 +701,7 @@ namespace Fling
         CurrentFrameIndex = (CurrentFrameIndex + 1) % VkConfig::MAX_FRAMES_IN_FLIGHT;
     }
 
-    void VulkanApp::Shutdown(entt::registry& t_Reg)
+    void VulkanApp::ShutdownRenderer()
     {
         Singleton<VulkanApp>::Shutdown();
 
@@ -709,7 +713,7 @@ namespace Fling
         {
             if (pipeline)
             {
-                pipeline->CleanUp(t_Reg);
+                pipeline->CleanUp();
             }
 
             delete pipeline;

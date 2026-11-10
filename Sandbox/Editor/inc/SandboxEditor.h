@@ -10,14 +10,12 @@ namespace Sandbox
     public:
         SandboxEditor() = default;
         ~SandboxEditor() = default;
-    
-        virtual void Draw(entt::registry& t_Reg, float DeltaTime) override;
+
+        virtual void Draw(Fling::EntityStorage& t_Reg, float DeltaTime) override;
 
     protected:
+        void OnLoadLevel(Fling::String t_FileName) override;
 
-		void OnLoadLevel(Fling::String t_FileName) override;
-
-		void OnSaveLevel(Fling::String t_FileName) override;
-
+        void OnSaveLevel(Fling::String t_FileName) override;
     };
-}   // namespace Sandbox
+} // namespace Sandbox

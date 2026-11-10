@@ -18,6 +18,8 @@ namespace Fling
         constexpr StringView LogInputFlag = "log-input";
         constexpr StringView ReplayInputFlag = "replay-input";
         constexpr StringView RecordInputFlag = "record-input";
+        constexpr StringView DumpScheduleFlag = "dump-schedule";
+        constexpr StringView ValidateScheduleFlag = "validate-schedule";
         constexpr StringView LanguageFlag = "language";
         constexpr StringView LocExportFlag = "loc-export";
         constexpr StringView LocImportFlag = "loc-import";
@@ -70,11 +72,8 @@ namespace Fling
         }
 
         /** Read a flag that must be a whole number from 0 to the uint32 maximum. */
-        bool ReadUint32(const CommandLine& t_CmdLine,
-                        StringView t_Flag,
-                        uint32& t_Out,
-                        bool& t_OutFound,
-                        String& t_OutError)
+        bool
+        ReadUint32(const CommandLine& t_CmdLine, StringView t_Flag, uint32& t_Out, bool& t_OutFound, String& t_OutError)
         {
             t_OutFound = false;
 
@@ -90,8 +89,8 @@ namespace Fling
             if (Str.empty() || Error != std::errc() || End != Str.data() + Str.size() ||
                 Result > std::numeric_limits<uint32>::max())
             {
-                t_OutError = "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" +
-                             String(Str) + "'";
+                t_OutError =
+                    "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" + String(Str) + "'";
                 return false;
             }
 
@@ -112,6 +111,12 @@ namespace Fling
         }
 
         if (!ReadBool(t_CmdLine, UnattendedFlag, t_Out.Unattended, t_OutError))
+        {
+            return false;
+        }
+
+        if (!ReadBool(t_CmdLine, DumpScheduleFlag, t_Out.DumpSchedule, t_OutError) ||
+            !ReadBool(t_CmdLine, ValidateScheduleFlag, t_Out.ValidateSchedule, t_OutError))
         {
             return false;
         }

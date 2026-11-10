@@ -1,79 +1,49 @@
+#include "TransformUtil.h"
 
-#include "Components/Transform.h"
-
-namespace Fling
+namespace Fling::TransformUtil
 {
-    bool Transform::operator==(const Transform &other) const 
+    glm::mat4 LocalMatrix(const Transform& t_Transform)
     {
-        return m_Pos == other.m_Pos && m_Rotation == other.m_Rotation && m_Scale == other.m_Scale;
+        glm::mat4 Result = glm::translate(glm::mat4(1.0f), t_Transform.Position);
+        Result = Result * glm::mat4_cast(t_Transform.Rotation);
+        return glm::scale(Result, t_Transform.Scale);
     }
 
-    bool Transform::operator!=(const Transform &other) const 
+    glm::quat FromEulerDegrees(const glm::vec3& t_Degrees)
     {
-        return !(*this == other);
-    }
-    
-    std::ostream& operator<< (std::ostream& t_OutStream, const Fling::Transform& t_Transform)   
-    {
-        t_OutStream << "Pos (" << t_Transform.m_Pos.x << "," << t_Transform.m_Pos.y << "," << t_Transform.m_Pos.z << ")";
-        t_OutStream << ", Scale (" << t_Transform.m_Scale.x << "," << t_Transform.m_Scale.y << "," << t_Transform.m_Scale.z << ")";
-        t_OutStream << ", Rot (" << t_Transform.m_Rotation.x << "," << t_Transform.m_Rotation.y << "," << t_Transform.m_Rotation.z << ")";
-
-        return t_OutStream;
+        return glm::quat_cast(
+            glm::yawPitchRoll(glm::radians(t_Degrees.y), glm::radians(t_Degrees.x), glm::radians(t_Degrees.z)));
     }
 
-    glm::mat4 Transform::GetWorldMatrix() const
+    glm::vec3 ToEulerDegrees(const glm::quat& t_Rotation)
     {
-        // World = Scale * rot * pos
-        glm::mat4 worldMat = glm::identity<glm::mat4>();
-        worldMat = glm::translate( worldMat, m_Pos );
-        worldMat = worldMat * glm::yawPitchRoll(glm::radians(m_Rotation.y), glm::radians(m_Rotation.x), glm::radians(m_Rotation.z) );
-        worldMat = glm::scale( worldMat, m_Scale );
-
-        return worldMat;
+        // The inverse of yawPitchRoll(yaw, pitch, roll) = Ry(yaw) * Rx(pitch) * Rz(roll)
+        const glm::mat3 M = glm::mat3_cast(glm::normalize(t_Rotation));
+        float Yaw = 0.0f;
+        float Pitch = 0.0f;
+        float Roll = 0.0f;
+        glm::extractEulerAngleYXZ(glm::mat4(M), Yaw, Pitch, Roll);
+        return glm::degrees(glm::vec3(Pitch, Yaw, Roll));
     }
 
-	void Transform::CalculateWorldMatrix(Transform& t_Trans)
-	{
-		//assert(t_OutMat);
-		//*t_OutMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);
-		//*t_OutMat = *t_OutMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
-		//*t_OutMat = glm::scale(*t_OutMat, t_Trans.m_Scale);
-		t_Trans.m_worldMat = glm::translate(glm::mat4(1.0f), t_Trans.m_Pos);;
-		t_Trans.m_worldMat= t_Trans.m_worldMat * glm::yawPitchRoll(glm::radians(t_Trans.m_Rotation.y), glm::radians(t_Trans.m_Rotation.x), glm::radians(t_Trans.m_Rotation.z));
-		t_Trans.m_worldMat = glm::scale(t_Trans.m_worldMat, t_Trans.m_Scale);
-		t_Trans.m_Dirty = false;
-	}
-
-    void Transform::SetPos(const glm::vec3& t_Pos)
+    void RotateAround(Transform& t_Transform, const glm::vec3& t_Axis, const float t_Degrees)
     {
-        m_Pos = t_Pos;
-        m_Dirty = true;
+        t_Transform.Rotation =
+            glm::normalize(glm::angleAxis(glm::radians(t_Degrees), glm::normalize(t_Axis)) * t_Transform.Rotation);
     }
 
-    void Transform::SetScale(const glm::vec3& t_Scale)
+    glm::vec3 Forward(const Transform& t_Transform)
     {
-        m_Scale = t_Scale;
-        m_Dirty = true;
+        return t_Transform.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
     }
 
-    void Transform::SetRotation(const glm::vec3& t_Rot)
+    glm::vec3 Right(const Transform& t_Transform)
     {
-        m_Rotation = t_Rot;
-        m_Dirty = true;
+        return t_Transform.Rotation * glm::vec3(1.0f, 0.0f, 0.0f);
     }
 
-	void Transform::Serialize(JsonArchive& Ar)
-	{
-		Ar << MakeNVP("position", m_Pos);
-		Ar << MakeNVP("rotation", m_Rotation);
-		Ar << MakeNVP("scale", m_Scale);
-
-		if (Ar.IsLoading())
-		{
-			CalculateWorldMatrix(*this);
-			// The GPU copy is still out of date, so keep the dirty flag set
-			m_Dirty = true;
-		}
-	}
-}   // namespace Fling
+    glm::vec3 Up(const Transform& t_Transform)
+    {
+        return t_Transform.Rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+} // namespace Fling::TransformUtil

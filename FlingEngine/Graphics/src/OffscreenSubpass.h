@@ -1,6 +1,8 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "GpuMesh.h"
+#include "MeshProxyTable.h"
 #include "Subpass.h"
 
 #include <memory>
@@ -8,133 +10,128 @@
 
 namespace Fling
 {
-	class CommandBuffer;
-	class LogicalDevice;
-	class FrameBuffer;	
-	struct MeshRenderer;
-	class Swapchain;
-	class FirstPersonCamera;
+    class CommandBuffer;
+    class LogicalDevice;
+    class FrameBuffer;
+    class Swapchain;
+    class FirstPersonCamera;
 
-	class Buffer;
+    class Buffer;
 
-	/** UBO for mesh data. Written only when the mesh's transform changes. */
-	struct alignas(16) OffscreenUBO
-	{
-		glm::mat4 Model;
-		glm::vec3 ObjPos;
-	};
+    /** UBO for mesh data. Written only when the mesh's transform changes. */
+    struct alignas(16) OffscreenUBO
+    {
+        glm::mat4 Model;
+        glm::vec3 ObjPos;
+    };
 
-	/** UBO for camera data. All meshes share one, written once per frame. */
-	struct alignas(16) OffscreenCameraUBO
-	{
-		glm::mat4 Projection;
-		glm::mat4 View;
-	};
+    /** UBO for camera data. All meshes share one, written once per frame. */
+    struct alignas(16) OffscreenCameraUBO
+    {
+        glm::mat4 Projection;
+        glm::mat4 View;
+    };
 
-	// Uses the MRT shaders (mulitple render targets)
-	class OffscreenSubpass : public Subpass
-	{
-	public:
-		OffscreenSubpass(
-			const LogicalDevice* t_Dev,
-			const Swapchain* t_Swap,
-			entt::registry& t_reg,
-			FirstPersonCamera* t_Cam,
-			std::shared_ptr<Fling::Shader> t_Vert,
-			std::shared_ptr<Fling::Shader> t_Frag
-		);
+    // Uses the MRT shaders (mulitple render targets)
+    class OffscreenSubpass : public Subpass
+    {
+    public:
+        OffscreenSubpass(const LogicalDevice* t_Dev,
+                         const Swapchain* t_Swap,
+                         FirstPersonCamera* t_Cam,
+                         std::shared_ptr<Fling::Shader> t_Vert,
+                         std::shared_ptr<Fling::Shader> t_Frag);
 
-		virtual ~OffscreenSubpass();
+        virtual ~OffscreenSubpass();
 
-		FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
+        FrameBuffer* GetOffscreenFrameBuffer() const { return m_OffscreenFrameBuf; }
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveSwapImage, entt::registry& t_reg, float DeltaTime) override final;
+        void Draw(CommandBuffer& t_CmdBuf,
+                  uint32 t_ActiveSwapImage,
+                  const RenderSnapshot& t_Snapshot,
+                  float DeltaTime) override final;
 
-		void PrepareAttachments() override final;
+        void PrepareAttachments() override final;
 
-		void CreateGraphicsPipeline() override final;
+        void CreateGraphicsPipeline() override final;
 
-		void GatherPresentDependencies(
-			std::vector<CommandBuffer*>& t_CmdBuffs,
-			std::vector<VkSemaphore>& t_Deps,
-			uint32 t_ActiveFrameIndex,
-			uint32 t_CurrentFrameInFlight) override final;
+        void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs,
+                                       std::vector<VkSemaphore>& t_Deps,
+                                       uint32 t_ActiveFrameIndex,
+                                       uint32 t_CurrentFrameInFlight) override final;
 
-		void CleanUp(entt::registry& t_reg) override final;
+        void CleanUp() override final;
 
-		virtual void OnSwapchainResized(entt::registry& t_reg) override final;
+        virtual void OnSwapchainResized() override final;
 
-	private:
+    private:
+        /**
+         * Match the proxies to the snapshot: release the resources of meshes that are
+         * gone, and make them for new meshes and meshes whose paths changed.
+         */
+        void SyncProxies(const RenderSnapshot& t_Snapshot);
 
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+        /** Retire the resources of one proxy. ReleaseRetiredMeshResources frees them on the next Draw. */
+        void RetireGpuMesh(GpuMesh& t_Mesh);
 
-		/**
-		* The model or material changed. The descriptor set update must wait for
-		* the next Draw, because entt calls this before it writes the new value.
-		*/
-		void OnMeshRendererReplaced(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+        /** Free the descriptor sets and UBOs of destroyed meshes */
+        void ReleaseRetiredMeshResources();
 
-		/** Any change to the set of drawn entities. The command buffers must be recorded again. */
-		void OnDrawListChanged(entt::entity t_Ent, entt::registry& t_Reg);
+        void CreateMeshDescriptorSet(GpuMesh& t_Mesh);
 
-		/**
-		* A MeshRenderer is about to be destroyed. Takes its descriptor set and UBO, so that
-		* ReleaseRetiredMeshResources frees them when the GPU no longer uses them.
-		*/
-		void OnMeshRendererDestroyed(entt::entity t_Ent, entt::registry& t_Reg);
+        /** Write the UBO of each mesh whose world matrix changed since its last upload */
+        void UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot);
 
-		/** Free the descriptor sets and UBOs of destroyed meshes */
-		void ReleaseRetiredMeshResources();
+        /** Record the draw calls for every drawn proxy into the given command buffer */
+        void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf);
 
-		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
+        /** Make each offscreen command buffer record again on its next use */
+        inline void InvalidateCommandBuffers() { ++m_DrawListVersion; }
 
-		/** Write the UBO of each mesh whose transform changed since its last upload */
-		void UpdateMeshUniformBuffers(entt::registry& t_reg);
+        // We need an offscreen semaphore for each possible frame in flight because the swap chain
+        // presentation will depend on this command buffer being complete
+        std::vector<VkSemaphore> m_OffscreenSemaphores;
 
-		/** Record the draw calls for every mesh into the given command buffer */
-		void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf, entt::registry& t_reg);
+        VkCommandPool m_CommandPool = VK_NULL_HANDLE;
 
-		/** Make each offscreen command buffer record again on its next use */
-		inline void InvalidateCommandBuffers() { ++m_DrawListVersion; }
+        // Offscreen command buffers for populating the GBuffer
+        std::vector<CommandBuffer*> m_OffscreenCmdBufs;
 
-		// We need an offscreen semaphore for each possible frame in flight because the swap chain
-		// presentation will depend on this command buffer being complete
-		std::vector<VkSemaphore> m_OffscreenSemaphores;
+        FrameBuffer* m_OffscreenFrameBuf = nullptr;
 
-		VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+        const FirstPersonCamera* m_Camera;
 
-		// Offscreen command buffers for populating the GBuffer
-		std::vector<CommandBuffer*> m_OffscreenCmdBufs;
+        VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 
-		FrameBuffer* m_OffscreenFrameBuf = nullptr;
+        /** Camera UBO that every mesh descriptor set points to */
+        Buffer* m_CameraUboBuffer = nullptr;
 
-		const FirstPersonCamera* m_Camera;
+        /**
+         * Goes up by one each time the draw list changes. A command buffer records
+         * again only when its recorded version is different from this value.
+         */
+        uint64 m_DrawListVersion = 1;
 
-		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+        /** The m_DrawListVersion that each offscreen command buffer holds. 0 means not recorded. */
+        std::vector<uint64> m_RecordedDrawListVersions;
 
-		/** Camera UBO that every mesh descriptor set points to */
-		Buffer* m_CameraUboBuffer = nullptr;
+        /** One proxy for each mesh in the snapshot */
+        MeshProxyTable m_Proxies;
 
-		/**
-		* Goes up by one each time the draw list changes. A command buffer records
-		* again only when its recorded version is different from this value.
-		*/
-		uint64 m_DrawListVersion = 1;
+        /** The GPU side of each proxy, indexed by slot */
+        std::vector<GpuMesh> m_GpuMeshes;
 
-		/** The m_DrawListVersion that each offscreen command buffer holds. 0 means not recorded. */
-		std::vector<uint64> m_RecordedDrawListVersions;
+        /** The proxy slot of each snapshot mesh, from the last SyncProxies */
+        std::vector<uint32> m_ItemSlots;
 
-		/** Entities with a replaced MeshRenderer. Their descriptor sets update on the next Draw. */
-		std::vector<entt::entity> m_ReplacedMeshes;
+        /**
+         * Descriptor sets of meshes that are gone. They are freed at the start of the next
+         * Draw. The previous frame has finished on the GPU then, and every command buffer
+         * records again.
+         */
+        std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
 
-		/**
-		* Descriptor sets of destroyed meshes. A destroy can happen while a frame records
-		* (editor UI), so they are freed at the start of the next Draw. The previous frame
-		* has finished on the GPU then, and every command buffer records again.
-		*/
-		std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
-
-		/** UBOs of destroyed meshes. Deleted at the same time as m_RetiredDescriptorSets. */
-		std::vector<Buffer*> m_RetiredUniformBuffers;
-	};
-}   // namespace Fling
+        /** UBOs of destroyed meshes. Deleted at the same time as m_RetiredDescriptorSets. */
+        std::vector<Buffer*> m_RetiredUniformBuffers;
+    };
+} // namespace Fling

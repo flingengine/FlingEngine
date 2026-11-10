@@ -6,14 +6,14 @@
 
 namespace Fling
 {
-	struct CORE_API Version
-	{
-		int Major;
-		int Minor;
-		int Patch;
+    struct CORE_API Version
+    {
+        int Major;
+        int Minor;
+        int Patch;
 
-		String ToString() const;
-		
-		static Version EngineVersion;
-	};
-}	// namespace Fling
+        String ToString() const;
+
+        static Version EngineVersion;
+    };
+} // namespace Fling

@@ -6,107 +6,107 @@
 
 namespace Fling
 {
-	/** The current window mode  */
-	enum class WindowMode : uint8
-	{
-		Fullscreen, 
-		Windowed, 
-		BorderlessWindowed,
-		SIZE
-	};
+    /** The current window mode  */
+    enum class WindowMode : uint8
+    {
+        Fullscreen,
+        Windowed,
+        BorderlessWindowed,
+        SIZE
+    };
 
-	/** Window creation data */
-	struct WindowProps
-	{
-		uint32 m_Width = 800;
-		uint32 m_Height = 600;
-		String m_Title = "Fling Engine";
-	};
+    /** Window creation data */
+    struct WindowProps
+    {
+        uint32 m_Width = 800;
+        uint32 m_Height = 600;
+        String m_Title = "Fling Engine";
+    };
 
-	/**
-	* Base class that represents a window to the Fling Engine
-	*/
-	class FlingWindow
-	{
-	public:
-		FlingWindow(const FlingWindow&) = delete;
-		FlingWindow& operator=(const FlingWindow&) = delete;
+    /**
+     * Base class that represents a window to the Fling Engine
+     */
+    class FlingWindow
+    {
+    public:
+        FlingWindow(const FlingWindow&) = delete;
+        FlingWindow& operator=(const FlingWindow&) = delete;
 
-		/** Create a window with the given data. Implemented per platform */
-		static FlingWindow* Create(const WindowProps& t_Props);
+        /** Create a window with the given data. Implemented per platform */
+        static FlingWindow* Create(const WindowProps& t_Props);
 
-		virtual ~FlingWindow() = default;
+        virtual ~FlingWindow() = default;
 
-		/** Per frame update of this window. */
-		virtual void Update() = 0;
+        /** Per frame update of this window. */
+        virtual void Update() = 0;
 
-		/** Create the rendering surface for this window */
-		virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) = 0;
+        /** Create the rendering surface for this window */
+        virtual void CreateSurface(void* t_GraphicsInstance, void* t_SurfData) = 0;
 
-		/**
-		* Block until the framebuffer has a non-zero size, for example while the window is minimized.
-		* @return	False if the window is asked to close while it waits. Do not recreate the swap chain then.
-		*/
-		virtual bool WaitForNewWindowSize() = 0;
+        /**
+         * Block until the framebuffer has a non-zero size, for example while the window is minimized.
+         * @return	False if the window is asked to close while it waits. Do not recreate the swap chain then.
+         */
+        virtual bool WaitForNewWindowSize() = 0;
 
-		/** The current width of this window's framebuffer, in pixels */
-		virtual uint32 GetFramebufferWidth() const = 0;
+        /** The current width of this window's framebuffer, in pixels */
+        virtual uint32 GetFramebufferWidth() const = 0;
 
-		/** The current height of this window's framebuffer, in pixels */
-		virtual uint32 GetFramebufferHeight() const = 0;
+        /** The current height of this window's framebuffer, in pixels */
+        virtual uint32 GetFramebufferHeight() const = 0;
 
-		/**
-		* The current width of this window in screen coordinates. Mouse positions use these units.
-		* This differs from GetFramebufferWidth when the display is scaled.
-		*/
-		virtual uint32 GetWindowWidth() const = 0;
+        /**
+         * The current width of this window in screen coordinates. Mouse positions use these units.
+         * This differs from GetFramebufferWidth when the display is scaled.
+         */
+        virtual uint32 GetWindowWidth() const = 0;
 
-		/** The current height of this window in screen coordinates. See GetWindowWidth. */
-		virtual uint32 GetWindowHeight() const = 0;
+        /** The current height of this window in screen coordinates. See GetWindowWidth. */
+        virtual uint32 GetWindowHeight() const = 0;
 
-		/** The current aspect ratio of this windows*/
-		virtual float GetAspectRatio() const = 0;
+        /** The current aspect ratio of this windows*/
+        virtual float GetAspectRatio() const = 0;
 
-		/** Int representing if this window should close or not */
-		virtual int ShouldClose() = 0;
+        /** Int representing if this window should close or not */
+        virtual int ShouldClose() = 0;
 
-		/** Set whether the window hides the mouse cursor **/
-		virtual void SetMouseVisible(bool t_IsVisible) = 0;
+        /** Set whether the window hides the mouse cursor **/
+        virtual void SetMouseVisible(bool t_IsVisible) = 0;
 
-		/** Gets current visibility of mouse cursor **/
-		virtual bool GetMouseVisible() = 0;
+        /** Gets current visibility of mouse cursor **/
+        virtual bool GetMouseVisible() = 0;
 
-		/** 
-		* Set this window's icon.
-		* @param t_Path	the path of the window icon, relative to the assets folder
-		*/
-		virtual void SetWindowIcon(const AssetPath& t_Path) = 0;
-		
-		/**
-		* Check if this window is currently minimized
-		* @return	True if the window is currently minimized
-		*/
-		virtual bool IsMinimized() const = 0;
+        /**
+         * Set this window's icon.
+         * @param t_Path	the path of the window icon, relative to the assets folder
+         */
+        virtual void SetWindowIcon(const AssetPath& t_Path) = 0;
 
-		/** True if this window is in front and gets keyboard input */
-		virtual bool IsFocused() const = 0;
+        /**
+         * Check if this window is currently minimized
+         * @return	True if the window is currently minimized
+         */
+        virtual bool IsMinimized() const = 0;
 
-		/** Changes window mode between fullscreen, window, and borderless window **/
-		virtual void SetWindowMode(WindowMode t_WindowMode) = 0;
+        /** True if this window is in front and gets keyboard input */
+        virtual bool IsFocused() const = 0;
 
-		/** Gets current window mode**/
-		virtual WindowMode GetWindowMode() = 0;
+        /** Changes window mode between fullscreen, window, and borderless window **/
+        virtual void SetWindowMode(WindowMode t_WindowMode) = 0;
 
-	protected:
-		FlingWindow() = default;
+        /** Gets current window mode**/
+        virtual WindowMode GetWindowMode() = 0;
 
-		/** Tracks mouse visibility in window **/
-		bool m_IsMouseVisible = true;
+    protected:
+        FlingWindow() = default;
 
-		/** Tracks current window mode **/
-		WindowMode m_WindowMode = WindowMode::Windowed;
+        /** Tracks mouse visibility in window **/
+        bool m_IsMouseVisible = true;
 
-		/** Saves window size information when switching between fullscreen and windowed
-		modes, so users return to their previous size **/
-	};
-}   // namespace Fling
+        /** Tracks current window mode **/
+        WindowMode m_WindowMode = WindowMode::Windowed;
+
+        /** Saves window size information when switching between fullscreen and windowed
+        modes, so users return to their previous size **/
+    };
+} // namespace Fling

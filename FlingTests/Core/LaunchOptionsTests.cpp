@@ -52,6 +52,17 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE(Options.Format == LogFormat::Json);
     }
 
+    SECTION("Schedule flags")
+    {
+        REQUIRE(ParseArgs({}, Options, Error));
+        REQUIRE_FALSE(Options.DumpSchedule);
+        REQUIRE_FALSE(Options.ValidateSchedule);
+
+        REQUIRE(ParseArgs({"--dump-schedule", "--validate-schedule"}, Options, Error));
+        REQUIRE(Options.DumpSchedule);
+        REQUIRE(Options.ValidateSchedule);
+    }
+
     SECTION("Level override")
     {
         REQUIRE(ParseArgs({}, Options, Error));

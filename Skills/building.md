@@ -46,10 +46,9 @@ docker run --rm -v "$PWD:/src:ro" fling-fresh-clone
 
 It clones the checked-out branch of your repo, so only committed changes are tested.
 
-Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022. CMake stops with an
-error on older GCC or Clang: the vendored EnTT 3.1 hangs at runtime on them in
-C++20 mode (its `entt::null` comparison calls itself forever). On Ubuntu 22.04,
-install `g++-13` or newer and configure with `CC=gcc-13 CXX=g++-13`.
+Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022, the oldest that CI
+tests. CMake stops with an error on older GCC or Clang. On Ubuntu 22.04, install
+`g++-13` or newer and configure with `CC=gcc-13 CXX=g++-13`.
 
 Linux also needs system packages before this will configure cleanly (GLFW, Vulkan
 headers, X11/Wayland dev libs) — see the root [README.md](../README.md) for the

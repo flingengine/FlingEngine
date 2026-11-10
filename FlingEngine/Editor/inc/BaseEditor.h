@@ -1,14 +1,17 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
+#include "EditorWidgets.h"
 #include "EntityEditorPanel.h"
 #include "IDebugUI.h"
 #include "InputDevicesPanel.h"
 #include "Strings/String.h"
 #include "WorldOutlinePanel.h"
+#include "WorldSingletonsPanel.h"
 
 #include <array>
-#include <entt/entity/registry.hpp>
 #include <imgui.h>
+#include <memory>
 
 namespace Fling
 {
@@ -21,45 +24,55 @@ namespace Fling
         BaseEditor() = default;
         virtual ~BaseEditor() = default;
 
-        /** Keeps the world and game, then calls RegisterComponents(). */
-        void Init(entt::registry& t_Reg, World* t_World, Game* t_Game) override;
+        /** Keeps the world and game, then calls RegisterWidgets(). */
+        void Init(Fling::EntityStorage& t_Reg,
+                  const std::shared_ptr<World>& t_World,
+                  const std::shared_ptr<Game>& t_Game) override;
 
-		/** Register  */
-		virtual void RegisterComponents(entt::registry& t_Reg);
+        /**
+         * Add editor widget overrides for components that the generated inspector cannot
+         * edit well. Call the base version from an override, to keep the engine's.
+         */
+        virtual void RegisterWidgets(EditorWidgets& t_Widgets);
 
         /**
          * Draws the editor via IMGUI. Does NOT need to do any addition renderering pipeline things
          */
-        void Draw(entt::registry& t_Reg, float DeltaTime) override;
+        void Draw(Fling::EntityStorage& t_Reg, float DeltaTime) override;
 
         // #TODO: Init and shutdown functions
 
     protected:
-
         virtual void OnLoadLevel(String t_FileName);
 
         virtual void OnSaveLevel(String t_FileName);
 
-		std::array<float, 400> fpsGraph {};
-		float m_FrameTimeMin = 9999.0f;
+        std::array<float, 400> fpsGraph{};
+        float m_FrameTimeMin = 9999.0f;
         float m_FrameTimeMax = 0.0f;
 
-		bool m_DisplayGPUInfo = false;
-		bool m_DisplayComponentEditor = true;
-		bool m_DisplayWorldOutline = true;
-		bool m_DisplayWindowOptions = false;
+        bool m_DisplayGPUInfo = false;
+        bool m_DisplayComponentEditor = true;
+        bool m_DisplayWorldOutline = true;
+        bool m_DisplayWindowOptions = false;
         bool m_DisplayCameraOptions = false;
 
-		/** Lists entities in the world and tracks which one is selected */
-		WorldOutlinePanel m_WorldOutline;
+        /** Lists entities in the world and tracks which one is selected */
+        WorldOutlinePanel m_WorldOutline;
 
-		/** Inspects the entity currently selected in m_WorldOutline */
-		EntityEditorPanel m_EntityEditor;
+        /** How each component type is drawn in the entity editor */
+        EditorWidgets m_Widgets;
 
-		/** Lists input interfaces and devices, and changes the input log level */
-		InputDevicesPanel m_InputDevices;
+        /** Inspects the entity currently selected in m_WorldOutline */
+        EntityEditorPanel m_EntityEditor;
 
-		virtual void DrawFileMenu();
+        /** Lists input interfaces and devices, and changes the input log level */
+        InputDevicesPanel m_InputDevices;
+
+        /** Singleton components and the system schedule */
+        WorldSingletonsPanel m_WorldSingletons;
+
+        virtual void DrawFileMenu();
 
         /** Draws the Play and Stop buttons in the menu bar */
         void DrawPlayControls();
@@ -68,21 +81,24 @@ namespace Fling
 
         void DrawCameraOptions();
 
-        void DrawWorldOutline(entt::registry& t_Reg);
+        void DrawWorldOutline(Fling::EntityStorage& t_Reg);
 
         /** assumes that m_DisplayComponentEditor is true */
-		void DrawEntityEditor(entt::registry& t_Reg);
+        void DrawEntityEditor(Fling::EntityStorage& t_Reg);
 
-		void DrawWindowOptions();
+        void DrawWindowOptions();
 
-        class World* m_OwningWorld = nullptr;
+        /** The world this editor works on. Asserts that it is still alive. */
+        std::shared_ptr<World> OwningWorld() const;
 
-        class Game* m_Game = nullptr;
+        /** The engine owns the world and the game. The editor only looks at them. */
+        std::weak_ptr<World> m_OwningWorld;
 
+        std::weak_ptr<Game> m_Game;
 
         // Draw stats graph
         // Draw File Menu
         // Draw Gizmos, etc
         // Draw component editor
     };
-}   // namespace Fling
+} // namespace Fling

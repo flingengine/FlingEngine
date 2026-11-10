@@ -130,6 +130,11 @@ Notice the `-DDEFINE_SHIPPING` option is set to `ON`. This sets a definiton that
 See [Skills/coding-style.md](Skills/coding-style.md) for documentation-comment conventions and
 how to run the comment-style check / clang-format. 
 
+## Writing gameplay
+
+Gameplay is components and systems. To make your own, start with the
+[ECS tutorial](Docs/ecs-tutorial.md).
+
 ## AI coding assistants
 
 If you're using Claude Code, Cursor, Copilot, or another AI coding assistant on this

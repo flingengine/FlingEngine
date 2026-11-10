@@ -1,60 +1,78 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "GpuMesh.h"
+#include "MeshProxyTable.h"
 #include "Subpass.h"
 
 #include <memory>
 
 namespace Fling
 {
-	class CommandBuffer;
-	class LogicalDevice;
-	class FrameBuffer;	
-	struct MeshRenderer;
-	class Swapchain;
-	class FirstPersonCamera;
+    class CommandBuffer;
+    class LogicalDevice;
+    class FrameBuffer;
+    class Buffer;
+    class Swapchain;
+    class FirstPersonCamera;
 
-	class DebugSubpass : public Subpass
-	{
-	public:
-		DebugSubpass(
-			const LogicalDevice* t_Dev,
-			const Swapchain* t_Swap,
-			entt::registry& t_reg,
-			VkRenderPass t_GlobalRenderPass,
-			FirstPersonCamera* t_Cam,
-			std::shared_ptr<Fling::Shader> t_Vert,
-			std::shared_ptr<Fling::Shader> t_Frag
-		);
+    class DebugSubpass : public Subpass
+    {
+    public:
+        DebugSubpass(const LogicalDevice* t_Dev,
+                     const Swapchain* t_Swap,
+                     VkRenderPass t_GlobalRenderPass,
+                     FirstPersonCamera* t_Cam,
+                     std::shared_ptr<Fling::Shader> t_Vert,
+                     std::shared_ptr<Fling::Shader> t_Frag);
 
-		virtual ~DebugSubpass();
+        virtual ~DebugSubpass();
 
-		void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+        void Draw(CommandBuffer& t_CmdBuf,
+                  uint32 t_ActiveFrameInFlight,
+                  const RenderSnapshot& t_Snapshot,
+                  float DeltaTime) override;
 
-		void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+        void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 
-		void PrepareAttachments() override;
+        void PrepareAttachments() override;
 
-		void CreateGraphicsPipeline() override;
+        void CreateGraphicsPipeline() override;
 
-		void CleanUp(entt::registry& t_reg) override;
+        void CleanUp() override;
 
-	private:
+    private:
+        /** Match the proxies to the snapshot, and make resources for meshes with a debug material */
+        void SyncProxies(const RenderSnapshot& t_Snapshot);
 
-		void OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend);
+        void RetireGpuMesh(GpuMesh& t_Mesh);
 
-		void CreateMeshDescriptorSet(MeshRenderer& t_MeshRend);
+        /** Free retired sets and UBOs. The previous frame has finished on the GPU when Draw starts. */
+        void ReleaseRetiredMeshResources();
 
-		VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
+        void CreateMeshDescriptorSet(GpuMesh& t_Mesh);
 
-		const FirstPersonCamera* m_Camera;
+        VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
 
-		struct DebugUBO
-		{
-			glm::mat4 Projection;
-			glm::mat4 Model;
-		} m_Ubo;
+        const FirstPersonCamera* m_Camera;
 
-		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-	};
-}   // namespace Fling
+        struct DebugUBO
+        {
+            glm::mat4 Projection;
+            glm::mat4 Model;
+        } m_Ubo;
+
+        VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+
+        MeshProxyTable m_Proxies;
+
+        /** The GPU side of each proxy, indexed by slot */
+        std::vector<GpuMesh> m_GpuMeshes;
+
+        std::vector<uint32> m_ItemSlots;
+
+        std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
+
+        std::vector<Buffer*> m_RetiredUniformBuffers;
+    };
+} // namespace Fling

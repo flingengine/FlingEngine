@@ -6,49 +6,48 @@
 
 namespace Fling
 {
-	Subpass::Subpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag)
-		: m_Device(t_Dev)
-		, m_SwapChain(t_Swap)
-		, m_VertexShader(t_Vert)
-		, m_FragShader(t_Frag)
-	{
-		assert(m_Device && m_VertexShader && m_FragShader);
+    Subpass::Subpass(const LogicalDevice* t_Dev,
+                     const Swapchain* t_Swap,
+                     std::shared_ptr<Fling::Shader> t_Vert,
+                     std::shared_ptr<Fling::Shader> t_Frag)
+        : m_Device(t_Dev), m_SwapChain(t_Swap), m_VertexShader(t_Vert), m_FragShader(t_Frag)
+    {
+        assert(m_Device && m_VertexShader && m_FragShader);
 
-		// Default clear values
-		m_ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-		m_ClearValues[1].depthStencil = { 1.0f, ~0U };
+        // Default clear values
+        m_ClearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+        m_ClearValues[1].depthStencil = {1.0f, ~0U};
 
-		InitalizeGraphicsPipeline();
-	}
+        InitalizeGraphicsPipeline();
+    }
 
-	void Subpass::InitalizeGraphicsPipeline()
-	{
-		// Initialize the layouts that this subpass will use for descriptors and pipeline creation
-		std::vector<Shader*> Shaders = { m_VertexShader.get(), m_FragShader.get() };
+    void Subpass::InitalizeGraphicsPipeline()
+    {
+        // Initialize the layouts that this subpass will use for descriptors and pipeline creation
+        std::vector<Shader*> Shaders = {m_VertexShader.get(), m_FragShader.get()};
 
-		// Add entt callbacks for handling mesh renderers
+        // Add storage hooks for handling mesh renderers
 
-		//Might want to change this per subpass?
-		m_GraphicsPipeline = new GraphicsPipeline(
-			Shaders,
-			m_Device->GetVkDevice(),
-			VK_POLYGON_MODE_FILL,
-			GraphicsPipeline::Depth::ReadWrite,
-			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-			VK_CULL_MODE_FRONT_BIT,
-			VK_FRONT_FACE_COUNTER_CLOCKWISE);
-	}
+        // Might want to change this per subpass?
+        m_GraphicsPipeline = new GraphicsPipeline(Shaders,
+                                                  m_Device->GetVkDevice(),
+                                                  VK_POLYGON_MODE_FILL,
+                                                  GraphicsPipeline::Depth::ReadWrite,
+                                                  VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                  VK_CULL_MODE_FRONT_BIT,
+                                                  VK_FRONT_FACE_COUNTER_CLOCKWISE);
+    }
 
-	void Subpass::DestroyGraphicsPipeline()
-	{
-		assert(m_Device);
+    void Subpass::DestroyGraphicsPipeline()
+    {
+        assert(m_Device);
 
-		delete m_GraphicsPipeline;
-		m_GraphicsPipeline = nullptr;
-	}
+        delete m_GraphicsPipeline;
+        m_GraphicsPipeline = nullptr;
+    }
 
-	Subpass::~Subpass()
-	{
-		DestroyGraphicsPipeline();
-	}
-}
+    Subpass::~Subpass()
+    {
+        DestroyGraphicsPipeline();
+    }
+} // namespace Fling

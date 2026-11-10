@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "FlingTypes.h"
-#include "JsonArchive.h"
+#include "PhysicsComponents.h"
 
 /**
  * Lets the player push a physics body. The arrow keys (or the gamepad D-pad)
@@ -10,22 +11,24 @@
  */
 struct BallControl
 {
+    static constexpr Fling::ComponentInfo Component{.Name = "BallControl"};
+
+    /** The ball is pushed through its physics body */
+    using Requires = Fling::TypeList<Fling::RigidBody>;
+
     /** The force of a push, in newtons. */
     float m_PushForce = 40.0f;
 
     /** The upward impulse of a jump, in newton seconds. */
     float m_JumpImpulse = 25.0f;
-
-    void Serialize(Fling::JsonArchive& Ar)
-    {
-        Ar << Fling::MakeNVP("pushForce", m_PushForce);
-        Ar << Fling::MakeNVP("jumpImpulse", m_JumpImpulse);
-    }
 };
 
-/** Singleton component: Sandbox state for the physics test level. */
+/** Singleton component: Sandbox state for the physics test level. The Sandbox.FirstHit system owns it. */
 struct SandboxPhysicsState
 {
+    static constexpr Fling::ComponentInfo Component{
+        .Name = "SandboxPhysicsState", .Kind = Fling::ComponentKind::Singleton, .Transient = true};
+
     /** True after the first contact between a BallControl body and another moving body. */
     bool m_HasLoggedHit = false;
 

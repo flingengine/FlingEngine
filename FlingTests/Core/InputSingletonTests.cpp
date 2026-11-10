@@ -218,8 +218,8 @@ TEST_CASE("Input singleton device events", "[Input]")
     Input& Singleton = Input::Get();
 
     DeviceListener Listener;
-    Singleton.OnDeviceConnected().connect<&DeviceListener::OnConnected>(Listener);
-    Singleton.OnDeviceDisconnected().connect<&DeviceListener::OnDisconnected>(Listener);
+    Singleton.OnDeviceConnected().Connect<&DeviceListener::OnConnected>(Listener);
+    Singleton.OnDeviceDisconnected().Connect<&DeviceListener::OnDisconnected>(Listener);
 
     std::shared_ptr<VirtualInputDeviceInterface> Virtual = AddVirtual();
     const InputDeviceId Keyboard = Virtual->CreateDevice(KeyboardInfo());

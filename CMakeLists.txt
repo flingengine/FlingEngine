@@ -2,6 +2,13 @@ cmake_minimum_required ( VERSION 3.21 )
 set( CMAKE_SUPPRESS_REGENERATION true )
 set( CMAKE_INSTALL_MESSAGE LAZY )   # Skips update to date messages
 
+# Single-config generators (Makefiles, Ninja) with no -DCMAKE_BUILD_TYPE get no
+# compiler flags at all, so there is no -g and a debugger cannot hit breakpoints.
+# Default to Debug. This must come before project(), which reads the build type.
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE )
+    set( CMAKE_BUILD_TYPE Debug CACHE STRING "Build type (Debug, Release, RelWithDebInfo, MinSizeRel)" FORCE )
+endif()
+
 project ( "FlingEngine" VERSION 1.0 )
 
 set ( FLING_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
@@ -45,16 +52,15 @@ IF( NOT WITH_IMGUI_FLAG AND WITH_EDITOR_FLAG )
     message( FATAL_ERROR    "WITH_EDITOR_FLAG cannot be enabled because WITH_IMGUI_FLAG is OFF!" )
 endif()
 
-# EnTT 3.1 (external/entt) compares entities with entt::null through an operator==
-# that calls itself forever under C++20 rewritten comparisons, unless the compiler
-# implements P2468 (GCC 13, Clang 16). Older compilers build the engine, but any
-# `entity == entt::null` then hangs at runtime, so stop here instead.
+# The oldest compilers that CI builds and tests with. The engine uses C++20
+# (concepts, designated initializers, std::span); older compilers may build it,
+# but nothing checks that they do.
 if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
-    message( FATAL_ERROR "Fling Engine needs GCC 13 or newer (found ${CMAKE_CXX_COMPILER_VERSION}). "
-        "In C++20 mode it resolves EnTT 3.1's entt::null comparison to itself, which hangs." )
+    message( FATAL_ERROR "Fling Engine needs GCC 13 or newer (found ${CMAKE_CXX_COMPILER_VERSION}), "
+        "the oldest version that CI tests." )
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16 )
-    message( FATAL_ERROR "Fling Engine needs Clang 16 or newer (found ${CMAKE_CXX_COMPILER_VERSION}). "
-        "In C++20 mode it resolves EnTT 3.1's entt::null comparison to itself, which hangs." )
+    message( FATAL_ERROR "Fling Engine needs Clang 16 or newer (found ${CMAKE_CXX_COMPILER_VERSION}), "
+        "the oldest version that CI tests." )
 endif()
 
 message( STATUS "----- Build Config ----" )

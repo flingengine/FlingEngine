@@ -57,7 +57,8 @@ namespace Fling
         /** Text that must not be translated, such as a player's name. */
         static DisplayText AsInvariant(String t_Text);
 
-        /** A number, written with the separators of the current language: 12345 is "12,345" in English and "12.345" in German. */
+        /** A number, written with the separators of the current language: 12345 is "12,345" in English and "12.345" in
+         * German. */
         static DisplayText AsNumber(int64 t_Number);
         static DisplayText AsNumber(double t_Number);
 

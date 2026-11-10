@@ -1,5 +1,5 @@
+#include "Buffer.h"
 #include "CommandBuffer.h"
-#include "Components/Transform.h"
 #include "DebugSubpass.h"
 #include "FirstPersonCamera.h"
 #include "FlingVulkan.h"
@@ -9,8 +9,6 @@
 #include "Logger.h"
 #include "LogicalDevice.h"
 #include "Material.h"
-#include "MeshRenderer.h"
-#include "MeshRendererGpu.h"
 #include "Model.h"
 #include "PhyscialDevice.h"
 #include "SwapChain.h"
@@ -20,186 +18,218 @@
 
 namespace Fling
 {
-	DebugSubpass::DebugSubpass(
-		const LogicalDevice* t_Dev,
-		const Swapchain* t_Swap,
-		entt::registry& t_reg,
-		VkRenderPass t_GlobalRenderPass,
-		FirstPersonCamera* t_Cam,
-		std::shared_ptr<Fling::Shader> t_Vert,
-		std::shared_ptr<Fling::Shader> t_Frag)
-		: Subpass(t_Dev, t_Swap, t_Vert, t_Frag)
-		, m_GlobalRenderPass(t_GlobalRenderPass)
-		, m_Camera(t_Cam)
-	{
-		t_reg.on_construct<MeshRenderer>().connect<&DebugSubpass::OnMeshRendererAdded>(*this);
+    DebugSubpass::DebugSubpass(const LogicalDevice* t_Dev,
+                               const Swapchain* t_Swap,
+                               VkRenderPass t_GlobalRenderPass,
+                               FirstPersonCamera* t_Cam,
+                               std::shared_ptr<Fling::Shader> t_Vert,
+                               std::shared_ptr<Fling::Shader> t_Frag)
+        : Subpass(t_Dev, t_Swap, t_Vert, t_Frag), m_GlobalRenderPass(t_GlobalRenderPass), m_Camera(t_Cam)
+    {
+        PrepareAttachments();
+    }
 
-		PrepareAttachments();
-	}
+    DebugSubpass::~DebugSubpass()
+    {
+    }
 
-	DebugSubpass::~DebugSubpass()
-	{
-		
-	}
+    void DebugSubpass::Draw(CommandBuffer& t_CmdBuf,
+                            uint32 t_ActiveFrameInFlight,
+                            const RenderSnapshot& t_Snapshot,
+                            float DeltaTime)
+    {
+        ReleaseRetiredMeshResources();
+        SyncProxies(t_Snapshot);
 
-	void DebugSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime)
-	{
-		// For every mesh bind it's model and descriptor set info.
-		// View instead of owning group so assign<Transform>() references stay valid.
-		auto RenderView = t_reg.view<Transform, MeshRenderer, entt::tag<entt::hashed_string::to_value("Debug")>>();
+        // Invert the project value to match the proper coordinate space compared to OpenGL
+        m_Ubo.Projection = m_Camera->GetProjectionMatrix();
+        m_Ubo.Projection[1][1] *= -1.0f;
+        VkDeviceSize offsets[1] = {0};
 
-		// Invert the project value to match the proper coordinate space compared to OpenGL
-		m_Ubo.Projection = m_Camera->GetProjectionMatrix();
-		m_Ubo.Projection[1][1] *= -1.0f;
-		VkDeviceSize offsets[1] = { 0 };
+        for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
+        {
+            const GpuMesh& Mesh = m_GpuMeshes[m_ItemSlots[i]];
+            if (!Mesh.Drawn || Mesh.MeshModel == nullptr)
+            {
+                continue;
+            }
+            Fling::Model* Model = Mesh.MeshModel;
 
-		RenderView.less([&](entt::entity ent, Transform& t_trans, MeshRenderer& t_MeshRend)
-		{
-			Fling::Model* Model = t_MeshRend.m_Model;
-			if (!Model)
-			{
-				return;
-			}
+            m_Ubo.Model = t_Snapshot.Meshes[i].World;
+            memcpy(Mesh.Ubo->m_MappedMem, &m_Ubo, sizeof(m_Ubo));
 
-			// Update the UBO
-			Transform::CalculateWorldMatrix(t_trans);
-			m_Ubo.Model = t_trans.GetWorldMatrix();
+            vkCmdBindDescriptorSets(t_CmdBuf.GetHandle(),
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    m_GraphicsPipeline->GetPipelineLayout(),
+                                    0,
+                                    1,
+                                    &Mesh.Set,
+                                    0,
+                                    nullptr);
 
-			// Memcpy to the buffer
-			Buffer* buf = t_MeshRend.m_UniformBuffer;
-			memcpy(
-				buf->m_MappedMem,
-				&m_Ubo,
-				buf->GetSize()
-			);
+            vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 
-			// If the mesh has no descriptor sets, then build them
-			// #TODO Investigate a better way to do this, probably by just moving the 
-			// descriptors off of the mesh
-			if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
-			{
-				CreateMeshDescriptorSet(t_MeshRend);
-			}
+            VkBuffer vertexBuffers[1] = {Model->GetVertexBuffer()->GetVkBuffer()};
+            // Render the mesh
+            vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
+            vkCmdBindIndexBuffer(
+                t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
+            vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
+        }
+    }
 
-			// Bind the descriptor set for rendering a mesh using the dynamic offset
-			vkCmdBindDescriptorSets(
-				t_CmdBuf.GetHandle(),
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				m_GraphicsPipeline->GetPipelineLayout(),
-				0,
-				1,
-				&MeshRendererDescriptorSet(t_MeshRend),
-				0,
-				nullptr);
+    void DebugSubpass::SyncProxies(const RenderSnapshot& t_Snapshot)
+    {
+        MeshProxyTable::SyncResult Result = m_Proxies.Sync(t_Snapshot.Meshes);
+        m_ItemSlots = std::move(Result.ItemSlots);
+        m_GpuMeshes.resize(m_Proxies.Capacity());
 
-			vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+        for (const uint32 Slot : Result.Removed)
+        {
+            RetireGpuMesh(m_GpuMeshes[Slot]);
+        }
 
-			VkBuffer vertexBuffers[1] = { Model->GetVertexBuffer()->GetVkBuffer() };
-			// Render the mesh
-			vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
-			vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
-		});
-	}
+        auto Prepare = [&](const uint32 Slot)
+        {
+            GpuMesh& Mesh = m_GpuMeshes[Slot];
+            RetireGpuMesh(Mesh);
+            const bool bHasAssets = ResolveMeshAssets(m_Proxies.At(Slot), Mesh);
+            Mesh.Drawn = bHasAssets && Mesh.MeshMaterial->GetType() == Material::Type::Debug;
+            if (!Mesh.Drawn)
+            {
+                Mesh = GpuMesh{};
+                return;
+            }
 
-	void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg)
-	{
-		
-	}
+            const VkDeviceSize BufferSize = sizeof(DebugUBO);
+            Mesh.Ubo = new Buffer(BufferSize,
+                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            Mesh.Ubo->MapMemory(BufferSize);
+            CreateMeshDescriptorSet(Mesh);
+        };
 
-	void DebugSubpass::CreateMeshDescriptorSet(MeshRenderer& t_MeshRend)
-	{
-		// Only allocate new descriptor sets if there are none
-		// Some may exist if entt decides to re-use the component
-		if (MeshRendererDescriptorSet(t_MeshRend) == VK_NULL_HANDLE)
-		{
-			VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
-			VkDescriptorSetAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			// If we have specified a specific pool then use that, otherwise use the one on the mesh
-			allocInfo.descriptorPool = m_DescriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &layout;
+        for (const uint32 Slot : Result.Added)
+        {
+            Prepare(Slot);
+        }
+        for (const uint32 Slot : Result.Changed)
+        {
+            Prepare(Slot);
+        }
+    }
 
-			VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &MeshRendererDescriptorSet(t_MeshRend)));
-		}
+    void DebugSubpass::RetireGpuMesh(GpuMesh& t_Mesh)
+    {
+        if (t_Mesh.Set != VK_NULL_HANDLE)
+        {
+            m_RetiredDescriptorSets.emplace_back(t_Mesh.Set);
+        }
+        if (t_Mesh.Ubo != nullptr)
+        {
+            m_RetiredUniformBuffers.emplace_back(t_Mesh.Ubo);
+        }
+        t_Mesh = GpuMesh{};
+    }
 
-		std::vector<VkWriteDescriptorSet> writeDescriptorSets =
-		{
-			// 0: UBO
-			Initializers::WriteDescriptorSetUniform(
-				t_MeshRend.m_UniformBuffer,
-				MeshRendererDescriptorSet(t_MeshRend),
-				0
-			),
-		};
+    void DebugSubpass::ReleaseRetiredMeshResources()
+    {
+        if (!m_RetiredDescriptorSets.empty() && m_DescriptorPool != VK_NULL_HANDLE)
+        {
+            VK_CHECK_RESULT(vkFreeDescriptorSets(m_Device->GetVkDevice(),
+                                                 m_DescriptorPool,
+                                                 static_cast<uint32>(m_RetiredDescriptorSets.size()),
+                                                 m_RetiredDescriptorSets.data()));
+        }
+        m_RetiredDescriptorSets.clear();
 
-		vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
-	}
+        for (Buffer* Ubo : m_RetiredUniformBuffers)
+        {
+            delete Ubo;
+        }
+        m_RetiredUniformBuffers.clear();
+    }
 
-	void DebugSubpass::PrepareAttachments()
-	{
-		// Create the descriptor pool for off screen things
-		uint32 DescriptorCount = 100 * m_SwapChain->GetImageViewCount();
+    void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool)
+    {
+    }
 
-		std::vector<VkDescriptorPoolSize> poolSizes =
-		{
-			Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 		DescriptorCount),			
-		};
+    void DebugSubpass::CreateMeshDescriptorSet(GpuMesh& t_Mesh)
+    {
+        if (t_Mesh.Set == VK_NULL_HANDLE)
+        {
+            VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
+            VkDescriptorSetAllocateInfo allocInfo = {};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            // If we have specified a specific pool then use that, otherwise use the one on the mesh
+            allocInfo.descriptorPool = m_DescriptorPool;
+            allocInfo.descriptorSetCount = 1;
+            allocInfo.pSetLayouts = &layout;
 
-		VkDescriptorPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
-		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = to_u32(100 * m_SwapChain->GetImageViewCount());
+            VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_Mesh.Set));
+        }
 
-		if (vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
-		{
-			F_LOG_FATAL("Failed to create descriptor pool");
-		}
-	}
+        std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+            // 0: UBO
+            Initializers::WriteDescriptorSetUniform(t_Mesh.Ubo, t_Mesh.Set, 0),
+        };
 
-	void DebugSubpass::CreateGraphicsPipeline()
-	{
-		// Draw in wireframe mode
-		m_GraphicsPipeline->m_RasterizationState =
-			Initializers::PipelineRasterizationStateCreateInfo(
-				VK_POLYGON_MODE_FILL,
-				VK_CULL_MODE_BACK_BIT,
-				VK_FRONT_FACE_COUNTER_CLOCKWISE
-			);
+        vkUpdateDescriptorSets(m_Device->GetVkDevice(),
+                               static_cast<uint32>(writeDescriptorSets.size()),
+                               writeDescriptorSets.data(),
+                               0,
+                               nullptr);
+    }
 
-		// Create it otherwise with defaults
-		m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
-	}
+    void DebugSubpass::PrepareAttachments()
+    {
+        // Create the descriptor pool for off screen things
+        uint32 DescriptorCount = 100 * m_SwapChain->GetImageViewCount();
 
-	void DebugSubpass::CleanUp(entt::registry& t_reg)
-	{
-		if (m_DescriptorPool != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
-			m_DescriptorPool = VK_NULL_HANDLE;
-		}
-	}
+        std::vector<VkDescriptorPoolSize> poolSizes = {
+            Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
+        };
 
-	void DebugSubpass::OnMeshRendererAdded(entt::entity t_Ent, entt::registry& t_Reg, MeshRenderer& t_MeshRend)
-	{
-		// If this mesh renderer material is set to DEBUG, then do this
-		if (t_MeshRend.m_Material && t_MeshRend.m_Material->GetType() != Material::Type::Debug)
-		{
-			return;
-		}
+        VkDescriptorPoolCreateInfo poolInfo = {};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        // A mesh frees its set when it leaves the snapshot
+        poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
+        poolInfo.pPoolSizes = poolSizes.data();
+        poolInfo.maxSets = to_u32(100 * m_SwapChain->GetImageViewCount());
 
-		t_Reg.assign<entt::tag<entt::hashed_string::to_value("Debug")>>(t_Ent);
+        if (vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to create descriptor pool");
+        }
+    }
 
-		// Initialize and map the UBO of each mesh renderer
-		if (t_MeshRend.m_UniformBuffer == nullptr)
-		{
-			VkDeviceSize bufferSize = sizeof(DebugUBO);
-			t_MeshRend.m_UniformBuffer = new Buffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			t_MeshRend.m_UniformBuffer->MapMemory(bufferSize);
-		}
+    void DebugSubpass::CreateGraphicsPipeline()
+    {
+        // Draw in wireframe mode
+        m_GraphicsPipeline->m_RasterizationState = Initializers::PipelineRasterizationStateCreateInfo(
+            VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-		CreateMeshDescriptorSet(t_MeshRend);
-	}
-}   // namespace Fling
+        // Create it otherwise with defaults
+        m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
+    }
+
+    void DebugSubpass::CleanUp()
+    {
+        // Called after the device is idle
+        for (GpuMesh& Mesh : m_GpuMeshes)
+        {
+            RetireGpuMesh(Mesh);
+        }
+        m_GpuMeshes.clear();
+        m_Proxies.Clear();
+        m_ItemSlots.clear();
+        ReleaseRetiredMeshResources();
+
+        if (m_DescriptorPool != VK_NULL_HANDLE)
+        {
+            vkDestroyDescriptorPool(m_Device->GetVkDevice(), m_DescriptorPool, nullptr);
+            m_DescriptorPool = VK_NULL_HANDLE;
+        }
+    }
+} // namespace Fling

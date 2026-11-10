@@ -1,11 +1,17 @@
 #include "Components/Transform.h"
 #include "DefaultPhysicsProvider.h"
+#include "Ecs/ModuleRegistration.h"
+#include "Ecs/SystemBase.h"
+#include "Ecs/SystemRegistry.h"
+#include "Ecs/SystemRunner.h"
 #include "Physics.h"
 #include "Strings/String.h"
 #include "Threading/ThreadManager.h"
+#include "TransformUtil.h"
 
 #include <bit>
 #include <catch2/catch_all.hpp>
+#include <memory>
 
 using Fling::String;
 using Fling::StringView;
@@ -39,10 +45,10 @@ namespace
     }
 
     /** The contacts of the last tick, as plain values that can be compared. */
-    std::vector<std::pair<entt::entity, entt::entity>> ContactPairs(const entt::registry& t_Reg)
+    std::vector<std::pair<Fling::Entity, Fling::Entity>> ContactPairs(const Fling::EntityStorage& t_Reg)
     {
-        std::vector<std::pair<entt::entity, entt::entity>> Pairs;
-        for (const ContactEvent& Event : t_Reg.ctx<ContactEvents>().m_Contacts)
+        std::vector<std::pair<Fling::Entity, Fling::Entity>> Pairs;
+        for (const ContactEvent& Event : t_Reg.Singleton<ContactEvents>().m_Contacts)
         {
             Pairs.emplace_back(Event.m_A, Event.m_B);
         }
@@ -50,27 +56,27 @@ namespace
     }
 
     /** A static floor whose top is at y = 0. */
-    entt::entity AddFloor(entt::registry& t_Reg)
+    Fling::Entity AddFloor(Fling::EntityStorage& t_Reg)
     {
-        const entt::entity Floor = t_Reg.create();
-        Transform& Trans = t_Reg.assign<Transform>(Floor);
-        Trans.SetPos(glm::vec3(0.0f, -0.05f, 0.0f));
-        Trans.SetScale(glm::vec3(40.0f, 0.1f, 40.0f));
-        t_Reg.assign<RigidBody>(Floor).m_Mass = 0.0f;
-        t_Reg.assign<Collider>(Floor).m_Shape = ColliderShape::Box;
+        const Fling::Entity Floor = t_Reg.Create();
+        Transform& Trans = t_Reg.Add<Transform>(Floor);
+        Trans.Position = glm::vec3(0.0f, -0.05f, 0.0f);
+        Trans.Scale = glm::vec3(40.0f, 0.1f, 40.0f);
+        t_Reg.Add<RigidBody>(Floor).m_Mass = 0.0f;
+        t_Reg.Add<Collider>(Floor).m_Shape = ColliderShape::Box;
         return Floor;
     }
 
-    entt::entity AddBody(entt::registry& t_Reg, ColliderShape t_Shape, const glm::vec3& t_Pos, float t_Mass)
+    Fling::Entity AddBody(Fling::EntityStorage& t_Reg, ColliderShape t_Shape, const glm::vec3& t_Pos, float t_Mass)
     {
-        const entt::entity Entity = t_Reg.create();
-        t_Reg.assign<Transform>(Entity).SetPos(t_Pos);
-        t_Reg.assign<RigidBody>(Entity).m_Mass = t_Mass;
-        t_Reg.assign<Collider>(Entity).m_Shape = t_Shape;
+        const Fling::Entity Entity = t_Reg.Create();
+        t_Reg.Add<Transform>(Entity).Position = t_Pos;
+        t_Reg.Add<RigidBody>(Entity).m_Mass = t_Mass;
+        t_Reg.Add<Collider>(Entity).m_Shape = t_Shape;
         return Entity;
     }
 
-    void TickFor(entt::registry& t_Reg, int t_Ticks)
+    void TickFor(Fling::EntityStorage& t_Reg, int t_Ticks)
     {
         for (int i = 0; i < t_Ticks; ++i)
         {
@@ -78,11 +84,13 @@ namespace
         }
     }
 
-    bool HasContact(const entt::registry& t_Reg, entt::entity t_A, entt::entity t_B)
+    bool HasContact(const Fling::EntityStorage& t_Reg, Fling::Entity t_A, Fling::Entity t_B)
     {
-        for (const ContactEvent& Event : t_Reg.ctx<ContactEvents>().m_Contacts)
+        for (const ContactEvent& Event : t_Reg.Singleton<ContactEvents>().m_Contacts)
         {
-            if ((Event.m_A == t_A && Event.m_B == t_B) || (Event.m_A == t_B && Event.m_B == t_A))
+            const Fling::Entity EventA = Event.m_A;
+            const Fling::Entity EventB = Event.m_B;
+            if ((EventA == t_A && EventB == t_B) || (EventA == t_B && EventB == t_A))
             {
                 return true;
             }
@@ -91,11 +99,11 @@ namespace
     }
 
     /** The physics test level: a floor, a ball, and a pyramid of 6 cubes. Every rotation is zero. */
-    void BuildPyramidScene(entt::registry& t_Reg)
+    void BuildPyramidScene(Fling::EntityStorage& t_Reg)
     {
         AddFloor(t_Reg);
-        const entt::entity Ball = AddBody(t_Reg, ColliderShape::Sphere, glm::vec3(-8.0f, 0.5f, 0.0f), 5.0f);
-        t_Reg.get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
+        const Fling::Entity Ball = AddBody(t_Reg, ColliderShape::Sphere, glm::vec3(-8.0f, 0.5f, 0.0f), 5.0f);
+        t_Reg.Get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
 
         int Row = 0;
         for (const int Count : {3, 2, 1})
@@ -114,7 +122,7 @@ namespace
      * does not use the Transform rotation, because the Euler conversion uses the
      * platform math library.
      */
-    uint64 HashBodies(entt::registry& t_Reg)
+    uint64 HashBodies(Fling::EntityStorage& t_Reg)
     {
         uint64 Hash = 14695981039346656037ull;
         auto Mix = [&Hash](float t_Value)
@@ -127,13 +135,13 @@ namespace
             }
         };
 
-        auto View = t_Reg.view<Transform, RigidBody>();
-        std::vector<entt::entity> Entities(View.begin(), View.end());
+        auto View = t_Reg.View<Transform, RigidBody>();
+        std::vector<Fling::Entity> Entities(View.begin(), View.end());
         std::sort(Entities.begin(), Entities.end());
-        for (const entt::entity Entity : Entities)
+        for (const Fling::Entity Entity : Entities)
         {
-            const glm::vec3 Pos = t_Reg.get<Transform>(Entity).GetPos();
-            const RigidBody& Body = t_Reg.get<RigidBody>(Entity);
+            const glm::vec3 Pos = t_Reg.Get<Transform>(Entity).Position;
+            const RigidBody& Body = t_Reg.Get<RigidBody>(Entity);
             for (int a = 0; a < 3; ++a)
             {
                 Mix(Pos[a]);
@@ -147,21 +155,21 @@ namespace
 
 TEST_CASE("Provider: sphere falls and rests on a static floor", "[physics][provider]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, GetProviderOrSkip());
 
-    const entt::entity Floor = AddFloor(Reg);
-    const entt::entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 3.0f, 0.0f), 1.0f);
+    const Fling::Entity Floor = AddFloor(Reg);
+    const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 3.0f, 0.0f), 1.0f);
 
     Physics::Tick(Reg, Dt);
-    REQUIRE(Reg.has<PhysicsBody>(Ball));
-    REQUIRE(Reg.has<PhysicsBody>(Floor));
+    REQUIRE(Reg.Has<PhysicsBody>(Ball));
+    REQUIRE(Reg.Has<PhysicsBody>(Floor));
     REQUIRE(Physics::GetBodyCount(Reg) == 2);
 
     // It falls first
     TickFor(Reg, 10);
-    REQUIRE(Reg.get<Transform>(Ball).GetPos().y < 3.0f);
-    REQUIRE(Reg.get<RigidBody>(Ball).m_Velocity.y < 0.0f);
+    REQUIRE(Reg.Get<Transform>(Ball).Position.y < 3.0f);
+    REQUIRE(Reg.Get<RigidBody>(Ball).m_Velocity.y < 0.0f);
 
     // Then it touches the floor
     bool bTouched = false;
@@ -173,83 +181,83 @@ TEST_CASE("Provider: sphere falls and rests on a static floor", "[physics][provi
     REQUIRE(bTouched);
 
     // And it rests on top of the floor (radius 0.5) and does not fall through
-    REQUIRE(Reg.get<Transform>(Ball).GetPos().y == Catch::Approx(0.5f).margin(0.05f));
+    REQUIRE(Reg.Get<Transform>(Ball).Position.y == Catch::Approx(0.5f).margin(0.05f));
 
     // A static body never moves
-    REQUIRE(Reg.get<Transform>(Floor).GetPos().y == Catch::Approx(-0.05f));
+    REQUIRE(Reg.Get<Transform>(Floor).Position.y == Catch::Approx(-0.05f));
 }
 
 TEST_CASE("Provider: impulse changes velocity by impulse / mass", "[physics][provider]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, GetProviderOrSkip());
-    Reg.ctx<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
+    Reg.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
 
-    const entt::entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 2.0f);
+    const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 2.0f);
 
     Physics::ApplyImpulse(Reg, Box, glm::vec3(4.0f, 0.0f, 0.0f));
     Physics::Tick(Reg, Dt);
 
-    REQUIRE(Reg.ctx<PhysicsCommands>().m_Commands.empty());
-    const glm::vec3 Vel = Reg.get<RigidBody>(Box).m_Velocity;
+    REQUIRE(Reg.Singleton<PhysicsCommands>().Requests.empty());
+    const glm::vec3 Vel = Reg.Get<RigidBody>(Box).m_Velocity;
     REQUIRE(Vel.x == Catch::Approx(2.0f).epsilon(1e-3));
     REQUIRE(Vel.y == Catch::Approx(0.0f).margin(1e-4f));
-    REQUIRE(Reg.get<Transform>(Box).GetPos().x == Catch::Approx(2.0f * Dt).epsilon(1e-3));
+    REQUIRE(Reg.Get<Transform>(Box).Position.x == Catch::Approx(2.0f * Dt).epsilon(1e-3));
 
     // SetLinearVelocity replaces the velocity
     Physics::SetLinearVelocity(Reg, Box, glm::vec3(0.0f, 0.0f, -1.0f));
     Physics::Tick(Reg, Dt);
-    REQUIRE(Reg.get<RigidBody>(Box).m_Velocity.x == Catch::Approx(0.0f).margin(1e-4f));
-    REQUIRE(Reg.get<RigidBody>(Box).m_Velocity.z == Catch::Approx(-1.0f).epsilon(1e-3));
+    REQUIRE(Reg.Get<RigidBody>(Box).m_Velocity.x == Catch::Approx(0.0f).margin(1e-4f));
+    REQUIRE(Reg.Get<RigidBody>(Box).m_Velocity.z == Catch::Approx(-1.0f).epsilon(1e-3));
 }
 
 TEST_CASE("Provider: force acts for one tick", "[physics][provider]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, GetProviderOrSkip());
-    Reg.ctx<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
+    Reg.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
 
-    const entt::entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
+    const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
     Physics::Tick(Reg, Dt);
 
     // 60 N on 1 kg for one 1/60 s tick adds 1 m/s
     Physics::ApplyForce(Reg, Box, glm::vec3(0.0f, 60.0f, 0.0f));
     Physics::Tick(Reg, Dt);
-    REQUIRE(Reg.get<RigidBody>(Box).m_Velocity.y == Catch::Approx(1.0f).epsilon(1e-3));
+    REQUIRE(Reg.Get<RigidBody>(Box).m_Velocity.y == Catch::Approx(1.0f).epsilon(1e-3));
 
     // The force is not kept for the next tick
     Physics::Tick(Reg, Dt);
-    REQUIRE(Reg.get<RigidBody>(Box).m_Velocity.y == Catch::Approx(1.0f).epsilon(1e-3));
+    REQUIRE(Reg.Get<RigidBody>(Box).m_Velocity.y == Catch::Approx(1.0f).epsilon(1e-3));
 }
 
 TEST_CASE("Provider: start velocity and rotation come from the components", "[physics][provider]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, GetProviderOrSkip());
-    Reg.ctx<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
+    Reg.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
 
-    const entt::entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
-    Reg.get<Transform>(Box).SetRotation(glm::vec3(10.0f, 30.0f, 20.0f));
-    Reg.get<RigidBody>(Box).m_Velocity = glm::vec3(0.0f, 0.0f, 3.0f);
+    const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
+    Reg.Get<Transform>(Box).Rotation = Fling::TransformUtil::FromEulerDegrees(glm::vec3(10.0f, 30.0f, 20.0f));
+    Reg.Get<RigidBody>(Box).m_Velocity = glm::vec3(0.0f, 0.0f, 3.0f);
 
     Physics::Tick(Reg, Dt);
 
-    const Transform& Trans = Reg.get<Transform>(Box);
-    REQUIRE(Trans.GetPos().z == Catch::Approx(3.0f * Dt).epsilon(1e-3));
-    REQUIRE(Trans.GetRotation().x == Catch::Approx(10.0f).margin(0.01f));
-    REQUIRE(Trans.GetRotation().y == Catch::Approx(30.0f).margin(0.01f));
-    REQUIRE(Trans.GetRotation().z == Catch::Approx(20.0f).margin(0.01f));
+    const Transform& Trans = Reg.Get<Transform>(Box);
+    REQUIRE(Trans.Position.z == Catch::Approx(3.0f * Dt).epsilon(1e-3));
+    REQUIRE(Fling::TransformUtil::ToEulerDegrees(Trans.Rotation).x == Catch::Approx(10.0f).margin(0.01f));
+    REQUIRE(Fling::TransformUtil::ToEulerDegrees(Trans.Rotation).y == Catch::Approx(30.0f).margin(0.01f));
+    REQUIRE(Fling::TransformUtil::ToEulerDegrees(Trans.Rotation).z == Catch::Approx(20.0f).margin(0.01f));
 }
 
 TEST_CASE("Provider: sphere rolls into a cube and pushes it", "[physics][provider]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, GetProviderOrSkip());
 
     AddFloor(Reg);
-    const entt::entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(-3.0f, 0.5f, 0.0f), 5.0f);
-    const entt::entity Cube = AddBody(Reg, ColliderShape::Box, glm::vec3(1.0f, 0.5f, 0.0f), 1.0f);
-    Reg.get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
+    const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(-3.0f, 0.5f, 0.0f), 5.0f);
+    const Fling::Entity Cube = AddBody(Reg, ColliderShape::Box, glm::vec3(1.0f, 0.5f, 0.0f), 1.0f);
+    Reg.Get<RigidBody>(Ball).m_Velocity = glm::vec3(6.0f, 0.0f, 0.0f);
 
     bool bHit = false;
     for (int i = 0; i < 120; ++i)
@@ -259,25 +267,25 @@ TEST_CASE("Provider: sphere rolls into a cube and pushes it", "[physics][provide
     }
 
     REQUIRE(bHit);
-    REQUIRE(Reg.get<Transform>(Cube).GetPos().x > 1.5f);
+    REQUIRE(Reg.Get<Transform>(Cube).Position.x > 1.5f);
 }
 
 TEST_CASE("Provider: destroyed bodies leave the scene", "[physics][provider]")
 {
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, GetProviderOrSkip());
 
     AddFloor(Reg);
-    const entt::entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 2.0f, 0.0f), 1.0f);
+    const Fling::Entity Ball = AddBody(Reg, ColliderShape::Sphere, glm::vec3(0.0f, 2.0f, 0.0f), 1.0f);
     TickFor(Reg, 5);
     REQUIRE(Physics::GetBodyCount(Reg) == 2);
 
     Physics::ApplyImpulse(Reg, Ball, glm::vec3(1.0f));
-    Reg.destroy(Ball);
+    Reg.Destroy(Ball);
     TickFor(Reg, 5);
     REQUIRE(Physics::GetBodyCount(Reg) == 1);
 
-    Reg.reset();
+    Reg.Clear();
     TickFor(Reg, 5);
     REQUIRE(Physics::GetBodyCount(Reg) == 0);
 }
@@ -286,14 +294,14 @@ TEST_CASE("Provider: scenes of two registries are separate", "[physics][provider
 {
     const std::shared_ptr<PhysicsProvider> Provider = GetProviderOrSkip();
 
-    entt::registry RegA;
-    entt::registry RegB;
+    Fling::EntityStorage RegA;
+    Fling::EntityStorage RegB;
     Physics::InitWorld(RegA, Provider);
     Physics::InitWorld(RegB, Provider);
-    RegB.ctx<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
+    RegB.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
 
-    const entt::entity BallA = AddBody(RegA, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
-    const entt::entity BallB = AddBody(RegB, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
+    const Fling::Entity BallA = AddBody(RegA, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
+    const Fling::Entity BallB = AddBody(RegB, ColliderShape::Sphere, glm::vec3(0.0f, 5.0f, 0.0f), 1.0f);
 
     for (int i = 0; i < 30; ++i)
     {
@@ -301,8 +309,8 @@ TEST_CASE("Provider: scenes of two registries are separate", "[physics][provider
         Physics::Tick(RegB, Dt);
     }
 
-    REQUIRE(RegA.get<Transform>(BallA).GetPos().y < 4.5f);
-    REQUIRE(RegB.get<Transform>(BallB).GetPos().y == Catch::Approx(5.0f));
+    REQUIRE(RegA.Get<Transform>(BallA).Position.y < 4.5f);
+    REQUIRE(RegB.Get<Transform>(BallB).Position.y == Catch::Approx(5.0f));
     REQUIRE(Physics::GetBodyCount(RegA) == 1);
     REQUIRE(Physics::GetBodyCount(RegB) == 1);
 }
@@ -315,8 +323,8 @@ TEST_CASE("Provider: the same inputs give the same bits", "[physics][provider][d
         SKIP("The provider is not deterministic");
     }
 
-    entt::registry RegA;
-    entt::registry RegB;
+    Fling::EntityStorage RegA;
+    Fling::EntityStorage RegB;
     Physics::InitWorld(RegA, Provider);
     Physics::InitWorld(RegB, Provider);
     BuildPyramidScene(RegA);
@@ -338,7 +346,7 @@ TEST_CASE("Provider: a restored state gives the same future", "[physics][provide
         SKIP("The provider cannot save and restore a scene");
     }
 
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, Provider);
     BuildPyramidScene(Reg);
 
@@ -373,8 +381,8 @@ TEST_CASE("Provider: worker threads give the same bits as one thread", "[physics
         SKIP("The provider does not use worker threads");
     }
 
-    entt::registry OneThread;
-    entt::registry Workers;
+    Fling::EntityStorage OneThread;
+    Fling::EntityStorage Workers;
     Physics::InitWorld(OneThread, Provider, WithWorkers(0));
     Physics::InitWorld(Workers, Provider, WithWorkers(3));
     BuildPyramidScene(OneThread);
@@ -415,7 +423,7 @@ TEST_CASE("Provider: physics workers are engine threads", "[physics][provider][T
 
     const int Before = CountWorkers();
     {
-        entt::registry Reg;
+        Fling::EntityStorage Reg;
         Physics::InitWorld(Reg, Provider, WithWorkers(2));
         REQUIRE(CountWorkers() == Before + 2);
 
@@ -438,7 +446,7 @@ TEST_CASE("Provider: the pyramid scene matches the saved result on every platfor
 
     // The same hash with no workers and with workers
     const uint32 WorkerCount = GENERATE(0u, 3u);
-    entt::registry Reg;
+    Fling::EntityStorage Reg;
     Physics::InitWorld(Reg, Provider, WithWorkers(WorkerCount));
     BuildPyramidScene(Reg);
     TickFor(Reg, 240);
@@ -449,4 +457,64 @@ TEST_CASE("Provider: the pyramid scene matches the saved result on every platfor
     const uint64 Hash = HashBodies(Reg);
     INFO("Provider " << Provider->GetName() << ", " << WorkerCount << " workers, hash 0x" << std::hex << Hash);
     REQUIRE(Hash == 0x6b3a55f789760cf8ull);
+}
+
+namespace
+{
+    /** A body that PushSystem pushes on +X each tick. */
+    struct Pushed
+    {
+        static constexpr Fling::ComponentInfo Component{.Name = "PhysicsTest.Pushed"};
+        float Impulse = 1.0f;
+    };
+
+    /** Asks for an impulse on each Pushed body, every tick, the way gameplay does. */
+    class PushSystem final
+        : public Fling::System<PushSystem, Fling::Access<Fling::Read<Pushed>, Fling::Append<Fling::PhysicsCommands>>>
+    {
+    public:
+        static constexpr Fling::SystemInfo Info{.Name = "PhysicsTest.Push", .Phase = Fling::Phases::Simulation};
+
+        void FixedUpdate(Context& ctx) const
+        {
+            for (auto [entity, pushed] : ctx.Query<const Pushed>())
+            {
+                ctx.Queue<Fling::PhysicsCommands>().Push(Fling::PhysicsCommand{
+                    entity, Fling::PhysicsCommandType::Impulse, glm::vec3(pushed.Impulse, 0.0f, 0.0f)});
+            }
+        }
+    };
+} // namespace
+
+TEST_CASE("Physics.Step runs in the schedule, after the systems that append commands", "[physics][provider]")
+{
+    std::shared_ptr<PhysicsProvider> Provider = GetProviderOrSkip();
+
+    Fling::EntityStorage Reg;
+    Fling::SystemRegistry Systems;
+    Fling::ModuleRegistration Modules(Systems);
+    RegisterPhysics(Modules);
+    Modules.Component<Pushed>();
+    Modules.System<PushSystem>();
+
+    Fling::ScheduleResult Schedule = Systems.BuildSchedule();
+    REQUIRE(Schedule.ErrorReport() == "");
+    Fling::SystemRunner Runner(Systems, std::move(Schedule.Value), Reg);
+    Runner.Create();
+    Physics::InitWorld(Reg, Provider);
+    Reg.Singleton<PhysicsSettings>().m_Gravity = glm::vec3(0.0f);
+
+    const Fling::Entity Box = AddBody(Reg, ColliderShape::Box, glm::vec3(0.0f), 1.0f);
+    Reg.Add<Pushed>(Box);
+
+    Runner.RunTick(Fling::WorldRole::Play);
+    Runner.RunTick(Fling::WorldRole::Play);
+
+    // One impulse of 1 per tick on a mass of 1
+    REQUIRE(Reg.Has<PhysicsBody>(Box));
+    REQUIRE(Reg.Get<RigidBody>(Box).m_Velocity.x == Catch::Approx(2.0f).epsilon(1e-3));
+    REQUIRE(Reg.Singleton<PhysicsCommands>().Requests.empty());
+
+    Physics::ShutdownWorld(Reg);
+    Runner.Destroy();
 }

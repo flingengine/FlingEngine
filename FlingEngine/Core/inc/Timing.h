@@ -7,81 +7,75 @@
 #include "Platform.h"
 #include "Singleton.hpp"
 
-
 namespace Fling
 {
-    // #TODO Have a "game time" and "real time" 
+    // #TODO Have a "game time" and "real time"
     // @see 8.5.4 in Game Engine arch
-	class Timing : public Singleton<Timing>
-	{
-	public:
+    class Timing : public Singleton<Timing>
+    {
+    public:
+        virtual void Init() override;
 
-		virtual void Init() override;
+        /**
+         * Update the time values of the timer. Should be done at the beginning
+         * of every frame
+         */
+        void Update();
 
-		/**
-		* Update the time values of the timer. Should be done at the beginning
-		* of every frame
-		*/
-		void Update();
+        /**
+         * Updates current frame timer
+         */
+        void UpdateFps();
 
-		/**
-		* Updates current frame timer
-		*/
-		void UpdateFps();
+        float CORE_API GetDeltaTime();
 
-		float CORE_API GetDeltaTime();
+        /**
+         * Get the current time of the application (double)
+         */
+        double CORE_API GetTime() const;
 
-		/**
-		 * Get the current time of the application (double)
-		 */
-		double CORE_API GetTime() const;
+        /**
+         * Get the current time of the application (float)
+         */
+        float CORE_API GetTimef() const { return static_cast<float>(GetTime()); }
 
-		/**
-		 * Get the current time of the application (float)
-		 */
-		float CORE_API GetTimef() const
-		{
-			return static_cast<float>( GetTime() );
-		}
+        /**
+         * Get the time that that frame has started
+         */
+        float CORE_API GetFrameStartTime() const { return m_frameStartTimef; }
 
-		/**
-		 * Get the time that that frame has started
-		 */
-		float CORE_API GetFrameStartTime() const { return m_frameStartTimef; }
+        /**
+         * Get the time that the application has started
+         */
+        double CORE_API GetStartTime() const { return m_startTime; }
 
-		/**
-		 * Get the time that the application has started
-		 */
-		double CORE_API GetStartTime() const { return m_startTime; }
+        /**
+         * Get the time since that application has started (i.e. time running)
+         */
+        float CORE_API GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
 
-		/**
-		 * Get the time since that application has started (i.e. time running)
-		 */
-		float CORE_API GetTimeSinceStart() const { return GetTimef() - static_cast<float>(m_startTime); }
+        /**
+         * Get fps count
+         */
+        int CORE_API GetFrameCount() const { return m_fpsFrameCount; }
 
-		/**
-		 * Get fps count
-		 */
-		int CORE_API GetFrameCount() const { return m_fpsFrameCount; }
+        /**
+         * Get current frame time
+         */
+        float CORE_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
 
-		/**
-		 * Get current frame time
-		 */
-		float CORE_API GetFrameTime() const { return 1000.0f / static_cast<float>(m_fpsFrameCount); }
+    private:
+        // Initialize delta time at 60 FPS to avoid an ImGUI assertion
+        float m_deltaTime = 1.0f / 60.0f;
 
-	private:
+        double m_lastFrameStartTime = 0.0;
+        float m_frameStartTimef = 0.0f;
 
-		// Initialize delta time at 60 FPS to avoid an ImGUI assertion
-		float m_deltaTime = 1.0f / 60.0f;
+        float m_fpsTimeElapsed = 0.0f;
+        int m_fpsFrameCount = 0;
+        int m_fpsFrameCountTemp = 0;
 
-		double m_lastFrameStartTime = 0.0;
-		float m_frameStartTimef = 0.0f;
-
-		float m_fpsTimeElapsed = 0.0f;
-		int m_fpsFrameCount = 0;
-		int m_fpsFrameCountTemp = 0;
-
-		/** The time that the program started */
-		double m_startTime = 0.0;
-	};
-}	// namespace Fling
+        /** The time that the program started */
+        double m_startTime = 0.0;
+    };
+} // namespace Fling

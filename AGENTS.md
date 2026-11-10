@@ -72,6 +72,11 @@ platform setup (Vulkan SDK, GLFW, etc.).
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
 - Threads, thread IDs and names, and command queues to subsystem threads, with
   the rules that keep them out of the ECS: [`Skills/threading.md`](Skills/threading.md).
+- ECS components, systems, phases, and the schedule (how to write and test a
+  system, the update-rate rules, `--dump-schedule`): [`Skills/ecs.md`](Skills/ecs.md).
+  A tutorial for people, with a tested worked example (a component, a system,
+  registration, a test, and the engine's own components):
+  [`Docs/ecs-tutorial.md`](Docs/ecs-tutorial.md).
 
 ## Plans
 
@@ -81,10 +86,12 @@ into `Skills/`.
 
 - Phased plan for the module split, including what is done and what is next:
   [`Plans/module-split-plan.md`](Plans/module-split-plan.md).
-- First slice of the ECS (Engine module), beside EnTT: the `ISystem` lifecycle, component
+- First slice of the ECS (Engine module): the `ISystem` lifecycle, component
   declarations, compile-time access checks, and the schedule built from them:
-  [`Plans/ecs-systems.md`](Plans/ecs-systems.md). The full design
-  and EnTT removal: [`Plans/ecs-plan.md`](Plans/ecs-plan.md).
+  [`Plans/ecs-systems.md`](Plans/ecs-systems.md). The full design, with the
+  migration that replaced EnTT (Phases A to G are done; H is next):
+  [`Plans/ecs-plan.md`](Plans/ecs-plan.md). The settled rules are in
+  [`Skills/ecs.md`](Skills/ecs.md).
 - ECS worlds and data ownership, features that add and remove systems at
   runtime, the end of the `Game` class, level streaming, and the editor (edit
   commands, edit and play worlds, editor-only systems):

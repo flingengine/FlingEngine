@@ -1,0 +1,6 @@
+{"format":"fling-input","version":1}
+# Test data for the "Sandbox: systems move the lighting test" CTest.
+# T turns on the Rotator spin on tick 6, and Space turns on the Mover lights on tick 12.
+# Sandbox.Toggles reads them from InputState, and Rotator and Mover use them on the same tick.
+{"tick":6,"type":"Press","key":"T"}
+{"tick":12,"type":"Press","key":"Space"}
