@@ -84,7 +84,8 @@ namespace Fling
 
             ImGui::Separator();
 
-            if (!m_World || !m_Widgets)
+            const std::shared_ptr<const World> OwningWorld = m_World.lock();
+            if (!OwningWorld || !m_Widgets)
             {
                 ImGui::TextDisabled("no world");
                 ImGui::End();
@@ -92,7 +93,7 @@ namespace Fling
             }
 
             std::vector<const TypeDesc*> missing;
-            for (const TypeDesc& type : m_World->GetTypes().All())
+            for (const TypeDesc& type : OwningWorld->GetTypes().All())
             {
                 // Singletons and queues belong to the world, not to an entity
                 if (IsNameComponent(type) || type.IsSingleton())
@@ -114,7 +115,17 @@ namespace Fling
 
                 if (type.Remove)
                 {
-                    if (ImGui::Button("-"))
+                    // A component that another one on the entity requires stays until that one is removed
+                    const TypeDesc* RequiredBy = OwningWorld->GetTypes().RequiredBy(t_Reg, t_Entity, type);
+                    ImGui::BeginDisabled(RequiredBy != nullptr);
+                    const bool bRemove = ImGui::Button("-");
+                    ImGui::EndDisabled();
+                    if (RequiredBy != nullptr && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                    {
+                        ImGui::SetTooltip(
+                            "%s requires this. Remove %s first.", RequiredBy->Name.c_str(), RequiredBy->Name.c_str());
+                    }
+                    if (bRemove)
                     {
                         type.Remove(t_Reg, t_Entity);
                         ImGui::PopID();
@@ -161,7 +172,8 @@ namespace Fling
                         }
                         if (type->Emplace && ImGui::Selectable(type->Name.c_str()))
                         {
-                            type->Emplace(t_Reg, t_Entity, nullptr);
+                            // Also adds the components that this one requires
+                            OwningWorld->GetTypes().AddWithRequired(t_Reg, t_Entity, *type);
                         }
                     }
 

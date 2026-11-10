@@ -25,10 +25,6 @@ namespace Sandbox
         static constexpr Fling::SystemInfo Info{
             .Name = "Sandbox.TestSpawn", .Phase = Fling::Phases::Simulation, .Before = "Sandbox.Rotator"};
 
-        void OnCreate(Setup& setup) const;
-
-        void OnDestroy(Setup& setup) const;
-
         /** Each play starts the row of spheres again. */
         void OnPlayBegin(Context& ctx) const;
 

@@ -160,6 +160,8 @@ fling_add_ecs_compile_check( QueueRead              "A queue is not read or writ
 fling_add_ecs_compile_check( NotAComponent          "is not a Fling::Component" )
 fling_add_ecs_compile_check( NameMismatch           "saved .Name must end with its C.. type name" )
 fling_add_ecs_compile_check( DuplicateAccess        "A type appears more than once in Access" )
+fling_add_ecs_compile_check( CreateWithoutRequired  "without a component that it" )
+fling_add_ecs_compile_check( RequireEachOther       "Two components require each other" )
 
 # Every first-party vk* call must be named in VulkanFunctions.inl.
 add_test(NAME "Vulkan calls are listed"

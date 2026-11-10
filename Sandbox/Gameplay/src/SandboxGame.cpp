@@ -92,38 +92,34 @@ namespace Sandbox
                         const Fling::StringView t_Mat,
                         const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
     {
-        Fling::Entity e0 = t_Reg.Create();
-        t_Reg.Add<MeshRenderer>(e0, MeshRenderer(Fling::String(t_Model), Fling::String(t_Mat)));
-        Transform& t0 = t_Reg.Add<Transform>(e0);
+        // One call makes the entity whole: no system sees it with only some of its components
+        Transform t0;
         t0.Position = glm::vec3(0.0f, -1.0f, 0.0f);
         t0.Scale = t_Scale;
+        t_Reg.Create(t0, MeshRenderer(Fling::String(t_Model), Fling::String(t_Mat)));
     }
 
     void Game::LightingTest(Fling::EntityStorage& t_Reg)
     {
         auto AddRandomPointLight = [&]()
         {
-            Fling::Entity e0 = t_Reg.Create();
-
             glm::vec3 min = {-15.0f, 0.2f, -15.0f};
             glm::vec3 max = {15.0f, 1.0f, 15.0f};
             const glm::vec3 startPos = Fling::Random::GetRandomVec3(min, max);
 
-            // Each Add moves the entity to a new archetype, so build each component
-            // whole and add it, instead of keeping a reference across adds
             Transform t0;
             t0.Position = startPos;
-            t_Reg.AddOrReplace<Transform>(e0, t0);
 
             Mover m0;
             m0.TargetPos = Fling::Random::GetRandomVec3(min, max);
-            t_Reg.Add<Mover>(e0, m0);
 
             PointLight Light;
             Light.DiffuseColor = glm::vec4(Fling::Random::GetRandomVec3(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
             Light.Intensity = 5.0f;
             Light.Range = 3.0f;
-            t_Reg.Add<PointLight>(e0, Light);
+
+            // One call makes the entity whole: no system sees it with only some of its components
+            t_Reg.Create(t0, m0, Light);
         };
 
         AddFloor(t_Reg, "Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
@@ -191,13 +187,11 @@ namespace Sandbox
                     ModelPath = "Models/sphere.obj";
                 }
 
-                Fling::Entity e0 = t_Reg.Create();
-                t_Reg.Add<MeshRenderer>(e0, ModelPath.c_str(), MatPath.c_str());
-                t_Reg.Add<Rotator>(e0);
-                Transform& t0 = t_Reg.Add<Transform>(e0);
+                Transform t0;
                 t0.Position = glm::vec3((-(float)(GridSize / 2) + ((float)i * Spacing)),
                                         (i > GridSize / 2) ? 1.0f : 0.0f,
                                         -(float)(GridSize / 2) + float(j) * Spacing);
+                t_Reg.Create(t0, MeshRenderer(ModelPath.c_str(), MatPath.c_str()), Rotator{});
             }
         }
     }

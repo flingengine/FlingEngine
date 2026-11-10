@@ -15,7 +15,7 @@ namespace Fling::VirtualMemory
      * zero until written. Bytes is rounded up to whole pages. Alignment is a power of
      * two; the block starts at a multiple of it. Pages that are never written take
      * no physical memory on Linux or Windows.
-     * @return Null if the OS has no memory left
+     * @return Null if the OS has no memory left, or if bytes plus alignment is too big for size_t
      */
     CORE_API void* Allocate(size_t bytes, size_t alignment);
 
@@ -32,4 +32,11 @@ namespace Fling::VirtualMemory
 
     /** Give pages from Allocate back to the OS. Bytes and alignment are the values given to Allocate. */
     CORE_API void Free(void* address, size_t bytes, size_t alignment);
+
+    /**
+     * Stop the program because the OS has no memory for bytes: log who asked, then abort.
+     * In every build. The engine allocators call this, so their callers never get a
+     * null block and never write through one.
+     */
+    [[noreturn]] CORE_API void OutOfMemory(const char* who, size_t bytes);
 } // namespace Fling::VirtualMemory

@@ -187,7 +187,38 @@ namespace
 #elif defined(FLING_ECS_CASE_DuplicateAccess)
     using BadAccess = Fling::Access<Fling::Read<Position>, Fling::Write<Position>>;
     constexpr auto BadTableSize = BadAccess::Table.size();
+#elif defined(FLING_ECS_CASE_RequireEachOther)
+    struct Lock;
+    struct Key
+    {
+        static constexpr Fling::ComponentInfo Component{.Name = "Check.Key"};
+        using Requires = Fling::TypeList<Lock>;
+        int Value = 0;
+    };
+    struct Lock
+    {
+        static constexpr Fling::ComponentInfo Component{.Name = "Check.Lock"};
+        using Requires = Fling::TypeList<Key>;
+        int Value = 0;
+    };
+    static_assert(Fling::Detail::CheckRequires<Key>());
 #endif
+
+    /** Needs a Position. With Position, an entity with a Marker is complete. */
+    struct Marker
+    {
+        static constexpr Fling::ComponentInfo Component{.Name = "Check.Marker"};
+        using Requires = Fling::TypeList<Position>;
+        int Value = 0;
+    };
+
+    [[maybe_unused]] void MakeEntities(Fling::EntityStorage& storage)
+    {
+        storage.Create(Position{}, Marker{});
+#if defined(FLING_ECS_CASE_CreateWithoutRequired)
+        storage.Create(Marker{});
+#endif
+    }
 } // namespace
 
 int main()

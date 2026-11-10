@@ -66,7 +66,16 @@ namespace Fling
         }
     } // namespace Widgets
 
-    void BaseEditor::Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game)
+    std::shared_ptr<World> BaseEditor::OwningWorld() const
+    {
+        std::shared_ptr<World> Result = m_OwningWorld.lock();
+        assert(Result && "The editor is used before Init, or after the world is gone");
+        return Result;
+    }
+
+    void BaseEditor::Init(Fling::EntityStorage& t_Reg,
+                          const std::shared_ptr<World>& t_World,
+                          const std::shared_ptr<Game>& t_Game)
     {
         // A plain click on a drag field opens a text box; dragging still scrubs the value.
         ImGui::GetIO().ConfigDragClickToInputText = true;
@@ -214,7 +223,7 @@ namespace Fling
                 // Loading or saving during play would change or save the play state,
                 // and the stop would then reset the level again
                 const bool bLevelEditLocked =
-                    !m_OwningWorld->IsReadyForPlay() || m_OwningWorld->HasPendingPlayRequest();
+                    !OwningWorld()->IsReadyForPlay() || OwningWorld()->HasPendingPlayRequest();
                 if (bLevelEditLocked)
                 {
                     ImGui::TextDisabled("Stop play to open or save levels");
@@ -272,8 +281,7 @@ namespace Fling
 
                 if (ImGui::MenuItem("New Level", "Ctrl+N"))
                 {
-                    assert(m_OwningWorld);
-                    m_OwningWorld->LoadLevelFile("Levels/EmptyLevel.json");
+                    OwningWorld()->LoadLevelFile("Levels/EmptyLevel.json");
                 }
 
                 ImGui::EndDisabled();
@@ -281,8 +289,7 @@ namespace Fling
                 ImGui::Separator();
                 if (ImGui::MenuItem("Exit", "Alt+F4"))
                 {
-                    assert(m_OwningWorld);
-                    m_OwningWorld->RequestQuit();
+                    OwningWorld()->RequestQuit();
                 }
                 ImGui::EndMenu();
             }
@@ -315,28 +322,26 @@ namespace Fling
 
     void BaseEditor::DrawPlayControls()
     {
-        assert(m_OwningWorld);
-
-        if (m_OwningWorld->HasPendingPlayRequest())
+        if (OwningWorld()->HasPendingPlayRequest())
         {
             // The request runs on the next world update
             ImGui::BeginDisabled();
-            ImGui::Button(m_OwningWorld->IsPlaying() ? "Stopping..." : "Starting...");
+            ImGui::Button(OwningWorld()->IsPlaying() ? "Stopping..." : "Starting...");
             ImGui::EndDisabled();
         }
-        else if (m_OwningWorld->IsReadyForPlay())
+        else if (OwningWorld()->IsReadyForPlay())
         {
             if (ImGui::Button("Play"))
             {
-                m_OwningWorld->RequestGameStart();
+                OwningWorld()->RequestGameStart();
             }
         }
-        else if (m_OwningWorld->IsPlaying() || m_OwningWorld->IsPaused())
+        else if (OwningWorld()->IsPlaying() || OwningWorld()->IsPaused())
         {
             if (ImGui::Button("Stop"))
             {
                 // The world calls OnStopGame, then resets the level to how it was at Play
-                m_OwningWorld->RequestGameStop();
+                OwningWorld()->RequestGameStop();
             }
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "Playing (Esc to stop)");
@@ -345,22 +350,18 @@ namespace Fling
 
     void BaseEditor::OnLoadLevel(String t_FileName)
     {
-        assert(m_OwningWorld);
-
         // File pop up
         F_LOG_TRACE("Load file {}", t_FileName);
 
-        m_OwningWorld->LoadLevelFile(t_FileName);
+        OwningWorld()->LoadLevelFile(t_FileName);
     }
 
     void BaseEditor::OnSaveLevel(String t_FileName)
     {
-        assert(m_OwningWorld);
-
         // File pop up to load the level file
         F_LOG_TRACE("Save to file {}", t_FileName);
 
-        m_OwningWorld->OutputLevelFile(t_FileName);
+        OwningWorld()->OutputLevelFile(t_FileName);
     }
 
     void BaseEditor::DrawGpuInfo()

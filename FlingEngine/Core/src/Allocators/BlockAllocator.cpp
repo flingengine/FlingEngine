@@ -1,4 +1,5 @@
 #include "Allocators/BlockAllocator.h"
+#include "Allocators/MemoryPoison.h"
 #include "Allocators/VirtualMemory.h"
 #include "MathUtils.h"
 
@@ -17,6 +18,7 @@ namespace Fling
             for (const auto& [address, used] : m_Classes[c].Slabs)
             {
                 (void)used;
+                FLING_UNPOISON_MEMORY(reinterpret_cast<void*>(address), slabBytes);
                 VirtualMemory::Free(reinterpret_cast<void*>(address), slabBytes, slabBytes);
             }
         }
@@ -81,6 +83,9 @@ namespace Fling
             FreeBlock* block = reinterpret_cast<FreeBlock*>(slab + offset - blockBytes);
             block->Next = sc.FreeList;
             sc.FreeList = block;
+            // A free block keeps only its link. The rest is not in use.
+            FLING_POISON_MEMORY(reinterpret_cast<std::byte*>(block) + sizeof(FreeBlock),
+                                blockBytes - sizeof(FreeBlock));
         }
         return true;
     }
@@ -91,12 +96,12 @@ namespace Fling
         {
             const size_t size = BlockSize(bytes);
             void* block = VirtualMemory::Allocate(size, VirtualMemory::PageSize());
-            assert(block != nullptr && "BlockAllocator: the OS has no memory left");
-            if (block != nullptr)
+            if (block == nullptr)
             {
-                m_Large.emplace(reinterpret_cast<uintptr_t>(block), size);
-                m_LargeBytes += size;
+                VirtualMemory::OutOfMemory("BlockAllocator", size);
             }
+            m_Large.emplace(reinterpret_cast<uintptr_t>(block), size);
+            m_LargeBytes += size;
             return block;
         }
 
@@ -104,8 +109,7 @@ namespace Fling
         SizeClass& sc = m_Classes[sizeClass];
         if (sc.FreeList == nullptr && !AddSlab(sizeClass))
         {
-            assert(false && "BlockAllocator: the OS has no memory left");
-            return nullptr;
+            VirtualMemory::OutOfMemory("BlockAllocator", ClassSlabBytes(sizeClass));
         }
 
         FreeBlock* block = sc.FreeList;
@@ -113,6 +117,7 @@ namespace Fling
         const size_t slabBytes = ClassSlabBytes(sizeClass);
         ++sc.Slabs.find(reinterpret_cast<uintptr_t>(block) & ~(slabBytes - 1))->second;
         ++sc.UsedBlocks;
+        FLING_UNPOISON_MEMORY(block, ClassBlockBytes(sizeClass));
         return block;
     }
 
@@ -126,6 +131,11 @@ namespace Fling
         {
             const auto found = m_Large.find(reinterpret_cast<uintptr_t>(block));
             assert(found != m_Large.end() && "BlockAllocator::Free: not a large block of this allocator");
+            if (found == m_Large.end())
+            {
+                // Not ours: to unmap it would take memory from its real owner
+                return;
+            }
             VirtualMemory::Free(block, found->second, VirtualMemory::PageSize());
             m_LargeBytes -= found->second;
             m_Large.erase(found);
@@ -137,12 +147,20 @@ namespace Fling
         const size_t slabBytes = ClassSlabBytes(sizeClass);
         const auto slab = sc.Slabs.find(reinterpret_cast<uintptr_t>(block) & ~(slabBytes - 1));
         assert(slab != sc.Slabs.end() && slab->second > 0 && "BlockAllocator::Free: not a block of this allocator");
+        if (slab == sc.Slabs.end() || slab->second == 0)
+        {
+            // Not ours, or the wrong size: to put it in the free list would hand out memory that is not ours
+            return;
+        }
         --slab->second;
         --sc.UsedBlocks;
 
         FreeBlock* freed = static_cast<FreeBlock*>(block);
         freed->Next = sc.FreeList;
         sc.FreeList = freed;
+        // A use of the block after this is a use after free
+        FLING_POISON_MEMORY(static_cast<std::byte*>(block) + sizeof(FreeBlock),
+                            ClassBlockBytes(sizeClass) - sizeof(FreeBlock));
     }
 
     size_t BlockAllocator::Trim()
@@ -183,6 +201,7 @@ namespace Fling
             for (const uintptr_t address : empty)
             {
                 sc.Slabs.erase(address);
+                FLING_UNPOISON_MEMORY(reinterpret_cast<void*>(address), slabBytes);
                 VirtualMemory::Free(reinterpret_cast<void*>(address), slabBytes, slabBytes);
                 released += slabBytes;
             }

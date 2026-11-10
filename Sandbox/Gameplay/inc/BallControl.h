@@ -2,6 +2,7 @@
 
 #include "Ecs/Component.h"
 #include "FlingTypes.h"
+#include "PhysicsComponents.h"
 
 /**
  * Lets the player push a physics body. The arrow keys (or the gamepad D-pad)
@@ -11,6 +12,9 @@
 struct BallControl
 {
     static constexpr Fling::ComponentInfo Component{.Name = "BallControl"};
+
+    /** The ball is pushed through its physics body */
+    using Requires = Fling::TypeList<Fling::RigidBody>;
 
     /** The force of a push, in newtons. */
     float m_PushForce = 40.0f;

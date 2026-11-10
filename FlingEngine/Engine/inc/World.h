@@ -33,7 +33,8 @@ namespace Fling
         World(const World&) = delete;
         World& operator=(const World&) = delete;
 
-        explicit World(Fling::Game* t_Game);
+        /** The world shares the game, so the game lives as long as the world calls it. */
+        explicit World(std::shared_ptr<Fling::Game> t_Game);
         ~World();
 
         /**
@@ -78,8 +79,8 @@ namespace Fling
          *
          * @param t_StartLevel	A level to load instead of the config StartLevel (relative to the assets folder). Empty
          * means use the config.
-         * @return False if the system schedule or the component names have errors (see GetScheduleErrors). The world is then not ready for
-         * play.
+         * @return False if the system schedule or the component names have errors (see GetScheduleErrors). The world is
+         * then not ready for play.
          */
         bool Init(StringView t_StartLevel = {});
 
@@ -154,6 +155,20 @@ namespace Fling
          */
         bool LoadLevelFile(StringView t_LevelToLoad);
 
+        /**
+         * Write all saved components on living entities to a level document. Gives each
+         * entity an EntityGuid first if it has none, so references between entities save.
+         * OutputLevelFile and the play snapshot use it.
+         */
+        bool SaveToJson(Json& t_OutDoc, StringView t_Title);
+
+        /**
+         * Remove all entities, then make the entities in a level document. A component
+         * loads after the components that it requires, and one that the document does not
+         * have is added with default values. LoadLevelFile and the play snapshot use it.
+         */
+        bool LoadFromJson(const Json& t_Doc, StringView t_SourceName);
+
         /** The entities, components, and singletons of this world. */
         FORCEINLINE EntityStorage& GetStorage() { return m_Storage; }
 
@@ -200,18 +215,6 @@ namespace Fling
          * @param t_RestoreSnapshot		If true, replace all entities with the snapshot from StartGame
          */
         void StopGame(bool t_RestoreSnapshot);
-
-        /**
-         * Write all saved components on living entities to a level document. Gives each
-         * entity an EntityGuid first if it has none, so references between entities save.
-         */
-        bool SaveToJson(Json& t_OutDoc, StringView t_Title);
-
-        /** A new random EntityGuid value that no entity in this world uses. */
-        uint64 MakeEntityGuid() const;
-
-        /** Remove all entities, then make the entities in a level document */
-        bool LoadFromJson(const Json& t_Doc, StringView t_SourceName);
 
         WorldState m_CurrentState = WorldState::NONE;
 
@@ -260,7 +263,7 @@ namespace Fling
         void ProcessAppRequests();
 
         /** The game will allow users to specify their own update/read/write functions */
-        Fling::Game* m_Game = nullptr;
+        std::shared_ptr<Fling::Game> m_Game;
 
         /** Flag if the world should quit or not! */
         uint8 m_ShouldQuit : 1;

@@ -6,7 +6,11 @@ namespace Fling
 {
     namespace
     {
-        /** The world matrix and its version. Before the first tick there is no LocalToWorld yet. */
+        /**
+         * The world matrix and its version. An entity that was made after the last tick (by the
+         * editor, or by a level load) has no LocalToWorld yet. It is drawn in its right place at
+         * once, child or not, from its Transform and its parents.
+         */
         template <typename Ctx>
         void WorldOf(Ctx& ctx, const Entity entity, const Transform& local, glm::mat4& outWorld, uint32& outVersion)
         {
@@ -16,20 +20,11 @@ namespace Fling
                 outVersion = world->Version;
                 return;
             }
-            outWorld = TransformUtil::LocalMatrix(local);
+            const Parent* link = ctx.template TryGet<const Parent>(entity);
+            outWorld = TransformUtil::WorldFromParents(ctx, local, link != nullptr ? link->Value : Entity::Null);
             outVersion = 0;
         }
     } // namespace
-
-    void ExtractSystem::OnCreate(Setup& setup) const
-    {
-        setup.AddSingleton<RenderSnapshot>();
-    }
-
-    void ExtractSystem::OnDestroy(Setup& setup) const
-    {
-        setup.RemoveSingleton<RenderSnapshot>();
-    }
 
     void ExtractSystem::Update(Context& ctx) const
     {

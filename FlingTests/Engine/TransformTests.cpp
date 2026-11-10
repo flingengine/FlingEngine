@@ -12,6 +12,7 @@
 
 #include <catch2/catch_all.hpp>
 #include <memory>
+#include <vector>
 
 using namespace Fling;
 
@@ -150,6 +151,99 @@ TEST_CASE("Engine.Transform computes LocalToWorld, parents first", "[transform][
     h.Storage.Get<Transform>(root).Position.x = 0.0f;
     h.Runner->RunTick(WorldRole::Edit);
     REQUIRE(h.WorldPos(root) == glm::vec3(0.0f));
+}
+
+TEST_CASE("Engine.Transform handles deep and wide trees, and a child that is new", "[transform][hierarchy]")
+{
+    QuietLogger();
+    TransformHarness h;
+    // A chain 300 deep: each link adds 1 on x
+    std::vector<Entity> chain{h.Make(glm::vec3(1.0f, 0.0f, 0.0f))};
+    for (int i = 1; i < 300; ++i)
+    {
+        chain.push_back(h.Make(glm::vec3(1.0f, 0.0f, 0.0f)));
+        REQUIRE(HierarchyUtil::SetParent(h.Storage, chain.back(), chain[chain.size() - 2]));
+    }
+    // A root with 500 children
+    const Entity hub = h.Make(glm::vec3(0.0f, 5.0f, 0.0f));
+    std::vector<Entity> spokes;
+    for (int i = 0; i < 500; ++i)
+    {
+        spokes.push_back(h.Make(glm::vec3(float(i), 0.0f, 0.0f)));
+        REQUIRE(HierarchyUtil::SetParent(h.Storage, spokes.back(), hub));
+    }
+
+    // The first tick: no entity has a LocalToWorld yet, and every one gets the right matrix
+    h.Runner->RunTick(WorldRole::Play);
+    for (size_t i = 0; i < chain.size(); ++i)
+    {
+        REQUIRE(h.WorldPos(chain[i]) == glm::vec3(float(i + 1), 0.0f, 0.0f));
+    }
+    for (size_t i = 0; i < spokes.size(); ++i)
+    {
+        REQUIRE(h.WorldPos(spokes[i]) == glm::vec3(float(i), 5.0f, 0.0f));
+    }
+    REQUIRE_FALSE(h.Storage.Singleton<TransformWork>().WarnedOutOfStep);
+
+    // A move at the top reaches the bottom in the same tick
+    h.Storage.Get<Transform>(chain[0]).Position.y = 2.0f;
+    h.Runner->RunTick(WorldRole::Play);
+    REQUIRE(h.WorldPos(chain.back()) == glm::vec3(300.0f, 2.0f, 0.0f));
+
+    // A child that is new under a parent that has its matrix
+    const Entity late = h.Make(glm::vec3(0.0f, 0.0f, 3.0f));
+    REQUIRE(HierarchyUtil::SetParent(h.Storage, late, spokes[7]));
+    h.Runner->RunTick(WorldRole::Play);
+    REQUIRE(h.WorldPos(late) == glm::vec3(7.0f, 5.0f, 3.0f));
+    REQUIRE(h.Storage.Singleton<TransformWork>().Pending.empty());
+}
+
+TEST_CASE("Engine.Transform treats a child with no usable parent as a root", "[transform][hierarchy]")
+{
+    QuietLogger();
+    TransformHarness h;
+    // The parent has no Transform
+    const Entity plain = h.Storage.Create();
+    const Entity child = h.Make(glm::vec3(1.0f, 2.0f, 3.0f));
+    const Entity grandchild = h.Make(glm::vec3(1.0f, 0.0f, 0.0f));
+    REQUIRE(HierarchyUtil::SetParent(h.Storage, child, plain));
+    REQUIRE(HierarchyUtil::SetParent(h.Storage, grandchild, child));
+    // The parent is dead, and the link was not cleaned up
+    const Entity gone = h.Make(glm::vec3(100.0f, 0.0f, 0.0f));
+    const Entity orphan = h.Make(glm::vec3(0.0f, 4.0f, 0.0f));
+    h.Storage.Add<Parent>(orphan, Parent{gone});
+    h.Storage.Destroy(gone);
+
+    h.Runner->RunTick(WorldRole::Play);
+    h.Runner->RunTick(WorldRole::Play);
+    REQUIRE(h.WorldPos(child) == glm::vec3(1.0f, 2.0f, 3.0f));
+    REQUIRE(h.WorldPos(grandchild) == glm::vec3(2.0f, 2.0f, 3.0f));
+    REQUIRE(h.WorldPos(orphan) == glm::vec3(0.0f, 4.0f, 0.0f));
+    REQUIRE_FALSE(h.Storage.Singleton<TransformWork>().WarnedOutOfStep);
+}
+
+TEST_CASE("Engine.Transform follows Parent when Children does not agree with it", "[transform][hierarchy]")
+{
+    QuietLogger();
+    TransformHarness h;
+    const Entity root = h.Make(glm::vec3(10.0f, 0.0f, 0.0f));
+    const Entity child = h.Make(glm::vec3(0.0f, 1.0f, 0.0f));
+    const Entity grandchild = h.Make(glm::vec3(0.0f, 0.0f, 2.0f));
+    // Parent set by hand, so no entity has Children
+    h.Storage.Add<Parent>(child, Parent{root});
+    h.Storage.Add<Parent>(grandchild, Parent{child});
+
+    h.Runner->RunTick(WorldRole::Play);
+    h.Runner->RunTick(WorldRole::Play);
+    REQUIRE(h.WorldPos(child) == glm::vec3(10.0f, 1.0f, 0.0f));
+    REQUIRE(h.WorldPos(grandchild) == glm::vec3(10.0f, 1.0f, 2.0f));
+    REQUIRE(h.Storage.Singleton<TransformWork>().WarnedOutOfStep);
+
+    // A Children list that names an entity with another parent does not move that entity
+    const Entity other = h.Make(glm::vec3(-5.0f, 0.0f, 0.0f));
+    h.Storage.Add<Children>(other).Value.push_back(grandchild);
+    h.Runner->RunTick(WorldRole::Play);
+    REQUIRE(h.WorldPos(grandchild) == glm::vec3(10.0f, 1.0f, 2.0f));
 }
 
 TEST_CASE("HierarchyUtil keeps Parent and Children in step", "[hierarchy]")

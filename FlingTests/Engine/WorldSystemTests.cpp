@@ -8,6 +8,7 @@
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
+#include <memory>
 #include <string>
 
 // Fixture systems that exist only for these tests (Plans/ecs-systems.md section 3.3).
@@ -132,8 +133,9 @@ TEST_CASE("The world runs its systems by role and calls the play hooks", "[world
 {
     QuietLogger();
 
-    SystemsGame TestGame;
-    World TestWorld(&TestGame);
+    const auto TestGameOwner = std::make_shared<SystemsGame>();
+    SystemsGame& TestGame = *TestGameOwner;
+    World TestWorld(TestGameOwner);
     Fling::EntityStorage& Reg = TestWorld.GetStorage();
     TestWorld.SetSystemRunnerConfig(SystemRunnerConfig{.OneTickPerFrame = true});
     REQUIRE(TestWorld.Init());
@@ -178,9 +180,10 @@ TEST_CASE("A world with a bad schedule does not start", "[world][ecs]")
 {
     QuietLogger();
 
-    SystemsGame TestGame;
+    const auto TestGameOwner = std::make_shared<SystemsGame>();
+    SystemsGame& TestGame = *TestGameOwner;
     TestGame.AddConflict = true;
-    World TestWorld(&TestGame);
+    World TestWorld(TestGameOwner);
     Fling::EntityStorage& Reg = TestWorld.GetStorage();
 
     REQUIRE_FALSE(TestWorld.Init());
@@ -199,9 +202,10 @@ TEST_CASE("A world with component names that clash does not start", "[world][ecs
 {
     QuietLogger();
 
-    SystemsGame TestGame;
+    const auto TestGameOwner = std::make_shared<SystemsGame>();
+    SystemsGame& TestGame = *TestGameOwner;
     TestGame.AddNameClash = true;
-    World TestWorld(&TestGame);
+    World TestWorld(TestGameOwner);
 
     REQUIRE_FALSE(TestWorld.Init());
     REQUIRE_FALSE(TestWorld.IsReadyForPlay());

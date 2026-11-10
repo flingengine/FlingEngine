@@ -101,18 +101,8 @@ namespace
     public:
         static constexpr SystemInfo Info{.Name = "Tutorial.Damage", .Phase = Phases::Simulation};
 
-        // The consumer of a queue makes it, and the owner of a singleton makes it
-        void OnCreate(Setup& setup) const
-        {
-            setup.AddSingleton<DamageRequests>();
-            setup.AddSingleton<DamageStats>();
-        }
-
-        void OnDestroy(Setup& setup) const
-        {
-            setup.RemoveSingleton<DamageStats>();
-            setup.RemoveSingleton<DamageRequests>();
-        }
+        // No OnCreate: the engine makes DamageRequests (this system consumes it) and DamageStats
+        // (this system writes it), and removes them when the world shuts down
 
         // Each play starts with no kills
         void OnPlayBegin(Context& ctx) const { ctx.Singleton<DamageStats>() = DamageStats{}; }

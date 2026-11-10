@@ -263,7 +263,7 @@ namespace Fling
 
         // The world owns the entity storage. The renderer and physics keep a reference
         // to it, so make the world first, and destroy it after them.
-        m_World = new World(m_GameImpl);
+        m_World = std::make_shared<World>(m_GameImpl);
         m_GameImpl->m_OwningWorld = m_World;
         EntityStorage& Storage = m_World->GetStorage();
 
@@ -503,8 +503,8 @@ namespace Fling
             m_World->Shutdown();
         }
 
-        delete m_GameImpl;
-        m_GameImpl = nullptr;
+        // The world still holds the game until the world is destroyed below
+        m_GameImpl.reset();
 
         // Cleanup any resources
         if (m_SystemsStarted)
@@ -550,8 +550,7 @@ namespace Fling
         {
             Physics::ShutdownWorld(m_World->GetStorage());
             m_World->GetStorage().Clear();
-            delete m_World;
-            m_World = nullptr;
+            m_World.reset();
         }
 
         PrintExitSummary(t_Code);

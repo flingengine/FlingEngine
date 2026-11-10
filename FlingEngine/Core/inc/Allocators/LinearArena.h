@@ -28,7 +28,10 @@ namespace Fling
         LinearArena& operator=(LinearArena&& other) noexcept;
         ~LinearArena();
 
-        /** Memory for bytes at a multiple of alignment (a power of two). Never null. */
+        /**
+         * Memory for bytes at a multiple of alignment (a power of two). Never null: if the OS
+         * has no memory, the program stops (VirtualMemory::OutOfMemory).
+         */
         void* Allocate(size_t bytes, size_t alignment);
 
         /** Make every allocation free again. The pages stay. */
@@ -48,6 +51,8 @@ namespace Fling
         {
             std::byte* Memory = nullptr;
             size_t Bytes = 0;
+            /** The alignment given to VirtualMemory::Allocate, to give the page back with the same values */
+            size_t Alignment = 0;
         };
 
         std::vector<Page> m_Pages;

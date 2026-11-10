@@ -29,7 +29,8 @@ namespace Fling
          * whose reflected fields cover much less than the struct (unless it is Partial).
          * Names that cannot be told apart are errors (see Errors): two types with one
          * saved name, a former name that is another type's name or a removed component's
-         * name, and a former name that two types claim.
+         * name, and a former name that two types claim. A type that requires a type which
+         * is not registered, and types that require each other in a loop, are errors too.
          */
         static TypeRegistry Build(const ModuleRegistration& modules);
 
@@ -53,6 +54,29 @@ namespace Fling
         const RemovedComponentDesc* FindRemoved(StringView name) const;
 
         const std::vector<TypeDesc>& All() const { return m_Types; }
+
+        /**
+         * The type and every type that it requires, directly or through another type. A
+         * type comes after the types that it requires, so the list is the order to add
+         * them in. The type itself is last.
+         */
+        std::vector<const TypeDesc*> WithRequired(const TypeDesc& type) const;
+
+        /**
+         * Add the type to the entity with default values (or with fill), after each type
+         * that it requires and the entity does not have. The editor and level load add
+         * components with this, so an entity never has a component without what it requires.
+         */
+        void AddWithRequired(EntityStorage& storage,
+                             Entity entity,
+                             const TypeDesc& type,
+                             TypeDesc::FillFn fill = nullptr) const;
+
+        /**
+         * A component on the entity that requires the type, so the type cannot be removed
+         * from the entity yet. Null if no component on it does.
+         */
+        const TypeDesc* RequiredBy(const EntityStorage& storage, Entity entity, const TypeDesc& type) const;
 
         bool Empty() const { return m_Types.empty(); }
 

@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <string_view>
+#include <tuple>
 #include <utility>
 
 namespace Fling
@@ -112,6 +113,7 @@ namespace Fling
                     phaseOrder[rate] = SortUpdateRate(static_cast<UpdateRate>(rate));
                 }
                 FinishPhases(phaseOrder);
+                FindLags();
                 return std::move(m_Result);
             }
 
@@ -955,6 +957,57 @@ namespace Fling
                 }
             }
 
+            /** Every pair where the reader (or consumer) runs before the writer (or appender) of a type. */
+            void FindLags()
+            {
+                std::vector<Index> position(Count(), NoIndex);
+                Index next = 0;
+                for (const Index i : m_Result.Value.RunOrder())
+                {
+                    position[i] = next++;
+                }
+
+                std::vector<ScheduleLag>& lags = m_Result.Value.Lags;
+                for (Index late = 0; late < Count(); ++late)
+                {
+                    for (Index source = 0; source < Count(); ++source)
+                    {
+                        // A cycle leaves systems out of the run order
+                        if (late == source || position[late] == NoIndex || position[source] == NoIndex ||
+                            position[late] > position[source] || RateOfSystem(late) != RateOfSystem(source) ||
+                            !Overlaps(Desc(late).Info.RunIn, Desc(source).Info.RunIn))
+                        {
+                            continue;
+                        }
+                        for (const AccessEntry& read : Desc(late).Access)
+                        {
+                            for (const AccessEntry& made : Desc(source).Access)
+                            {
+                                if (read.Hash != made.Hash)
+                                {
+                                    continue;
+                                }
+                                if (read.Mode == AccessMode::Read && made.Mode == AccessMode::Write)
+                                {
+                                    lags.push_back(ScheduleLag{late, source, false, read.Name});
+                                }
+                                else if (read.Mode == AccessMode::Consume && made.Mode == AccessMode::Append)
+                                {
+                                    lags.push_back(ScheduleLag{late, source, true, read.Name});
+                                }
+                            }
+                        }
+                    }
+                }
+                std::sort(lags.begin(),
+                          lags.end(),
+                          [this](const ScheduleLag& a, const ScheduleLag& b)
+                          {
+                              return std::tuple{SystemName(a.Late), StringView(a.TypeName), SystemName(a.Source)} <
+                                     std::tuple{SystemName(b.Late), StringView(b.TypeName), SystemName(b.Source)};
+                          });
+            }
+
             struct PhaseEdge
             {
                 Index From = 0;
@@ -1097,6 +1150,20 @@ namespace Fling
                                 out += "Order\n";
                                 break;
                             }
+                        }
+
+                        const char* before = rate == UpdateRate::Fixed ? "tick" : "frame";
+                        for (const ScheduleLag& lag : Lags)
+                        {
+                            if (lag.Late != i)
+                            {
+                                continue;
+                            }
+                            const String source = Systems[lag.Source]->Info.Name;
+                            out += lag.Queue ? String("             one ") + before + " late: consumes " +
+                                                   lag.TypeName + " before " + source + " appends to it\n"
+                                             : String("             one ") + before + " late: reads " + lag.TypeName +
+                                                   " before " + source + " writes it\n";
                         }
                     }
                 }

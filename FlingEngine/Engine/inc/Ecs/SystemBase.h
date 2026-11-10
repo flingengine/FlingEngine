@@ -54,7 +54,7 @@ namespace Fling
             .Access = A::Table,
             .Spawns = A::HasSpawns,
             .RawStorage = A::HasRawStorage,
-            .PrepareStorage = &PrepareStorage<A>,
+            .Prepare = &PrepareSystem<A>,
         };
     } // namespace Detail
 
@@ -73,6 +73,11 @@ namespace Fling
      * optionally OnCreate(Setup&), OnDestroy(Setup&), OnPlayBegin(Context&), and
      * OnPlayEnd(Context&). They are not virtual: the adapter implements the ISystem
      * functions and calls yours with a context typed by the access list.
+     *
+     * A singleton in the list with Write, and a queue with Consume, belongs to the
+     * system: the engine makes it before OnCreate and removes it after OnDestroy. So
+     * most systems need no OnCreate. Write one only to give a singleton other values
+     * than its defaults, or to make one that has no default constructor.
      */
     template <typename Derived, typename AccessList>
     class System : public ISystem

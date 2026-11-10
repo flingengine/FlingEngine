@@ -95,10 +95,11 @@ namespace Fling
          * Gets the owning world of this game. You can use the world to add entities to
          * 			the world. Asserts that world exists first
          */
-        FORCEINLINE World* GetWorld() const
+        FORCEINLINE std::shared_ptr<World> GetWorld() const
         {
-            assert(m_OwningWorld);
-            return m_OwningWorld;
+            std::shared_ptr<World> OwningWorld = m_OwningWorld.lock();
+            assert(OwningWorld);
+            return OwningWorld;
         }
 
         /**
@@ -113,8 +114,8 @@ namespace Fling
         Game() = default;
         virtual ~Game() = default;
 
-        /** The world that updates this game. Set in the Engine::Startup */
-        World* m_OwningWorld = nullptr;
+        /** The world that updates this game. Set in the Engine::Startup. Weak: the world holds the game. */
+        std::weak_ptr<World> m_OwningWorld;
 
         /** Change this value to true when the game wants to exit. The World clears it when play stops. */
         bool m_WantsToQuit = false;

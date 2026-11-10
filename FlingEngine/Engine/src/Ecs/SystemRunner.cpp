@@ -49,11 +49,12 @@ namespace Fling
         m_Storage.SetSingleton<SimTime>(SimTime{0, static_cast<float>(Seconds(m_Config.FixedStep)), 0.0});
         m_Storage.SetSingleton<RealFrameTime>();
 
+        // Every owned singleton exists before the first OnCreate, so an OnCreate can read another system's
         for (const uint32 i : m_RunOrder)
         {
-            if (const auto prepare = m_Systems.At(i).Describe().PrepareStorage)
+            if (const auto prepare = m_Systems.At(i).Describe().Prepare)
             {
-                prepare(setup);
+                prepare(m_Storage, m_OwnedSingletons);
             }
         }
         for (const uint32 i : m_RunOrder)
@@ -71,6 +72,11 @@ namespace Fling
         {
             m_Systems.At(i).RunDestroy(setup);
         }
+        for (const auto remove : std::views::reverse(m_OwnedSingletons))
+        {
+            remove(m_Storage);
+        }
+        m_OwnedSingletons.clear();
 
         m_Storage.RemoveSingleton<RealFrameTime>();
         m_Storage.RemoveSingleton<SimTime>();

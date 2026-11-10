@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Components/Transform.h"
 #include "Ecs/Component.h"
 #include "FlingMath.h"
 
@@ -7,6 +8,7 @@
 struct Mover
 {
     static constexpr Fling::ComponentInfo Component{.Name = "Mover"};
+    using Requires = Fling::TypeList<Fling::Transform>;
 
     glm::vec3 TargetPos = {-10.0f, 0.0f, 0.0f};
 
@@ -17,6 +19,7 @@ struct Mover
 struct Rotator
 {
     static constexpr Fling::ComponentInfo Component{.Name = "Rotator"};
+    using Requires = Fling::TypeList<Fling::Transform>;
 
     glm::vec3 MinPos = {-10.0f, 0.0f, 0.0f};
     glm::vec3 MaxPos = {-10.0f, 0.0f, 0.0f};

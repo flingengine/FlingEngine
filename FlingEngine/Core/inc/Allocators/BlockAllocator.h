@@ -52,7 +52,8 @@ namespace Fling
         /** The alignment of a block for bytes: the block size, or the page size for a large block. */
         static size_t BlockAlignment(size_t bytes);
 
-        /** A block of BlockSize(bytes). Asserts and returns null if the OS has no memory. */
+        /** A block of BlockSize(bytes). Never null: if the OS has no memory, the program stops
+         * (VirtualMemory::OutOfMemory). */
         void* Allocate(size_t bytes);
 
         /** Give back a block. Bytes is the value given to Allocate. */

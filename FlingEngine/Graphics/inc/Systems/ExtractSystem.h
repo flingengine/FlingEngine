@@ -17,6 +17,7 @@ namespace Fling
      */
     class ExtractSystem final : public System<ExtractSystem,
                                               Access<Read<Transform>,
+                                                     Read<Parent>,
                                                      Read<LocalToWorld>,
                                                      Read<MeshRenderer>,
                                                      Read<PointLight>,
@@ -25,10 +26,6 @@ namespace Fling
     {
     public:
         static constexpr SystemInfo Info{.Name = "Graphics.Extract", .Phase = Phases::Extract, .RunIn = WorldRole::All};
-
-        void OnCreate(Setup& setup) const;
-
-        void OnDestroy(Setup& setup) const;
 
         void Update(Context& ctx) const;
 

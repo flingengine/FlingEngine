@@ -6,6 +6,7 @@
 #include <catch2/catch_all.hpp>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <set>
 #include <vector>
 
@@ -23,7 +24,7 @@ TEST_CASE("VirtualMemory gives aligned pages that can be written", "[allocators]
 {
     const size_t page = VirtualMemory::PageSize();
     REQUIRE(page >= 4096);
-    for (const size_t alignment : {page, size_t(64 * 1024), size_t(256 * 1024)})
+    for (const size_t alignment : {page, size_t(64 * 1024), size_t(256 * 1024), VirtualMemory::LargePageBytes})
     {
         void* memory = VirtualMemory::Allocate(3 * page, alignment);
         REQUIRE(memory != nullptr);
@@ -31,6 +32,43 @@ TEST_CASE("VirtualMemory gives aligned pages that can be written", "[allocators]
         std::memset(memory, 0xAB, 3 * page);
         VirtualMemory::Free(memory, 3 * page, alignment);
     }
+}
+
+TEST_CASE("VirtualMemory pages are zero, and many aligned blocks can live and die in any order", "[allocators]")
+{
+    // The aligned path takes more address space than it gives out. Every block must still be usable to its
+    // last byte, must not overlap another one, and must go back whole.
+    const size_t bytes = 96 * 1024;
+    const size_t alignment = 128 * 1024;
+    std::vector<unsigned char*> blocks;
+    for (int i = 0; i < 64; ++i)
+    {
+        auto* block = static_cast<unsigned char*>(VirtualMemory::Allocate(bytes, alignment));
+        REQUIRE(block != nullptr);
+        REQUIRE(IsAligned(block, alignment));
+        REQUIRE(block[0] == 0);
+        REQUIRE(block[bytes - 1] == 0);
+        std::memset(block, i + 1, bytes);
+        blocks.push_back(block);
+    }
+    for (size_t i = 0; i < blocks.size(); ++i)
+    {
+        REQUIRE(blocks[i][0] == i + 1);
+        REQUIRE(blocks[i][bytes - 1] == i + 1);
+    }
+    // Every other one first, then the rest
+    for (size_t i = 0; i < blocks.size(); i += 2)
+    {
+        VirtualMemory::Free(blocks[i], bytes, alignment);
+    }
+    for (size_t i = 1; i < blocks.size(); i += 2)
+    {
+        REQUIRE(blocks[i][bytes / 2] == i + 1);
+        VirtualMemory::Free(blocks[i], bytes, alignment);
+    }
+
+    // A size that cannot be is refused, not wrapped around to a small one
+    REQUIRE(VirtualMemory::Allocate(std::numeric_limits<size_t>::max() - 100, alignment) == nullptr);
 }
 
 TEST_CASE("BlockAllocator rounds to size classes and aligns blocks to their size", "[allocators]")
@@ -137,6 +175,21 @@ TEST_CASE("LinearArena aligns, keeps its pages on Reset, and takes big requests"
     CHECK(moved.ReservedBytes() == reserved);
     moved.Release();
     CHECK(moved.ReservedBytes() == 0);
+}
+
+TEST_CASE("LinearArena takes an alignment that is more than a page, and gives the page back", "[allocators]")
+{
+    LinearArena arena;
+    const size_t alignment = 256 * 1024;
+    auto* wide = static_cast<unsigned char*>(arena.Allocate(1000, alignment));
+    REQUIRE(IsAligned(wide, alignment));
+    std::memset(wide, 0x5A, 1000);
+    // A small request after it does not move it
+    auto* small = static_cast<unsigned char*>(arena.Allocate(8, 8));
+    REQUIRE((small < wide || small >= wide + 1000));
+    REQUIRE(wide[999] == 0x5A);
+    arena.Release();
+    REQUIRE(arena.ReservedBytes() == 0);
 }
 
 TEST_CASE("SlotPool gives aligned, stable slots and uses freed ones again", "[allocators]")

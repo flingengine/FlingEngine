@@ -1,6 +1,7 @@
 #include "Components/Transform.h"
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
+#include "HierarchyUtil.h"
 #include "Lighting/PointLight.hpp"
 #include "MeshProxyTable.h"
 #include "MeshRenderer.h"
@@ -119,6 +120,28 @@ TEST_CASE("Destroying an entity with a MeshRenderer releases its proxy slot", "[
     REQUIRE(proxies.LiveCount() == 1);
     REQUIRE(proxies.SlotOf(doomed.ToBits()) == MeshProxyTable::InvalidSlot);
     REQUIRE(proxies.SlotOf(kept.ToBits()) != MeshProxyTable::InvalidSlot);
+}
+
+TEST_CASE("An entity made after the last tick is drawn in its world place in the same frame", "[graphics][extract]")
+{
+    ExtractHarness h;
+    const Entity parent = h.Storage.Create(Transform{glm::vec3(10.0f, 0.0f, 0.0f)});
+    h.Frame();
+
+    // Made between the tick and the frame, as the editor and a level load do: no LocalToWorld yet
+    const Entity child = h.Storage.Create(Transform{glm::vec3(0.0f, 1.0f, 0.0f)}, MeshRenderer("Models/cube.obj"));
+    REQUIRE(HierarchyUtil::SetParent(h.Storage, child, parent));
+    h.Runner->RunFrame(std::chrono::milliseconds(16), WorldRole::Play);
+    REQUIRE_FALSE(h.Storage.Has<LocalToWorld>(child));
+
+    const RenderSnapshot& snapshot = h.Storage.Singleton<RenderSnapshot>();
+    REQUIRE(snapshot.Meshes.size() == 1);
+    // Not at (0, 1, 0), which is where it is relative to its parent
+    REQUIRE(glm::vec3(snapshot.Meshes[0].World[3]) == glm::vec3(10.0f, 1.0f, 0.0f));
+
+    // The next tick gives it a LocalToWorld with the same place
+    REQUIRE(glm::vec3(h.Frame().Meshes[0].World[3]) == glm::vec3(10.0f, 1.0f, 0.0f));
+    REQUIRE(h.Storage.Has<LocalToWorld>(child));
 }
 
 TEST_CASE("Extract copies world matrices and lights into the snapshot", "[graphics][extract]")

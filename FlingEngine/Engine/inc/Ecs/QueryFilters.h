@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Ecs/Component.h"
 #include "Ecs/TypeList.h"
+
+#include <type_traits>
 
 namespace Fling
 {
@@ -18,6 +21,16 @@ namespace Fling
 
     namespace Detail
     {
+        /** True for a component that is on entities and has data: what a query returns. A const T counts. */
+        template <typename T>
+        inline constexpr bool IsTableComponent =
+            Component<std::remove_const_t<T>> && ComponentInfoOf<std::remove_const_t<T>>.Kind == ComponentKind::Table;
+
+        /** True for a component that is on entities, with data or a tag: what With and Without take. */
+        template <typename T>
+        inline constexpr bool IsFilterComponent = Component<T> && (ComponentInfoOf<T>.Kind == ComponentKind::Table ||
+                                                                   ComponentInfoOf<T>.Kind == ComponentKind::Tag);
+
         template <typename F>
         struct FilterTypes
         {
@@ -57,5 +70,17 @@ namespace Fling
         {
             using Type = typename Concat<TypeList<As..., Bs...>, Rest...>::Type;
         };
+
+        /** True if every F is a With<...> or a Without<...>. */
+        template <typename... Filters>
+        inline constexpr bool AreFilters = (FilterTypes<Filters>::IsFilter && ...);
+
+        /** Every type that the With<...> filters in Filters name, as one TypeList. */
+        template <typename... Filters>
+        using WithTypes = typename Concat<typename FilterTypes<Filters>::WithList...>::Type;
+
+        /** Every type that the Without<...> filters in Filters name, as one TypeList. */
+        template <typename... Filters>
+        using WithoutTypes = typename Concat<typename FilterTypes<Filters>::WithoutList...>::Type;
     } // namespace Detail
 } // namespace Fling

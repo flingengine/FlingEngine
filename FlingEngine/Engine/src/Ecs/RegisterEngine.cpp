@@ -40,6 +40,7 @@ namespace Fling
                                     { t_Type.Category("Core").Field("value", &Parent::Value).ReadOnly(); });
         t_Modules.Component<Children>();
         t_Modules.Component<LocalToWorld>();
+        t_Modules.Component<TransformWork>();
 
         t_Modules.Component<NameComponent>([](TypeBuilder<NameComponent>& t_Type)
                                            { t_Type.Category("Core").Field("Name", &NameComponent::Name); });

@@ -38,6 +38,24 @@ namespace Fling
         const char* TypeName = nullptr;
     };
 
+    /**
+     * A system that runs before the system which makes its data, so it gets the data of
+     * the tick (or frame) before. Phase order and explicit orders can do this: the
+     * schedule only puts a writer before a reader where nothing else orders the two.
+     * It is legal, and often wanted. It is listed so that a delay of one tick is a choice
+     * and not a surprise.
+     */
+    struct ScheduleLag
+    {
+        /** The reader or consumer, which runs first. An index into Schedule::Systems. */
+        uint32 Late = 0;
+        /** The writer or appender, which runs after it. */
+        uint32 Source = 0;
+        /** True for a queue: its requests wait one tick. False for a component that is read. */
+        bool Queue = false;
+        const char* TypeName = nullptr;
+    };
+
     /** Systems with no edge between them. A parallel executor can run them at the same time. Sorted by name. */
     struct ScheduleStage
     {
@@ -72,6 +90,8 @@ namespace Fling
         /** For each update rate, its segments in run order. */
         std::array<std::vector<ScheduleSegment>, UpdateRateCount> Segments;
         std::vector<ScheduleEdge> Edges;
+        /** Every read that is one tick (or frame) late. Sorted by the name of the reader, then the type. */
+        std::vector<ScheduleLag> Lags;
 
         const std::vector<ScheduleSegment>& GetSegments(const UpdateRate rate) const
         {
@@ -84,7 +104,10 @@ namespace Fling
         /** Every system index in run order: the fixed systems, then the frame systems. */
         std::vector<uint32> RunOrder() const;
 
-        /** A readable listing of each update rate, segment, stage, and system, and why each edge exists. */
+        /**
+         * A readable listing of each update rate, segment, stage, and system, why each edge
+         * exists, and each read that is one tick late.
+         */
         String Dump() const;
     };
 

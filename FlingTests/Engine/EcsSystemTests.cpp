@@ -282,7 +282,7 @@ TEST_CASE("Describe is made from Info and the access list", "[ecs][system]")
     REQUIRE(desc.Access[3].Hash == TypeHashOf<Position>);
     REQUIRE(desc.Access[3].Mode == AccessMode::Write);
     REQUIRE_FALSE(desc.Spawns);
-    REQUIRE(desc.PrepareStorage != nullptr);
+    REQUIRE(desc.Prepare != nullptr);
     REQUIRE(ResolveSpawnSystem{}.Describe().Spawns);
 }
 
@@ -524,4 +524,124 @@ TEST_CASE("SystemRegistry::Order orders two writers, and AddPhase adds an empty 
     h.Storage.Add<Position>(e, Position{5.0f});
     h.Runner->RunTick(WorldRole::Play);
     REQUIRE(h.Storage.Get<Position>(e).X == 2.0f);
+}
+
+namespace
+{
+    struct Score
+    {
+        static constexpr ComponentInfo Component{
+            .Name = "Owned.Score", .Kind = ComponentKind::Singleton, .Transient = true};
+        int Points = 7;
+    };
+
+    struct ScoreRequests
+    {
+        static constexpr ComponentInfo Component{
+            .Name = "Owned.ScoreRequests", .Kind = ComponentKind::Queue, .Transient = true};
+        std::vector<int> Requests;
+    };
+
+    /** Made by code outside the systems, like the physics world. */
+    struct Device
+    {
+        static constexpr ComponentInfo Component{
+            .Name = "Owned.Device", .Kind = ComponentKind::Singleton, .Transient = true, .External = true};
+        int Handle = 0;
+    };
+
+    /** A singleton with no default constructor: its writer must make it in OnCreate. */
+    struct Limits
+    {
+        static constexpr ComponentInfo Component{
+            .Name = "Owned.Limits", .Kind = ComponentKind::Singleton, .Transient = true};
+        explicit Limits(const int max) : Max(max) {}
+        int Max;
+    };
+
+    /** Has no OnCreate. Appends to a queue that another system consumes. */
+    class AskSystem final : public System<AskSystem, Access<Append<ScoreRequests>>>
+    {
+    public:
+        static constexpr SystemInfo Info{.Name = "Owned.Ask", .Phase = Phases::Simulation};
+
+        void FixedUpdate(Context& ctx) const { ctx.Queue<ScoreRequests>().Push(1); }
+    };
+
+    /** Has no OnCreate for Score or ScoreRequests. Makes Limits, which has no default. */
+    class ScoreSystem final
+        : public System<ScoreSystem, Access<Write<Score>, Consume<ScoreRequests>, Write<Device>, Write<Limits>>>
+    {
+    public:
+        static constexpr SystemInfo Info{.Name = "Owned.Score", .Phase = Phases::Simulation};
+
+        void OnCreate(Setup& setup) const { setup.AddSingleton<Limits>(100); }
+
+        void OnDestroy(Setup& setup) const { setup.RemoveSingleton<Limits>(); }
+
+        void FixedUpdate(Context& ctx) const
+        {
+            for (const int points : ctx.Drain<ScoreRequests>())
+            {
+                ctx.Singleton<Score>().Points += points;
+            }
+        }
+    };
+} // namespace
+
+TEST_CASE("The runner makes the singletons a system writes and the queues it consumes", "[ecs][system]")
+{
+    STATIC_REQUIRE(Detail::OwnsSingleton<Write<Score>>());
+    STATIC_REQUIRE(Detail::OwnsSingleton<Consume<ScoreRequests>>());
+    STATIC_REQUIRE_FALSE(Detail::OwnsSingleton<Read<Score>>());
+    STATIC_REQUIRE_FALSE(Detail::OwnsSingleton<Append<ScoreRequests>>());
+    STATIC_REQUIRE_FALSE(Detail::OwnsSingleton<Write<Device>>());
+    STATIC_REQUIRE_FALSE(Detail::OwnsSingleton<Write<Limits>>());
+    STATIC_REQUIRE_FALSE(Detail::OwnsSingleton<Write<Position>>());
+
+    EntityStorage storage;
+    SystemRegistry systems;
+    systems.Add<AskSystem>();
+    systems.Add<ScoreSystem>();
+    ScheduleResult schedule = systems.BuildSchedule();
+    REQUIRE(schedule.ErrorReport() == "");
+    SystemRunner runner(systems, std::move(schedule.Value), storage);
+
+    // Code outside the systems makes the External one
+    storage.SetSingleton<Device>().Handle = 5;
+
+    runner.Create();
+    REQUIRE(storage.Singleton<Score>().Points == 7);
+    REQUIRE(storage.TryGetSingleton<ScoreRequests>() != nullptr);
+    REQUIRE(storage.Singleton<Limits>().Max == 100);
+    REQUIRE(storage.Singleton<Device>().Handle == 5);
+
+    runner.RunTick(WorldRole::Play);
+    REQUIRE(storage.Singleton<Score>().Points == 8);
+
+    // Destroy removes what Create made, and leaves the External one
+    runner.Destroy();
+    REQUIRE(storage.TryGetSingleton<Score>() == nullptr);
+    REQUIRE(storage.TryGetSingleton<ScoreRequests>() == nullptr);
+    REQUIRE(storage.TryGetSingleton<Limits>() == nullptr);
+    REQUIRE(storage.Singleton<Device>().Handle == 5);
+}
+
+TEST_CASE("The runner keeps a singleton that exists before Create", "[ecs][system]")
+{
+    EntityStorage storage;
+    SystemRegistry systems;
+    systems.Add<ScoreSystem>();
+    ScheduleResult schedule = systems.BuildSchedule();
+    REQUIRE(schedule.ErrorReport() == "");
+    SystemRunner runner(systems, std::move(schedule.Value), storage);
+
+    storage.SetSingleton<Device>();
+    storage.SetSingleton<Score>().Points = 40;
+    runner.Create();
+    REQUIRE(storage.Singleton<Score>().Points == 40);
+
+    // It was not the runner's, so the runner does not remove it
+    runner.Destroy();
+    REQUIRE(storage.Singleton<Score>().Points == 40);
 }

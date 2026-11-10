@@ -110,6 +110,12 @@ struct DamageStats
 `.Transient = true` means that the engine never saves the component. Use it for
 runtime state, such as queues and counters.
 
+If a component cannot work without another one, say so on the struct. A poison
+that needs a health to decrease would have
+`using Requires = Fling::TypeList<Health>;`. Then `ctx.Spawn(Poison{})` with no
+`Health` does not compile, and the editor adds a `Health` when you add a
+`Poison`. Read "Required components" in [`Skills/ecs.md`](../Skills/ecs.md).
+
 Use Fling types in components: `uint32` and `int64`, not `uint32_t`. Use `String`
 for text and `Name` for identifiers. Use `Fling::Entity` for a reference to
 another entity. Read [`Skills/strings.md`](../Skills/strings.md).
@@ -179,24 +185,9 @@ class DamageSystem final : public Fling::System<DamageSystem,
 public:
     static constexpr Fling::SystemInfo Info{.Name = "Tutorial.Damage", .Phase = Fling::Phases::Simulation};
 
-    void OnCreate(Setup& setup) const;
-    void OnDestroy(Setup& setup) const;
     void OnPlayBegin(Context& ctx) const;
     void FixedUpdate(Context& ctx) const;
 };
-
-// The consumer of a queue makes the queue. The owner of a singleton makes the singleton.
-void DamageSystem::OnCreate(Setup& setup) const
-{
-    setup.AddSingleton<DamageRequests>();
-    setup.AddSingleton<DamageStats>();
-}
-
-void DamageSystem::OnDestroy(Setup& setup) const
-{
-    setup.RemoveSingleton<DamageStats>();
-    setup.RemoveSingleton<DamageRequests>();
-}
 
 // Each play starts with no kills
 void DamageSystem::OnPlayBegin(Context& ctx) const
@@ -227,8 +218,13 @@ void DamageSystem::FixedUpdate(Context& ctx) const
 ```
 
 - **Put the state of a system in a singleton component.** A system cannot
-  have member variables (it does not compile). The system that writes a
-  singleton makes it in `OnCreate` and removes it in `OnDestroy`.
+  have member variables (it does not compile).
+- **You do not make the singleton or the queue.** `Write<DamageStats>` and
+  `Consume<DamageRequests>` in the access list tell the engine that this system
+  owns them. The engine makes them, with their default values, before the first
+  tick, and removes them when the world shuts down. If a singleton must start
+  with other values, or has no default constructor, write
+  `void OnCreate(Setup& setup) const` and call `setup.AddSingleton<T>(values...)`.
 - **`OnPlayBegin`** runs when play starts (also when you push Play in the
   editor). Reset the state of each play there.
 - **`ctx.Drain<Q>()`** gives each request in the queue one time. Then it empties
@@ -241,7 +237,10 @@ void DamageSystem::FixedUpdate(Context& ctx) const
   (and its children) at the end of the tick. This does not change a query while
   the query runs. `ctx.Add(e, value)` and `ctx.Remove<T>(e)` are also deferred.
 - **Spawn is immediate.** With `Spawns` in the access list,
-  `ctx.Spawn(Health{}, Poison{})` makes a new entity at once.
+  `ctx.Spawn(Health{}, Poison{})` makes a new entity at once. Give it every
+  component that the entity needs in that one call. The systems that run after
+  yours in this tick then see the whole entity. A component that you add later
+  with `ctx.Add` is not there until the end of the tick.
 
 You do not need to set the order of `PoisonSystem` and `DamageSystem`. Every
 system that appends to a queue runs before the system that consumes it. If
@@ -474,7 +473,9 @@ The access checks are `static_assert`s. The message tells you what to change:
 | "A fixed phase system implements FixedUpdate" | The phase and the function do not agree |
 | "A frame rate system cannot write a Simulation component" | Write a `Presentation` component, or move the system to a fixed phase |
 | "Only a writer of a singleton makes it" | `AddSingleton<T>` needs `Write<T>` |
+| A debug assert: "Singleton: nobody made it" | No system has `Write<T>` for that singleton, or the singleton is `.External` and its module did not make it |
 | "is not a Fling::Component" | Add the `static constexpr Fling::ComponentInfo Component{...}` line |
+| "makes an entity with a component, and without a component that it requires" | Add the missing component to the `Spawn` or `Create` call. The `Requires` list of each component says what it needs |
 | "saved .Name must end with its C++ type name" | Make `.Name` end with the struct name. If you renamed the struct, add the old `.Name` to `FormerNames` |
 
 If the schedule has an error (two writers with no order, a cycle), or two

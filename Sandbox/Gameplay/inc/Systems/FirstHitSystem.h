@@ -21,10 +21,6 @@ namespace Sandbox
     public:
         static constexpr Fling::SystemInfo Info{.Name = "Sandbox.FirstHit", .Phase = Fling::Phases::Simulation};
 
-        void OnCreate(Setup& setup) const;
-
-        void OnDestroy(Setup& setup) const;
-
         /** Each play counts ticks from 0 and logs its own first hit. */
         void OnPlayBegin(Context& ctx) const;
 

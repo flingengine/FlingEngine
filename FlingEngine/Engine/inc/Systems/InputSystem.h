@@ -15,10 +15,6 @@ namespace Fling
     public:
         static constexpr SystemInfo Info{.Name = "Engine.Input", .Phase = Phases::Input, .RunIn = WorldRole::All};
 
-        void OnCreate(Setup& setup) const;
-
-        void OnDestroy(Setup& setup) const;
-
         void FixedUpdate(Context& ctx) const;
     };
 } // namespace Fling

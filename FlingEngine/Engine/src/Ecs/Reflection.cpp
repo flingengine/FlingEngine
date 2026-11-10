@@ -419,7 +419,124 @@ namespace Fling
                 }
             }
         }
+        // Requirements: every required type is registered, and no types require each other in a loop
+        for (const TypeDesc& type : registry.m_Types)
+        {
+            for (const TypeDesc::Required& required : type.Requires)
+            {
+                if (registry.Find(required.Hash) == nullptr)
+                {
+                    registry.m_Errors.push_back(fmt::format("'{}' requires '{}', which is not registered. Add it with "
+                                                            "ModuleRegistration::Component<T>().",
+                                                            type.Name,
+                                                            required.Name));
+                }
+            }
+        }
+        // 0 is not seen, 1 is on the path from the start, and 2 is done
+        std::vector<uint8> state(registry.m_Types.size(), 0);
+        std::vector<size_t> path;
+        const std::function<void(size_t)> visit = [&](const size_t index)
+        {
+            state[index] = 1;
+            path.push_back(index);
+            for (const TypeDesc::Required& required : registry.m_Types[index].Requires)
+            {
+                const auto found = registry.m_ByHash.find(required.Hash);
+                if (found == registry.m_ByHash.end() || state[found->second] == 2)
+                {
+                    continue;
+                }
+                if (state[found->second] == 0)
+                {
+                    visit(found->second);
+                    continue;
+                }
+                String loop;
+                for (auto at = std::find(path.begin(), path.end(), found->second); at != path.end(); ++at)
+                {
+                    loop += registry.m_Types[*at].Name + " -> ";
+                }
+                registry.m_Errors.push_back(
+                    fmt::format("Component types require each other in a loop: {}{}. Remove one of the "
+                                "requirements, or make them one component.",
+                                loop,
+                                required.Name));
+            }
+            path.pop_back();
+            state[index] = 2;
+        };
+        for (size_t i = 0; i < registry.m_Types.size(); ++i)
+        {
+            if (state[i] == 0)
+            {
+                visit(i);
+            }
+        }
         return registry;
+    }
+
+    std::vector<const TypeDesc*> TypeRegistry::WithRequired(const TypeDesc& type) const
+    {
+        // Depth first, so a type is added after the types that it requires. A type that is already in the
+        // list is skipped, which also ends a loop (Build reports a loop as an error).
+        std::vector<const TypeDesc*> result;
+        std::vector<const TypeDesc*> open;
+        const std::function<void(const TypeDesc&)> visit = [&](const TypeDesc& each)
+        {
+            if (std::find(open.begin(), open.end(), &each) != open.end() ||
+                std::find(result.begin(), result.end(), &each) != result.end())
+            {
+                return;
+            }
+            open.push_back(&each);
+            for (const TypeDesc::Required& required : each.Requires)
+            {
+                if (const TypeDesc* found = Find(required.Hash))
+                {
+                    visit(*found);
+                }
+            }
+            open.pop_back();
+            result.push_back(&each);
+        };
+        visit(type);
+        return result;
+    }
+
+    void TypeRegistry::AddWithRequired(EntityStorage& storage,
+                                       const Entity entity,
+                                       const TypeDesc& type,
+                                       const TypeDesc::FillFn fill) const
+    {
+        for (const TypeDesc* each : WithRequired(type))
+        {
+            if (each == &type)
+            {
+                each->Emplace(storage, entity, fill);
+            }
+            else if (!each->Has(storage, entity))
+            {
+                each->Emplace(storage, entity, nullptr);
+            }
+        }
+    }
+
+    const TypeDesc*
+    TypeRegistry::RequiredBy(const EntityStorage& storage, const Entity entity, const TypeDesc& type) const
+    {
+        for (const TypeDesc& other : m_Types)
+        {
+            const bool needsType =
+                std::any_of(other.Requires.begin(),
+                            other.Requires.end(),
+                            [&](const TypeDesc::Required& required) { return required.Hash == type.Hash; });
+            if (needsType && other.Has != nullptr && other.Has(storage, entity))
+            {
+                return &other;
+            }
+        }
+        return nullptr;
     }
 
     const TypeDesc* TypeRegistry::Find(const StringView name) const

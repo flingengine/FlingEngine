@@ -3,6 +3,7 @@
 #include "Ecs/Component.h"
 #include "Ecs/detail/NativeStorage.h"
 #include "Ecs/Entity.h"
+#include "Ecs/Query.h"
 #include "Ecs/QueryFilters.h"
 #include "MathUtils.h"
 #include "Signals.h"
@@ -26,20 +27,7 @@ namespace Fling
 
     namespace Detail
     {
-        /** Construct a T at memory, with () when T has a matching constructor and {} otherwise (aggregates). */
-        template <typename T, typename... Args>
-        T* ConstructAt(void* memory, Args&&... args)
-        {
-            if constexpr (std::is_constructible_v<T, Args...>)
-            {
-                return ::new (memory) T(std::forward<Args>(args)...);
-            }
-            else
-            {
-                return ::new (memory) T{std::forward<Args>(args)...};
-            }
-        }
-
+        /** A T from args, with () when T has a matching constructor and {} otherwise (aggregates). */
         template <typename T, typename... Args>
         T MakeValue(Args&&... args)
         {
@@ -52,11 +40,19 @@ namespace Fling
                 return T{std::forward<Args>(args)...};
             }
         }
+
+        /** Construct a T at memory from args, in place: the value MakeValue returns is made there, with no move. */
+        template <typename T, typename... Args>
+        T* ConstructAt(void* memory, Args&&... args)
+        {
+            return ::new (memory) T(MakeValue<T>(std::forward<Args>(args)...));
+        }
     } // namespace Detail
 
     /**
      * Every entity that has all of the Ts, found when the view is made. Made by
-     * EntityStorage::View, for code outside systems (systems use ctx.Query).
+     * EntityStorage::View, for code outside systems (systems use ctx.Query). The
+     * entities come from the same QueryRange that ctx.Query returns.
      *
      * The list of entities is taken when the view is made, so the loop body may add
      * and remove components. Iterate it with a range-for (each element is an Entity),
@@ -136,7 +132,9 @@ namespace Fling
         /**
          * Make an entity with the given components. It goes straight to the archetype of
          * all of them, so this costs much less than Create and then Add for each. The
-         * Added hooks run after every component is in place, in the order given.
+         * Added hooks run after every component is in place, in the order given. The call
+         * must have every component that one of them requires (RequiredOf), or it does
+         * not compile.
          */
         template <typename... Cs>
         requires(sizeof...(Cs) > 0) Entity Create(Cs&&... components)
@@ -144,6 +142,10 @@ namespace Fling
             static_assert(((Component<std::decay_t<Cs>> && !IsSingletonComponent<std::decay_t<Cs>>) && ...),
                           "Create takes Table, Tag, and Sparse components.");
             static_assert(AllUnique<std::decay_t<Cs>...>, "A component appears twice in one Create.");
+            static_assert((HasRequired<std::decay_t<Cs>, std::decay_t<Cs>...> && ...),
+                          "Create (or ctx.Spawn) makes an entity with a component, and without a component that it "
+                          "requires. Look at the Requires list of each component in the call, and add what is "
+                          "missing.");
             constexpr size_t Count = sizeof...(Cs);
             const std::array<Detail::ComponentId, Count> ids{Detail::ComponentIdOf<std::decay_t<Cs>>()...};
             std::array<void*, Count> memory{};
@@ -193,9 +195,9 @@ namespace Fling
         // Components ------------------------------------------------------------------
 
         /**
-         * Add a T to the entity. The entity must not have one. Returns the new component
-         * (nothing for a tag). An Added hook must not remove the T or destroy the entity,
-         * because the reference is to the component after the hooks ran.
+         * Add a T to the entity. The entity must not have one, and must have every component
+         * that T requires (RequiredOf). Returns the new component (nothing for a tag). An Added hook must not remove
+         * the T or destroy the entity, because the reference is to the component after the hooks ran.
          */
         template <typename T, typename... Args>
         decltype(auto) Add(const Entity entity, Args&&... args)
@@ -266,7 +268,7 @@ namespace Fling
             return Add<T>(entity);
         }
 
-        /** Remove the entity's T. The entity must have one. */
+        /** Remove the entity's T. The entity must have one, and no component that requires T (RequiredOf). */
         template <typename T>
         void Remove(const Entity entity)
         {
@@ -287,13 +289,9 @@ namespace Fling
         {
             static_assert(Component<T> && !IsSingletonComponent<T>, "AddToAll adds a Table, Tag, or Sparse component.");
             static_assert(std::is_copy_constructible_v<T>, "AddToAll copies the value to each entity.");
-            static_assert((Detail::FilterTypes<Filters>::IsFilter && ...),
-                          "AddToAll takes only Fling::With<...> and Fling::Without<...> filters.");
-            const auto required =
-                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithList...>::Type{});
-            const auto excluded =
-                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithoutList...>::Type{});
-            return m_Native.AddToAll(Detail::ComponentIdOf<T>(), &value, &FillCopies<T>, required, excluded);
+            const BulkFilterIds<Filters...> filter;
+            return m_Native.AddToAll(
+                Detail::ComponentIdOf<T>(), &value, &FillCopies<T>, filter.Required, filter.Excluded);
         }
 
         /**
@@ -306,13 +304,8 @@ namespace Fling
         {
             static_assert(Component<T> && !IsSingletonComponent<T>,
                           "RemoveFromAll removes a Table, Tag, or Sparse component.");
-            static_assert((Detail::FilterTypes<Filters>::IsFilter && ...),
-                          "RemoveFromAll takes only Fling::With<...> and Fling::Without<...> filters.");
-            const auto required =
-                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithList...>::Type{});
-            const auto excluded =
-                SortedFilterIds(typename Detail::Concat<typename Detail::FilterTypes<Filters>::WithoutList...>::Type{});
-            return m_Native.RemoveFromAll(Detail::ComponentIdOf<T>(), required, excluded);
+            const BulkFilterIds<Filters...> filter;
+            return m_Native.RemoveFromAll(Detail::ComponentIdOf<T>(), filter.Required, filter.Excluded);
         }
 
         /** Remove the entity's T if it has one. */
@@ -481,16 +474,26 @@ namespace Fling
         template <typename... Ts>
         static std::array<Detail::ComponentId, sizeof...(Ts)> SortedFilterIds(TypeList<Ts...>)
         {
-            static_assert(((Component<Ts> &&
-                            (ComponentInfoOf<Ts>.Kind == ComponentKind::Table ||
-                             ComponentInfoOf<Ts>.Kind == ComponentKind::Tag) &&
-                            ComponentInfoOf<Ts>.Storage != ComponentStorage::Sparse) &&
-                           ...),
-                          "AddToAll and RemoveFromAll filter by Table, Enableable, and Tag components only.");
+            static_assert(
+                ((Detail::IsFilterComponent<Ts> && ComponentInfoOf<Ts>.Storage != ComponentStorage::Sparse) && ...),
+                "AddToAll and RemoveFromAll filter by Table, Enableable, and Tag components only.");
             std::array<Detail::ComponentId, sizeof...(Ts)> ids{Detail::ComponentIdOf<Ts>()...};
             std::sort(ids.begin(), ids.end());
             return ids;
         }
+
+        /** The sorted ids that the With and Without filters of AddToAll and RemoveFromAll name. */
+        template <typename... Filters>
+        struct BulkFilterIds
+        {
+            static_assert(Detail::AreFilters<Filters...>,
+                          "AddToAll and RemoveFromAll take only Fling::With<...> and Fling::Without<...> filters.");
+
+            std::array<Detail::ComponentId, Detail::WithTypes<Filters...>::Size> Required =
+                SortedFilterIds(Detail::WithTypes<Filters...>{});
+            std::array<Detail::ComponentId, Detail::WithoutTypes<Filters...>::Size> Excluded =
+                SortedFilterIds(Detail::WithoutTypes<Filters...>{});
+        };
 
         template <typename T, typename Arg>
         static void ConstructComponent(void* memory, Arg&& value)
@@ -517,66 +520,10 @@ namespace Fling
     template <typename... Ts>
     std::vector<Entity> EntityStorage::Gather()
     {
-        const std::array<Detail::ComponentId, sizeof...(Ts)> ids{Detail::ComponentIdOf<Ts>()...};
-
-        std::vector<Detail::ComponentId> archetypeIds;
-        std::vector<Detail::ComponentId> sparseIds;
-        std::vector<Detail::ComponentId> enableableIds;
-        for (const Detail::ComponentId id : ids)
-        {
-            const ComponentStorage kind = Detail::GetComponentOps(id).Storage;
-            (kind == ComponentStorage::Sparse ? sparseIds : archetypeIds).push_back(id);
-            if (kind == ComponentStorage::Enableable)
-            {
-                enableableIds.push_back(id);
-            }
-        }
-        std::sort(archetypeIds.begin(), archetypeIds.end());
-
+        // The same query that systems use, with every type as a filter
         std::vector<Entity> result;
-        auto accept = [&](const Entity entity)
-        {
-            for (const Detail::ComponentId id : sparseIds)
-            {
-                if (!m_Native.Has(entity, id))
-                {
-                    return;
-                }
-            }
-            for (const Detail::ComponentId id : enableableIds)
-            {
-                if (!m_Native.IsEnabled(entity, id))
-                {
-                    return;
-                }
-            }
-            result.push_back(entity);
-        };
-
-        if (archetypeIds.empty() && !sparseIds.empty())
-        {
-            // Only sparse types: walk the first set
-            if (const Detail::SparseSet* set = m_Native.FindSparse(sparseIds.front()))
-            {
-                const std::vector<Entity> dense = set->Dense;
-                for (const Entity entity : dense)
-                {
-                    accept(entity);
-                }
-            }
-            return result;
-        }
-
-        for (Detail::Archetype* arch : m_Native.Match(archetypeIds, {}))
-        {
-            for (const Detail::Chunk* chunk : arch->Chunks)
-            {
-                for (uint32 row = 0; row < chunk->Count; ++row)
-                {
-                    accept(chunk->Entities[row]);
-                }
-            }
-        }
+        QueryRange<TypeList<>, TypeList<std::remove_const_t<Ts>...>, TypeList<>>(m_Native).Each(
+            [&result](const Entity entity) { result.push_back(entity); });
         return result;
     }
 

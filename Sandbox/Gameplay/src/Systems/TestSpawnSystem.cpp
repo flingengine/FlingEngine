@@ -3,16 +3,6 @@
 
 namespace Sandbox
 {
-    void TestSpawnSystem::OnCreate(Setup& setup) const
-    {
-        setup.AddSingleton<SandboxSpawnState>();
-    }
-
-    void TestSpawnSystem::OnDestroy(Setup& setup) const
-    {
-        setup.RemoveSingleton<SandboxSpawnState>();
-    }
-
     void TestSpawnSystem::OnPlayBegin(Context& ctx) const
     {
         ctx.Singleton<SandboxSpawnState>() = SandboxSpawnState{};

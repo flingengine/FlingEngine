@@ -39,14 +39,26 @@ namespace Fling::Detail
             return s_Table;
         }
 
-        uint64 HashTypes(const std::vector<ComponentId>& types)
+        uint64 HashTypes(const std::span<const ComponentId> types, uint64 hash = 0xcbf29ce484222325ull)
         {
-            uint64 hash = 0xcbf29ce484222325ull;
             for (const ComponentId id : types)
             {
                 hash = (hash ^ id) * 0x100000001b3ull;
             }
             return hash;
+        }
+
+        /** The hash of a query: its two id lists, with a mark between them. */
+        uint64 HashQuery(const std::span<const ComponentId> required, const std::span<const ComponentId> excluded)
+        {
+            return HashTypes(excluded, HashTypes(required) ^ 0x9E3779B97F4A7C15ull);
+        }
+
+        /** The row counts of the queries that are alive on this thread. It keeps its memory. */
+        std::vector<size_t>& QueryRowLimits()
+        {
+            thread_local std::vector<size_t> t_Limits;
+            return t_Limits;
         }
 
         /**
@@ -134,6 +146,34 @@ namespace Fling::Detail
         }
     } // namespace
 
+    std::atomic<const ComponentOps*> g_ComponentOps[MaxComponentTypes]{};
+
+    size_t PushQueryRowLimits(const std::vector<Archetype*>& archetypes, const size_t count)
+    {
+        std::vector<size_t>& limits = QueryRowLimits();
+        const size_t start = limits.size();
+        for (size_t i = 0; i < count; ++i)
+        {
+            limits.push_back(archetypes[i]->EntityCount);
+        }
+        return start;
+    }
+
+    void PopQueryRowLimits(const size_t start)
+    {
+        QueryRowLimits().resize(start);
+    }
+
+    size_t QueryRowLimit(const size_t start, const size_t index)
+    {
+        return QueryRowLimits()[start + index];
+    }
+
+    bool AnyQueryAliveOnThread()
+    {
+        return !QueryRowLimits().empty();
+    }
+
     ComponentId RegisterComponentType(const ComponentOps& ops)
     {
         TypeTable& table = Types();
@@ -156,32 +196,25 @@ namespace Fling::Detail
                    existing.Empty == ops.Empty && "One component type has two shapes");
             return found->second;
         }
+        if (table.Ops.size() >= MaxComponentTypes)
+        {
+            F_LOG_ERROR("More than {} component types. Raise Fling::Detail::MaxComponentTypes.", MaxComponentTypes);
+            std::abort();
+        }
         const ComponentId id = static_cast<ComponentId>(table.Ops.size());
         table.Ops.push_back(ops);
         table.ByKey.emplace(ops.Key, id);
+        // A std::deque never moves its elements, so the pointer stays valid. Readers take no lock.
+        g_ComponentOps[id].store(&table.Ops.back(), std::memory_order_release);
         return id;
-    }
-
-    const ComponentOps& GetComponentOps(const ComponentId id)
-    {
-        TypeTable& table = Types();
-        std::lock_guard<std::mutex> guard(table.Lock);
-        return table.Ops[id];
-    }
-
-    const ComponentOps& NativeStorage::CacheOps(const ComponentId id) const
-    {
-        if (id >= m_OpsCache.size())
-        {
-            m_OpsCache.resize(id + 1, nullptr);
-        }
-        // A std::deque never moves its elements, so the pointer stays valid
-        m_OpsCache[id] = &GetComponentOps(id);
-        return *m_OpsCache[id];
     }
 
     SparseSet::~SparseSet()
     {
+        for (uint32* page : LookupPages)
+        {
+            Blocks.Free(page, LookupPageSize * sizeof(uint32));
+        }
         // The pool gives its pages back to the BlockAllocator
         const ComponentOps& ops = GetComponentOps(Id);
         if (!ops.Trivial)
@@ -195,12 +228,33 @@ namespace Fling::Detail
 
     void* SparseSet::Find(const Entity entity) const
     {
-        if (entity.Index >= Lookup.size() || Lookup[entity.Index] == 0)
+        const uint32 found = Lookup(entity.Index);
+        if (found == 0)
         {
             return nullptr;
         }
-        const uint32 position = Lookup[entity.Index] - 1;
+        const uint32 position = found - 1;
         return Dense[position] == entity ? Values[position] : nullptr;
+    }
+
+    void SparseSet::SetLookup(const uint32 entityIndex, const uint32 value)
+    {
+        const size_t page = entityIndex >> LookupPageBits;
+        if (page >= LookupPages.size() || LookupPages[page] == nullptr)
+        {
+            if (value == 0)
+            {
+                return;
+            }
+            if (page >= LookupPages.size())
+            {
+                LookupPages.resize(page + 1, nullptr);
+            }
+            // A block may be used before, so clear it
+            LookupPages[page] = static_cast<uint32*>(Blocks.Allocate(LookupPageSize * sizeof(uint32)));
+            std::memset(LookupPages[page], 0, LookupPageSize * sizeof(uint32));
+        }
+        LookupPages[page][entityIndex & (LookupPageSize - 1)] = value;
     }
 
     NativeStorage::NativeStorage(EntityStorage& owner) : m_Owner(owner)
@@ -295,6 +349,7 @@ namespace Fling::Detail
         const Entity entity{index, slot.Generation};
         const Chunk& chunk = AddRow(arch, entity, slot);
         ++m_AliveCount;
+        CheckRequirements(*arch);
 
         const uint32 row = slot.Row();
         for (size_t i = 0; i < ids.size(); ++i)
@@ -325,9 +380,9 @@ namespace Fling::Detail
         {
             anyHooks = anyHooks || HasHooks(id);
         }
-        for (size_t i = 0; i < m_Sparse.size() && !anyHooks; ++i)
+        for (size_t i = 0; i < m_SparseList.size() && !anyHooks; ++i)
         {
-            anyHooks = m_Sparse[i] != nullptr && HasHooks(m_Sparse[i]->Id) && m_Sparse[i]->Find(entity) != nullptr;
+            anyHooks = HasHooks(m_SparseList[i]->Id) && m_SparseList[i]->Find(entity) != nullptr;
         }
         if (!anyHooks)
         {
@@ -339,20 +394,35 @@ namespace Fling::Detail
         const std::vector<ComponentId> types = ArchOf(*slot)->Types;
         for (const ComponentId id : types)
         {
-            if (HasHooks(id) && Has(entity, id))
+            if (HasHooks(id) && Has(entity, id) && !RemovedHookRan(entity, id))
             {
+                m_RemovedNotices.push_back(RemovedNotice{entity, id});
                 m_Hooks[id]->Removed.Publish(m_Owner, entity);
             }
         }
-        // By index: a hook may add a Sparse type that is new, which grows m_Sparse
-        for (size_t i = 0; i < m_Sparse.size(); ++i)
+        // By index: a hook may add a Sparse type that is new, which grows m_SparseList
+        for (size_t i = 0; i < m_SparseList.size(); ++i)
         {
-            const SparseSet* set = m_Sparse[i].get();
-            if (set != nullptr && HasHooks(set->Id) && set->Find(entity) != nullptr)
+            const SparseSet* set = m_SparseList[i];
+            if (HasHooks(set->Id) && set->Find(entity) != nullptr && !RemovedHookRan(entity, set->Id))
             {
+                m_RemovedNotices.push_back(RemovedNotice{entity, set->Id});
                 m_Hooks[set->Id]->Removed.Publish(m_Owner, entity);
             }
         }
+    }
+
+    bool NativeStorage::RemovedHookRan(const Entity entity, const ComponentId id) const
+    {
+        // Empty unless a Destroy is running, so this costs one compare for a plain remove
+        for (const RemovedNotice& notice : m_RemovedNotices)
+        {
+            if (notice.Target == entity && notice.Id == id)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     void NativeStorage::Destroy(const Entity entity)
@@ -364,14 +434,18 @@ namespace Fling::Detail
             return;
         }
         slot->SetDying(true);
+        // The hooks that run for this entity are kept until it is gone, so that a hook which removes a
+        // component does not run the Removed hooks of that component a second time
+        const size_t noticeStart = m_RemovedNotices.size();
         FireRemovedForAll(entity);
+        m_RemovedNotices.resize(noticeStart);
 
         // A hook may make entities, which moves m_Slots
         slot = FindSlot(entity);
         // The Removed hooks already ran. Values a hook added are destroyed with no hook.
-        for (const std::unique_ptr<SparseSet>& set : m_Sparse)
+        for (SparseSet* set : m_SparseList)
         {
-            if (set && set->Find(entity) != nullptr)
+            if (set->Find(entity) != nullptr)
             {
                 EraseSparse(*set, entity);
             }
@@ -497,10 +571,31 @@ namespace Fling::Detail
             arch->AllTrivial = arch->AllTrivial && ops.Trivial;
         }
 
+        for (const ComponentId id : types)
+        {
+            const ComponentOps& ops = Ops(id);
+            if (const char* missing = ops.MissingRequirement != nullptr ? ops.MissingRequirement(*arch) : nullptr)
+            {
+                arch->UnmetType = ops.Name;
+                arch->UnmetRequirement = missing;
+                break;
+            }
+        }
+
         arch->Index = static_cast<uint32>(m_Archetypes.size());
         Archetype* result = arch.get();
         bucket.push_back(result);
         m_Archetypes.push_back(std::move(arch));
+
+        // Every cached query that the new archetype matches gets it now, so Match only reads
+        const ScopedLock lock(m_QueryLock);
+        for (const std::unique_ptr<CachedQuery>& query : m_Queries)
+        {
+            if (result->Matches(query->Required, query->Excluded))
+            {
+                query->Matches.push_back(result);
+            }
+        }
         return result;
     }
 
@@ -509,7 +604,8 @@ namespace Fling::Detail
         ArchetypeEdge edge;
         edge.Id = id;
         edge.Target = to;
-        edge.TargetColumn = from.Has(id) ? -1 : Math::Max(to->ColumnOf(id), -1);
+        // The column that an add edge makes. A remove edge, a jump edge, and a tag have none.
+        edge.TargetColumn = id == InvalidComponentId || from.Has(id) ? -1 : Math::Max(to->ColumnOf(id), -1);
         for (size_t c = 0; c < from.Columns.size(); ++c)
         {
             const Archetype::Column& column = from.Columns[c];
@@ -561,6 +657,38 @@ namespace Fling::Detail
         }
         from->RemoveEdges.push_back(MakeEdge(*from, id, to));
         return from->RemoveEdges.back();
+    }
+
+    const ArchetypeEdge& NativeStorage::JumpEdge(Archetype* from, Archetype* to)
+    {
+        for (const ArchetypeEdge& edge : from->JumpEdges)
+        {
+            if (edge.Target == to)
+            {
+                return edge;
+            }
+        }
+        from->JumpEdges.push_back(MakeEdge(*from, InvalidComponentId, to));
+        return from->JumpEdges.back();
+    }
+
+    void NativeStorage::CheckRequirements(const Archetype& arch)
+    {
+        if (arch.UnmetType == nullptr) [[likely]]
+        {
+            return;
+        }
+        if (!arch.UnmetReported)
+        {
+            arch.UnmetReported = true;
+            F_LOG_ERROR("An entity has a {} component and no {}, which {} requires. Add {} first, and remove it "
+                        "last.",
+                        arch.UnmetType,
+                        arch.UnmetRequirement,
+                        arch.UnmetType,
+                        arch.UnmetRequirement);
+        }
+        assert(false && "An entity has a component without a component that it requires. See the log.");
     }
 
     Chunk* NativeStorage::MakeChunk(const Archetype& arch, size_t bytes)
@@ -665,7 +793,12 @@ namespace Fling::Detail
 
     Chunk* NativeStorage::AddChunk(Archetype* arch)
     {
-        assert(arch->Chunks.size() < MaxChunks && "An archetype has more chunks than a slot can address");
+        if (arch->Chunks.size() >= MaxChunks) [[unlikely]]
+        {
+            // The chunk index would not fit in Slot::Location, and rows would be lost. Stop in every build.
+            F_LOG_ERROR("One archetype has {} chunks, the most that an entity's location can address.", MaxChunks);
+            std::abort();
+        }
         // Chunks grow from 1 KiB to 128 KiB, so an archetype with few entities stays small
         const size_t bytes = Math::Min(MaxChunkBytes, FirstChunkBytes << Math::Min<size_t>(arch->Chunks.size(), 7));
         arch->Chunks.push_back(MakeChunk(*arch, bytes));
@@ -674,12 +807,8 @@ namespace Fling::Detail
 
     Chunk& NativeStorage::AddRow(Archetype* arch, const Entity entity, Slot& slot)
     {
-        const size_t chunkCount = arch->Chunks.size();
-        Chunk* chunk = chunkCount != 0 ? arch->Chunks.data()[chunkCount - 1] : nullptr;
-        if (chunk == nullptr || chunk->Count == chunk->Capacity) [[unlikely]]
-        {
-            chunk = AddChunk(arch);
-        }
+        const uint32 chunkIndex = OpenChunk(arch);
+        Chunk* chunk = arch->Chunks.data()[chunkIndex];
 
         const uint32 row = chunk->Count++;
         chunk->Entities[row] = entity;
@@ -695,8 +824,34 @@ namespace Fling::Detail
         }
         ++arch->EntityCount;
         slot.ArchIndex = arch->Index + 1;
-        slot.SetPlace(static_cast<uint32>(arch->Chunks.size() - 1), row);
+        slot.SetPlace(chunkIndex, row);
         return *chunk;
+    }
+
+    uint32 NativeStorage::OpenChunk(Archetype* arch)
+    {
+        const size_t chunkCount = arch->Chunks.size();
+        if (chunkCount == 0) [[unlikely]]
+        {
+            AddChunk(arch);
+            return 0;
+        }
+        Chunk* const* chunks = arch->Chunks.data();
+        const Chunk* last = chunks[chunkCount - 1];
+        if (last->Count != 0 && last->Count < last->Capacity) [[likely]]
+        {
+            return static_cast<uint32>(chunkCount - 1);
+        }
+        if (last->Count == 0)
+        {
+            // The last chunk is an empty spare. Rows fill the chunks in order, so the chunk
+            // before it takes the row if it has room.
+            const bool previousHasRoom =
+                chunkCount > 1 && chunks[chunkCount - 2]->Count < chunks[chunkCount - 2]->Capacity;
+            return static_cast<uint32>(previousHasRoom ? chunkCount - 2 : chunkCount - 1);
+        }
+        AddChunk(arch);
+        return static_cast<uint32>(chunkCount);
     }
 
     void NativeStorage::FillHole(Archetype* arch, const uint32 chunkIndex, const uint32 row)
@@ -777,46 +932,6 @@ namespace Fling::Detail
         FillHole(arch, slot.ChunkIndex(), slot.Row());
     }
 
-    void NativeStorage::MoveRow(Slot& slot, Archetype* to)
-    {
-        Archetype* from = ArchOf(slot);
-        assert(from != to && "MoveRow to the archetype the entity is in");
-        const Slot oldLocation = slot;
-        const Entity entity = from->Chunks[slot.ChunkIndex()]->Entities[slot.Row()];
-
-        // AddRow may add a chunk to `to`, so take the chunk references after it
-        Chunk& newChunk = AddRow(to, entity, slot);
-        const uint32 oldChunkIndex = oldLocation.ChunkIndex();
-        const uint32 oldRow = oldLocation.Row();
-        const uint32 newRow = slot.Row();
-        Chunk& oldChunk = *from->Chunks[oldChunkIndex];
-
-        for (size_t c = 0; c < from->Columns.size(); ++c)
-        {
-            const Archetype::Column& column = from->Columns[c];
-            std::byte* src = oldChunk.Columns[c] + oldRow * column.Size;
-            const int32 target = to->ColumnOf(column.Id);
-            if (target >= 0)
-            {
-                RelocateValue(column, newChunk.Columns[static_cast<size_t>(target)] + newRow * column.Size, src);
-                if (newChunk.Enabled[static_cast<size_t>(target)] != nullptr)
-                {
-                    SetBit(newChunk.Enabled[static_cast<size_t>(target)],
-                           newRow,
-                           NativeStorage::RowEnabled(oldChunk, c, oldRow));
-                }
-            }
-            else
-            {
-                // Dropped: the old value ends here
-                DestroyValue(column, src);
-            }
-        }
-
-        FillHole(from, oldChunkIndex, oldRow);
-        ++m_StructuralMoves;
-    }
-
     void NativeStorage::MoveRow(Slot& slot, const ArchetypeEdge& edge)
     {
         Archetype* from = ArchOf(slot);
@@ -874,7 +989,7 @@ namespace Fling::Detail
     void NativeStorage::EraseSparse(SparseSet& set, const Entity entity)
     {
         const ComponentOps& ops = Ops(set.Id);
-        const uint32 position = set.Lookup[entity.Index] - 1;
+        const uint32 position = set.Lookup(entity.Index) - 1;
         void* value = set.Values[position];
         if (!ops.Trivial)
         {
@@ -887,11 +1002,11 @@ namespace Fling::Detail
         {
             set.Dense[position] = set.Dense[lastPosition];
             set.Values[position] = set.Values[lastPosition];
-            set.Lookup[set.Dense[position].Index] = position + 1;
+            set.SetLookup(set.Dense[position].Index, position + 1);
         }
         set.Dense.pop_back();
         set.Values.pop_back();
-        set.Lookup[entity.Index] = 0;
+        set.SetLookup(entity.Index, 0);
     }
 
     SparseSet& NativeStorage::SparseFor(const ComponentId id)
@@ -904,6 +1019,7 @@ namespace Fling::Detail
         {
             const ComponentOps& ops = Ops(id);
             m_Sparse[id] = std::make_unique<SparseSet>(m_Blocks, id, Math::Max<size_t>(ops.Size, 1), ops.Align);
+            m_SparseList.push_back(m_Sparse[id].get());
         }
         return *m_Sparse[id];
     }
@@ -926,6 +1042,7 @@ namespace Fling::Detail
 
         const ArchetypeEdge& edge = AddEdge(ArchOf(*slot), id);
         MoveRow(*slot, edge);
+        CheckRequirements(*edge.Target);
         if (edge.TargetColumn < 0)
         {
             return nullptr; // A tag
@@ -938,14 +1055,10 @@ namespace Fling::Detail
     void* NativeStorage::AddSparse(const Entity entity, const ComponentId id)
     {
         SparseSet& set = SparseFor(id);
-        if (entity.Index >= set.Lookup.size())
-        {
-            set.Lookup.resize(entity.Index + 1, 0);
-        }
         void* memory = set.Pool.Allocate();
         set.Dense.push_back(entity);
         set.Values.push_back(memory);
-        set.Lookup[entity.Index] = static_cast<uint32>(set.Dense.size());
+        set.SetLookup(entity.Index, static_cast<uint32>(set.Dense.size()));
         return memory;
     }
 
@@ -974,7 +1087,20 @@ namespace Fling::Detail
                 assert(false && "Remove on an entity that does not have the component");
                 return;
             }
-            m_Hooks[id]->Removed.Publish(m_Owner, entity);
+            if (RemovedHookRan(entity, id))
+            {
+                // The entity is being destroyed, and Destroy ran these hooks. Only the value goes.
+            }
+            else
+            {
+                // A hook of another type may remove this one later in the same Destroy
+                const bool dying = FindSlot(entity)->Dying();
+                if (dying)
+                {
+                    m_RemovedNotices.push_back(RemovedNotice{entity, id});
+                }
+                m_Hooks[id]->Removed.Publish(m_Owner, entity);
+            }
             // A Removed hook may remove the component or destroy the entity
             if (!Has(entity, id))
             {
@@ -1006,7 +1132,13 @@ namespace Fling::Detail
             assert(false && "Remove on an entity that does not have the component");
             return;
         }
-        MoveRow(*slot, RemoveEdge(arch, id));
+        const ArchetypeEdge& edge = RemoveEdge(arch, id);
+        MoveRow(*slot, edge);
+        // A hook of an entity that is being destroyed can take it apart in any order
+        if (!slot->Dying())
+        {
+            CheckRequirements(*edge.Target);
+        }
     }
 
     void NativeStorage::MatchForBulk(const std::span<const ComponentId> required,
@@ -1014,7 +1146,7 @@ namespace Fling::Detail
                                      const ComponentId alsoRequired,
                                      const ComponentId alsoExcluded)
     {
-        assert(m_RowLimits.empty() && "AddToAll or RemoveFromAll while a query is being iterated");
+        assert(!AnyQueryAliveOnThread() && "AddToAll or RemoveFromAll while a query is being iterated");
         const auto withId = [this](const std::span<const ComponentId> ids, const ComponentId id)
         {
             m_BulkIds.assign(ids.begin(), ids.end());
@@ -1121,6 +1253,7 @@ namespace Fling::Detail
     NativeStorage::MoveAllRows(Archetype* from, const ArchetypeEdge& edge, const void* value, const FillValues fill)
     {
         Archetype* to = edge.Target;
+        CheckRequirements(*to);
         const uint32 toArchIndex = to->Index + 1;
         size_t moved = 0;
         for (Chunk*& src : from->Chunks)
@@ -1128,12 +1261,8 @@ namespace Fling::Detail
             uint32 done = 0;
             while (done < src->Count)
             {
-                Chunk* dst = to->Chunks.empty() ? nullptr : to->Chunks.back();
-                if (dst == nullptr || dst->Count == dst->Capacity)
-                {
-                    dst = AddChunk(to);
-                }
-                const uint32 dstIndex = static_cast<uint32>(to->Chunks.size() - 1);
+                const uint32 dstIndex = OpenChunk(to);
+                Chunk* dst = to->Chunks[dstIndex];
                 const uint32 base = dst->Count;
                 const uint32 count = Math::Min(src->Count - done, dst->Capacity - base);
 
@@ -1263,7 +1392,8 @@ namespace Fling::Detail
         for (size_t i = 0; i < changes.size(); ++i)
         {
             const PendingChange& change = changes[i];
-            if (!change.IsAdd && wins(i) && HasHooks(change.Id) && Has(entity, change.Id))
+            if (!change.IsAdd && wins(i) && HasHooks(change.Id) && Has(entity, change.Id) &&
+                !RemovedHookRan(entity, change.Id))
             {
                 m_Hooks[change.Id]->Removed.Publish(m_Owner, entity);
                 if (!IsValid(entity))
@@ -1278,7 +1408,7 @@ namespace Fling::Detail
         Slot* slot = FindSlot(entity);
         Archetype* from = ArchOf(*slot);
         Archetype* to = from;
-        // The edge of the only step, when there is one, so the move uses its column moves
+        // The edge of the only step, when there is one. More steps use one edge straight to the last archetype.
         const ArchetypeEdge* onlyStep = nullptr;
         size_t steps = 0;
         for (size_t i = 0; i < changes.size(); ++i)
@@ -1295,14 +1425,8 @@ namespace Fling::Detail
         }
         if (to != from)
         {
-            if (steps == 1)
-            {
-                MoveRow(*slot, *onlyStep);
-            }
-            else
-            {
-                MoveRow(*slot, to);
-            }
+            MoveRow(*slot, steps == 1 ? *onlyStep : JumpEdge(from, to));
+            CheckRequirements(*to);
         }
 
         // 3. The values, in the order the changes were recorded. No hooks run here.
@@ -1458,50 +1582,36 @@ namespace Fling::Detail
         }
     }
 
-    size_t NativeStorage::PushRowLimits(const std::vector<Archetype*>& archetypes, const size_t count)
-    {
-        const size_t start = m_RowLimits.size();
-        for (size_t i = 0; i < count; ++i)
-        {
-            m_RowLimits.push_back(archetypes[i]->EntityCount);
-        }
-        return start;
-    }
-
     const std::vector<Archetype*>& NativeStorage::Match(const std::span<const ComponentId> required,
                                                         const std::span<const ComponentId> excluded)
     {
-        CachedQuery* query = nullptr;
-        for (const std::unique_ptr<CachedQuery>& each : m_Queries)
+        const uint64 hash = HashQuery(required, excluded);
+        const ScopedLock lock(m_QueryLock);
+        if (const auto found = m_QueriesByHash.find(hash); found != m_QueriesByHash.end())
         {
-            if (std::equal(each->Required.begin(), each->Required.end(), required.begin(), required.end()) &&
-                std::equal(each->Excluded.begin(), each->Excluded.end(), excluded.begin(), excluded.end()))
+            for (const CachedQuery* each : found->second)
             {
-                query = each.get();
-                break;
+                if (std::equal(each->Required.begin(), each->Required.end(), required.begin(), required.end()) &&
+                    std::equal(each->Excluded.begin(), each->Excluded.end(), excluded.begin(), excluded.end()))
+                {
+                    return each->Matches;
+                }
             }
-        }
-        if (query == nullptr)
-        {
-            m_Queries.push_back(std::make_unique<CachedQuery>());
-            query = m_Queries.back().get();
-            query->Required.assign(required.begin(), required.end());
-            query->Excluded.assign(excluded.begin(), excluded.end());
         }
 
-        // Only archetypes made since the last call need a look
-        for (; query->SeenArchetypes < m_Archetypes.size(); ++query->SeenArchetypes)
+        // The first time for these lists: look at every archetype. FindOrMakeArchetype adds the later ones.
+        m_Queries.push_back(std::make_unique<CachedQuery>());
+        CachedQuery* query = m_Queries.back().get();
+        query->Required.assign(required.begin(), required.end());
+        query->Excluded.assign(excluded.begin(), excluded.end());
+        for (const std::unique_ptr<Archetype>& arch : m_Archetypes)
         {
-            Archetype* arch = m_Archetypes[query->SeenArchetypes].get();
-            const bool hasAll =
-                std::all_of(required.begin(), required.end(), [&](const ComponentId id) { return arch->Has(id); });
-            const bool hasNone =
-                std::none_of(excluded.begin(), excluded.end(), [&](const ComponentId id) { return arch->Has(id); });
-            if (hasAll && hasNone)
+            if (arch->Matches(query->Required, query->Excluded))
             {
-                query->Matches.push_back(arch);
+                query->Matches.push_back(arch.get());
             }
         }
+        m_QueriesByHash[hash].push_back(query);
         return query->Matches;
     }
 

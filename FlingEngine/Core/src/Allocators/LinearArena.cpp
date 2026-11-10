@@ -1,10 +1,12 @@
 #include "Allocators/LinearArena.h"
+#include "Allocators/MemoryPoison.h"
 #include "Allocators/VirtualMemory.h"
 #include "MathUtils.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <limits>
 #include <utility>
 
 namespace Fling
@@ -43,6 +45,12 @@ namespace Fling
     void* LinearArena::Allocate(const size_t bytes, const size_t alignment)
     {
         assert(Math::IsPowerOfTwo(alignment));
+        // A size this big is a bug in the caller (a negative number as a size, for example). The sums
+        // below would wrap around, so stop here.
+        if (bytes > std::numeric_limits<size_t>::max() / 4 || alignment > std::numeric_limits<size_t>::max() / 4)
+        {
+            VirtualMemory::OutOfMemory("LinearArena", bytes);
+        }
         // Try the current page, then each later page kept from earlier ticks
         while (m_Current < m_Pages.size())
         {
@@ -53,6 +61,7 @@ namespace Fling
             {
                 m_Used += (at + bytes) - (base + m_Offset);
                 m_Offset = (at + bytes) - base;
+                FLING_UNPOISON_MEMORY(reinterpret_cast<void*>(at), bytes);
                 return reinterpret_cast<void*>(at);
             }
             ++m_Current;
@@ -62,8 +71,13 @@ namespace Fling
         // A new page, big enough for this request
         const size_t pageBytes = Math::Max(PageBytes, bytes + alignment);
         const size_t pageAlign = Math::Max(VirtualMemory::PageSize(), alignment);
-        Page page{static_cast<std::byte*>(VirtualMemory::Allocate(pageBytes, pageAlign)), pageBytes};
-        assert(page.Memory != nullptr && "LinearArena: the OS has no memory left");
+        Page page{static_cast<std::byte*>(VirtualMemory::Allocate(pageBytes, pageAlign)), pageBytes, pageAlign};
+        if (page.Memory == nullptr)
+        {
+            VirtualMemory::OutOfMemory("LinearArena", pageBytes);
+        }
+        // Nothing in the page is in use until Allocate hands it out
+        FLING_POISON_MEMORY(page.Memory, page.Bytes);
         m_Pages.push_back(page);
         m_Current = m_Pages.size() - 1;
         m_Offset = 0;
@@ -72,6 +86,11 @@ namespace Fling
 
     void LinearArena::Reset()
     {
+        // A use of an old allocation after this is a use after free
+        for (const Page& page : m_Pages)
+        {
+            FLING_POISON_MEMORY(page.Memory, page.Bytes);
+        }
         m_Current = 0;
         m_Offset = 0;
         m_Used = 0;
@@ -81,7 +100,8 @@ namespace Fling
     {
         for (const Page& page : m_Pages)
         {
-            VirtualMemory::Free(page.Memory, page.Bytes, VirtualMemory::PageSize());
+            FLING_UNPOISON_MEMORY(page.Memory, page.Bytes);
+            VirtualMemory::Free(page.Memory, page.Bytes, page.Alignment);
         }
         m_Pages.clear();
         Reset();

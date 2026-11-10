@@ -3,16 +3,6 @@
 
 namespace Sandbox
 {
-    void FirstHitSystem::OnCreate(Setup& setup) const
-    {
-        setup.AddSingleton<SandboxPhysicsState>();
-    }
-
-    void FirstHitSystem::OnDestroy(Setup& setup) const
-    {
-        setup.RemoveSingleton<SandboxPhysicsState>();
-    }
-
     void FirstHitSystem::OnPlayBegin(Context& ctx) const
     {
         ctx.Singleton<SandboxPhysicsState>() = SandboxPhysicsState{};

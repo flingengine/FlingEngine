@@ -25,6 +25,8 @@ namespace Fling
             return;
         }
 
+        // Held while the window is drawn, so the world cannot go away in the middle
+        const std::shared_ptr<const World> OwningWorld = m_World.lock();
         if (ImGui::Begin("World Singletons", &m_ShowWindow))
         {
             ImGui::SetWindowSize(ImVec2(480.0f, 560.0f), ImGuiCond_FirstUseEver);
@@ -33,7 +35,7 @@ namespace Fling
             {
                 bool bAny = false;
                 static const std::vector<TypeDesc> NoTypes;
-                const std::vector<TypeDesc>& AllTypes = m_World ? m_World->GetTypes().All() : NoTypes;
+                const std::vector<TypeDesc>& AllTypes = OwningWorld ? OwningWorld->GetTypes().All() : NoTypes;
                 for (const TypeDesc& Type : AllTypes)
                 {
                     if (!Type.IsSingleton())
@@ -69,7 +71,7 @@ namespace Fling
 
             if (ImGui::CollapsingHeader("System schedule"))
             {
-                const Schedule* CurrentSchedule = m_World ? m_World->GetSchedule() : nullptr;
+                const Schedule* CurrentSchedule = OwningWorld ? OwningWorld->GetSchedule() : nullptr;
                 if (CurrentSchedule)
                 {
                     ImGui::TextUnformatted(CurrentSchedule->Dump().c_str());

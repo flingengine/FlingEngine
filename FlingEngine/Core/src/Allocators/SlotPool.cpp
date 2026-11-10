@@ -1,3 +1,4 @@
+#include "Allocators/MemoryPoison.h"
 #include "Allocators/SlotPool.h"
 #include "MathUtils.h"
 
@@ -20,6 +21,7 @@ namespace Fling
     {
         for (void* page : m_Pages)
         {
+            FLING_UNPOISON_MEMORY(page, m_PageBytes);
             m_Blocks.Free(page, m_PageBytes);
         }
     }
@@ -34,6 +36,8 @@ namespace Fling
             FreeSlot* slot = reinterpret_cast<FreeSlot*>(page + (i - 1) * m_Stride);
             slot->Next = m_FreeList;
             m_FreeList = slot;
+            // A free slot keeps only its link. The rest is not in use.
+            FLING_POISON_MEMORY(reinterpret_cast<std::byte*>(slot) + sizeof(FreeSlot), m_Stride - sizeof(FreeSlot));
         }
     }
 
@@ -46,6 +50,7 @@ namespace Fling
         FreeSlot* slot = m_FreeList;
         m_FreeList = slot->Next;
         ++m_Used;
+        FLING_UNPOISON_MEMORY(slot, m_Stride);
         return slot;
     }
 
@@ -59,5 +64,7 @@ namespace Fling
         freed->Next = m_FreeList;
         m_FreeList = freed;
         --m_Used;
+        // A use of the slot after this is a use after free
+        FLING_POISON_MEMORY(static_cast<std::byte*>(slot) + sizeof(FreeSlot), m_Stride - sizeof(FreeSlot));
     }
 } // namespace Fling

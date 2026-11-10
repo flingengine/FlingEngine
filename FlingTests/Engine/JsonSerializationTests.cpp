@@ -14,6 +14,7 @@
 #include <catch2/catch_all.hpp>
 #include <cstdio>
 #include <functional>
+#include <memory>
 
 using Fling::String;
 using Fling::StringView;
@@ -109,8 +110,9 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
 
     SECTION("LoadLevelFile before Init fails")
     {
-        JsonTestGame game;
-        World world(&game);
+        const auto gameOwner = std::make_shared<JsonTestGame>();
+        JsonTestGame& game = *gameOwner;
+        World world(gameOwner);
         REQUIRE(world.GetTypes().Empty());
         REQUIRE_FALSE(world.LoadLevelFile("Levels/EmptyLevel.json"));
     }
@@ -141,8 +143,9 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
         RemoveTestLevelFile();
         REQUIRE(root.SaveToFile(TestLevelFullPath()));
 
-        JsonTestGame game;
-        World world(&game);
+        const auto gameOwner = std::make_shared<JsonTestGame>();
+        JsonTestGame& game = *gameOwner;
+        World world(gameOwner);
         Fling::EntityStorage& reg = world.GetStorage();
         REQUIRE(world.Init());
         REQUIRE(world.LoadLevelFile(TestLevelRelativePath()));
@@ -189,8 +192,9 @@ TEST_CASE("Reflected components save and load, and the world loads levels", "[js
         RemoveTestLevelFile();
         REQUIRE(root.SaveToFile(TestLevelFullPath()));
 
-        JsonTestGame game;
-        World world(&game);
+        const auto gameOwner = std::make_shared<JsonTestGame>();
+        JsonTestGame& game = *gameOwner;
+        World world(gameOwner);
         Fling::EntityStorage& reg = world.GetStorage();
         REQUIRE(world.Init());
         REQUIRE(world.LoadLevelFile(TestLevelRelativePath()));
@@ -224,6 +228,7 @@ namespace
 {
     struct DummyMesh
     {
+        static constexpr Fling::ComponentInfo Component{.Name = "JsonTest.DummyMesh"};
         int Id = 0;
     };
 

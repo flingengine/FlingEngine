@@ -520,6 +520,40 @@ TEST_CASE("Phase order wins over a data edge that points back", "[ecs][schedule]
     REQUIRE(RunNames(result.Value) == std::vector<String>{"Engine.Reader", "Game.LateWriter"});
 }
 
+TEST_CASE("A read that runs before its writer is listed as one tick late", "[ecs][schedule]")
+{
+    // In one phase the writer runs first, so nothing is late
+    FakeSystems inOrder;
+    inOrder.Add(Sim("T.Reader"), {{"Health", R}}).Add(Sim("T.Writer"), {{"Health", W}});
+    REQUIRE(inOrder.Build().Value.Lags.empty());
+
+    // Phase order puts the reader and the consumer first. Their data is from the tick before.
+    FakeSystems late;
+    late.Add(Sim("T.Reader"), {{"Contacts", R}})
+        .Add(Sim("T.Consumer"), {{"Hits", C}})
+        .Add(SystemInfo{.Name = "T.Step", .Phase = Phases::ResolveDeferred}, {{"Contacts", W}, {"Hits", A}});
+    const ScheduleResult result = late.Build();
+    REQUIRE(result.ErrorReport() == "");
+    const std::vector<ScheduleLag>& lags = result.Value.Lags;
+    REQUIRE(lags.size() == 2);
+    REQUIRE(String(result.Value.Systems[lags[0].Late]->Info.Name) == "T.Consumer");
+    REQUIRE(lags[0].Queue);
+    REQUIRE(String(lags[0].TypeName) == "Hits");
+    REQUIRE(String(result.Value.Systems[lags[1].Late]->Info.Name) == "T.Reader");
+    REQUIRE_FALSE(lags[1].Queue);
+    REQUIRE(String(result.Value.Systems[lags[1].Source]->Info.Name) == "T.Step");
+
+    const String dump = result.Value.Dump();
+    REQUIRE(dump.find("one tick late: reads Contacts before T.Step writes it") != String::npos);
+    REQUIRE(dump.find("one tick late: consumes Hits before T.Step appends to it") != String::npos);
+
+    // An explicit order can do the same inside one phase
+    FakeSystems chosen;
+    chosen.Add(SystemInfo{.Name = "T.Reader", .Phase = Phases::Simulation, .Before = "T.Writer"}, {{"Health", R}})
+        .Add(Sim("T.Writer"), {{"Health", W}});
+    REQUIRE(chosen.Build().Value.Lags.size() == 1);
+}
+
 TEST_CASE("A system After can cross phases of one update rate", "[ecs][schedule][phases]")
 {
     SECTION("It agrees with phase order")

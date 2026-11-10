@@ -3,6 +3,8 @@
 #include "Ecs/EntityStorage.h"
 #include "FlingEditorPanel.h"
 
+#include <memory>
+
 namespace Fling
 {
     class World;
@@ -20,7 +22,7 @@ namespace Fling
         WorldSingletonsPanel() { m_ShowWindow = false; }
 
         /** The world whose schedule to show. Null shows no schedule. */
-        void SetWorld(const World* t_World) { m_World = t_World; }
+        void SetWorld(std::weak_ptr<const World> t_World) { m_World = std::move(t_World); }
 
         /** Draws the "World Singletons" window. Call this once per frame. */
         void Draw(Fling::EntityStorage& t_Reg) override;
@@ -29,6 +31,6 @@ namespace Fling
         bool& ShowWindowFlag() { return m_ShowWindow; }
 
     private:
-        const World* m_World = nullptr;
+        std::weak_ptr<const World> m_World;
     };
 } // namespace Fling

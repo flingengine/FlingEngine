@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Components/Transform.h"
 #include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "Platform.h"
@@ -14,6 +15,9 @@ namespace Fling
     {
     public:
         static constexpr ComponentInfo Component{.Name = "PointLight"};
+
+        /** A light needs a place in the world */
+        using Requires = TypeList<Transform>;
 
         /**
          * Diffuse color of this point light, RBA on a scale of 0.0 to 1.0

@@ -3,6 +3,8 @@
 #include "Ecs/EntityStorage.h"
 #include "FlingEditorPanel.h"
 
+#include <memory>
+
 namespace Fling
 {
     class EditorWidgets;
@@ -23,16 +25,19 @@ namespace Fling
         /** Sets which entity this panel inspects. Pass Fling::Entity::Null to show none. */
         void SetTargetEntity(Fling::Entity t_Entity) { m_TargetEntity = t_Entity; }
 
-        /** The world whose component types to list, and how to draw them. Not owned. */
-        void SetWorld(const World* t_World, const EditorWidgets* t_Widgets)
+        /**
+         * The world whose component types to list, and how to draw them. Not owned. The
+         * widgets belong to the editor that owns this panel.
+         */
+        void SetWorld(std::weak_ptr<const World> t_World, const EditorWidgets* t_Widgets)
         {
-            m_World = t_World;
+            m_World = std::move(t_World);
             m_Widgets = t_Widgets;
         }
 
     private:
         Fling::Entity m_TargetEntity = Fling::Entity::Null;
-        const World* m_World = nullptr;
+        std::weak_ptr<const World> m_World;
         const EditorWidgets* m_Widgets = nullptr;
     };
 } // namespace Fling

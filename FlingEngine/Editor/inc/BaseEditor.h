@@ -11,6 +11,7 @@
 
 #include <array>
 #include <imgui.h>
+#include <memory>
 
 namespace Fling
 {
@@ -24,7 +25,9 @@ namespace Fling
         virtual ~BaseEditor() = default;
 
         /** Keeps the world and game, then calls RegisterWidgets(). */
-        void Init(Fling::EntityStorage& t_Reg, World* t_World, Game* t_Game) override;
+        void Init(Fling::EntityStorage& t_Reg,
+                  const std::shared_ptr<World>& t_World,
+                  const std::shared_ptr<Game>& t_Game) override;
 
         /**
          * Add editor widget overrides for components that the generated inspector cannot
@@ -85,9 +88,13 @@ namespace Fling
 
         void DrawWindowOptions();
 
-        class World* m_OwningWorld = nullptr;
+        /** The world this editor works on. Asserts that it is still alive. */
+        std::shared_ptr<World> OwningWorld() const;
 
-        class Game* m_Game = nullptr;
+        /** The engine owns the world and the game. The editor only looks at them. */
+        std::weak_ptr<World> m_OwningWorld;
+
+        std::weak_ptr<Game> m_Game;
 
         // Draw stats graph
         // Draw File Menu

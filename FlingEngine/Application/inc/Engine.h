@@ -113,11 +113,17 @@ namespace Fling
         /** Write a one-line summary of this run to stdout, in the --log-format. */
         void PrintExitSummary(ExitCode t_Code) const;
 
-        /** Persistent world object that can be used to load levels, entities, etc */
-        World* m_World = nullptr;
+        /**
+         * Persistent world object that can be used to load levels, entities, etc. The engine
+         * owns it. The game and the debug UI keep a weak_ptr to it.
+         */
+        std::shared_ptr<World> m_World;
 
-        /** The implementation of the game that this engine is running. @see Fling::Game */
-        Fling::Game* m_GameImpl = nullptr;
+        /**
+         * The implementation of the game that this engine is running. @see Fling::Game
+         * The engine and the world share it, so it lives until both let go.
+         */
+        std::shared_ptr<Fling::Game> m_GameImpl;
 
         /** Optional developer UI (for example the editor). Drawn in the ImGui subpass. */
         std::shared_ptr<Fling::IDebugUI> m_DebugUI;
@@ -166,8 +172,7 @@ namespace Fling
                       "T_GameType requires default-constructible elements");
         static_assert(std::is_base_of<Fling::Game, T_GameType>::value, "T_GameType must inherit from Fling::Game");
 
-        // #TODO Use a pool allocator for new
-        m_GameImpl = new T_GameType();
+        m_GameImpl = std::make_shared<T_GameType>();
 
         ExitCode Code = Startup(argc, argv);
         // A localization tool (--loc-export, --loc-import) does its work in Startup

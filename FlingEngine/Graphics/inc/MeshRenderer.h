@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Components/Transform.h"
 #include "Ecs/Component.h"
 #include "Strings/String.h"
 
@@ -15,6 +16,9 @@ namespace Fling
     struct MeshRenderer
     {
         static constexpr ComponentInfo Component{.Name = "MeshRenderer"};
+
+        /** A mesh is drawn at its entity's Transform */
+        using Requires = TypeList<Transform>;
 
         MeshRenderer() = default;
 

@@ -58,20 +58,28 @@ namespace Fling
 
             auto View = t_Reg.View<Transform, RigidBody, Collider>();
 
+            // Only the entities with no body yet. In a steady tick there are none, so nothing is sorted.
+            std::vector<Fling::Entity> Ordered;
+            for (const Fling::Entity Entity : View)
+            {
+                if (!t_Reg.Has<PhysicsBody>(Entity))
+                {
+                    Ordered.push_back(Entity);
+                }
+            }
+            if (Ordered.empty())
+            {
+                return;
+            }
+
             // Physics libraries give different results for a different creation order,
             // so the order is a rule here, not whatever order the storage keeps:
             // highest entity index first (the newest entity of a fresh level first).
-            std::vector<Fling::Entity> Ordered(View.begin(), View.end());
             std::sort(
                 Ordered.begin(), Ordered.end(), [](const Fling::Entity a, const Fling::Entity b) { return b < a; });
 
             for (const Fling::Entity Entity : Ordered)
             {
-                if (t_Reg.Has<PhysicsBody>(Entity))
-                {
-                    continue;
-                }
-
                 const Transform& Trans = View.Get<Transform>(Entity);
                 const RigidBody& Body = View.Get<RigidBody>(Entity);
 

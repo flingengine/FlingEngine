@@ -40,7 +40,7 @@ namespace Fling
         }
     } // namespace
 
-    World::World(Fling::Game* t_Game) : m_Game(t_Game), m_ShouldQuit(false)
+    World::World(std::shared_ptr<Fling::Game> t_Game) : m_Game(std::move(t_Game)), m_ShouldQuit(false)
     {
     }
 
@@ -323,26 +323,23 @@ namespace Fling
         return root.SaveToFile(FullPath);
     }
 
-    uint64 World::MakeEntityGuid() const
+    namespace
     {
-        // Only level files use the id, so it does not need to be deterministic
-        static std::mt19937_64 Generator{std::random_device{}()};
-        while (true)
+        /** A new random EntityGuid value that is not in t_Used. Adds it to t_Used. */
+        uint64 MakeEntityGuid(std::unordered_set<uint64>& t_Used)
         {
-            const uint64 Value = Generator();
-            bool bTaken = Value == 0;
-            m_Storage.EachEntity(
-                [&](const Fling::Entity t_Entity)
-                {
-                    const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(t_Entity);
-                    bTaken = bTaken || (Guid && Guid->Value == Value);
-                });
-            if (!bTaken)
+            // Only level files use the id, so it does not need to be deterministic
+            static std::mt19937_64 Generator{std::random_device{}()};
+            while (true)
             {
-                return Value;
+                const uint64 Value = Generator();
+                if (Value != 0 && t_Used.insert(Value).second)
+                {
+                    return Value;
+                }
             }
         }
-    }
+    } // namespace
 
     bool World::SaveToJson(Json& t_OutDoc, const StringView t_Title)
     {
@@ -367,7 +364,7 @@ namespace Fling
             });
         for (const Fling::Entity Entity : NeedGuid)
         {
-            m_Storage.AddOrReplace<EntityGuid>(Entity, EntityGuid{MakeEntityGuid()});
+            m_Storage.AddOrReplace<EntityGuid>(Entity, EntityGuid{MakeEntityGuid(UsedGuids)});
         }
 
         const SaveContext Context{&m_Storage};
@@ -541,13 +538,19 @@ namespace Fling
             NameComponent& nameComp = m_Storage.Add<NameComponent>(Each.Entity);
             nameComp.Name = Name(Each.Name);
 
-            auto LoadNamedComponent = [&](const StringView key)
+            // What the file has for this entity: the types to load, and the keys that are not types
+            struct SavedComponent
             {
-                if (IsReservedEntityKey(key) || !Each.Data.Contains(key))
+                const TypeDesc* Type = nullptr;
+                String Key;
+            };
+            std::vector<SavedComponent> Saved;
+            for (const String& key : Each.Data.Keys())
+            {
+                if (IsReservedEntityKey(key))
                 {
-                    return;
+                    continue;
                 }
-
                 const TypeDesc* type = m_Types.Find(key);
                 if (!type || type->IsSingleton())
                 {
@@ -557,35 +560,63 @@ namespace Fling
                         {
                             removed->Convert(m_Storage, Each.Entity, Each.Data.Get(key));
                         }
-                        return;
+                        continue;
                     }
                     F_LOG_WARN("Unknown component '{}' on entity '{}', skipping", key, Each.Name);
-                    return;
-                }
-                if (!type->IsSaved() || !type->Emplace)
-                {
-                    return;
-                }
-
-                const Json ComponentJson = Each.Data.Get(key);
-                const std::function<void(void*)> Fill = [&](void* t_Object)
-                {
-                    LoadObject(*type, t_Object, ComponentJson, Context);
-                };
-                type->Emplace(m_Storage, Each.Entity, type->IsTag() ? nullptr : &Fill);
-            };
-
-            // nlohmann objects iterate keys alphabetically, so MeshRenderer would
-            // otherwise construct before Transform. Load pose first so renderer
-            // hooks and later components see the authored transform.
-            LoadNamedComponent("Transform");
-            for (const String& key : Each.Data.Keys())
-            {
-                if (key == "Transform")
-                {
                     continue;
                 }
-                LoadNamedComponent(key);
+                if (type->IsSaved() && type->Emplace)
+                {
+                    Saved.push_back(SavedComponent{type, key});
+                }
+            }
+
+            const auto IsSaved = [&Saved](const TypeDesc* t_Type)
+            {
+                return std::any_of(
+                    Saved.begin(), Saved.end(), [&](const SavedComponent& t_Each) { return t_Each.Type == t_Type; });
+            };
+            const auto Load = [&](const SavedComponent& t_Saved)
+            {
+                if (t_Saved.Type->Has(m_Storage, Each.Entity))
+                {
+                    return;
+                }
+                const Json ComponentJson = Each.Data.Get(t_Saved.Key);
+                const std::function<void(void*)> Fill = [&](void* t_Object)
+                {
+                    LoadObject(*t_Saved.Type, t_Object, ComponentJson, Context);
+                };
+                t_Saved.Type->Emplace(m_Storage, Each.Entity, t_Saved.Type->IsTag() ? nullptr : &Fill);
+            };
+
+            // A component loads after the components that it requires (a MeshRenderer after its
+            // Transform), so its hooks see them with their saved values. One that the file does not
+            // have is added with default values.
+            for (const SavedComponent& Component : Saved)
+            {
+                for (const TypeDesc* Needed : m_Types.WithRequired(*Component.Type))
+                {
+                    const auto Found =
+                        std::find_if(Saved.begin(),
+                                     Saved.end(),
+                                     [&](const SavedComponent& t_Each) { return t_Each.Type == Needed; });
+                    if (Found != Saved.end())
+                    {
+                        Load(*Found);
+                    }
+                    else if (!Needed->Has(m_Storage, Each.Entity))
+                    {
+                        F_LOG_WARN("{}: entity '{}' has a '{}' and no '{}', which it requires. A default '{}' was "
+                                   "added.",
+                                   t_SourceName,
+                                   Each.Name,
+                                   Component.Type->Name,
+                                   Needed->Name,
+                                   Needed->Name);
+                        Needed->Emplace(m_Storage, Each.Entity, nullptr);
+                    }
+                }
             }
         }
 

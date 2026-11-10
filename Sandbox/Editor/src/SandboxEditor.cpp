@@ -41,7 +41,7 @@ namespace Sandbox
     {
         F_LOG_TRACE("Load file {}", t_FileName);
 
-        m_OwningWorld->LoadLevelFile(t_FileName);
+        OwningWorld()->LoadLevelFile(t_FileName);
     }
 
     void SandboxEditor::OnSaveLevel(Fling::String t_FileName)
@@ -49,7 +49,7 @@ namespace Sandbox
         // File pop up to load the level file
         F_LOG_TRACE("Save to file {}", t_FileName);
 
-        m_OwningWorld->OutputLevelFile(t_FileName);
+        OwningWorld()->OutputLevelFile(t_FileName);
     }
 } // namespace Sandbox
 

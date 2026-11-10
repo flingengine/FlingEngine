@@ -4,9 +4,11 @@
 #include "Ecs/Phase.h"
 
 #include <span>
+#include <vector>
 
 namespace Fling
 {
+    class EntityStorage;
     class SystemContextBase;
     class SystemSetupBase;
 
@@ -44,14 +46,20 @@ namespace Fling
         bool Spawns = false;
         /** True if the access list has RawStorage. A parallel executor runs such a system alone. */
         bool RawStorage = false;
-        /** Makes the storage for every component in the access table, so a query never changes the storage. */
-        void (*PrepareStorage)(SystemSetupBase& setup) = nullptr;
+        /**
+         * Gets the storage ready for the system. It gives every component type in the access
+         * table its id, so the first tick does not. And it makes each singleton that the
+         * system writes and each queue that it consumes, if the world does not have it
+         * yet, and adds a function to made that removes it. The runner calls it before any
+         * OnCreate, and calls the functions at shutdown.
+         */
+        void (*Prepare)(EntityStorage& storage, std::vector<void (*)(EntityStorage&)>& made) = nullptr;
     };
 
     /**
      * A system: functions and no state. The world owns one instance of each
      * system, and the instance has no members, so all state goes in singleton
-     * components that the system makes in OnCreate.
+     * components. The engine makes a singleton for the system that writes it.
      *
      * Do not derive from ISystem directly. Derive from the Fling::System<Self,
      * Access<...>> adapter (Ecs/SystemBase.h). The adapter implements these Run*

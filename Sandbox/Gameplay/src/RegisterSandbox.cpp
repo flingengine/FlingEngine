@@ -64,7 +64,8 @@ namespace Sandbox
         RegisterBallControl(t_Modules);
         RegisterMovement(t_Modules);
 
-        // Systems in one list: the schedule keeps this order where nothing else orders them
+        // Systems in one list. The order here does not matter: the schedule orders them by what they
+        // read and write, and by name where nothing else orders two of them.
         t_Modules.System<AppKeysSystem>();
         t_Modules.System<BallControlSystem>();
         t_Modules.System<FirstHitSystem>();

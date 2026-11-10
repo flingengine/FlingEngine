@@ -47,11 +47,13 @@ namespace Fling
         SystemRunner(const SystemRunner&) = delete;
         SystemRunner& operator=(const SystemRunner&) = delete;
 
-        /** Makes the storage for every declared component and the clock singletons, then calls OnCreate in schedule
-         * order. */
+        /**
+         * Makes the clock singletons, and for each system the singletons it writes and the
+         * queues it consumes (see ComponentInfo::External). Then calls OnCreate in schedule order.
+         */
         void Create();
 
-        /** Calls OnDestroy in reverse schedule order, then removes the clock singletons. */
+        /** Calls OnDestroy in reverse schedule order, then removes the singletons that Create made. */
         void Destroy();
 
         /** Calls OnPlayBegin on each system that runs in the role, then applies their commands. */
@@ -113,6 +115,9 @@ namespace Fling
         std::vector<FlushEntry> m_FlushEntries;
         std::vector<Detail::PendingChange> m_FlushBatch;
         std::vector<Entity> m_DestroyScratch;
+
+        /** One function for each singleton that Create made for a system. Destroy calls them in reverse. */
+        std::vector<void (*)(EntityStorage&)> m_OwnedSingletons;
 
         std::chrono::nanoseconds m_Accumulator{0};
         std::chrono::nanoseconds m_RealElapsed{0};

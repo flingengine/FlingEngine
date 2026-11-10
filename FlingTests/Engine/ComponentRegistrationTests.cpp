@@ -5,6 +5,7 @@
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
+#include <memory>
 #include <vector>
 
 using namespace Fling;
@@ -149,8 +150,9 @@ TEST_CASE("Saved singletons and tags round-trip through the play snapshot", "[co
 {
     QuietLogger();
 
-    RegistrationGame TestGame;
-    World TestWorld(&TestGame);
+    const auto TestGameOwner = std::make_shared<RegistrationGame>();
+    RegistrationGame& TestGame = *TestGameOwner;
+    World TestWorld(TestGameOwner);
     Fling::EntityStorage& Reg = TestWorld.GetStorage();
     REQUIRE(TestWorld.Init());
 

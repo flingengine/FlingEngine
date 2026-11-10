@@ -20,10 +20,6 @@ namespace Sandbox
     public:
         static constexpr Fling::SystemInfo Info{.Name = "Sandbox.Toggles", .Phase = Fling::Phases::Simulation};
 
-        void OnCreate(Setup& setup) const;
-
-        void OnDestroy(Setup& setup) const;
-
         /** Each play starts with both toggles off. */
         void OnPlayBegin(Context& ctx) const;
 

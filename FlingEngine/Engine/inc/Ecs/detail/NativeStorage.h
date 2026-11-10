@@ -10,14 +10,15 @@
 #include "Ecs/TypeHash.h"
 #include "FlingTypes.h"
 #include "Signals.h"
+#include "Threading/Mutex.h"
 #include "TypeName.h"
 
+#include <atomic>
 #include <cstddef>
 #include <memory>
 #include <span>
 #include <string_view>
 #include <type_traits>
-#include <typeinfo>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -48,10 +49,12 @@ namespace Fling::Detail
 
     inline constexpr ComponentId InvalidComponentId = 0xFFFFFFFFu;
 
+    struct Archetype;
+
     /** What the storage needs to know about a type it does not see as a template. */
     struct ComponentOps
     {
-        /** TypeHashOf for a Fling::Component, and a hash of the type's name for any other type. */
+        /** TypeHashOf: the hash of the saved name. */
         uint64 Key = 0;
         const char* Name = "";
         /** The C++ type name (TypeNameOf). Two different types with one Key are an error. */
@@ -63,6 +66,12 @@ namespace Fling::Detail
 
         /** Trivially copyable and destructible: a row move is a memcpy, and nothing is destroyed. */
         bool Trivial = false;
+
+        /**
+         * For a type with a Requires list: the saved name of a required type that the
+         * archetype does not have, or null if it has them all. Null for other types.
+         */
+        const char* (*MissingRequirement)(const Archetype& archetype) = nullptr;
 
         /** Construct at dst from src (moved from). dst is raw memory. */
         void (*MoveConstruct)(void* dst, void* src) = nullptr;
@@ -76,51 +85,43 @@ namespace Fling::Detail
      */
     ComponentId RegisterComponentType(const ComponentOps& ops);
 
-    /**
-     * The ops of a registered type. Thread safe. The reference stays valid while
-     * other threads register types, because the table never moves an entry.
-     */
-    const ComponentOps& GetComponentOps(ComponentId id);
+    /** The most component types one process can register. RegisterComponentType aborts at one more. */
+    inline constexpr ComponentId MaxComponentTypes = 4096;
 
-    template <typename T>
-    ComponentOps MakeComponentOps()
+    /**
+     * The ops of each registered type, by ComponentId. RegisterComponentType writes an
+     * entry one time, before it gives out the id, and never changes it. So a read
+     * needs no lock, from any thread.
+     */
+    extern std::atomic<const ComponentOps*> g_ComponentOps[MaxComponentTypes];
+
+    /** The ops of a registered type. Thread safe, with no lock. The reference is valid until the process ends. */
+    inline const ComponentOps& GetComponentOps(const ComponentId id)
     {
-        ComponentOps ops;
-        if constexpr (Component<T>)
-        {
-            ops.Key = TypeHashOf<T>;
-            ops.Name = ComponentInfoOf<T>.Name;
-            ops.Storage = ComponentInfoOf<T>.Storage;
-        }
-        else
-        {
-            // Types that are not declared components (test helpers) get a key from their name
-            ops.Name = typeid(T).name();
-            ops.Key = HashName(ops.Name) ^ 0x9E3779B97F4A7C15ull;
-        }
-        ops.TypeName = TypeNameOf<T>();
-        ops.Empty = std::is_empty_v<T>;
-        ops.Trivial = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
-        ops.Size = std::is_empty_v<T> ? 0 : sizeof(T);
-        ops.Align = alignof(T);
-        ops.MoveConstruct = [](void* dst, void* src)
-        {
-            ::new (dst) T(std::move(*static_cast<T*>(src)));
-        };
-        ops.Destroy = [](void* object)
-        {
-            static_cast<T*>(object)->~T();
-        };
-        return ops;
+        return *g_ComponentOps[id].load(std::memory_order_acquire);
     }
+
+    /**
+     * The row counts of the queries that are alive on this thread. A query keeps the row
+     * count of each archetype it matches, so its loop stops at the rows that existed when
+     * it was made. The counts are a stack for each thread, not part of the storage: to make
+     * a query does not write to the storage, so systems on different threads can make
+     * queries at the same time. Queries on one thread end in the reverse order they were
+     * made. Returns where the counts of this query start.
+     */
+    size_t PushQueryRowLimits(const std::vector<Archetype*>& archetypes, size_t count);
+
+    void PopQueryRowLimits(size_t start);
+
+    /** The row count that PushQueryRowLimits kept for the archetype at index. */
+    size_t QueryRowLimit(size_t start, size_t index);
+
+    /** True if a query is alive on this thread. A bulk change must not run then. */
+    bool AnyQueryAliveOnThread();
 
     /** The ComponentId of T. The first call registers it. */
     template <typename T>
-    ComponentId ComponentIdOf()
-    {
-        static const ComponentId s_Id = RegisterComponentType(MakeComponentOps<std::remove_cv_t<T>>());
-        return s_Id;
-    }
+    ComponentId ComponentIdOf();
 
     /**
      * One block of rows of one archetype. The header is at the start of its block from the
@@ -145,8 +146,6 @@ namespace Fling::Detail
         /** One bit per row for each Enableable column, in Archetype::Columns order. Null for other columns. */
         uint64** Enabled = nullptr;
     };
-
-    struct Archetype;
 
     /** The archetype with one more or one less type, and how a row moves there. */
     struct ArchetypeEdge
@@ -200,7 +199,11 @@ namespace Fling::Detail
         /** ComponentId -> column index. -1 for none, -2 for a tag the archetype has. */
         std::vector<int32> ColumnById;
 
-        /** The chunks, which live in the storage's BlockAllocator. Every chunk but the last is full. */
+        /**
+         * The chunks, which live in the storage's BlockAllocator. Rows fill them in order:
+         * every chunk before the last one with rows is full, and at most one empty chunk (a
+         * spare) follows it.
+         */
         std::vector<Chunk*> Chunks;
 
         /** Bytes of one row: the Entity and every column. */
@@ -214,20 +217,114 @@ namespace Fling::Detail
         /** True if every column can be moved with a copy of its bytes. */
         bool AllTrivial = true;
 
+        /**
+         * Set if a type in the archetype requires a type that the archetype does not have
+         * (see RequiredOf): the saved names of the two. An entity must not stay in such an
+         * archetype. It can pass through one on the way to another.
+         */
+        const char* UnmetType = nullptr;
+        const char* UnmetRequirement = nullptr;
+
+        /** True after the error for UnmetType was logged, so it is logged one time. */
+        mutable bool UnmetReported = false;
+
         /** The archetype with one more or one less type. Few per archetype, so a short list is faster than a map. */
         std::vector<ArchetypeEdge> AddEdges;
         std::vector<ArchetypeEdge> RemoveEdges;
 
+        /**
+         * Edges to archetypes that differ by more than one type, which a batch of changes
+         * moves a row to in one step. Found by Target. Their Id is InvalidComponentId.
+         */
+        std::vector<ArchetypeEdge> JumpEdges;
+
         bool Has(const ComponentId id) const { return id < ColumnById.size() && ColumnById[id] != -1; }
 
         int32 ColumnOf(const ComponentId id) const { return id < ColumnById.size() ? ColumnById[id] : -1; }
+
+        /** True if the archetype has every type in required and none in excluded. */
+        bool Matches(const std::span<const ComponentId> required, const std::span<const ComponentId> excluded) const
+        {
+            for (const ComponentId id : required)
+            {
+                if (!Has(id))
+                {
+                    return false;
+                }
+            }
+            for (const ComponentId id : excluded)
+            {
+                if (Has(id))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
     };
+
+    /** The function for ComponentOps::MissingRequirement of a type that requires Rs. Null if it requires nothing. */
+    template <typename... Rs>
+    auto MissingRequirementFn(TypeList<Rs...>) -> const char* (*)(const Archetype&)
+    {
+        if constexpr (sizeof...(Rs) == 0)
+        {
+            return nullptr;
+        }
+        else
+        {
+            return [](const Archetype& arch) -> const char*
+            {
+                const char* missing = nullptr;
+                ((missing = arch.Has(ComponentIdOf<Rs>()) ? missing : ComponentInfoOf<Rs>.Name), ...);
+                return missing;
+            };
+        }
+    }
+
+    template <typename T>
+    ComponentOps MakeComponentOps()
+    {
+        static_assert(Component<T>,
+                      "The storage holds only Fling::Component types. Add 'static constexpr Fling::ComponentInfo "
+                      "Component { .Name = \"...\" };' to the struct.");
+        static_assert(CheckRequires<T>());
+        static_assert(alignof(T) <= 4096,
+                      "A component can be aligned to 4096 bytes at most. That is one page on every platform, and "
+                      "the most that the storage's blocks promise.");
+        ComponentOps ops;
+        ops.Key = TypeHashOf<T>;
+        ops.Name = ComponentInfoOf<T>.Name;
+        ops.Storage = ComponentInfoOf<T>.Storage;
+        ops.TypeName = TypeNameOf<T>();
+        ops.MissingRequirement = MissingRequirementFn(RequiredOf<T>{});
+        ops.Empty = std::is_empty_v<T>;
+        ops.Trivial = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
+        ops.Size = std::is_empty_v<T> ? 0 : sizeof(T);
+        ops.Align = alignof(T);
+        ops.MoveConstruct = [](void* dst, void* src)
+        {
+            ::new (dst) T(std::move(*static_cast<T*>(src)));
+        };
+        ops.Destroy = [](void* object)
+        {
+            static_cast<T*>(object)->~T();
+        };
+        return ops;
+    }
+
+    template <typename T>
+    ComponentId ComponentIdOf()
+    {
+        static const ComponentId s_Id = RegisterComponentType(MakeComponentOps<std::remove_cv_t<T>>());
+        return s_Id;
+    }
 
     /** A Sparse component type: values beside the archetypes, each at a stable address in a SlotPool. */
     struct SparseSet
     {
         SparseSet(BlockAllocator& blocks, ComponentId id, size_t bytes, size_t alignment)
-            : Id(id), Pool(blocks, bytes, alignment)
+            : Id(id), Blocks(blocks), Pool(blocks, bytes, alignment)
         {
         }
         SparseSet(const SparseSet&) = delete;
@@ -236,15 +333,41 @@ namespace Fling::Detail
 
         ComponentId Id = InvalidComponentId;
 
+        /** The storage's allocator: the lookup pages are blocks from it */
+        BlockAllocator& Blocks;
+
         /** The memory of the values. */
         SlotPool Pool;
 
-        /** Entity index -> position in Dense, plus one. 0 means none. */
-        std::vector<uint32> Lookup;
+        /** Entities in one page of the lookup: 4096, so a page is one 16 KiB block */
+        static constexpr uint32 LookupPageBits = 12;
+        static constexpr uint32 LookupPageSize = 1u << LookupPageBits;
+
+        /**
+         * Entity index -> position in Dense, plus one. 0 means none. In pages, and a page is
+         * made only when an entity in its range gets the component. So the memory follows
+         * the number of entities that have the component, not the highest entity index in
+         * the world. A page that was never needed is null.
+         */
+        std::vector<uint32*> LookupPages;
         std::vector<Entity> Dense;
         std::vector<void*> Values;
 
         void* Find(Entity entity) const;
+
+        /** The position of the entity in Dense, plus one. 0 if it has no value. */
+        uint32 Lookup(const uint32 entityIndex) const
+        {
+            const size_t page = entityIndex >> LookupPageBits;
+            if (page >= LookupPages.size() || LookupPages[page] == nullptr)
+            {
+                return 0;
+            }
+            return LookupPages[page][entityIndex & (LookupPageSize - 1)];
+        }
+
+        /** Set what Lookup returns for the entity. Makes the page if value is not 0. */
+        void SetLookup(uint32 entityIndex, uint32 value);
     };
 
     /** The component hooks of one type. */
@@ -364,22 +487,32 @@ namespace Fling::Detail
         /**
          * The archetypes that have every type in required and none in excluded. Only
          * archetype kinds (Table, Enableable, Tag) count here: Sparse types are checked
-         * per entity. The result is cached, and new archetypes are added to it.
+         * per entity. Both lists are sorted. The result is cached. A new archetype goes in
+         * every cached list that it matches when it is made, so the list changes only then.
+         * Thread safe against other Match calls. Not safe against a structural change:
+         * systems that run at the same time make none.
          */
         const std::vector<Archetype*>& Match(std::span<const ComponentId> required,
                                              std::span<const ComponentId> excluded);
 
         SparseSet* FindSparse(ComponentId id) const;
 
-        /** The ops of a type, from a cache in this storage, so a lookup takes no lock. */
-        const ComponentOps& Ops(ComponentId id) const
+        /** Where a living entity's row is. Returns false for a dead entity. For a query that walks a sparse set. */
+        bool Locate(const Entity entity, Archetype*& arch, Chunk*& chunk, uint32& row) const
         {
-            if (id < m_OpsCache.size() && m_OpsCache[id] != nullptr)
+            const Slot* slot = FindSlot(entity);
+            if (slot == nullptr)
             {
-                return *m_OpsCache[id];
+                return false;
             }
-            return CacheOps(id);
+            arch = ArchOf(*slot);
+            chunk = arch->Chunks[slot->ChunkIndex()];
+            row = slot->Row();
+            return true;
         }
+
+        /** The ops of a type. No lock, and no write to the storage. */
+        static const ComponentOps& Ops(const ComponentId id) { return GetComponentOps(id); }
 
         HookSet& Hooks(ComponentId id);
 
@@ -416,17 +549,6 @@ namespace Fling::Detail
 
         /** Give the OS the memory of empty slabs (after a level unload, for example). Returns the bytes given back. */
         size_t TrimMemory() { return m_Blocks.Trim(); }
-
-        /**
-         * Keep the row count of each archetype in archetypes, so a query can stop at the
-         * rows that existed when it was made. A stack: each call is paired with
-         * PopRowLimits in reverse order. Returns where the counts start.
-         */
-        size_t PushRowLimits(const std::vector<Archetype*>& archetypes, size_t count);
-
-        void PopRowLimits(size_t start) { m_RowLimits.resize(start); }
-
-        size_t RowLimit(size_t start, size_t index) const { return m_RowLimits[start + index]; }
 
     private:
         /**
@@ -466,7 +588,6 @@ namespace Fling::Detail
             std::vector<ComponentId> Required;
             std::vector<ComponentId> Excluded;
             std::vector<Archetype*> Matches;
-            size_t SeenArchetypes = 0;
         };
 
         Archetype* ArchOf(const Slot& slot) const { return m_Archetypes[slot.ArchIndex - 1].get(); }
@@ -481,9 +602,6 @@ namespace Fling::Detail
         uint32 TakeSlotIndex();
 
         Archetype* FindOrMakeArchetype(std::vector<ComponentId> types);
-        Archetype* WithType(Archetype* from, ComponentId id) { return AddEdge(from, id).Target; }
-        Archetype* WithoutType(Archetype* from, ComponentId id) { return RemoveEdge(from, id).Target; }
-
         /** The cached edge to the archetype with id added. Makes the archetype and the edge the first time. */
         const ArchetypeEdge& AddEdge(Archetype* from, ComponentId id);
 
@@ -496,17 +614,23 @@ namespace Fling::Detail
         /** Append a row for the entity, and set slot to where it is. Returns the chunk of the row. */
         Chunk& AddRow(Archetype* arch, Entity entity, Slot& slot);
 
+        /**
+         * The index of the chunk that the next row of the archetype goes in: the first
+         * chunk with room, or a new chunk at the end.
+         */
+        uint32 OpenChunk(Archetype* arch);
+
         /** Add a chunk to the end of the archetype, for AddRow when the last chunk is full. */
         Chunk* AddChunk(Archetype* arch);
 
-        /**
-         * Move the entity's row to another archetype. Columns both archetypes have are
-         * moved. Columns only the old one has are destroyed. Columns only the new one
-         * has are raw memory: the caller constructs them.
-         */
-        void MoveRow(Slot& slot, Archetype* to);
+        /** The cached edge to any other archetype, for a batch that changes more than one type. */
+        const ArchetypeEdge& JumpEdge(Archetype* from, Archetype* to);
 
-        /** MoveRow along an edge from the entity's archetype, with the column moves it has ready. */
+        /**
+         * Move the entity's row along an edge from its archetype. Columns both archetypes
+         * have are moved. Columns only the old one has are destroyed. Columns only the
+         * new one has are raw memory: the caller constructs them.
+         */
         void MoveRow(Slot& slot, const ArchetypeEdge& edge);
 
         /**
@@ -550,6 +674,18 @@ namespace Fling::Detail
 
         void FireRemovedForAll(Entity entity);
 
+        /**
+         * Call when an entity comes to rest in an archetype. If a type in it requires a type
+         * that is not in it, logs an error (one time for each archetype) and asserts.
+         */
+        static void CheckRequirements(const Archetype& arch);
+
+        /**
+         * True if Destroy already ran the Removed hooks of this type for this entity, which
+         * is being destroyed. A hook that then removes the component must not run them again.
+         */
+        bool RemovedHookRan(Entity entity, ComponentId id) const;
+
         /** A new chunk for the archetype, in one block, with the most rows that fit in bytes. */
         Chunk* MakeChunk(const Archetype& arch, size_t bytes);
 
@@ -576,7 +712,11 @@ namespace Fling::Detail
         std::unordered_map<uint64, std::vector<Archetype*>> m_ArchetypesByHash;
         Archetype* m_Root = nullptr;
 
+        /** By ComponentId. Null for a type that is not Sparse, or that no entity ever had. */
         std::vector<std::unique_ptr<SparseSet>> m_Sparse;
+
+        /** Only the sets that exist, in the order they were made, so Destroy does not walk every component id. */
+        std::vector<SparseSet*> m_SparseList;
 
         struct SingletonSlot
         {
@@ -588,13 +728,29 @@ namespace Fling::Detail
 
         std::vector<std::unique_ptr<HookSet>> m_Hooks;
 
+        /** A Removed hook that Destroy ran for an entity that is being destroyed. */
+        struct RemovedNotice
+        {
+            Entity Target;
+            ComponentId Id = InvalidComponentId;
+        };
+
+        /**
+         * The Removed hooks that ran for the entities that are being destroyed now. A stack:
+         * a hook can destroy another entity. Empty when no Destroy is running.
+         */
+        std::vector<RemovedNotice> m_RemovedNotices;
+
+        /** Each CachedQuery keeps its address, so a query can hold a pointer to its Matches. */
         std::vector<std::unique_ptr<CachedQuery>> m_Queries;
 
-        uint64 m_StructuralMoves = 0;
+        /** Hash of the two id lists -> the queries with that hash. */
+        std::unordered_map<uint64, std::vector<CachedQuery*>> m_QueriesByHash;
 
-        /** The row counts that live queries keep (see PushRowLimits). It grows to the most that is needed, then stays.
-         */
-        std::vector<size_t> m_RowLimits;
+        /** Guards m_Queries and m_QueriesByHash: two threads can ask for the same new query. */
+        mutable Mutex m_QueryLock;
+
+        uint64 m_StructuralMoves = 0;
 
         /** Scratch for MakeChunk, kept so it does not allocate again */
         std::vector<size_t> m_ColumnOffsets;
@@ -603,9 +759,5 @@ namespace Fling::Detail
         std::vector<Archetype*> m_BulkArchetypes;
         std::vector<ComponentId> m_BulkIds;
         std::vector<Entity> m_BulkEntities;
-
-        const ComponentOps& CacheOps(ComponentId id) const;
-
-        mutable std::vector<const ComponentOps*> m_OpsCache;
     };
 } // namespace Fling::Detail

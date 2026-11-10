@@ -10,7 +10,7 @@ namespace Fling::HierarchyUtil
     {
         void RemoveFromChildren(EntityStorage& t_Storage, const Entity t_Parent, const Entity t_Child)
         {
-            Children* List = t_Storage.IsValid(t_Parent) ? t_Storage.TryGet<Children>(t_Parent) : nullptr;
+            Children* List = t_Storage.TryGet<Children>(t_Parent);
             if (List == nullptr)
             {
                 return;
@@ -34,7 +34,7 @@ namespace Fling::HierarchyUtil
 
     Entity GetParent(const EntityStorage& t_Storage, const Entity t_Entity)
     {
-        const Parent* Link = t_Storage.IsValid(t_Entity) ? t_Storage.TryGet<Parent>(t_Entity) : nullptr;
+        const Parent* Link = t_Storage.TryGet<Parent>(t_Entity);
         return Link ? Link->Value : Entity::Null;
     }
 

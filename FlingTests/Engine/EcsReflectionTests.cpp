@@ -13,6 +13,7 @@
 
 #include <catch2/catch_all.hpp>
 #include <functional>
+#include <memory>
 #include <string>
 
 using namespace Fling;
@@ -285,8 +286,9 @@ TEST_CASE("The world saves entity references and loads them into the new entitie
 
     Json levelData;
     {
-        ReflectionGame game;
-        World world(&game);
+        const auto gameOwner = std::make_shared<ReflectionGame>();
+        ReflectionGame& game = *gameOwner;
+        World world(gameOwner);
         REQUIRE(world.Init());
         EntityStorage& storage = world.GetStorage();
 
@@ -307,8 +309,9 @@ TEST_CASE("The world saves entity references and loads them into the new entitie
     }
 
     // Load into a new world. The entities have new handles, and the reference follows.
-    ReflectionGame game;
-    World world(&game);
+    const auto gameOwner = std::make_shared<ReflectionGame>();
+    ReflectionGame& game = *gameOwner;
+    World world(gameOwner);
     REQUIRE(world.Init());
     REQUIRE(world.LoadLevelFile(LevelPath));
     EntityStorage& storage = world.GetStorage();
@@ -363,8 +366,9 @@ TEST_CASE("Removed and renamed components in a level", "[reflection][world]")
     })");
     REQUIRE(level.SaveToFile(FullPath));
 
-    ReflectionGame game;
-    World world(&game);
+    const auto gameOwner = std::make_shared<ReflectionGame>();
+    ReflectionGame& game = *gameOwner;
+    World world(gameOwner);
     REQUIRE(world.Init());
     REQUIRE(world.LoadLevelFile(LevelPath));
     EntityStorage& storage = world.GetStorage();
@@ -392,8 +396,9 @@ TEST_CASE("Removed and renamed components in a level", "[reflection][world]")
 TEST_CASE("Level_1 loads, and saves the same components again", "[reflection][world]")
 {
     QuietLogger();
-    ReflectionGame game;
-    World world(&game);
+    const auto gameOwner = std::make_shared<ReflectionGame>();
+    ReflectionGame& game = *gameOwner;
+    World world(gameOwner);
     REQUIRE(world.Init());
 
     Json original;

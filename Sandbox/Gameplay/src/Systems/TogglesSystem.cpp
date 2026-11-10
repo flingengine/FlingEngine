@@ -2,16 +2,6 @@
 
 namespace Sandbox
 {
-    void TogglesSystem::OnCreate(Setup& setup) const
-    {
-        setup.AddSingleton<SandboxToggles>();
-    }
-
-    void TogglesSystem::OnDestroy(Setup& setup) const
-    {
-        setup.RemoveSingleton<SandboxToggles>();
-    }
-
     void TogglesSystem::OnPlayBegin(Context& ctx) const
     {
         ctx.Singleton<SandboxToggles>() = SandboxToggles{};

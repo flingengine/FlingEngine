@@ -198,6 +198,74 @@ TEST_CASE("Destroy runs each Removed hook once when a hook removes another compo
     REQUIRE_FALSE(storage.IsValid(e));
 }
 
+namespace
+{
+    // Used only by the test below, which gives them their ids in this order
+    struct EdgeEarly
+    {
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeEarly"};
+        int Value = 0;
+    };
+
+    struct EdgeLate
+    {
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeLate"};
+        int Value = 0;
+    };
+
+    struct EdgeLateSparseOwner
+    {
+        static constexpr ComponentInfo Component{.Name = "Edge.EdgeLateSparseOwner",
+                                                 .Storage = ComponentStorage::Sparse};
+        int Value = 0;
+    };
+
+    struct RemoveEarly
+    {
+        int Removed = 0;
+
+        void Run(EntityStorage& storage, const Entity e)
+        {
+            ++Removed;
+            storage.RemoveIfPresent<EdgeEarly>(e);
+        }
+    };
+} // namespace
+
+TEST_CASE("Destroy runs each Removed hook once in every order of the component types", "[ecs][storage][edge]")
+{
+    // Destroy runs the hooks in the order of the type ids. Here the hook of the later type removes
+    // the earlier type, whose hook already ran. (The test above is the other order.)
+    REQUIRE(Detail::ComponentIdOf<EdgeEarly>() < Detail::ComponentIdOf<EdgeLate>());
+
+    for (const bool sparseOwner : {false, true})
+    {
+        EntityStorage storage;
+        HookLog onEarly;
+        RemoveEarly onLate;
+        storage.OnRemove<EdgeEarly>().Connect<&HookLog::OnRemoved>(onEarly);
+        if (sparseOwner)
+        {
+            storage.OnRemove<EdgeLateSparseOwner>().Connect<&RemoveEarly::Run>(onLate);
+        }
+        else
+        {
+            storage.OnRemove<EdgeLate>().Connect<&RemoveEarly::Run>(onLate);
+        }
+
+        const Entity e = storage.Create(EdgeEarly{1}, EdgeLate{2}, EdgeLateSparseOwner{3});
+        const Entity other = storage.Create(EdgeEarly{4});
+        storage.Destroy(e);
+        REQUIRE(onEarly.Removed == 1);
+        REQUIRE(onLate.Removed == 1);
+        REQUIRE_FALSE(storage.IsValid(e));
+
+        // Nothing is left over from the destroy: a later remove runs its hook as usual
+        storage.Remove<EdgeEarly>(other);
+        REQUIRE(onEarly.Removed == 2);
+    }
+}
+
 TEST_CASE("A Removed hook that destroys its own entity runs once", "[ecs][storage][edge]")
 {
     EntityStorage storage;

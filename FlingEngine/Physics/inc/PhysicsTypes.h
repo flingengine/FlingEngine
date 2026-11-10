@@ -27,7 +27,7 @@ namespace Fling
     struct PhysicsSettings
     {
         static constexpr ComponentInfo Component{
-            .Name = "PhysicsSettings", .Kind = ComponentKind::Singleton, .Transient = true};
+            .Name = "PhysicsSettings", .Kind = ComponentKind::Singleton, .Transient = true, .External = true};
 
         glm::vec3 m_Gravity{0.0f, -9.81f, 0.0f};
 
@@ -75,7 +75,7 @@ namespace Fling
     struct PhysicsCommands
     {
         static constexpr ComponentInfo Component{
-            .Name = "PhysicsCommands", .Kind = ComponentKind::Queue, .Transient = true};
+            .Name = "PhysicsCommands", .Kind = ComponentKind::Queue, .Transient = true, .External = true};
 
         std::vector<PhysicsCommand> Requests;
     };
@@ -101,7 +101,7 @@ namespace Fling
     struct ContactEvents
     {
         static constexpr ComponentInfo Component{
-            .Name = "ContactEvents", .Kind = ComponentKind::Singleton, .Transient = true};
+            .Name = "ContactEvents", .Kind = ComponentKind::Singleton, .Transient = true, .External = true};
 
         std::vector<ContactEvent> m_Contacts;
     };
@@ -129,7 +129,7 @@ namespace Fling
     struct PhysicsWorld
     {
         static constexpr ComponentInfo Component{
-            .Name = "PhysicsWorld", .Kind = ComponentKind::Singleton, .Transient = true};
+            .Name = "PhysicsWorld", .Kind = ComponentKind::Singleton, .Transient = true, .External = true};
 
         std::shared_ptr<PhysicsProvider> m_Provider;
         std::unique_ptr<PhysicsScene> m_Scene;

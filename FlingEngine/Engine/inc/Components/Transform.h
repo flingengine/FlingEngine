@@ -53,4 +53,27 @@ namespace Fling
         glm::mat4 Value{1.0f};
         uint32 Version = 0;
     };
+
+    /**
+     * The work list of Engine.Transform: the children that wait for their matrix, each
+     * with the world matrix of its parent. Empty between ticks. It is a singleton so
+     * that the list keeps its memory, and the system allocates nothing in a steady tick.
+     */
+    struct TransformWork
+    {
+        static constexpr ComponentInfo Component{
+            .Name = "TransformWork", .Kind = ComponentKind::Singleton, .Transient = true};
+
+        struct Item
+        {
+            Entity Child = Entity::Null;
+            Entity Parent = Entity::Null;
+            glm::mat4 ParentWorld{1.0f};
+        };
+
+        std::vector<Item> Pending;
+
+        /** True after the system logged that Parent and Children do not agree, so it logs one time. */
+        bool WarnedOutOfStep = false;
+    };
 } // namespace Fling

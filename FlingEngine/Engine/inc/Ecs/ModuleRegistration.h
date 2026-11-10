@@ -52,6 +52,7 @@ namespace Fling
             static_assert(IsWellFormedComponent<T>,
                           "The ComponentInfo needs a name, and Kind = Tag exactly when the struct is empty.");
             static_assert(!std::is_pointer_v<T>, "A component cannot be a pointer.");
+            static_assert(Detail::CheckRequires<T>());
             static_assert(IsSingletonComponent<T> || std::is_default_constructible_v<T>,
                           "A table component must be default constructible, so that load and the editor can add it.");
             TypeDesc desc = MakeDesc<T>();
@@ -104,6 +105,7 @@ namespace Fling
             desc.Transient = info.Transient;
             desc.Size = std::is_empty_v<T> ? 0 : sizeof(T);
             desc.Align = alignof(T);
+            AddRequired(desc, RequiredOf<T>{});
 
             if constexpr (IsSingletonComponent<T>)
             {
@@ -171,6 +173,12 @@ namespace Fling
                 }
             }
             return desc;
+        }
+
+        template <typename... Rs>
+        static void AddRequired(TypeDesc& desc, TypeList<Rs...>)
+        {
+            (desc.Requires.push_back(TypeDesc::Required{TypeHashOf<Rs>, ComponentInfoOf<Rs>.Name}), ...);
         }
 
         /** Adds the type unless the name is taken. Defined in Reflection.cpp. */

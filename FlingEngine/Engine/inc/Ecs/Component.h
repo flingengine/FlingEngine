@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Ecs/TypeHash.h"
+#include "Ecs/TypeList.h"
 #include "FlingTypes.h"
 #include "Strings/String.h"
 #include "TypeName.h"
@@ -65,6 +66,14 @@ namespace Fling
         bool Transient = false;
         /** Table components only: how the storage keeps it. */
         ComponentStorage Storage = ComponentStorage::Table;
+        /**
+         * Singletons and queues only. By default the engine makes the singleton (with its
+         * default values) for the system that writes it, or the queue for the system that
+         * consumes it, and removes it when the world shuts down. Set this to true when
+         * code outside the systems makes and removes it (the physics module makes the
+         * PhysicsWorld), so the engine leaves it alone.
+         */
+        bool External = false;
     };
 
     namespace Detail
@@ -74,17 +83,32 @@ namespace Fling
         {
         };
 
+        template <typename T, typename = void>
+        struct DeclaredRequires
+        {
+            using Type = TypeList<>;
+        };
+
+        template <typename T>
+        struct DeclaredRequires<T, std::void_t<typename T::Requires>>
+        {
+            using Type = typename T::Requires;
+        };
+
         template <typename T>
         struct DefaultComponentTraits<T, std::void_t<decltype(T::Component)>>
         {
             static constexpr ComponentInfo Info = T::Component;
+            /** T::Requires, or an empty list. See RequiredOf. */
+            using Requires = typename DeclaredRequires<T>::Type;
         };
     } // namespace Detail
 
     /**
      * Where the engine finds the ComponentInfo for T. By default it is T::Component.
      * Specialize this for a type that you cannot edit, and give it a
-     * `static constexpr ComponentInfo Info`.
+     * `static constexpr ComponentInfo Info` (and, if it requires other components, a
+     * `using Requires = TypeList<...>;`).
      */
     template <typename T>
     struct ComponentTraits : Detail::DefaultComponentTraits<T>
@@ -148,4 +172,83 @@ namespace Fling
     template <Component T>
     inline constexpr bool IsSingletonComponent =
         ComponentInfoOf<T>.Kind == ComponentKind::Singleton || ComponentInfoOf<T>.Kind == ComponentKind::Queue;
+
+    namespace Detail
+    {
+        template <typename T, typename = void>
+        struct RequiredTypes
+        {
+            using Type = TypeList<>;
+        };
+
+        template <typename T>
+        struct RequiredTypes<T, std::void_t<typename ComponentTraits<T>::Requires>>
+        {
+            using Type = typename ComponentTraits<T>::Requires;
+        };
+    } // namespace Detail
+
+    /**
+     * The components that an entity must have to have a T. Declare them on the struct:
+     * `using Requires = Fling::TypeList<Fling::Transform>;` (a point light needs a place).
+     * A component with no such line requires nothing.
+     *
+     * What the engine does with it:
+     * - `storage.Create(...)` and `ctx.Spawn(...)` do not compile without the required components.
+     * - To add T to an entity that does not have them, or to remove one of them from an
+     *   entity that has T, is an error: a debug build asserts, and every build logs it.
+     *   So add the required components first, and remove them last.
+     * - The editor adds them with T, and does not remove one while T is there.
+     * - A level that has T without them gets default ones, with a warning.
+     */
+    template <typename T>
+    using RequiredOf = typename Detail::RequiredTypes<T>::Type;
+
+    namespace Detail
+    {
+        /** True if T can be in a Requires list, or have one: a component on entities that is in the archetype. */
+        template <typename T>
+        consteval bool CanHaveRequirements()
+        {
+            if constexpr (Component<T>)
+            {
+                const ComponentInfo info = ComponentInfoOf<T>;
+                return (info.Kind == ComponentKind::Table || info.Kind == ComponentKind::Tag) &&
+                       info.Storage != ComponentStorage::Sparse;
+            }
+            return false;
+        }
+
+        template <typename T, typename... Rs>
+        consteval bool CheckRequiresList(TypeList<Rs...>)
+        {
+            static_assert((Component<Rs> && ...), "A type in a component's Requires list is not a Fling::Component.");
+            static_assert((!std::is_same_v<T, Rs> && ...), "A component cannot require itself.");
+            static_assert(sizeof...(Rs) == 0 || CanHaveRequirements<T>(),
+                          "Only a Table or Tag component (and not a Sparse one) can have a Requires list.");
+            static_assert((CanHaveRequirements<Rs>() && ...),
+                          "A component can require only Table and Tag components (and not Sparse ones).");
+            static_assert((!Contains<RequiredOf<Rs>, T> && ...),
+                          "Two components require each other. Remove one of the two requirements, or make them "
+                          "one component.");
+            return true;
+        }
+
+        /** The rules for T's Requires list, as static_asserts. True so that it can be in a static_assert. */
+        template <typename T>
+        consteval bool CheckRequires()
+        {
+            return CheckRequiresList<T>(RequiredOf<T>{});
+        }
+
+        template <typename List, typename... Present>
+        inline constexpr bool AllIn = false;
+
+        template <typename... Rs, typename... Present>
+        inline constexpr bool AllIn<TypeList<Rs...>, Present...> = (Contains<TypeList<Present...>, Rs> && ...);
+    } // namespace Detail
+
+    /** True if every component that T requires is one of Present. */
+    template <typename T, typename... Present>
+    inline constexpr bool HasRequired = Detail::AllIn<RequiredOf<T>, Present...>;
 } // namespace Fling

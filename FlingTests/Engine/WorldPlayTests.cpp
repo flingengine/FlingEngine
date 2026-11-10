@@ -8,6 +8,7 @@
 #include "World.h"
 
 #include <catch2/catch_all.hpp>
+#include <memory>
 #include <vector>
 
 using Fling::String;
@@ -93,8 +94,9 @@ TEST_CASE("World play sessions reset the world when play stops", "[world][play]"
     using namespace Fling;
     InitTestLogger();
 
-    PlayTestGame TestGame;
-    World TestWorld(&TestGame);
+    const auto TestGameOwner = std::make_shared<PlayTestGame>();
+    PlayTestGame& TestGame = *TestGameOwner;
+    World TestWorld(TestGameOwner);
     Fling::EntityStorage& Reg = TestWorld.GetStorage();
     TestWorld.Init();
     REQUIRE(TestWorld.IsReadyForPlay());

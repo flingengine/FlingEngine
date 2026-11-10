@@ -1,3 +1,4 @@
+#include "Components/Transform.h"
 #include "Ecs/EntityStorage.h"
 #include "Ecs/SimTime.h"
 #include "Ecs/SystemBase.h"
@@ -5,6 +6,8 @@
 #include "Ecs/SystemRegistry.h"
 #include "Ecs/SystemRunner.h"
 #include "FlingTypes.h"
+#include "HierarchyUtil.h"
+#include "Systems/TransformSystem.h"
 
 #include <array>
 #include <atomic>
@@ -12,6 +15,7 @@
 #include <cstdlib>
 #include <memory>
 #include <new>
+#include <vector>
 
 // Proves that a steady simulation tick takes no memory from the global heap: chunks,
 // sparse slots, and singletons come from the world's BlockAllocator, and deferred
@@ -348,4 +352,54 @@ TEST_CASE("A steady tick takes no memory from the global heap", "[ecs][memory]")
     const EcsStats after = storage.Stats();
     CHECK(after.Entities == 0);
     CHECK(after.ReservedBytes < before.ReservedBytes);
+}
+
+TEST_CASE("Engine.Transform takes no memory from the global heap in a steady tick", "[ecs][memory][transform]")
+{
+    if (!FLING_TEST_COUNT_ALLOCATIONS)
+    {
+        SKIP("This build has no counting operator new (ThreadSanitizer)");
+    }
+    EntityStorage storage;
+    SystemRegistry systems;
+    systems.Add<TransformSystem>();
+    ScheduleResult schedule = systems.BuildSchedule();
+    REQUIRE(schedule.ErrorReport() == "");
+    SystemRunner runner(systems, std::move(schedule.Value), storage, SystemRunnerConfig{});
+    runner.Create();
+
+    // Roots, and chains four deep below some of them
+    std::vector<Entity> movers;
+    for (int i = 0; i < 200; ++i)
+    {
+        Entity above = storage.Create(Transform{glm::vec3(float(i), 0.0f, 0.0f)});
+        movers.push_back(above);
+        for (int depth = 0; depth < (i % 4 == 0 ? 4 : 0); ++depth)
+        {
+            const Entity child = storage.Create(Transform{glm::vec3(0.0f, 1.0f, 0.0f)});
+            REQUIRE(HierarchyUtil::SetParent(storage, child, above));
+            above = child;
+        }
+    }
+
+    // Warm up: LocalToWorld is added, and the work list reaches its size
+    for (int i = 0; i < 4; ++i)
+    {
+        runner.RunTick(WorldRole::Play);
+    }
+
+    g_Allocations = 0;
+    g_CountAllocations = true;
+    for (int i = 0; i < 50; ++i)
+    {
+        for (const Entity mover : movers)
+        {
+            storage.Get<Transform>(mover).Position.z += 1.0f;
+        }
+        runner.RunTick(WorldRole::Play);
+    }
+    g_CountAllocations = false;
+
+    CHECK(g_Allocations.load() == 0);
+    runner.Destroy();
 }

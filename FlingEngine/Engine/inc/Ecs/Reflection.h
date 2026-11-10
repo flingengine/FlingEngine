@@ -171,6 +171,17 @@ namespace Fling
         /** The C++ type name (TypeNameOf), to tell two types with one saved name apart. */
         StringView CppName;
 
+        /** A component type that an entity must have to have this one (RequiredOf). */
+        struct Required
+        {
+            TypeHash Hash = 0;
+            /** The saved name, for messages. */
+            const char* Name = "";
+        };
+
+        /** The types in this type's Requires list. TypeRegistry::WithRequired gives those that they require too. */
+        std::vector<Required> Requires;
+
         TypeHash Hash = 0;
         ComponentKind Kind = ComponentKind::Table;
         ComponentDomain Domain = ComponentDomain::Simulation;
