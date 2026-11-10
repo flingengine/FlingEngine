@@ -129,7 +129,6 @@ namespace Fling
      * one time when the simulation has its last state. One frame is Presentation,
      * Publish, Editor, after the ticks that were due.
      */
-    // clang-format off: clang-format puts the { of a designated initializer on the line of the name.
     namespace Phases
     {
         /** Turns this tick's input into InputState. */
