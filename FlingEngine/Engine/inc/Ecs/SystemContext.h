@@ -9,7 +9,6 @@
 #include "Ecs/Query.h"
 #include "Ecs/QueryFilters.h"
 #include "Ecs/TypeList.h"
-#include "Input/TickInput.h"
 #include "MathUtils.h"
 
 #include <algorithm>
@@ -195,8 +194,7 @@ namespace Fling
     class SystemContextBase
     {
     public:
-        SystemContextBase(EntityStorage& storage, DeferredCommands* commands, const TickInput* tickInput = nullptr)
-            : m_Storage(storage), m_Commands(commands), m_TickInput(tickInput)
+        SystemContextBase(EntityStorage& storage, DeferredCommands* commands) : m_Storage(storage), m_Commands(commands)
         {
         }
 
@@ -206,13 +204,9 @@ namespace Fling
         /** Null in a variable rate phase. */
         DeferredCommands* Commands() const { return m_Commands; }
 
-        /** This tick's input. Null in a variable rate phase. */
-        const TickInput* GetTickInput() const { return m_TickInput; }
-
     private:
         EntityStorage& m_Storage;
         DeferredCommands* m_Commands = nullptr;
-        const TickInput* m_TickInput = nullptr;
     };
 
     /** Pushes requests into one queue. A queue component keeps its requests in a container named Requests. */
@@ -443,19 +437,6 @@ namespace Fling
             static_assert(IsFixed(Derived::Info.Phase), "Only a fixed phase system uses RawStorage.");
             static_assert(A::HasRawStorage, "Add Fling::RawStorage to the access list to use ctx.RawStorage().");
             return m_Core.Storage();
-        }
-
-        /**
-         * The input of this tick, merged over devices, with presses and releases counted.
-         * Fixed phases only. Only the engine's Input system reads it: it copies it into
-         * the InputState singleton, which gameplay reads.
-         */
-        const TickInput& ReadTickInput() const
-        {
-            static_assert(IsFixed(Derived::Info.Phase),
-                          "Only a fixed phase system reads the tick input. Read InputState instead.");
-            static const TickInput s_NoInput{};
-            return m_Core.GetTickInput() != nullptr ? *m_Core.GetTickInput() : s_NoInput;
         }
 
         /**

@@ -31,7 +31,7 @@ This document covers both parts: the ideal design (Part 1) and the migration tha
 ## 1.1 Rules of engagement (Overwatch, enforced in review)
 
 1. **Components have state and no functions. Systems have functions and no state.** A component is a plain struct. Allowed extras: small accessors, plus lifetime hooks declared in its type registration (not on the struct). (Ford 01:00, 03:35)
-2. **System state lives in singleton components**, reached through the world and never through a global. Examples: `InputState`, `SimTime`, `ContactQueue`. (11:47) Type names have no `Singleton` prefix; the registration and `world.Singleton<T>()` already say what the type is.
+2. **System state lives in singleton components**, reached through the world and never through a global. Examples: `InputSnapshot`, `SimTime`, `ContactQueue`. (11:47) Type names have no `Singleton` prefix; the registration and `world.Singleton<T>()` already say what the type is.
 3. **Systems never call systems.** Shared behavior goes in `*Util` free functions. Many call sites → reads few components, no side effects. Many side effects → few call sites. (14:55, 16:32)
 4. **Defer big side effects.** Callers push to a queue singleton. One resolver system drains it at one point in the frame. (18:10, 20:35)
 5. **Explicit tuples with read/write access.** The scheduler reads them to order systems and, later, to run them in parallel. (43:27)
@@ -390,7 +390,7 @@ void Scheduler::RunFrame(World& world, TickClock& clock, int64 nowNs)
     const uint32 ticks = (world.Mode() == WorldMode::Play) ? clock.TicksDue(time.Tick) : 0;
     for (uint32 i = 0; i < ticks; ++i)
     {
-        // Builds this tick's TickInput from timestamped input events (see improve-time.md).
+        // Gives Engine.Input the real-time range of this tick's input events (see improve-time.md).
         world.BindTickInput(time.Tick, clock.Presentation());
         RunPhase(world, Phase::Input, SimPass::Live);
         RunPhase(world, Phase::Simulation, SimPass::Live);
@@ -441,7 +441,7 @@ A query captures the chunk count and the last chunk's row count when it starts, 
 
 | Phase | When | What moves here |
 |---|---|---|
-| `Input` | Once per live tick, before that tick's `Simulation`. Not on a resim | `InputSystem` reads the tick's `TickInput` (built from timestamped input events) and writes `InputState`. Game preprocessors (dead zones, action mapping) read it here. |
+| `Input` | Once per live tick, before that tick's `Simulation`. Not on a resim | `InputSystem` builds the tick's `InputSnapshot` from timestamped input events. Game preprocessors (dead zones, action mapping) read it here. |
 | `Simulation` | Each live tick, and each replayed `TickCommands` | Gameplay, movement, AI. On a resim pass only systems that opted in run, and they query the prediction set. |
 | `ResolveDeferred` | After each of those ticks | Queue consumers, then that phase's `Commands` flush. Damage, audio, and VFX consumers leave `ReplayOnResim` off. A consumer that sends work to a subsystem thread is the only call site for that thread (see [`Skills/threading.md`](../Skills/threading.md)). |
 | `PostSimulation` | Once per frame, after resim and the due ticks | `TransformSystem` (hierarchy to `LocalToWorld`). Interpolation is not here: the renderer does it from two snapshots (see `improve-time.md`). |
@@ -495,7 +495,7 @@ void Engine::Tick()
 }
 ```
 
-`RegisterLinkedModules` is generated per target from the modules that target links. `InputSystem` is the writer of `InputState`. `SystemContext::RequestQuit()` sets the flag `Tick` reads after the frame.
+`RegisterLinkedModules` is generated per target from the modules that target links. `InputSystem` is the writer of `InputSnapshot`. `SystemContext::RequestQuit()` sets the flag `Tick` reads after the frame.
 
 ### Resimulation
 
@@ -557,7 +557,7 @@ Archetype storage is fastest to iterate, but it has a known weakness: when many 
 | A state flag that flips often (`Grounded`, `Stunned`, `Selected`, `Visible`) | **Enableable** component | Flipping a bit costs nothing and doesn't move the entity. Queries skip disabled rows (`With<Stunned>` checks the bit) |
 | Present on few entities and added/removed often (`StatusEffectStack`, `AiTarget`, `Burning`) | **Sparse** component (`.Storage(Sparse)`) | O(1) add/remove that doesn't move the entity and doesn't create archetypes |
 | "X happened this frame" (damage, hit, spawn request, sound cue) | **Not a component.** A queue in a singleton (`ModifyHealthQueue`, `ContactQueue`) | Ford's deferment rule. Components used as events are the main cause of archetype churn |
-| State owned by one system that others read (`InputState`, `CameraState`) | **Singleton** component | Rule 2 |
+| State owned by one system that others read (`InputSnapshot`, `CameraState`) | **Singleton** component | Rule 2 |
 | A specialist subsystem's internals (GPU buffers, physics body, audio voice) | **Proxy** component holding a handle | Rule 6, the "iceberg" |
 
 The storage kind is `type.Storage(...)` on the builder. Changing it later does not affect any system code, because queries look the same for all three kinds.
@@ -604,7 +604,7 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 
 Done. `Guid`, `Guid_Handle`, and `HS()` are replaced by the Core string types (`Name`, a stable 64-bit hash, and `AssetPath`/`AssetId`; see [`Skills/strings.md`](../Skills/strings.md)). `Fling::Signal`/`Sink` (`Core/inc/Signals.h`) replace `entt::sigh` in the input handler. Core never linked EnTT after this phase, and the unused cereal submodule is gone.
 
-- Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `InputState`).
+- Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `InputSnapshot`).
 - Remove `<entt/...>` from `FlingTypes.h`. Delete the dead cereal include `Core/inc/Serilization.h` and the `FlingExt::cereal` link.
 - After this phase, EnTT appears only in ECS code.
 
@@ -636,8 +636,8 @@ Done. `Ecs/Reflection.h` (`TypeBuilder`, `FieldBuilder`, `TypeDesc`, `FieldTrait
 Done. The scheduler, systems, and tick loop are in [`ecs-systems.md`](ecs-systems.md). The hierarchy is in too: `Transform` is plain data with a quaternion rotation (version 2, which upgrades the Euler angles of older levels), `Parent` and `Children` are kept in step by `HierarchyUtil`, and `TransformSystem` (`Engine.Transform`, its own fixed phase after `Engine.ResolveDeferred`) writes `LocalToWorld` parents first. `TransformUtil` has the old methods. The renderer reads `LocalToWorld` and uploads a mesh only when its version changes. Systems have deferred `Add`, `Remove`, and `Defer`, and a deferred destroy takes the subtree. The editor outliner is a tree with drag-to-parent. `Transform` keeps its name, not `LocalTransform`, so code and level files keep the key `Transform`.
 
 - Add `Fling::System`, `SystemDecl`, `SystemContext`, `Schedule`, and `Scheduler` (§1.5). `modules.System<T>()` records each system. `Scheduler::Build` orders them. `--validate-schedule` plus `fling_validate_schedule()` (POST_BUILD) fails the build on a cycle, a write/write conflict, or an unknown `After` name. Add the batched `Commands` flush (§1.10).
-- `Engine::Tick` calls `world.RunFrame(tickClock, now)` (§1.5). That frame applies completed loads, replays a resim when one is pending, then runs the due ticks, each with its own `TickInput`. The tick clock and the time types come from [`improve-time.md`](improve-time.md). It stops calling `Game::Update`. Move Sandbox's Rotator and Mover logic into registered systems. `Game` keeps start/stop and quit.
-- Add `SimTime`, `RealFrameTime`, and `InputState` (from the `Input` key maps), plus `SpawnQueue` and `ResolveSpawnSystem` for `OnTestSpawn`.
+- `Engine::Tick` calls `world.RunFrame(tickClock, now)` (§1.5). That frame applies completed loads, replays a resim when one is pending, then runs the due ticks, each with its own `InputSnapshot`. The tick clock and the time types come from [`improve-time.md`](improve-time.md). It stops calling `Game::Update`. Move Sandbox's Rotator and Mover logic into registered systems. `Game` keeps start/stop and quit.
+- Add `SimTime`, `RealFrameTime`, and `InputSnapshot` (from the `Input` key maps), plus `SpawnQueue` and `ResolveSpawnSystem` for `OnTestSpawn`.
 - Add `TransformSystem` (computes the world matrix out of the renderer). `Transform` loses its methods, which move to `TransformUtil`.
 
 ### Phase E — Renderer to proxy components

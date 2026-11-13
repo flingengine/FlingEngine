@@ -32,7 +32,7 @@ variable update rules were reviewed with the `rollback-netcode-expert` agent.
    them at the top of the class. The compiler checks that the body uses only
    what the class declares.
 3. The update order comes from those declarations. If `InputSystem` writes
-   `InputState` and `MoverSystem` reads it, `InputSystem` runs first. Nobody
+   `InputSnapshot` and `MoverSystem` reads it, `InputSystem` runs first. Nobody
    writes that order by hand.
 4. Components are plain structs. They plug into today's
    `ComponentTypeRegistry`, level files, and the editor with no change to
@@ -187,12 +187,12 @@ concept accepts either.
 ### 2.2 Singletons, tags, and queues
 
 ```cpp
-// Engine/inc/Components/InputState.h
+// Engine/inc/Components/InputSnapshot.h
 /** This tick's input. InputSystem writes it. Gameplay reads it. */
-struct InputState
+struct InputSnapshot
 {
     static constexpr Fling::ComponentInfo Component {
-        .Name = "InputState",
+        .Name = "InputSnapshot",
         .Kind = Fling::ComponentKind::Singleton,
         .Transient = true };
 
@@ -489,8 +489,8 @@ as the loop does today. Note: `improve-time.md` wants its own integer
 `TickPeriod` before that lands.
 
 **Input.** The OS is polled once per frame, outside the schedule.
-`InputSystem` (phase `Input`, fixed, live only) turns that tick's
-`TickInput` into `InputState`. Dead zones and action mapping run in the
+`InputSystem` (phase `Input`, fixed, live only) builds that tick's
+`InputSnapshot` from the input messages. Dead zones and action mapping run in the
 `Input` phase too. When recording arrives, the recorded per-tick commands
 are the output of the `Input` phase, so a replay does not run it again.
 
@@ -605,7 +605,7 @@ short. In the repo the body goes in the `.cpp`.)
 
 ```cpp
 class PlayerMoveSystem final : public Fling::System<PlayerMoveSystem, Fling::Access<
-    Fling::Read<Fling::InputState>,     // -> runs after InputSystem (it writes InputState)
+    Fling::Read<Fling::InputSnapshot>,     // -> runs after InputSystem (it writes InputSnapshot)
     Fling::Read<Fling::SimTime>,
     Fling::Read<ControlledByLocal>,     // Tag
     Fling::Write<Fling::Transform>,
@@ -618,7 +618,7 @@ public:
 
     void FixedUpdate(Context& ctx) const
     {
-        const Fling::InputState& input = ctx.Singleton<const Fling::InputState>();
+        const Fling::InputSnapshot& input = ctx.Singleton<const Fling::InputSnapshot>();
         const float dt = ctx.Singleton<const Fling::SimTime>().FixedDelta;
 
         for (auto [entity, transform] : ctx.Query<Fling::Transform>(Fling::With<ControlledByLocal>{}))
@@ -635,12 +635,13 @@ public:
 };
 ```
 
-`InputSystem` is ordinary. It is the only writer of `InputState`, and it
-makes that singleton in `OnCreate`:
+`InputSystem` is ordinary. It is the only writer of `InputSnapshot` and of
+`InputSource` (its cursor on the input message queue), so the engine makes
+both singletons for it:
 
 ```cpp
 class InputSystem final : public Fling::System<InputSystem, Fling::Access<
-    Fling::Write<Fling::InputState>>>
+    Fling::Write<Fling::InputSource>, Fling::Write<Fling::InputSnapshot>>>
 {
 public:
     static constexpr Fling::SystemInfo Info {
@@ -648,21 +649,17 @@ public:
         .Phase = Fling::Phases::Input,
         .RunIn = Fling::WorldRole::Play };
 
-    void OnCreate(Setup& setup) const
-    {
-        setup.AddSingleton<Fling::InputState>();
-    }
-
     void FixedUpdate(Context& ctx) const
     {
-        Fling::InputState& state = ctx.Singleton<Fling::InputState>();
-        state = InputUtil::Sample(ctx.TickInput());   // This tick's input, not "now"
+        Fling::InputSource& source = ctx.Singleton<Fling::InputSource>();
+        Fling::InputSnapshot& snapshot = ctx.Singleton<Fling::InputSnapshot>();
+        // Take the messages that no earlier tick took, and merge every device into the snapshot
     }
 };
 ```
 
 `Input` is its own phase, so `InputSystem` is before every `Simulation`
-system even with no edge. The edge from `Read<InputState>` matters when two
+system even with no edge. The edge from `Read<InputSnapshot>` matters when two
 systems in one phase share data, and it is what the schedule dump shows as
 the reason.
 
@@ -829,7 +826,7 @@ output is stable across platforms and runs, which rollback needs later.
 
 ```
 Phase Input
-  stage 0  Engine.Input              writes InputState
+  stage 0  Engine.Input              writes InputSnapshot
 Phase Simulation
   stage 0  Sandbox.Mover             writes Mover, Transform
   stage 1  Sandbox.Rotator           writes Transform  (.After = "Sandbox.Mover")
@@ -1190,8 +1187,7 @@ Each item is one PR off `main`, green on all CI platforms.
    with `FlingTests/Engine/EcsSystemTests.cpp` and the compile checks in
    `FlingTests/EcsCompileFail/`. `SystemRegistry::Add` now has every rule
    in §3.6. Not done yet, and why:
-   - `ctx.TickInput()`: no `TickInput` type yet. It comes with
-     `InputSystem` in item 6.
+   - Per-tick input: it comes with `InputSystem` in item 6.
    - `RunIf`: no system needs it yet. `RunIn` works.
    - Queue buffers: `ctx.Queue<Q>().Push` writes to the queue directly. With
      one thread that gives the same order as one buffer per system. The
@@ -1268,7 +1264,7 @@ Each item is one PR off `main`, green on all CI platforms.
    - `AccessEntry::Transient`. `World::Init` warns when a system uses a
      saved component that is not registered.
 6. **Port Sandbox.** `MoverSystem` and `RotatorSystem` replace the loops in
-   `Game::Update`. `InputSystem` and `InputState` read from `Input`.
+   `Game::Update`. `InputSystem` and `InputSnapshot` read from `Input`.
    Headless check: `Sandbox --null-render --unattended --frames 120 --seed 1`
    gives the same final transforms before and after (write them to a log and
    compare).
@@ -1295,19 +1291,19 @@ Each item is one PR off `main`, green on all CI platforms.
      name in one namespace are an ODR violation: the linker used the Vulkan
      destructor for the ECS vector, and the game crashed at exit. Check new
      ECS type names against the other modules.
-   - Per-tick input: `TickInputBuilder` (Core, `Input/TickInput.h`) has its
-     own cursor on the input queue. The runner calls it once before each
-     fixed tick, so each tick takes the messages that no earlier tick took:
+   - Per-tick input: `Engine.Input` (`Engine/inc/Systems/InputSystem.h`)
+     builds the `InputSnapshot` singleton in its `FixedUpdate`. Its cursor on
+     the input queue is in the `InputSource` singleton, which only it uses.
+     Each tick takes the messages that no earlier tick took:
      a frame with no tick keeps its presses for the next tick, and the
      second tick of a frame does not see them again. UI capture gives the
      simulation neutral input. This is the "first tick not yet built" rule
      of `improve-input.md` I2. Assigning messages to ticks by time waits for
      `improve-time.md` T3.
-   - `Engine.Input` (`Engine/inc/Systems/InputSystem.h`, registered in
-     `RegisterEngineSystems`) copies `ctx.ReadTickInput()` into the
-     `InputState` singleton. `Engine::Startup` adds the engine systems and
-     the tick input source before `World::Init`.
-   - `Sandbox.Toggles` reads `InputState` and owns `SandboxToggles`. With
+   - The runner and the system context know nothing about input.
+     `Engine::Startup` connects the world to the input message handler with
+     `InputUtil::Connect`. A world that is not connected has empty input.
+   - `Sandbox.Toggles` reads `InputSnapshot` and owns `SandboxToggles`. With
      it, the toggles take effect on the same tick again: the replay gives
      the same checksum as the code before item 6, digit for digit.
 

@@ -131,7 +131,7 @@ namespace Fling
      */
     namespace Phases
     {
-        /** Turns this tick's input into InputState. */
+        /** Engine.Input builds this tick's InputSnapshot. */
         inline constexpr PhaseInfo Input
         {
             .Name = "Engine.Input",

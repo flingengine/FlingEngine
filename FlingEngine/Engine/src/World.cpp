@@ -115,7 +115,6 @@ namespace Fling
 
         // Each system makes its singletons before the first level loads
         m_Runner = std::make_unique<SystemRunner>(m_Systems, std::move(Schedule.Value), m_Storage, m_RunnerConfig);
-        m_Runner->SetTickInputSource(m_TickInputSource);
         m_Runner->Create();
 
         const String LevelToLoad =

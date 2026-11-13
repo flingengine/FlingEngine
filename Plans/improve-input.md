@@ -1,5 +1,35 @@
 # Improve input plan
 
+====================
+## Notes for next impl to clean up the new ECS style singleton: 
+
+✻ Cooked for 5m 7s · done 6:14 AM
+
+❯ in the future, in order to get the absolute latest input on the presentation thread for things like camera rotation, spawning transeitn effects like muzzle flashes, etc we will need to actually poll the input on the presentation side most likely.
+
+  in this manner, the presentation side may be polling input "ahead of" the fixed tick simulation which the gameplay and other things may use.
+
+  we will also have a syncronized clock of sorts, or a frame identifier the whole engine agrees on for timing. The fixed tick simulation will be running at something like 30hz, updating the determinisitc sim code for gameplay, anim, physics, etc. And the variable rate render side will be consuming the two (or possibly more) latest published sim states and doing presentation-only interpoloation between those two states. some things, like camera rotation, muzzle flash effects, etc which are presentation only (they need the lowest possible input latency) will want to poll input which is "ahead" of the fixed tick simulation. This system needs to support that.
+
+  we already have a timestamped input message queue at the lower level of the engine (the message handler), which is good. But this input system needs to provide an interface on it which will allow fixed tick code to get the input state UP TO the time of the synronized frame we are processing, and the render thread needs an interface (which is basically the same thing, so the useage of the API is the same but you just grab a different input snapshot) for the PRESENTATION side of input.
+
+  this may not be essential right this moment, but we need the system to be able to support that. I would prefer to only have one InputSystem singleton, like we have now, but we need to be able to poll it
+
+  the InputSystem itself should be the owner of the actual POLLING (aka "pumping") of the input message handler code itself, so that we can easily find where the input is being polled and updated.
+
+  Ran 1 shell command
+
+● User answered Claude's questions:
+· The ECS has a compile-time rule that a system is either fixed-tick or frame-rate, never both, and every frame phase currently runs after the fixed ticks. Pumping has to happen once per frame before the ticks (even on frames with zero ticks), while the sim snapshot has to be built per tick. How should 'one InputSystem that pumps and serves both sides' fit that? → Two systems, one file area (Recommended)
+
+  Ran 1 shell command
+You've hit your weekly limit · resets Nov 11, 10pm (America/New_York)
+/upgrade or /usage-credits to finish what you’re working on.
+
+✻ Baked for 1m 44s · done 6:39 AM
+
+===========================
+
 Design for how Fling reads input: input devices produce timestamped messages
 into a shared queue, and each consumer (the game simulation, the renderer, UI,
 the recorder) reads that queue at its own pace. Later, a dedicated input thread
@@ -11,9 +41,9 @@ This is a plan, not an established standard. When a phase is done, move the
 rules that it establishes into [`Skills/`](../Skills/).
 
 Related plans: [`improve-time.md`](improve-time.md) (`SimTick`,
-`PresentationClock`, `TickInput`, threads),
+`PresentationClock`, `InputSnapshot`, threads),
 [`improve-ai-iteration.md`](improve-ai-iteration.md) (record, replay, and
-injected input), and [`ecs-plan.md`](ecs-plan.md) (`InputState`, the `Input`
+injected input), and [`ecs-plan.md`](ecs-plan.md) (`InputSnapshot`, the `Input`
 phase).
 
 ## Problem
@@ -75,7 +105,7 @@ why it must be replaced; it is not a list of things to fix in place.
 ```
                    ┌──────────────────────────── consumers (each has its own cursor) ──┐
  Input thread      │                                                                   │
- ────────────      │  Game side:   InputMessageProcessor ─► contexts ─► TickInput      │
+ ────────────      │  Game side:   InputMessageProcessor ─► contexts ─► InputSnapshot      │
  IInputDevice-     │  Render side: InputMessageProcessor ─► late camera look, UI hover │
   Interface ─┐     │  Recorder:    InputMessageProcessor ─► event log file             │
   (GLFW,     ├─► InputMessageHandler ─► InputMessageQueue                             │
@@ -300,7 +330,7 @@ public:
 
 ### Ordering
 
-`Read` by time and the `TickInput` cut at `LastSequence` both assume that
+`Read` by time and the `InputSnapshot` cut at `LastSequence` both assume that
 sequence order is time order. Several sources break that if they push
 directly: OS events, pad polls, `VirtualInputDeviceInterface` with chosen
 timestamps, and later device timestamps from Raw Input. So:
@@ -430,7 +460,7 @@ consumer, not at the device):
 - An **input context stack** with priorities, for example UI, editor
   viewport, and gameplay. A context claims the inputs it uses while it is
   active.
-- The `TickInput` builder asks the stack. For anything another context has
+- The `Engine.Input` system asks the stack. For anything another context has
   claimed, gameplay gets **neutral input**: not held, no edges, zero axes.
 - When gameplay loses an input it was holding, the builder sends a release on
   that tick, so no action stays on.
@@ -442,14 +472,14 @@ consumer, not at the device):
 - Which contexts are active is part of the recorded input, so a replay gives
   the same neutral input.
 
-### Game-side consumer: `TickInput`
+### Game-side consumer: `InputSnapshot`
 
 The simulation needs input that is the same on every replay, so it does not
-read events directly. Before each tick, the engine builds one `TickInput` per
+read events directly. In each tick, the `Engine.Input` system builds one `InputSnapshot` per
 local player slot:
 
 ```cpp
-struct TickInput
+struct InputSnapshot
 {
     SimTick Tick;
     uint64 LastSequence;       // The last event this tick used
@@ -465,15 +495,16 @@ struct TickInput
   one tick give `presses = 1, releases = 1, held = false`. Gameplay checks
   `presses > 0`, not only `held`.
 - Axes are int16 and mouse values are integer counts, so the same
-  `TickInput` can go over the network later without change.
-- The `Input` phase (once per live tick, see `ecs-plan.md`) turns `TickInput`
-  into `InputState`. Dead zones, response curves, and action mapping are pure
+  `InputSnapshot` can go over the network later without change.
+- `InputSnapshot` is a singleton component. The `Engine.Input` system builds it
+  in the `Input` phase (once per live tick, see `ecs-plan.md`), and it is the
+  only system that reads the message queue. Dead zones, response curves, and action mapping are pure
   functions here, with Catch2 tests that do not need an engine.
-- A recording of `TickInput`s is what deterministic replay uses
+- A recording of `InputSnapshot`s is what deterministic replay uses
   (`improve-ai-iteration.md`). A resim uses the stored `TickCommands` and does
   not read events.
 - `Input::BindKeyPress` delegates go away. A system reads the press count in
-  `InputState` instead, at a fixed point in the tick.
+  `InputSnapshot` instead, at a fixed point in the tick.
 
 **Assigning events to ticks.**
 
@@ -498,14 +529,14 @@ struct TickInput
   `PresentationClock` anchor has a version number and only moves forward.
 
 **Chords, sequences, and input buffers** (a combo, a jump pressed slightly
-early) are pure functions over the `TickInput` history, measured in ticks,
+early) are pure functions over the `InputSnapshot` history, measured in ticks,
 not milliseconds (Game Engine Architecture 8.5.4). Their state is rollback
 state and goes into `SimHistory` (`improve-time.md`). For a chord, either
 delay single-button actions by 2–3 ticks, or let the chord cancel them.
 
 ### Local players
 
-- Each player slot has its own `TickInput`.
+- Each player slot has its own `InputSnapshot`.
 - Which device belongs to which player is **sim state**. A tick-tagged
   command changes it, so replays and rollback get it right.
 - `DeviceId` stays the same when a device reconnects, so recordings still
@@ -519,7 +550,7 @@ Camera look is the input that players feel most. The render side can apply
 mouse movement that the simulation has not seen yet. This is like VR "late
 latching":
 
-1. Each `RenderSnapshot` stores the `LastSequence` of the `TickInput` that
+1. Each `RenderSnapshot` stores the `LastSequence` of the `InputSnapshot` that
    made it (`LastInputSequence`), and the sim camera: position, the sim view
    (`SimView`, yaw and pitch), `LookScale`, and a `LateLook` flag.
 2. Each render frame, the render side sums the raw mouse counts of look
@@ -579,13 +610,13 @@ timestamped messages into one queue. Each clock that needs input has its own
 
 | Reader | Thread | Rate | Gives | Can change sim state |
 |---|---|---|---|---|
-| `Engine.Input` (fixed phase) | Game | Fixed tick | `TickInput`, then `InputState` | Yes. It is the only reader that can |
+| `Engine.Input` (fixed phase) | Game | Fixed tick | `InputSnapshot` | Yes. It is the only reader that can |
 | `Engine.FrameInput` (frame phase) | Game | Game frame | `FrameInputState`, a `Presentation` singleton | No |
 | Render-side late input | Render | Render frame | Late look and predicted cosmetic events | No |
 | ImGui and the editor | Main | Main frame | ImGui IO | No (edits are commands) |
 | Recorder | Input | Every message | The event log | No |
 
-- **No second fixed reader.** A fixed system gets input only from `InputState`,
+- **No second fixed reader.** A fixed system gets input only from `InputSnapshot`,
   so a replay gives the same result.
 - **`FrameInputState`** is for game-thread frame systems: game UI hover, and
   debug cameras. It is a `Presentation` component, so the existing rule ("a
@@ -643,7 +674,7 @@ ready). The render side must be able to take it back.
    is not in the list.
 3. **The simulation says what happened, by sequence.** When a tick uses a fire
    press, it writes a `FireResult{weapon, sequence, fired}` to the snapshot.
-   `TickInput` keeps the `Sequence` of each press, so the simulation knows
+   `InputSnapshot` keeps the `Sequence` of each press, so the simulation knows
    which message caused the shot.
 4. **The render side reconciles when the snapshot covers the press.** When
    `Latest.LastInputSequence >= sequence`:
@@ -675,16 +706,16 @@ Rules:
   `VulkanApp` updates each frame on the main thread from the global `Input`.
   It already reads input at frame rate, with no tick between, so it has the
   lowest latency today. It is a debug and editor camera, not a game camera.
-- There is no camera in the simulation, and `TickInput` does not keep the
+- There is no camera in the simulation, and `InputSnapshot` does not keep the
   `Sequence` of the last message it used. Late look needs both.
 
 Work, in order:
 
-1. `TickInput::LastSequence`, and the `Sequence` of each press. The builder
+1. `InputSnapshot::LastSequence`, and the `Sequence` of each press. The builder
    sets them.
 2. A sim camera: a `CameraView` component (yaw, pitch, `LookScale`,
    `LateLook`) on an entity with a `Transform`, and `Engine.CameraLook`, a
-   fixed system that applies the look input in `InputState` with `LookUtil`.
+   fixed system that applies the look input in `InputSnapshot` with `LookUtil`.
 3. `Graphics.Extract` writes the active camera and `LastInputSequence` to the
    `RenderSnapshot`.
 4. The late input handler list in Graphics, and the late look handler. Before
@@ -709,19 +740,19 @@ Work, in order:
 ### Recording
 
 - **Event log** (raw `InputMessage`s with timestamps): good for finding bugs in
-  the `TickInput` builder, the render-side look, and UI. Playback is in real
+  the `Engine.Input` system, the render-side look, and UI. Playback is in real
   time, so it is not exact. **Done:** `InputRecorder`, `InputPlayback`, the
   `.input.jsonl` format, `--record-input` and `--replay-input`, and the editor
   UI. See `Skills/input-playback.md`.
-- **`TickInput` log**: exact. This is what scenario tests and the state hash
+- **`InputSnapshot` log**: exact. This is what scenario tests and the state hash
   use. It includes context changes and UI commands (through `TickCommands`).
 - The recorder is one more reader. Recording can be turned on at any time.
 
 ### Headless
 
 With `--null-render` there is no window and no `GlfwInputDeviceInterface`. Input comes
-from `VirtualInputDeviceInterface`, or directly from a `TickInput` log. Headless
-scenario tests feed `TickInput`s and skip timestamps entirely, so they do not
+from `VirtualInputDeviceInterface`, or directly from a `InputSnapshot` log. Headless
+scenario tests feed `InputSnapshot`s and skip timestamps entirely, so they do not
 depend on real time.
 
 ## Rules
@@ -731,7 +762,7 @@ depend on real time.
    or platform input state directly.
 2. Every message has a sequence number and a real-time timestamp that never
    decreases.
-3. The simulation reads only `InputState`, built from one `TickInput` per
+3. The simulation reads only `InputSnapshot`, built once per
    player per tick, after the input context stack.
 4. The render side can use input for look rotation and UI only. It never
    writes sim state, and it computes the late look from the latest snapshot
@@ -784,10 +815,10 @@ on every CI platform.
 | Phase | Work | Depends on |
 |-------|------|------------|
 | **I1** | **In progress.** Device layer (`InputDevice`, `InputDeviceFactory`, `InputDeviceId`), `InputKey`, `InputMessage` (with scancodes, `KeyRepeat`, `Char`, integer mouse counts), `InputMessageQueue` with copying `Read`, `InputMessageHandler`, `InputMessageProcessor` with its own `InputDeviceStates`. `GlfwInputDeviceInterface` with callbacks replaces `WindowsInput` and `LinuxInput`. `VirtualInputDeviceInterface`. The old static `Input` is removed, with no shim. One thread. See [Phase I1 status](#phase-i1-status) | `PlatformTime` from `improve-time.md` T1 (not yet; `InputNowNs()` is used) |
-| **I2** | `TickInput` builder with edge counts and the tick assignment rules (late arrival, hitch, pause). `InputState`. **Started:** `TickInputBuilder` (Core) and the `InputState` singleton and `Engine.Input` system exist (`ecs-systems.md` item 6). Each fixed tick takes every message that no earlier tick took. Tick assignment by time, hitch, and pause rules are still to do | `improve-time.md` T3 |
-| **I3** | Event log and `TickInput` log record and replay (`VirtualInputDeviceInterface` exists from I1). Event log record and replay is done (`Skills/input-playback.md`). The `TickInput` log is still to do | I2. Phase B in `improve-ai-iteration.md` |
+| **I2** | `InputSnapshot` with edge counts and the tick assignment rules (late arrival, hitch, pause). **Started:** the `Engine.Input` system builds the `InputSnapshot` singleton from the message queue, with its cursor in the `InputSource` singleton (`ecs-systems.md` item 6). Each fixed tick takes every message that no earlier tick took. Tick assignment by time, hitch, and pause rules are still to do | `improve-time.md` T3 |
+| **I3** | Event log and `InputSnapshot` log record and replay (`VirtualInputDeviceInterface` exists from I1). Event log record and replay is done (`Skills/input-playback.md`). The `InputSnapshot` log is still to do | I2. Phase B in `improve-ai-iteration.md` |
 | **I4** | Gamepad support, polled by deadline at `input.poll_hz`. Raw mouse motion and cursor capture requests | I1 |
-| **I5** | Input context stack, with ImGui capture flags. UI commands into `TickCommands`. Systems read `InputState`. ImGui and the editor get their own reader | I2, `ecs-plan.md` systems |
+| **I5** | Input context stack, with ImGui capture flags. UI commands into `TickCommands`. Systems read `InputSnapshot`. ImGui and the editor get their own reader | I2, `ecs-plan.md` systems |
 | **Later** | Main thread becomes the input thread. Render-side late look and UI hover, late input handlers, and predicted cosmetic events (see [What exists today](#what-exists-today) for the order). Local player slots. Chords and input buffers. Rumble. A Raw Input or GameInput backend if timestamps need to be better | Game and render threads from `improve-time.md` |
 
 ### Phase I1 status
@@ -833,7 +864,7 @@ Not done:
   thread. The main thread polls once per frame.
 - **Gamepads, raw mouse motion, and cursor capture requests** are I4.
   `Poll` reads GLFW gamepad state with `glfwGetGamepadState` once per frame, not at `input.poll_hz` (I4).
-- `TickInput`, tick assignment, and `InputState` are I2. The input context
+- `InputSnapshot` and tick assignment are I2. The input context
   stack is I5. Event log record and replay is I3.
 
 ## Open questions

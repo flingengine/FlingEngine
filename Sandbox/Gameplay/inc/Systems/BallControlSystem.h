@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BallControl.h"
-#include "Components/InputState.h"
+#include "Components/InputSnapshot.h"
 #include "Ecs/SystemBase.h"
 #include "PhysicsTypes.h"
 
@@ -13,7 +13,7 @@ namespace Sandbox
      * into PhysicsCommands, and physics applies them in its next step.
      */
     class BallControlSystem final : public Fling::System<BallControlSystem,
-                                                         Fling::Access<Fling::Read<Fling::InputState>,
+                                                         Fling::Access<Fling::Read<Fling::InputSnapshot>,
                                                                        Fling::Read<BallControl>,
                                                                        Fling::Append<Fling::PhysicsCommands>>>
     {

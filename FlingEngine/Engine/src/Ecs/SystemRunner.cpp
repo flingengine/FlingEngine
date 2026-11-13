@@ -91,7 +91,7 @@ namespace Fling
         {
             if (RunsIn(i, role))
             {
-                SystemContextBase ctx(m_Storage, &m_Commands[i], &m_TickInput);
+                SystemContextBase ctx(m_Storage, &m_Commands[i]);
                 m_Systems.At(i).RunPlayBegin(ctx);
             }
         }
@@ -104,7 +104,7 @@ namespace Fling
         {
             if (RunsIn(i, role))
             {
-                SystemContextBase ctx(m_Storage, &m_Commands[i], &m_TickInput);
+                SystemContextBase ctx(m_Storage, &m_Commands[i]);
                 m_Systems.At(i).RunPlayEnd(ctx);
             }
         }
@@ -140,16 +140,6 @@ namespace Fling
     {
         assert(m_Created);
         ++m_Tick;
-
-        // Each tick takes the input that no earlier tick took
-        if (m_TickInputSource)
-        {
-            m_TickInputSource(m_TickInput);
-        }
-        else
-        {
-            m_TickInput.Clear();
-        }
 
         SimTime& time = m_Storage.Singleton<SimTime>();
         time.Tick = m_Tick;
@@ -193,7 +183,7 @@ namespace Fling
                     }
 
                     // A variable rate phase gets no command buffer: it cannot change the simulation.
-                    SystemContextBase ctx(m_Storage, fixed ? &m_Commands[i] : nullptr, fixed ? &m_TickInput : nullptr);
+                    SystemContextBase ctx(m_Storage, fixed ? &m_Commands[i] : nullptr);
                     if (fixed)
                     {
                         m_Systems.At(i).RunFixedUpdate(ctx);

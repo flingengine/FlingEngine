@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BallControl.h"
-#include "Components/InputState.h"
+#include "Components/InputSnapshot.h"
 #include "Ecs/SystemBase.h"
 #include "SandboxToggles.h"
 
@@ -15,7 +15,7 @@ namespace Sandbox
     class TogglesSystem final
         : public Fling::System<
               TogglesSystem,
-              Fling::Access<Fling::Read<Fling::InputState>, Fling::Read<BallControl>, Fling::Write<SandboxToggles>>>
+              Fling::Access<Fling::Read<Fling::InputSnapshot>, Fling::Read<BallControl>, Fling::Write<SandboxToggles>>>
     {
     public:
         static constexpr Fling::SystemInfo Info{.Name = "Sandbox.Toggles", .Phase = Fling::Phases::Simulation};

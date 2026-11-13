@@ -86,23 +86,23 @@ New launch flags on the same binary (these extend the flags in
 
 ### 2. Input as data
 
-Each fixed tick reads one `TickInput` from `InputState`. Devices only
-write into it. Gameplay never reads GLFW or platform state directly.
+Each fixed tick reads one `InputSnapshot`. Only the `Engine.Input` system
+writes it, from the device messages. Gameplay never reads GLFW or platform state directly.
 
 ```
 GLFW device  ─┐
-Replay file  ─┼─► TickInput (one per tick) ─► InputState ─► gameplay systems
+Replay file  ─┼─► Engine.Input ─► InputSnapshot (one per tick) ─► gameplay systems
 Script / RPC ─┘
 ```
 
-- `TickInput` holds the **raw** device state (keys, mouse, stick x/y,
+- `InputSnapshot` holds the **raw** device state (keys, mouse, stick x/y,
   triggers) and the **resolved** actions and axes. Recording only the resolved
   actions would make dead-zone and response-curve code impossible to replay or
   tune.
 - The raw message log exists now: `--record-input <file>` and `--replay-input
   <file>` write and read a JSON Lines event log (`Skills/input-playback.md`).
-  The `TickInput` log is still to do.
-- `--record-input <file>` will also write the `TickInput` stream. `--replay-input
+  The `InputSnapshot` log is still to do.
+- `--record-input <file>` will also write the `InputSnapshot` stream. `--replay-input
   <file>` reads it back. The file has a version field and the tick rate.
 - A `VirtualInputDevice` takes frames from a replay file or from the command
   layer. It lives in Core or Engine, not in Graphics, so it works with
@@ -169,7 +169,7 @@ The engine has one set of commands. All clients use it:
 | `query` | List entities that match a set of components, with compact output |
 | `step`, `pause`, `resume` | Control the simulation |
 | `load`, `save` | Load or save a level |
-| `input.push` | Push `TickInput`s to the virtual device |
+| `input.push` | Push `InputSnapshot`s to the virtual device |
 | `screenshot` | Write the current frame to a file (needs a renderer) |
 | `undo`, `redo` | Undo or redo editor commands |
 
@@ -233,7 +233,7 @@ on every CI platform.
 | Phase | Work | Depends on |
 |-------|------|------------|
 | **A** | `--null-render`, `--unattended`, `--frames`, `--seed`, exit codes, JSON logs. Separate the main loop from `VkApp` | Overlaps P4 in `project-model.md` |
-| **B** | `TickInput`, `VirtualInputDevice`, record and replay (raw event log done, `TickInput` log to do). Pure-function dead-zone and curve code with Catch2 tests | A. Lines up with `InputState` in `ecs-plan.md` |
+| **B** | `InputSnapshot`, `VirtualInputDevice`, record and replay (raw event log done, `InputSnapshot` log to do). Pure-function dead-zone and curve code with Catch2 tests | A. Lines up with `InputSnapshot` in `ecs-plan.md` |
 | **C** | Scenario runner, state hash, CTest registration. `Skills/agent-workflow.md` | A, B |
 | **D** | `--dump-schema`, `fling validate`, saves that round-trip with stable entity IDs | Reflection and stable IDs from `ecs-plan.md` |
 | **E** | Command layer, JSON-RPC, Python package and CLI. Editor panels use commands, with undo and redo | D |
@@ -273,11 +273,11 @@ Done. The rules that it establishes are in
 
 ## Open questions
 
-- Where does `TickInput` live: Core (with `Input`) or Engine (with
-  `InputState`)?
+- Where does the per-tick input live: Core (with `Input`) or Engine? Decided:
+  Engine. `InputSnapshot` is the singleton component that `Engine.Input` builds.
 - Format of input recordings: JSON lines (easy to read and edit) or binary
   (small)? JSON lines with optional compression is the current preference. The raw event
-  log now uses JSON Lines (`Skills/input-playback.md`). `TickInput` logs remain open.
+  log now uses JSON Lines (`Skills/input-playback.md`). `InputSnapshot` logs remain open.
 - Which fields go into the state hash? Some components (render handles, caches)
   must be left out.
 - Does `--null-render` skip the Graphics module at link time (the `<Name>Server`

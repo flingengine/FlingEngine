@@ -68,7 +68,7 @@ There are four kinds of component. To choose one, set `.Kind`:
 |---|---|---|
 | `Table` (the default) | One per entity | `Health`, `Transform` |
 | `Tag` | An empty struct that marks an entity | `Invulnerable` |
-| `Singleton` | One per world, not on an entity | `SimTime`, `InputState` |
+| `Singleton` | One per world, not on an entity | `SimTime`, `InputSnapshot` |
 | `Queue` | A singleton list of requests from many systems to one system | `PhysicsCommands` |
 
 The example has one of each of the other kinds:
@@ -367,12 +367,13 @@ replays and rollback. A debug build asserts if you call them.
 
 ### Input
 
-`Fling::InputState` (singleton, from `Components/InputState.h`) is the input of this tick.
-`Engine.Input` writes it before gameplay runs.
+`Fling::InputSnapshot` (singleton, from `Components/InputSnapshot.h`) is the input of this tick.
+`Engine.Input` builds it once at the start of the tick, before gameplay runs, and it is the only
+input a fixed system reads.
 
 ```cpp
-// Access<Fling::Read<Fling::InputState>, ...>
-const Fling::InputState& input = ctx.Singleton<const Fling::InputState>();
+// Access<Fling::Read<Fling::InputSnapshot>, ...>
+const Fling::InputSnapshot& input = ctx.Singleton<const Fling::InputSnapshot>();
 if (input.WasPressed(Fling::Keys::Space)) { /* once, on the tick the key goes down */ }
 if (input.IsHeld(Fling::Keys::Left)) { /* every tick while it is down */ }
 const float stick = input.GetAxisValue(Fling::Keys::GamepadLeftX);
@@ -448,7 +449,7 @@ its order inside the phase, use `.After` and `.Before` with system names.
 
 | Rate | Phase | What runs |
 |---|---|---|
-| Fixed | `Phases::Input` | Engine: fills `InputState` |
+| Fixed | `Phases::Input` | Engine: fills `InputSnapshot` |
 | Fixed | `Phases::Simulation` | Your gameplay |
 | Fixed | `Phases::Physics` | Engine: the physics step. Moves bodies and writes the contacts of this tick |
 | Fixed | `Phases::ResolveDeferred` | Consumers of queues: spawns, damage. They see the contacts of this tick |

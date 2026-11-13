@@ -4,7 +4,7 @@ namespace Sandbox
 {
     void BallControlSystem::FixedUpdate(Context& ctx) const
     {
-        const Fling::InputState& input = ctx.Singleton<const Fling::InputState>();
+        const Fling::InputSnapshot& input = ctx.Singleton<const Fling::InputSnapshot>();
 
         glm::vec3 dir(0.0f);
         if (input.IsHeld(Fling::Keys::Up) || input.IsHeld(Fling::Keys::GamepadDPadUp))

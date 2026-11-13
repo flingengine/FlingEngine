@@ -52,7 +52,7 @@ State that breaks the rule today, and where it goes:
 | `World::m_CurrentState`, `m_PendingRequest`, `m_PlaySnapshot` | `PlaySession` singleton, plus the edit/play world split (§6.2) |
 | `Game::m_WantsToQuit` | `AppRequests` singleton. `Engine` reads it after each frame |
 | Members on `Sandbox`'s `Game` | Singletons that the game's systems own |
-| `Input::Get()` | `InputState` singleton, written by `InputSystem` |
+| `Input::Get()` | `InputSnapshot` singleton, written by `InputSystem` |
 | `Timing::Get()` | `SimTime` and `RealFrameTime` singletons, written by the runner |
 
 ---

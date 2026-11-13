@@ -196,6 +196,6 @@ checks the tick count where the game quit.
 | `Input::GetRecorder`, `Input::GetPlayback` | `Core/inc/Input/Input.h` | The engine's recorder and playback. `Input::Poll(deltaSeconds)` updates them |
 
 A recording holds raw input messages with times. It is not a per-tick
-`TickInput` log, so playback with a window (frame times that change) is close
+`InputSnapshot` log, so playback with a window (frame times that change) is close
 to the recording, but not exact. Exact per-tick replay is phase I3 in
 [`Plans/improve-input.md`](../Plans/improve-input.md).

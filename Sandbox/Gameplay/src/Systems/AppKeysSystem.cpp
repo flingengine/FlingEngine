@@ -4,7 +4,7 @@ namespace Sandbox
 {
     void AppKeysSystem::FixedUpdate(Context& ctx) const
     {
-        const Fling::InputState& input = ctx.Singleton<const Fling::InputState>();
+        const Fling::InputSnapshot& input = ctx.Singleton<const Fling::InputSnapshot>();
 
         if (input.WasPressed(Fling::Keys::Escape) || input.WasPressed(Fling::Keys::GamepadBack))
         {

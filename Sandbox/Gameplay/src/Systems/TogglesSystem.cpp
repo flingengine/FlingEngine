@@ -9,7 +9,7 @@ namespace Sandbox
 
     void TogglesSystem::FixedUpdate(Context& ctx) const
     {
-        const Fling::InputState& input = ctx.Singleton<const Fling::InputState>();
+        const Fling::InputSnapshot& input = ctx.Singleton<const Fling::InputSnapshot>();
         SandboxToggles& toggles = ctx.Singleton<SandboxToggles>();
 
         if (input.WasPressed(Fling::Keys::T) || input.WasPressed(Fling::Keys::GamepadFaceLeft))

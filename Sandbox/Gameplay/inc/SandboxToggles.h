@@ -6,7 +6,7 @@
  * Singleton component: the Sandbox toggles for the lighting test level. T turns
  * the Rotator spin on and off, and Space turns the Mover lights on and off.
  *
- * The Sandbox.Toggles system owns it: it flips the toggles from InputState, and
+ * The Sandbox.Toggles system owns it: it flips the toggles from InputSnapshot, and
  * resets them when play begins.
  */
 struct SandboxToggles

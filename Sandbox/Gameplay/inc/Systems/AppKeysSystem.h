@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Components/AppRequests.h"
-#include "Components/InputState.h"
+#include "Components/InputSnapshot.h"
 #include "Ecs/SystemBase.h"
 
 namespace Sandbox
@@ -12,7 +12,7 @@ namespace Sandbox
      */
     class AppKeysSystem final
         : public Fling::System<AppKeysSystem,
-                               Fling::Access<Fling::Read<Fling::InputState>, Fling::Append<Fling::AppRequests>>>
+                               Fling::Access<Fling::Read<Fling::InputSnapshot>, Fling::Append<Fling::AppRequests>>>
     {
     public:
         static constexpr Fling::SystemInfo Info{.Name = "Sandbox.AppKeys", .Phase = Fling::Phases::Simulation};

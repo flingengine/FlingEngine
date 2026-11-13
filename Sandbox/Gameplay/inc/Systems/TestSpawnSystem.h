@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Components/InputState.h"
+#include "Components/InputSnapshot.h"
 #include "Components/Transform.h"
 #include "Ecs/SystemBase.h"
 #include "MeshRenderer.h"
@@ -14,7 +14,7 @@ namespace Sandbox
      * before Sandbox.Rotator, so a new sphere spins on the tick it is made.
      */
     class TestSpawnSystem final : public Fling::System<TestSpawnSystem,
-                                                       Fling::Access<Fling::Read<Fling::InputState>,
+                                                       Fling::Access<Fling::Read<Fling::InputSnapshot>,
                                                                      Fling::Write<SandboxSpawnState>,
                                                                      Fling::Write<Fling::MeshRenderer>,
                                                                      Fling::Write<Rotator>,

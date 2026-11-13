@@ -10,7 +10,7 @@ namespace Sandbox
 
     void TestSpawnSystem::FixedUpdate(Context& ctx) const
     {
-        const Fling::InputState& input = ctx.Singleton<const Fling::InputState>();
+        const Fling::InputSnapshot& input = ctx.Singleton<const Fling::InputSnapshot>();
         if (!input.WasPressed(Fling::Keys::Zero) && !input.WasPressed(Fling::Keys::GamepadFaceTop))
         {
             return;

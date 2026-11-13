@@ -377,7 +377,7 @@ TEST_CASE("Phases keep their own stages", "[ecs][schedule]")
 TEST_CASE("Dump lists phases, stages, writes, and reasons", "[ecs][schedule]")
 {
     FakeSystems systems;
-    systems.Add(SystemInfo{.Name = "Engine.Input", .Phase = Phases::Input}, {{"InputState", W}});
+    systems.Add(SystemInfo{.Name = "Engine.Input", .Phase = Phases::Input}, {{"InputSnapshot", W}});
     systems.Add(Sim("Sandbox.Mover"), {{"Mover", W}, {"Transform", W}});
     systems.Add(SystemInfo{.Name = "Sandbox.Rotator", .Phase = Phases::Simulation, .After = "Sandbox.Mover"},
                 {{"Transform", W}});

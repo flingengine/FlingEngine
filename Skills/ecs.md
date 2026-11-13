@@ -123,7 +123,7 @@ Systems do not use `EntityStorage`. They use their typed context.
    to the application in a Queue component. One system (or the engine)
    consumes each queue.
 5. **No globals in simulation code.** Read `SimTime`, not `Timing`. Read
-   `InputState`, not `Input::Get()`. A debug build asserts if a fixed rate
+   `InputSnapshot`, not `Input::Get()`. A debug build asserts if a fixed rate
    system calls `Timing` or the global `Random`.
 
 ## A component
@@ -374,7 +374,7 @@ rate, and prediction with rollback ([`Plans/ecs-plan.md`](../Plans/ecs-plan.md),
   changes that made them. The schedule breaks ties by name. The flush sorts by
   entity and then by the order of the calls.
 - **The simulation reads no globals.** Time is `SimTime`, input is
-  `InputState`, and a random number comes from state in a component.
+  `InputSnapshot`, and a random number comes from state in a component.
 - **The renderer reads only `RenderSnapshot`.** No render code holds a pointer
   into the storage, so the simulation can run while a frame is drawn.
 - **State for rollback is component data.** To restore an entity, write its
@@ -446,7 +446,7 @@ more, override `BaseEditor::RegisterWidgets` and call
   `ResolveDeferred`, `Finalize` (fixed); `Presentation`, `Publish`, `Editor`
   (frame).
 - What each one is for:
-  - `Input`: this tick's input becomes `InputState`.
+  - `Input`: this tick's input becomes `InputSnapshot`.
   - `Simulation`: gameplay.
   - `Physics`: the physics step. Gameplay asks for forces before it, and the
     contacts of this tick exist after it.

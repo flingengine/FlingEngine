@@ -1,6 +1,7 @@
 #include "Components/AppRequests.h"
 #include "Components/EntityGuid.h"
-#include "Components/InputState.h"
+#include "Components/InputSnapshot.h"
+#include "Components/InputSource.h"
 #include "Components/Name.hpp"
 #include "Components/Transform.h"
 #include "Ecs/ModuleRegistration.h"
@@ -49,7 +50,8 @@ namespace Fling
                                         { t_Type.Category("Core").Field("value", &EntityGuid::Value).ReadOnly(); });
 
         t_Modules.Component<AppRequests>();
-        t_Modules.Component<InputState>();
+        t_Modules.Component<InputSnapshot>();
+        t_Modules.Component<InputSource>();
 
         t_Modules.System<InputSystem>();
         t_Modules.System<TransformSystem>();

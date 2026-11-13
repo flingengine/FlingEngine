@@ -7,7 +7,7 @@
 #include "FlingWindow.h"
 #include "Input/GlfwInput.h"
 #include "Input/Input.h"
-#include "Input/TickInput.h"
+#include "InputUtil.h"
 #include "Localization.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CrashHandler.h"
@@ -313,15 +313,9 @@ namespace Fling
         RunnerConfig.OneTickPerFrame = m_Options.NullRender;
         m_World->SetSystemRunnerConfig(RunnerConfig);
 
-        // Each fixed tick takes the input messages that no earlier tick took, with its own
-        // cursor on the input queue. UI capture (ImGui) gives the simulation neutral input.
-        auto TickInputs = std::make_shared<TickInputBuilder>(Input::Get().GetHandler());
-        m_World->SetTickInputSource(
-            [TickInputs](TickInput& t_Out)
-            {
-                const Input& GameInput = Input::Get();
-                TickInputs->Build(t_Out, GameInput.IsKeyboardCaptured(), GameInput.IsMouseCaptured());
-            });
+        // The Engine.Input system builds each tick's InputSnapshot from the input
+        // messages, with its own cursor on the queue
+        InputUtil::Connect(Storage, Input::Get().GetHandler());
 
         // Before World::Init() seals the component type registry, so developer UI
         // (the editor) can still attach to component types
@@ -419,6 +413,10 @@ namespace Fling
 
             // The game sees the input up to now, and the same input for the whole tick
             Input::Get().BeginTick();
+
+            // UI capture (ImGui) gives the simulation neutral input for the captured device
+            InputUtil::SetUICapture(
+                m_World->GetStorage(), Input::Get().IsKeyboardCaptured(), Input::Get().IsMouseCaptured());
 
             // World update will handle the starting, updating, and stopping of game logic
             m_World->Update(DeltaTime);

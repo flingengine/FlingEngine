@@ -53,12 +53,6 @@ namespace Fling
         /** How the fixed tick runs (step length, one tick per frame). Set it before Init. */
         void SetSystemRunnerConfig(const SystemRunnerConfig& t_Config) { m_RunnerConfig = t_Config; }
 
-        /**
-         * Set the function that fills each fixed tick's input (see SystemRunner). Set it
-         * before Init. With none (for example in tests), ticks have no input.
-         */
-        void SetTickInputSource(std::function<void(TickInput&)> t_Source) { m_TickInputSource = std::move(t_Source); }
-
         /** The schedule that Init built. Null before Init. */
         const Schedule* GetSchedule() const;
 
@@ -246,9 +240,6 @@ namespace Fling
 
         /** @see SetSystemRunnerConfig */
         SystemRunnerConfig m_RunnerConfig;
-
-        /** @see SetTickInputSource */
-        std::function<void(TickInput&)> m_TickInputSource;
 
         /** Runs the schedule. Made by Init when the schedule has no errors. */
         std::unique_ptr<SystemRunner> m_Runner;

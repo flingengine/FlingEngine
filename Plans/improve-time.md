@@ -104,7 +104,7 @@ What Fling does not take:
 | `PresentationClock` | Maps real time to sim time, for the renderer and audio |
 | `SimTime` | World data: the current tick and timeline |
 | `RealFrameTime` | World data: rendered-frame counter and real delta, for presentation and the editor |
-| `TickInput` | The input for one tick (was `InputFrame`) |
+| `InputSnapshot` | The input for one tick: a singleton component (was `InputFrame`, then `TickInput`) |
 | `TickCommands` | The commands for one tick that a resim replays (was `CommandFrame` in `ecs-plan.md`) |
 | `RenderSnapshot` | The render extract for one tick |
 | `SnapshotRing` | The ring of `RenderSnapshot`s that the game side writes and the render side reads |
@@ -126,7 +126,7 @@ belongs to:
 
 | Data | Tagged with |
 |------|-------------|
-| Input for a tick | `TickInput{ Tick }` |
+| Input for a tick | `InputSnapshot{ Tick }` |
 | Commands that a resim replays | `TickCommands{ Tick }` |
 | Data for the renderer | `RenderSnapshot{ Tick }` |
 | Rollback history | `SimHistory[Tick]` |
@@ -293,7 +293,7 @@ void Engine::Tick()
         const uint32 ticks = m_TickClock->TicksDue(m_SimTime.Tick);
         for (uint32 i = 0; i < ticks; ++i)
         {
-            // Builds this tick's TickInput from timestamped input events.
+            // Gives Engine.Input the real-time range of this tick's input events.
             m_World->BindTickInput(m_SimTime.Tick, m_TickClock->Presentation());
             m_World->FixedUpdate(m_SimTime);         // gameplay and physics, fixed delta only
             ++m_SimTime.Tick;
@@ -328,14 +328,13 @@ The full input design is in [`improve-input.md`](improve-input.md). The parts
 that touch timing:
 
 - Input events have a real-time timestamp and a sequence number.
-- Before each live tick, the engine builds one `TickInput` from the events
+- In each live tick, `Engine.Input` builds one `InputSnapshot` from the events
   whose timestamps fall inside that tick. The tick's real-time range comes
   from `PresentationClock` and `TickTimeline`.
-- `TickInput` has **edge counts** (presses and releases in that tick), so a
+- `InputSnapshot` has **edge counts** (presses and releases in that tick), so a
   press and release inside one tick is not lost. When the clock drops ticks,
   their events go into the next tick that runs.
-- The `Input` phase runs once per live tick (not once per frame) and writes
-  `InputState`. A resim uses stored `TickCommands` and reads no events.
+- The `Input` phase runs once per live tick (not once per frame). A resim uses stored `TickCommands` and reads no events.
 - Each `RenderSnapshot` stores the last input sequence its tick used, so the
   render side can apply newer look input without counting it twice.
 
@@ -511,7 +510,7 @@ makes sure that its key is `SimTick`.
 
 ## Rules
 
-1. Sim code reads only `SimTime` and `InputState`. It never reads
+1. Sim code reads only `SimTime` and `InputSnapshot`. It never reads
    `RealFrameTime`, `PlatformTime`, the global `Random`, or a wall clock.
 2. Everything that crosses a thread or network boundary has a `SimTick`.
 3. The renderer reads only `SnapshotRing`.
@@ -551,7 +550,7 @@ on every CI platform.
 | **T2** | `Engine::Tick` uses a tick clock and calls `World::Update(FixedDelta())` per tick. `--frames`, `--seed`, and `--null-render` (skip `VulkanApp`). Delete `Timing`; FPS stats move to `Stats` | T1. Phase A in `improve-ai-iteration.md` |
 | **T3** | `SimTime` and `RealFrameTime` on the world. Counter-based sim RNG. Debug "in simulation" asserts | T2 |
 | **T4** | `RenderSnapshot` with transforms only, single-thread `SnapshotRing`, render-side interpolation | T2 |
-| **T5** | `TickInput` per tick, with edge counts (phases I1 and I2 in `improve-input.md`) | T3 |
+| **T5** | `InputSnapshot` per tick, with edge counts (phases I1 and I2 in `improve-input.md`) | T3 |
 | **T6** | Move into `Scheduler::RunFrame`; scheduler rejects `Read<RealFrameTime>` in sim phases | `ecs-plan.md` scheduler |
 | **Later** | Render thread with a lock-free `SnapshotRing`, physics step as jobs, `SimHistory` and resim, `NetworkTickClock`, audio scheduling, correction smoothing | Threading, job system, and netcode work |
 
