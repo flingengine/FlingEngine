@@ -27,5 +27,8 @@ static_assert(sizeof(glm::vec2) == 8 && alignof(glm::vec2) == 4);
 static_assert(sizeof(glm::vec3) == 12 && alignof(glm::vec3) == 4);
 static_assert(sizeof(glm::vec4) == 16 && alignof(glm::vec4) == 4);
 static_assert(sizeof(glm::quat) == 16 && alignof(glm::quat) == 4);
+// The one layout difference left: GLM stores a quat as w, x, y, z when the compiler has Microsoft language extensions
+// (MSVC, clang-cl) and as x, y, z, w otherwise, and no GLM option changes that. Use .x, .y, .z and .w, never the bytes
+// of a quat, its operator[] or glm::value_ptr, for anything that must match across platforms (the state hash does).
 static_assert(sizeof(glm::mat3) == 36 && alignof(glm::mat3) == 4);
 static_assert(sizeof(glm::mat4) == 64 && alignof(glm::mat4) == 4);

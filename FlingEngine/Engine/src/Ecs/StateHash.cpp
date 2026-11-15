@@ -43,9 +43,9 @@ namespace Fling
             uint64 m_Value = 0xCBF29CE484222325ull;
         };
 
-        // The kinds hashed as their whole object have no padding bytes
-        static_assert(sizeof(glm::vec2) == 2 * sizeof(float) && sizeof(glm::vec4) == 4 * sizeof(float) &&
-                      sizeof(glm::quat) == 4 * sizeof(float));
+        // The kinds hashed as their whole object have no padding bytes, and their members are in one order on every
+        // platform (x, y, z, w). Not glm::quat: see FieldKind::Quat below.
+        static_assert(sizeof(glm::vec2) == 2 * sizeof(float) && sizeof(glm::vec4) == 4 * sizeof(float));
 
         /** Hashes the value of a field, never a padding byte, so two equal values hash the same. */
         void HashField(Hasher& t_Hash, const FieldDesc& t_Field, const void* t_Object)
@@ -61,6 +61,15 @@ namespace Fling
                 // By value, never as bytes: x, y and z, whatever sizeof(glm::vec3) is in this build
                 const glm::vec3& Value = *static_cast<const glm::vec3*>(Address);
                 const float Components[3] = {Value.x, Value.y, Value.z};
+                t_Hash.Bytes(Components, sizeof(Components));
+                break;
+            }
+            case FieldKind::Quat:
+            {
+                // By value, in the order x, y, z, w. GLM stores a quaternion as w, x, y, z when the compiler has
+                // Microsoft language extensions (MSVC, clang-cl) and as x, y, z, w otherwise, so its bytes differ.
+                const glm::quat& Value = *static_cast<const glm::quat*>(Address);
+                const float Components[4] = {Value.x, Value.y, Value.z, Value.w};
                 t_Hash.Bytes(Components, sizeof(Components));
                 break;
             }
@@ -88,7 +97,7 @@ namespace Fling
                 break;
             }
             default:
-                // Integers, floats, enums, vec2, vec4 and quaternions: every byte is part of the value
+                // Integers, floats, enums, vec2 and vec4: every byte is part of the value
                 t_Hash.Bytes(Address, t_Field.Size);
                 break;
             }

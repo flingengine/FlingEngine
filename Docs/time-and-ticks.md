@@ -430,9 +430,10 @@ the simulation state after a tick. It covers **exactly the restore set**:
   generation), never memory order. For a singleton, the one object. For a Tag,
   which entities have it.
 - Each reflected field, `Transient` or not, by its value, never a padding
-  byte, so two equal states hash the same: numbers, enums, `vec2`, `vec4` and
-  quaternions as their bytes (bit-exact: `-0` and `+0` differ), a `vec3` as
-  its x, y and z (never its bytes, whatever the layout), a `bool` as 0 or 1, a `Name` as its
+  byte, so two equal states hash the same: numbers, enums, `vec2` and `vec4`
+  as their bytes (bit-exact: `-0` and `+0` differ), a `vec3` as its x, y and z
+  and a quaternion as its x, y, z and w (never their bytes: GLM stores a
+  quaternion as w, x, y, z under MSVC and clang-cl), a `bool` as 0 or 1, a `Name` as its
   hash, a `String` as its text, an `Entity` as index and generation, a Custom
   field as its saved JSON (NaN and infinity both save as `null`). The gaps
   between fields are never read.
