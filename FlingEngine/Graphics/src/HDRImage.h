@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "FlingVulkan.h"
 #include "Resource.h"
@@ -8,7 +8,7 @@
 
 namespace Fling
 {
-	class LogicalDevice;
+    class LogicalDevice;
     /**
      * Loads image R16G16B16_SFLOAT file formats
      *  exmplae file format : .hdr
@@ -16,7 +16,8 @@ namespace Fling
     class HDRImage : public Resource
     {
     public:
-        static std::shared_ptr<Fling::HDRImage> Create(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data = nullptr);
+        static std::shared_ptr<Fling::HDRImage>
+        Create(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data = nullptr);
 
         explicit HDRImage(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data = nullptr);
         virtual ~HDRImage();
@@ -51,7 +52,7 @@ namespace Fling
         void CopyBufferToImage(VkBuffer t_Buffer);
 
         void GenerateMipMaps(VkFormat t_ImageFormat);
-		const LogicalDevice* m_Device;
+        const LogicalDevice* m_Device;
         VkImage m_Image;
 
         VkImageView m_ImageView;
@@ -75,4 +76,4 @@ namespace Fling
 
         int32 m_Channels = 0;
     };
-}
+} // namespace Fling

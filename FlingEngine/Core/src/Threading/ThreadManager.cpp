@@ -16,7 +16,7 @@ namespace Fling
         {
             Mutex ThreadsMutex;
             std::map<ThreadId, ThreadInfo> Threads FLING_GUARDED_BY(ThreadsMutex);
-            std::atomic<ThreadId> NextId{GameThreadId + 1};
+            std::atomic<ThreadId> NextId{MainThreadId + 1};
         };
 
         // In this .cpp so that every module sees the one registry in Core

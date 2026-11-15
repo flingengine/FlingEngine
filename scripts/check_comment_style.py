@@ -3,9 +3,12 @@
 Check that first-party C++ sources follow the FlingEngine doc-comment style
 (see Skills/coding-style.md and issue #166).
 
-Fails if any of these legacy patterns remain:
+Fails if any of these patterns remain:
   - @brief tags (prefer a plain description line)
   - /*! doc comments (prefer /**)
+  - references to working notes that are not in the tree (DESIGN-, NOTES-,
+    REVIEW-, AUDIT- files, or H/): cite a file under Docs/ or Skills/, or state
+    the rule in the comment
 """
 
 from __future__ import annotations
@@ -21,6 +24,10 @@ EXTENSIONS = {".h", ".hpp", ".cpp", ".cc", ".cxx"}
 PATTERNS = [
     (re.compile(r"@brief\b"), "@brief tag (use a plain description instead)"),
     (re.compile(r"/\*!"), "/*! doc comment (use /** instead)"),
+    (
+        re.compile(r"\b(DESIGN|NOTES|REVIEW|AUDIT)-[\w-]*\.md|\bH/[\w./-]+\.md"),
+        "reference to a note that is not in the tree (cite Docs/ or Skills/, or state the rule)",
+    ),
 ]
 
 

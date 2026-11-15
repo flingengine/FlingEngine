@@ -79,10 +79,11 @@ namespace Fling
         CORE_API bool SetPriority(ThreadPriority t_Priority);
 
         /**
-         * Give the calling thread GameThreadId and the name t_Name. Call this once,
-         * at the start of the process, on the thread that runs the game loop.
+         * Give the calling thread MainThreadId and the name t_Name. Call this once,
+         * at the start of the process, on the main thread (window, input, frame, render).
+         * The fixed ticks of threaded play run on another thread (GameLane).
          */
-        CORE_API static void InitGameThread(StringView t_Name = "Game Thread");
+        CORE_API static void InitMainThread(StringView t_Name = "Main Thread");
 
         /** The engine ID of the calling thread, or InvalidThreadId when the engine did not start it. */
         CORE_API static ThreadId CurrentId();
@@ -90,7 +91,7 @@ namespace Fling
         /** The engine name of the calling thread, or an empty string. */
         CORE_API static const String& CurrentName();
 
-        static bool IsGameThread() { return CurrentId() == GameThreadId; }
+        static bool IsMainThread() { return CurrentId() == MainThreadId; }
 
     private:
         enum class StartState : uint8

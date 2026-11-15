@@ -416,7 +416,7 @@ class TransformGizmoSystem final : public Fling::System<TransformGizmoSystem, Fl
 public:
     static constexpr Fling::SystemInfo Info {
         .Name = "Editor.TransformGizmo",
-        .Phase = Fling::Phase::Editor,
+        .Phase = Fling::Phases::Editor,
         .RunIn = Fling::WorldRole::Edit | Fling::WorldRole::Play };   // Remove Play to hide it during play
 
     void Update(Context& ctx) const;

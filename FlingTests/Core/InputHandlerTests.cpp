@@ -81,9 +81,10 @@ TEST_CASE("Input handler sequence and time", "[Input]")
 
     SECTION("Sequence strictly increases")
     {
-        Handler->HandleMessage(MakeKey(Device, Keys::W, true, 100));
-        Handler->HandleMessage(MakeKey(Device, Keys::W, false, 200));
-        Handler->HandleMessage(MakeKey(Device, Keys::A, true, 300));
+        // HandleMessage returns the sequence it gave, so no caller reads GetLatestSequence after it
+        REQUIRE(Handler->HandleMessage(MakeKey(Device, Keys::W, true, 100)) == 1);
+        REQUIRE(Handler->HandleMessage(MakeKey(Device, Keys::W, false, 200)) == 2);
+        REQUIRE(Handler->HandleMessage(MakeKey(Device, Keys::A, true, 300)) == 3);
         REQUIRE(Handler->GetLatestSequence() == 3);
 
         InputMessage Message;
@@ -108,9 +109,9 @@ TEST_CASE("Input handler sequence and time", "[Input]")
 
     SECTION("A time of 0 becomes now")
     {
-        const int64 Before = InputNowNs();
+        const int64 Before = PlatformTime::NowNanoseconds();
         Handler->HandleMessage(MakeKey(Device, Keys::W, true, 0));
-        const int64 After = InputNowNs();
+        const int64 After = PlatformTime::NowNanoseconds();
 
         InputMessage Message;
         REQUIRE(Handler->GetQueue().TryGet(1, Message));
@@ -179,7 +180,7 @@ TEST_CASE("Input device factory", "[Input]")
     {
         const InputDeviceId Keyboard = Virtual->CreateDevice(MakeInfo(InputDeviceType::Keyboard, "kb"));
         Virtual->Queue(MakeKey(Keyboard, Keys::W, true));
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
 
         InputMessageProcessor Processor = Handler->CreateProcessor();
         REQUIRE(Processor.GetState().GetKeyState(Keyboard, Keys::W).IsHeld);
@@ -201,8 +202,8 @@ TEST_CASE("Input device factory", "[Input]")
     SECTION("Deferred events fire only on dispatch, in order, once")
     {
         Listener Events;
-        Handler->OnDeviceConnected().connect<&Listener::OnConnected>(Events);
-        Handler->OnDeviceDisconnected().connect<&Listener::OnDisconnected>(Events);
+        Handler->OnDeviceConnected().Connect<&Listener::OnConnected>(Events);
+        Handler->OnDeviceDisconnected().Connect<&Listener::OnDisconnected>(Events);
 
         const InputDeviceId A = Virtual->CreateDevice(MakeInfo(InputDeviceType::Virtual, "a"));
         const InputDeviceId B = Virtual->CreateDevice(MakeInfo(InputDeviceType::Virtual, "b"));

@@ -167,6 +167,7 @@ namespace Fling
 
     void InputMessageHandler::PollInterfaces(int64 t_NowNs)
     {
+        FLING_LANE_CHECK(m_WriterLane);
         m_IsPolling = true;
         // Interfaces cannot be added or removed while polling, so the indices stay valid.
         for (size_t Index = 0; Index < m_Interfaces.size(); ++Index)
@@ -197,6 +198,11 @@ namespace Fling
         {
             AddInterfaceNow(std::move(Entry));
         }
+
+        // An interface stamps each message with the time it handles it, at or after
+        // t_NowNs, so every message before t_NowNs is in the queue now
+        m_Queue->PublishWatermark(t_NowNs);
+        m_Polled.Signal();
     }
 
     void InputMessageHandler::QueueDeviceEvent(InputDeviceId t_Device, bool t_Connected)
@@ -220,28 +226,41 @@ namespace Fling
             }
             if (Event.Connected)
             {
-                m_OnDeviceConnected.publish(*Device);
+                m_OnDeviceConnected.Publish(*Device);
             }
             else
             {
-                m_OnDeviceDisconnected.publish(*Device);
+                m_OnDeviceDisconnected.Publish(*Device);
             }
         }
     }
 
-    void InputMessageHandler::HandleMessage(InputMessage t_Message)
+    uint64 InputMessageHandler::HandleMessage(InputMessage t_Message)
     {
+        FLING_LANE_CHECK(m_WriterLane);
         if (t_Message.TimeNs == 0)
         {
-            t_Message.TimeNs = InputNowNs();
+            t_Message.TimeNs = PlatformTime::NowNanoseconds();
         }
         t_Message.TimeNs = std::max(t_Message.TimeNs, m_LastTimeNs);
         m_LastTimeNs = t_Message.TimeNs;
         t_Message.Sequence = ++m_LastSequence;
         const std::shared_ptr<InputDevice> Device = m_Factory.Find(t_Message.Device);
         t_Message.Simulated = Device != nullptr && Device->IsSimulated();
+        if (t_Message.Type == InputMessageType::CaptureChanged)
+        {
+            m_Capture.store(t_Message.Capture, std::memory_order_relaxed);
+        }
+        t_Message.Capture = m_Capture.load(std::memory_order_relaxed);
         m_LatestState.Apply(t_Message);
-        m_Queue->Push(t_Message);
+        {
+            // Pushed under the lock too, so the sequence of a snapshot is always in the queue
+            ScopedLock Lock(m_SnapshotMutex);
+            m_Snapshot.States.Apply(t_Message);
+            m_Snapshot.Sequence = t_Message.Sequence;
+            m_Snapshot.Capture = t_Message.Capture;
+            m_Queue->Push(t_Message);
+        }
 
         // Device connects and disconnects are always logged, at every log level.
         const bool IsDeviceChange = t_Message.Type == InputMessageType::DeviceConnected ||
@@ -251,6 +270,7 @@ namespace Fling
         {
             LogMessage(t_Message);
         }
+        return t_Message.Sequence;
     }
 
     void InputMessageHandler::LogMessage(const InputMessage& t_Message) const
@@ -355,10 +375,17 @@ namespace Fling
         }
     }
 
+    InputStateSnapshot InputMessageHandler::GetLatestSnapshot() const
+    {
+        ScopedLock Lock(m_SnapshotMutex);
+        return m_Snapshot;
+    }
+
     InputMessageProcessor InputMessageHandler::CreateProcessor() const
     {
-        InputMessageProcessor Processor(m_Queue, m_LastSequence);
-        Processor.Resync(m_LatestState, m_LastSequence);
+        const InputStateSnapshot Latest = GetLatestSnapshot();
+        InputMessageProcessor Processor(m_Queue, Latest.Sequence);
+        Processor.Resync(Latest.States, Latest.Sequence);
         Processor.ClearEdges();
         return Processor;
     }

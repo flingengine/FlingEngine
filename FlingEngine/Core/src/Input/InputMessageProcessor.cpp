@@ -2,6 +2,7 @@
 #include "Input/InputMessageQueue.h"
 
 #include <algorithm>
+#include <cassert>
 
 namespace Fling
 {
@@ -19,6 +20,13 @@ namespace Fling
     {
         const std::shared_ptr<const InputMessageQueue> Queue = m_Queue.lock();
         return Queue ? Queue->CopyRange(m_Cursor, t_Out, t_Max, t_UntilNs) : 0;
+    }
+
+    void InputMessageProcessor::Apply(const InputMessage& t_Message)
+    {
+        assert(t_Message.Sequence == m_Cursor + 1 && "Apply takes the message right after the cursor");
+        m_State.Apply(t_Message);
+        m_Cursor = t_Message.Sequence;
     }
 
     void InputMessageProcessor::Consume(uint64 t_Sequence)

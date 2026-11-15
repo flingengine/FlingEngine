@@ -8,7 +8,7 @@
 #include "Input/InputRecording.h"
 #endif
 
-#include <entt/entity/registry.hpp>
+#include "Ecs/EntityStorage.h"
 
 namespace Fling
 {
@@ -27,7 +27,7 @@ namespace Fling
         InputDevicesPanel() { m_ShowWindow = false; }
 
         /** Draws the "Input Devices" window. Call this once per frame. */
-        void Draw(entt::registry& t_Reg) override;
+        void Draw(Fling::EntityStorage& t_Reg) override;
 
         /** The flag that shows or hides the window, for a menu checkbox. */
         bool& ShowWindowFlag() { return m_ShowWindow; }

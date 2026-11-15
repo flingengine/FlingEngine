@@ -182,11 +182,11 @@ TEST_CASE("Input interfaces at runtime", "[Input]")
     {
         auto Test = std::make_shared<TestInterface>();
         Handler->AddInterface(Test);
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Test->PollCount == 1);
 
         Test->PollWanted = false;
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Test->PollCount == 1);
     }
 
@@ -205,12 +205,12 @@ TEST_CASE("Input interfaces at runtime", "[Input]")
         };
         Handler->AddInterface(Adder);
 
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Late->InitCount == 1);
         REQUIRE(Late->PollCount == 0);
         REQUIRE(Handler->GetInterfaces().size() == 2);
 
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Late->PollCount == 1);
     }
 
@@ -228,7 +228,7 @@ TEST_CASE("Input interfaces at runtime", "[Input]")
         Handler->AddInterface(Remover);
         VictimId = Handler->AddInterface<DestroyFlagInterface>(&Destroyed);
 
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Destroyed);
         REQUIRE(Handler->GetInterfaces().size() == 1);
     }
@@ -244,7 +244,7 @@ TEST_CASE("Input interfaces at runtime", "[Input]")
             Handler->RemoveInterface(Id);
         };
 
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Destroyed);
         REQUIRE(Handler->GetInterfaces().empty());
     }
@@ -332,7 +332,7 @@ TEST_CASE("Virtual input interface", "[Input]")
         Processor.ConsumeUntil();
         REQUIRE_FALSE(Processor.GetState().GetKeyState(Keyboard, Keys::W).IsHeld);
 
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Virtual->GetQueuedCount() == 0);
         Processor.ConsumeUntil();
         REQUIRE(Processor.GetState().GetKeyState(Keyboard, Keys::W).IsHeld);
@@ -344,7 +344,7 @@ TEST_CASE("Virtual input interface", "[Input]")
         REQUIRE(Virtual->GetQueuedCount() == 0);
 
         const uint64 Before = Handler->GetLatestSequence();
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Handler->GetLatestSequence() == Before);
     }
 
@@ -354,7 +354,7 @@ TEST_CASE("Virtual input interface", "[Input]")
         Virtual->DisconnectDevice(Keyboard);
 
         const uint64 Before = Handler->GetLatestSequence();
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         REQUIRE(Handler->GetLatestSequence() == Before);
     }
 }
@@ -387,7 +387,7 @@ TEST_CASE("Devices and messages of a virtual interface are simulated", "[Input][
     FromVirtual.Key = Keys::GamepadFaceBottom;
     FromVirtual.Simulated = false;
     Virtual->Queue(FromVirtual);
-    Handler->PollInterfaces(InputNowNs());
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
 
     InputMessage FromHardware = FromVirtual;
     FromHardware.Device = HardwareId;

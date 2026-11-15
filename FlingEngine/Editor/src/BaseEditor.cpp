@@ -7,14 +7,18 @@
 
 // We have to draw the ImGUI stuff somewhere, so we miind as well keep it all here!
 #include "Components/Transform.h"
-#include "ComponentTypeRegistry.h"
+#include "EditorWidgets.h"
 #include "FlingPaths.h"
 #include "ImFileBrowser.hpp"
 #include "Lighting/DirectionalLight.hpp"
 #include "Lighting/PointLight.hpp"
 #include "Logger.h"
 #include "MeshRenderer.h"
+#include "PresentMode.h"
+#include "RunControls.h"
+#include "SimRate.h"
 #include "Timing.h"
+#include "TransformUtil.h"
 #include "World.h"
 
 #include <stdio.h>
@@ -24,239 +28,164 @@ namespace Fling
 {
     namespace Widgets
     {
-        void Transform(Fling::Transform& t)
+        /** A path field with a file browser. Returns true when a new path is picked. */
+        bool AssetPicker(const char* t_Label, const char* t_Folder, const char* t_Extension, String& t_Path)
         {
-            bool bChanged = ImGui::InputFloat3( "Position", ( float* ) &t.m_Pos );
-            bChanged |= ImGui::InputFloat3( "Scale", ( float* )  &t.m_Scale );
-            bChanged |= ImGui::InputFloat3( "Rotation", ( float* )  &t.m_Rotation );
-            if (bChanged)
+            ImGui::PushID(t_Label);
+            ImGui::LabelText(t_Label, "%s", t_Path.empty() ? "None" : t_Path.c_str());
+
+            static ImGui::FileBrowser s_FileDialog;
+            static const char* s_OpenFor = nullptr;
+            if (ImGui::Button("Select..."))
             {
-                t.MarkDirty();
-            }
-        }
-
-        void PointLight(Fling::PointLight& t_Light)
-        {
-            ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-            ImGui::InputFloat( "Range", &t_Light.Range );
-            ImGui::InputFloat( "Intensity", &t_Light.Intensity );
-        }
-
-        void DirectionalLight(Fling::DirectionalLight& t_Light)
-        {
-            ImGui::ColorEdit3( "Color", ( float* ) &t_Light.DiffuseColor );
-            ImGui::InputFloat3( "Direction", ( float* ) &t_Light.Direction );
-            ImGui::InputFloat( "Intensity", &t_Light.Intensity );
-        }
-
-        void MeshRenderer(Fling::MeshRenderer& t_MeshRend, entt::registry& t_Reg, entt::entity t_Entity)
-        {
-            // Model -----------------------
-            {
-                String ModelName = "None";
-                if (t_MeshRend.m_Model)
-                {
-                    ModelName = t_MeshRend.GetModelPath();
-                }
-
-                ImGui::LabelText("Model", ModelName.c_str(), "%s");
-
-                // Show file browser
-                static ImGui::FileBrowser fileDialog;
-                if(ImGui::Button("Select Model"))
-                {
-                    fileDialog.SetTitle("Select Model...");
-                    std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Models" };
-                    fileDialog.SetPwd(p);
-
-                    fileDialog.SetTypeFilters({ ".obj" });
-                    fileDialog.Open();
-                }
-
-                fileDialog.Display();
-                if(fileDialog.HasSelected())
-                {
-                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
-
-                    t_MeshRend.LoadModelFromPath(SelectedAsset);
-                    // Tell the renderer to record its draw calls again with the new model
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
-
-                    fileDialog.ClearSelected();
-                }
+                s_FileDialog.SetTitle(String("Select ") + t_Label);
+                s_FileDialog.SetPwd(std::filesystem::path{FlingPaths::EngineAssetsDir() + "/" + t_Folder});
+                s_FileDialog.SetTypeFilters({t_Extension});
+                s_FileDialog.Open();
+                s_OpenFor = t_Label;
             }
 
-            // Material ----------------------
+            bool bPicked = false;
+            if (s_OpenFor == t_Label)
             {
-                String MaterialName = "None";
-                if (t_MeshRend.m_Material)
+                s_FileDialog.Display();
+                if (s_FileDialog.HasSelected())
                 {
-                    MaterialName = t_MeshRend.GetMaterialPath();
+                    t_Path = FlingPaths::ConvertAbsolutePathToRelative(s_FileDialog.GetSelected().string());
+                    s_FileDialog.ClearSelected();
+                    s_OpenFor = nullptr;
+                    bPicked = true;
                 }
-
-                const char* m = MaterialName.c_str();
-                ImGui::LabelText("Material", m, "%s");
-
-                // Show file browser
-                static ImGui::FileBrowser fileDialog;
-                if(ImGui::Button("Select Material"))
-                {
-                    fileDialog.SetTitle("Select Material...");
-                    std::filesystem::path p { FlingPaths::EngineAssetsDir() + "/Materials" };
-                    fileDialog.SetPwd(p);
-
-
-                    fileDialog.SetTypeFilters({ ".mat" });
-                    fileDialog.Open();
-                }
-
-                fileDialog.Display();
-                if(fileDialog.HasSelected())
-                {
-                    String SelectedAsset = FlingPaths::ConvertAbsolutePathToRelative(fileDialog.GetSelected().string());
-
-                    t_MeshRend.LoadMaterialFromPath(SelectedAsset);
-                    // Tell the renderer to write the new textures to the descriptor set.
-                    // replace() copies the component without its GPU handles, and the
-                    // move assignment keeps the handles on the stored component.
-                    t_Reg.replace<Fling::MeshRenderer>(t_Entity, t_MeshRend);
-
-                    fileDialog.ClearSelected();
-                }
-
-				// Material type --------
-
-				const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO", "PPPP", "QQQQQQQQQQ", "RRR", "SSSS" };
-				static const char* current_item = NULL;
-
-				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
-				{
-					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-					{
-						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-						if (ImGui::Selectable(items[n], is_selected))
-						{
-							current_item = items[n];
-							if (is_selected)
-							{
-								ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-
-							}
-						}
-					}
-					ImGui::EndCombo();
-				}
             }
+            ImGui::PopID();
+            return bPicked;
         }
+
+        void MeshRenderer(Fling::MeshRenderer& t_MeshRend)
+        {
+            // The renderer sees the new paths in the next snapshot and makes a new proxy
+            AssetPicker("Model", "Models", ".obj", t_MeshRend.Mesh);
+            AssetPicker("Material", "Materials", ".mat", t_MeshRend.Material);
+        }
+    } // namespace Widgets
+
+    std::shared_ptr<World> BaseEditor::OwningWorld() const
+    {
+        std::shared_ptr<World> Result = m_OwningWorld.lock();
+        assert(Result && "The editor is used before Init, or after the world is gone");
+        return Result;
     }
 
-    void BaseEditor::Init(entt::registry& t_Reg, World* t_World, Game* t_Game)
+    void BaseEditor::Init(Fling::EntityStorage& t_Reg,
+                          const std::shared_ptr<World>& t_World,
+                          const std::shared_ptr<Game>& t_Game,
+                          RunControls& t_Controls)
     {
+        m_Controls = &t_Controls;
+        // A plain click on a drag field opens a text box; dragging still scrubs the value.
+        ImGui::GetIO().ConfigDragClickToInputText = true;
+
         m_OwningWorld = t_World;
+        m_WorldSingletons.SetWorld(t_World);
         m_Game = t_Game;
-        RegisterComponents(t_Reg);
-    }
-
-    void BaseEditor::RegisterComponents(entt::registry& t_Reg)
-    {
+        m_EntityEditor.SetWorld(t_World, &m_Widgets);
         (void)t_Reg;
-
-        // Transform, NameComponent, MeshRenderer, DirectionalLight, and PointLight are
-        // already known to ComponentTypeRegistry (RegisterEngineComponents /
-        // RegisterGraphicsComponents); we're just attaching an ImGui draw callback for
-        // each so EntityEditorPanel can render them.
-        ComponentTypeRegistry& Registry = ComponentTypeRegistry::Get();
-
-        Registry.SetEditorWidget("Transform",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::Transform>(e);
-                Widgets::Transform(t);
-            }
-        );
-
-        Registry.SetEditorWidget("PointLight",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::PointLight>(e);
-                Widgets::PointLight(t);
-            }
-        );
-
-        Registry.SetEditorWidget("DirectionalLight",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::DirectionalLight>(e);
-                Widgets::DirectionalLight(t);
-            }
-        );
-
-        Registry.SetEditorWidget("MeshRenderer",
-            [](entt::registry& reg, entt::entity e)
-            {
-                auto& t = reg.get<Fling::MeshRenderer>(e);
-                Widgets::MeshRenderer(t, reg, e);
-            }
-        );
+        RegisterWidgets(m_Widgets);
     }
 
-    void BaseEditor::Draw(entt::registry& t_Reg, float DeltaTime)
+    void BaseEditor::RegisterWidgets(EditorWidgets& t_Widgets)
+    {
+        // The other components use the inspector made from their reflected fields.
+        // Transform stores a quaternion, so it is edited as Euler angles in degrees.
+        t_Widgets.Override<Fling::Transform>(
+            [](Fling::EntityStorage&, Fling::Entity, Fling::Transform& t_Trans)
+            {
+                ImGui::DragFloat3("Position", &t_Trans.Position.x, 0.05f);
+                glm::vec3 Degrees = TransformUtil::ToEulerDegrees(t_Trans.Rotation);
+                if (ImGui::DragFloat3("Rotation", &Degrees.x, 0.5f))
+                {
+                    t_Trans.Rotation = TransformUtil::FromEulerDegrees(Degrees);
+                }
+                ImGui::DragFloat3("Scale", &t_Trans.Scale.x, 0.05f);
+            });
+
+        // MeshRenderer saves asset paths by hand, so it gets file pickers.
+        t_Widgets.Override<Fling::MeshRenderer>([](Fling::EntityStorage&, Fling::Entity, Fling::MeshRenderer& t_Mesh)
+                                                { Widgets::MeshRenderer(t_Mesh); });
+    }
+
+    void BaseEditor::Draw(Fling::EntityStorage& t_Reg, float DeltaTime)
     {
         DrawFileMenu();
 
-        if (m_DisplayGPUInfo)
+        if (m_DisplayGpuOptions)
         {
-            DrawGpuInfo();
+            DrawGpuOptions();
         }
 
-        if(m_DisplayWorldOutline)
+        // In play the panels are read only in every exec mode: an edit would change the
+        // simulation outside a tick. In Inline and Threaded play they show the published copy
+        const std::shared_ptr<World> ShownWorld = OwningWorld();
+        const bool bReadOnly = ShownWorld->IsPlaying() || ShownWorld->IsPresentingCopy();
+        Fling::EntityStorage& Shown = ShownWorld->IsPresentingCopy() ? ShownWorld->GetPresentedStorage() : t_Reg;
+        m_WorldOutline.SetReadOnly(bReadOnly);
+
+        if (m_DisplayWorldOutline)
         {
-            DrawWorldOutline(t_Reg);
+            DrawWorldOutline(Shown);
         }
 
-        if(m_DisplayComponentEditor)
+        ImGui::BeginDisabled(bReadOnly);
+        if (m_DisplayComponentEditor)
         {
-            DrawEntityEditor(t_Reg);
+            DrawEntityEditor(Shown);
         }
+        ImGui::EndDisabled();
 
         if (m_DisplayWindowOptions)
         {
             DrawWindowOptions();
         }
 
-        if(m_DisplayCameraOptions)
+        if (m_DisplayCameraOptions)
         {
             DrawCameraOptions();
         }
 
-        m_InputDevices.Draw(t_Reg);
+        // The input panel runs on the thread that polls input (the input writer), and the
+        // game thread only claims replay cuts and notes recorded cuts, so it works in play
+        m_InputDevices.Draw(Shown);
+
+        ImGui::BeginDisabled(bReadOnly);
+        m_WorldSingletons.Draw(Shown);
+        ImGui::EndDisabled();
     }
 
     void BaseEditor::DrawCameraOptions()
     {
-		ImGui::Begin("Camera Options");
+        ImGui::Begin("Camera Options");
 
-        if(FirstPersonCamera* Cam = VulkanApp::Get().GetCamera())
+        if (FirstPersonCamera* Cam = VulkanApp::Get().GetCamera())
         {
-			ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
+            ImGui::SetWindowSize(ImVec2(250.0f, 400.0f), ImGuiCond_FirstUseEver);
             ImGui::InputFloat("Aspect Ratio", &Cam->m_aspectRatio);
-			ImGui::InputFloat("NearPlane", &Cam->m_nearPlane);
-			ImGui::InputFloat("FarPlane", &Cam->m_farPlane);
+            ImGui::InputFloat("NearPlane", &Cam->m_nearPlane);
+            ImGui::InputFloat("FarPlane", &Cam->m_farPlane);
             ImGui::InputFloat("FOV", &Cam->m_fieldOfView);
             ImGui::InputFloat("Gamma", &Cam->m_Gamma);
             ImGui::InputFloat("Exposure", &Cam->m_Exposure);
-			ImGui::InputFloat("Speed", &Cam->m_speed);
-		}
+            ImGui::InputFloat("Speed", &Cam->m_speed);
+        }
 
-		ImGui::End();
+        ImGui::End();
     }
 
-    void BaseEditor::DrawWorldOutline(entt::registry& t_Reg)
+    void BaseEditor::DrawWorldOutline(Fling::EntityStorage& t_Reg)
     {
         m_WorldOutline.Draw(t_Reg);
     }
 
-    void BaseEditor::DrawEntityEditor(entt::registry& t_Reg)
+    void BaseEditor::DrawEntityEditor(Fling::EntityStorage& t_Reg)
     {
         // Spawn the entity editor for whatever is currently selected in the outline
         m_EntityEditor.SetTargetEntity(m_WorldOutline.GetSelectedEntity());
@@ -269,41 +198,38 @@ namespace Fling
         ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
         // Dropdown for windowed, borderless, etc
-		static const char* WindowOpts[] = { "Fullscreen", "Windowed", "BorderlessWindowed" };
+        static const char* WindowOpts[] = {"Fullscreen", "Windowed", "BorderlessWindowed"};
         static const char* CurSelection = nullptr;
 
-		if (ImGui::BeginCombo("Window Mode", CurSelection))
-		{
-			for (int n = 0; n < IM_ARRAYSIZE(WindowOpts); n++)
+        if (ImGui::BeginCombo("Window Mode", CurSelection))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(WindowOpts); n++)
             {
-				bool is_selected = (CurSelection == WindowOpts[n]); // You can store your selection however you want, outside or inside your objects
-				if (ImGui::Selectable(WindowOpts[n], is_selected))
+                bool is_selected =
+                    (CurSelection ==
+                     WindowOpts[n]); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(WindowOpts[n], is_selected))
                 {
                     CurSelection = WindowOpts[n];
                 }
 
                 if (is_selected)
                 {
-					ImGui::SetItemDefaultFocus();
+                    ImGui::SetItemDefaultFocus();
                 }
             }
-			ImGui::EndCombo();
-		}
+            ImGui::EndCombo();
+        }
 
         ImGui::End();
     }
 
     void BaseEditor::DrawFileMenu()
     {
-        ImGuiWindowFlags corner =
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoSavedSettings |
-            ImGuiWindowFlags_AlwaysAutoResize |
-            ImGuiWindowFlags_MenuBar |
-            ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoBackground;
+        ImGuiWindowFlags corner = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                                  ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize |
+                                  ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar |
+                                  ImGuiWindowFlags_NoBackground;
 
         bool isOpen = true;
         ImGui::Begin("File Options", &isOpen, corner);
@@ -316,7 +242,7 @@ namespace Fling
                 // Loading or saving during play would change or save the play state,
                 // and the stop would then reset the level again
                 const bool bLevelEditLocked =
-                    !m_OwningWorld->IsReadyForPlay() || m_OwningWorld->HasPendingPlayRequest();
+                    !OwningWorld()->IsReadyForPlay() || OwningWorld()->HasPendingPlayRequest();
                 if (bLevelEditLocked)
                 {
                     ImGui::TextDisabled("Stop play to open or save levels");
@@ -333,10 +259,10 @@ namespace Fling
                     ShouldSaveLevel = false;
 
                     fileDialog.SetTitle("Select Level to Load...");
-                    static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+                    static std::filesystem::path p{FlingPaths::EngineAssetsDir() + "/Levels"};
                     fileDialog.SetPwd(p);
 
-                    fileDialog.SetTypeFilters({ ".json" });
+                    fileDialog.SetTypeFilters({".json"});
                     fileDialog.Open();
                 }
 
@@ -346,10 +272,10 @@ namespace Fling
                     ShouldLoadLevel = false;
 
                     fileDialog.SetTitle("Select Save Destination...");
-                    static std::filesystem::path p{ FlingPaths::EngineAssetsDir() + "/Levels" };
+                    static std::filesystem::path p{FlingPaths::EngineAssetsDir() + "/Levels"};
                     fileDialog.SetPwd(p);
 
-                    fileDialog.SetTypeFilters({ ".json" });
+                    fileDialog.SetTypeFilters({".json"});
                     fileDialog.Open();
                 }
 
@@ -374,19 +300,25 @@ namespace Fling
 
                 if (ImGui::MenuItem("New Level", "Ctrl+N"))
                 {
-                    assert(m_OwningWorld);
-                    m_OwningWorld->LoadLevelFile("Levels/EmptyLevel.json");
+                    OwningWorld()->LoadLevelFile("Levels/EmptyLevel.json");
                 }
 
                 ImGui::EndDisabled();
+
+                ImGui::Separator();
+                if (ImGui::MenuItem("Exit", "Alt+F4"))
+                {
+                    OwningWorld()->RequestQuit();
+                }
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("Windows"))
             {
-                ImGui::Checkbox("GPU Info", &m_DisplayGPUInfo);
-				ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
-				ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
+                ImGui::Checkbox("GPU Options", &m_DisplayGpuOptions);
+                ImGui::Checkbox("Camera Options", &m_DisplayCameraOptions);
+                ImGui::Checkbox("Input Devices", &m_InputDevices.ShowWindowFlag());
+                ImGui::Checkbox("World Singletons", &m_WorldSingletons.ShowWindowFlag());
                 ImGui::EndMenu();
             }
 
@@ -409,28 +341,26 @@ namespace Fling
 
     void BaseEditor::DrawPlayControls()
     {
-        assert(m_OwningWorld);
-
-        if (m_OwningWorld->HasPendingPlayRequest())
+        if (OwningWorld()->HasPendingPlayRequest())
         {
             // The request runs on the next world update
             ImGui::BeginDisabled();
-            ImGui::Button(m_OwningWorld->IsPlaying() ? "Stopping..." : "Starting...");
+            ImGui::Button(OwningWorld()->IsPlaying() ? "Stopping..." : "Starting...");
             ImGui::EndDisabled();
         }
-        else if (m_OwningWorld->IsReadyForPlay())
+        else if (OwningWorld()->IsReadyForPlay())
         {
             if (ImGui::Button("Play"))
             {
-                m_OwningWorld->RequestGameStart();
+                OwningWorld()->RequestGameStart();
             }
         }
-        else if (m_OwningWorld->IsPlaying() || m_OwningWorld->IsPaused())
+        else if (OwningWorld()->IsPlaying())
         {
             if (ImGui::Button("Stop"))
             {
                 // The world calls OnStopGame, then resets the level to how it was at Play
-                m_OwningWorld->RequestGameStop();
+                OwningWorld()->RequestGameStop();
             }
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "Playing (Esc to stop)");
@@ -439,55 +369,108 @@ namespace Fling
 
     void BaseEditor::OnLoadLevel(String t_FileName)
     {
-        assert(m_OwningWorld);
-
         // File pop up
         F_LOG_TRACE("Load file {}", t_FileName);
 
-        m_OwningWorld->LoadLevelFile(t_FileName);
+        OwningWorld()->LoadLevelFile(t_FileName);
     }
 
     void BaseEditor::OnSaveLevel(String t_FileName)
     {
-        assert(m_OwningWorld);
-
         // File pop up to load the level file
         F_LOG_TRACE("Save to file {}", t_FileName);
 
-        m_OwningWorld->OutputLevelFile(t_FileName);
+        OwningWorld()->OutputLevelFile(t_FileName);
     }
 
-    void BaseEditor::DrawGpuInfo()
+    namespace
     {
-        Timing& Timing = Timing::Get();
-        ImGui::Begin("GPU Info");
+        /**
+         * A whole number box that shows t_Current until it is edited, and returns true once
+         * when an edit is committed (Enter or focus loss), with the typed value in t_Field.
+         */
+        template <class T_Field>
+        bool CommittedNumberBox(const char* t_Label, const uint32 t_Current, T_Field& t_Field)
+        {
+            if (!t_Field.bEditing)
+            {
+                t_Field.Value = t_Current;
+            }
+            ImGui::InputScalar(t_Label, ImGuiDataType_U32, &t_Field.Value);
+            t_Field.bEditing = ImGui::IsItemActive();
+            return ImGui::IsItemDeactivatedAfterEdit();
+        }
+    } // namespace
 
-        ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
+    void BaseEditor::DrawGpuOptions()
+    {
+        assert(m_Controls && "Init gives the editor the run controls");
+        RunControls& Controls = *m_Controls;
 
-		const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
+        // Right of the World Outline and Entity Editor windows, so none covers another on
+        // first use, and wide enough for the limiter and measured lines
+        ImGui::SetNextWindowPos(ImVec2(520, 30), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(600, 340), ImGuiCond_FirstUseEver);
+        ImGui::Begin("GPU Options");
+
+        const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
         ImGui::Text("Device: %s", DeviceName.c_str());
 
-        // Update fps graph
+        // The setting; the swap chain is made again with it after the next present
+        const char* const VSyncItems[] = {"On", "Off"};
+        int VSyncItem = Controls.VSync() ? 0 : 1;
+        if (ImGui::Combo("VSync", &VSyncItem, VSyncItems, static_cast<int>(std::size(VSyncItems))))
+        {
+            m_ControlsError.clear();
+            Controls.SetVSync(VSyncItem == 0);
+        }
+        const PresentMode InUse = VulkanApp::Get().GetPresentMode();
+        ImGui::TextDisabled("Present mode in use: %s", PresentModeName(InUse));
+
+        if (CommittedNumberBox("Frame cap (fps)", Controls.MaxFps(), m_FrameCapField))
+        {
+            Controls.SetMaxFps(m_FrameCapField.Value, m_ControlsError);
+        }
+        ImGui::TextDisabled("0: no cap, or 1 to %u. %s",
+                            RunSettings::MaxMaxFps,
+                            Controls.DescribeLimiter(DisplayPacesFrames(InUse)).c_str());
+
+        if (CommittedNumberBox("Simulation rate (Hz)", Controls.SimHz(), m_SimHzField))
+        {
+            Controls.RequestSimHz(m_SimHzField.Value, m_ControlsError);
+        }
+        ImGui::TextDisabled("%u to %u ticks a second, from the next tick on", SimRate::MinHz, SimRate::MaxHz);
+
+        bool bInterpolation = Controls.Interpolation();
+        if (ImGui::Checkbox("Render interpolation", &bInterpolation))
+        {
+            m_ControlsError.clear();
+            Controls.SetInterpolation(bInterpolation);
+        }
+
+        if (!m_ControlsError.empty())
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", m_ControlsError.c_str());
+        }
+
+        ImGui::Separator();
+        const float Fps = static_cast<float>(Timing::Get().GetFrameCount());
+        ImGui::TextWrapped("%s", Controls.DescribeMeasured(Fps).c_str());
+
         std::rotate(fpsGraph.begin(), fpsGraph.begin() + 1, fpsGraph.end());
-        float frameTime = static_cast<float>(Timing.GetFrameCount());
-        fpsGraph.back() = frameTime;
-
-        if (frameTime < m_FrameTimeMin)
-        {
-            m_FrameTimeMin = frameTime;
-        }
-        if (frameTime > m_FrameTimeMax)
-        {
-            m_FrameTimeMax = frameTime;
-        }
-
-        if (m_DisplayGPUInfo)
-        {
-            ImGui::Text("FPS: %f", frameTime);
-            ImGui::PlotLines("FPS", &fpsGraph[0], fpsGraph.size(), 0, "", m_FrameTimeMin, m_FrameTimeMax, ImVec2(0, 80));
-        }
+        fpsGraph.back() = Fps;
+        m_FrameTimeMin = std::min(m_FrameTimeMin, Fps);
+        m_FrameTimeMax = std::max(m_FrameTimeMax, Fps);
+        ImGui::PlotLines("FPS",
+                         fpsGraph.data(),
+                         static_cast<int>(fpsGraph.size()),
+                         0,
+                         "",
+                         m_FrameTimeMin,
+                         m_FrameTimeMax,
+                         ImVec2(0, 80));
         ImGui::End();
     }
-}   // namespace Fling
+} // namespace Fling
 
-#endif  // WITH_EDITOR
+#endif // WITH_EDITOR

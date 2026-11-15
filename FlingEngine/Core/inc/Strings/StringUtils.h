@@ -76,5 +76,24 @@ namespace Fling
                 return ValueStream.fail() ? Default : Value;
             }
         }
+
+        /**
+         * Read a whole number from 0 to the uint32 maximum that is all of t_Str: no sign, no
+         * spaces, no other text. Stricter than ParseAs, for values that must be checked
+         * (launch flags, the [Engine] settings).
+         *
+         * @return False, and t_Out unchanged, if t_Str is not such a number
+         */
+        inline bool TryParseUint32(const StringView t_Str, uint32& t_Out)
+        {
+            uint64 Result = 0;
+            const auto [End, Error] = std::from_chars(t_Str.data(), t_Str.data() + t_Str.size(), Result);
+            if (t_Str.empty() || Error != std::errc() || End != t_Str.data() + t_Str.size() || Result > 0xFFFFFFFFull)
+            {
+                return false;
+            }
+            t_Out = static_cast<uint32>(Result);
+            return true;
+        }
     } // namespace StringUtils
 } // namespace Fling

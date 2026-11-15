@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-/** 
+/**
  * @see FlingAssetPaths.cpp.in
  */
 namespace Fling
@@ -16,7 +16,7 @@ namespace Fling
     {
         /** Returns directory where engine config files are kept */
         static const String& EngineConfigDir();
-        
+
         /** Returns directory where engine assets are kept */
         static const String& EngineAssetsDir();
 
@@ -53,8 +53,8 @@ namespace Fling
         static String ConvertAbsolutePathToRelative(StringView t_FullPath);
 
         /**
-         * Makes a directory given the specified path. 
-         * 
+         * Makes a directory given the specified path.
+         *
          * @param t_Dir     The directory to make
          * @return  0 if successful, error code if not
          */
@@ -62,15 +62,15 @@ namespace Fling
 
         /**
          * Checks if this directory exists
-         * 
+         *
          * @param t_Dir     The directory to check
-         * @return  True if the directory exists 
+         * @return  True if the directory exists
          */
         static bool DirExists(StringView t_Dir);
 
         /**
          * Get the current working directory
-         * 
+         *
          * @param t_OutBuf      The out buffer
          * @param t_BufSize     Size of the out buffer
          */
@@ -78,4 +78,4 @@ namespace Fling
 
         // TODO: Add options to get the current user's home path
     };
-}   // namespace Fling
+} // namespace Fling

@@ -3,6 +3,7 @@
 #include "FlingExports.h"
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
+#include "PresentMode.h"
 
 #include <vector>
 
@@ -25,7 +26,8 @@ namespace Fling
     {
     public:
 
-		explicit Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface);
+		/** t_VSync: SetVSync. */
+		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface, bool t_VSync);
 
 		~Swapchain();
 
@@ -44,8 +46,14 @@ namespace Fling
 		 */
 		void Cleanup();
 
+		/** The present mode of the next Recreate: ChoosePresentMode with t_VSync. */
+		void SetVSync(bool t_VSync) { m_VSync = t_VSync; }
+
 		const VkSwapchainKHR& GetVkSwapChain() const { return m_SwapChain; }
-		const VkPresentModeKHR& GetPresentMode() const { return m_PresentMode; }
+
+		/** The present mode it was made with. */
+		PresentMode GetPresentMode() const { return m_PresentMode; }
+
 		const VkExtent2D& GetExtents() const { return m_Extents; }
 		const VkFormat& GetImageFormat() const { return m_ImageFormat; }
 
@@ -61,7 +69,9 @@ namespace Fling
 
 		VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
 
-		VkPresentModeKHR m_PresentMode;
+		bool m_VSync = true;
+
+		PresentMode m_PresentMode = PresentMode::Fifo;
 
 		VkExtent2D m_Extents;
 
@@ -106,14 +116,5 @@ namespace Fling
 		*/
 		VkSurfaceFormatKHR ChooseSwapChainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& t_AvailableFormats);
 
-		/**
-		* Choose a present mode for the swap chain based on the given formats. Prefer VK_PRESENT_MODE_MAILBOX_KHR
-		* If none are available, than return VK_PRESENT_MODE_FIFO_KHR or VK_PRESENT_MODE_IMMEDIATE_KHR based on support
-		*
-		* @param    Vector of available formats
-		*
-		* @return   Preferred present mode from the available formats
-		*/
-		VkPresentModeKHR ChooseSwapChainPresentMode(const std::vector<VkPresentModeKHR>& t_AvialableFormats);
     };
 }   // namespace Fling

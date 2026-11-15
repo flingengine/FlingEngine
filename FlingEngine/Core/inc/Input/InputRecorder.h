@@ -1,12 +1,17 @@
 #pragma once
 
 #include "FlingTypes.h"
+#include "Input/InputCut.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputRecording.h"
+#include "SimRate.h"
 #include "Strings/String.h"
+#include "Threading/ThreadQueue.h"
 
+#include <atomic>
 #include <memory>
 #include <optional>
+#include <vector>
 
 // Not in shipping builds (see WITH_INPUT_RECORDING in Core/CMakeLists.txt)
 #if WITH_INPUT_RECORDING
@@ -30,8 +35,12 @@ namespace Fling
      * other consumers see.
      *
      * When recording starts, every key that is held then is written as a KeyDown at
-     * time 0. Connect and disconnect messages are not written; the file header lists
-     * the devices.
+     * time 0, and the UI capture as a CaptureChanged (also when nothing is captured), so
+     * a replay starts from the same capture. Connect and disconnect messages are not
+     * written; the file header lists the devices.
+     *
+     * Threads: Input::Poll updates it, so it belongs to the writer lane of the input
+     * queue. NoteTickCut and IsActive are thread safe, for the tick lane.
      */
     class InputRecorder
     {
@@ -64,6 +73,26 @@ namespace Fling
          * is saved.
          */
         void Update(float t_DeltaSeconds);
+
+        /**
+         * Note the input cut of a tick that ran. Call it once for
+         * each tick. While recording, the saved file then has a cut per tick
+         * (InputRecording::TickCuts), so a replay gives each tick the same messages at any
+         * frame rate. Thread safe: the tick lane calls it, and the recorder takes the cuts
+         * at its next Update or Stop. A tick that runs at the same time as Start or Stop on
+         * another thread may or may not be in the file.
+         */
+        void NoteTickCut(const InputCut& t_Cut);
+
+        /**
+         * The simulation rate of the ticks whose cuts NoteTickCut gets. The saved file stores it
+         * with the cuts (InputRecording::TickCutRate) and as its "tickRate". Set it before Start:
+         * while the recorder is active a change is refused (false, and a log line), because a
+         * file stores one rate.
+         */
+        bool SetTickRate(uint32 t_Hz);
+
+        uint32 GetTickRate() const { return m_TickRate; }
 
         InputRecorderState GetState() const { return m_State; }
 
@@ -108,6 +137,9 @@ namespace Fling
 
         void ReadMessages();
 
+        /** Move the cuts that NoteTickCut sent into m_TickCutSequences. */
+        void TakeTickCuts();
+
         /** Remove the last MouseLeft KeyDown and the mouse messages after it, if only mouse messages follow it. */
         void TrimStopClick();
 
@@ -117,6 +149,17 @@ namespace Fling
         std::weak_ptr<InputMessageHandler> m_Handler;
 
         std::optional<InputMessageProcessor> m_Processor;
+
+        /** The queue sequence of each recorded message (0 for the held keys at the start). */
+        std::vector<uint64> m_SourceSequences;
+
+        /** The cut of each tick that ran while recording, as a queue sequence. */
+        std::vector<uint64> m_TickCutSequences;
+
+        /** True while recording: NoteTickCut sends its cut to m_TickCutInbox. */
+        std::atomic<bool> m_TakesTickCuts{false};
+
+        ThreadQueue<uint64> m_TickCutInbox;
 
         InputRecording m_Recording;
 
@@ -128,7 +171,8 @@ namespace Fling
 
         String m_LastError;
 
-        InputRecorderState m_State = InputRecorderState::Idle;
+        /** Atomic so that IsActive is thread safe. Only the writer changes it. */
+        std::atomic<InputRecorderState> m_State{InputRecorderState::Idle};
 
         float m_CountdownRemaining = 0.0f;
 
@@ -143,6 +187,9 @@ namespace Fling
         float m_Duration = 0.0f;
 
         uint32 m_SaveCount = 0;
+
+        /** @see SetTickRate */
+        uint32 m_TickRate = SimRate::DefaultHz;
     };
 } // namespace Fling
 #endif // WITH_INPUT_RECORDING

@@ -1,0 +1,16 @@
+Fixed (once per tick)
+  the runner writes first: SimTime, InputState
+  groups:
+    Engine.Tick
+      Engine.Input
+      Engine.Simulation  (resim)
+      Engine.Physics  (resim)
+      Engine.ResolveDeferred  (resim)
+      Engine.Finalize
+  stage 0  Physics.Step                 [Engine.Physics]           writes Transform, RigidBody, PhysicsBody, PhysicsWorld, PhysicsSettings, ContactEvents, PhysicsCommands
+  stage 1  Engine.Transform             [Engine.Finalize]          writes LocalToWorld, TransformWork
+  flush: end of tick
+  resim runs: Physics.Step
+  resim reads from outside: SimTime (from the runner)
+Published each tick, for Order::Frame
+  nothing

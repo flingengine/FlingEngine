@@ -8,15 +8,32 @@
 #include "Input/InputMessage.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputMessageQueue.h"
+#include "Signals.h"
 #include "Strings/String.h"
+#include "Threading/Event.h"
+#include "Threading/Lane.h"
+#include "Threading/Mutex.h"
 
-#include <entt/signal/sigh.hpp>
+#include <atomic>
+#include <chrono>
 #include <memory>
 #include <utility>
 #include <vector>
 
 namespace Fling
 {
+    /** The newest device state with the sequence of the last message in it: a copy that any thread can take. */
+    struct InputStateSnapshot
+    {
+        InputDeviceStates States;
+
+        /** The last message applied to States. */
+        uint64 Sequence = 0;
+
+        /** The UI capture after that message. */
+        InputCapture Capture = InputCapture::None;
+    };
+
     /**
      * The center of the input system. It owns the input interfaces, the device
      * factory, the message queue, and the newest state of every device.
@@ -31,6 +48,12 @@ namespace Fling
      *
      * A handler is always owned by a shared_ptr (make one with Create), so devices,
      * interfaces, and processors can keep a weak_ptr to it and to its queue.
+     *
+     * Threads: one thread writes (the writer: it polls, adds interfaces and calls
+     * HandleMessage). Readers on other threads use the queue (InputMessageProcessor,
+     * PendingInputReader), GetLatestSnapshot, GetLatestSequence, GetCapture and
+     * GetWatermark. Everything else is for the writer thread only. SetWriterLane makes
+     * debug builds check it.
      */
     class InputMessageHandler : public std::enable_shared_from_this<InputMessageHandler>
     {
@@ -100,11 +123,14 @@ namespace Fling
         void DispatchDeferredEvents();
 
         /**
-         * Give an input message its Sequence and TimeNs, apply it to the newest state, and
-         * push it to the queue. A TimeNs of 0 means "now". A TimeNs that is earlier than
-         * the last message's is set to the last message's time, so time never goes back.
+         * Give an input message its Sequence, TimeNs and Capture, apply it to the newest
+         * state, and push it to the queue. A TimeNs of 0 means "now". A TimeNs that is
+         * earlier than the last message's is set to the last message's time, so time never
+         * goes back. A CaptureChanged message sets the capture of itself and of every later
+         * message. Returns the Sequence it gave the message, so a caller never has to read
+         * GetLatestSequence after it (which is the same only while nobody else writes).
          */
-        void HandleMessage(InputMessage t_Message);
+        uint64 HandleMessage(InputMessage t_Message);
 
         /**
          * Log each message that HandleMessage gets, at this level. Off by default. Device
@@ -133,16 +159,50 @@ namespace Fling
 
         const InputMessageQueue& GetQueue() const { return *m_Queue; }
 
-        /** The newest state of every device, with every message applied. Edge counts are never cleared. */
+        /**
+         * The newest state of every device, with every message applied. Edge counts are
+         * never cleared. Writer thread only: other threads use GetLatestSnapshot.
+         */
         const InputDeviceStates& GetLatestState() const { return m_LatestState; }
 
-        uint64 GetLatestSequence() const { return m_LastSequence; }
+        /** A copy of the newest state and its sequence, taken under a lock. Any thread. For a resync after an overrun.
+         */
+        InputStateSnapshot GetLatestSnapshot() const;
+
+        /** The sequence of the newest message in the queue. Any thread. */
+        uint64 GetLatestSequence() const { return m_Queue->NewestSequence(); }
+
+        /** The UI capture that the next message gets. Any thread. */
+        InputCapture GetCapture() const { return m_Capture.load(std::memory_order_relaxed); }
+
+        /** Every message with a TimeNs before this is in the queue. Set at the end of each PollInterfaces. Any thread.
+         */
+        int64 GetWatermark() const { return m_Queue->Watermark(); }
+
+        /**
+         * Any thread: sleep until the end of the next PollInterfaces (the watermark and any
+         * replay cut it sent are then visible), or until t_Timeout. Returns at once when a
+         * poll ended since the last call. A tick that waits for the writer blocks here.
+         */
+        void WaitForPoll(std::chrono::nanoseconds t_Timeout) const { m_Polled.WaitFor(t_Timeout); }
+
+        /** The lane of the writer thread. Debug builds check it in the writer functions. None (the default) checks
+         * nothing. */
+        void SetWriterLane(Lane t_Lane) { m_WriterLane = t_Lane; }
+
+        Lane GetWriterLane() const { return m_WriterLane; }
 
         /** Fired by DispatchDeferredEvents for each device that connected. */
-        entt::sink<void(const InputDevice&)> OnDeviceConnected() { return entt::sink{m_OnDeviceConnected}; }
+        Sink<void(const InputDevice&)> OnDeviceConnected()
+        {
+            return Sink<void(const InputDevice&)>{m_OnDeviceConnected};
+        }
 
         /** Fired by DispatchDeferredEvents for each device that disconnected. */
-        entt::sink<void(const InputDevice&)> OnDeviceDisconnected() { return entt::sink{m_OnDeviceDisconnected}; }
+        Sink<void(const InputDevice&)> OnDeviceDisconnected()
+        {
+            return Sink<void(const InputDevice&)>{m_OnDeviceDisconnected};
+        }
 
     private:
         friend class InputDeviceFactory;
@@ -185,9 +245,21 @@ namespace Fling
         /** Shared so that processors can keep a weak_ptr to it. */
         std::shared_ptr<InputMessageQueue> m_Queue;
 
+        /** Only the writer touches it. */
         InputDeviceStates m_LatestState;
 
+        /** The same state, for other threads. The writer applies each message to both. */
+        mutable Mutex m_SnapshotMutex;
+        InputStateSnapshot m_Snapshot FLING_GUARDED_BY(m_SnapshotMutex);
+
         uint64 m_LastSequence = 0;
+
+        std::atomic<InputCapture> m_Capture{InputCapture::None};
+
+        Lane m_WriterLane = Lane::None;
+
+        /** Signaled at the end of each PollInterfaces. @see WaitForPoll */
+        mutable Event m_Polled{EventReset::Auto};
 
         int64 m_LastTimeNs = 0;
 
@@ -198,10 +270,10 @@ namespace Fling
         InputLogLevel m_LogLevel = InputLogLevel::Off;
 
         /** Log times are shown in seconds after this time. */
-        int64 m_StartNs = InputNowNs();
+        int64 m_StartNs = PlatformTime::NowNanoseconds();
 
-        entt::sigh<void(const InputDevice&)> m_OnDeviceConnected;
+        Signal<void(const InputDevice&)> m_OnDeviceConnected;
 
-        entt::sigh<void(const InputDevice&)> m_OnDeviceDisconnected;
+        Signal<void(const InputDevice&)> m_OnDeviceDisconnected;
     };
 } // namespace Fling

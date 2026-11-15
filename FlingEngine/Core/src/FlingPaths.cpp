@@ -27,15 +27,21 @@ namespace Fling
         struct stat info;
 
         const String Dir(t_Dir);
-        int statRC = stat( Dir.c_str(), &info );
-        if( statRC != 0 )
+        int statRC = stat(Dir.c_str(), &info);
+        if (statRC != 0)
         {
-            if (errno == ENOENT)  { return false; } // something along the path does not exist
-            if (errno == ENOTDIR) { return false; } // something in path prefix is not a dir
+            if (errno == ENOENT)
+            {
+                return false;
+            } // something along the path does not exist
+            if (errno == ENOTDIR)
+            {
+                return false;
+            } // something in path prefix is not a dir
             return false;
         }
 
-        return ( info.st_mode & S_IFDIR ) ? 1 : 0;        
+        return (info.st_mode & S_IFDIR) ? 1 : 0;
     }
 
     void FlingPaths::GetCurrentWorkingDir(char* t_OutBuf, size_t t_BufSize)
@@ -78,7 +84,7 @@ namespace Fling
 
             F_LOG_TRACE("Current working dir: {}", t_OutBuf);
         }
-#endif	// FLING_LINUX
+#endif // FLING_LINUX
     }
 
     String FlingPaths::ResolveProjectPath(const StringView t_Path)
@@ -95,4 +101,4 @@ namespace Fling
         }
         return PathToUtf8(PathFromUtf8(Root) / Path);
     }
-}   // namespace Fling 
+} // namespace Fling

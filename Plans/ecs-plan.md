@@ -1,6 +1,6 @@
 # ECS design and EnTT replacement plan
 
-Status: proposal for review. Nothing here is implemented yet.
+Status: Phases A to G are done: EnTT is gone. Phase H (features on the new core) is next, with ecs-features.md and ecs-parallel.md. Each phase heading below says what is left.
 
 **Newer plans replace parts of this one.** Where they disagree, the newer plan wins:
 
@@ -127,6 +127,19 @@ Movement/
 - **Level format:** the current JSON shape stays (`{version, title, entities:[{name, <TypeName>:{...}}]}`) so existing levels load. We add:
   - an `EntityGuid` component (stable 64-bit ID, saved), so `Entity` fields in components are remapped on load. This preserves references, which is the gap today.
   - a `version` per component, plus an optional upgrade function per type. Loading by field name already ignores unknown or missing fields.
+- **Versioning (back compatibility of authored JSON):**
+  - **No version bump** for the common changes, because load matches fields by name:
+    - Add a field: an old file has no key, so the field keeps its default value.
+    - Remove a field: the old key is ignored, and the next save drops it. `type.Removed("oldName")` stops the warning and reserves the name.
+    - Rename a field: `type.Field("speed", &Mover::Speed).FormerNames({"velocity"})`. Load tries the old names. Save writes the new one.
+    - Rename a component: `ComponentInfo::FormerNames`.
+    - Enums save by name, so reordering an enum is safe.
+  - **A version bump** when the meaning or shape changes (Euler degrees to a quaternion, one field split into two, a unit change): `type.Version(2).Upgrade(1, [](Json& data) { ... })`. The upgrade rewrites the old JSON object before the fields load, because the struct knows only the current layout. Upgrades chain (v1 to v2, then v2 to v3), and each is written once and never changed.
+  - The version is stored in the component's object as `"$v"`. A missing `"$v"` is version 1, so every level file today is a valid v1 file. Save writes the current version, and writes `"$v"` only when it is above 1.
+  - Save writes every field, not only the ones that differ from the default. Then a changed default never changes an old level. Override-only saving (prefab instances) must bump the version when a default changes.
+  - `modules.RemovedComponent("OldName")` stops the "Unknown component" warning for a deleted type, with an optional function that turns it into another component.
+  - **Not versioned:** play snapshots, undo, and rollback (same build, raw copy), cooked binary levels (they store a hash of the type layouts and are cooked again from JSON when it does not match), and network data (both sides check the same hash on connect).
+  - **Tests and tools:** old-format fixture files in `FlingTests` must load to known values. A CI check loads every `Assets/Levels/*.json` with no warnings. `--upgrade-levels` loads and saves every level at the current versions. Delete an upgrade function when no file older than its version is left.
 - **Archive abstraction:** both JSON (authoring) and binary (cooked levels, snapshots) go through the same reflected field visitor.
 - **World snapshot / restore:** chunks are copied with `memcpy` for trivially-copyable columns and with reflected copy for the rest. Pressing Play stores that snapshot. Stop writes it back into the same `World`. A network resim does not snapshot the whole world (§1.5).
 - **Prefabs = entity definitions** (Overwatch: an entity is an ID plus an optional entity-definition asset). A prefab is a JSON entity template. `Instantiate(world, prefab)` creates the entity immediately. Instances save only their overrides.
@@ -588,17 +601,30 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 **Strategy: strangler facade.** First, move every caller onto the *new Fling API* while EnTT still backs it. Then swap the backend underneath. Every phase is one or more PRs off `main` that keep Sandbox and FlingTests green on all CI platforms. Coordinate with `module-split-plan.md`, so that ECS code lands in the module targets that plan defines.
 
 ### Phase A — Remove the EnTT usage that is not ECS (small, low risk)
-- Done: `Guid`/`Guid_Handle`/`HS()` are replaced by the Core string types (`Name`, a stable 64-bit hash, and `AssetPath`/`AssetId`; see [`Skills/strings.md`](../Skills/strings.md)). Only the `"Default"_hs` render tags still use EnTT hashed strings; Phase B removes them.
+
+Done. `Guid`, `Guid_Handle`, and `HS()` are replaced by the Core string types (`Name`, a stable 64-bit hash, and `AssetPath`/`AssetId`; see [`Skills/strings.md`](../Skills/strings.md)). `Fling::Signal`/`Sink` (`Core/inc/Signals.h`) replace `entt::sigh` in the input handler. Core never linked EnTT after this phase, and the unused cereal submodule is gone.
+
 - Replace `entt::delegate` in `Core/inc/Input/Input.h/.inl` with a small `Fling::Delegate` (to be replaced in Phase D by `InputState`).
 - Remove `<entt/...>` from `FlingTypes.h`. Delete the dead cereal include `Core/inc/Serilization.h` and the `FlingExt::cereal` link.
 - After this phase, EnTT appears only in ECS code.
 
 ### Phase B — `Fling::World` facade, still backed by EnTT
+
+Done, with one change from the text below. The facade is `Fling::EntityStorage` (`Engine/inc/Ecs/EntityStorage.h`), not a second class named `World`, because `World` already exists as the level and play owner. Each `World` owns one `EntityStorage` (`World::GetStorage()`), and `Engine::g_Registry` is gone. The renderer, physics, the editor, `Game`, and the tests take `EntityStorage&`. Component hooks are `OnAdd<T>()`, `OnReplace<T>()`, and `OnRemove<T>()` with `(EntityStorage&, Entity)` callbacks. The render tags are `DeferredRenderTag` and `DebugRenderTag`. EnTT is still in `EntityStorage.h` (as the private backend, reached only by `Ecs/` code through `Native()`) until Phase F replaces it.
+
 - Add `Ecs/Entity.h`, `Ecs/World.h`, `Ecs/Query.h`, and `Ecs/Commands.h` with the final API (§1.2, §1.5 query types). The implementation wraps `entt::registry` in `Ecs/src/EnttBackend.cpp` and keeps EnTT out of the public headers.
 - `World` **owns** its storage. `Engine::g_Registry` is removed, and `entt::registry&` parameters become `World&` / `const World&` in `Game`, `VulkanApp`, `RenderPipeline`, `Subpass`, the editor panels, Sandbox, and the tests. This is mechanical and can go in several PRs, one per area.
 - Replace the `entt::tag<"Default"_hs>` / `"Debug"_hs` tags with tag structs (`DeferredRenderTag`).
 
 ### Phase C — `ModuleRegistration`, `TypeRegistry`, and reflection (replaces `ComponentTypeRegistry`)
+
+Done. `Ecs/Reflection.h` (`TypeBuilder`, `FieldBuilder`, `TypeDesc`, `FieldTraits`), `Ecs/ModuleRegistration.h`, and `Ecs/TypeRegistry.h` (with `SaveObject` and `LoadObject`) are in Engine. Each module has `Register<Module>(ModuleRegistration&)`, and `Game::Register` replaces `RegisterComponents` and `RegisterSystems`. A world builds its own `TypeRegistry` in `Init`. `ComponentTypeRegistry`, `JsonArchive`, and every `Serialize` method are gone. `EntityGuid` is saved, and `Entity` fields remap on load. The versioning in §1.4 is in (`$v`, upgrades, former field and component names, removed fields and components). The editor inspector is generated, with `EditorWidgets::Override<T>` for `MeshRenderer`. Changes from the text below:
+
+- `Engine::Startup` calls `RegisterEngine`, `RegisterGraphics`, and `RegisterPhysics` by hand. A generated `RegisterLinkedModules` waits for `fling_add_game` ([`project-model.md`](project-model.md)).
+- A component's former names are on the builder (`TypeBuilder::FormerNames`), not on `ComponentInfo`.
+- `MeshRenderer` still holds raw `Model*` and `Material*`, and saves its paths through `TypeBuilder::Serialize`. The `AssetRef` split is part of Phase E.
+- Sandbox groups each feature's registration in one function in `RegisterSandbox.cpp`, not in feature folders yet.
+
 - Add `ModuleRegistration`, `TypeBuilder<T>`, and `TypeRegistry::Build` (§1.3). `fling_add_game` generates `RegisterLinkedModules` from the target's link line. Port `Transform`, `NameComponent`, the lights, `MeshRenderer`, `Mover`, and `Rotator` onto `modules.Component` / `modules.Singleton`. During the move, `.Serialize(fn)` adapts existing `Serialize(JsonArchive&)` methods.
 - Make `World::LoadLevelFile` and `OutputLevelFile` use reflection, and add `EntityGuid`. Existing `Assets/Levels/*.json` must load without changes.
 - The editor inspector is generated from reflection. The hand-written widgets in `BaseEditor.cpp` become `EditorWidgets::Override<T>`.
@@ -606,17 +632,62 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 - Move Sandbox's code into feature folders (`Sandbox/Gameplay/Features/Movement/`, ...) as each feature is ported.
 
 ### Phase D — `Scheduler`, systems, and the tick loop
+
+Done. The scheduler, systems, and tick loop are in [`ecs-systems.md`](ecs-systems.md). The hierarchy is in too: `Transform` is plain data with a quaternion rotation (version 2, which upgrades the Euler angles of older levels), `Parent` and `Children` are kept in step by `HierarchyUtil`, and `TransformSystem` (`Engine.Transform`, its own fixed phase after `Engine.ResolveDeferred`) writes `LocalToWorld` parents first. `TransformUtil` has the old methods. The renderer reads `LocalToWorld` and uploads a mesh only when its version changes. Systems have deferred `Add`, `Remove`, and `Defer`, and a deferred destroy takes the subtree. The editor outliner is a tree with drag-to-parent. `Transform` keeps its name, not `LocalTransform`, so code and level files keep the key `Transform`.
+
 - Add `Fling::System`, `SystemDecl`, `SystemContext`, `Schedule`, and `Scheduler` (§1.5). `modules.System<T>()` records each system. `Scheduler::Build` orders them. `--validate-schedule` plus `fling_validate_schedule()` (POST_BUILD) fails the build on a cycle, a write/write conflict, or an unknown `After` name. Add the batched `Commands` flush (§1.10).
 - `Engine::Tick` calls `world.RunFrame(tickClock, now)` (§1.5). That frame applies completed loads, replays a resim when one is pending, then runs the due ticks, each with its own `TickInput`. The tick clock and the time types come from [`improve-time.md`](improve-time.md). It stops calling `Game::Update`. Move Sandbox's Rotator and Mover logic into registered systems. `Game` keeps start/stop and quit.
 - Add `SimTime`, `RealFrameTime`, and `InputState` (from the `Input` key maps), plus `SpawnQueue` and `ResolveSpawnSystem` for `OnTestSpawn`.
 - Add `TransformSystem` (computes the world matrix out of the renderer). `Transform` loses its methods, which move to `TransformUtil`.
 
 ### Phase E — Renderer to proxy components
+
+Done. `Graphics.Extract` writes a `RenderSnapshot` singleton (meshes with their world matrix and `LocalToWorld` version, and the lights), and every render pass reads only the snapshot. `MeshRenderer` holds only the two asset paths, saved as reflected fields. Each pass keeps a `MeshProxyTable` and its own GPU array per slot. A mesh that leaves the snapshot frees its proxy, which fixes the UBO leak on destroy and on level load. The storage hooks, the render tags, and the renderer's writes to the world (the point light gizmo is now a snapshot item in debug builds) are gone. `GraphicsTests` checks that destroying an entity frees its proxy slot. Changes from the text below:
+
+- One snapshot, not a `SnapshotRing`: the renderer runs on the game thread. The ring comes with a render thread.
+- No `OnRemove` hooks: comparing snapshots finds removed meshes, so nothing has to tell the renderer.
+- The editor still draws in the ImGui pass with the storage. Queued edits come with the editor commands in [`ecs-features.md`](ecs-features.md).
+- Mesh and material are path strings, not an `AssetRef<T>` type yet.
+
 - Subpasses become read-only. `Extract` systems handle mesh proxy creation and write the `RenderSnapshot` (transforms filtered by `Changed<Transform>`, light data). The renderer updates its UBOs from the `SnapshotRing`, not from the world.
 - Remove both `on_construct` connections. `OnRemove` hooks release the GPU resources (fixes the leak). The editor moves to queued edits in the `Editor` phase.
 - Add a test that destroys an entity with a `MeshRenderer` and checks that the proxy pool released its slot.
 
 ### Phase F — Native backend (can be built in parallel from Phase B on)
+
+Done. `Ecs/detail/NativeStorage.h` is archetype storage in chunks that grow from 1 KiB to 16 KiB, with a location table, an archetype graph of add and remove edges, a query cache that takes in new archetypes, and swap-and-pop rows. `ComponentInfo::Storage` picks `Table`, `Enableable` (an enabled bit per row, no move to turn it off), or `Sparse` (a set beside the archetypes, at a stable address). Systems iterate chunks over raw column pointers. Deferred adds and removes from all systems are grouped by entity, so an entity moves archetype once per flush. `EntityStorage::Stats()` reports archetypes, chunks, entities, and row moves. `EcsStorageTests.cpp` covers the verification list, and `[!benchmark]` cases measure iteration and create/destroy. Changes from the text below:
+
+- No `FLING_ECS_BACKEND` option and no CI run on both backends: the full suite, ASan and UBSan, and the headless Sandbox checksums were compared on both backends locally before EnTT was deleted.
+- No `Changed<T>` query filter yet: `LocalToWorld::Version` covers the renderer. Change versions per column come with the editor's dirty tracking.
+- The play snapshot stays the JSON save. A chunk `memcpy` snapshot comes with world clone (Phase H).
+- Physics creates bodies in a fixed order (highest entity index first), so its results do not depend on storage order.
+- Storage memory is engine owned (see Skills/ecs.md, Memory): chunks are blocks from a per-world `BlockAllocator`, Sparse components use a `SlotPool`, and deferred values a `LinearArena`. A steady tick makes no global allocation (`EcsAllocationTests.cpp`).
+- Chunks grow to 128 KiB, not 16 KiB: 16 KiB chunks restart the hardware prefetcher every few hundred rows, which made iteration about 50% slower.
+
+**Benchmark** (a temporary benchmark, since removed; Clang -O3, one core of a Ryzen 9 7950X, 1M entities with Position and Velocity, ns per entity):
+
+| | EnTT 3.1 | Native, range-for | Native, `Each` |
+|---|---|---|---|
+| Iterate one component | 0.56 | 0.66 | 0.62 |
+| Iterate two components | 1.38 | 0.74 | 0.77 |
+| Iterate two, over 8 archetypes | 1.60 | 0.88 | 0.91 |
+| Create with two components | 28 | 26 | 26 |
+| Add / remove one component | 8.0 / 3.4 | 19 / 18 | 19 / 18 |
+| Add to all / remove from all | 5.3 / 0.0 | 2.6 / 2.2 | 2.4 / 2.1 |
+| Destroy | 17 | 28 | 28 |
+| Memory, bytes per entity | 45.8 | 47.3 | 47.3 |
+| Memory after an add and remove of a third component | 58.2 | 51.5 | 51.5 |
+
+Memory counts the heap and the pages the world maps itself. Create is each library's usual form: `create` then `assign` for each component in EnTT, and `Create(Position{}, Velocity{})`, which goes straight to the archetype, in Fling. Create, then Add for each component, takes 45 ns. Add to all is a view loop with `assign` in EnTT (this version has no range add), and `AddToAll` in Fling. Remove from all is `reset<T>()` in EnTT, which only empties one pool.
+
+Multi-component iteration, the shape of most systems, is about 45% faster, and memory is smaller. A single add or remove costs about 2.5 to 5 times as much, because a change moves the whole row. That is the trade an archetype store makes, and the reason adds and removes are deferred and batched, and why `Create` with components and `AddToAll` move no row at a time.
+
+Where the time went, and what changed it:
+
+- A row move ran about 500 instructions. Each archetype edge now keeps the list of columns to copy, common component sizes copy with fixed-size moves, the enabled bits are skipped when an archetype has no Enableable column, and `Add` and `Remove` look the entity up once. Add went from 30 to 19 ns, remove from 27 to 18 ns.
+- The fresh pages of a new world cost about 10 ns per entity in page faults. The 128 KiB blocks now come from 2 MiB slabs that ask for a large page, which also makes iteration about 10% faster (fewer TLB misses).
+- `AddToAll` frees each source chunk as soon as its rows are out, so the target takes the same blocks and the move does not need twice the memory.
+
 - Implement the archetypes, chunks (growing 1→16 KiB), Enableable and Sparse storage, the query cache, change versions, snapshot, and ECS telemetry (§1.2, §1.4, §1.10) in `Engine/src/Ecs/` (see [`ecs-systems.md`](ecs-systems.md) §1). The EnTT backend maps Enableable to add/remove and Sparse to its own storage, so both backends behave the same.
 - Add an archetype/move budget check: a headless run of a fixed number of Sandbox frames.
 - Add a CMake option `FLING_ECS_BACKEND=entt|native` for the transition. CI runs FlingTests on both backends.
@@ -624,6 +695,9 @@ Graphics, Physics, Editor, and gameplay modules already depend on Engine, so the
 - Switch the default to `native` once the tests pass and the benchmarks hold.
 
 ### Phase G — Delete EnTT
+
+Done. The submodule, the CMake external, the Engine link, the bridge, and the named-type workaround are gone. `NOMINMAX` stays, because `windows.h` macros break `std::min` and `std::max` everywhere, not just in EnTT. The GCC 13 and Clang 16 floor stays as the oldest compilers CI tests. `grep -ri entt FlingEngine Sandbox FlingTests CMake` finds only words such as "ComponentType".
+
 - Remove `EnttBackend.cpp`, the backend option, `fling_add_external(entt ...)` (`CMake/FlingExternals.cmake:29`), the link at `FlingEngine/CMakeLists.txt`, the EnTT `NOMINMAX` workaround (`FlingTargets.cmake`), and the `external/entt` submodule.
 - Revisit the GCC 13 / Clang 16 floor that EnTT forced (root `CMakeLists.txt:42-52`).
 - Update `module-split-plan.md` (its module table lists entt), `architecture.md`, and the `ecs-architecture` skill's notes about Fling.

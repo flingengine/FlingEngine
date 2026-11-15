@@ -81,7 +81,7 @@ namespace Fling
 #endif // WITH_INPUT_RECORDING
     } // namespace
 
-    void InputDevicesPanel::Draw(entt::registry& t_Reg)
+    void InputDevicesPanel::Draw(Fling::EntityStorage& t_Reg)
     {
         if (!m_ShowWindow)
         {
@@ -436,9 +436,9 @@ namespace Fling
                 }
             }
 
-            const String Label = String(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) +
-                                      ", " + std::to_string(Owned) + " devices" +
-                                      (Interface->IsSimulated() ? ", simulated" : "") + ")";
+            const String Label = String(Interface->GetName()) + "  (interface " + std::to_string(Id.Value) + ", " +
+                                 std::to_string(Owned) + " devices" + (Interface->IsSimulated() ? ", simulated" : "") +
+                                 ")";
             if (ImGui::TreeNodeEx(Label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 if (Owned == 0)

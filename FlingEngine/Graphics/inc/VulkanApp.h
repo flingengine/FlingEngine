@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Ecs/EntityStorage.h"
 #include "FlingTypes.h"
+#include "PresentMode.h"
 #include "Singleton.hpp"
 #include "Strings/String.h"
 
-#include <entt/entity/registry.hpp>
 #include <memory>
 #include <vector>
 
@@ -46,8 +47,14 @@ namespace Fling
          */
         struct State;
 
-        void Init(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
-        void Shutdown(entt::registry& t_Reg);
+        /**
+         * Make the window, the device, and the render pipelines. t_Reg is the world that
+         * the editor UI (IDebugUI) changes. The render passes never read it.
+         */
+        void Init(PipelineFlags t_Conf, Fling::EntityStorage& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+
+        /** Wait for the GPU, then free the render pipelines, the device, and the window. */
+        void ShutdownRenderer();
 
         /**
          * Specify default constructible so that we have more explicit
@@ -57,9 +64,9 @@ namespace Fling
         ~VulkanApp();
 
         /**
-         * Updates all rendering buffers and sends commands to draw a frame
+         * Draw a frame from the RenderSnapshot in t_Reg (Graphics.PublishSnapshot writes it).
          */
-        void Update(float DeltaTime, entt::registry& t_Reg);
+        void Update(float DeltaTime, const Fling::EntityStorage& t_Reg);
 
         inline FlingWindow* GetCurrentWindow() const { return m_CurrentWindow; }
         inline LogicalDevice* GetLogicalDevice() const { return m_LogicalDevice; }
@@ -81,6 +88,17 @@ namespace Fling
 
         /** Callback for when a window is resized and to what width and height */
         void OnWindowResized(int Width, int Height);
+
+        /**
+         * VSync on or off (RunSettings::VSync; ChoosePresentMode picks the present mode from it
+         * and the modes the surface offers). Before Init it is the setting the swap chain is
+         * made with; after Init a change makes the swap chain again on the path a resize takes,
+         * after the next present. The same value changes nothing.
+         */
+        void SetVSync(bool t_VSync);
+
+        /** The present mode of the swap chain. */
+        PresentMode GetPresentMode() const;
 
     protected:
         void Init() override {}
@@ -104,11 +122,14 @@ namespace Fling
          */
         void CreateGameWindow(const uint32 t_width, const uint32 t_height);
 
-        void RecreateFrameResourcesForResize(entt::registry& t_Reg);
+        /** Make the swap chain and what depends on it again (a resize, an out-of-date swap chain, a present mode
+         * change). */
+        void RecreateSwapchain();
 
         /** Builds any render pipelines with their specific set of sub passes and shaders */
-        void
-        BuildRenderPipelines(PipelineFlags t_Conf, entt::registry& t_Reg, std::shared_ptr<Fling::IDebugUI> t_DebugUI);
+        void BuildRenderPipelines(PipelineFlags t_Conf,
+                                  Fling::EntityStorage& t_Reg,
+                                  std::shared_ptr<Fling::IDebugUI> t_DebugUI);
 
         /**
          * Build the frame buffers for each swap chain image along with the render pass
@@ -134,10 +155,13 @@ namespace Fling
         DepthBuffer* m_DepthBuffer = nullptr;
 
         /**
-         * Flag that when set to true, means that there is a pending resize of a window
-         * so we must recreate the necessary swap chain/frame buffer elements
+         * True when the swap chain must be made again after this frame's present (a resize, a
+         * present mode change): RecreateSwapchain.
          */
-        uint8 bNeedsResizing : 1;
+        bool bSwapchainOutOfDate = false;
+
+        /** @see SetVSync */
+        bool m_VSync = true;
 
         /** Keep a vector of command buffers that we want to use so that we can have one for each active frame */
         std::vector<CommandBuffer*> m_DrawCmdBuffers;

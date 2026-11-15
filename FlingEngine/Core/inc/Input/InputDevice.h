@@ -17,7 +17,7 @@ namespace Fling
      *
      * The interface that owns the device calls the Push functions. Each one makes an
      * InputMessage and sends it to the InputMessageHandler. A Push on a device that is
-     * not connected does nothing. A time of 0 means "now" (InputNowNs).
+     * not connected does nothing. A time of 0 means "now" (PlatformTime::NowNanoseconds).
      *
      * The factory owns devices with a shared_ptr, so code can keep a device. A device
      * keeps only a weak_ptr to its handler: after the handler is destroyed, the Push

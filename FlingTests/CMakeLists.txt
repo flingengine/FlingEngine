@@ -8,7 +8,8 @@ include(Catch)
 
 # One Catch2 executable per module that owns tests. Each links Catch2 and only
 # that module; public dependencies come along transitively. An empty folder
-# adds no target, so a module with no real tests (Graphics, Editor) stays out.
+# adds no target, so a module with no real tests (Editor) stays out. Graphics
+# tests use no GPU: they test the CPU side of the renderer.
 # Extra libraries after MODULE are linked too (for example the physics provider).
 function( fling_add_module_tests MODULE )
 	file( GLOB _sources CONFIGURE_DEPENDS
@@ -54,6 +55,29 @@ endfunction()
 fling_add_module_tests( Core )
 fling_add_module_tests( Resources )
 fling_add_module_tests( Engine )
+
+# Tests of an example game system, not of the engine: the Sandbox look camera
+# (Plans/improve-input.md, late look) and stasis (Docs/tutorial-systems-and-camera.md).
+# Its sources use the Engine module only, so they build here, headless, without the rest
+# of the Sandbox. No engine test target compiles Sandbox code.
+add_executable( SandboxExampleTests
+	"${CMAKE_CURRENT_SOURCE_DIR}/SandboxExample/LookCameraTests.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/SandboxExample/LookRig.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/SandboxExample/StasisTests.cpp"
+	"${FLING_ROOT_DIR}/Sandbox/Gameplay/src/Systems/CameraStatusSystem.cpp"
+	"${FLING_ROOT_DIR}/Sandbox/Gameplay/src/Systems/LookCameraSystem.cpp"
+	"${FLING_ROOT_DIR}/Sandbox/Gameplay/src/Systems/LookCameraViewSystem.cpp"
+	"${FLING_ROOT_DIR}/Sandbox/Gameplay/src/Systems/StasisSystem.cpp"
+)
+fling_configure_target( SandboxExampleTests )
+fling_set_bin_output( SandboxExampleTests )
+target_include_directories( SandboxExampleTests PRIVATE "${FLING_ROOT_DIR}/Sandbox/Gameplay/inc" )
+target_link_libraries( SandboxExampleTests PRIVATE Catch2::Catch2WithMain Fling::Engine )
+catch_discover_tests( SandboxExampleTests
+	DISCOVERY_MODE PRE_TEST
+	WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+)
+fling_add_module_tests( Graphics )
 fling_add_module_tests( Physics Fling::DefaultPhysicsProvider )
 fling_add_module_tests( Application )
 
@@ -117,11 +141,25 @@ if( WITH_EDITOR_FLAG )
 	fling_add_isolation_test( EditorHeaders        Fling::Editor    "BaseEditor.h"      VISIBLE )
 endif()
 
+# ECS compile checks: the function and the list of cases, shared with every build of the tests
+include( EcsCompileFail/EcsCompileChecks.cmake )
+
 # Every first-party vk* call must be named in VulkanFunctions.inl.
 add_test(NAME "Vulkan calls are listed"
 	COMMAND ${CMAKE_COMMAND}
 		-DSOURCE_ROOT=${FLING_ROOT_DIR}
 		-P "${CMAKE_CURRENT_SOURCE_DIR}/VulkanLoad/CheckVulkanCalls.cmake"
+)
+
+# Simulation code calls no math that the platform's C library rounds its own way
+# (SimMath.h). The self test checks the patterns of the check.
+add_test(NAME "Simulation math is the same on every platform"
+	COMMAND ${CMAKE_COMMAND}
+		-DSOURCE_ROOT=${FLING_ROOT_DIR}
+		-P "${CMAKE_CURRENT_SOURCE_DIR}/SimMath/CheckSimMath.cmake"
+)
+add_test(NAME "Simulation math check finds banned calls"
+	COMMAND ${CMAKE_COMMAND} -DSELF_TEST=ON -P "${CMAKE_CURRENT_SOURCE_DIR}/SimMath/CheckSimMath.cmake"
 )
 
 # Unattended crash tests. CrashProbe crashes on purpose after

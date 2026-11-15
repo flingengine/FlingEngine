@@ -14,79 +14,77 @@ namespace Fling
     class Texture : public Resource
     {
     public:
-
-		static std::shared_ptr<Fling::Texture> Create(const AssetPath& t_Path);
+        static std::shared_ptr<Fling::Texture> Create(const AssetPath& t_Path);
 
         explicit Texture(const AssetPath& t_Path);
         virtual ~Texture();
 
-		FORCEINLINE uint32 GetWidth() const { return m_Width; }
-		FORCEINLINE uint32 GetHeight() const { return m_Height; }
-		FORCEINLINE int32 GetChannels() const { return m_Channels; }
+        FORCEINLINE uint32 GetWidth() const { return m_Width; }
+        FORCEINLINE uint32 GetHeight() const { return m_Height; }
+        FORCEINLINE int32 GetChannels() const { return m_Channels; }
         FORCEINLINE uint32 GetMipLevels() const { return m_MipLevels; }
 
-		FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
-		FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
-		FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
-		FORCEINLINE VkDescriptorImageInfo* GetDescriptorInfo() { return &m_ImageInfo; }
+        FORCEINLINE const VkImage& GetVkImage() const { return m_vVkImage; }
+        FORCEINLINE const VkImageView& GetVkImageView() const { return m_ImageView; }
+        FORCEINLINE const VkSampler& GetSampler() const { return m_TextureSampler; }
+        FORCEINLINE VkDescriptorImageInfo* GetDescriptorInfo() { return &m_ImageInfo; }
         FORCEINLINE const VkFormat& GetVkImageFormat() const { return m_Format; }
         /**
          * Get the Image Size object (width * height * 4)
          *          Multiply by 4 because the pixel is laid out row by row with 4 bytes per pixel
-         * @return int32 
+         * @return int32
          */
-        uint64 GetImageSize() const { return m_Width * m_Height * 4; } 
+        uint64 GetImageSize() const { return m_Width * m_Height * 4; }
 
-		/**
-		* Release the Vulkan resources of this image
-		*/
-		void Release();
+        /**
+         * Release the Vulkan resources of this image
+         */
+        void Release();
 
     private:
-
-		/**
-		* Loads the Vulkan resources needed for this image
-		*/
-		void LoadVulkanImage();
+        /**
+         * Loads the Vulkan resources needed for this image
+         */
+        void LoadVulkanImage();
 
         /**
          * Create a Image View object that is needed to sample this image from the swap chain
          */
         void CreateImageView();
 
-		void CreateTextureSampler();
+        void CreateTextureSampler();
 
-		void CopyBufferToImage(VkBuffer t_Buffer);
+        void CopyBufferToImage(VkBuffer t_Buffer);
 
         void GenerateMipMaps(VkFormat imageFormat);
 
         /** Width of this image */
-		uint32 m_Width = 0;
+        uint32 m_Width = 0;
 
         /** Height of this image */
-		uint32 m_Height = 0;
+        uint32 m_Height = 0;
 
         uint32 m_MipLevels = 0;
 
         /** The color channels of this image */
         int32 m_Channels = 0;
 
-		/** The Vulkan image data */
-		VkImage m_vVkImage = VK_NULL_HANDLE;
+        /** The Vulkan image data */
+        VkImage m_vVkImage = VK_NULL_HANDLE;
 
         /** The view of this image for the swap chain */
         VkImageView m_ImageView = VK_NULL_HANDLE;
 
-		VkSampler m_TextureSampler = VK_NULL_HANDLE;
+        VkSampler m_TextureSampler = VK_NULL_HANDLE;
 
-		/** The Vulkan memory resource for this image */
-		VkDeviceMemory m_VkMemory = VK_NULL_HANDLE;
+        /** The Vulkan memory resource for this image */
+        VkDeviceMemory m_VkMemory = VK_NULL_HANDLE;
 
-		VkDescriptorImageInfo m_ImageInfo{};
-        
+        VkDescriptorImageInfo m_ImageInfo{};
+
         /** Decoded pixels. Only valid while LoadVulkanImage uploads them, then freed. **/
         stbi_uc* m_PixelData = nullptr;
 
         VkFormat m_Format = VK_FORMAT_R8G8B8A8_UNORM;
     };
-}   // namespace Fling
+} // namespace Fling

@@ -1,0 +1,22 @@
+# Recorded at the default 30 Hz with: Sandbox --null-render --unattended --frames 120 --seed 1
+#   --exec direct --replay-input Sandbox/Tests/Input/look_camera.input.jsonl --record-input <this file>
+# The last line holds the tick rate and the input cut of each of the 120 ticks
+# (Skills/input-playback.md), so a replay gives each tick the same input at any frame rate.
+# The cuts replay only at 30 Hz. look_camera_cuts_60hz.input.jsonl is the 60 Hz recording.
+{"format":"fling-input","version":2,"tickRate":30,"duration":4.0,"devices":[{"capabilities":["MouseButtons","Pointer","RelativeMotion","Wheel"],"id":1,"name":"Mouse","path":"playback:1","productId":0,"type":"Mouse","vendorId":0},{"capabilities":["Keys"],"id":2,"name":"Keyboard","path":"playback:2","productId":0,"type":"Keyboard","vendorId":0}]}
+{"t":0.066667,"device":1,"type":"MouseMove","dx":10,"dy":0,"x":10.0,"y":0.0}
+{"t":0.066667,"device":1,"type":"MouseMove","dx":10,"dy":-5,"x":20.0,"y":-5.0}
+{"t":0.066667,"device":1,"type":"MouseMove","dx":4,"dy":0,"x":24.0,"y":-5.0}
+{"t":0.1,"device":2,"type":"KeyDown","key":"F"}
+{"t":0.1,"device":2,"type":"KeyUp","key":"F"}
+{"t":0.133333,"device":1,"type":"MouseMove","dx":50,"dy":0,"x":74.0,"y":-5.0}
+{"t":0.133333,"device":1,"type":"MouseMove","dx":50,"dy":0,"x":124.0,"y":-5.0}
+{"t":0.2,"device":2,"type":"KeyDown","key":"F"}
+{"t":0.2,"device":2,"type":"KeyUp","key":"F"}
+{"t":0.2,"device":1,"type":"MouseMove","dx":6,"dy":0,"x":130.0,"y":-5.0}
+{"t":0.233333,"device":2,"type":"KeyDown","key":"Equal"}
+{"t":0.233333,"device":2,"type":"KeyUp","key":"Equal"}
+{"t":0.233333,"device":1,"type":"MouseMove","dx":10,"dy":0,"x":140.0,"y":-5.0}
+{"t":0.266667,"device":1,"type":"MouseMove","dx":0,"dy":-800,"x":140.0,"y":-805.0}
+{"t":0.266667,"device":1,"type":"MouseMove","dx":0,"dy":800,"x":140.0,"y":-5.0}
+{"tickCuts":{"tickRate":30,"counts":[0,0,3,5,7,7,10,13,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]}}

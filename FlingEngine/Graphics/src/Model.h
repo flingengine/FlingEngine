@@ -9,60 +9,57 @@
 
 namespace Fling
 {
-	/**
-	 * A model represents a 3D model (.obj files for now) with vertices
-	 * 			and indecies. A model has a vertex and index buffer and can be 
-	 * 			bound to a command buffer.
-	 */
+    /**
+     * A model represents a 3D model (.obj files for now) with vertices
+     * 			and indecies. A model has a vertex and index buffer and can be
+     * 			bound to a command buffer.
+     */
     class Model : public Resource
     {
-	public:
+    public:
+        static std::shared_ptr<Fling::Model> Create(const AssetPath& t_Path);
 
-		static std::shared_ptr<Fling::Model> Create(const AssetPath& t_Path);
+        /** Creates a quad primitive model */
+        static std::shared_ptr<Fling::Model> Quad();
 
-		/** Creates a quad primitive model */
-		static std::shared_ptr<Fling::Model> Quad();
+        /**
+         * Load a model from the asset path t_Path.
+         * @param t_Path            The path of this model, relative to the assets folder
+         */
+        Model(const AssetPath& t_Path);
 
-		/**
-		 * Load a model from the asset path t_Path.
-		 * @param t_Path            The path of this model, relative to the assets folder
-		 */
-		Model(const AssetPath& t_Path);
+        /**
+         * @param	t_Path A unique name for this model. It's up to the user to ensure uniqueness
+         */
+        Model(const AssetPath& t_Path, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies);
 
-		/**
-		 * @param	t_Path A unique name for this model. It's up to the user to ensure uniqueness
-		 */
-		Model(const AssetPath& t_Path, std::vector<Vertex>& t_Verts, std::vector<uint32> t_Indecies);
+        ~Model();
 
-		~Model();
+        FORCEINLINE Buffer* GetVertexBuffer() const { return m_VertexBuffer; }
+        FORCEINLINE Buffer* GetIndexBuffer() const { return m_IndexBuffer; }
 
-		FORCEINLINE Buffer* GetVertexBuffer() const { return m_VertexBuffer; }
-		FORCEINLINE Buffer* GetIndexBuffer() const { return m_IndexBuffer; }
+        FORCEINLINE const std::vector<Vertex>& GetVerts() const { return m_Verts; }
+        FORCEINLINE const std::vector<uint32>& GetIndices() const { return m_Indices; }
 
-		FORCEINLINE const std::vector<Vertex>& GetVerts() const { return m_Verts; }
-		FORCEINLINE const std::vector<uint32>& GetIndices() const { return m_Indices; }
+        FORCEINLINE uint32 GetIndexCount() const { return static_cast<uint32>(m_Indices.size()); }
+        FORCEINLINE uint32 GetVertexCount() const { return static_cast<uint32>(m_Verts.size()); }
 
-		FORCEINLINE uint32 GetIndexCount() const { return static_cast<uint32>(m_Indices.size()); }
-		FORCEINLINE uint32 GetVertexCount() const { return static_cast<uint32>(m_Verts.size()); }
+        constexpr static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
-		constexpr static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
+    private:
+        void CreateBuffers();
 
-	private:
+        static void CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices);
 
-		void CreateBuffers();
+        std::vector<Vertex> m_Verts;
+        std::vector<uint32> m_Indices;
 
-		static void CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices);
+        Buffer* m_VertexBuffer = nullptr;
+        Buffer* m_IndexBuffer = nullptr;
 
-		std::vector<Vertex> m_Verts;
-		std::vector<uint32> m_Indices;
-
-		Buffer* m_VertexBuffer = nullptr;
-		Buffer* m_IndexBuffer = nullptr;
-
-		/**
-		 * Load this model from Tiny Obj loader
-		 */
-		void LoadModel();
-
+        /**
+         * Load this model from Tiny Obj loader
+         */
+        void LoadModel();
     };
-}   // namespace Fling
+} // namespace Fling

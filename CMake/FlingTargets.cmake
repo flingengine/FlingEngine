@@ -33,23 +33,29 @@ function(fling_set_warnings TARGET)
 		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			target_compile_options(${TARGET} PRIVATE -Wno-class-memaccess)
 		endif()
-		# Std mutex types have no annotations. First-party code uses the wrappers
-		# in Threading/, which Clang can check. A thread-safety warning fails the build.
-		if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-			target_compile_options(${TARGET} PRIVATE -Wthread-safety -Werror=thread-safety)
-		endif()
+	endif()
+	# Std mutex types have no annotations. First-party code uses the wrappers
+	# in Threading/, which Clang can check, clang-cl too. A thread-safety warning fails the build.
+	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		target_compile_options(${TARGET} PRIVATE -Wthread-safety -Werror=thread-safety)
 	endif()
 endfunction()
 
 # Language standard, warnings, platform defines, and VS filters for a first-party target.
-# Floating point rules for simulation code (physics, and later the fixed tick).
+# Floating point rules for simulation code. fling_configure_target applies them to
+# every first-party target, because fixed systems, the helpers they call (TransformUtil,
+# SimMath) and the inline glm code they use are in every module, not only Physics.
 # The compiler must not fuse a multiply and an add into one FMA instruction, and
 # must not use fast math, because both change the result on some platforms or
 # compilers and break determinism. MSVC: /fp:precise does not fuse in VS 2022
-# and later.
+# and later. clang-cl reads /fp:precise as -ffp-model=precise, which allows
+# contraction, so it also gets -ffp-contract=off.
 function(fling_set_deterministic_math TARGET)
 	if(MSVC)
 		target_compile_options(${TARGET} PRIVATE /fp:precise)
+		if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+			target_compile_options(${TARGET} PRIVATE /clang:-ffp-contract=off)
+		endif()
 	else()
 		target_compile_options(${TARGET} PRIVATE -ffp-contract=off -fno-fast-math)
 	endif()
@@ -63,11 +69,12 @@ function(fling_configure_target TARGET)
 	)
 
 	if(MSVC)
-		# NOMINMAX: Entt warning, see https://github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-C4003-the-min-the-max-and-the-macro
+		# NOMINMAX: windows.h min and max macros break std::min and std::max
 		target_compile_definitions(${TARGET} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
 	endif()
 
 	fling_set_warnings(${TARGET})
+	fling_set_deterministic_math(${TARGET})
 
 	fling_source_groups(${TARGET})
 endfunction()
@@ -77,5 +84,22 @@ endfunction()
 function(fling_set_bin_output TARGET)
 	set_target_properties(${TARGET} PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
+endfunction()
+
+# Checks a game's ECS system schedule after each build: runs the game headless
+# with --validate-schedule, so a schedule error (two unordered writers, a cycle,
+# a bad After name) fails `cmake --build` before anyone runs the game
+# (Plans/ecs-systems.md section 3.6). Turn it off with -DFLING_VALIDATE_SCHEDULE=OFF.
+option(FLING_VALIDATE_SCHEDULE "Check the ECS system schedule after building a game" ON)
+function(fling_validate_schedule TARGET)
+	if(NOT FLING_VALIDATE_SCHEDULE)
+		return()
+	endif()
+	add_custom_command(TARGET ${TARGET} POST_BUILD
+		COMMAND $<TARGET_FILE:${TARGET}> --null-render --unattended --validate-schedule
+		WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+		COMMENT "Checking the ECS system schedule of ${TARGET}"
+		VERBATIM
 	)
 endfunction()

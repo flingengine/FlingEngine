@@ -25,7 +25,7 @@ namespace Fling
      */
     namespace ThreadManager
     {
-        /** Return a new ID. IDs start after GameThreadId and are not used again. */
+        /** Return a new ID. IDs start after MainThreadId and are not used again. */
         CORE_API ThreadId AllocateId();
 
         /** Add t_Id, or replace its entry. */

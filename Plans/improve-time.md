@@ -555,6 +555,14 @@ on every CI platform.
 | **T6** | Move into `Scheduler::RunFrame`; scheduler rejects `Read<RealFrameTime>` in sim phases | `ecs-plan.md` scheduler |
 | **Later** | Render thread with a lock-free `SnapshotRing`, physics step as jobs, `SimHistory` and resim, `NetworkTickClock`, audio scheduling, correction smoothing | Threading, job system, and netcode work |
 
+Status (experiment, see `H/NOTES-time.md` in the build harness): `PlatformTime`
+(with a virtual clock for headless runs and tests), `TickTimeline` and
+`TickWindow` (Core), a runner-owned timeline and `TickLedger` with a state hash
+(Engine), input assigned to ticks by time, per-tick input cuts in recordings, and
+`--dump-ticks` exist. `TickClock`, `PresentationClock`, time scale, rate changes
+and `SnapshotRing` do not. The tick length is a whole number of nanoseconds
+(16 666 667 at 60 Hz), not `TicksPerSecond`.
+
 ## Open questions
 
 - Which hitch threshold do editor builds use? A breakpoint is always a hitch,

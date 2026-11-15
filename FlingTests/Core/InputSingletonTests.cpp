@@ -1,3 +1,4 @@
+#include "../Common/TestScopes.h"
 #include "Input/Input.h"
 #include "Input/VirtualInputDeviceInterface.h"
 #include "Logger.h"
@@ -8,14 +9,6 @@
 namespace
 {
     using namespace Fling;
-
-    /** Starts the Input singleton, and always shuts it down at the end of the test. */
-    struct InputGuard
-    {
-        InputGuard() { Input::Get().Init(); }
-
-        ~InputGuard() { Input::Get().Shutdown(); }
-    };
 
     struct DeviceListener
     {
@@ -55,18 +48,6 @@ namespace
         return Message;
     }
 
-    InputMessage MakeMove(InputDeviceId t_Device, int32 t_DeltaX, int32 t_DeltaY, float t_X, float t_Y)
-    {
-        InputMessage Message;
-        Message.Device = t_Device;
-        Message.Type = InputMessageType::MouseMove;
-        Message.DeltaX = t_DeltaX;
-        Message.DeltaY = t_DeltaY;
-        Message.PositionX = t_X;
-        Message.PositionY = t_Y;
-        return Message;
-    }
-
     std::shared_ptr<VirtualInputDeviceInterface> AddVirtual()
     {
         const InputInterfaceId Id = Input::Get().AddInterface<VirtualInputDeviceInterface>();
@@ -78,33 +59,20 @@ TEST_CASE("Input singleton is safe before Init", "[Input]")
 {
     Input& Singleton = Input::Get();
     REQUIRE_FALSE(Singleton.IsInitialized());
-    REQUIRE_FALSE(Singleton.IsHeld(Keys::W));
-    REQUIRE_FALSE(Singleton.WasPressed(Keys::W));
-    REQUIRE_FALSE(Singleton.WasReleased(Keys::W));
-    REQUIRE(Singleton.GetAxisValue(Keys::GamepadLeftX) == 0.0f);
+    REQUIRE_FALSE(Singleton.IsKeyboardCaptured());
     REQUIRE(Singleton.GetDevices().empty());
     REQUIRE(Singleton.GetDevice(InputDeviceId{1}) == nullptr);
     REQUIRE_FALSE(Singleton.AddInterface<VirtualInputDeviceInterface>().IsValid());
-
-    int32 X = 5;
-    int32 Y = 5;
-    Singleton.GetMouseDelta(X, Y);
-    REQUIRE(X == 0);
-    REQUIRE(Y == 0);
-
-    float PointerX = 0.0f;
-    float PointerY = 0.0f;
-    REQUIRE_FALSE(Singleton.GetPointerPosition(PointerX, PointerY));
+    REQUIRE_FALSE(Singleton.CreateProcessor().IsValid());
 
     Singleton.Poll();
-    Singleton.BeginTick();
-    Singleton.EndTick();
+    Singleton.PollLate();
     Singleton.Shutdown();
 }
 
-TEST_CASE("Input singleton ticks", "[Input]")
+TEST_CASE("Input singleton devices and processors", "[Input]")
 {
-    InputGuard Guard;
+    TestScopes::InputScope Guard;
     Input& Singleton = Input::Get();
     REQUIRE(Singleton.IsInitialized());
 
@@ -112,73 +80,6 @@ TEST_CASE("Input singleton ticks", "[Input]")
     REQUIRE(Virtual != nullptr);
     const InputDeviceId Keyboard = Virtual->CreateDevice(KeyboardInfo());
     const InputDeviceId Mouse = Virtual->CreateDevice(MouseInfo());
-
-    SECTION("A press shows as held and pressed, then only held")
-    {
-        Virtual->Queue(MakeKey(Keyboard, Keys::W, true));
-        Singleton.Poll();
-        Singleton.BeginTick();
-        REQUIRE(Singleton.IsHeld(Keys::W));
-        REQUIRE(Singleton.WasPressed(Keys::W));
-        REQUIRE_FALSE(Singleton.WasReleased(Keys::W));
-        REQUIRE(Singleton.GetKeyState(Keyboard, Keys::W).IsHeld);
-        Singleton.EndTick();
-
-        Singleton.Poll();
-        Singleton.BeginTick();
-        REQUIRE(Singleton.IsHeld(Keys::W));
-        REQUIRE_FALSE(Singleton.WasPressed(Keys::W));
-        Singleton.EndTick();
-    }
-
-    SECTION("A press and release in one tick")
-    {
-        Virtual->Queue(MakeKey(Keyboard, Keys::W, true));
-        Virtual->Queue(MakeKey(Keyboard, Keys::W, false));
-        Singleton.Poll();
-        Singleton.BeginTick();
-        REQUIRE(Singleton.WasPressed(Keys::W));
-        REQUIRE(Singleton.WasReleased(Keys::W));
-        REQUIRE_FALSE(Singleton.IsHeld(Keys::W));
-        Singleton.EndTick();
-    }
-
-    SECTION("Input is not visible before BeginTick")
-    {
-        Virtual->Queue(MakeKey(Keyboard, Keys::W, true));
-        Singleton.Poll();
-        REQUIRE_FALSE(Singleton.IsHeld(Keys::W));
-        Singleton.BeginTick();
-        REQUIRE(Singleton.IsHeld(Keys::W));
-        Singleton.EndTick();
-    }
-
-    SECTION("Mouse delta sums and resets after EndTick")
-    {
-        Virtual->Queue(MakeMove(Mouse, 3, -2, 10.0f, 20.0f));
-        Virtual->Queue(MakeMove(Mouse, 4, 5, 14.0f, 25.0f));
-        Singleton.Poll();
-        Singleton.BeginTick();
-
-        int32 X = 0;
-        int32 Y = 0;
-        Singleton.GetMouseDelta(X, Y);
-        REQUIRE(X == 7);
-        REQUIRE(Y == 3);
-
-        float PointerX = 0.0f;
-        float PointerY = 0.0f;
-        REQUIRE(Singleton.GetPointerPosition(PointerX, PointerY));
-        REQUIRE(PointerX == 14.0f);
-        REQUIRE(PointerY == 25.0f);
-        Singleton.EndTick();
-
-        Singleton.GetMouseDelta(X, Y);
-        REQUIRE(X == 0);
-        REQUIRE(Y == 0);
-        REQUIRE(Singleton.GetPointerPosition(PointerX, PointerY));
-        REQUIRE(PointerX == 14.0f);
-    }
 
     SECTION("Devices are listed")
     {
@@ -201,10 +102,10 @@ TEST_CASE("Input singleton ticks", "[Input]")
 
         Virtual->Queue(MakeKey(Keyboard, Keys::W, false));
         Singleton.Poll();
-        Singleton.BeginTick();
-        Singleton.EndTick();
+        InputMessageProcessor First = Singleton.CreateProcessor();
+        REQUIRE_FALSE(First.GetState().GetKeyState(Keyboard, Keys::W).IsHeld);
 
-        REQUIRE_FALSE(Singleton.IsHeld(Keys::W));
+        // Another processor reading does not move this one
         REQUIRE(Other.GetState().GetKeyState(Keyboard, Keys::W).IsHeld);
 
         Other.ConsumeUntil();
@@ -214,12 +115,12 @@ TEST_CASE("Input singleton ticks", "[Input]")
 
 TEST_CASE("Input singleton device events", "[Input]")
 {
-    InputGuard Guard;
+    TestScopes::InputScope Guard;
     Input& Singleton = Input::Get();
 
     DeviceListener Listener;
-    Singleton.OnDeviceConnected().connect<&DeviceListener::OnConnected>(Listener);
-    Singleton.OnDeviceDisconnected().connect<&DeviceListener::OnDisconnected>(Listener);
+    Singleton.OnDeviceConnected().Connect<&DeviceListener::OnConnected>(Listener);
+    Singleton.OnDeviceDisconnected().Connect<&DeviceListener::OnDisconnected>(Listener);
 
     std::shared_ptr<VirtualInputDeviceInterface> Virtual = AddVirtual();
     const InputDeviceId Keyboard = Virtual->CreateDevice(KeyboardInfo());
@@ -236,75 +137,41 @@ TEST_CASE("Input singleton device events", "[Input]")
     REQUIRE(Listener.Disconnected[0] == Keyboard.Value);
 }
 
-TEST_CASE("UI capture gives the game neutral input", "[Input]")
+TEST_CASE("UI capture is stamped on the stream, and a processor still gets every message", "[Input]")
 {
-    InputGuard Guard;
+    TestScopes::InputScope Guard;
     std::shared_ptr<VirtualInputDeviceInterface> Virtual = AddVirtual();
     const InputDeviceId Keyboard = Virtual->CreateDevice(KeyboardInfo());
-    const InputDeviceId Mouse = Virtual->CreateDevice(MouseInfo());
+    InputMessageProcessor Processor = Input::Get().CreateProcessor();
 
     Input::Get().SetUICapture(true, false);
+    REQUIRE(Input::Get().IsKeyboardCaptured());
+    REQUIRE_FALSE(Input::Get().IsMouseCaptured());
     Virtual->Queue(MakeKey(Keyboard, Keys::M, true));
-    Virtual->Queue(MakeKey(Mouse, Keys::MouseRight, true));
-    Virtual->Queue(MakeMove(Mouse, 4, 2, 10.0f, 10.0f));
     Input::Get().Poll();
-    Input::Get().BeginTick();
 
-    SECTION("Captured keyboard keys are not pressed or held")
-    {
-        REQUIRE_FALSE(Input::Get().WasPressed(Keys::M));
-        REQUIRE_FALSE(Input::Get().IsHeld(Keys::M));
-        REQUIRE_FALSE(Input::Get().GetKeyState(Keyboard, Keys::M).IsHeld);
-    }
-
-    SECTION("The mouse is not captured, so it still works")
-    {
-        REQUIRE(Input::Get().IsHeld(Keys::MouseRight));
-        int32 X = 0;
-        int32 Y = 0;
-        Input::Get().GetMouseDelta(X, Y);
-        REQUIRE(X == 4);
-        REQUIRE(Y == 2);
-    }
-
-    SECTION("Mouse capture hides mouse buttons and movement")
-    {
-        Input::Get().SetUICapture(false, true);
-        REQUIRE_FALSE(Input::Get().IsHeld(Keys::MouseRight));
-        int32 X = 0;
-        int32 Y = 0;
-        Input::Get().GetMouseDelta(X, Y);
-        REQUIRE(X == 0);
-        REQUIRE(Y == 0);
-        REQUIRE(Input::Get().IsHeld(Keys::M));
-    }
-
-    SECTION("Another processor still gets the captured input")
-    {
-        REQUIRE(Input::Get().GetGameProcessor().GetState().GetKeyState(Keyboard, Keys::M).IsHeld);
-    }
-
-    SECTION("After the capture ends, a held key is held again")
-    {
-        Input::Get().EndTick();
-        Input::Get().SetUICapture(false, false);
-        REQUIRE(Input::Get().IsHeld(Keys::M));
-        REQUIRE_FALSE(Input::Get().WasPressed(Keys::M));
-    }
+    InputMessage Messages[8];
+    const uint32 Count = Processor.Read(Messages, 8);
+    REQUIRE(Count > 0);
+    REQUIRE(Messages[Count - 1].Type == InputMessageType::KeyDown);
+    REQUIRE(Messages[Count - 1].Capture == InputCapture::Keyboard);
+    Processor.ConsumeUntil();
+    REQUIRE(Processor.GetState().GetKeyState(Keyboard, Keys::M).IsHeld);
 }
 
 TEST_CASE("Input logging does not change messages", "[Input]")
 {
     Logger::Get().Init();
-    InputGuard Guard;
+    TestScopes::InputScope Guard;
     Input::Get().SetLogLevel(InputLogLevel::All);
     std::shared_ptr<VirtualInputDeviceInterface> Virtual = AddVirtual();
     const InputDeviceId Keyboard = Virtual->CreateDevice(KeyboardInfo());
 
+    InputMessageProcessor Processor = Input::Get().CreateProcessor();
     Virtual->Queue(MakeKey(Keyboard, Keys::W, true));
     Input::Get().Poll();
-    Input::Get().BeginTick();
-    REQUIRE(Input::Get().WasPressed(Keys::W));
+    Processor.ConsumeUntil();
+    REQUIRE(Processor.GetState().GetKeyState(Keyboard, Keys::W).WasPressed());
     REQUIRE(Input::Get().GetHandler()->GetLogLevel() == InputLogLevel::All);
 
     Input::Get().SetLogLevel(InputLogLevel::Off);
@@ -313,7 +180,7 @@ TEST_CASE("Input logging does not change messages", "[Input]")
 
 TEST_CASE("Input processors are invalid after Shutdown", "[Input]")
 {
-    InputGuard Guard;
+    TestScopes::InputScope Guard;
     Input& Singleton = Input::Get();
 
     InputMessageProcessor Before = Singleton.CreateProcessor();

@@ -14,9 +14,6 @@
 [submodule "external/inih"]
 	path = external/inih
 	url = https://github.com/flingengine/inih.git
-[submodule "external/entt"]
-	path = external/entt
-	url = https://github.com/flingengine/entt.git
 [submodule "external/json"]
 	path = external/json
 	url = https://github.com/flingengine/json.git
@@ -26,9 +23,6 @@
 [submodule "external/tinyobjloader"]
 	path = external/tinyobjloader
 	url = https://github.com/flingengine/tinyobjloader.git
-[submodule "external/cereal"]
-	path = external/cereal
-	url = https://github.com/flingengine/cereal.git
 [submodule "external/imgui"]
 	path = external/imgui
 	url = https://github.com/flingengine/imgui.git

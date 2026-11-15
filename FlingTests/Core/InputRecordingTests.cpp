@@ -3,12 +3,16 @@
 #include "Input/InputPlayback.h"
 #include "Input/InputRecorder.h"
 #include "Input/InputRecording.h"
+#include "Input/PendingInputReader.h"
+#include "Input/TickInput.h"
+#include "Input/TickInputProvider.h"
 #include "Input/VirtualInputDeviceInterface.h"
 #include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <vector>
 
 using Fling::String;
@@ -88,7 +92,7 @@ namespace
         void Send(InputKey t_Key, bool t_Down)
         {
             Interface->Queue(MakeKey(Keyboard, t_Key, t_Down));
-            Handler->PollInterfaces(InputNowNs());
+            Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         }
     };
 
@@ -108,14 +112,14 @@ namespace
 TEST_CASE("InputRecording parses the documented example", "[Input][Recording]")
 {
     const String Text = "{\"format\":\"fling-input\",\"version\":1,\"duration\":4.0}\n"
-                             "# Walk forward for one second, then strafe left\n"
-                             "{\"t\":0.0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
-                             "{\"t\":1.0,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
-                             "{\"t\":1.0,\"type\":\"Press\",\"key\":\"A\",\"duration\":0.5}\n"
-                             "\n"
-                             "{\"t\":2.0,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":1.0}\n"
-                             "{\"t\":2.5,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":0.0}\n"
-                             "{\"tick\":200,\"type\":\"Press\",\"key\":\"Escape\"}\n";
+                        "# Walk forward for one second, then strafe left\n"
+                        "{\"t\":0.0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
+                        "{\"t\":1.0,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
+                        "{\"t\":1.0,\"type\":\"Press\",\"key\":\"A\",\"duration\":0.5}\n"
+                        "\n"
+                        "{\"t\":2.0,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":1.0}\n"
+                        "{\"t\":2.5,\"type\":\"Axis\",\"key\":\"GamepadRightX\",\"value\":0.0}\n"
+                        "{\"tick\":200,\"type\":\"Press\",\"key\":\"Escape\"}\n";
     const InputRecording Recording = MustParse(Text);
 
     CHECK(Recording.Version == 1);
@@ -148,10 +152,10 @@ TEST_CASE("InputRecording picks a device for a message", "[Input][Recording]")
     {
         const InputRecording Recording =
             MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
-                                            "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
-                                            "{\"t\":0,\"type\":\"MouseMove\",\"dx\":1}\n"
-                                            "{\"t\":0,\"type\":\"Char\",\"codepoint\":65}\n"
-                                            "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n");
+                                       "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
+                                       "{\"t\":0,\"type\":\"MouseMove\",\"dx\":1}\n"
+                                       "{\"t\":0,\"type\":\"Char\",\"codepoint\":65}\n"
+                                       "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n");
         REQUIRE(Recording.Devices.size() == 3);
         CHECK(Recording.Devices[0].Info.Type == InputDeviceType::Keyboard);
         CHECK(Recording.Devices[1].Info.Type == InputDeviceType::Mouse);
@@ -184,8 +188,7 @@ TEST_CASE("InputRecording picks a device for a message", "[Input][Recording]")
 
     SECTION("A device ID that is not in the header is an error")
     {
-        const String Error =
-            ParseError(String(Header) + "{\"t\":0,\"device\":5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+        const String Error = ParseError(String(Header) + "{\"t\":0,\"device\":5,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
         CHECK_THAT(Error, StartsWith("line 2:"));
         CHECK_THAT(Error, ContainsSubstring("5"));
     }
@@ -246,8 +249,8 @@ TEST_CASE("InputRecording gives mouse moves a position", "[Input][Recording]")
 {
     const InputRecording Recording =
         MustParse(String(Header) + "{\"t\":0.1,\"type\":\"MouseMove\",\"dx\":3,\"dy\":4}\n"
-                                        "{\"t\":0.2,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1}\n"
-                                        "{\"t\":0.3,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1,\"x\":100,\"y\":50}\n");
+                                   "{\"t\":0.2,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1}\n"
+                                   "{\"t\":0.3,\"type\":\"MouseMove\",\"dx\":1,\"dy\":1,\"x\":100,\"y\":50}\n");
     REQUIRE(Recording.Messages.size() == 3);
     CHECK(Recording.Messages[0].Message.PositionX == Catch::Approx(3.0f));
     CHECK(Recording.Messages[0].Message.PositionY == Catch::Approx(4.0f));
@@ -276,7 +279,8 @@ TEST_CASE("InputRecording errors name the line", "[Input][Recording]")
     {
         CHECK_THAT(ParseError("{\"format\":\"other\",\"version\":1}\n"), StartsWith("line 1:"));
         CHECK_THAT(ParseError("# comment\n{\"format\":\"fling-input\"}\n"), StartsWith("line 2:"));
-        CHECK_THAT(ParseError("{\"format\":\"fling-input\",\"version\":2}\n"), StartsWith("line 1:"));
+        // Version 2 (tick cuts with their rate) is the newest; there is no version 3 yet
+        CHECK_THAT(ParseError("{\"format\":\"fling-input\",\"version\":3}\n"), StartsWith("line 1:"));
         CHECK_THAT(ParseError("not json\n"), StartsWith("line 1:"));
     }
 
@@ -333,7 +337,7 @@ TEST_CASE("InputRecording errors name the line", "[Input][Recording]")
 TEST_CASE("InputRecording sorts messages by time", "[Input][Recording]")
 {
     const InputRecording Recording = MustParse(String(Header) + "{\"t\":2,\"type\":\"KeyUp\",\"key\":\"W\"}\n"
-                                                                     "{\"t\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
+                                                                "{\"t\":1,\"type\":\"KeyDown\",\"key\":\"W\"}\n");
     REQUIRE(Recording.Messages.size() == 2);
     CHECK(Recording.Messages[0].Message.Type == InputMessageType::KeyDown);
     CHECK(Recording.Messages[1].Message.Type == InputMessageType::KeyUp);
@@ -433,6 +437,153 @@ TEST_CASE("InputRecording write and parse round trip", "[Input][Recording]")
     CHECK(std::count(Text.begin(), Text.end(), '\n') == static_cast<long>(1 + Recording.Messages.size()));
 }
 
+TEST_CASE("Input recordings keep per-tick cuts, and old files load without them", "[time][InputRecording]")
+{
+    InputRecording Recording;
+    InputRecordingDevice Device;
+    Device.Id = 1;
+    Device.Info.Type = InputDeviceType::Keyboard;
+    Recording.Devices.push_back(Device);
+    for (int i = 0; i < 3; ++i)
+    {
+        InputRecordedMessage Message;
+        Message.TimeSeconds = 0.1 * i;
+        Message.Message.Device = InputDeviceId{1};
+        Message.Message.Type = InputMessageType::KeyDown;
+        Message.Message.Key = Keys::A;
+        Recording.Messages.push_back(Message);
+    }
+    Recording.TickCuts = {0, 1, 1, 3, 3};
+    Recording.TickCutRate = 30;
+
+    // Version 2: the cuts keep the rate of the ticks they were recorded on
+    const String Text = WriteInputRecording(Recording);
+    REQUIRE(Text.find("\"version\":2") != String::npos);
+    REQUIRE(Text.find("{\"tickCuts\":{\"tickRate\":30,\"counts\":[0,1,1,3,3]}}") != String::npos);
+    InputRecording Read;
+    String Error;
+    REQUIRE(ParseInputRecording(Text, Read, Error));
+    REQUIRE(Error.empty());
+    REQUIRE(Read.Version == 2);
+    REQUIRE(Read.Messages.size() == 3);
+    REQUIRE(Read.TickCuts == std::vector<uint64>{0, 1, 1, 3, 3});
+    REQUIRE(Read.TickCutRate == 30);
+
+    // A file with no cuts line loads, and replays by time
+    InputRecording Old = Recording;
+    Old.TickCuts.clear();
+    REQUIRE(WriteInputRecording(Old).find("tickCuts") == String::npos);
+    REQUIRE(ParseInputRecording(WriteInputRecording(Old), Read, Error));
+    REQUIRE(Read.TickCuts.empty());
+    REQUIRE(Read.TickCutRate == 0);
+
+    // A version 1 file stored the cuts as a bare list, with no rate: they were recorded at 60 Hz
+    const String Version1 = "{\"format\":\"fling-input\",\"version\":1}\n"
+                            "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"A\"}\n"
+                            "{\"t\":0.1,\"type\":\"KeyDown\",\"key\":\"B\"}\n"
+                            "{\"tickCuts\":[0,1,2]}\n";
+    REQUIRE(ParseInputRecording(Version1, Read, Error));
+    REQUIRE(Read.Version == 1);
+    REQUIRE(Read.TickCuts == std::vector<uint64>{0, 1, 2});
+    REQUIRE(Read.TickCutRate == InputRecording::Version1TickCutRate);
+    REQUIRE(Read.TickCutRate == 60);
+    // Written again, it is a version 2 file that says 60 Hz
+    REQUIRE(WriteInputRecording(Read).find("{\"tickCuts\":{\"tickRate\":60,") != String::npos);
+
+    // Bad cuts
+    REQUIRE_FALSE(ParseInputRecording(Text + "{\"tickCuts\":{\"tickRate\":30,\"counts\":[2,1]}}\n", Read, Error));
+    REQUIRE(Error.find("never decrease") != String::npos);
+    REQUIRE_FALSE(ParseInputRecording(
+        WriteInputRecording(Old) + "{\"tickCuts\":{\"tickRate\":30,\"counts\":[0,4]}}\n", Read, Error));
+    REQUIRE(Error.find("more messages") != String::npos);
+    REQUIRE_FALSE(ParseInputRecording(WriteInputRecording(Old) + "{\"tickCuts\":[0,1]}\n", Read, Error));
+    REQUIRE(Error.find("must be an object") != String::npos);
+    REQUIRE_FALSE(ParseInputRecording(WriteInputRecording(Old) + "{\"tickCuts\":{\"counts\":[0,1]}}\n", Read, Error));
+    REQUIRE(Error.find("needs a \"tickRate\"") != String::npos);
+    REQUIRE_FALSE(ParseInputRecording(
+        WriteInputRecording(Old) + "{\"tickCuts\":{\"tickRate\":0,\"counts\":[0]}}\n", Read, Error));
+    REQUIRE_FALSE(ParseInputRecording(Text + "{\"tickCuts\":{\"tickRate\":60,\"counts\":[3]}}\n", Read, Error));
+    REQUIRE(Error.find("same \"tickRate\"") != String::npos);
+    REQUIRE_FALSE(ParseInputRecording("{\"format\":\"fling-input\",\"version\":3}\n", Read, Error));
+    REQUIRE(Error.find("unsupported version 3") != String::npos);
+}
+
+TEST_CASE("Input recordings with tick cuts replay only at the rate they were recorded at", "[time][InputRecording]")
+{
+    InputRecording Recording;
+    String Error;
+    REQUIRE(ParseInputRecording("{\"format\":\"fling-input\",\"version\":1}\n"
+                                "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"A\"}\n"
+                                "{\"tickCuts\":[0,1]}\n",
+                                Recording,
+                                Error));
+
+    // A version 1 file: 60 Hz
+    REQUIRE(CheckTickCutRate(Recording, 60, Error));
+    REQUIRE_FALSE(CheckTickCutRate(Recording, 30, Error));
+    REQUIRE(Error == "its tick cuts were recorded at 60 ticks a second, and the simulation runs at 30. Replay it with "
+                     "--sim-hz 60 (or [Engine] SimHz=60)");
+
+    // A file with no cuts replays by time at any rate
+    Recording.TickCuts.clear();
+    REQUIRE(CheckTickCutRate(Recording, 30, Error));
+    REQUIRE(CheckTickCutRate(Recording, 144, Error));
+
+    // Playback refuses the mismatch and plays nothing; at the recorded rate it plays
+    const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
+    InputPlayback Playback(Handler);
+    REQUIRE(Playback.GetTickRate() == 30);
+    Recording.TickCuts = {0, 1};
+    Recording.TickCutRate = 60;
+    REQUIRE_FALSE(Playback.Start(Recording, 0.0f, Error));
+    REQUIRE(Error.find("--sim-hz 60") != String::npos);
+    REQUIRE_FALSE(Playback.IsActive());
+    Playback.SetTickRate(60);
+    REQUIRE(Playback.Start(Recording, 0.0f, Error));
+    REQUIRE(Playback.HasTickCuts());
+    Playback.Stop();
+
+    // From a file, the message names the file
+    const String Path = TempFile("cuts_at_60.input.jsonl");
+    REQUIRE(SaveInputRecording(Path, Recording, Error));
+    Playback.SetTickRate(30);
+    REQUIRE_FALSE(Playback.Start(Path, 0.0f, Error));
+    REQUIRE(Error.find("cuts_at_60.input.jsonl") != String::npos);
+    REQUIRE(Error.find("recorded at 60 ticks a second") != String::npos);
+}
+
+TEST_CASE("The recorder stores the tick rate with its cuts", "[time][InputRecording]")
+{
+    const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
+    for (const uint32 Hz : {30u, 60u})
+    {
+        CAPTURE(Hz);
+        const String Path = TempFile("recorder_rate.input.jsonl");
+        InputRecorder Recorder(Handler);
+        Recorder.SetTickRate(Hz);
+        Recorder.Start(Path, 0.0f, 0.0f);
+        Recorder.Update(0.0f);
+        Recorder.NoteTickCut(InputCut{});
+        Recorder.NoteTickCut(InputCut{});
+        REQUIRE(Recorder.Stop());
+
+        InputRecording Read;
+        String Error;
+        REQUIRE(LoadInputRecording(Path, Read, Error));
+        REQUIRE(Read.TickCuts.size() == 2);
+        REQUIRE(Read.TickCutRate == Hz);
+        REQUIRE(Read.TickRate == Hz);
+
+        // It replays at its own rate only
+        InputPlayback Playback(Handler);
+        Playback.SetTickRate(Hz);
+        REQUIRE(Playback.Start(Path, 0.0f, Error));
+        Playback.Stop();
+        Playback.SetTickRate(Hz == 30 ? 60 : 30);
+        REQUIRE_FALSE(Playback.Start(Path, 0.0f, Error));
+    }
+}
+
 TEST_CASE("InputRecording saves and loads a file", "[Input][Recording]")
 {
     const String Path = TempFile("nested/folder/save_load.input.jsonl");
@@ -491,7 +642,8 @@ TEST_CASE("InputRecorder records messages to a file", "[Input][Recorder]")
     Recorder.Update(0.1f);
     Fixture.Send(Keys::W, false);
     Recorder.Update(0.1f);
-    CHECK(Recorder.GetMessageCount() == 2);
+    // The start capture (none), then the two keys
+    CHECK(Recorder.GetMessageCount() == 3);
 
     REQUIRE(Recorder.Stop());
     CHECK(Recorder.GetState() == InputRecorderState::Idle);
@@ -503,11 +655,13 @@ TEST_CASE("InputRecorder records messages to a file", "[Input][Recorder]")
     InputRecording Loaded;
     String Error;
     REQUIRE(LoadInputRecording(Path, Loaded, Error));
-    REQUIRE(Loaded.Messages.size() == 2);
-    CHECK(Loaded.Messages[0].Message.Type == InputMessageType::KeyDown);
-    CHECK(Loaded.Messages[0].Message.Key == Keys::W);
-    CHECK(Loaded.Messages[1].Message.Type == InputMessageType::KeyUp);
-    CHECK(Loaded.Messages[1].TimeSeconds >= Loaded.Messages[0].TimeSeconds);
+    REQUIRE(Loaded.Messages.size() == 3);
+    CHECK(Loaded.Messages[0].Message.Type == InputMessageType::CaptureChanged);
+    CHECK(Loaded.Messages[0].Message.Capture == InputCapture::None);
+    CHECK(Loaded.Messages[1].Message.Type == InputMessageType::KeyDown);
+    CHECK(Loaded.Messages[1].Message.Key == Keys::W);
+    CHECK(Loaded.Messages[2].Message.Type == InputMessageType::KeyUp);
+    CHECK(Loaded.Messages[2].TimeSeconds >= Loaded.Messages[1].TimeSeconds);
     CHECK(Loaded.Duration == Catch::Approx(0.2).margin(1e-6));
     REQUIRE(Loaded.Devices.size() == 1);
     CHECK(Loaded.Devices[0].Id == Fixture.Keyboard.Value);
@@ -524,7 +678,8 @@ TEST_CASE("InputRecorder does not record messages from before it started", "[Inp
     InputRecorder Recorder(Fixture.Handler);
     Recorder.Start(TempFile("recorder_before.input.jsonl"), 0.0f, 0.0f);
     Recorder.Update(0.1f);
-    CHECK(Recorder.GetMessageCount() == 0);
+    // Only the start capture
+    CHECK(Recorder.GetMessageCount() == 1);
     REQUIRE(Recorder.Stop());
 }
 
@@ -541,10 +696,12 @@ TEST_CASE("InputRecorder writes held keys at time 0", "[Input][Recorder]")
     InputRecording Loaded;
     String Error;
     REQUIRE(LoadInputRecording(Path, Loaded, Error));
-    REQUIRE(Loaded.Messages.size() == 1);
+    REQUIRE(Loaded.Messages.size() == 2);
     CHECK(Loaded.Messages[0].Message.Type == InputMessageType::KeyDown);
     CHECK(Loaded.Messages[0].Message.Key == Keys::W);
     CHECK(Loaded.Messages[0].TimeSeconds == 0.0);
+    CHECK(Loaded.Messages[1].Message.Type == InputMessageType::CaptureChanged);
+    CHECK(Loaded.Messages[1].TimeSeconds == 0.0);
 }
 
 TEST_CASE("InputRecorder counts down before it records", "[Input][Recorder]")
@@ -611,10 +768,12 @@ TEST_CASE("InputPlayback sends each message on the right update", "[Input][Playb
     InputMessageProcessor Processor = Handler->CreateProcessor();
     InputPlayback Playback(Handler);
 
-    Playback.Start(MustParse("{\"format\":\"fling-input\",\"version\":1,\"duration\":1.0}\n"
-                             "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"A\"}\n"
-                             "{\"t\":0.5,\"type\":\"KeyDown\",\"key\":\"W\"}\n"),
-                   0.0f);
+    String StartError;
+    REQUIRE(Playback.Start(MustParse("{\"format\":\"fling-input\",\"version\":1,\"duration\":1.0}\n"
+                                     "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"A\"}\n"
+                                     "{\"t\":0.5,\"type\":\"KeyDown\",\"key\":\"W\"}\n"),
+                           0.0f,
+                           StartError));
     REQUIRE(Playback.GetState() == InputPlaybackState::Playing);
     CHECK(Handler->FindInterface(InputPlayback::InterfaceName) != nullptr);
 
@@ -622,7 +781,7 @@ TEST_CASE("InputPlayback sends each message on the right update", "[Input][Playb
     for (int Update = 0; Update < 100; ++Update)
     {
         Playback.Update(TickSeconds);
-        Handler->PollInterfaces(InputNowNs());
+        Handler->PollInterfaces(PlatformTime::NowNanoseconds());
         Processor.ConsumeUntil();
 
         // A message at time 0 goes out on update 0, and one at 0.5 s on update 30.
@@ -648,30 +807,73 @@ TEST_CASE("InputPlayback sends each message on the right update", "[Input][Playb
     CHECK(Handler->GetDeviceFactory().GetConnectedDevices().empty());
 }
 
+TEST_CASE("A replay that overruns the input queue stops with an error", "[Input][Playback]")
+{
+    // Mutation note: fails (the replay goes on with lost input and reports nothing) if
+    // TickInputProvider::Build does not call InputPlayback::NoteTickOverran.
+    const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create(8);
+    InputPlayback Playback(Handler);
+    TickInputProvider Provider(Handler, &Playback, nullptr);
+    String Text = "{\"format\":\"fling-input\",\"version\":2,\"duration\":1.0}\n";
+    for (int i = 0; i < 20; ++i)
+    {
+        Text += "{\"t\":0,\"type\":\"MouseMove\",\"dx\":1,\"dy\":0}\n";
+    }
+    String Error;
+    REQUIRE(Playback.Start(MustParse(Text), 0.0f, Error));
+
+    // All 20 go out on the first frame, before a tick takes any: the tick loses input
+    TickInput Tick;
+    Playback.Update(TickSeconds);
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
+    Provider.Build(Tick, TickWindow{});
+    REQUIRE(Tick.Slice.Overran);
+    REQUIRE(Playback.IsActive());
+
+    // The next frame stops the replay and says why
+    Playback.Update(TickSeconds);
+    REQUIRE_FALSE(Playback.IsActive());
+    REQUIRE(Playback.HasOverrun());
+    REQUIRE(Playback.GetFinishedCount() == 0);
+    REQUIRE_THAT(Playback.GetLog().GetLines().back(), Catch::Matchers::ContainsSubstring("Stopped"));
+    bool Reported = false;
+    for (const String& Line : Playback.GetLog().GetLines())
+    {
+        Reported = Reported || Line.find("Replay failed: a tick lost input") != String::npos;
+    }
+    REQUIRE(Reported);
+
+    // A new replay starts with no overrun
+    REQUIRE(Playback.Start(MustParse("{\"format\":\"fling-input\",\"version\":2,\"duration\":1.0}\n"), 0.0f, Error));
+    REQUIRE_FALSE(Playback.HasOverrun());
+}
+
 TEST_CASE("InputPlayback waits for the start delay", "[Input][Playback]")
 {
     const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
     InputMessageProcessor Processor = Handler->CreateProcessor();
     InputPlayback Playback(Handler);
 
-    Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"), 0.5f);
+    String StartError;
+    REQUIRE(
+        Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"), 0.5f, StartError));
     CHECK(Playback.GetState() == InputPlaybackState::Countdown);
     CHECK(Handler->FindInterface(InputPlayback::InterfaceName) == nullptr);
 
     Playback.Update(0.25f);
-    Handler->PollInterfaces(InputNowNs());
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
     Processor.ConsumeUntil();
     CHECK(Playback.GetState() == InputPlaybackState::Countdown);
     CHECK_FALSE(IsHeldAnywhere(Processor, Keys::W));
 
     Playback.Update(0.25f);
-    Handler->PollInterfaces(InputNowNs());
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
     Processor.ConsumeUntil();
     CHECK(Playback.GetState() == InputPlaybackState::Playing);
     CHECK(IsHeldAnywhere(Processor, Keys::W));
 
     Playback.Stop();
-    Handler->PollInterfaces(InputNowNs());
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
     Processor.ConsumeUntil();
     CHECK(Playback.GetState() == InputPlaybackState::Idle);
     CHECK_FALSE(IsHeldAnywhere(Processor, Keys::W));
@@ -681,10 +883,12 @@ TEST_CASE("InputPlayback makes one device for each recorded device", "[Input][Pl
 {
     const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
     InputPlayback Playback(Handler);
-    Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
-                                                   "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
-                                                   "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n"),
-                   0.0f);
+    String StartError;
+    REQUIRE(Playback.Start(MustParse(String(Header) + "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"W\"}\n"
+                                                      "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"MouseLeft\"}\n"
+                                                      "{\"t\":0,\"type\":\"KeyDown\",\"key\":\"GamepadFaceBottom\"}\n"),
+                           0.0f,
+                           StartError));
 
     const auto Devices = Handler->GetDeviceFactory().GetConnectedDevices();
     REQUIRE(Devices.size() == 3);
@@ -732,17 +936,19 @@ TEST_CASE("Input Poll drives playback and recording", "[Input][Playback][Recorde
     const String Path = TempFile("singleton_record.input.jsonl");
     Singleton.GetRecorder().Start(Path, 0.0f, 0.0f);
 
-    Singleton.GetPlayback().Start(MustParse("{\"format\":\"fling-input\",\"version\":1,\"duration\":0.2}\n"
-                                            "{\"t\":0.05,\"type\":\"KeyDown\",\"key\":\"W\"}\n"),
-                                  0.0f);
+    String StartError;
+    REQUIRE(Singleton.GetPlayback().Start(MustParse("{\"format\":\"fling-input\",\"version\":1,\"duration\":0.2}\n"
+                                                    "{\"t\":0.05,\"type\":\"KeyDown\",\"key\":\"W\"}\n"),
+                                          0.0f,
+                                          StartError));
 
+    InputMessageProcessor Reader = Singleton.CreateProcessor();
     bool WasHeld = false;
     for (int Update = 0; Update < 60 && Singleton.GetPlayback().IsActive(); ++Update)
     {
         Singleton.Poll(TickSeconds);
-        Singleton.BeginTick(InputNowNs());
-        WasHeld = WasHeld || Singleton.IsHeld(Keys::W);
-        Singleton.EndTick();
+        Reader.ConsumeUntil();
+        WasHeld = WasHeld || IsHeldAnywhere(Reader, Keys::W);
     }
     CHECK(WasHeld);
     CHECK(Singleton.GetPlayback().GetFinishedCount() == 1);
@@ -773,16 +979,18 @@ TEST_CASE("A recording of a playback plays on the same ticks", "[Input][Playback
         {
             Singleton.GetRecorder().Start(t_RecordPath, 0.0f, 0.0f);
         }
-        Singleton.GetPlayback().Start(t_Recording, 0.0f);
+        String StartError;
+        TickInputBuilder Builder(Singleton.GetHandler());
+        TickInput Taken;
+        REQUIRE(Singleton.GetPlayback().Start(t_Recording, 0.0f, StartError));
         for (int Tick = 0; Tick < 600 && Singleton.GetPlayback().IsActive(); ++Tick)
         {
             Singleton.Poll(TickSeconds);
-            Singleton.BeginTick();
-            if (Singleton.WasPressed(Keys::W))
+            Builder.Build(Taken);
+            if (Taken.WasPressed(Keys::W))
             {
                 PressTicks.push_back(Tick);
             }
-            Singleton.EndTick();
         }
         if (!t_RecordPath.empty())
         {
@@ -839,29 +1047,150 @@ TEST_CASE("InputRecorder can remove the click that stopped it", "[Input][Recorde
     Queue(Mouse, InputMessageType::KeyDown, Keys::MouseLeft);
     Queue(Mouse, InputMessageType::MouseMove, Keys::Invalid);
     Queue(Mouse, InputMessageType::KeyUp, Keys::MouseLeft);
-    Handler->PollInterfaces(InputNowNs());
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
     Recorder.Update(TickSeconds);
-    REQUIRE(Recorder.GetMessageCount() == 5);
+    // The start capture and the five messages
+    REQUIRE(Recorder.GetMessageCount() == 6);
 
     REQUIRE(Recorder.Stop(true));
     InputRecording Saved;
     String Error;
     REQUIRE(LoadInputRecording(Path, Saved, Error));
-    REQUIRE(Saved.Messages.size() == 2);
-    CHECK(Saved.Messages[0].Message.Key == Keys::W);
-    CHECK(Saved.Messages[1].Message.Type == InputMessageType::MouseMove);
+    REQUIRE(Saved.Messages.size() == 3);
+    CHECK(Saved.Messages[1].Message.Key == Keys::W);
+    CHECK(Saved.Messages[2].Message.Type == InputMessageType::MouseMove);
 
     // A keyboard message after the click means the click did not stop the recording
     Recorder.Start(Path, 0.0f, 0.0f);
     Queue(Mouse, InputMessageType::KeyDown, Keys::MouseLeft);
     Queue(Keyboard, InputMessageType::KeyUp, Keys::W);
-    Handler->PollInterfaces(InputNowNs());
+    Handler->PollInterfaces(PlatformTime::NowNanoseconds());
     Recorder.Update(TickSeconds);
     REQUIRE(Recorder.Stop(true));
     REQUIRE(LoadInputRecording(Path, Saved, Error));
-    // W was held at the start, so it is written first as a KeyDown at time 0
-    REQUIRE(Saved.Messages.size() == 3);
-    CHECK(Saved.Messages[1].Message.Key == Keys::MouseLeft);
-    CHECK(Saved.Messages[2].Message.Type == InputMessageType::KeyUp);
+    // W was held at the start, so it is written first as a KeyDown at time 0, then the start capture
+    REQUIRE(Saved.Messages.size() == 4);
+    CHECK(Saved.Messages[2].Message.Key == Keys::MouseLeft);
+    CHECK(Saved.Messages[3].Message.Type == InputMessageType::KeyUp);
+}
+namespace
+{
+    /** What one run of the late poll loop gives: the mouse counts of each tick, and the samples pending on each frame.
+     */
+    struct LoopResult
+    {
+        std::vector<std::vector<int32>> TickCounts;
+        std::vector<size_t> PendingPerFrame;
+        /** The file that the recorder saved, if the run recorded. */
+        String SavedPath;
+    };
+
+    /**
+     * The engine loop with one tick per frame, as World::Update runs it: Update the
+     * playback and poll, build the tick, then (if t_Late) UpdateLate and poll again, then
+     * read what is pending. A recorder, if given, reads at the start of each frame (as
+     * Input::Poll does).
+     */
+    LoopResult RunLateLoop(InputRecording t_Recording, const bool t_Late, const bool t_Record = false)
+    {
+        const std::shared_ptr<InputMessageHandler> Handler = InputMessageHandler::Create();
+        InputPlayback Playback(Handler);
+        InputRecorder Recorder(Handler);
+        TickInputBuilder Ticks(Handler);
+        PendingInputReader Pending(Handler);
+        String StartError;
+        REQUIRE(Playback.Start(std::move(t_Recording), 0.0f, StartError));
+        if (t_Record)
+        {
+            Recorder.Start(TempFile("late_poll.input.jsonl"), 0.0f, 0.0f);
+        }
+        LoopResult Result;
+        for (int Frame = 0; Frame < 40; ++Frame)
+        {
+            Playback.Update(TickSeconds);
+            Handler->PollInterfaces(PlatformTime::NowNanoseconds());
+            if (t_Record)
+            {
+                Recorder.Update(TickSeconds);
+            }
+
+            TickInput Tick;
+            Ticks.Build(Tick);
+            std::vector<int32>& Counts = Result.TickCounts.emplace_back();
+            for (const InputMouseSample& Sample : Tick.Slice.MouseSamples)
+            {
+                Counts.push_back(Sample.DeltaX);
+            }
+
+            if (t_Late)
+            {
+                Playback.UpdateLate();
+                Handler->PollInterfaces(PlatformTime::NowNanoseconds());
+            }
+            InputSlice Data;
+            Pending.Read(Tick.Slice.Cut.LastSequence, Data);
+            Result.PendingPerFrame.push_back(Data.MouseSamples.size());
+        }
+        if (t_Record)
+        {
+            REQUIRE(Recorder.Stop());
+            Result.SavedPath = Recorder.GetLastSavedPath();
+        }
+        return Result;
+    }
+} // namespace
+
+TEST_CASE("InputPlayback::UpdateLate sends early what the next Update would send", "[Input][Playback]")
+{
+    // Moves at times between two frames and on them, two at one time, and a key
+    String Text = "{\"format\":\"fling-input\",\"version\":1,\"tickRate\":120,\"duration\":0.5}\n";
+    for (const int Tick : {3, 4, 7, 7, 10, 15, 16, 21, 30})
+    {
+        Text += "{\"tick\":" + std::to_string(Tick) + ",\"type\":\"MouseMove\",\"dx\":" + std::to_string(Tick) +
+                ",\"dy\":0}\n";
+    }
+    Text += "{\"tick\":12,\"type\":\"Press\",\"key\":\"F\"}\n";
+    const InputRecording Recording = MustParse(Text);
+
+    const LoopResult Early = RunLateLoop(Recording, false);
+    const LoopResult Late = RunLateLoop(Recording, true);
+
+    // Every tick gets the same messages, in the same order, with or without the late poll
+    REQUIRE(Late.TickCounts == Early.TickCounts);
+    size_t Total = 0;
+    for (const std::vector<int32>& Counts : Early.TickCounts)
+    {
+        Total += Counts.size();
+    }
+    REQUIRE(Total == 9);
+
+    // Without it, a frame that ran a tick has nothing pending. With it, the frame before a
+    // tick shows exactly what that tick will take.
+    size_t PendingLate = 0;
+    for (size_t Frame = 0; Frame < Early.PendingPerFrame.size(); ++Frame)
+    {
+        REQUIRE(Early.PendingPerFrame[Frame] == 0);
+        if (Frame + 1 < Late.TickCounts.size())
+        {
+            REQUIRE(Late.PendingPerFrame[Frame] == Late.TickCounts[Frame + 1].size());
+        }
+        PendingLate += Late.PendingPerFrame[Frame];
+    }
+    UNSCOPED_INFO("pending samples over 40 frames: 0 without the late poll, " << PendingLate << " with it");
+    REQUIRE(PendingLate == Total);
+
+    SECTION("A recording of a run with the late poll plays on the same ticks")
+    {
+        const LoopResult Recorded = RunLateLoop(Recording, true, true);
+        REQUIRE(Recorded.TickCounts == Early.TickCounts);
+
+        InputRecording Saved;
+        String Error;
+        REQUIRE(LoadInputRecording(Recorded.SavedPath, Saved, Error));
+        // The start capture, 9 moves, and the press and release of F
+        REQUIRE(Saved.Messages.size() == 12);
+        REQUIRE(RunLateLoop(Saved, true).TickCounts == Early.TickCounts);
+        REQUIRE(RunLateLoop(Saved, false).TickCounts == Early.TickCounts);
+    }
 }
 #endif // WITH_INPUT_RECORDING

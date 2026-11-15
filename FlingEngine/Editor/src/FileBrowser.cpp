@@ -6,95 +6,93 @@
 
 namespace Fling
 {
-    FileBrowser::FileBrowser(String t_Title)
-		: m_Title(t_Title)
+    FileBrowser::FileBrowser(String t_Title) : m_Title(t_Title)
     {
-		m_CurrentWorkingDir = FlingPaths::EngineAssetsDir();
+        m_CurrentWorkingDir = FlingPaths::EngineAssetsDir();
     }
 
-	void FileBrowser::SetTitle(String t_Title)
-	{
-		m_Title = t_Title;
-	}
+    void FileBrowser::SetTitle(String t_Title)
+    {
+        m_Title = t_Title;
+    }
 
-	void FileBrowser::Open()
-	{
-		ImGui::OpenPopup(m_Title.c_str());
-	}
+    void FileBrowser::Open()
+    {
+        ImGui::OpenPopup(m_Title.c_str());
+    }
 
-	void FileBrowser::ClearSelected()
-	{
-		m_HasSelected = false;
-		m_SelectedFile = String();
-	}
+    void FileBrowser::ClearSelected()
+    {
+        m_HasSelected = false;
+        m_SelectedFile = String();
+    }
 
-	void FileBrowser::Display()
-	{
-		bool open = true;
-		ImGui::SetNextWindowSize(ImVec2(700, 450), ImGuiCond_FirstUseEver);
+    void FileBrowser::Display()
+    {
+        bool open = true;
+        ImGui::SetNextWindowSize(ImVec2(700, 450), ImGuiCond_FirstUseEver);
 
-		if (ImGui::BeginPopupModal(m_Title.c_str(), &open))
-		{
-			namespace fs = std::filesystem;
+        if (ImGui::BeginPopupModal(m_Title.c_str(), &open))
+        {
+            namespace fs = std::filesystem;
 
-			// For each file in 
-			for (const auto& entry : fs::directory_iterator(m_CurrentWorkingDir))
-			{
-				String FilePath = entry.path().generic_string();
-				const bool IsSelected = m_SelectedFile == FilePath;
-				String DisplayName = (entry.is_directory() ? "[D] " : "[F] ") + FilePath;
-				if (ImGui::Selectable(DisplayName.c_str(), IsSelected, ImGuiSelectableFlags_DontClosePopups))
-				{
-					if (entry.is_directory())
-					{
-						// Do deeper into this dir
-						m_CurrentWorkingDir = FilePath;
-						break;
-					}
-					else if (entry.is_regular_file())
-					{
-						m_SelectedFile = String(FilePath);
-					}
-				}
-			}
+            // For each file in
+            for (const auto& entry : fs::directory_iterator(m_CurrentWorkingDir))
+            {
+                String FilePath = entry.path().generic_string();
+                const bool IsSelected = m_SelectedFile == FilePath;
+                String DisplayName = (entry.is_directory() ? "[D] " : "[F] ") + FilePath;
+                if (ImGui::Selectable(DisplayName.c_str(), IsSelected, ImGuiSelectableFlags_DontClosePopups))
+                {
+                    if (entry.is_directory())
+                    {
+                        // Do deeper into this dir
+                        m_CurrentWorkingDir = FilePath;
+                        break;
+                    }
+                    else if (entry.is_regular_file())
+                    {
+                        m_SelectedFile = String(FilePath);
+                    }
+                }
+            }
 
-			if (ImGui::Selectable("..", false, ImGuiSelectableFlags_DontClosePopups))
-			{
-				// Go back a directory
-				
-			}
+            if (ImGui::Selectable("..", false, ImGuiSelectableFlags_DontClosePopups))
+            {
+                // Go back a directory
+            }
 
-			ImGui::Text("------");
+            ImGui::Text("------");
 
-			ImGui::TextUnformatted("Selected file %s", m_SelectedFile.c_str());
+            ImGui::TextUnformatted("Selected file %s", m_SelectedFile.c_str());
 
-			ImGui::SameLine();
+            ImGui::SameLine();
 
-			if (ImGui::Button("Open Selected"))
-			{
-				m_HasSelected = true;
-				ImGui::CloseCurrentPopup();
-			}
+            if (ImGui::Button("Open Selected"))
+            {
+                m_HasSelected = true;
+                ImGui::CloseCurrentPopup();
+            }
 
-			ImGui::SameLine();
+            ImGui::SameLine();
 
-			if (ImGui::Button("Close"))
-			{
-				m_HasSelected = false;
-				ImGui::CloseCurrentPopup();
-			}
+            if (ImGui::Button("Close"))
+            {
+                m_HasSelected = false;
+                ImGui::CloseCurrentPopup();
+            }
 
-			/*if (!typeFilters_.empty())
-			{
-				SameLine();
-				PushItemWidth(8 * GetFontSize());
-				Combo("##Filters", &typeFilterIndex_, typeFilters_.data(), int(typeFilters_.size()));
-				PopItemWidth();
-			}*/
+            /*if (!typeFilters_.empty())
+            {
+                SameLine();
+                PushItemWidth(8 * GetFontSize());
+                Combo("##Filters", &typeFilterIndex_, typeFilters_.data(), int(typeFilters_.size()));
+                PopItemWidth();
+            }*/
 
-			ImGui::EndPopup();
-		}
-	}
-}
+            ImGui::EndPopup();
+        }
+    }
+} // namespace Fling
 
 #endif

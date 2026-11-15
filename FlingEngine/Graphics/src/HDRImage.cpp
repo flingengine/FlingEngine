@@ -17,9 +17,7 @@ namespace Fling
         return ResourceManager::LoadResource<Fling::HDRImage>(t_Path, t_dev, t_Data);
     }
 
-    HDRImage::HDRImage(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data)
-        : Resource(t_Path)
-		, m_Device(t_dev)
+    HDRImage::HDRImage(const AssetPath& t_Path, LogicalDevice* t_dev, void* t_Data) : Resource(t_Path), m_Device(t_dev)
     {
         LoadVulkanImage();
 
@@ -42,13 +40,7 @@ namespace Fling
         const String Filepath = GetFilepathReleativeToAssets();
         int Width = 0;
         int Height = 0;
-        m_PixelData = stbi_loadf(
-            Filepath.c_str(),
-            &Width,
-            &Height,
-            &m_Channels,
-            0
-        );
+        m_PixelData = stbi_loadf(Filepath.c_str(), &Width, &Height, &m_Channels, 0);
 
         m_Width = static_cast<uint32>(Width);
         m_Height = static_cast<uint32>(Height);
@@ -63,36 +55,29 @@ namespace Fling
             F_LOG_ERROR("Failed to load image file: {}", Filepath);
         }
 
-        GraphicsHelpers::CreateVkImage(
-			m_Device->GetVkDevice(),
-            m_Width,
-            m_Height,
-            m_MipLevels,
-            /* Depth */ 1,
-            /* Array Layers */ 1,
-            /* Format */ m_Format,
-            /* Tiling */ VK_IMAGE_TILING_OPTIMAL,
-            /* Usage */ VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            /* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            /* Flags */ 0,
-            m_Image,
-            m_Memory
-        );
+        GraphicsHelpers::CreateVkImage(m_Device->GetVkDevice(),
+                                       m_Width,
+                                       m_Height,
+                                       m_MipLevels,
+                                       /* Depth */ 1,
+                                       /* Array Layers */ 1,
+                                       /* Format */ m_Format,
+                                       /* Tiling */ VK_IMAGE_TILING_OPTIMAL,
+                                       /* Usage */ VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+                                           VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                       /* Props */ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                       /* Flags */ 0,
+                                       m_Image,
+                                       m_Memory);
 
         VkDeviceSize ImageSize = GetImageSize();
-        Buffer StagingBuffer(
-            ImageSize, 
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 
-            m_PixelData);
+        Buffer StagingBuffer(ImageSize,
+                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                             m_PixelData);
 
         GraphicsHelpers::TransitionImageLayout(
-            m_Image,
-            m_Format,
-            VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            m_MipLevels
-        );
+            m_Image, m_Format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
 
         CopyBufferToImage(StagingBuffer.GetVkBuffer());
 
@@ -105,26 +90,20 @@ namespace Fling
 
     void HDRImage::CreateImageView()
     {
-        m_ImageView = GraphicsHelpers::CreateVkImageView(
-            m_Image,
-            m_Format,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            m_MipLevels
-        );
+        m_ImageView = GraphicsHelpers::CreateVkImageView(m_Image, m_Format, VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
         assert(m_ImageView != VK_NULL_HANDLE);
     }
 
     void HDRImage::CreateTextureSampler()
     {
-        GraphicsHelpers::CreateVkSampler(
-            VK_FILTER_LINEAR, 
-            VK_FILTER_LINEAR,
-            VK_SAMPLER_MIPMAP_MODE_LINEAR, 
-            VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLER_ADDRESS_MODE_REPEAT, 
-            VK_SAMPLER_ADDRESS_MODE_REPEAT, 
-            VK_BORDER_COLOR_INT_OPAQUE_BLACK, 
-            m_TextureSampler);
+        GraphicsHelpers::CreateVkSampler(VK_FILTER_LINEAR,
+                                         VK_FILTER_LINEAR,
+                                         VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                                         VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                         VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                         VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                         VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+                                         m_TextureSampler);
     }
 
     void HDRImage::CopyBufferToImage(VkBuffer t_Buffer)
@@ -141,21 +120,10 @@ namespace Fling
         region.imageSubresource.baseArrayLayer = 0;
         region.imageSubresource.layerCount = 1;
 
-        region.imageOffset = { 0, 0, 0 };
-        region.imageExtent = {
-            m_Width,
-            m_Height,
-            1
-        };
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {m_Width, m_Height, 1};
 
-        vkCmdCopyBufferToImage(
-            CommandBuffer,
-            t_Buffer,
-            m_Image,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            1,
-            &region
-        );
+        vkCmdCopyBufferToImage(CommandBuffer, t_Buffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
         GraphicsHelpers::EndSingleTimeCommands(CommandBuffer);
     }
@@ -194,32 +162,38 @@ namespace Fling
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
             vkCmdPipelineBarrier(commandBuffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-                0, nullptr,
-                0, nullptr,
-                1, &barrier
-            );
+                                 VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                 VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                 0,
+                                 0,
+                                 nullptr,
+                                 0,
+                                 nullptr,
+                                 1,
+                                 &barrier);
 
             VkImageBlit blit = {};
-            blit.srcOffsets[0] = { 0, 0, 0 };
-            blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+            blit.srcOffsets[0] = {0, 0, 0};
+            blit.srcOffsets[1] = {mipWidth, mipHeight, 1};
             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.srcSubresource.mipLevel = i - 1;
             blit.srcSubresource.baseArrayLayer = 0;
             blit.srcSubresource.layerCount = 1;
-            blit.dstOffsets[0] = { 0, 0, 0 };
-            blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+            blit.dstOffsets[0] = {0, 0, 0};
+            blit.dstOffsets[1] = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
             blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.dstSubresource.mipLevel = i;
             blit.dstSubresource.baseArrayLayer = 0;
             blit.dstSubresource.layerCount = 1;
 
             vkCmdBlitImage(commandBuffer,
-                m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                1, &blit,
-                VK_FILTER_LINEAR
-            );
+                           m_Image,
+                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                           m_Image,
+                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                           1,
+                           &blit,
+                           VK_FILTER_LINEAR);
 
             barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -227,11 +201,15 @@ namespace Fling
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
             vkCmdPipelineBarrier(commandBuffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                0, nullptr,
-                0, nullptr,
-                1, &barrier
-            );
+                                 VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                 0,
+                                 0,
+                                 nullptr,
+                                 0,
+                                 nullptr,
+                                 1,
+                                 &barrier);
 
             if (mipWidth > 1)
             {
@@ -250,10 +228,15 @@ namespace Fling
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
         vkCmdPipelineBarrier(commandBuffer,
-            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-            0, nullptr,
-            0, nullptr,
-            1, &barrier);
+                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                             0,
+                             0,
+                             nullptr,
+                             0,
+                             nullptr,
+                             1,
+                             &barrier);
 
         GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
     }
@@ -291,4 +274,4 @@ namespace Fling
             m_ImageView = VK_NULL_HANDLE;
         }
     }
-}
+} // namespace Fling

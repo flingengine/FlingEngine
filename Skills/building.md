@@ -14,7 +14,7 @@ Both are thin wrappers around one platform-agnostic CMake script,
 logic lives in one place. CI runs the same script to install Catch2. It does three
 things, stopping at the first failure:
 
-1. `git submodule update --init --recursive` — pulls all vendored deps under `external/`.
+1. `git submodule update --init --recursive`: pulls all vendored deps under `external/`.
 2. Builds and installs Catch2 locally to `external/Catch2/install`, in both Debug and
    Release (no `sudo` needed; `find_package(Catch2 3 REQUIRED)` in
    `FlingTests/CMakeLists.txt` needs this when `FLING_BUILD_TESTS` is ON).
@@ -46,18 +46,17 @@ docker run --rm -v "$PWD:/src:ro" fling-fresh-clone
 
 It clones the checked-out branch of your repo, so only committed changes are tested.
 
-Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022. CMake stops with an
-error on older GCC or Clang: the vendored EnTT 3.1 hangs at runtime on them in
-C++20 mode (its `entt::null` comparison calls itself forever). On Ubuntu 22.04,
-install `g++-13` or newer and configure with `CC=gcc-13 CXX=g++-13`.
+Minimum compilers: GCC 13, Clang 16, or Visual Studio 2022, the oldest that CI
+tests. CMake stops with an error on older GCC or Clang. On Ubuntu 22.04, install
+`g++-13` or newer and configure with `CC=gcc-13 CXX=g++-13`.
 
 Linux also needs system packages before this will configure cleanly (GLFW, Vulkan
-headers, X11/Wayland dev libs) — see the root [README.md](../README.md) for the
+headers, X11/Wayland dev libs): see the root [README.md](../README.md) for the
 `apt-get` list, or `.github/workflows/build.yml` for the CI package list.
 
 ## Day-to-day builds
 
-Reconfigure `build/` for the mode you want (this does **not** build — build
+Reconfigure `build/` for the mode you want (this does **not** build; build
 separately), e.g.:
 
 ```bash
@@ -77,6 +76,33 @@ There used to be `build-debug.sh`/`build-release.sh`/`build-shipping.sh` wrapper
 scripts for the commands above; they were removed since CI and IDE tooling
 (VS Code's cmake-tools extension) never used them and they only added an
 indirection layer over a couple of CMake flags.
+
+## clang-cl on Windows
+
+clang-cl (LLVM's MSVC-compatible driver) builds the engine, Sandbox and tests.
+Run the configure from a Developer Command Prompt, so that the MSVC headers,
+libraries and the Vulkan SDK are found. Use a separate build folder:
+
+```bat
+cmake -G Ninja -S . -B build-clang -DCMAKE_BUILD_TYPE=Debug ^
+  -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER=lld-link
+cmake --build build-clang
+ctest --test-dir build-clang --output-on-failure
+```
+
+If clang-cl is not on `PATH`, give the full path to `clang-cl.exe` and
+`lld-link.exe` (for example in `C:/Program Files/LLVM/bin`). The Catch2 install
+from `Init.bat` links as it is. What the CMake files do differently for
+clang-cl:
+
+- No `/MP` (`ENABLE_MULTICORE` applies to cl.exe only).
+- `-Wthread-safety -Werror=thread-safety`, as for Clang
+  (`CMake/FlingTargets.cmake`).
+- `/fp:precise` plus `/clang:-ffp-contract=off`, so floating point contraction
+  is off as with MSVC and GCC.
+- The Clang 16 minimum applies.
+
+The work on this branch used clang-cl 20.1.8.
 
 ## Shaders
 
@@ -167,7 +193,8 @@ definition on Core.
 ## `FLING_BUILD_TESTS`
 
 Controls whether the per-module Catch2 executables exist (`CoreTests`,
-`ResourcesTests`, `EngineTests`, `PhysicsTests`, `ApplicationTests`). When OFF,
+`ResourcesTests`, `EngineTests`, `GraphicsTests`, `PhysicsTests`,
+`ApplicationTests`, and `SandboxExampleTests`). When OFF,
 CMake does not look for Catch2 and does not add `FlingTests/`. It defaults to ON,
 except for shipping builds (`DEFINE_SHIPPING=ON`) and when Fling is added to
 another project with `add_subdirectory()`. Pass `-DFLING_BUILD_TESTS=ON` to test
@@ -181,4 +208,4 @@ switching `DEFINE_SHIPPING` on an existing build dir does not change it.
 
 `.github/workflows/build.yml` is the ground truth for exactly what gets built and
 with which flags across Linux GCC, Linux Clang, Windows MSVC (Debug + Release), and
-Windows MSYS2 UCRT64 (MinGW-w64 GCC) — check it if a build works locally but fails in CI, or vice versa.
+Windows MSYS2 UCRT64 (MinGW-w64 GCC): check it if a build works locally but fails in CI, or vice versa.

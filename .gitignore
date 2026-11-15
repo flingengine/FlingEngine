@@ -167,6 +167,8 @@ DocProject/Help/html
 
 # Click-Once directory
 publish/
+# Ecs/Publish holds engine source, not Click-Once output (core.ignorecase makes publish/ match it).
+!/FlingEngine/Engine/*/Ecs/Publish/
 
 # Publish Web Output
 *.[Pp]ublish.xml

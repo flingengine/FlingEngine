@@ -166,8 +166,8 @@ namespace Fling
 			InputMessageProcessor& Processor = *g_InputProcessor;
 			if (Processor.Overran())
 			{
-				const std::shared_ptr<InputMessageHandler>& Handler = Input::Get().GetHandler();
-				Processor.Resync(Handler->GetLatestState(), Handler->GetLatestSequence());
+				const InputStateSnapshot Latest = Input::Get().GetHandler()->GetLatestSnapshot();
+				Processor.Resync(Latest.States, Latest.Sequence);
 			}
 			Processor.ConsumeUntil();
 
@@ -198,7 +198,11 @@ namespace Fling
 			Processor.ClearEdges();
 		}
 
-		/** Tell the input system which devices ImGui owns this frame. Call after ImGui::NewFrame. */
+		/**
+		 * Tell the input system which devices ImGui owns this frame. Call after ImGui::NewFrame,
+		 * on the thread that polls input. A change becomes a CaptureChanged message in the input
+		 * stream, so the tick and the frame side drop the same messages, and a recording keeps it.
+		 */
 		void UpdateInputCapture()
 		{
 			if (Input::Get().IsInitialized())

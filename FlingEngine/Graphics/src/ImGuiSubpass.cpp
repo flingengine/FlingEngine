@@ -24,19 +24,22 @@
 #include <algorithm>
 #include <imgui.h>
 
-namespace Fling {
+namespace Fling
+{
     ImGuiSubpass::ImGuiSubpass(const LogicalDevice* t_Dev,
                                const Swapchain* t_Swap,
-                               entt::registry& t_reg,
+                               Fling::EntityStorage& t_reg,
                                FlingWindow* t_Window,
                                VkRenderPass t_GlobalRenderPass,
                                std::shared_ptr<Fling::IDebugUI> t_DebugUI,
                                std::shared_ptr<Fling::Shader> t_Vert,
                                std::shared_ptr<Fling::Shader> t_Frag)
         : Subpass(t_Dev, t_Swap, t_Vert, t_Frag),
+          m_EditorStorage(&t_reg),
           m_Window(t_Window),
           m_DebugUI(t_DebugUI),
-          m_GlobalRenderPass(t_GlobalRenderPass) {
+          m_GlobalRenderPass(t_GlobalRenderPass)
+    {
         assert(m_Window);
 
         // Set the clear values for the G Buffer
@@ -45,7 +48,8 @@ namespace Fling {
         m_ClearValues[1].depthStencil = {1.0f, ~0U};
 
         // Initialize ImGui
-        if (!ImGui::GetCurrentContext()) {
+        if (!ImGui::GetCurrentContext())
+        {
             ImGui::CreateContext();
         }
 
@@ -59,7 +63,8 @@ namespace Fling {
         PrepareAttachments();
     }
 
-    ImGuiSubpass::~ImGuiSubpass() {
+    ImGuiSubpass::~ImGuiSubpass()
+    {
         ImGui::DestroyContext();
 
         VkDevice logicalDevice = m_Device->GetVkDevice();
@@ -75,15 +80,21 @@ namespace Fling {
         vkDestroyDescriptorSetLayout(logicalDevice, m_descriptorSetLayout, nullptr);
     }
 
-    void
-    ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) {
+    void ImGuiSubpass::Draw(CommandBuffer& t_CmdBuf,
+                            uint32 t_ActiveFrameInFlight,
+                            const RenderSnapshot& t_Snapshot,
+                            float DeltaTime)
+    {
         InternalImGui::UpdateImGuiIO(m_Window);
 
         ImGui::NewFrame();
         InternalImGui::UpdateInputCapture();
 
-        if (m_DebugUI) {
-            m_DebugUI->Draw(t_reg, DeltaTime);
+        (void)t_Snapshot;
+        if (m_DebugUI)
+        {
+            // The editor is the one part of the renderer that changes the world
+            m_DebugUI->Draw(*m_EditorStorage, DeltaTime);
         }
 
         ImGui::Render();
@@ -93,7 +104,8 @@ namespace Fling {
         BuildCommandBuffer(t_CmdBuf.GetHandle());
     }
 
-    void ImGuiSubpass::BuildCommandBuffer(VkCommandBuffer t_commandBuffer) {
+    void ImGuiSubpass::BuildCommandBuffer(VkCommandBuffer t_commandBuffer)
+    {
         ImGuiIO& io = ImGui::GetIO();
 
         vkCmdBindDescriptorSets(
@@ -123,21 +135,25 @@ namespace Fling {
         uint32 vertexOffset = 0;
         uint32 indexOffset = 0;
 
-        if (imDrawData->CmdListsCount > 0) {
+        if (imDrawData->CmdListsCount > 0)
+        {
             VkDeviceSize offsets[1] = {0};
             vkCmdBindVertexBuffers(t_commandBuffer, 0, 1, &m_vertexBuffer->GetVkBuffer(), offsets);
 
             vkCmdBindIndexBuffer(t_commandBuffer, m_indexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
-            for (int32 i = 0; i < imDrawData->CmdListsCount; ++i) {
+            for (int32 i = 0; i < imDrawData->CmdListsCount; ++i)
+            {
                 const ImDrawList* cmd_list = imDrawData->CmdLists[i];
-                for (int32 j = 0; j < cmd_list->CmdBuffer.Size; ++j) {
+                for (int32 j = 0; j < cmd_list->CmdBuffer.Size; ++j)
+                {
                     const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
                     const float clipMinX = std::max(pcmd->ClipRect.x * fbScale.x, 0.0f);
                     const float clipMinY = std::max(pcmd->ClipRect.y * fbScale.y, 0.0f);
                     const float clipMaxX = std::min(pcmd->ClipRect.z * fbScale.x, displayWidth);
                     const float clipMaxY = std::min(pcmd->ClipRect.w * fbScale.y, displayHeight);
-                    if (clipMaxX <= clipMinX || clipMaxY <= clipMinY) {
+                    if (clipMaxX <= clipMinX || clipMaxY <= clipMinY)
+                    {
                         indexOffset += pcmd->ElemCount;
                         continue;
                     }
@@ -156,13 +172,16 @@ namespace Fling {
         }
     }
 
-    void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) {
+    void ImGuiSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool)
+    {
     }
 
-    void ImGuiSubpass::PrepareAttachments() {
+    void ImGuiSubpass::PrepareAttachments()
+    {
     }
 
-    void ImGuiSubpass::CreateGraphicsPipeline() {
+    void ImGuiSubpass::CreateGraphicsPipeline()
+    {
         ImGuiIO& io = ImGui::GetIO();
         unsigned char* fontData;
         int texWidth;
@@ -264,7 +283,8 @@ namespace Fling {
         // Descriptor set  --------------------------------
         VkDescriptorSetAllocateInfo allocInfo =
             Initializers::DescriptorSetAllocateInfo(m_descriptorPool, &m_descriptorSetLayout, 1);
-        if (vkAllocateDescriptorSets(logicalDevice, &allocInfo, &m_descriptorSet) != VK_SUCCESS) {
+        if (vkAllocateDescriptorSets(logicalDevice, &allocInfo, &m_descriptorSet) != VK_SUCCESS)
+        {
             F_LOG_ERROR("Could not allocate descriptor sets for imgui");
         }
 
@@ -282,7 +302,8 @@ namespace Fling {
         // Pipeline cache --------------------------------------------------------
         VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
         pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-        if (vkCreatePipelineCache(logicalDevice, &pipelineCacheCreateInfo, nullptr, &m_pipelineCache) != VK_SUCCESS) {
+        if (vkCreatePipelineCache(logicalDevice, &pipelineCacheCreateInfo, nullptr, &m_pipelineCache) != VK_SUCCESS)
+        {
             F_LOG_ERROR("Could not create pipeline cache for imgui");
         }
 
@@ -295,19 +316,19 @@ namespace Fling {
         pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
-        if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) !=
-            VK_SUCCESS) {
+        if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
+        {
             F_LOG_ERROR("Could not create pipline layout for imgui");
         }
 
         CreateUiPipeline();
     }
 
-    void ImGuiSubpass::OnSwapchainResized(entt::registry& t_reg) {
-        (void)t_reg;
-
+    void ImGuiSubpass::OnSwapchainResized()
+    {
         m_GlobalRenderPass = VulkanApp::Get().GetState().m_RenderPass;
-        if (m_pipeLine != VK_NULL_HANDLE) {
+        if (m_pipeLine != VK_NULL_HANDLE)
+        {
             vkDestroyPipeline(m_Device->GetVkDevice(), m_pipeLine, nullptr);
             m_pipeLine = VK_NULL_HANDLE;
         }
@@ -315,7 +336,8 @@ namespace Fling {
         CreateUiPipeline();
     }
 
-    void ImGuiSubpass::CreateUiPipeline() {
+    void ImGuiSubpass::CreateUiPipeline()
+    {
         VkDevice logicalDevice = m_Device->GetVkDevice();
 
         // Setup graphics pipeline for UI rendering
@@ -406,16 +428,19 @@ namespace Fling {
         pipelineCreateInfo.pVertexInputState = &vertexInputState;
 
         if (vkCreateGraphicsPipelines(logicalDevice, m_pipelineCache, 1, &pipelineCreateInfo, nullptr, &m_pipeLine) !=
-            VK_SUCCESS) {
+            VK_SUCCESS)
+        {
             F_LOG_ERROR("Could not create graphics pipeline for imgui");
         }
     }
 
-    void ImGuiSubpass::CleanUp(entt::registry& t_reg) {
+    void ImGuiSubpass::CleanUp()
+    {
         // Do we need this?
     }
 
-    void ImGuiSubpass::PrepImGuiStyleSettings() {
+    void ImGuiSubpass::PrepImGuiStyleSettings()
+    {
         // Color scheme
         ImGuiStyle& style = ImGui::GetStyle();
         style.Colors[ImGuiCol_TitleBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
@@ -427,29 +452,34 @@ namespace Fling {
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2((float)m_Window->GetWindowWidth(), (float)m_Window->GetWindowHeight());
         io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-        if (io.DisplaySize.x > 0.0f && io.DisplaySize.y > 0.0f) {
-            io.DisplayFramebufferScale =
-                ImVec2((float)m_Window->GetFramebufferWidth() / io.DisplaySize.x, (float)m_Window->GetFramebufferHeight() / io.DisplaySize.y);
+        if (io.DisplaySize.x > 0.0f && io.DisplaySize.y > 0.0f)
+        {
+            io.DisplayFramebufferScale = ImVec2((float)m_Window->GetFramebufferWidth() / io.DisplaySize.x,
+                                                (float)m_Window->GetFramebufferHeight() / io.DisplaySize.y);
         }
     }
 
-    void ImGuiSubpass::PrepareResources() {
+    void ImGuiSubpass::PrepareResources()
+    {
         // Create vert and index buffers for use with imgui geometry
         m_indexBuffer = std::make_unique<Buffer>();
         m_vertexBuffer = std::make_unique<Buffer>();
     }
 
-    void ImGuiSubpass::UpdateUniforms() {
+    void ImGuiSubpass::UpdateUniforms()
+    {
         ImDrawData* imDrawData = ImGui::GetDrawData();
 
         VkDeviceSize vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
         VkDeviceSize indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 
-        if ((vertexBufferSize == 0) || (indexBufferSize == 0)) {
+        if ((vertexBufferSize == 0) || (indexBufferSize == 0))
+        {
             return;
         }
 
-        if ((m_vertexBuffer->GetVkBuffer() == VK_NULL_HANDLE) || (m_vertexCount != imDrawData->TotalVtxCount)) {
+        if ((m_vertexBuffer->GetVkBuffer() == VK_NULL_HANDLE) || (m_vertexCount != imDrawData->TotalVtxCount))
+        {
             m_vertexBuffer->UnmapMemory();
             m_vertexBuffer->Release();
 
@@ -459,7 +489,8 @@ namespace Fling {
             m_vertexBuffer->MapMemory();
         }
 
-        if ((m_indexBuffer->GetVkBuffer() == VK_NULL_HANDLE) || (m_indexCount < imDrawData->TotalIdxCount)) {
+        if ((m_indexBuffer->GetVkBuffer() == VK_NULL_HANDLE) || (m_indexCount < imDrawData->TotalIdxCount))
+        {
             m_indexBuffer->UnmapMemory();
             m_indexBuffer->Release();
 
@@ -472,7 +503,8 @@ namespace Fling {
         ImDrawVert* vtxDst = (ImDrawVert*)m_vertexBuffer->m_MappedMem;
         ImDrawIdx* idxDst = (ImDrawIdx*)m_indexBuffer->m_MappedMem;
 
-        for (int n = 0; n < imDrawData->CmdListsCount; ++n) {
+        for (int n = 0; n < imDrawData->CmdListsCount; ++n)
+        {
             const ImDrawList* cmd_list = imDrawData->CmdLists[n];
             memcpy(vtxDst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
             memcpy(idxDst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));

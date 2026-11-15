@@ -1,8 +1,11 @@
 #pragma once
 
+#include "ExecMode.h"
 #include "FlingTypes.h"
 #include "Input/InputMessage.h"
 #include "Strings/String.h"
+
+#include <optional>
 
 namespace Fling
 {
@@ -25,7 +28,12 @@ namespace Fling
      *
      *   --null-render       No window, no swapchain, no GPU work
      *   --unattended        No modal dialogs. A crash prints a stack trace and exits with code 2
-     *   --frames N          Run N ticks, then exit
+     *   --frames N          Run N frames, then exit, in every exec mode. No tick runs after
+     *                       tick N / frames-per-tick (rounded up), and the run ends once that
+     *                       tick is shown
+     *   --frames-per-tick N With --null-render, run one fixed tick every N frames (default 1),
+     *                       so frame systems see the input of the frames between ticks.
+     *                       --frames still counts frames
      *   --seed S            Seed the random number generator
      *   --log-format json   Write logs as JSON lines
      *   --level F           Load level file F (relative to Assets/) instead of [Game] StartLevel
@@ -34,18 +42,36 @@ namespace Fling
      *   --replay-input F    Play the input messages in file F from the first tick
      *   --record-input F    Record the input messages, and save them to file F at exit
      *                       (--replay-input and --record-input are errors in shipping builds)
+     *   --dump-schedule     Print the ECS schedule (phases, stages, and why), then exit.
+     *                       Exits with code 1 if the schedule has errors
+     *   --validate-schedule Check the ECS schedule, print any errors, then exit with
+     *                       code 0 (no errors) or 1. The build runs this (fling_validate_schedule)
+     *   --dump-ticks F      Write one line per tick to file F: the tick, its input cut, its
+     *                       input counts and the state hash (the tick ledger), to diff two runs
+     *   --exec M            How play runs: threaded (ticks on a game thread), direct or inline
+     *                       (one thread, frame systems on a published copy). Overrides [Engine] Exec
+     *   --sim-hz N          The fixed simulation rate, ticks a second. Overrides [Engine] SimHz
+     *   --max-fps N         At most N frames a second on the main thread; 0: no cap. Overrides
+     *                       [Engine] MaxFps. RunSettings has the defaults and the valid ranges
+     *   --vsync on|off      Present waits for the display's refresh (on) or not (off: frames
+     *                       may tear, for the lowest latency). Overrides [Engine] VSync
+     *   --interpolation on|off
+     *                       Draw between the latest two published ticks (on) or the latest tick
+     *                       only. Overrides [Engine] Interpolation
+     *   --thread-jitter S:U --exec threaded only: sleep a random 0..U microseconds (seed S) before each wake
+     *                       and after each publish on the game thread, and before each frame
      */
     struct LaunchOptions
     {
-        /** The tick rate of a --null-render run, in ticks per second. */
-        static constexpr uint32 NullRenderTickRate = 60;
-
         bool NullRender = false;
 
         bool Unattended = false;
 
-        /** Number of ticks to run before the engine exits. 0 means no limit. */
+        /** Number of frames to run before the engine exits (--frames). 0 means no limit. */
         uint32 Frames = 0;
+
+        /** With NullRender: frames per fixed tick (--frames-per-tick). 1 or more. */
+        uint32 FramesPerTick = 1;
 
         /** True when --seed was given. If false, the seed comes from the operating system. */
         bool HasSeed = false;
@@ -64,6 +90,34 @@ namespace Fling
 
         /** The file to save an input recording to (--record-input). Empty means no recording. */
         String RecordInput;
+
+        /** Print the ECS schedule, then exit (--dump-schedule). */
+        bool DumpSchedule = false;
+
+        /** Check the ECS schedule, then exit (--validate-schedule). */
+        bool ValidateSchedule = false;
+
+        /** The file to write the tick ledger rows to (--dump-ticks). Empty means none. */
+        String DumpTicks;
+
+        /** How play runs (--exec). Empty: not on the command line (RunSettings picks it). */
+        std::optional<ExecMode> Exec;
+
+        /** The simulation rate (--sim-hz). Empty: not on the command line. RunSettings checks the range. */
+        std::optional<uint32> SimHz;
+
+        /** The frame cap (--max-fps), 0 for none. Empty: not on the command line. RunSettings checks the range. */
+        std::optional<uint32> MaxFps;
+
+        /** --vsync on or off. Empty: not on the command line. */
+        std::optional<bool> VSync;
+
+        /** --interpolation on or off. Empty: not on the command line. */
+        std::optional<bool> Interpolation;
+
+        /** --thread-jitter: the seed and the longest sleep in microseconds. 0 microseconds means off. */
+        uint32 JitterSeed = 0;
+        uint32 JitterMaxMicroseconds = 0;
 
         /** The language code to show text in (--language), for example "fr". Empty means use the config. */
         String Language;
@@ -102,4 +156,15 @@ namespace Fling
          */
         static bool Parse(const CommandLine& t_CmdLine, LaunchOptions& t_Out, String& t_OutError);
     };
+
+    /** Read "on" or "off" (a switch setting such as --vsync or [Engine] VSync). False for any other text. */
+    inline bool ParseOnOff(const StringView t_Text, bool& t_Out)
+    {
+        if (t_Text == "on" || t_Text == "off")
+        {
+            t_Out = t_Text == "on";
+            return true;
+        }
+        return false;
+    }
 } // namespace Fling

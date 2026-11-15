@@ -13,26 +13,25 @@ namespace Fling
     class File : public Resource
     {
     public:
-
-		static std::shared_ptr<Fling::File> Create(const AssetPath& t_Path);
+        static std::shared_ptr<Fling::File> Create(const AssetPath& t_Path);
 
         /**
          * Load a file from the asset path t_Path.
-         * 
+         *
          * @param t_Path              The path of this file, relative to the assets folder.
          */
         explicit File(const AssetPath& t_Path);
-        
+
         /**
          * Get char* that represents the text in this file
-         * 
-         * @return const char* 
+         *
+         * @return const char*
          */
         const char* GetData() const { return m_Characters.data(); }
 
         /**
          * Get the File Length object
-         * 
+         *
          * @return size_t Length of the file in characters
          */
         size_t GetFileLength() const { return m_Characters.size(); }
@@ -43,10 +42,9 @@ namespace Fling
         bool IsLoaded() const { return m_Characters.size() != 0; }
 
     private:
-
         /**
          * Loads the file from its path.
-         * @note All paths are relative to the assets directory. 
+         * @note All paths are relative to the assets directory.
          */
 
         void LoadFile();
@@ -54,4 +52,4 @@ namespace Fling
         /** Array of characters that represents this file */
         std::vector<char> m_Characters;
     };
-}   // namespace Fling
+} // namespace Fling

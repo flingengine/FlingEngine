@@ -1,9 +1,7 @@
 #include "LaunchOptions.h"
 #include "Misc/CommandLine.h"
 #include "Strings/String.h"
-
-#include <charconv>
-#include <limits>
+#include "Strings/StringUtils.h"
 
 namespace Fling
 {
@@ -12,16 +10,41 @@ namespace Fling
         constexpr StringView NullRenderFlag = "null-render";
         constexpr StringView UnattendedFlag = "unattended";
         constexpr StringView FramesFlag = "frames";
+        constexpr StringView FramesPerTickFlag = "frames-per-tick";
         constexpr StringView SeedFlag = "seed";
         constexpr StringView LogFormatFlag = "log-format";
         constexpr StringView LevelFlag = "level";
         constexpr StringView LogInputFlag = "log-input";
         constexpr StringView ReplayInputFlag = "replay-input";
         constexpr StringView RecordInputFlag = "record-input";
+        constexpr StringView DumpScheduleFlag = "dump-schedule";
+        constexpr StringView ValidateScheduleFlag = "validate-schedule";
         constexpr StringView LanguageFlag = "language";
         constexpr StringView LocExportFlag = "loc-export";
         constexpr StringView LocImportFlag = "loc-import";
         constexpr StringView LocGatherFlag = "loc-gather";
+        constexpr StringView DumpTicksFlag = "dump-ticks";
+        constexpr StringView ExecFlag = "exec";
+        constexpr StringView SimHzFlag = "sim-hz";
+        constexpr StringView MaxFpsFlag = "max-fps";
+        constexpr StringView VSyncFlag = "vsync";
+        constexpr StringView InterpolationFlag = "interpolation";
+        constexpr StringView ThreadJitterFlag = "thread-jitter";
+        /**
+         * Flags that are refused with the name of the flag that does their job, so a script
+         * that passes one does not run unseen.
+         */
+        struct RefusedFlag
+        {
+            StringView Flag;
+            const char* Instead;
+        };
+        constexpr RefusedFlag RefusedFlags[] = {
+            {"render-hz", "--max-fps caps the frame rate, --sim-hz sets the tick rate"},
+            {"present-mode", "--vsync on|off chooses how frames are shown"},
+        };
+
+        using StringUtils::TryParseUint32;
 
         /** Read a flag that must have a file path. A flag with no value or an empty value is an error. */
         bool ReadPath(const CommandLine& t_CmdLine, StringView t_Flag, String& t_Out, String& t_OutError)
@@ -70,11 +93,8 @@ namespace Fling
         }
 
         /** Read a flag that must be a whole number from 0 to the uint32 maximum. */
-        bool ReadUint32(const CommandLine& t_CmdLine,
-                        StringView t_Flag,
-                        uint32& t_Out,
-                        bool& t_OutFound,
-                        String& t_OutError)
+        bool
+        ReadUint32(const CommandLine& t_CmdLine, StringView t_Flag, uint32& t_Out, bool& t_OutFound, String& t_OutError)
         {
             t_OutFound = false;
 
@@ -85,18 +105,54 @@ namespace Fling
             }
 
             const StringView Str = *Value;
-            uint64 Result = 0;
-            const auto [End, Error] = std::from_chars(Str.data(), Str.data() + Str.size(), Result);
-            if (Str.empty() || Error != std::errc() || End != Str.data() + Str.size() ||
-                Result > std::numeric_limits<uint32>::max())
+            if (!TryParseUint32(Str, t_Out))
             {
-                t_OutError = "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" +
-                             String(Str) + "'";
+                t_OutError =
+                    "--" + String(t_Flag) + " needs a whole number from 0 to 4294967295, not '" + String(Str) + "'";
                 return false;
             }
 
-            t_Out = static_cast<uint32>(Result);
             t_OutFound = true;
+            return true;
+        }
+
+        /** Read an on|off flag into an optional: empty when the flag is not given. */
+        bool ReadOptionalOnOff(const CommandLine& t_CmdLine,
+                               StringView t_Flag,
+                               std::optional<bool>& t_Out,
+                               String& t_OutError)
+        {
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
+            {
+                return true;
+            }
+            bool bOn = false;
+            if (!ParseOnOff(*Value, bOn))
+            {
+                t_OutError = "--" + String(t_Flag) + " must be on or off, not '" + String(*Value) + "'";
+                return false;
+            }
+            t_Out = bOn;
+            return true;
+        }
+
+        /** Read a uint32 flag into an optional: empty when the flag is not given. */
+        bool ReadOptionalUint32(const CommandLine& t_CmdLine,
+                                StringView t_Flag,
+                                std::optional<uint32>& t_Out,
+                                String& t_OutError)
+        {
+            uint32 Value = 0;
+            bool bFound = false;
+            if (!ReadUint32(t_CmdLine, t_Flag, Value, bFound, t_OutError))
+            {
+                return false;
+            }
+            if (bFound)
+            {
+                t_Out = Value;
+            }
             return true;
         }
     } // namespace
@@ -116,9 +172,26 @@ namespace Fling
             return false;
         }
 
+        if (!ReadBool(t_CmdLine, DumpScheduleFlag, t_Out.DumpSchedule, t_OutError) ||
+            !ReadBool(t_CmdLine, ValidateScheduleFlag, t_Out.ValidateSchedule, t_OutError))
+        {
+            return false;
+        }
+
         bool bFoundFrames = false;
         if (!ReadUint32(t_CmdLine, FramesFlag, t_Out.Frames, bFoundFrames, t_OutError))
         {
+            return false;
+        }
+
+        bool bFoundFramesPerTick = false;
+        if (!ReadUint32(t_CmdLine, FramesPerTickFlag, t_Out.FramesPerTick, bFoundFramesPerTick, t_OutError))
+        {
+            return false;
+        }
+        if (t_Out.FramesPerTick == 0)
+        {
+            t_OutError = "--frames-per-tick must be 1 or more";
             return false;
         }
 
@@ -195,6 +268,51 @@ namespace Fling
         if (t_Out.IsLocalizationTool())
         {
             t_Out.NullRender = true;
+        }
+
+        if (!ReadPath(t_CmdLine, DumpTicksFlag, t_Out.DumpTicks, t_OutError))
+        {
+            return false;
+        }
+
+        if (const std::optional<StringView> Exec = t_CmdLine.GetValueAsString(ExecFlag))
+        {
+            ExecMode Mode = DefaultExecMode;
+            if (!ParseExecMode(*Exec, Mode))
+            {
+                t_OutError = "--exec must be direct, inline, or threaded, not '" + String(*Exec) + "'";
+                return false;
+            }
+            t_Out.Exec = Mode;
+        }
+
+        if (!ReadOptionalUint32(t_CmdLine, SimHzFlag, t_Out.SimHz, t_OutError) ||
+            !ReadOptionalUint32(t_CmdLine, MaxFpsFlag, t_Out.MaxFps, t_OutError) ||
+            !ReadOptionalOnOff(t_CmdLine, VSyncFlag, t_Out.VSync, t_OutError) ||
+            !ReadOptionalOnOff(t_CmdLine, InterpolationFlag, t_Out.Interpolation, t_OutError))
+        {
+            return false;
+        }
+        for (const RefusedFlag& Refused : RefusedFlags)
+        {
+            if (t_CmdLine.GetValueAsString(Refused.Flag).has_value())
+            {
+                t_OutError = "--" + String(Refused.Flag) + " is not a flag: " + Refused.Instead;
+                return false;
+            }
+        }
+
+        if (const std::optional<StringView> Jitter = t_CmdLine.GetValueAsString(ThreadJitterFlag))
+        {
+            const StringView Str = *Jitter;
+            const size_t Colon = Str.find(':');
+            if (Colon == StringView::npos || !TryParseUint32(Str.substr(0, Colon), t_Out.JitterSeed) ||
+                !TryParseUint32(Str.substr(Colon + 1), t_Out.JitterMaxMicroseconds))
+            {
+                t_OutError =
+                    "--thread-jitter needs <seed>:<max microseconds>, for example 7:2000, not '" + String(Str) + "'";
+                return false;
+            }
         }
 
 #if WITH_INPUT_RECORDING

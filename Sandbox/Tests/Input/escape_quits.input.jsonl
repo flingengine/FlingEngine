@@ -1,5 +1,7 @@
 {"format":"fling-input","version":1}
-# Test data for the "Sandbox: replay input quits" CTest.
+# Test data for the "Sandbox: replay input quits" CTests.
 # The Escape key goes down at 0.5 s. The Sandbox game quits when it sees Escape.
-# At 60 ticks per second, the press goes out on tick 30, so the run ends after 31 ticks.
+# The press goes out on tick 0.5 * the tick rate: tick 15 at 30 ticks a second (the run
+# ends after 16 ticks), tick 30 at 60 (31 ticks). The file has no tick cuts, so it
+# replays by time at any rate.
 {"t":0.5,"type":"Press","key":"Escape"}

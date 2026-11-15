@@ -1,91 +1,105 @@
 #pragma once
 
+#include "RenderSnapshot.h"
 #include "Shader.h"
 
-#include <entt/entity/helper.hpp>
-#include <entt/entity/registry.hpp>
 #include <memory>
 #include <vector>
 
 namespace Fling
 {
-	class CommandBuffer;
-	class LogicalDevice;
-	class FrameBuffer;
-	class Swapchain;
-	class GraphicsPipeline;
+    class CommandBuffer;
+    class LogicalDevice;
+    class FrameBuffer;
+    class Swapchain;
+    class GraphicsPipeline;
 
-	/**
-	* A subpass represents one part of a RenderPipeline. Each subpass should
-	*			can add attachments to the frame buffer, build it's own command buffers, 
-	*			and create its own descriptors. When overriding this class, add any additional
-	*			uniform buffers or bindings you may need into the child class. 
-	* 
-	* @see GeometrySubpass for an example
-	*/
-	class Subpass
-	{
-	public:
-		Subpass(const Subpass&) = delete;
-		Subpass& operator=(const Subpass&) = delete;
+    /**
+     * A subpass represents one part of a RenderPipeline. Each subpass should
+     *			can add attachments to the frame buffer, build it's own command buffers,
+     *			and create its own descriptors. When overriding this class, add any additional
+     *			uniform buffers or bindings you may need into the child class.
+     *
+     * @see GeometrySubpass for an example
+     */
+    class Subpass
+    {
+    public:
+        Subpass(const Subpass&) = delete;
+        Subpass& operator=(const Subpass&) = delete;
 
-		Subpass(const LogicalDevice* t_Dev, const Swapchain* t_Swap, std::shared_ptr<Fling::Shader> t_Vert, std::shared_ptr<Fling::Shader> t_Frag);
-		
-		virtual ~Subpass();
+        Subpass(const LogicalDevice* t_Dev,
+                const Swapchain* t_Swap,
+                std::shared_ptr<Fling::Shader> t_Vert,
+                std::shared_ptr<Fling::Shader> t_Frag);
 
-		/** Add any attachments to a frame buffer that this subpass may need */
-		virtual void PrepareAttachments() {}
+        virtual ~Subpass();
 
-		virtual void CreateGraphicsPipeline() = 0;
+        /** Add any attachments to a frame buffer that this subpass may need */
+        virtual void PrepareAttachments() {}
 
-		virtual void Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) = 0;
+        virtual void CreateGraphicsPipeline() = 0;
 
-		/** Cleanup any allocated resources that you may need a registry for */
-		virtual void CleanUp(entt::registry& t_reg) {}
+        /**
+         * Record this pass for one frame. A pass reads only the snapshot, never the
+         * world, so the world can change while the frame is drawn.
+         */
+        virtual void Draw(CommandBuffer& t_CmdBuf,
+                          uint32 t_ActiveFrameInFlight,
+                          const RenderSnapshot& t_Snapshot,
+                          float DeltaTime) = 0;
 
-		/**
-		* Given the frame buffers and the registry, create any descriptor sets that we may need
-		*			Assumes that the frame buffer has been prepared with it's attachments already.
-		* @param t_FrameBuffer	The swap chain frame buffer
-		*/		
-		virtual void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) {};
-		
-		/**
-		 * If a subpass has a command buffer that the final swap chain presentation is dependent on,
-		 *			then add it this vector. The Deferred offscreen GBuffer is an example of this
-		 */
-		virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs, std::vector<VkSemaphore>& t_Deps, uint32 t_ActiveFrameIndex, uint32 t_CurrentFrameInFlight) {}
-		
-		/**
-		* If a subpass has an additional command buffer to add to the final swap chain draw submission
-		*			but it is not dependent on it, then add it here. ImGUI is an example of this
-		*/
-		virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex) {}
+        /** Free the resources this pass made. Called after the device is idle. */
+        virtual void CleanUp() {}
 
-		/** Function that is called when the swap chain is resized. Put any logic that may depend on Swapchain extents */
-		virtual void OnSwapchainResized(entt::registry& t_reg) {}
+        /**
+         * Given the frame buffers, create any descriptor sets that we may need
+         *			Assumes that the frame buffer has been prepared with it's attachments already.
+         * @param t_FrameBuffer	The swap chain frame buffer
+         */
+        virtual void CreateDescriptorSets(VkDescriptorPool t_Pool) {};
 
-		inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
-		inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }
+        /**
+         * If a subpass has a command buffer that the final swap chain presentation is dependent on,
+         *			then add it this vector. The Deferred offscreen GBuffer is an example of this
+         */
+        virtual void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs,
+                                               std::vector<VkSemaphore>& t_Deps,
+                                               uint32 t_ActiveFrameIndex,
+                                               uint32 t_CurrentFrameInFlight)
+        {
+        }
 
-	protected:
+        /**
+         * If a subpass has an additional command buffer to add to the final swap chain draw submission
+         *			but it is not dependent on it, then add it here. ImGUI is an example of this
+         */
+        virtual void GatherPresentBuffers(std::vector<CommandBuffer*>& t_CmdBuffs, uint32 t_ActiveFrameIndex) {}
 
-		void InitalizeGraphicsPipeline();
+        /** Function that is called when the swap chain is resized. Put any logic that may depend on Swapchain extents
+         */
+        virtual void OnSwapchainResized() {}
 
-		void DestroyGraphicsPipeline();
+        inline GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_GraphicsPipeline; }
+        inline const std::vector<VkClearValue>& GetClearValues() const { return m_ClearValues; }
 
-		// Get default graphics Pipeline
-		const LogicalDevice* m_Device;
-		const Swapchain* m_SwapChain;
+    protected:
+        void InitalizeGraphicsPipeline();
 
-		std::shared_ptr<Fling::Shader> m_VertexShader;
-		
-		std::shared_ptr<Fling::Shader> m_FragShader;
+        void DestroyGraphicsPipeline();
 
-		/** The clear values that will be used when building the command buffer to run this subpass */
-		std::vector<VkClearValue> m_ClearValues = std::vector<VkClearValue>(2);
+        // Get default graphics Pipeline
+        const LogicalDevice* m_Device;
+        const Swapchain* m_SwapChain;
 
-		/** Layouts created in the constructor via shader reflection */
-		GraphicsPipeline* m_GraphicsPipeline = nullptr;
-	};
-}
+        std::shared_ptr<Fling::Shader> m_VertexShader;
+
+        std::shared_ptr<Fling::Shader> m_FragShader;
+
+        /** The clear values that will be used when building the command buffer to run this subpass */
+        std::vector<VkClearValue> m_ClearValues = std::vector<VkClearValue>(2);
+
+        /** Layouts created in the constructor via shader reflection */
+        GraphicsPipeline* m_GraphicsPipeline = nullptr;
+    };
+} // namespace Fling

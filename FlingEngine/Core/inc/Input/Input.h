@@ -5,40 +5,57 @@
 #include "Input/InputDevice.h"
 #include "Input/InputDeviceTypes.h"
 #include "Input/InputKey.h"
-#include "Input/InputKeyState.h"
 #include "Input/InputMessageHandler.h"
 #include "Input/InputMessageProcessor.h"
 #include "Input/InputPlayback.h"
 #include "Input/InputRecorder.h"
+#include "Misc/SimulationCheck.h"
 #include "Singleton.hpp"
 #include "Strings/String.h"
 
-#include <limits>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
 namespace Fling
 {
     /**
-     * The input system for game code. It owns the InputMessageHandler and the game's
-     * InputMessageProcessor. The key queries (IsHeld, WasPressed, ...) read the game
-     * processor's state, which changes only in BeginTick, so every system in a tick sees
-     * the same input.
+     * The engine's input: it owns the InputMessageHandler (the message queue and the
+     * device interfaces), the playback and the recorder. It has no key queries. A fixed
+     * system reads the InputState singleton (the tick's cut), a frame system reads
+     * PendingInput, and any other consumer (the editor, the debug camera, the UI) makes
+     * its own reader with CreateProcessor.
      *
-     * Each frame the engine calls, in order: Poll, BeginTick, the game update, EndTick.
-     * Other consumers (render, editor, recorder) make their own processor with
-     * CreateProcessor.
+     * Each frame the engine calls, in order: Poll, the fixed ticks, PollLate, the frame
+     * systems.
+     *
+     * Threads (see SetWriterLane): the writer lane polls and owns the handler, the
+     * interfaces, the playback and the recorder (Poll, PollLate, SetUICapture, Add and
+     * RemoveInterface, GetPlayback and GetRecorder, except the calls below). The tick
+     * lane builds tick input with its own TickInputProvider; from there it calls only
+     * InputPlayback::ClaimTickCut and NoteTickOverran and InputRecorder::NoteTickCut,
+     * which are thread safe.
+     *
+     * The capture, the devices, the processors and the handler call
+     * FLING_SIMULATION_FORBID, so a fixed system that reads them fails in a debug build
+     * (SimulationCheck).
      */
     class Input : public Singleton<Input>
     {
     public:
-        /** Make the handler and the game processor. Adds no interfaces. */
+        /** Make the handler, the playback and the recorder. Adds no interfaces. */
         void Init() override;
 
-        /** Remove every interface and destroy the handler. */
+        /** Remove every interface and destroy the handler. Stop every other thread that reads input first. */
         void Shutdown() override;
+
+        /**
+         * The lane of the thread that polls (the writer of the queue). The engine sets
+         * Lane::Frame: the main thread is the input writer in every exec mode. Debug builds
+         * then check every writer call. None (the default, one
+         * thread) checks nothing. Set it before other threads start.
+         */
+        void SetWriterLane(Lane t_Lane);
 
         bool IsInitialized() const { return m_Handler != nullptr; }
 
@@ -77,25 +94,32 @@ namespace Fling
         void Poll(float t_DeltaSeconds = 0.0f);
 
         /**
-         * Consume input for the game, up to t_UntilNs. If the game processor fell behind
-         * the queue, it is resynced from the newest state first.
+         * The second poll of a frame: after the fixed ticks, right before the frame rate
+         * systems. It polls every interface again and fires deferred device events, so the
+         * input that came in while the ticks ran is in the queue, pending, when the frame
+         * systems read it (PendingInputReader). The next tick consumes it as usual. Playback
+         * queues the messages that its next Update would queue (InputPlayback::UpdateLate).
+         * The recorder reads them at the next Poll, with that frame's time, so a recording
+         * gives them the tick that consumed them. Does not move any clock.
          */
-        void BeginTick(int64 t_UntilNs = std::numeric_limits<int64>::max());
-
-        /** Clear the game processor's edge counts and mouse deltas. */
-        void EndTick();
+        void PollLate();
 
         /**
          * Tell the game that UI (for example ImGui) owns the keyboard or the mouse. While a
-         * device is captured, the key queries below give neutral input for its keys: not
-         * held, no presses, no releases, and no mouse delta. Gamepads are never captured.
-         * Other processors (the UI's own) still get every message.
+         * device is captured, the tick and the frame side give neutral input for its keys:
+         * not held, no presses, no releases, and no mouse moves (InputSlice::Append).
+         * Gamepads are never captured. A processor (the UI's own) still gets every message.
+         *
+         * A change is a CaptureChanged message in the stream, so the tick and the frame
+         * side see it at the same place, and a recording replays it. While input playback
+         * runs, the recording owns the capture and this call does nothing. Writer lane.
          */
         void SetUICapture(bool t_Keyboard, bool t_Mouse);
 
-        bool IsKeyboardCaptured() const { return m_KeyboardCaptured; }
+        /** The capture now, at the newest message. Any thread, but not simulation code. */
+        bool IsKeyboardCaptured() const;
 
-        bool IsMouseCaptured() const { return m_MouseCaptured; }
+        bool IsMouseCaptured() const;
 
         /**
          * Log each input message at this level (see --log-input). Keeps the level for a later
@@ -105,43 +129,17 @@ namespace Fling
 
         InputLogLevel GetLogLevel() const { return m_LogLevel; }
 
-        /** True if the key is held on any device. */
-        bool IsHeld(InputKey t_Key) const;
-
-        /** True if the key was pressed on any device this tick. */
-        bool WasPressed(InputKey t_Key) const;
-
-        /** True if the key was released on any device this tick. */
-        bool WasReleased(InputKey t_Key) const;
-
-        /** The state of a key on one device, this tick. */
-        InputKeyState GetKeyState(InputDeviceId t_Device, InputKey t_Key) const;
-
-        /** The largest absolute axis value of this key over every device, this tick (with its sign). */
-        float GetAxisValue(InputKey t_Key) const;
-
-        /** Mouse movement this tick, summed over every device, in integer counts. */
-        void GetMouseDelta(int32& t_OutX, int32& t_OutY) const;
-
-        /**
-         * The cursor position of the first connected device with the Pointer capability,
-         * in window coordinates. Returns false if there is no such device.
-         */
-        bool GetPointerPosition(float& t_OutX, float& t_OutY) const;
-
         std::shared_ptr<InputDevice> GetDevice(InputDeviceId t_Id) const;
 
         /** Every connected device. */
         std::vector<std::shared_ptr<InputDevice>> GetDevices() const;
 
-        entt::sink<void(const InputDevice&)> OnDeviceConnected() { return m_Handler->OnDeviceConnected(); }
+        Sink<void(const InputDevice&)> OnDeviceConnected() { return m_Handler->OnDeviceConnected(); }
 
-        entt::sink<void(const InputDevice&)> OnDeviceDisconnected() { return m_Handler->OnDeviceDisconnected(); }
+        Sink<void(const InputDevice&)> OnDeviceDisconnected() { return m_Handler->OnDeviceDisconnected(); }
 
         /** Make a new consumer of the message queue. After Shutdown it reads nothing (IsValid is false). */
         InputMessageProcessor CreateProcessor() const;
-
-        const InputMessageProcessor& GetGameProcessor() const { return *m_GameProcessor; }
 
 #if WITH_INPUT_RECORDING
         /** Records the message stream to a file. Only call this after Init. Not in shipping builds. */
@@ -152,12 +150,14 @@ namespace Fling
 #endif
 
         /** The handler, or null before Init. Keep a std::weak_ptr if you store it. */
-        const std::shared_ptr<InputMessageHandler>& GetHandler() const { return m_Handler; }
+        const std::shared_ptr<InputMessageHandler>& GetHandler() const
+        {
+            ForbidInSimulation();
+            return m_Handler;
+        }
 
     private:
         std::shared_ptr<InputMessageHandler> m_Handler;
-
-        std::optional<InputMessageProcessor> m_GameProcessor;
 
 #if WITH_INPUT_RECORDING
         std::unique_ptr<InputRecorder> m_Recorder;
@@ -165,12 +165,16 @@ namespace Fling
         std::unique_ptr<InputPlayback> m_Playback;
 #endif
 
-        /** True if the key belongs to a device that UI owns now. */
-        bool IsCaptured(InputKey t_Key) const;
+        /** The simulation check of every reader of the frame's input. */
+        static void ForbidInSimulation()
+        {
+            FLING_SIMULATION_FORBID(
+                "A fixed rate system read the frame's input (Input). Read the InputState singleton.");
+        }
 
-        bool m_KeyboardCaptured = false;
+        InputCapture GetCapture() const { return m_Handler ? m_Handler->GetCapture() : InputCapture::None; }
 
-        bool m_MouseCaptured = false;
+        Lane m_WriterLane = Lane::None;
 
         InputLogLevel m_LogLevel = InputLogLevel::Off;
     };
