@@ -3,6 +3,8 @@
 # Each case builds EcsCompileFail.cpp with one FLING_ECS_CASE_<Name> defined, and passes only
 # if the build fails and its output matches the rule's message. The "Good" case defines
 # nothing and must build. How to add a case: Docs/system-order-api.md, section 9.
+# A message that quotes a name: match "[^ ]*" around the name, never one "." per quote. GCC
+# in a UTF-8 locale quotes with ‘ and ’, which are three bytes each, and MSVC writes 'Name':.
 
 set( FLING_ECS_COMPILE_FAIL_SOURCE "${CMAKE_CURRENT_LIST_DIR}/EcsCompileFail.cpp" )
 
@@ -65,8 +67,8 @@ fling_add_ecs_compile_check( WritesSimTime          "No system writes what the r
 fling_add_ecs_compile_check( WritesInputState       "No system writes what the runner writes" )
 fling_add_ecs_compile_check( WritesRealFrameTime    "No system writes what the runner writes" )
 fling_add_ecs_compile_check( WritesPendingInput     "No system writes what the runner writes" )
-fling_add_ecs_compile_check( ReadsTickInput         ".ReadTickInput.:? is not a member|no member named .ReadTickInput." )
-fling_add_ecs_compile_check( ReadsPendingInput      ".ReadPendingInput.:? is not a member|no member named .ReadPendingInput." )
+fling_add_ecs_compile_check( ReadsTickInput         "ReadTickInput[^ ]* is not a member|no member named [^ ]*ReadTickInput" )
+fling_add_ecs_compile_check( ReadsPendingInput      "ReadPendingInput[^ ]* is not a member|no member named [^ ]*ReadPendingInput" )
 fling_add_ecs_compile_check( SingletonNotOwned      "Only a writer of a singleton makes it" )
 fling_add_ecs_compile_check( QueueMadeByAppender    "Only the consumer of a queue makes it" )
 fling_add_ecs_compile_check( QueueRead              "A queue is not read or written directly" )
@@ -82,8 +84,8 @@ fling_add_ecs_compile_check( CreateWithoutRequired  "without a component that it
 fling_add_ecs_compile_check( RequireEachOther       "Two components require each other" )
 fling_add_ecs_compile_check( OrderListTooLong       "TooManyItems" )
 fling_add_ecs_compile_check( GroupWithoutRoot       "must be inside Fling::Order::Tick or Fling::Order::Frame" )
-fling_add_ecs_compile_check( OrderGroupTypo         ".Simulaton.:? is not a member|no member named .Simulaton." )
-fling_add_ecs_compile_check( OrderSystemTypo        ".TransfromSystem.:? is not a member|no member named .TransfromSystem.|.TransfromSystem.:? undeclared" )
+fling_add_ecs_compile_check( OrderGroupTypo         "Simulaton[^ ]* is not a member|no member named [^ ]*Simulaton" )
+fling_add_ecs_compile_check( OrderSystemTypo        "TransfromSystem[^ ]* is not a member|no member named [^ ]*TransfromSystem|TransfromSystem[^ ]* undeclared" )
 fling_add_ecs_compile_check( FixedReadsPendingInput "A fixed rate system cannot read or write a Presentation component" )
 fling_add_ecs_compile_check( ResimGroupInFinalize   "sets .Resim but is not directly in Fling::Order::Tick" )
 fling_add_ecs_compile_check( ResimGroupInSimulation "sets .Resim but is not directly in Fling::Order::Tick" )

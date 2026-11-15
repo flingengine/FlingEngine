@@ -123,6 +123,7 @@ namespace
         std::function<void()> Call;
     };
 
+#if FLING_SIMULATION_CHECKS
     std::vector<NamedCall> FrameInputCalls()
     {
         return {
@@ -158,6 +159,7 @@ namespace
              }},
         };
     }
+#endif
 
     /** One runner with the call systems. */
     struct CallRig
