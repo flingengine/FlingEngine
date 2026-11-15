@@ -2,17 +2,19 @@
 #include "Strings/String.h"
 
 #include <catch2/catch_all.hpp>
-#include <optional>
 #include <cstdio>
 #include <fstream>
+#include <optional>
 
 using Fling::String;
 using Fling::StringView;
 
-TEST_CASE("Command Line", "[Command Line]") {
+TEST_CASE("Command Line", "[Command Line]")
+{
     using namespace Fling;
 
-    SECTION("Ignores First Argument") {
+    SECTION("Ignores First Argument")
+    {
         const char* Args[] = {
             "FlingEngine.exe",
         };
@@ -27,7 +29,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CurCmdLine.empty());
     }
 
-    SECTION("Bool Flag - true") {
+    SECTION("Bool Flag - true")
+    {
         const char* Args[] = {"FlingEngine.exe", "-test=true"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
@@ -37,7 +40,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(bHasFlag);
     }
 
-    SECTION("Integer Flag") {
+    SECTION("Integer Flag")
+    {
         const char* Args[] = {
             "FlingEngine.exe",
             "-numFlag=776",
@@ -59,7 +63,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(PlainIntValue == 776);
     }
 
-    SECTION("Double Flag") {
+    SECTION("Double Flag")
+    {
         const char* Args[] = {
             "FlingEngine.exe",
             "-numericValue=-1123.56",
@@ -73,7 +78,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(Value == Catch::Approx(-1123.56));
     }
 
-    SECTION("Multiple flags must be separate argv entries") {
+    SECTION("Multiple flags must be separate argv entries")
+    {
         // A real shell splits "-foo=1 -bar=2" into two argv entries before the program
         // ever sees them. A launcher that instead hands both flags over as a single
         // argv string (e.g. a misconfigured launch.json "args" entry) will not get
@@ -95,7 +101,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<double>("TestDouble", -1.0) == Catch::Approx(420.69));
     }
 
-    SECTION("Bool Flag - implicit true") {
+    SECTION("Bool Flag - implicit true")
+    {
         const char* Args[] = {"FlingEngine.exe", "-BoolFlag"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
@@ -105,7 +112,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<bool>("BoolFlag", false) == true);
     }
 
-    SECTION("Bool Flag - double dash implicit true") {
+    SECTION("Bool Flag - double dash implicit true")
+    {
         const char* Args[] = {"FlingEngine.exe", "--BoolFlag"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -114,7 +122,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<bool>("BoolFlag", false) == true);
     }
 
-    SECTION("Double dash key-value flag") {
+    SECTION("Double dash key-value flag")
+    {
         const char* Args[] = {"FlingEngine.exe", "--resolutionWidth=1920"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -123,7 +132,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<int32>("resolutionWidth", -1) == 1920);
     }
 
-    SECTION("Argument exactly at the max length is parsed") {
+    SECTION("Argument exactly at the max length is parsed")
+    {
         const String Prefix = "-longFlag=";
         const String ArgAtLimit = Prefix + String(CommandLine::MaxArgLength - Prefix.size(), 'a');
         REQUIRE(ArgAtLimit.size() == CommandLine::MaxArgLength);
@@ -135,7 +145,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().HasParam("longFlag"));
     }
 
-    SECTION("Argument over the max length is ignored") {
+    SECTION("Argument over the max length is ignored")
+    {
         const String Prefix = "-longFlag=";
         const String ArgOverLimit = Prefix + String(CommandLine::MaxArgLength - Prefix.size() + 1, 'a');
         REQUIRE(ArgOverLimit.size() == CommandLine::MaxArgLength + 1);
@@ -147,7 +158,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE_FALSE(CommandLine::Get().HasParam("longFlag"));
     }
 
-    SECTION("String Flag - quoted value") {
+    SECTION("String Flag - quoted value")
+    {
         const char* Args[] = {"FlingEngine.exe", "-stringFlag=\"I like this format\""};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
@@ -160,7 +172,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(*Value == "I like this format");
     }
 
-    SECTION("Missing param falls back to default") {
+    SECTION("Missing param falls back to default")
+    {
         const char* Args[] = {"FlingEngine.exe", "-numFlag=776"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         const bool bWasInitalized = CommandLine::Get().Init(ArgCount, Args);
@@ -171,18 +184,19 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<int32>("notPresent", 42) == 42);
     }
 
-    SECTION("Console Variables - loaded from ini string") {
+    SECTION("Console Variables - loaded from ini string")
+    {
         const char* Args[] = {"FlingEngine.exe"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
 
         const String IniContent = "[Video]\n"
-                                       "resolutionWidth=1280\n"
-                                       "\n"
-                                       "[ConsoleVariables]\n"
-                                       "resolutionWidth=1920\n"
-                                       "fullscreen=true\n"
-                                       "windowTitle=\"Fling Engine\"\n";
+                                  "resolutionWidth=1280\n"
+                                  "\n"
+                                  "[ConsoleVariables]\n"
+                                  "resolutionWidth=1920\n"
+                                  "fullscreen=true\n"
+                                  "windowTitle=\"Fling Engine\"\n";
 
         REQUIRE(CommandLine::Get().LoadConfigVarsFromString(IniContent));
 
@@ -200,14 +214,15 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE_FALSE(CommandLine::Get().HasParam("nonConsoleVariableKey"));
     }
 
-    SECTION("Console Variables - command line takes precedence over ini file") {
+    SECTION("Console Variables - command line takes precedence over ini file")
+    {
         const char* Args[] = {"FlingEngine.exe", "-windowTitle=FromCommandLine"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
 
         const String IniContent = "[ConsoleVariables]\n"
-                                       "windowTitle=FromConfigFile\n"
-                                       "onlyInConfig=42\n";
+                                  "windowTitle=FromConfigFile\n"
+                                  "onlyInConfig=42\n";
 
         REQUIRE(CommandLine::Get().LoadConfigVarsFromString(IniContent));
 
@@ -221,7 +236,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         REQUIRE(CommandLine::Get().GetValueAs<int32>("onlyInConfig", -1) == 42);
     }
 
-    SECTION("Console Variables - loaded from an actual ini file on disk") {
+    SECTION("Console Variables - loaded from an actual ini file on disk")
+    {
         const char* Args[] = {"FlingEngine.exe"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -239,7 +255,8 @@ TEST_CASE("Command Line", "[Command Line]") {
         std::remove(TempFilePath.c_str());
     }
 
-    SECTION("Console Variables - missing file fails to load") {
+    SECTION("Console Variables - missing file fails to load")
+    {
         const char* Args[] = {"FlingEngine.exe"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -248,10 +265,12 @@ TEST_CASE("Command Line", "[Command Line]") {
     }
 }
 
-TEST_CASE("Command Line - double dash key with a separate value", "[Command Line]") {
+TEST_CASE("Command Line - double dash key with a separate value", "[Command Line]")
+{
     using namespace Fling;
 
-    SECTION("Takes the next argument as the value") {
+    SECTION("Takes the next argument as the value")
+    {
         const char* Args[] = {"FlingEngine.exe", "--frames", "300", "--null-render"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -264,7 +283,8 @@ TEST_CASE("Command Line - double dash key with a separate value", "[Command Line
         REQUIRE(CommandLine::Get().GetCommandLineData() == "--frames 300 --null-render");
     }
 
-    SECTION("A following flag is not taken as the value") {
+    SECTION("A following flag is not taken as the value")
+    {
         const char* Args[] = {"FlingEngine.exe", "--unattended", "--seed", "7"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -273,7 +293,8 @@ TEST_CASE("Command Line - double dash key with a separate value", "[Command Line
         REQUIRE(CommandLine::Get().GetValueAs<int32>("seed", -1) == 7);
     }
 
-    SECTION("A single dash key does not take the next argument") {
+    SECTION("A single dash key does not take the next argument")
+    {
         const char* Args[] = {"FlingEngine.exe", "-BoolFlag", "value"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));
@@ -282,7 +303,8 @@ TEST_CASE("Command Line - double dash key with a separate value", "[Command Line
         REQUIRE(CommandLine::Get().HasParam("value"));
     }
 
-    SECTION("An equals sign still sets the value") {
+    SECTION("An equals sign still sets the value")
+    {
         const char* Args[] = {"FlingEngine.exe", "--frames=12", "34"};
         constexpr int32 ArgCount = sizeof(Args) / sizeof(char*);
         REQUIRE(CommandLine::Get().Init(ArgCount, Args));

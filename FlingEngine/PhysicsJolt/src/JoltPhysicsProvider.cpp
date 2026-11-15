@@ -389,7 +389,10 @@ namespace Fling
                 // Bodies awake before or after the step can have moved
                 AddActiveBodies();
                 const JPH::EPhysicsUpdateError Error =
-                    m_System->Update(t_DeltaTime, 1, m_TempAllocator.get(), m_JobSystem.get());
+                    m_System->Update(t_DeltaTime,
+                                     static_cast<int>(PhysicsCollisionSteps(t_DeltaTime)),
+                                     m_TempAllocator.get(),
+                                     m_JobSystem.get());
                 AddActiveBodies();
 
                 if (Error != JPH::EPhysicsUpdateError::None)

@@ -42,7 +42,7 @@ or running the program.
 You can download the SDK from the LunarG website [here](https://www.lunarg.com/vulkan-sdk/). 
 
 On Ubuntu/Debian you can alternatively install the headers, loader, and validation layers from
-the system package manager instead of the LunarG SDK — this is enough for `find_package(Vulkan)`
+the system package manager instead of the LunarG SDK: this is enough for `find_package(Vulkan)`
 in CMake to succeed:
 ```
 sudo apt-get install -y libvulkan-dev vulkan-tools vulkan-validationlayers spirv-tools glslang-tools
@@ -98,13 +98,13 @@ shipping) and other day-to-day build details.
 
 After running `Init.bat`/`Init.sh`, open [`FlingEngine.code-workspace`](FlingEngine.code-workspace)
 in VS Code (install the recommended `CMake Tools` and `C/C++` extensions if prompted). The
-`Run and Debug` panel has ready-made configurations — **Debug Sandbox** and **Debug CoreTests**,
-**Debug ResourcesTests**, **Debug EngineTests**, **Debug PhysicsTests**, and **Debug ApplicationTests** —
+`Run and Debug` panel has ready-made configurations (**Debug Sandbox** and **Debug CoreTests**,
+**Debug ResourcesTests**, **Debug EngineTests**, **Debug PhysicsTests**, and **Debug ApplicationTests**)
 that build the right target and launch it under the debugger. `Ctrl+Shift+B` runs **Build All**
 (the engine, Sandbox, and the test executables). The **Run CTest** task runs every Catch2 case
 and the isolation tests; per-target build tasks are also available via
 `Tasks: Run Task`. Click the build-type entry in the bottom status bar (or run `CMake: Select
-Variant`) to switch between Debug, Release, RelWithDebInfo, and MinSizeRel — no need to
+Variant`) to switch between Debug, Release, RelWithDebInfo, and MinSizeRel: no need to
 re-run `Init.bat`/`Init.sh`; the extension reconfigures automatically.
 
 #### Packaging a project
@@ -130,10 +130,15 @@ Notice the `-DDEFINE_SHIPPING` option is set to `ON`. This sets a definiton that
 See [Skills/coding-style.md](Skills/coding-style.md) for documentation-comment conventions and
 how to run the comment-style check / clang-format. 
 
+## Writing gameplay
+
+Gameplay is components and systems. To make your own, start with the
+[ECS tutorial](Docs/ecs-tutorial.md).
+
 ## AI coding assistants
 
 If you're using Claude Code, Cursor, Copilot, or another AI coding assistant on this
-project, start at [AGENTS.md](AGENTS.md) — it covers build/test commands, coding
+project, start at [AGENTS.md](AGENTS.md): it covers build/test commands, coding
 style, and architecture, and links into [Skills/](Skills/) for topic-specific detail.
 
 ## Branching Strategy

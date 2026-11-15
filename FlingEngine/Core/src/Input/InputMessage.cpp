@@ -44,6 +44,8 @@ namespace Fling
             return "FocusLost";
         case InputMessageType::FocusGained:
             return "FocusGained";
+        case InputMessageType::CaptureChanged:
+            return "CaptureChanged";
         }
         return "Unknown";
     }
@@ -93,6 +95,13 @@ namespace Fling
             break;
         case InputMessageType::MouseWheel:
             Length = std::snprintf(Buffer, sizeof(Buffer), " wheel=(%.2f, %.2f)", t_Message.WheelX, t_Message.WheelY);
+            break;
+        case InputMessageType::CaptureChanged:
+            Length = std::snprintf(Buffer,
+                                   sizeof(Buffer),
+                                   " keyboard=%s mouse=%s",
+                                   HasCapture(t_Message.Capture, InputCapture::Keyboard) ? "yes" : "no",
+                                   HasCapture(t_Message.Capture, InputCapture::Mouse) ? "yes" : "no");
             break;
         default:
             Length = 0;

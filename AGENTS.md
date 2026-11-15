@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Guidance for AI coding assistants working in this repository. 
-This file is the entry point — read it first. Topic-specific
+This file is the entry point: read it first. Topic-specific
 detail lives under [`Skills/`](Skills/) and is linked from the relevant section below.
 
 ## What this project is
@@ -29,8 +29,10 @@ platform setup (Vulkan SDK, GLFW, etc.).
 ## Tests
 
 - Tests use Catch2 3. Each module that owns tests has an executable
-  (`CoreTests`, `ResourcesTests`, `EngineTests`, `PhysicsTests`,
+  (`CoreTests`, `ResourcesTests`, `EngineTests`, `GraphicsTests`, `PhysicsTests`,
   `ApplicationTests`) built from `FlingTests/<Module>/`. Each links only that module.
+  `SandboxExampleTests` (`FlingTests/SandboxExample/`) tests the Sandbox look
+  camera and stasis; it links `Fling::Engine` and compiles those Sandbox systems.
 - Run them with CTest, e.g. `ctest --test-dir build` (add `-C <Debug|Release>` for
   Visual Studio). That runs every `TEST_CASE` plus the isolation tests. On Linux
   one executable is `./build/FlingTests/bin/<Module>Tests` (for example
@@ -40,6 +42,17 @@ platform setup (Vulkan SDK, GLFW, etc.).
   `Sandbox --null-render --unattended --frames 120 --seed 1`. It exits with
   `0` success, `1` failure, `2` crash, or `3` bad arguments. Use `--unattended` for
   every run with no human present, so that a crash cannot open a dialog.
+- Play runs threaded (a game thread for the ticks) at a fixed 30 Hz, with the
+  main thread's frames capped at the monitor's refresh rate (no cap headless).
+  `--exec direct|inline|threaded`, `--sim-hz N`, `--max-fps N` (0: no cap),
+  `--vsync on|off` (on by default) and `--interpolation on|off` (on by
+  default) override, as do `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync` and
+  `Interpolation` in
+  `Config/EngineConf.ini`. A test that depends on a mode or a rate sets it. The
+  startup log line `Run settings: ...` says each value and where it came from.
+  The editor's GPU Options window (menu Windows; drawn in `--play` too) changes
+  the rate, the cap, VSync and interpolation at run time.
+  Detail: [`Docs/time-and-ticks.md`](Docs/time-and-ticks.md) section 2.
 - Drive a headless run with `--replay-input <file>`. Agents can write their own
   `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).
 - Load a level other than `[Game] StartLevel` with `--level <file>` (relative
@@ -48,7 +61,7 @@ platform setup (Vulkan SDK, GLFW, etc.).
 
 ## Coding style
 
-- Style doc: [`Skills/coding-style.md`](Skills/coding-style.md) — documentation
+- Style doc: [`Skills/coding-style.md`](Skills/coding-style.md): documentation
   comment conventions (no `@brief`, no `/*!`), enforced by
   `python3 scripts/check_comment_style.py`; include ordering (project `"..."`
   includes first, then `<...>` includes, each alphabetical).
@@ -61,17 +74,40 @@ platform setup (Vulkan SDK, GLFW, etc.).
   [`Skills/strings.md`](Skills/strings.md). `python3 scripts/check_string_types.py`
   (run in CI) rejects `std::string` and `const String&` parameters.
 - Applies to first-party code only (`FlingEngine/`, `Sandbox/`, `FlingTests/`).
-  **Never edit code under `external/`** — it's vendored third-party code.
+  **Never edit code under `external/`**: it's vendored third-party code.
 
 ## Architecture / module layout
 
 - Orientation for where things live today, and the in-progress module split
-  (Core, Resources, Engine, Graphics, Application, Editor): [`Skills/architecture.md`](Skills/architecture.md) —
+  (Core, Resources, Engine, Graphics, Application, Editor): [`Skills/architecture.md`](Skills/architecture.md):
   read it before restructuring includes or CMake targets.
 - Adding a new CMake module (folder + `fling_add_module`, with a UI example):
   [`Skills/adding-modules.md`](Skills/adding-modules.md).
 - Threads, thread IDs and names, and command queues to subsystem threads, with
   the rules that keep them out of the ECS: [`Skills/threading.md`](Skills/threading.md).
+- ECS components, systems, groups, and the schedule (how to write and test a
+  system, the update-rate rules, `--dump-schedule`): [`Skills/ecs.md`](Skills/ecs.md).
+  A tutorial for people, with a tested worked example (a component, a system,
+  registration, a test, and the engine's own components):
+  [`Docs/ecs-tutorial.md`](Docs/ecs-tutorial.md).
+- System order reference (groups and `.In`, `.After`/`.Before` with
+  `SystemOf<T>`, order headers, run order rules, every order error, reading the
+  dump, schedule tests): [`Docs/system-order-api.md`](Docs/system-order-api.md).
+  Why it is built this way and what broke on the way:
+  [`Docs/update-order-design-notes.md`](Docs/update-order-design-notes.md).
+- Input read by both update rates (the fixed tick's cut, `PendingInput`, the
+  late poll, a frame side with no state): [`Docs/input-two-sided.md`](Docs/input-two-sided.md).
+- The whole runtime model on a few pages (start here):
+  [`Docs/architecture-overview.md`](Docs/architecture-overview.md). Ticks, the
+  input rule, the tick ledger, state hash, rollback classes and hooks:
+  [`Docs/time-and-ticks.md`](Docs/time-and-ticks.md). The game thread, the
+  published copy, exec modes and the determinism tests:
+  [`Docs/threading-model.md`](Docs/threading-model.md).
+- One self-contained guide to all of the above, written to be loaded as context
+  by an AI coding agent: [`Docs/agent-guide.md`](Docs/agent-guide.md). The
+  handoff for the original Fling authors (what changed since the first commit,
+  migration, verification status, known limits):
+  [`Docs/handoff-to-fling-authors.md`](Docs/handoff-to-fling-authors.md).
 
 ## Plans
 
@@ -79,12 +115,12 @@ platform setup (Vulkan SDK, GLFW, etc.).
 established standards. When a plan's phase is done, move the rules it establishes
 into `Skills/`.
 
-- Phased plan for the module split, including what is done and what is next:
-  [`Plans/module-split-plan.md`](Plans/module-split-plan.md).
-- First slice of the ECS (Engine module), beside EnTT: the `ISystem` lifecycle, component
+- First slice of the ECS (Engine module): the `ISystem` lifecycle, component
   declarations, compile-time access checks, and the schedule built from them:
-  [`Plans/ecs-systems.md`](Plans/ecs-systems.md). The full design
-  and EnTT removal: [`Plans/ecs-plan.md`](Plans/ecs-plan.md).
+  [`Plans/ecs-systems.md`](Plans/ecs-systems.md). The full design, with the
+  migration that replaced EnTT (Phases A to G are done; H is next):
+  [`Plans/ecs-plan.md`](Plans/ecs-plan.md). The settled rules are in
+  [`Skills/ecs.md`](Skills/ecs.md).
 - ECS worlds and data ownership, features that add and remove systems at
   runtime, the end of the `Game` class, level streaming, and the editor (edit
   commands, edit and play worlds, editor-only systems):
@@ -97,8 +133,9 @@ into `Skills/`.
 - How agents and scripts run, test, and edit the engine (headless deterministic
   runs, input record and replay, scenario tests, command layer, CLI/Python/MCP):
   [`Plans/improve-ai-iteration.md`](Plans/improve-ai-iteration.md).
-- Timing API and fixed-tick loop (SimTick, tick sources, frame publishing for
-  render interpolation and rollback): [`Plans/improve-time.md`](Plans/improve-time.md).
+- Timing API and fixed-tick loop (tick sources, frame publishing for render
+  interpolation and rollback): [`Plans/improve-time.md`](Plans/improve-time.md).
+  What is built is in [`Docs/time-and-ticks.md`](Docs/time-and-ticks.md).
 - How Graphics loads Vulkan at runtime with only the official SDK
   (`VK_NO_PROTOTYPES`, a function-pointer table, no import library), replacing
   the MSVC `/DELAYLOAD` fix: [`Plans/vulkan-loading.md`](Plans/vulkan-loading.md).
@@ -122,7 +159,7 @@ into `Skills/`.
   `Config/gamecontrollerdb.txt`): add it, with its license, to
   [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 - CI (`.github/workflows/build.yml`) builds on Linux (GCC/Clang) and Windows
-  (MSVC/MinGW) and runs the per-module Catch2 tests via CTest plus the comment-style check on every PR —
+  (MSVC/MinGW) and runs the per-module Catch2 tests via CTest plus the comment-style check on every PR:
   make sure changes pass locally first.
 
 ## For Claude Code specifically
@@ -134,9 +171,9 @@ This repo ships a committed `.claude/settings.json` that registers the
 [flingengine/skills-marketplace](https://github.com/flingengine/skills-marketplace)
 marketplace and enables three of its plugins:
 
-- `fling-engine` — build/test/coding-style/module-architecture skills.
-- `gameplay-architecture` — strict (Overwatch-style) ECS design skill.
-- `rollback-netcode` — rollback / client-side prediction netcode expert agent.
+- `fling-engine`: build/test/coding-style/module-architecture skills.
+- `gameplay-architecture`: strict (Overwatch-style) ECS design skill.
+- `rollback-netcode`: rollback / client-side prediction netcode expert agent.
 
 Opening this repo in Claude Code and trusting the folder will offer to install them
-automatically — no manual `/plugin marketplace add` needed.
+automatically: no manual `/plugin marketplace add` needed.

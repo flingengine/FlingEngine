@@ -16,6 +16,11 @@ namespace Fling
 
     void InputDeviceStates::Apply(const InputMessage& t_Message)
     {
+        // A capture change belongs to no device
+        if (t_Message.Type == InputMessageType::CaptureChanged)
+        {
+            return;
+        }
         InputDeviceState& Device = m_Devices[t_Message.Device];
 
         switch (t_Message.Type)

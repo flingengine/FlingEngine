@@ -8,13 +8,15 @@ Graphics relinks `ApplicationTests` and leaves `CoreTests` alone.
 
 | Executable | Links | What it covers |
 | --- | --- | --- |
-| `CoreTests` | `Fling::Core` | `FlingTests/Core/` — string utils, command line, launch options, timing, random, logger, allocators, circular buffer |
-| `ResourcesTests` | `Fling::Resources` | `FlingTests/Resources/` — `ResourceManager` / `FlingConfig`, `Json`, `JsonArchive` |
-| `EngineTests` | `Fling::Engine` | `FlingTests/Engine/` — `ComponentTypeRegistry`, world save/load, `Transform` / entt views |
-| `PhysicsTests` | `Fling::Physics` + the selected provider | `FlingTests/Physics/` — `PhysicsCoreTests.cpp`: the clock, requests, and body bookkeeping, with a recording provider. `PhysicsProviderTests.cpp`: tests every provider must pass, including determinism, save/restore, and a golden hash that must match on every platform |
-| `ApplicationTests` | `Fling::Application` | `FlingTests/Application/` — `Fling::Engine` smoke test (`Engine.h` lives in Application) |
+| `CoreTests` | `Fling::Core` | `FlingTests/Core/`: string utils, command line, launch options, timing, random, logger, allocators, circular buffer |
+| `ResourcesTests` | `Fling::Resources` | `FlingTests/Resources/`: `ResourceManager` / `FlingConfig`, `Json`, JSON serialization |
+| `EngineTests` | `Fling::Engine` | `FlingTests/Engine/`: reflection, the type registry, world save/load, `Transform`, ECS systems |
+| `PhysicsTests` | `Fling::Physics` + the selected provider | `FlingTests/Physics/`: `PhysicsCoreTests.cpp`: the clock, requests, and body bookkeeping, with a recording provider. `PhysicsProviderTests.cpp`: tests every provider must pass, including determinism, save/restore, and a golden hash that must match on every platform |
+| `ApplicationTests` | `Fling::Application` | `FlingTests/Application/`: `Fling::Engine` smoke test (`Engine.h` lives in Application) |
+| `GraphicsTests` | `Fling::Graphics` | `FlingTests/Graphics/`: interpolation in every exec mode, the present mode choice, render proxies |
+| `SandboxExampleTests` | `Fling::Engine` plus four Sandbox system sources | `FlingTests/SandboxExample/`: the Sandbox look camera and stasis (`LookCameraTests.cpp`, `StasisTests.cpp`). It compiles `CameraStatusSystem.cpp`, `LookCameraSystem.cpp`, `LookCameraViewSystem.cpp` and `StasisSystem.cpp` from `Sandbox/Gameplay/src/Systems/`; no engine test target compiles Sandbox code |
 
-Graphics and Editor have no test executable. Add one only when that module has a real test: a `.cpp` under `FlingTests/<Module>/` is enough, once `fling_add_module_tests` is called for that module.
+Editor has no test executable. Add one only when that module has a real test: a `.cpp` under `FlingTests/<Module>/` is enough, once `fling_add_module_tests` is called for that module. `SandboxExampleTests` is the one test target added by hand (`add_executable` in `FlingTests/CMakeLists.txt`).
 
 ## Running tests
 
@@ -51,10 +53,13 @@ root.
 ./build/FlingTests/bin/EngineTests
 ./build/FlingTests/bin/PhysicsTests
 ./build/FlingTests/bin/ApplicationTests
+./build/FlingTests/bin/GraphicsTests
+./build/FlingTests/bin/SandboxExampleTests
 ```
 
-On Windows the config directory is appended, for example
-`build\FlingTests\bin\<Debug|Release>\CoreTests.exe`.
+With a multi-config generator (Visual Studio) the config directory is appended,
+for example `build\FlingTests\bin\<Debug|Release>\CoreTests.exe`. With Ninja on
+Windows it is `build\FlingTests\bin\CoreTests.exe`.
 
 Catch2's CLI flags work on one executable, e.g.
 `./build/FlingTests/bin/CoreTests "[tag]"` to filter, or `--list-tests` to see
@@ -72,9 +77,9 @@ executable directory.
 ## Adding a new test
 
 - Add a new `.cpp` under `FlingTests/<Module>/` for the module the test should
-  link (`Core`, `Resources`, `Engine`, `Physics`, or `Application`).
+  link (`Core`, `Resources`, `Engine`, `Graphics`, `Physics`, or `Application`).
   `fling_add_module_tests` globs `FlingTests/<Module>/*.cpp` with
-  `CONFIGURE_DEPENDS`, so a new file is picked up on the next build — no CMake
+  `CONFIGURE_DEPENDS`, so a new file is picked up on the next build: no CMake
   source-list edit. Re-run CMake configure if the file does not show up.
 - Put the test in the lowest module whose headers the case needs. A file under
   `FlingTests/Core/` includes Core headers (`Logger.h`, `Timing.h`,
@@ -112,11 +117,16 @@ the game on machines that have no display and no Vulkan device:
 
 | Flag | What it does |
 | --- | --- |
-| `--null-render` | No window, no swapchain, no GPU work. Ticks use a fixed delta of 1/60 s and do not wait on real time. There is no developer UI, so the game starts at once |
+| `--null-render` | No window, no swapchain, no GPU work. Ticks use a fixed delta of one tick length (1/30 s at the default `--sim-hz 30`) and do not wait on real time, and frames have no cap unless `--max-fps` asks for one. There is no developer UI, so the game starts at once |
 | `--unattended` | No modal dialogs. A crash, a failed assert, or an uncaught exception prints a stack trace to stderr and exits with code 2 |
-| `--frames N` | Run N ticks, then exit. With no `--frames`, a `--null-render` run continues until the game quits |
+| `--frames N` | No tick runs after tick N (with `--frames-per-tick F`, tick `ceil(N / F)`). The run exits at the first frame where at least N main-thread frames have run and that last tick is shown. With `--null-render`, `--exec direct` and `inline` run exactly N frames; `--exec threaded` (the default) runs N ticks but usually more than N frames (467 to 491 frames for `--frames 120` in two runs). A windowed run lasts until that tick is due on the clock. With no `--frames`, a `--null-render` run continues until the game quits |
 | `--seed S` | Seed the random number generator. Each run logs its seed, so you can repeat a run |
 | `--log-format json` | JSON lines on the console and in `Logs/fling_log.jsonl` |
+| `--exec M` | How play runs: `threaded` (the default), `direct` or `inline`. A test that is about one mode says it |
+| `--sim-hz N` | The fixed simulation rate, 1 to 1000 (default 30). Recorded tick cuts replay only at their own rate |
+| `--max-fps N` | At most N frames a second on the main thread (0: no cap) |
+| `--vsync on\|off` | On (the default): FIFO, and a cap at or above the refresh rate is left to the display. Off: IMMEDIATE, else MAILBOX, else FIFO (no wait, may tear); the cap applies. The swap chain logs `Present mode ...`. Does nothing with `--null-render` (a warning says so) |
+| `--interpolation on\|off` | Draw between the latest two published ticks (the default) or the latest tick only. Presentation only: checksums and tick dumps do not change |
 
 A flag takes its value as `--frames 120` or `--frames=120`. The flags are parsed
 by `LaunchOptions::Parse` (`FlingEngine/Core/inc/LaunchOptions.h`).
@@ -163,5 +173,5 @@ time out. These tests exist only when `WITH_CRASH_HANDLER_FLAG` is ON (see
 Every PR runs the tests with CTest on Linux (GCC + Clang) and Windows (MSVC
 Debug/Release + MSYS2 UCRT64) via `.github/workflows/build.yml`. A Linux shipping
 job also builds with tests OFF and without Catch2. A test that only passes on one platform
-is not done — check for platform-specific assumptions (path separators, endianness,
+is not done: check for platform-specific assumptions (path separators, endianness,
 float precision) before considering a new test finished.

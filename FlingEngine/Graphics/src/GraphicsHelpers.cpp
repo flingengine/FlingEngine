@@ -29,7 +29,13 @@ namespace Fling
             return 0;
         }
 
-        void CreateBuffer(VkDevice t_Device, VkPhysicalDevice t_PhysicalDevice, VkDeviceSize t_Size, VkBufferUsageFlags t_Usage, VkMemoryPropertyFlags t_Properties, VkBuffer& t_Buffer, VkDeviceMemory& t_BuffMemory)
+        void CreateBuffer(VkDevice t_Device,
+                          VkPhysicalDevice t_PhysicalDevice,
+                          VkDeviceSize t_Size,
+                          VkBufferUsageFlags t_Usage,
+                          VkMemoryPropertyFlags t_Properties,
+                          VkBuffer& t_Buffer,
+                          VkDeviceMemory& t_BuffMemory)
         {
             // Create a buffer
             VkBufferCreateInfo bufferInfo = {};
@@ -52,7 +58,8 @@ namespace Fling
             AllocInfo.allocationSize = MemRequirments.size;
             // Using VK_MEMORY_PROPERTY_HOST_COHERENT_BIT may cause worse perf,
             // we could use explicit flushing with vkFlushMappedMemoryRanges
-            AllocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(t_PhysicalDevice, MemRequirments.memoryTypeBits, t_Properties);
+            AllocInfo.memoryTypeIndex =
+                GraphicsHelpers::FindMemoryType(t_PhysicalDevice, MemRequirments.memoryTypeBits, t_Properties);
 
             // Allocate the vertex buffer memory
             // #TODO Don't call vkAllocateMemory every time, we should use a custom allocator or
@@ -66,8 +73,8 @@ namespace Fling
 
         VkCommandBuffer BeginSingleTimeCommands()
         {
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
             VkDevice Device = Dev->GetVkDevice();
             const VkCommandPool CommandPool = VulkanApp::Get().GetState().m_CommandPool;
 
@@ -90,8 +97,8 @@ namespace Fling
 
         void EndSingleTimeCommands(VkCommandBuffer t_CommandBuffer)
         {
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
             VkDevice Device = Dev->GetVkDevice();
             VkCommandPool CmdPool = VulkanApp::Get().GetState().m_CommandPool;
             VkQueue GraphicsQueue = Dev->GetGraphicsQueue();
@@ -109,57 +116,51 @@ namespace Fling
             vkFreeCommandBuffers(Device, CmdPool, 1, &t_CommandBuffer);
         }
 
-        void CreateVkImage(
-			VkDevice t_Dev,
-            uint32 t_Width,
-            uint32 t_Height,
-            VkFormat t_Format, 
-            VkImageTiling t_Tiling, 
-            VkImageUsageFlags t_Useage, 
-            VkMemoryPropertyFlags t_Props, 
-            VkImage& t_Image,
-            VkDeviceMemory& t_Memory,
-			VkSampleCountFlagBits t_NumSamples
-        )
+        void CreateVkImage(VkDevice t_Dev,
+                           uint32 t_Width,
+                           uint32 t_Height,
+                           VkFormat t_Format,
+                           VkImageTiling t_Tiling,
+                           VkImageUsageFlags t_Useage,
+                           VkMemoryPropertyFlags t_Props,
+                           VkImage& t_Image,
+                           VkDeviceMemory& t_Memory,
+                           VkSampleCountFlagBits t_NumSamples)
         {
-            CreateVkImage(
-				t_Dev,
-				t_Width, 
-				t_Height, 
-				/* t_MipLevels */ 1, 
-				/* t_Depth */ 1, 
-				/* t_ArrayLayers */ 1, 
-				t_Format, 
-				t_Tiling, 
-				t_Useage, 
-				t_Props, 
-				/* t_flags */ 0, 
-				t_Image, 
-				t_Memory,
-				t_NumSamples
-			);
+            CreateVkImage(t_Dev,
+                          t_Width,
+                          t_Height,
+                          /* t_MipLevels */ 1,
+                          /* t_Depth */ 1,
+                          /* t_ArrayLayers */ 1,
+                          t_Format,
+                          t_Tiling,
+                          t_Useage,
+                          t_Props,
+                          /* t_flags */ 0,
+                          t_Image,
+                          t_Memory,
+                          t_NumSamples);
         }
 
-        void CreateVkImage(
-			VkDevice t_Dev,
-            uint32 t_Width, 
-            uint32 t_Height, 
-            uint32 t_MipLevels, 
-            uint32 t_Depth, 
-            uint32 t_ArrayLayers, 
-            VkFormat t_Format, 
-            VkImageTiling t_Tiling, 
-            VkImageUsageFlags t_Useage, 
-            VkMemoryPropertyFlags t_Props, 
-            VkImageCreateFlags t_flags,
-            VkImage& t_Image, 
-            VkDeviceMemory& t_Memory, 
-            VkSampleCountFlagBits t_NumSamples
-            )
+        void CreateVkImage(VkDevice t_Dev,
+                           uint32 t_Width,
+                           uint32 t_Height,
+                           uint32 t_MipLevels,
+                           uint32 t_Depth,
+                           uint32 t_ArrayLayers,
+                           VkFormat t_Format,
+                           VkImageTiling t_Tiling,
+                           VkImageUsageFlags t_Useage,
+                           VkMemoryPropertyFlags t_Props,
+                           VkImageCreateFlags t_flags,
+                           VkImage& t_Image,
+                           VkDeviceMemory& t_Memory,
+                           VkSampleCountFlagBits t_NumSamples)
         {
             VkDevice Device = t_Dev;
-			PhysicalDevice* Phys = VulkanApp::Get().GetPhysicalDevice();
-			assert(Phys);
+            PhysicalDevice* Phys = VulkanApp::Get().GetPhysicalDevice();
+            assert(Phys);
             VkPhysicalDevice PhysDevice = Phys->GetVkPhysicalDevice();
 
             VkImageCreateInfo imageInfo = {};
@@ -192,7 +193,8 @@ namespace Fling
             VkMemoryAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = GraphicsHelpers::FindMemoryType(PhysDevice, memRequirements.memoryTypeBits, t_Props);
+            allocInfo.memoryTypeIndex =
+                GraphicsHelpers::FindMemoryType(PhysDevice, memRequirements.memoryTypeBits, t_Props);
 
             if (vkAllocateMemory(Device, &allocInfo, nullptr, &t_Memory) != VK_SUCCESS)
             {
@@ -202,30 +204,29 @@ namespace Fling
             VK_CHECK_RESULT(vkBindImageMemory(Device, t_Image, t_Memory, 0));
         }
 
-		VkSemaphore CreateSemaphore(VkDevice t_Dev)
-		{
-			VkSemaphoreCreateInfo createInfo = {};
-			createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-			VkSemaphore semaphore = 0;
-
-			VK_CHECK_RESULT(vkCreateSemaphore(t_Dev, &createInfo, 0, &semaphore));
-
-			return semaphore;
-		}
-
-        void CreateVkSampler(
-            VkFilter t_magFilter, 
-            VkFilter t_minFilter, 
-            VkSamplerMipmapMode t_mipmapMode, 
-            VkSamplerAddressMode t_addressModeU, 
-            VkSamplerAddressMode t_addressModeV, 
-            VkSamplerAddressMode t_addressModeM, 
-            VkBorderColor t_borderColor, 
-            VkSampler& t_sampler)
+        VkSemaphore CreateSemaphore(VkDevice t_Dev)
         {
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
-			VkDevice Device = Dev->GetVkDevice();
+            VkSemaphoreCreateInfo createInfo = {};
+            createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+            VkSemaphore semaphore = 0;
+
+            VK_CHECK_RESULT(vkCreateSemaphore(t_Dev, &createInfo, 0, &semaphore));
+
+            return semaphore;
+        }
+
+        void CreateVkSampler(VkFilter t_magFilter,
+                             VkFilter t_minFilter,
+                             VkSamplerMipmapMode t_mipmapMode,
+                             VkSamplerAddressMode t_addressModeU,
+                             VkSamplerAddressMode t_addressModeV,
+                             VkSamplerAddressMode t_addressModeM,
+                             VkBorderColor t_borderColor,
+                             VkSampler& t_sampler)
+        {
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
+            VkDevice Device = Dev->GetVkDevice();
 
             VkSamplerCreateInfo samplerInfo = {};
             samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -244,14 +245,13 @@ namespace Fling
             }
         }
 
-        void SetImageLayout(
-            VkCommandBuffer t_cmdbuffer, 
-            VkImage t_image, 
-            VkImageAspectFlags t_aspectMask, 
-            VkImageLayout t_oldImageLayout, 
-            VkImageLayout t_newImageLayout, 
-            VkPipelineStageFlags t_srcStageMask, 
-            VkPipelineStageFlags t_dstStageMask)
+        void SetImageLayout(VkCommandBuffer t_cmdbuffer,
+                            VkImage t_image,
+                            VkImageAspectFlags t_aspectMask,
+                            VkImageLayout t_oldImageLayout,
+                            VkImageLayout t_newImageLayout,
+                            VkPipelineStageFlags t_srcStageMask,
+                            VkPipelineStageFlags t_dstStageMask)
         {
             VkImageSubresourceRange subresourceRange = {};
             subresourceRange.aspectMask = t_aspectMask;
@@ -259,17 +259,22 @@ namespace Fling
             subresourceRange.baseMipLevel = 0;
             subresourceRange.levelCount = 1;
             subresourceRange.layerCount = 1;
-            SetImageLayout(t_cmdbuffer, t_image, t_oldImageLayout, t_newImageLayout, subresourceRange, t_srcStageMask, t_dstStageMask);
+            SetImageLayout(t_cmdbuffer,
+                           t_image,
+                           t_oldImageLayout,
+                           t_newImageLayout,
+                           subresourceRange,
+                           t_srcStageMask,
+                           t_dstStageMask);
         }
 
-        void SetImageLayout(
-            VkCommandBuffer t_cmdbuffer, 
-            VkImage t_image, 
-            VkImageLayout t_oldImageLayout,
-            VkImageLayout t_newImageLayout, 
-            VkImageSubresourceRange t_subresourceRange, 
-            VkPipelineStageFlags t_srcStageMask, 
-            VkPipelineStageFlags t_dstStageMask)
+        void SetImageLayout(VkCommandBuffer t_cmdbuffer,
+                            VkImage t_image,
+                            VkImageLayout t_oldImageLayout,
+                            VkImageLayout t_newImageLayout,
+                            VkImageSubresourceRange t_subresourceRange,
+                            VkPipelineStageFlags t_srcStageMask,
+                            VkPipelineStageFlags t_dstStageMask)
         {
             // Create an image barrier object
             VkImageMemoryBarrier imageMemoryBarrier = {};
@@ -317,7 +322,7 @@ namespace Fling
                 break;
 
             case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-                // Image is a transfer source 
+                // Image is a transfer source
                 // Make sure any reads from the image have been finished
                 imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
                 break;
@@ -363,7 +368,8 @@ namespace Fling
             case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 // Image layout will be used as a depth/stencil attachment
                 // Make sure any writes to depth/stencil buffer have been finished
-                imageMemoryBarrier.dstAccessMask = imageMemoryBarrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                imageMemoryBarrier.dstAccessMask =
+                    imageMemoryBarrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
 
             case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
@@ -382,16 +388,10 @@ namespace Fling
 
             // Put barrier inside setup command buffer
             vkCmdPipelineBarrier(
-                t_cmdbuffer,
-                t_srcStageMask,
-                t_dstStageMask,
-                0,
-                0, nullptr,
-                0, nullptr,
-                1, &imageMemoryBarrier);
+                t_cmdbuffer, t_srcStageMask, t_dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
         }
 
-        void CreateCommandPool(VkCommandPool * t_commandPool, VkCommandPoolCreateFlags t_flags)
+        void CreateCommandPool(VkCommandPool* t_commandPool, VkCommandPoolCreateFlags t_flags)
         {
             LogicalDevice* logicalDevice = VulkanApp::Get().GetLogicalDevice();
 
@@ -401,17 +401,20 @@ namespace Fling
             commandPoolCreateInfo.flags = t_flags;
             commandPoolCreateInfo.queueFamilyIndex = GraphicsFamily;
 
-            if (vkCreateCommandPool(logicalDevice->GetVkDevice(), &commandPoolCreateInfo, nullptr, t_commandPool) != VK_SUCCESS)
+            if (vkCreateCommandPool(logicalDevice->GetVkDevice(), &commandPoolCreateInfo, nullptr, t_commandPool) !=
+                VK_SUCCESS)
             {
                 F_LOG_ERROR("Failed to create command pool");
             }
         }
 
-        void CreateCommandBuffers(VkCommandBuffer * t_commandBuffer, uint32 t_commandBufferCount, VkCommandPool & t_commandPool)
+        void CreateCommandBuffers(VkCommandBuffer* t_commandBuffer,
+                                  uint32 t_commandBufferCount,
+                                  VkCommandPool& t_commandPool)
         {
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
-			VkDevice logicalDevice = Dev->GetVkDevice();
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
+            VkDevice logicalDevice = Dev->GetVkDevice();
 
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
             commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -423,14 +426,13 @@ namespace Fling
             {
                 F_LOG_ERROR("Failed to create command buffers");
             }
-
         }
 
         void CreatePipelineCache(VkPipelineCache& t_PipelineCache)
         {
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
-			VkDevice Device = Dev->GetVkDevice();
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
+            VkDevice Device = Dev->GetVkDevice();
 
             VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
             pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -440,12 +442,11 @@ namespace Fling
             }
         }
 
-        void TransitionImageLayout(
-            VkImage t_Image, 
-            VkFormat t_Format, 
-            VkImageLayout t_oldLayout, 
-            VkImageLayout t_NewLayout,
-            uint32 t_MipLevels /* = 1 */
+        void TransitionImageLayout(VkImage t_Image,
+                                   VkFormat t_Format,
+                                   VkImageLayout t_oldLayout,
+                                   VkImageLayout t_NewLayout,
+                                   uint32 t_MipLevels /* = 1 */
         )
         {
             VkCommandBuffer commandBuffer = GraphicsHelpers::BeginSingleTimeCommands();
@@ -463,18 +464,18 @@ namespace Fling
             {
                 barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-                if (GraphicsHelpers::HasStencilComponent(t_Format)) 
+                if (GraphicsHelpers::HasStencilComponent(t_Format))
                 {
                     barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
                 }
             }
-            else 
+            else
             {
                 barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             }
 
             barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = t_MipLevels;        // TODO: Set this as the mip levels passed in
+            barrier.subresourceRange.levelCount = t_MipLevels; // TODO: Set this as the mip levels passed in
             barrier.subresourceRange.baseArrayLayer = 0;
             barrier.subresourceRange.layerCount = 1;
 
@@ -490,7 +491,8 @@ namespace Fling
                 SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 DestinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             }
-            else if (t_oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && t_NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            else if (t_oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+                     t_NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             {
                 barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
                 barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -498,48 +500,40 @@ namespace Fling
                 SourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 DestinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
             }
-            else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+            else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+                     t_NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
             {
                 barrier.srcAccessMask = 0;
-                barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                barrier.dstAccessMask =
+                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
                 SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 DestinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
             }
-			else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && t_NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-			{
-				barrier.srcAccessMask = 0;
-				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-				SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-				DestinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			}
+            else if (t_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+                     t_NewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+            {
+                barrier.srcAccessMask = 0;
+                barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                DestinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            }
             else
             {
                 F_LOG_FATAL("Unsupported layout transition!");
             }
 
-            vkCmdPipelineBarrier(
-                commandBuffer,
-                SourceStage, DestinationStage,
-                0,
-                0, nullptr,
-                0, nullptr,
-                1, &barrier
-            );
+            vkCmdPipelineBarrier(commandBuffer, SourceStage, DestinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
             GraphicsHelpers::EndSingleTimeCommands(commandBuffer);
         }
 
-        VkImageView CreateVkImageView(
-            VkImage t_Image, 
-            VkFormat t_Format, 
-            VkImageAspectFlags t_AspectFalgs, 
-            uint32 t_MipLevels
-        )
+        VkImageView
+        CreateVkImageView(VkImage t_Image, VkFormat t_Format, VkImageAspectFlags t_AspectFalgs, uint32 t_MipLevels)
         {
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
-			VkDevice Device = Dev->GetVkDevice();
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
+            VkDevice Device = Dev->GetVkDevice();
 
             assert(Device != VK_NULL_HANDLE);
 
@@ -547,7 +541,7 @@ namespace Fling
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = t_Image;
 
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;    // use 3D for cube maps
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D; // use 3D for cube maps
             createInfo.format = t_Format;
 
             createInfo.subresourceRange.aspectMask = t_AspectFalgs;
@@ -565,12 +559,13 @@ namespace Fling
             return imageView;
         }
 
-        VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates, VkImageTiling t_Tiling, VkFormatFeatureFlags t_Features)
+        VkFormat FindSupportedFormat(const std::vector<VkFormat>& t_Candidates,
+                                     VkImageTiling t_Tiling,
+                                     VkFormatFeatureFlags t_Features)
         {
-			PhysicalDevice* Dev = VulkanApp::Get().GetPhysicalDevice();
-			assert(Dev);
-			VkPhysicalDevice PhysDevice = Dev->GetVkPhysicalDevice();
-
+            PhysicalDevice* Dev = VulkanApp::Get().GetPhysicalDevice();
+            assert(Dev);
+            VkPhysicalDevice PhysDevice = Dev->GetVkPhysicalDevice();
 
             for (VkFormat CurFormat : t_Candidates)
             {
@@ -581,7 +576,8 @@ namespace Fling
                 {
                     return CurFormat;
                 }
-                else if (t_Tiling == VK_IMAGE_TILING_OPTIMAL && (Props.optimalTilingFeatures & t_Features) == t_Features)
+                else if (t_Tiling == VK_IMAGE_TILING_OPTIMAL &&
+                         (Props.optimalTilingFeatures & t_Features) == t_Features)
                 {
                     return CurFormat;
                 }
@@ -600,9 +596,9 @@ namespace Fling
 
             VkShaderModule ShaderModule;
 
-			LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
-			assert(Dev);
-			VkDevice Device = Dev->GetVkDevice();
+            LogicalDevice* Dev = VulkanApp::Get().GetLogicalDevice();
+            assert(Dev);
+            VkDevice Device = Dev->GetVkDevice();
 
             if (vkCreateShaderModule(Device, &CreateInfo, nullptr, &ShaderModule) != VK_SUCCESS)
             {
@@ -617,7 +613,7 @@ namespace Fling
             return t_format == VK_FORMAT_D32_SFLOAT_S8_UINT || t_format == VK_FORMAT_D24_UNORM_S8_UINT;
         }
 
-    }    // namespace GraphicsHelpers
+    } // namespace GraphicsHelpers
 
     namespace Initializers
     {
@@ -628,7 +624,10 @@ namespace Fling
             return mappedMemoryRange;
         }
 
-        VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags, uint32 binding, uint32 descriptorCount)
+        VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(VkDescriptorType type,
+                                                                VkShaderStageFlags stageFlags,
+                                                                uint32 binding,
+                                                                uint32 descriptorCount)
         {
             VkDescriptorSetLayoutBinding setLayoutBinding{};
             setLayoutBinding.descriptorType = type;
@@ -638,7 +637,11 @@ namespace Fling
             return setLayoutBinding;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet dstSet, VkDescriptorType type, uint32 binding, VkDescriptorBufferInfo* bufferInfo, uint32 descriptorCount)
+        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet dstSet,
+                                                VkDescriptorType type,
+                                                uint32 binding,
+                                                VkDescriptorBufferInfo* bufferInfo,
+                                                uint32 descriptorCount)
         {
             VkWriteDescriptorSet writeDescriptorSet{};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -675,9 +678,8 @@ namespace Fling
             return descriptorPoolSize;
         }
 
-        VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo(
-            const std::vector<VkDescriptorPoolSize>& t_poolSizes, 
-            uint32 t_maxSets)
+        VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo(const std::vector<VkDescriptorPoolSize>& t_poolSizes,
+                                                            uint32 t_maxSets)
         {
             VkDescriptorPoolCreateInfo descriptorPoolInfo{};
             descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -694,10 +696,10 @@ namespace Fling
             return memAllocInfo;
         }
 
-        VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(
-            VkDescriptorType t_type, 
-            VkShaderStageFlags t_stageFlags, 
-            uint32 t_binding, uint32 t_descriptorCount)
+        VkDescriptorSetLayoutBinding DescriptorSetLayoutBindings(VkDescriptorType t_type,
+                                                                 VkShaderStageFlags t_stageFlags,
+                                                                 uint32 t_binding,
+                                                                 uint32 t_descriptorCount)
         {
             VkDescriptorSetLayoutBinding setLayoutBinding = {};
             setLayoutBinding.descriptorType = t_type;
@@ -707,7 +709,8 @@ namespace Fling
             return setLayoutBinding;
         }
 
-        VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(const std::vector<VkDescriptorSetLayoutBinding>& t_bindings)
+        VkDescriptorSetLayoutCreateInfo
+        DescriptorSetLayoutCreateInfo(const std::vector<VkDescriptorSetLayoutBinding>& t_bindings)
         {
             VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {};
             descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -716,7 +719,8 @@ namespace Fling
             return descriptorSetLayoutCreateInfo;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSetUniform(Buffer* t_Buffer, VkDescriptorSet t_DstSet, uint32 t_Binding, uint32 t_Set, VkDeviceSize t_Offset)
+        VkWriteDescriptorSet WriteDescriptorSetUniform(
+            Buffer* t_Buffer, VkDescriptorSet t_DstSet, uint32 t_Binding, uint32 t_Set, VkDeviceSize t_Offset)
         {
             VkWriteDescriptorSet uniformSet = {};
             uniformSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -730,7 +734,8 @@ namespace Fling
             return uniformSet;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSetImage(Texture* t_Image, VkDescriptorSet t_DstSet, uint32 t_Binding, uint32 t_Set, VkDeviceSize t_Offset)
+        VkWriteDescriptorSet WriteDescriptorSetImage(
+            Texture* t_Image, VkDescriptorSet t_DstSet, uint32 t_Binding, uint32 t_Set, VkDeviceSize t_Offset)
         {
             VkDescriptorImageInfo* imageInfo = t_Image->GetDescriptorInfo();
             // Create sampler information
@@ -761,7 +766,9 @@ namespace Fling
             return imageViewCreateInfo;
         }
 
-        VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool t_descriptorPool, const VkDescriptorSetLayout * t_pSetLayouts, uint32 t_descriptorSetCount)
+        VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool t_descriptorPool,
+                                                              const VkDescriptorSetLayout* t_pSetLayouts,
+                                                              uint32 t_descriptorSetCount)
         {
             VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
             descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -771,7 +778,8 @@ namespace Fling
             return descriptorSetAllocateInfo;
         }
 
-        VkDescriptorImageInfo DescriptorImageInfo(VkSampler t_sampler, VkImageView t_imageView, VkImageLayout t_imageLayout)
+        VkDescriptorImageInfo
+        DescriptorImageInfo(VkSampler t_sampler, VkImageView t_imageView, VkImageLayout t_imageLayout)
         {
             VkDescriptorImageInfo descriptorImageInfo = {};
             descriptorImageInfo.sampler = t_sampler;
@@ -780,7 +788,11 @@ namespace Fling
             return descriptorImageInfo;
         }
 
-        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet t_dstSet, VkDescriptorType t_type, uint32 t_binding, VkDescriptorImageInfo * imageInfo, uint32 descriptorCount)
+        VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet t_dstSet,
+                                                VkDescriptorType t_type,
+                                                uint32 t_binding,
+                                                VkDescriptorImageInfo* imageInfo,
+                                                uint32 descriptorCount)
         {
             VkWriteDescriptorSet writeDescriptorSet = {};
             writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -801,9 +813,8 @@ namespace Fling
             return pushConstantRange;
         }
 
-        VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(
-            const VkDescriptorSetLayout * t_pSetLayouts, 
-            uint32 t_setLayoutCount)
+        VkPipelineLayoutCreateInfo PiplineLayoutCreateInfo(const VkDescriptorSetLayout* t_pSetLayouts,
+                                                           uint32 t_setLayoutCount)
         {
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -812,10 +823,10 @@ namespace Fling
             return pipelineLayoutCreateInfo;
         }
 
-        VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo(
-            VkPrimitiveTopology t_topology, 
-            VkPipelineInputAssemblyStateCreateFlags t_flags, 
-            VkBool32 t_primitiveRestartEnable)
+        VkPipelineInputAssemblyStateCreateInfo
+        PipelineInputAssemblyStateCreateInfo(VkPrimitiveTopology t_topology,
+                                             VkPipelineInputAssemblyStateCreateFlags t_flags,
+                                             VkBool32 t_primitiveRestartEnable)
         {
             VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
             pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -825,11 +836,11 @@ namespace Fling
             return pipelineInputAssemblyStateCreateInfo;
         }
 
-        VkPipelineRasterizationStateCreateInfo PipelineRasterizationStateCreateInfo(
-            VkPolygonMode t_polygonMode, 
-            VkCullModeFlags t_cullMode, 
-            VkFrontFace t_frontFace, 
-            VkPipelineRasterizationStateCreateFlags t_flags)
+        VkPipelineRasterizationStateCreateInfo
+        PipelineRasterizationStateCreateInfo(VkPolygonMode t_polygonMode,
+                                             VkCullModeFlags t_cullMode,
+                                             VkFrontFace t_frontFace,
+                                             VkPipelineRasterizationStateCreateFlags t_flags)
         {
             VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo{};
             pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -842,9 +853,9 @@ namespace Fling
             return pipelineRasterizationStateCreateInfo;
         }
 
-        VkPipelineColorBlendStateCreateInfo PipelineColorBlendStateCreateInfo(
-            uint32 t_attachmentCount, 
-            const VkPipelineColorBlendAttachmentState * t_pAttachments)
+        VkPipelineColorBlendStateCreateInfo
+        PipelineColorBlendStateCreateInfo(uint32 t_attachmentCount,
+                                          const VkPipelineColorBlendAttachmentState* t_pAttachments)
         {
             VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
             pipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -853,7 +864,8 @@ namespace Fling
             return pipelineColorBlendStateCreateInfo;
         }
 
-        VkPipelineColorBlendAttachmentState PipelineColorBlendAttachmentState(VkColorComponentFlags t_colorWriteMask, VkBool32 t_blendEnable)
+        VkPipelineColorBlendAttachmentState PipelineColorBlendAttachmentState(VkColorComponentFlags t_colorWriteMask,
+                                                                              VkBool32 t_blendEnable)
         {
             VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState{};
             pipelineColorBlendAttachmentState.colorWriteMask = t_colorWriteMask;
@@ -861,10 +873,8 @@ namespace Fling
             return pipelineColorBlendAttachmentState;
         }
 
-        VkPipelineDepthStencilStateCreateInfo DepthStencilState(
-            VkBool32 t_depthTestEnable, 
-            VkBool32 t_depthWriteEnable, 
-            VkCompareOp t_depthCompareOp)
+        VkPipelineDepthStencilStateCreateInfo
+        DepthStencilState(VkBool32 t_depthTestEnable, VkBool32 t_depthWriteEnable, VkCompareOp t_depthCompareOp)
         {
             VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
             pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -876,10 +886,9 @@ namespace Fling
             return pipelineDepthStencilStateCreateInfo;
         }
 
-        VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(
-            uint32 t_viewportCount, 
-            uint32 t_scissorCount, 
-            VkPipelineViewportStateCreateFlags t_flags)
+        VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(uint32 t_viewportCount,
+                                                                          uint32 t_scissorCount,
+                                                                          VkPipelineViewportStateCreateFlags t_flags)
         {
             VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
             pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -889,9 +898,9 @@ namespace Fling
             return pipelineViewportStateCreateInfo;
         }
 
-        VkPipelineMultisampleStateCreateInfo PipelineMultiSampleStateCreateInfo(
-            VkSampleCountFlagBits t_rasterizationSamples, 
-            VkPipelineMultisampleStateCreateFlags t_flags)
+        VkPipelineMultisampleStateCreateInfo
+        PipelineMultiSampleStateCreateInfo(VkSampleCountFlagBits t_rasterizationSamples,
+                                           VkPipelineMultisampleStateCreateFlags t_flags)
         {
             VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo = {};
             pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -900,9 +909,9 @@ namespace Fling
             return pipelineMultisampleStateCreateInfo;
         }
 
-        VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(
-            const std::vector<VkDynamicState>& t_pDynamicStates, 
-            VkPipelineDynamicStateCreateFlags t_flags)
+        VkPipelineDynamicStateCreateInfo
+        PipelineDynamicStateCreateInfo(const std::vector<VkDynamicState>& t_pDynamicStates,
+                                       VkPipelineDynamicStateCreateFlags t_flags)
         {
             VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = {};
             pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -912,10 +921,8 @@ namespace Fling
             return pipelineDynamicStateCreateInfo;
         }
 
-        VkGraphicsPipelineCreateInfo PipelineCreateInfo(
-            VkPipelineLayout t_layout, 
-            VkRenderPass t_renderPass, 
-            VkPipelineCreateFlags t_flags)
+        VkGraphicsPipelineCreateInfo
+        PipelineCreateInfo(VkPipelineLayout t_layout, VkRenderPass t_renderPass, VkPipelineCreateFlags t_flags)
         {
             VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
             pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -927,10 +934,8 @@ namespace Fling
             return pipelineCreateInfo;
         }
 
-        VkVertexInputBindingDescription VertexInputBindingDescription(
-            uint32 t_binding, 
-            uint32 t_stride, 
-            VkVertexInputRate t_inputRate)
+        VkVertexInputBindingDescription
+        VertexInputBindingDescription(uint32 t_binding, uint32 t_stride, VkVertexInputRate t_inputRate)
         {
             VkVertexInputBindingDescription vInputBindDescription = {};
             vInputBindDescription.binding = t_binding;
@@ -939,11 +944,8 @@ namespace Fling
             return vInputBindDescription;
         }
 
-        VkVertexInputAttributeDescription VertexInputAttributeDescription(
-            uint32 t_binding, 
-            uint32 t_location, 
-            VkFormat t_format, 
-            uint32 t_offset)
+        VkVertexInputAttributeDescription
+        VertexInputAttributeDescription(uint32 t_binding, uint32 t_location, VkFormat t_format, uint32 t_offset)
         {
             VkVertexInputAttributeDescription vInputAttribDescription = {};
             vInputAttribDescription.location = t_location;
@@ -962,6 +964,6 @@ namespace Fling
             viewport.minDepth = t_minDepth;
             return viewport;
         }
-    }    // namespace Initializers
+    } // namespace Initializers
 
-}   // namespace Fling        
+} // namespace Fling

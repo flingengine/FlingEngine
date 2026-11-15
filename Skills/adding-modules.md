@@ -80,7 +80,7 @@ add_subdirectory(Graphics)
 add_subdirectory(UI)
 ```
 
-If Sandbox or Application should use UI, link the alias — do not `include_directories`
+If Sandbox or Application should use UI, link the alias: do not `include_directories`
 the UI folder:
 
 ```cmake

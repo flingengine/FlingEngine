@@ -1,0 +1,20 @@
+{"format":"fling-input","version":1,"tickRate":120,"duration":0.4}
+# Test data for the Sandbox look camera (Sandbox.LookCamera, Sandbox.LookCameraView).
+# Run with --sim-hz 60 --frames-per-tick 2: "tick" here is a frame (1/120 s), and a fixed tick
+# runs on even frames, so a message on an odd frame is pending (shown by the frame side) for one
+# frame. The file has no tick cuts, so it also replays by time at the default 30 Hz.
+{"tick":5,"type":"MouseMove","dx":10,"dy":0}
+{"tick":7,"type":"MouseMove","dx":10,"dy":-5}
+{"tick":8,"type":"MouseMove","dx":4,"dy":0}
+# F freezes the camera. The moves while it is frozen are thrown away on both sides.
+{"tick":11,"type":"Press","key":"F"}
+{"tick":13,"type":"MouseMove","dx":50,"dy":0}
+{"tick":15,"type":"MouseMove","dx":50,"dy":0}
+{"tick":21,"type":"Press","key":"F"}
+{"tick":23,"type":"MouseMove","dx":6,"dy":0}
+# Equal doubles the look scale
+{"tick":25,"type":"Press","key":"Equal"}
+{"tick":27,"type":"MouseMove","dx":10,"dy":0}
+# A flick up past the pitch clamp and back, inside one pending window
+{"tick":31,"type":"MouseMove","dx":0,"dy":-800}
+{"tick":31,"type":"MouseMove","dx":0,"dy":800}

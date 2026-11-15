@@ -13,53 +13,51 @@
 namespace Fling
 {
 #if FLING_LINUX
-	typedef VkDescriptorUpdateTemplateKHR VkDescriptorUpdateTemplate;
-	typedef VkDescriptorUpdateTemplateEntryKHR VkDescriptorUpdateTemplateEntry;
+    typedef VkDescriptorUpdateTemplateKHR VkDescriptorUpdateTemplate;
+    typedef VkDescriptorUpdateTemplateEntryKHR VkDescriptorUpdateTemplateEntry;
 #endif
 
-	// Grabbed this and some shader reflection things from https://github.com/zeux/niagara
-	struct DescriptorInfo
-	{
-		union
-		{
-			VkDescriptorImageInfo image;
-			VkDescriptorBufferInfo buffer;
-		};
+    // Grabbed this and some shader reflection things from https://github.com/zeux/niagara
+    struct DescriptorInfo
+    {
+        union
+        {
+            VkDescriptorImageInfo image;
+            VkDescriptorBufferInfo buffer;
+        };
 
-		DescriptorInfo()
-		{
-		}
+        DescriptorInfo() {}
 
-		DescriptorInfo(VkImageView imageView, VkImageLayout imageLayout)
-		{
-			image.sampler = VK_NULL_HANDLE;
-			image.imageView = imageView;
-			image.imageLayout = imageLayout;
-		}
+        DescriptorInfo(VkImageView imageView, VkImageLayout imageLayout)
+        {
+            image.sampler = VK_NULL_HANDLE;
+            image.imageView = imageView;
+            image.imageLayout = imageLayout;
+        }
 
-		DescriptorInfo(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
-		{
-			image.sampler = sampler;
-			image.imageView = imageView;
-			image.imageLayout = imageLayout;
-		}
+        DescriptorInfo(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
+        {
+            image.sampler = sampler;
+            image.imageView = imageView;
+            image.imageLayout = imageLayout;
+        }
 
-		DescriptorInfo(VkBuffer buffer_, VkDeviceSize offset, VkDeviceSize range)
-		{
-			buffer.buffer = buffer_;
-			buffer.offset = offset;
-			buffer.range = range;
-		}
+        DescriptorInfo(VkBuffer buffer_, VkDeviceSize offset, VkDeviceSize range)
+        {
+            buffer.buffer = buffer_;
+            buffer.offset = offset;
+            buffer.range = range;
+        }
 
-		DescriptorInfo(VkBuffer buffer_)
-		{
-			buffer.buffer = buffer_;
-			buffer.offset = 0;
-			buffer.range = VK_WHOLE_SIZE;
-		}
-	};
+        DescriptorInfo(VkBuffer buffer_)
+        {
+            buffer.buffer = buffer_;
+            buffer.offset = 0;
+            buffer.range = VK_WHOLE_SIZE;
+        }
+    };
 
-	class LogicalDevice;
+    class LogicalDevice;
 
     /**
      * Class that represents what a shader is in the Fling engine.
@@ -68,14 +66,14 @@ namespace Fling
      */
     class Shader : public Resource
     {
-		friend class ResourceManager;
-    public:
+        friend class ResourceManager;
 
-		static std::shared_ptr<Fling::Shader> Create(const AssetPath& t_Path, LogicalDevice* t_Dev);
+    public:
+        static std::shared_ptr<Fling::Shader> Create(const AssetPath& t_Path, LogicalDevice* t_Dev);
 
         /**
          * Load a shader from disk and compile it.
-         * 
+         *
          * @param t_Path  The path of this shader, relative to the compiled shader folder.
          */
         explicit Shader(const AssetPath& t_Path, LogicalDevice* t_Dev);
@@ -84,26 +82,29 @@ namespace Fling
 
         /**
          * Create a Shader Module object
-         * 
-         * @return VkShaderModule 
+         *
+         * @return VkShaderModule
          */
         VkShaderModule GetShaderModule() const { return m_Module; }
 
         /** get the Vulkan stage bit flags that we should bind to */
-		VkShaderStageFlagBits GetStage() const { return m_Stage; }
+        VkShaderStageFlagBits GetStage() const { return m_Stage; }
 
-		/**
-		* @breif	Release any resrources created by this shader (the module)
-		*/
-		void Release();
+        /**
+         * @breif	Release any resrources created by this shader (the module)
+         */
+        void Release();
 
-		static VkDescriptorSetLayout CreateSetLayout(VkDevice t_Dev, std::vector<Shader*>& t_Shaders, bool t_SupportPushDescriptor = false);
+        static VkDescriptorSetLayout
+        CreateSetLayout(VkDevice t_Dev, std::vector<Shader*>& t_Shaders, bool t_SupportPushDescriptor = false);
 
-		static VkPipelineLayout CreatePipelineLayout(VkDevice t_Dev, VkDescriptorSetLayout t_SetLayout, VkShaderStageFlags t_PushConstantStages, size_t t_PushConstantSize);
+        static VkPipelineLayout CreatePipelineLayout(VkDevice t_Dev,
+                                                     VkDescriptorSetLayout t_SetLayout,
+                                                     VkShaderStageFlags t_PushConstantStages,
+                                                     size_t t_PushConstantSize);
 
     private:
-
-		static uint32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType(&t_ResourceTypes)[32]);
+        static uint32 GatherResources(const std::vector<Shader*>& t_Shaders, VkDescriptorType (&t_ResourceTypes)[32]);
 
         /**
          * Compiles this shader with SPRIV-Cross
@@ -121,23 +122,23 @@ namespace Fling
         /** The shader module created by this shader */
         VkShaderModule m_Module = VK_NULL_HANDLE;
 
-		// Shader reflection data ----------
-		uint32 m_ResourceMask {};
+        // Shader reflection data ----------
+        uint32 m_ResourceMask{};
 
-		/** The types of descriptors that are used by this shader */
-		VkDescriptorType m_ResourceTypes[32] {};
+        /** The types of descriptors that are used by this shader */
+        VkDescriptorType m_ResourceTypes[32]{};
 
         /** The stage in the pipeline that this shader is in */
         VkShaderStageFlagBits m_Stage = VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT;
-		
-		const LogicalDevice* m_Device;
 
-		bool m_UsesPushConstants = false;
+        const LogicalDevice* m_Device;
 
-		// Sizes that can be used by a compute pipeline
-		uint32 localSizeX {};
-		uint32 localSizeY {};
-		uint32 localSizeZ {};
+        bool m_UsesPushConstants = false;
+
+        // Sizes that can be used by a compute pipeline
+        uint32 localSizeX{};
+        uint32 localSizeY{};
+        uint32 localSizeZ{};
     };
-    
-}   // namespace Fling
+
+} // namespace Fling

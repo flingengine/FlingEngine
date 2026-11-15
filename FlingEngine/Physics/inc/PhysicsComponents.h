@@ -1,9 +1,12 @@
 #pragma once
 
+#include "Components/Transform.h"
+#include "Ecs/Component.h"
 #include "FlingMath.h"
 #include "FlingTypes.h"
-#include "JsonArchive.h"
 #include "Strings/String.h"
+
+#include <cstddef>
 
 namespace Fling
 {
@@ -13,6 +16,11 @@ namespace Fling
      */
     struct RigidBody
     {
+        static constexpr ComponentInfo Component{.Name = "RigidBody"};
+
+        /** Physics moves the entity's Transform */
+        using Requires = TypeList<Transform>;
+
         /** Mass in kilograms. A mass of 0 makes a static body that never moves. */
         float m_Mass = 1.0f;
 
@@ -38,19 +46,10 @@ namespace Fling
 
         /** Angular velocity in radians per second. The same rules as m_Velocity apply. */
         glm::vec3 m_AngularVelocity{0.0f, 0.0f, 0.0f};
-
-        void Serialize(JsonArchive& Ar)
-        {
-            Ar << MakeNVP("mass", m_Mass);
-            Ar << MakeNVP("friction", m_Friction);
-            Ar << MakeNVP("rollingFriction", m_RollingFriction);
-            Ar << MakeNVP("restitution", m_Restitution);
-            Ar << MakeNVP("linearDamping", m_LinearDamping);
-            Ar << MakeNVP("angularDamping", m_AngularDamping);
-            Ar << MakeNVP("velocity", m_Velocity);
-            Ar << MakeNVP("angularVelocity", m_AngularVelocity);
-        }
     };
+    // The same layout on every platform: a build where this fails has drifted from the others
+    static_assert(sizeof(RigidBody) == 48 && alignof(RigidBody) == 4 && offsetof(RigidBody, m_LinearDamping) == 16 &&
+                  offsetof(RigidBody, m_Velocity) == 24 && offsetof(RigidBody, m_AngularVelocity) == 36);
 
     enum class ColliderShape : uint8
     {
@@ -65,6 +64,11 @@ namespace Fling
      */
     struct Collider
     {
+        static constexpr ComponentInfo Component{.Name = "Collider"};
+
+        /** The shape is at the entity's Transform */
+        using Requires = TypeList<Transform>;
+
         ColliderShape m_Shape = ColliderShape::Box;
 
         /** Half the size of a Box on each axis. */
@@ -72,18 +76,8 @@ namespace Fling
 
         /** The radius of a Sphere. A Sphere uses the largest axis of the Transform scale. */
         float m_Radius = 0.5f;
-
-        void Serialize(JsonArchive& Ar)
-        {
-            String Shape = (m_Shape == ColliderShape::Sphere) ? "sphere" : "box";
-            Ar << MakeNVP("shape", Shape);
-            if (Ar.IsLoading())
-            {
-                m_Shape = (Shape == "sphere") ? ColliderShape::Sphere : ColliderShape::Box;
-            }
-
-            Ar << MakeNVP("halfExtents", m_HalfExtents);
-            Ar << MakeNVP("radius", m_Radius);
-        }
     };
+    // The same layout on every platform: a build where this fails has drifted from the others
+    static_assert(sizeof(Collider) == 20 && offsetof(Collider, m_HalfExtents) == 4 &&
+                  offsetof(Collider, m_Radius) == 16);
 } // namespace Fling

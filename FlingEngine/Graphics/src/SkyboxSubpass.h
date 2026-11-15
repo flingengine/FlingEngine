@@ -35,14 +35,16 @@ namespace Fling
 
         virtual ~SkyboxSubpass();
 
-        void
-        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+        void Draw(CommandBuffer& t_CmdBuf,
+                  uint32 t_ActiveFrameInFlight,
+                  const RenderSnapshot& t_Snapshot,
+                  float DeltaTime) override;
 
-        void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+        void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 
         void CreateGraphicsPipeline() override;
 
-        void OnSwapchainResized(entt::registry& t_reg) override;
+        void OnSwapchainResized() override;
 
     private:
         /** Matches the UBO at binding 0 of skybox.frag */
@@ -51,6 +53,7 @@ namespace Fling
             /** Inverse of projection * view, with the camera translation removed */
             glm::mat4 InvViewProjection;
         };
+        static_assert(sizeof(SkyboxUbo) == 64);
 
         VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
 

@@ -71,8 +71,8 @@ namespace Fling
     /** No thread has this ID. CurrentId returns it on a thread that the engine did not start. */
     constexpr ThreadId InvalidThreadId = 0;
 
-    /** The ID of the thread that called Thread::InitGameThread. */
-    constexpr ThreadId GameThreadId = 1;
+    /** The ID of the thread that called Thread::InitMainThread. */
+    constexpr ThreadId MainThreadId = 1;
 
     /** Scheduling priority of a thread. Linux can only lower a priority without privileges. */
     enum class ThreadPriority : uint8

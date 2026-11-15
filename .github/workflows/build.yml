@@ -287,6 +287,9 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check documentation comment style
         run: python3 scripts/check_comment_style.py
+      - name: Check ECS system includes
+        run: python3 scripts/check_system_includes.py
+
       # String and StringView, not std::string; StringView for read-only text parameters;
       # uint32 and friends, not std::uint32_t (Skills/strings.md, Skills/coding-style.md)
       - name: Check string and integer types

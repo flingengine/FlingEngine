@@ -51,9 +51,10 @@ components, fixed step, reflection).
 
 ## Non-goals
 
-- Bit-exact determinism across compilers, platforms, or CPU types. The target
-  is the same binary on the same platform. Cross-platform lockstep is a
-  separate project.
+- Bit-exact determinism across compilers and platforms is not a goal of this
+  plan, but it is now an engine rule (Windows and Linux must simulate the same
+  bits, so a Linux server can run with a Windows client): see
+  [`Skills/ecs.md`](../Skills/ecs.md) rule 6. ARM is not verified.
 - A full scripting language for gameplay. Gameplay stays in C++.
 
 ## Design

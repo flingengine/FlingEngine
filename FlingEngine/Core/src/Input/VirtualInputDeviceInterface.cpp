@@ -15,6 +15,7 @@ namespace Fling
     {
         m_Devices.clear();
         m_Queued.clear();
+        m_QueuedTags.clear();
     }
 
     void VirtualInputDeviceInterface::Poll(int64 t_NowNs)
@@ -26,27 +27,28 @@ namespace Fling
         }
         std::vector<InputMessage> Messages;
         Messages.swap(m_Queued);
-        for (InputMessage& Message : Messages)
+        std::vector<uint64> Tags;
+        Tags.swap(m_QueuedTags);
+        for (size_t Index = 0; Index < Messages.size(); ++Index)
         {
-            if (Message.Type == InputMessageType::DeviceConnected ||
-                Message.Type == InputMessageType::DeviceDisconnected)
+            InputMessage& Message = Messages[Index];
+            if (!CanSend(*Handler, Message))
             {
-                continue;
-            }
-            if (std::find(m_Devices.begin(), m_Devices.end(), Message.Device) == m_Devices.end())
-            {
-                continue;
-            }
-            const std::shared_ptr<InputDevice> Device = Handler->GetDeviceFactory().Find(Message.Device);
-            if (Device == nullptr || !Device->IsConnected())
-            {
+                if (Tags[Index] != 0 && m_OnSent)
+                {
+                    m_OnSent(Tags[Index], 0);
+                }
                 continue;
             }
             if (Message.TimeNs == 0)
             {
                 Message.TimeNs = t_NowNs;
             }
-            Handler->HandleMessage(Message);
+            const uint64 Sequence = Handler->HandleMessage(Message);
+            if (Tags[Index] != 0 && m_OnSent)
+            {
+                m_OnSent(Tags[Index], Sequence);
+            }
         }
     }
 
@@ -86,12 +88,43 @@ namespace Fling
         Handler->GetDeviceFactory().DisconnectDevice(t_Device);
     }
 
-    void VirtualInputDeviceInterface::Queue(const InputMessage& t_Message)
+    bool VirtualInputDeviceInterface::Queue(const InputMessage& t_Message)
     {
-        if (std::find(m_Devices.begin(), m_Devices.end(), t_Message.Device) == m_Devices.end())
+        return Queue(t_Message, 0);
+    }
+
+    bool VirtualInputDeviceInterface::Queue(const InputMessage& t_Message, const uint64 t_Tag)
+    {
+        if (!IsOwnMessage(t_Message))
         {
-            return;
+            return false;
         }
         m_Queued.push_back(t_Message);
+        m_QueuedTags.push_back(t_Tag);
+        return true;
+    }
+
+    bool VirtualInputDeviceInterface::IsOwnMessage(const InputMessage& t_Message) const
+    {
+        if (t_Message.Type == InputMessageType::CaptureChanged)
+        {
+            return true;
+        }
+        return std::find(m_Devices.begin(), m_Devices.end(), t_Message.Device) != m_Devices.end();
+    }
+
+    bool VirtualInputDeviceInterface::CanSend(const InputMessageHandler& t_Handler, const InputMessage& t_Message) const
+    {
+        if (t_Message.Type == InputMessageType::DeviceConnected ||
+            t_Message.Type == InputMessageType::DeviceDisconnected || !IsOwnMessage(t_Message))
+        {
+            return false;
+        }
+        if (t_Message.Type == InputMessageType::CaptureChanged)
+        {
+            return true;
+        }
+        const std::shared_ptr<InputDevice> Device = t_Handler.GetDeviceFactory().Find(t_Message.Device);
+        return Device != nullptr && Device->IsConnected();
     }
 } // namespace Fling

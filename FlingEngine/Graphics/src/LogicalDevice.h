@@ -3,11 +3,10 @@
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
 
-
 namespace Fling
 {
-	class PhysicalDevice;
-	class Instance;
+    class PhysicalDevice;
+    class Instance;
 
     /**
      * A logical device represents the application view of the device
@@ -15,57 +14,56 @@ namespace Fling
     class LogicalDevice
     {
     public:
-
-        explicit LogicalDevice(class Instance* t_Instance, class PhysicalDevice* t_PhysDevice, const VkSurfaceKHR t_Surface);
+        explicit LogicalDevice(class Instance* t_Instance,
+                               class PhysicalDevice* t_PhysDevice,
+                               const VkSurfaceKHR t_Surface);
 
         ~LogicalDevice();
 
         const VkDevice& GetVkDevice() const { return m_Device; }
 
-		const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
-		const VkQueue& GetPresentQueue() const { return m_PresentQueue; }
+        const VkQueue& GetGraphicsQueue() const { return m_GraphicsQueue; }
+        const VkQueue& GetPresentQueue() const { return m_PresentQueue; }
 
-		const VkQueueFlags& GetSupportedQueues() const { return m_SupportedQueues; }
+        const VkQueueFlags& GetSupportedQueues() const { return m_SupportedQueues; }
 
-		const PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
-		const Instance* GetInstance() const { return m_Instance; }
+        const PhysicalDevice* GetPhysicalDevice() const { return m_PhysicalDevice; }
+        const Instance* GetInstance() const { return m_Instance; }
 
-		uint32 GetGraphicsFamily() const { return m_GraphicsFamily; }
-		uint32 GetPresentFamily() const { return m_PresentFamily; }
+        uint32 GetGraphicsFamily() const { return m_GraphicsFamily; }
+        uint32 GetPresentFamily() const { return m_PresentFamily; }
 
-		void WaitForIdle();
-
+        void WaitForIdle();
 
     private:
-
         /** The vulkan logical device */
         VkDevice m_Device = VK_NULL_HANDLE;
 
         const Instance* m_Instance;
-		const PhysicalDevice* m_PhysicalDevice;
-		const VkSurfaceKHR m_Surface;
-        
+        const PhysicalDevice* m_PhysicalDevice;
+        const VkSurfaceKHR m_Surface;
+
         /** Handle for the graphics queue */
         VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
 
         /** Handle to the presentation queue */
         VkQueue m_PresentQueue = VK_NULL_HANDLE;
 
-		/** Queue families */
-		VkQueueFlags m_SupportedQueues{};
-		uint32 m_GraphicsFamily = 0;
-		uint32 m_PresentFamily = 0;
-		uint32 m_ComputeFamily = 0;
-		uint32 m_TransferFamily = 0;
+        /** Queue families */
+        VkQueueFlags m_SupportedQueues{};
+        uint32 m_GraphicsFamily = 0;
+        uint32 m_PresentFamily = 0;
+        uint32 m_ComputeFamily = 0;
+        uint32 m_TransferFamily = 0;
 
-		/**
-		 * Get what queue Indecies/families this device should use
-		 */
-		void CreateQueueIndecies();
+        /**
+         * Get what queue Indecies/families this device should use
+         */
+        void CreateQueueIndecies();
 
         /**
          * Create the Vk resoruces for this logical device
          */
         void CreateDevice();
     };
-}   // namespace Fling
+} // namespace Fling

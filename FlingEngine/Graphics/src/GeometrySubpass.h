@@ -6,6 +6,7 @@
 #include "Lighting/PointLight.hpp"
 #include "Subpass.h"
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -31,7 +32,10 @@ namespace Fling
 
         alignas(16) PointLight PointLightBuffer[DeferredLightSettings::MaxPointLights] = {};
     };
+    static_assert(offsetof(LightingUbo, PointLightCount) == 4 && offsetof(LightingUbo, DirLightBuffer) == 16 &&
+                  offsetof(LightingUbo, PointLightBuffer) == 16 + 48 * DeferredLightSettings::MaxDirectionalLights);
 
+    /** The std140 layout of deferred.frag's UBO at binding 7. */
     struct CameraInfoUbo
     {
         glm::mat4 Projection;
@@ -39,7 +43,12 @@ namespace Fling
         glm::vec4 CamPos = {};
         float Gamma = 2.2f;
         float Exposure = 4.5f;
+        /** std140 rounds the block to 16 bytes (160); packed GLM types would make the struct 152. */
+        float Padding[2] = {};
     };
+    static_assert(offsetof(CameraInfoUbo, ModelView) == 64 && offsetof(CameraInfoUbo, CamPos) == 128 &&
+                  offsetof(CameraInfoUbo, Gamma) == 144 && offsetof(CameraInfoUbo, Exposure) == 148 &&
+                  sizeof(CameraInfoUbo) == 160);
 
     /**
      * The geometry subpass is in charge of sending the geometry portion of
@@ -52,7 +61,6 @@ namespace Fling
     public:
         GeometrySubpass(const LogicalDevice* t_Dev,
                         const Swapchain* t_Swap,
-                        entt::registry& t_reg,
                         VkRenderPass t_GlobalRenderPass,
                         FirstPersonCamera* t_Cam,
                         FrameBuffer* t_OffscreenDep,
@@ -61,22 +69,22 @@ namespace Fling
 
         virtual ~GeometrySubpass();
 
-        void
-        Draw(CommandBuffer& t_CmdBuf, uint32 t_ActiveFrameInFlight, entt::registry& t_reg, float DeltaTime) override;
+        void Draw(CommandBuffer& t_CmdBuf,
+                  uint32 t_ActiveFrameInFlight,
+                  const RenderSnapshot& t_Snapshot,
+                  float DeltaTime) override;
 
-        void CreateDescriptorSets(VkDescriptorPool t_Pool, entt::registry& t_reg) override;
+        void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 
         /**
          * @param t_FrameBuffer	The swap chain frame buffer
          */
         void CreateGraphicsPipeline() override;
 
-        virtual void OnSwapchainResized(entt::registry& t_reg) override final;
+        virtual void OnSwapchainResized() override final;
 
     private:
-        void OnPointLightAdded(entt::entity t_Ent, entt::registry& t_Reg, PointLight& t_Light);
-
-        void UpdateLightingUBO(entt::registry& t_Reg, uint32 t_ActiveFrame);
+        void UpdateLightingUBO(const RenderSnapshot& t_Snapshot, uint32 t_ActiveFrame);
 
         // Global render pass for frame buffer writes
         std::shared_ptr<Model> m_QuadModel;

@@ -52,6 +52,14 @@ namespace Fling
          */
         CORE_API bool WaitForNextTick();
 
+        /**
+         * Wait until t_Deadline or Interrupt, outside the fixed schedule (a caller with its
+         * own schedule, such as the game thread's tick timeline). It uses the same timer as
+         * WaitForNextTick, so a limiter with a fixed rate is needed for the high-resolution
+         * timer on Windows. Return false on Interrupt.
+         */
+        CORE_API bool WaitUntil(std::chrono::steady_clock::time_point t_Deadline);
+
         /** Make WaitForNextTick return false, now and on each later call. */
         CORE_API void Interrupt();
 
@@ -67,9 +75,6 @@ namespace Fling
 
     private:
         using Clock = std::chrono::steady_clock;
-
-        /** Wait until t_Deadline or Interrupt. Return false on Interrupt. */
-        bool WaitUntil(Clock::time_point t_Deadline);
 
         /** Spin until t_Deadline or Interrupt. Return false on Interrupt. */
         bool SpinUntil(Clock::time_point t_Deadline) const;

@@ -2,6 +2,7 @@
 #include "Strings/String.h"
 
 #include <algorithm>
+#include <cassert>
 #include <charconv>
 #include <cmath>
 #include <cstdarg>
@@ -58,7 +59,8 @@ namespace Fling
                                                          InputMessageType::MouseMove,
                                                          InputMessageType::MouseWheel,
                                                          InputMessageType::FocusLost,
-                                                         InputMessageType::FocusGained};
+                                                         InputMessageType::FocusGained,
+                                                         InputMessageType::CaptureChanged};
 
         bool ParseDeviceType(StringView t_Name, InputDeviceType& t_OutType)
         {
@@ -223,6 +225,10 @@ namespace Fling
                         Error = ParseHeader(Value);
                         HaveHeader = true;
                     }
+                    else if (Value.contains("tickCuts"))
+                    {
+                        Error = ParseTickCuts(Value["tickCuts"]);
+                    }
                     else
                     {
                         Error = ParseMessage(Value);
@@ -238,11 +244,77 @@ namespace Fling
                     return "line 1: missing header";
                 }
                 Finish();
+                if (!m_Out.TickCuts.empty() && m_Out.TickCuts.back() > m_Out.Messages.size())
+                {
+                    return "\"tickCuts\" counts more messages than the file has";
+                }
                 return {};
             }
 
         private:
             static String Quote(const StringView t_Text) { return "'" + String(t_Text) + "'"; }
+
+            /**
+             * The per-tick cuts line. Version 2: {"tickCuts":{"tickRate":30,"counts":[0,2,2,5,...]}}.
+             * Version 1: {"tickCuts":[0,2,2,5,...]}, recorded at Version1TickCutRate. The counts
+             * are whole numbers that never decrease.
+             */
+            String ParseTickCuts(const Json& t_Cuts)
+            {
+                uint32 Rate = InputRecording::Version1TickCutRate;
+                const Json* Counts = &t_Cuts;
+                if (m_Out.Version >= 2)
+                {
+                    if (!t_Cuts.is_object())
+                    {
+                        return "\"tickCuts\" must be an object with \"tickRate\" and \"counts\" (version 2)";
+                    }
+                    String Error;
+                    std::optional<int64> TickRate;
+                    if (!ReadInteger(t_Cuts, "tickRate", TickRate, Error, 1, std::numeric_limits<uint32>::max()))
+                    {
+                        return "\"tickCuts\": " + Error;
+                    }
+                    if (!TickRate)
+                    {
+                        return "\"tickCuts\" needs a \"tickRate\"";
+                    }
+                    Rate = static_cast<uint32>(*TickRate);
+                    const auto It = t_Cuts.find("counts");
+                    if (It == t_Cuts.end())
+                    {
+                        return "\"tickCuts\" needs \"counts\"";
+                    }
+                    Counts = &*It;
+                }
+                if (!Counts->is_array())
+                {
+                    return m_Out.Version >= 2 ? "\"tickCuts\" \"counts\" must be a list"
+                                              : "\"tickCuts\" must be a list";
+                }
+                if (m_Out.TickCutRate != 0 && m_Out.TickCutRate != Rate)
+                {
+                    return "every \"tickCuts\" line must have the same \"tickRate\"";
+                }
+                m_Out.TickCutRate = Rate;
+
+                uint64 Previous = m_Out.TickCuts.empty() ? 0 : m_Out.TickCuts.back();
+                for (const Json& Cut : *Counts)
+                {
+                    if (!Cut.is_number_unsigned())
+                    {
+                        return "\"tickCuts\" must hold whole numbers, 0 or more";
+                    }
+                    const uint64 Value = Cut.get<uint64>();
+                    if (Value < Previous)
+                    {
+                        return "\"tickCuts\" must never decrease";
+                    }
+                    Previous = Value;
+                    m_Out.TickCuts.push_back(Value);
+                }
+                return {};
+            }
 
             /** Read an optional number field. Returns false (with t_Error set) if it is not a number. */
             static bool
@@ -260,6 +332,23 @@ namespace Fling
                     return false;
                 }
                 t_Out = It->get<double>();
+                return true;
+            }
+
+            /** Read an optional true or false field. Absent leaves t_Out as it is. */
+            static bool ReadBool(const Json& t_Object, const char* t_Name, bool& t_Out, String& t_Error)
+            {
+                const auto It = t_Object.find(t_Name);
+                if (It == t_Object.end())
+                {
+                    return true;
+                }
+                if (!It->is_boolean())
+                {
+                    t_Error = String("\"") + t_Name + "\" must be true or false";
+                    return false;
+                }
+                t_Out = It->get<bool>();
                 return true;
             }
 
@@ -310,7 +399,7 @@ namespace Fling
                 {
                     return "header: missing \"version\"";
                 }
-                if (*Version != static_cast<int64>(InputRecording::CurrentVersion))
+                if (*Version < 1 || *Version > static_cast<int64>(InputRecording::CurrentVersion))
                 {
                     return "header: unsupported version " + std::to_string(*Version);
                 }
@@ -431,8 +520,7 @@ namespace Fling
                         InputDeviceCapabilities Capability = InputDeviceCapabilities::None;
                         if (!Item.is_string() || !ParseCapability(Item.get<String>(), Capability))
                         {
-                            return "unknown capability " +
-                                   (Item.is_string() ? Quote(Item.get<String>()) : "value");
+                            return "unknown capability " + (Item.is_string() ? Quote(Item.get<String>()) : "value");
                         }
                         Device.Info.Capabilities = Device.Info.Capabilities | Capability;
                     }
@@ -551,6 +639,20 @@ namespace Fling
                         return Error;
                     }
                     Message.Recorded.Message.Scancode = static_cast<uint32>(Scancode.value_or(0));
+                }
+
+                // A capture change has no device: {"type":"CaptureChanged","keyboard":true,"mouse":false}
+                if (Type == InputMessageType::CaptureChanged)
+                {
+                    bool Keyboard = false;
+                    bool Mouse = false;
+                    if (!ReadBool(t_Line, "keyboard", Keyboard, Error) || !ReadBool(t_Line, "mouse", Mouse, Error))
+                    {
+                        return Error;
+                    }
+                    Message.Recorded.Message.Capture = MakeCapture(Keyboard, Mouse);
+                    m_Messages.push_back(std::move(Message));
+                    return {};
                 }
 
                 // Device
@@ -888,7 +990,7 @@ namespace Fling
         String Text;
         LineWriter Header;
         Header.Add("format", InputRecording::FormatName);
-        Header.Add("version", t_Recording.Version);
+        Header.Add("version", InputRecording::CurrentVersion);
         Header.Add("tickRate", t_Recording.TickRate);
         Header.Add("duration", RoundMicroseconds(t_Recording.Duration));
         Json Devices = Json::array();
@@ -926,7 +1028,10 @@ namespace Fling
             }
             LineWriter Line;
             Line.Add("t", RoundMicroseconds(Recorded.TimeSeconds));
-            Line.Add("device", Message.Device.Value);
+            if (Message.Device.IsValid())
+            {
+                Line.Add("device", Message.Device.Value);
+            }
             Line.Add("type", ToString(Message.Type));
             switch (Message.Type)
             {
@@ -956,13 +1061,39 @@ namespace Fling
                 Line.Add("wx", Message.WheelX);
                 Line.Add("wy", Message.WheelY);
                 break;
+            case InputMessageType::CaptureChanged:
+                Line.Add("keyboard", HasCapture(Message.Capture, InputCapture::Keyboard));
+                Line.Add("mouse", HasCapture(Message.Capture, InputCapture::Mouse));
+                break;
             default:
                 break;
             }
             Text += Line.Finish();
             Text += '\n';
         }
+
+        if (!t_Recording.TickCuts.empty())
+        {
+            assert(t_Recording.TickCutRate != 0 && "Tick cuts need the rate they were recorded at");
+            LineWriter Cuts;
+            Cuts.Add("tickRate", t_Recording.TickCutRate);
+            Cuts.Add("counts", t_Recording.TickCuts);
+            Text += "{\"tickCuts\":" + Cuts.Finish() + "}\n";
+        }
         return Text;
+    }
+
+    bool CheckTickCutRate(const InputRecording& t_Recording, const uint32 t_SimHz, String& t_OutError)
+    {
+        if (t_Recording.TickCuts.empty() || t_Recording.TickCutRate == t_SimHz)
+        {
+            return true;
+        }
+        const String Rate = std::to_string(t_Recording.TickCutRate);
+        t_OutError = "its tick cuts were recorded at " + Rate + " ticks a second, and the simulation runs at " +
+                     std::to_string(t_SimHz) + ". Replay it with --sim-hz " + Rate + " (or [Engine] SimHz=" + Rate +
+                     ")";
+        return false;
     }
 
     bool SaveInputRecording(const StringView t_Path, const InputRecording& t_Recording, String& t_OutError)
@@ -995,8 +1126,7 @@ namespace Fling
         return true;
     }
 
-    String
-    DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message)
+    String DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message)
     {
         String Result;
         AppendFormatted(Result, "%.3fs  ", t_TimeSeconds);
@@ -1027,6 +1157,12 @@ namespace Fling
                             " wx=%.2f wy=%.2f",
                             static_cast<double>(t_Message.WheelX),
                             static_cast<double>(t_Message.WheelY));
+            break;
+        case InputMessageType::CaptureChanged:
+            AppendFormatted(Result,
+                            " keyboard=%s mouse=%s",
+                            HasCapture(t_Message.Capture, InputCapture::Keyboard) ? "yes" : "no",
+                            HasCapture(t_Message.Capture, InputCapture::Mouse) ? "yes" : "no");
             break;
         default:
             break;

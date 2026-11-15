@@ -182,12 +182,12 @@ namespace Fling
         return true;
     }
 
-    void Thread::InitGameThread(StringView t_Name)
+    void Thread::InitMainThread(StringView t_Name)
     {
-        t_CurrentId = GameThreadId;
+        t_CurrentId = MainThreadId;
         t_CurrentName = String(t_Name);
         NativeThread::SetCurrentName(t_Name);
-        ThreadManager::Register(GameThreadId, t_Name, NativeThread::CurrentNativeId());
+        ThreadManager::Register(MainThreadId, t_Name, NativeThread::CurrentNativeId());
     }
 
     ThreadId Thread::CurrentId()

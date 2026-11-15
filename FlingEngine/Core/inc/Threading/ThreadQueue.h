@@ -17,6 +17,7 @@ namespace Fling
      * Any thread can Push. Only the consumer calls Drain and WaitForItems. Drain
      * takes all items under a short lock, then calls the function without the
      * lock, in push order. An item pushed during Drain goes to the next Drain.
+     * Once the vectors have grown to the largest batch, Push and Drain do not allocate.
      *
      * Prefer data items (a request struct) to lambdas when the items cross into
      * a subsystem. Data can be recorded, and it cannot hold a pointer into a world.
@@ -44,16 +45,17 @@ namespace Fling
         template <typename T_Fn>
         uint32 Drain(T_Fn&& t_Fn)
         {
-            std::vector<T> Items;
             {
                 ScopedLock Lock(m_Mutex);
-                Items.swap(m_Items);
+                m_Draining.swap(m_Items);
             }
-            for (T& Item : Items)
+            for (T& Item : m_Draining)
             {
                 t_Fn(Item);
             }
-            return static_cast<uint32>(Items.size());
+            const uint32 Count = static_cast<uint32>(m_Draining.size());
+            m_Draining.clear();
+            return Count;
         }
 
         /**
@@ -91,5 +93,11 @@ namespace Fling
         ConditionVariable m_Condition;
         std::vector<T> m_Items FLING_GUARDED_BY(m_Mutex);
         bool m_WakeRequested FLING_GUARDED_BY(m_Mutex) = false;
+
+        /**
+         * The items that Drain runs. Only the consumer uses it. Drain swaps it with m_Items and
+         * clears it, so both vectors keep their capacity and a steady Push does not allocate.
+         */
+        std::vector<T> m_Draining;
     };
 } // namespace Fling

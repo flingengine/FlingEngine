@@ -1,6 +1,20 @@
 # ECS parallel execution and parallel loading
 
-Status: proposal for review. Nothing here is implemented yet.
+Status: proposal for review. The executor and the job system are not
+implemented yet. The storage already has the properties that the plan needs
+(see "Threads, determinism, and rollback" in
+[`Skills/ecs.md`](../Skills/ecs.md)):
+
+- To make and run a query does not write to the storage. The row counts of a
+  query are on a list that each thread has. The cache of archetype lists is
+  behind a lock, and a new archetype goes in the lists when it is made, which
+  is on one thread.
+- The table of component types is read with no lock.
+- Each system has its own command buffer.
+
+Still to do before stages run in parallel: a buffer per appender for each queue
+(§3.1 says "one buffer per appender", and today `Push` writes to the one
+queue), and the items in §6.
 
 This plan builds on [`ecs-systems.md`](ecs-systems.md) (access lists,
 phases, and stages) and [`ecs-features.md`](ecs-features.md) (worlds and

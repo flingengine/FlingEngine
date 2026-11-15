@@ -6,6 +6,7 @@
 #include "Input/InputMessage.h"
 #include "Strings/String.h"
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -56,10 +57,29 @@ namespace Fling
 
         /**
          * Queue a message for the next Poll. t_Message.Device must be a device of this
-         * interface; messages for other devices are dropped. Sequence is set by the
-         * handler. A TimeNs of 0 means "the time of the Poll".
+         * interface; messages for other devices are dropped. A CaptureChanged message has
+         * no device. Sequence is set by the handler. A TimeNs of 0 means "the time of the
+         * Poll".
+         *
+         * @return False if the message was dropped
          */
-        void Queue(const InputMessage& t_Message);
+        bool Queue(const InputMessage& t_Message);
+
+        /**
+         * Queue a message with a tag. When Poll sends it, the sent function (SetOnSent)
+         * gets the tag and the sequence the handler gave it. Input playback uses it to know
+         * the sequence of each file message, for replay by recorded tick cuts.
+         */
+        bool Queue(const InputMessage& t_Message, uint64 t_Tag);
+
+        /**
+         * Called for each message that was queued with a tag other than 0, when Poll sends
+         * it, with its sequence; or with sequence 0 when Poll drops it (its device is gone).
+         */
+        void SetOnSent(std::function<void(uint64 t_Tag, uint64 t_Sequence)> t_OnSent)
+        {
+            m_OnSent = std::move(t_OnSent);
+        }
 
         /** The number of messages that wait for the next Poll. */
         uint32 GetQueuedCount() const { return static_cast<uint32>(m_Queued.size()); }
@@ -67,6 +87,12 @@ namespace Fling
         const std::vector<InputDeviceId>& GetDevices() const { return m_Devices; }
 
     private:
+        /** A message for one of this interface's devices, or a capture change. */
+        bool IsOwnMessage(const InputMessage& t_Message) const;
+
+        /** The message can go to the handler now: its device is still connected. */
+        bool CanSend(const InputMessageHandler& t_Handler, const InputMessage& t_Message) const;
+
         String m_Name;
 
         std::weak_ptr<InputMessageHandler> m_Handler;
@@ -74,5 +100,10 @@ namespace Fling
         std::vector<InputDeviceId> m_Devices;
 
         std::vector<InputMessage> m_Queued;
+
+        /** One tag for each queued message (0: none). */
+        std::vector<uint64> m_QueuedTags;
+
+        std::function<void(uint64, uint64)> m_OnSent;
     };
 } // namespace Fling

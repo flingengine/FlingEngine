@@ -4,6 +4,11 @@ The thread layer in Core (`FlingEngine/Core/inc/Threading/`). It is below the
 ECS. Subsystems (audio, render, streaming) use it for their own threads.
 Gameplay code does not use it directly.
 
+The engine's own game thread (the fixed tick on its own thread, the frame on
+the main thread, the published copy, the lane checks) is described in
+[`Docs/threading-model.md`](../Docs/threading-model.md). A game programmer
+chooses only the group of a system; the group decides the thread.
+
 ## Types
 
 | Type | Header | What it does |
@@ -15,12 +20,17 @@ Gameplay code does not use it directly.
 | `CommandQueue` | `Threading/CommandQueue.h` | `ThreadQueue` of `std::function<void()>`, with `Execute` |
 | `CommandRunnable` | `Threading/CommandRunnable.h` | A `Runnable` that runs the commands sent to it, then calls `Tick` |
 | `TickLimiter` | `Threading/TickLimiter.h` | Waits for each tick of a fixed `TickRate` (for example 60 or 120 Hz) |
+| `FrameLimiter` | `Threading/FrameLimiter.h` | Caps the main thread's frames at `RunControls::LimiterFps` (the cap with the present mode in use): sleeps with a `SleepTimer`, then spins at most 1 ms. Takes a clock and a sleep, so a test runs it on a virtual clock |
+| `SleepTimer` | `Threading/SleepTimer.h` | Sleeps until a steady-clock time and never wakes early (the Windows high-resolution waitable timer when the OS has it) |
 | `Mutex`, `ScopedLock` | `Threading/Mutex.h` | Exclusive lock. Clang `-Wthread-safety` can see it |
 | `SharedMutex`, `ReadScopedLock`, `WriteScopedLock` | `Threading/Mutex.h` | Many readers, or one writer |
 | `SpinLock`, `ScopedSpinLock` | `Threading/Mutex.h` | Spin lock for a critical section of a few instructions |
 | `ConditionVariable` | `Threading/ConditionVariable.h` | Wait and notify on a `ScopedLock` |
 | `Semaphore` | `Threading/Semaphore.h` | A counter of permits |
 | `Event` | `Threading/Event.h` | A flag that threads can wait on. Auto or manual reset |
+| `TripleBuffer<T>` | `Threading/TripleBuffer.h` | Latest-wins mailbox for one writer and one reader. Each side is one atomic exchange. The tick packet uses it |
+| `Lane`, `LaneCheck` | `Threading/Lane.h` | The thread's lane (`Game`, `Frame`), set by `LaneCheck::Scope` in every build, and `FLING_LANE_CHECK(owner)`, which checks it in debug builds only |
+| `ThreadJitter` | `Threading/ThreadJitter.h` | Random short sleeps at chosen points, with its own generator (`--thread-jitter`), to shake out races |
 
 The OS code is in `src/Threading/NativeThreadPosix.cpp` and
 `src/Threading/NativeThreadWindows.cpp`. No public header includes
@@ -88,15 +98,18 @@ std::shared_ptr<Thread> Worker = Thread::Create({.Name = "Ticker"}, TickRate::Hz
 - In fixed-rate mode, commands run only at the start of a tick. Every command
   sent before a tick is seen by that tick.
 - `Kill` does not wait for the next tick. `Stop` interrupts the wait.
-- A fixed-rate thread is not the simulation clock. Gameplay and physics tick on
-  `SimTick` inside the game loop (see `Plans/improve-time.md`). Use a fixed-rate
-  thread for work that has its own clock, for example audio mixing or device
-  polling.
+- A fixed-rate thread is not the simulation clock. Gameplay and physics tick
+  in the world's wakes: `SystemRunner::RunFixedAt` runs the ticks that are due on
+  the tick timeline, and writes `SimTime` for each (see
+  [`Docs/time-and-ticks.md`](../Docs/time-and-ticks.md)). In threaded play the
+  `GameLane` runs the wakes; it uses a `TickLimiter` only for its wait. Use a
+  fixed-rate thread for work that has its own clock, for example audio mixing
+  or device polling.
 
 ## IDs and names
 
 - `ThreadId` is an engine ID, given in creation order. `InvalidThreadId` is 0.
-  `GameThreadId` is 1. `Engine::Startup` calls `Thread::InitGameThread` first.
+  `MainThreadId` is 1. `Engine::Startup` calls `Thread::InitMainThread` first.
 - `Thread::CurrentId()` and `Thread::CurrentName()` read thread-local values.
   They return `InvalidThreadId` and an empty name on a thread that the engine
   did not start.
@@ -162,13 +175,19 @@ These rules follow `Plans/ecs-plan.md` and the `gameplay-architecture` skill.
    is never a component. ECS systems do not create or own threads.
 2. **Gameplay does not send commands to a thread.** A gameplay system appends a
    request (for example `SoundCue`) to a queue singleton. One resolver system in
-   `ResolveDeferred` drains it and pushes the requests to the subsystem thread.
-   The resolver does not set `ReplayOnResim`, so a rollback resim does not send
-   the requests again. The resolver gets the subsystem from a transient proxy
-   singleton, not from a global.
+   `Order::ResolveDeferred` drains it and pushes the requests to the subsystem
+   thread. A resimulation runs `ResolveDeferred` again (`GroupInfo::Resim`, with
+   no per-system opt-out), so the resolver must not send the requests of a
+   replayed tick a second time. Stamp each request with its tick and drop the
+   ones whose tick is not newer than the last one sent, as the world's outbox
+   does for `AppRequests` (`TickOutboxEntry`, `Engine/inc/TickEvents.h`). No
+   subsystem resolver exists yet. The resolver gets the subsystem from a
+   transient proxy singleton, not from a global.
 3. **Other threads do not touch the world.** Results that come back (a voice
-   ended, a load is done) go through a `ThreadQueue` that a main-thread system
-   drains, with a tick stamp (see `Plans/improve-time.md`).
+   ended, a load is done) go through a `ThreadQueue` that the tick's thread
+   drains at a tick boundary, with a tick stamp (planned). The game thread
+   itself shares only the tick packet, the input queue, the outbox and the clock
+   commands with the main thread.
 4. **Determinism.** Systems do not branch on `Thread::CurrentId()` or on thread
    timing. Thread IDs are not simulation state.
 5. **No-thread mode.** Without a thread (tests, `--null-render`), the owner calls
@@ -182,6 +201,10 @@ These rules follow `Plans/ecs-plan.md` and the `gameplay-architecture` skill.
    [`Plans/physics.md`](../Plans/physics.md) §Threading.
 
 ## Tests
+
+The game thread's determinism tests (`[threads]` in EngineTests, and the
+`Sandbox: tick dump exec modes` ctests) are described in
+[`Docs/threading-model.md`](../Docs/threading-model.md), "The determinism tests".
 
 `FlingTests/Core/ThreadTests.cpp`, `TickLimiterTests.cpp`, and `SyncTests.cpp`,
 tag `[Threading]` (`[TickRate]` for the fixed-rate cases). Timing tests check only

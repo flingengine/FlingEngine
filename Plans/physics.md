@@ -23,7 +23,7 @@ Gameplay (Sandbox, game modules)
   │             Physics::ApplyForce / ApplyImpulse / ApplyTorque / SetLinearVelocity
   ▼
 Physics module (FlingEngine/Physics, no physics library)
-  │  components, singletons, the fixed step clock, Transform <-> pose,
+  │  components, singletons, one step per tick, Transform <-> pose,
   │  entity <-> body mapping, the physics systems, PhysicsProvider.h
   ▼
 PhysicsProvider / PhysicsScene interface (uses no EnTT and no library types)
@@ -44,27 +44,31 @@ PhysicsProvider / PhysicsScene interface (uses no EnTT and no library types)
 - **Runtime types** (`PhysicsTypes.h`, in the registry context, so each registry
   has its own scene):
   - `PhysicsBody` is the proxy component: the provider's body ID.
-  - `PhysicsSettings`: gravity, the fixed step, and the most steps per tick.
+  - `PhysicsSettings`: gravity and the worker thread count.
   - `PhysicsCommands`: the queue of gameplay requests.
   - `ContactEvents`: the touching pairs of the last tick, one time for each pair.
-  - `PhysicsWorld`: the provider, its scene, the tracked bodies, and the clock.
+  - `PhysicsWorld`: the provider, its scene, the tracked bodies, and the step count.
 - **The phase**: `Engine::Tick` calls `Physics::Tick(reg, dt)` after the game
   update. It runs stateless systems in a fixed order:
   1. CreateBodies
   2. RemoveStaleBodies
   3. QueueCommands
-  4. Step: zero or more fixed steps
+  4. Step: one step of the tick's fixed delta
   5. ContactEvents
   6. WriteBack
-- **Fixed step**: the module owns the clock. The provider runs exactly one step
-  of `PhysicsSettings::m_FixedStep` each time it is called, so a provider cannot
-  bring its own clock. A frame shorter than a step runs no step. A long stall
-  runs at most `m_MaxStepsPerTick` steps, and the rest of the time is dropped.
+- **Fixed step**: physics has no clock of its own. `Physics.Step` calls
+  `Physics::Tick` with `SimTime::DeltaSeconds()`, the length of the game tick
+  (`[Engine] SimHz`, 30 Hz by default), and that runs exactly one provider step
+  of that length (none for a delta of 0). The provider splits it into
+  `PhysicsCollisionSteps(dt)` = ceil(dt * 60) equal collision steps (two at
+  30 Hz), so no collision step is longer than 1/60 s. A hitch is the tick runner's job
+  (`TickTimeline::DropBacklog`). A provider runs exactly one step each time it is
+  called, so it cannot bring its own clock.
 - **Forces**: `ApplyForce` and `ApplyTorque` become impulses of
   `value * tick delta time`. The momentum that they add is then the same at any
   frame rate and with any number of steps.
 - **Rollback**: `Physics::SaveState` and `Physics::RestoreState` save and restore
-  the scene and the clock. After a restore, every body is written back,
+  the scene and its step count. After a restore, every body is written back,
   including sleeping bodies. The entities and their components are saved by the
   caller (the ECS snapshot), not by physics.
 
@@ -217,8 +221,9 @@ Rules for the registration:
 - **What is done:**
   - Jolt is built with `CROSS_PLATFORM_DETERMINISTIC`, which also turns off FMA
     in Jolt.
-  - `fling_set_deterministic_math()` builds the Physics module and the provider
-    modules with `-ffp-contract=off -fno-fast-math` (GCC/Clang) or `/fp:precise`
+  - `fling_set_deterministic_math()` builds every first-party target (it is part
+    of `fling_configure_target`), the Physics module and the provider modules
+    included, with `-ffp-contract=off -fno-fast-math` (GCC/Clang) or `/fp:precise`
     (MSVC).
   - The physics step is fixed, and `ReadBodies` output is sorted.
 - **What is tested** (`PhysicsProviderTests.cpp`):
@@ -244,15 +249,13 @@ Rules for the registration:
 
 ## Next steps
 
-1. Step on `SimTick` with `FixedDelta()` when the tick loop of
-   [improve-time.md](improve-time.md) lands, in place of the physics clock.
-2. Move the physics workers to the engine job system when it exists (a pool
+1. Move the physics workers to the engine job system when it exists (a pool
    shared by every subsystem, Skills/threading.md rule 6), and pick a default
    worker count from the CPU count.
-3. Kinematic bodies, and more shapes: capsule, convex hull, mesh, compound.
-4. Collision layers and masks, triggers, and raycast, sweep, and overlap queries
+2. Kinematic bodies, and more shapes: capsule, convex hull, mesh, compound.
+3. Collision layers and masks, triggers, and raycast, sweep, and overlap queries
    as utility functions, each added to the provider interface.
-5. A rollback test that saves the ECS state and the physics state together and
+4. A rollback test that saves the ECS state and the physics state together and
    resimulates with the rollback-netcode tools.
-6. When a system scheduler exists ([ecs-plan.md](ecs-plan.md)), register the
+5. When a system scheduler exists ([ecs-plan.md](ecs-plan.md)), register the
    physics systems with it, with read/write sets, in place of `Physics::Tick`.

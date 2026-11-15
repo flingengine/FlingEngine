@@ -10,17 +10,17 @@ namespace Fling
     {
         struct Frames
         {
-        friend class Engine;
+            friend class Fling::Engine;
+
         public:
             static float GetAverageFrameTime();
 
             static float GetAverageFPS();
-        
-            static void TickStats(float t_DeltaTime);
 
-		private:
+            static void FrameStats(float t_DeltaTime);
 
+        private:
             static MovingAverage<float, 100> FPSCounter;
         };
-    }
-}
+    } // namespace Stats
+} // namespace Fling

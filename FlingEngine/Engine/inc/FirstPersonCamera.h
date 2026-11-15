@@ -1,12 +1,16 @@
 #pragma once
 #include "Camera.h"
-#include "Input/Input.h"
+#include "Input/InputMessageProcessor.h"
+
+#include <optional>
 
 namespace Fling 
 {
-	/**
-	 * A simple first person camera. Moves with WASD and rotates with right click + drag
-	 */
+    /**
+     * A simple first person camera. Moves with WASD and rotates with right click + drag.
+     * A debug view for the main thread, not simulation: it reads the input queue with an
+     * InputMessageProcessor of its own, up to the moment of each Update.
+     */
     class FirstPersonCamera : public Camera
     {
         public:
@@ -37,6 +41,9 @@ namespace Fling
 
 			bool IsRotating() const { return m_IsRotating; }
 
+			/** Set the rotation (yaw around world up, pitch) in radians, and update the view matrix. */
+			void SetLookRotation(float t_Yaw, float t_Pitch);
+
         private:
 			glm::vec3 m_front;
 			glm::vec3 m_up;
@@ -62,5 +69,11 @@ namespace Fling
             void UpdateViewMatrix();
             void UpdateProjectionMatrix();
             void UpdateCameraVectors();
+
+            /** Apply every new input message to m_Input. Makes it once Input is initialized. */
+            void ReadInput();
+
+            /** The camera's own reader of the input queue. Empty until Input is initialized. */
+            std::optional<InputMessageProcessor> m_Input;
     };
 }

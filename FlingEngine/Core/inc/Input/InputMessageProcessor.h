@@ -41,6 +41,14 @@ namespace Fling
         uint32 Read(InputMessage* t_Out, uint32 t_Max, int64 t_UntilNs = std::numeric_limits<int64>::max()) const;
 
         /**
+         * Apply one message that Read copied, and move the cursor past it. It must be the
+         * message right after the cursor. The copy is not read from the queue again, so the
+         * caller that also keeps the copy (a tick's slice, a recording) and the state always
+         * hold the same messages, also when the writer overwrites them after the Read.
+         */
+        void Apply(const InputMessage& t_Message);
+
+        /**
          * Move the cursor past every message up to and including t_Sequence, and apply
          * them to the state. If some of those messages were overwritten, it stops and
          * Overran() becomes true.

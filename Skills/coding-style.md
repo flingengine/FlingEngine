@@ -3,14 +3,14 @@
 Conventions for first-party Fling Engine C++, plus the pitfalls an AI assistant
 is most likely to hit.
 
-Scope: first-party code only — `FlingEngine/`, `Sandbox/`, `FlingTests/`.
-**Never reformat, refactor, or "clean up" anything under `external/`** — it's
+Scope: first-party code only: `FlingEngine/`, `Sandbox/`, `FlingTests/`.
+**Never reformat, refactor, or "clean up" anything under `external/`**: it's
 vendored third-party code and is left alone, full stop.
 
 ## Documentation comments
 
 - Modern Doxygen-style blocks, plain description first, no `@brief` line.
-- Never use `/*!` — always `/**`.
+- Never use `/*!`; always `/**`.
 - Only add `@param` / `@return` / `@see` when they say something the signature
   doesn't already make obvious. Don't generate `@return float GetTimef`-style noise.
 
@@ -27,16 +27,18 @@ bool Init(const int32 Argc, const char* ArgV[]);
 
 Trivial members/accessors can use a one-line `/** ... */`.
 
-## Enforcement — check before considering work done
+## Enforcement: check before considering work done
 
-- **String and integer types**: `python3 scripts/check_string_types.py` — rejects
+- **String and integer types**: `python3 scripts/check_string_types.py`: rejects
   `std::string` and `std::string_view` (use `String` and `StringView`),
   `const String&` parameters (use `StringView`), and `std::uint32_t` or
   `uint32_t` style integers (use `uint8` to `uint64` and `int8` to `int64` from
   `FlingIntegers.h`, which `FlingTypes.h` includes). See [`strings.md`](strings.md).
-- **Comment content**: `python3 scripts/check_comment_style.py` — rejects leftover
-  `@brief` / `/*!` in first-party sources. Run this after adding or editing any
-  doc comment.
+- **Comment content**: `python3 scripts/check_comment_style.py`: rejects leftover
+  `@brief` / `/*!` in first-party sources, and references to working notes that
+  are not in the tree (`DESIGN-*.md`, `NOTES-*.md`, `REVIEW-*.md`, `AUDIT-*.md`,
+  `H/...`). A comment cites a file under `Docs/` or `Skills/`, or states the rule
+  itself. Run this after adding or editing any doc comment.
 - **Layout/formatting**: `.clang-format` at the repo root. Run `clang-format`
   rather than hand-formatting:
 
@@ -45,7 +47,7 @@ Trivial members/accessors can use a one-line `/** ... */`.
     | xargs clang-format -i
   ```
 
-  clang-format handles layout only — it does not check comment *content*, that's
+  clang-format handles layout only: it does not check comment *content*, that's
   what `check_comment_style.py` is for. Both checks run in CI
   (`.github/workflows/build.yml`, `comment-style` job runs the Python script;
   formatting is expected to already be clean going in).
@@ -120,11 +122,22 @@ signatures:
   `String` from the view at that call. Open files with `PathFromUtf8(path)`, not
   with the text, so that non-ASCII paths work on Windows.
 
+## Math
+
+- Use the Fling math types (`FlingMath.h`) and the scalar helpers in
+  `Fling::Math` (`MathUtils.h`: `Min`, `Max`, `Clamp`, `IsPowerOfTwo`,
+  `NextPowerOfTwo`, `AlignUp`, `AlignDown`, `DivideRoundUp`) in first-party
+  code, not `std::min`, `std::max`, or `std::clamp`.
+
 ## Naming / conventions to preserve
 
 - Flat include names (`#include "Logger.h"`, not `#include "Core/Logger.h"`) are
   intentional, even across the in-progress module split described in
   [`architecture.md`](architecture.md). Don't "fix" these to path-qualified includes.
+- Two different classes with the same fully qualified name, in any two
+  modules, are an ODR violation: the linker keeps one and silently uses it for
+  both. This is easy to do in `namespace Fling` across modules. Give each class
+  a unique name, or put a helper type in an anonymous namespace.
 - There is no `pch.h` or other catch-all include. Each header compiles on its own,
   and each file includes the headers it uses.
 - Include `Platform.h` before you test `FLING_WINDOWS`, `FLING_LINUX`, or

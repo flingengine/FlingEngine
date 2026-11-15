@@ -5,6 +5,7 @@
 #include "PhysicsAPI.h"
 #include "Strings/String.h"
 
+#include <cmath>
 #include <glm/gtc/quaternion.hpp>
 #include <memory>
 #include <span>
@@ -13,7 +14,7 @@
 // The interface between the Physics module and a physics library (a "provider").
 //
 // The Physics module owns everything that gameplay sees: the components, the
-// request queue, the fixed step clock, and the entity <-> body mapping. A
+// request queue, the step per tick, and the entity <-> body mapping. A
 // provider only simulates bodies. It does not know about entities, the
 // registry, or Transform, so a provider can be written for any library
 // (Jolt, Bullet, or a library that a game brings) and gameplay code does not
@@ -24,6 +25,26 @@
 
 namespace Fling
 {
+    /**
+     * The most collision steps one second of simulation has. A provider splits a step
+     * longer than 1 / 60 s into equal collision steps (PhysicsCollisionSteps), because one
+     * long step loses contact stability and lets a fast body pass through a thin wall.
+     * Jolt's guidance is one collision step per 1 / 60 s or less.
+     */
+    inline constexpr uint32 PhysicsCollisionStepsPerSecond = 60;
+
+    /**
+     * The collision steps for one step of t_DeltaTime seconds: ceil(t_DeltaTime * 60), at
+     * least 1. 1 at 60 Hz and above, 2 at 30 Hz, 60 at 1 Hz. It depends only on the fixed
+     * delta, so it is the same on every run and thread. A thousandth of a step is taken
+     * off before rounding up, so the rounded tick length at 60 Hz (16 666 667 ns) is one step.
+     */
+    inline uint32 PhysicsCollisionSteps(const float t_DeltaTime)
+    {
+        const double Steps = std::ceil(static_cast<double>(t_DeltaTime) * PhysicsCollisionStepsPerSecond - 1e-3);
+        return Steps < 1.0 ? 1u : static_cast<uint32>(Steps);
+    }
+
     /** A provider's ID for a body. Only the provider that made it knows what the value means. */
     struct PhysicsBodyId
     {
@@ -193,7 +214,10 @@ namespace Fling
 
         virtual void SetGravity(const glm::vec3& t_Gravity) = 0;
 
-        /** Run exactly one step of t_DeltaTime seconds. The Physics module owns the clock. */
+        /**
+         * Run exactly one step of t_DeltaTime seconds (the fixed delta of the game tick), as
+         * PhysicsCollisionSteps(t_DeltaTime) equal collision steps.
+         */
         virtual void Step(float t_DeltaTime) = 0;
 
         /**

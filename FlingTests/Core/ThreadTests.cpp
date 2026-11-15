@@ -1,3 +1,4 @@
+#include "../Common/CountingNew.h"
 #include "Strings/String.h"
 #include "Threading/CommandQueue.h"
 #include "Threading/CommandRunnable.h"
@@ -87,16 +88,16 @@ namespace
 
 TEST_CASE("Thread names and IDs", "[Threading]")
 {
-    Thread::InitGameThread("Test Game");
-    REQUIRE(Thread::CurrentId() == GameThreadId);
-    REQUIRE(Thread::CurrentName() == "Test Game");
-    REQUIRE(Thread::IsGameThread());
-    REQUIRE(ThreadManager::GetThreadName(GameThreadId) == "Test Game");
+    Thread::InitMainThread("Test Main");
+    REQUIRE(Thread::CurrentId() == MainThreadId);
+    REQUIRE(Thread::CurrentName() == "Test Main");
+    REQUIRE(Thread::IsMainThread());
+    REQUIRE(ThreadManager::GetThreadName(MainThreadId) == "Test Main");
 
     std::latch Release(1);
     ThreadId SeenId = InvalidThreadId;
     String SeenName;
-    bool SeenGame = true;
+    bool SeenMain = true;
 
     const String LongName = "A thread name that is longer than fifteen bytes";
     std::shared_ptr<Thread> Worker = Thread::Create({.Name = LongName},
@@ -104,7 +105,7 @@ TEST_CASE("Thread names and IDs", "[Threading]")
                                                     {
                                                         SeenId = Thread::CurrentId();
                                                         SeenName = Thread::CurrentName();
-                                                        SeenGame = Thread::IsGameThread();
+                                                        SeenMain = Thread::IsMainThread();
                                                         Release.wait();
                                                     });
     REQUIRE(Worker);
@@ -112,7 +113,7 @@ TEST_CASE("Thread names and IDs", "[Threading]")
 
     const ThreadId Id = Worker->GetId();
     REQUIRE(Id != InvalidThreadId);
-    REQUIRE(Id != GameThreadId);
+    REQUIRE(Id != MainThreadId);
     REQUIRE(Worker->GetName() == LongName);
     REQUIRE(Worker->GetNativeId() != 0);
 
@@ -124,7 +125,7 @@ TEST_CASE("Thread names and IDs", "[Threading]")
     REQUIRE_FALSE(Worker->IsRunning());
     REQUIRE(SeenId == Id);
     REQUIRE(SeenName == LongName);
-    REQUIRE_FALSE(SeenGame);
+    REQUIRE_FALSE(SeenMain);
     REQUIRE(ThreadManager::GetThreadName(Id).empty());
 }
 
@@ -215,6 +216,41 @@ TEST_CASE("ThreadQueue with data items", "[Threading]")
     // Wake with no items: WaitForItems returns now, with false
     Queue.Wake();
     REQUIRE_FALSE(Queue.WaitForItems(std::chrono::seconds(10)));
+}
+
+TEST_CASE("ThreadQueue keeps its capacity, so steady pushes and drains do not allocate", "[Threading][memory]")
+{
+    // Mutation note: fails if Drain gives the items' vector away (swaps with a new empty one).
+    if (!FLING_TEST_COUNT_ALLOCATIONS)
+    {
+        SKIP("This build has no counting operator new (ThreadSanitizer)");
+    }
+    ThreadQueue<PlaySoundRequest> Queue;
+    constexpr uint32 Batch = 64;
+    uint32 Drained = 0;
+    const auto PushAndDrain = [&]()
+    {
+        for (uint32 Id = 0; Id < Batch; ++Id)
+        {
+            Queue.Push({Id, 1.0f});
+        }
+        Drained += Queue.Drain([](PlaySoundRequest&) {});
+    };
+
+    // Warm up: both vectors grow to the batch size
+    PushAndDrain();
+    PushAndDrain();
+
+    g_Allocations = 0;
+    g_CountAllocations = true;
+    for (int Round = 0; Round < 100; ++Round)
+    {
+        PushAndDrain();
+    }
+    g_CountAllocations = false;
+
+    CHECK(g_Allocations.load() == 0);
+    CHECK(Drained == 102 * Batch);
 }
 
 TEST_CASE("CommandQueue from many producers", "[Threading]")

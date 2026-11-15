@@ -144,8 +144,13 @@ namespace Fling
                 // Bodies awake before or after the step can have moved
                 MarkActiveBodies();
 
-                // maxSubSteps = 0: one step of exactly t_DeltaTime, with no Bullet clock
-                m_World->stepSimulation(t_DeltaTime, 0, t_DeltaTime);
+                // maxSubSteps = 0: each call is one collision step of exactly its time, with no Bullet clock
+                const uint32 Steps = PhysicsCollisionSteps(t_DeltaTime);
+                const float StepTime = t_DeltaTime / static_cast<float>(Steps);
+                for (uint32 i = 0; i < Steps; ++i)
+                {
+                    m_World->stepSimulation(StepTime, 0, StepTime);
+                }
                 MarkActiveBodies();
                 GatherContacts();
             }
