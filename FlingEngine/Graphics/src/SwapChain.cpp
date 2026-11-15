@@ -1,5 +1,6 @@
 #include "FlingIntegers.h"
 #include "FlingWindow.h"
+#include "GraphicsHelpers.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
 #include "PhyscialDevice.h"
@@ -40,6 +41,24 @@ namespace Fling
         Recreate(m_Extents);
     }
 
+    Swapchain::Swapchain(const VkExtent2D& t_Extent,
+                         LogicalDevice* t_Dev,
+                         PhysicalDevice* t_PhysDev,
+                         const uint32 t_ImageCount)
+        : m_VSync(false),
+          m_Extents{t_Extent},
+          m_Device(t_Dev),
+          m_PhysicalDevice(t_PhysDev),
+          m_Surface(VK_NULL_HANDLE),
+          m_Offscreen(true),
+          m_OffscreenImageCount(t_ImageCount)
+    {
+        assert(m_Device && m_PhysicalDevice && m_OffscreenImageCount > 0);
+        // Nothing is presented, so nothing waits for a display
+        m_PresentMode = PresentMode::Immediate;
+        Recreate(m_Extents);
+    }
+
     Swapchain::~Swapchain()
     {
         Cleanup();
@@ -62,7 +81,7 @@ namespace Fling
         assert(m_Device);
         VkDevice Device = m_Device->GetVkDevice();
 
-        // Image views
+        // Image views. Cleared, so a second Cleanup (the destructor after a resize) frees nothing twice
         for (size_t i = 0; i < m_ImageViews.size(); i++)
         {
             if (m_ImageViews[i] != VK_NULL_HANDLE)
@@ -70,11 +89,25 @@ namespace Fling
                 vkDestroyImageView(Device, m_ImageViews[i], nullptr);
             }
         }
+        m_ImageViews.clear();
 
         if (m_SwapChain != VK_NULL_HANDLE)
         {
             vkDestroySwapchainKHR(Device, m_SwapChain, nullptr);
+            m_SwapChain = VK_NULL_HANDLE;
         }
+
+        // Offscreen: this swap chain made the images, so it frees them
+        if (m_Offscreen)
+        {
+            for (size_t i = 0; i < m_Images.size(); ++i)
+            {
+                vkDestroyImage(Device, m_Images[i], nullptr);
+                vkFreeMemory(Device, m_ImageMemory[i], nullptr);
+            }
+            m_ImageMemory.clear();
+        }
+        m_Images.clear();
     }
 
     SwapChainSupportDetails Swapchain::QuerySwapChainSupport()
@@ -110,8 +143,49 @@ namespace Fling
         return Details;
     }
 
+    void Swapchain::CreateOffscreenImages()
+    {
+        // The format a surface would most likely give (ChooseSwapChainSurfaceFormat), so the
+        // pipelines are the same as with a window. RGBA if the device cannot draw to BGRA.
+        m_ImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+        VkFormatProperties Props = {};
+        vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice->GetVkPhysicalDevice(), m_ImageFormat, &Props);
+        if (!(Props.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT))
+        {
+            m_ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+        }
+        F_LOG_TRACE("Offscreen swap chain: {} images of {}x{}, format {}",
+                    m_OffscreenImageCount,
+                    m_Extents.width,
+                    m_Extents.height,
+                    static_cast<int>(m_ImageFormat));
+
+        m_CanCopyImages = true;
+        m_Images.resize(m_OffscreenImageCount);
+        m_ImageMemory.resize(m_OffscreenImageCount);
+        for (uint32 i = 0; i < m_OffscreenImageCount; ++i)
+        {
+            GraphicsHelpers::CreateVkImage(m_Device->GetVkDevice(),
+                                           m_Extents.width,
+                                           m_Extents.height,
+                                           m_ImageFormat,
+                                           VK_IMAGE_TILING_OPTIMAL,
+                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                           m_Images[i],
+                                           m_ImageMemory[i]);
+        }
+        // AquireNextImage moves to the next image first, so the first frame draws to image 0
+        m_ActiveImageIndex = m_OffscreenImageCount - 1;
+    }
+
     void Swapchain::CreateResources()
     {
+        if (m_Offscreen)
+        {
+            CreateOffscreenImages();
+            return;
+        }
         assert(m_Device && m_Surface);
 
         SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport();
@@ -139,6 +213,12 @@ namespace Fling
         CreateInfo.imageExtent = m_Extents;
         CreateInfo.imageArrayLayers = 1;
         CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        // A capture (--screenshot) copies from the image before it is presented
+        m_CanCopyImages = (SwapChainSupport.Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0;
+        if (m_CanCopyImages)
+        {
+            CreateInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        }
 
         // Specify the handling of multiple queue families
         uint32 GraphicsFam = m_Device->GetGraphicsFamily();
@@ -228,6 +308,18 @@ namespace Fling
     {
         assert(m_Device);
 
+        if (m_Offscreen)
+        {
+            // Each image in turn. The frame's work waits on the semaphore, so signal it now:
+            // the image is free, because the last frame's fence was waited on
+            m_ActiveImageIndex = (m_ActiveImageIndex + 1) % static_cast<uint32>(m_Images.size());
+            VkSubmitInfo Signal = {};
+            Signal.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            Signal.signalSemaphoreCount = 1;
+            Signal.pSignalSemaphores = &t_CompletedSemaphore;
+            return vkQueueSubmit(m_Device->GetGraphicsQueue(), 1, &Signal, VK_NULL_HANDLE);
+        }
+
         VkDevice Device = m_Device->GetVkDevice();
         VkResult iRes = vkAcquireNextImageKHR(Device,
                                               m_SwapChain,
@@ -240,6 +332,19 @@ namespace Fling
 
     VkResult Swapchain::QueuePresent(const VkQueue& t_PresentQueue, const VkSemaphore& t_WaitSemaphore)
     {
+        if (m_Offscreen)
+        {
+            // Nothing to show. Wait on the semaphore all the same, so it is unsignaled before
+            // the frame that uses this image again signals it
+            const VkPipelineStageFlags WaitStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            VkSubmitInfo Wait = {};
+            Wait.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            Wait.waitSemaphoreCount = 1;
+            Wait.pWaitSemaphores = &t_WaitSemaphore;
+            Wait.pWaitDstStageMask = &WaitStage;
+            return vkQueueSubmit(t_PresentQueue, 1, &Wait, VK_NULL_HANDLE);
+        }
+
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 

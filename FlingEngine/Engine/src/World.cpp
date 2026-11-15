@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <cstdio>
 #include <limits>
 #include <random>
 #include <set>
@@ -611,6 +612,15 @@ namespace Fling
         {
             m_NewTickRecords.Push(*m_Runner->GetLedger().Latest());
         }
+        if (std::binary_search(m_StateDumpTicks.begin(), m_StateDumpTicks.end(), t_Tick))
+        {
+            StateDump Dump;
+            Dump.Tick = t_Tick;
+            if (SaveStateToJson(Dump.Doc, t_Tick))
+            {
+                m_StateDumps.Push(std::move(Dump));
+            }
+        }
         AppRequests* Queue = m_Storage.TryGetSingleton<AppRequests>();
         if (!Queue || Queue->Requests.empty())
         {
@@ -737,6 +747,13 @@ namespace Fling
         return Records;
     }
 
+    std::vector<World::StateDump> World::TakeStateDumps()
+    {
+        std::vector<StateDump> Dumps;
+        m_StateDumps.Drain([&Dumps](StateDump& t_Dump) { Dumps.push_back(std::move(t_Dump)); });
+        return Dumps;
+    }
+
     bool World::RequestSimHz(const uint32 t_Hz, String& t_OutError, const uint64 t_BeforeTick)
     {
         t_OutError.clear();
@@ -819,7 +836,7 @@ namespace Fling
         return root.SaveToFile(FullPath);
     }
 
-    std::unordered_map<Fling::Entity, uint64> World::MakeMissingEntityGuids() const
+    std::unordered_map<Fling::Entity, uint64> World::MakeMissingEntityGuids(const bool t_FromHandles) const
     {
         std::unordered_set<uint64> UsedGuids;
         std::vector<Fling::Entity> NeedGuid;
@@ -840,13 +857,15 @@ namespace Fling
         {
             return NewGuids;
         }
-        std::mt19937_64 Generator{std::random_device{}()};
+        // A state dump makes the same ids in the same run: each one comes from the handle,
+        // with the top bit set so it is not 0, and the next free value if it is taken
+        std::mt19937_64 Generator{t_FromHandles ? 0u : std::random_device{}()};
         for (const Fling::Entity Entity : NeedGuid)
         {
-            uint64 Value = 0;
+            uint64 Value = t_FromHandles ? (Entity.ToBits() | (uint64{1} << 63)) : 0;
             while (Value == 0 || !UsedGuids.insert(Value).second)
             {
-                Value = Generator();
+                Value = t_FromHandles ? Value + 1 : Generator();
             }
             NewGuids.emplace(Entity, Value);
         }
@@ -953,6 +972,116 @@ namespace Fling
         {
             t_OutDoc.Set("singletons", singletons);
         }
+        return true;
+    }
+
+    bool World::SaveStateToJson(Json& t_OutDoc, const uint64 t_Tick) const
+    {
+        if (!m_TypesBuilt)
+        {
+            F_LOG_ERROR("Cannot write the world state before World::Init");
+            return false;
+        }
+
+        // The types that the state hash covers (rollback state) and the ones a level saves,
+        // with every field, Transient ones too
+        std::vector<const TypeDesc*> ComponentTypes;
+        std::vector<const TypeDesc*> SingletonTypes;
+        for (const TypeDesc& Type : m_Types.All())
+        {
+            if (!Type.IsSaved() && !Type.IsRollbackState())
+            {
+                continue;
+            }
+            if (Type.IsSingleton())
+            {
+                SingletonTypes.push_back(&Type);
+            }
+            else if (!IsReservedEntityKey(Type.Name))
+            {
+                ComponentTypes.push_back(&Type);
+            }
+        }
+        const auto ByName = [](const TypeDesc* a, const TypeDesc* b)
+        {
+            return a->Name < b->Name;
+        };
+        std::sort(ComponentTypes.begin(), ComponentTypes.end(), ByName);
+        std::sort(SingletonTypes.begin(), SingletonTypes.end(), ByName);
+
+        // Entities in handle order, which is the same for the same run. Ids made from the handles,
+        // so Entity fields name their targets the same way in every run
+        const std::unordered_map<Fling::Entity, uint64> NewGuids = MakeMissingEntityGuids(/* t_FromHandles */ true);
+        SaveContext Context{&m_Storage, &NewGuids};
+        Context.IncludeTransientFields = true;
+        std::vector<Fling::Entity> Entities;
+        m_Storage.EachEntity([&](const Fling::Entity t_Entity) { Entities.push_back(t_Entity); });
+        std::sort(Entities.begin(), Entities.end());
+
+        Json EntitiesJson = Json::Array();
+        for (const Fling::Entity Each : Entities)
+        {
+            Json EntityJson = Json::Object();
+            char Handle[32];
+            std::snprintf(Handle, sizeof(Handle), "%u:%u", Each.Index, Each.Generation);
+            EntityJson.Set("entity", StringView(Handle));
+            if (const NameComponent* Named = m_Storage.TryGet<NameComponent>(Each))
+            {
+                EntityJson.Set("name", Named->Name.ToView());
+            }
+            if (const auto Found = NewGuids.find(Each); Found != NewGuids.end())
+            {
+                EntityJson.SetUInt64("guid", Found->second);
+            }
+            else if (const EntityGuid* Guid = m_Storage.TryGet<EntityGuid>(Each))
+            {
+                EntityJson.SetUInt64("guid", Guid->Value);
+            }
+            for (const TypeDesc* Type : ComponentTypes)
+            {
+                if (Type->Has == nullptr || !Type->Has(m_Storage, Each) || Type->Name == EntityGuid::Component.Name)
+                {
+                    continue;
+                }
+                Json ComponentJson = Json::Object();
+                if (!Type->IsTag() && Type->GetConst)
+                {
+                    SaveObject(*Type, Type->GetConst(m_Storage, Each), ComponentJson, Context);
+                }
+                EntityJson.Set(Type->Name, ComponentJson);
+            }
+            EntitiesJson.PushBack(EntityJson);
+        }
+
+        Json Singletons = Json::Object();
+        for (const TypeDesc* Type : SingletonTypes)
+        {
+            if (const void* Object = Type->GetSingletonConst ? Type->GetSingletonConst(m_Storage) : nullptr)
+            {
+                Json SingletonJson = Json::Object();
+                SaveObject(*Type, Object, SingletonJson, Context);
+                Singletons.Set(Type->Name, SingletonJson);
+            }
+        }
+
+        uint64 StateHash = 0;
+        if (m_Runner)
+        {
+            if (const TickRecord* Latest = m_Runner->GetLedger().Latest(); Latest && Latest->Stamp.Tick == t_Tick)
+            {
+                StateHash = Latest->Stamp.StateHash;
+            }
+        }
+        char HashText[17];
+        std::snprintf(HashText, sizeof(HashText), "%016llx", static_cast<unsigned long long>(StateHash));
+
+        t_OutDoc = Json::Object();
+        t_OutDoc.SetUInt64("tick", t_Tick);
+        t_OutDoc.Set("stateHash", StringView(HashText));
+        t_OutDoc.SetUInt64("simHz", GetSimHz());
+        t_OutDoc.SetUInt64("entityCount", Entities.size());
+        t_OutDoc.Set("entities", EntitiesJson);
+        t_OutDoc.Set("singletons", Singletons);
         return true;
     }
 

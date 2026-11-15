@@ -8,6 +8,7 @@
 #include "FlingConfig.h"
 #include "FlingIntegers.h"
 #include "FlingWindow.h"
+#include "FrameCapture.h"
 #include "GeometrySubpass.h"
 #include "GitVersion.h"
 #include "GraphicsHelpers.h"
@@ -140,25 +141,62 @@ namespace Fling
 
     void VulkanApp::Prepare()
     {
-        CreateGameWindow(FlingConfig::GetInt("Engine", "WindowWidth", FLING_DEFAULT_WINDOW_WIDTH),
-                         FlingConfig::GetInt("Engine", "WindowHeight", FLING_DEFAULT_WINDOW_WIDTH));
+        // --resolution, else the config
+        const uint32 Width = m_SurfaceDesc.Width > 0
+                                 ? m_SurfaceDesc.Width
+                                 : FlingConfig::GetInt("Engine", "WindowWidth", FLING_DEFAULT_WINDOW_WIDTH);
+        const uint32 Height = m_SurfaceDesc.Height > 0
+                                  ? m_SurfaceDesc.Height
+                                  : FlingConfig::GetInt("Engine", "WindowHeight", FLING_DEFAULT_WINDOW_HEIGHT);
+        const bool bOffscreen = m_SurfaceDesc.Offscreen;
 
-        m_Instance = new Instance();
+        // Offscreen: no window, no glfwInit, and no window system extension
+        if (!bOffscreen)
+        {
+            CreateGameWindow(Width, Height);
+        }
+
+        m_Instance = new Instance(/* t_WithSurface */ !bOffscreen);
         assert(m_Instance);
 
-        m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_State->m_Surface);
+        if (!bOffscreen)
+        {
+            if (const char* Missing = VulkanLoader::MissingSurfaceCommand())
+            {
+                F_LOG_ERROR("The Vulkan driver has no {}: a window cannot be shown", Missing);
+                F_LOG_FATAL("The Vulkan driver cannot show a window (no VK_KHR_surface). Try --offscreen");
+            }
+            m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_State->m_Surface);
+        }
 
         m_PhysicalDevice = new PhysicalDevice(m_Instance->GetBestPhysicalDevice());
         assert(m_PhysicalDevice);
+        F_LOG_TRACE("Render device: {} ({})", GetPhysicalDeviceName(), bOffscreen ? "offscreen" : "window");
 
         m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_State->m_Surface);
         assert(m_LogicalDevice);
+        if (!bOffscreen)
+        {
+            if (const char* Missing = VulkanLoader::MissingSwapchainCommand())
+            {
+                F_LOG_ERROR("The Vulkan driver has no {}: a window cannot be shown", Missing);
+                F_LOG_FATAL("The Vulkan driver cannot show a window (no VK_KHR_swapchain). Try --offscreen");
+            }
+        }
 
-        m_SwapChain = new Swapchain(ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface),
-                                    m_LogicalDevice,
-                                    m_PhysicalDevice,
-                                    m_State->m_Surface,
-                                    m_VSync);
+        if (bOffscreen)
+        {
+            const VkExtent2D Extent = {std::max<uint32>(Width, 1), std::max<uint32>(Height, 1)};
+            m_SwapChain = new Swapchain(Extent, m_LogicalDevice, m_PhysicalDevice, VkConfig::MAX_FRAMES_IN_FLIGHT);
+        }
+        else
+        {
+            m_SwapChain = new Swapchain(ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface),
+                                        m_LogicalDevice,
+                                        m_PhysicalDevice,
+                                        m_State->m_Surface,
+                                        m_VSync);
+        }
         assert(m_SwapChain);
 
         GraphicsHelpers::CreateCommandPool(&m_State->m_CommandPool, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -168,7 +206,10 @@ namespace Fling
         // Create the camera
         float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
-        m_Camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
+        const float Aspect = m_CurrentWindow ? m_CurrentWindow->GetAspectRatio()
+                                             : static_cast<float>(m_SwapChain->GetExtents().width) /
+                                                   static_cast<float>(m_SwapChain->GetExtents().height);
+        m_Camera = new FirstPersonCamera(Aspect, CamMoveSpeed, CamRotSpeed);
 
         BuildSwapChainResources();
     }
@@ -228,7 +269,8 @@ namespace Fling
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        // PRESENT_SRC for a window; offscreen, TRANSFER_SRC (a capture copies from it)
+        colorAttachment.finalLayout = m_SwapChain->GetFinalLayout();
 
         VkAttachmentDescription depthAttachment = {};
         depthAttachment.format = DepthBuffer::GetDepthBufferFormat();
@@ -388,8 +430,52 @@ namespace Fling
         return m_SwapChain ? m_SwapChain->GetPresentMode() : PresentMode::Fifo;
     }
 
+    uint32 VulkanApp::GetFrameWidth() const
+    {
+        return m_SwapChain ? m_SwapChain->GetExtents().width : 0;
+    }
+
+    uint32 VulkanApp::GetFrameHeight() const
+    {
+        return m_SwapChain ? m_SwapChain->GetExtents().height : 0;
+    }
+
+    void VulkanApp::SaveCaptures()
+    {
+        if (m_PendingCaptures.empty())
+        {
+            return;
+        }
+        std::vector<String> Paths = std::exchange(m_PendingCaptures, {});
+        String Error;
+        bool bOk = false;
+        if (!m_SwapChain->CanCopyImages())
+        {
+            Error = "the swap chain images cannot be copied (no VK_IMAGE_USAGE_TRANSFER_SRC_BIT); use --offscreen";
+        }
+        else
+        {
+            bOk = FrameCapture::SaveImageAsPng(*m_LogicalDevice,
+                                               m_SwapChain->GetActiveImage(),
+                                               m_SwapChain->GetImageFormat(),
+                                               m_SwapChain->GetExtents(),
+                                               m_SwapChain->GetFinalLayout(),
+                                               Paths,
+                                               Error);
+        }
+        for (String& Path : Paths)
+        {
+            m_CaptureResults.push_back(CaptureResult{std::move(Path), bOk, bOk ? String() : Error});
+        }
+    }
+
     void VulkanApp::RecreateSwapchain()
     {
+        // Offscreen images never go out of date: there is no window to resize
+        if (m_CurrentWindow == nullptr)
+        {
+            return;
+        }
         F_LOG_TRACE("Making the swap chain again");
         if (!m_CurrentWindow->WaitForNewWindowSize())
         {
@@ -509,7 +595,12 @@ namespace Fling
             );
         }*/
 
-        if (t_Conf & PipelineFlags::IMGUI)
+        if ((t_Conf & PipelineFlags::IMGUI) && m_CurrentWindow == nullptr)
+        {
+            // ImGui reads its input from the window
+            F_LOG_WARN("IMGUI render pipeline needs a window: there is none offscreen, so it is left out");
+        }
+        else if (t_Conf & PipelineFlags::IMGUI)
         {
 #if WITH_IMGUI
             F_LOG_TRACE("Bulid IMGUI render pipeline! ");
@@ -540,9 +631,17 @@ namespace Fling
         const RenderSnapshot& Snapshot = SnapshotPtr ? *SnapshotPtr : s_EmptySnapshot;
 
         // Prepare the frame for submission by waiting for the swap chain
-        m_CurrentWindow->Update();
-        m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
-                                  static_cast<float>(m_CurrentWindow->GetFramebufferHeight()));
+        if (m_CurrentWindow)
+        {
+            m_CurrentWindow->Update();
+            m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
+                                      static_cast<float>(m_CurrentWindow->GetFramebufferHeight()));
+        }
+        else
+        {
+            m_Camera->SetViewportSize(static_cast<float>(m_SwapChain->GetExtents().width),
+                                      static_cast<float>(m_SwapChain->GetExtents().height));
+        }
         m_Camera->Update(DeltaTime);
         // A game's view (CameraView, written by its frame system) turns the camera. The debug camera still moves it.
         const CameraView* View = t_Reg.TryGetSingleton<CameraView>();
@@ -708,6 +807,9 @@ namespace Fling
                         VK_TRUE,
                         std::numeric_limits<uint64>::max());
 
+        // The frame is drawn: copy it out before it is presented (--screenshot)
+        SaveCaptures();
+
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
                                             m_State->m_RenderFinishedSemaphores[ImageIndex]);
@@ -794,7 +896,12 @@ namespace Fling
         delete m_LogicalDevice;
         m_LogicalDevice = nullptr;
 
-        vkDestroySurfaceKHR(m_Instance->GetRawVkInstance(), m_State->m_Surface, nullptr);
+        // Offscreen there is no surface
+        if (m_State->m_Surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_Instance->GetRawVkInstance(), m_State->m_Surface, nullptr);
+            m_State->m_Surface = VK_NULL_HANDLE;
+        }
 
         delete m_PhysicalDevice;
         m_PhysicalDevice = nullptr;

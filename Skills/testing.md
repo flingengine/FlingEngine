@@ -159,6 +159,72 @@ Rules for code that can run under `--null-render`:
 headless, check the JSON exit summary, and check that a bad argument exits with
 code 3.
 
+## Seeing the game without a window
+
+An agent (or a script) can look at a run in two ways, and neither opens a window.
+Read the state first: it is cheaper than an image and you can check it exactly. Use a
+screenshot only when the question is about what the frame looks like.
+
+### The state as text: `--dump-state`
+
+```bash
+./build/Sandbox/bin/Sandbox --null-render --unattended --frames 60 --seed 1 \
+    --dump-state Saved/state.json --dump-state-ticks 10,60
+# writes Saved/state_tick10.json and Saved/state_tick60.json
+```
+
+| Flag | What it does |
+| --- | --- |
+| `--dump-state F` | Write the simulation state as JSON to `F` (relative to the project folder, or absolute; missing folders are made). Works with `--null-render`: no GPU |
+| `--dump-state-ticks L` | The ticks to write, a comma list such as `10,60`. Without it: the last tick of the run (`--frames` is then required) |
+
+Each file is written on the game thread right after its tick, so it is the state the
+tick left (`World::SaveStateToJson`). It holds:
+
+- `tick`, `simHz`, `entityCount` and `stateHash` (the same hash as `--dump-ticks`).
+- `entities`, in handle order: `entity` (`index:generation`), `name` when it has a
+  `NameComponent`, `guid`, then one object for each component, with every reflected field.
+- `singletons`: one object for each singleton.
+
+The types are the ones the state hash covers (rollback state, Transient ones too) and
+the ones a level saves. A type that is neither (a `RollbackClass::Keep` setting, a
+render cache) is left out. The same seed, input and flags write the same bytes in
+every exec mode, so two dumps can be diffed. It is not a level file: `--level` cannot
+load it.
+
+### The rendered frame: `--offscreen` and `--screenshot`
+
+```bash
+./build/Sandbox/bin/Sandbox --offscreen --unattended --frames 30 --seed 1 \
+    --resolution 640x360 --screenshot Saved/shot.png --screenshot-ticks 1,30
+# writes Saved/shot_tick1.png and Saved/shot_tick30.png
+```
+
+| Flag | What it does |
+| --- | --- |
+| `--offscreen` | Render with Vulkan into images that the renderer owns. No window, no surface, no window system extension, and no GLFW: it runs on a machine with no display, and opens nothing on a machine that has one. The timing is the same as `--null-render` (a virtual clock, no frame cap), so the ticks are the same as a `--null-render` run. There is no developer UI (ImGui needs a window). Cannot be used with `--null-render` |
+| `--resolution WxH` | The size of the frames (`--offscreen`) or of the window. Overrides `[Engine] WindowWidth` and `WindowHeight` |
+| `--screenshot F` | Save the frame as a PNG file `F`. Works with `--offscreen` and with a window (then the editor UI is in the image too). Not with `--null-render` |
+| `--screenshot-ticks L` | Save the first frame that shows each of these ticks. Without it: the last tick of the run (`--frames` is then required). The log line `Saved the frame of tick N (it shows tick M, WxH) to F` says which tick the frame shows |
+
+File names: with one tick the path is used as it is. With more than one, `_tick<N>` goes
+before the extension. `{tick}` in the path puts the tick where you want it
+(`--screenshot frames/{tick}.png`). `CaptureFilePath` in `LaunchOptions.h` has the rule.
+
+A capture that was asked for and not made (the tick never ran, the file cannot be
+written) logs an error and the run exits with code 1, so a script never reads an
+old file.
+
+`--offscreen` needs a Vulkan driver, but a software one is enough: Mesa's lavapipe
+(`llvmpipe`, package `mesa-vulkan-drivers` on Ubuntu) renders the Sandbox at 640x360
+in about 5 s for 30 ticks. The same flags give the same image in every exec mode.
+`FLING_TEST_OFFSCREEN=ON` adds the CTest `Sandbox: offscreen screenshots`; it is off by
+default because CI machines may have no Vulkan driver. `Sandbox: headless state dump`
+always runs.
+
+To view a PNG, an agent reads the file (most agent tools show images). Choose a small
+`--resolution` to keep the image cheap.
+
 ## Unattended crash tests
 
 `FlingTests/CMakeLists.txt` adds `Unattended crash: <mode>` tests. Each runs

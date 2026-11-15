@@ -146,6 +146,24 @@ namespace Fling
         /** The ledger records of the ticks since the last call, in tick order (KeepTickRecords). */
         std::vector<TickRecord> TakeNewTickRecords();
 
+        /** The simulation state after one tick (SetStateDumpTicks). */
+        struct StateDump
+        {
+            uint64 Tick = 0;
+
+            /** SaveStateToJson's document. */
+            Json Doc;
+        };
+
+        /**
+         * Write the state (SaveStateToJson) right after each of these ticks, on the thread that
+         * runs the ticks, for TakeStateDumps (--dump-state). Sorted. Call it before play starts.
+         */
+        void SetStateDumpTicks(std::vector<uint64> t_Ticks) { m_StateDumpTicks = std::move(t_Ticks); }
+
+        /** The state dumps of the ticks since the last call, in tick order (SetStateDumpTicks). */
+        std::vector<StateDump> TakeStateDumps();
+
         /**
          * Set the function that reads the input after a sequence, for the frame side
          * (see SystemRunner::SetPendingInputSource). Set it before Init.
@@ -345,6 +363,19 @@ namespace Fling
         bool SaveToJson(Json& t_OutDoc, StringView t_Title) const;
 
         /**
+         * Write the simulation state to a document, for an agent or a test to read (--dump-state).
+         * The types are the ones the state hash covers (rollback state) and the ones a level
+         * saves, with every field (Transient fields too). Top level: "tick", "stateHash"
+         * (TickRecord::StateHash, 0 when off), "simHz", "entityCount", "entities" (in handle
+         * order: "entity" index:generation, "name" when it has one, "guid", then one object per
+         * component) and "singletons". An entity with no EntityGuid gets an id made from its
+         * handle, not a random one, so the same run writes the same document. It is not a level
+         * file: LoadFromJson does not read it. Call it on the thread that owns the simulation
+         * storage (OnTickDone does).
+         */
+        bool SaveStateToJson(Json& t_OutDoc, uint64 t_Tick) const;
+
+        /**
          * Remove all entities, then make the entities in a level document. A component
          * loads after the components that it requires, and one that the document does not
          * have is added with default values. LoadLevelFile and the play snapshot use it.
@@ -404,7 +435,7 @@ namespace Fling
         TickHost& AsTickHost() { return *this; }
 
         /** A new EntityGuid for each entity that has none, or the same one as an entity before it. */
-        std::unordered_map<Fling::Entity, uint64> MakeMissingEntityGuids() const;
+        std::unordered_map<Fling::Entity, uint64> MakeMissingEntityGuids(bool t_FromHandles = false) const;
 
         /** Run the pending start or stop request, if there is one */
         void ProcessPlayRequest();
@@ -594,6 +625,12 @@ namespace Fling
 
         /** Tick thread to main thread: @see KeepTickRecords */
         ThreadQueue<TickRecord> m_NewTickRecords;
+
+        /** @see SetStateDumpTicks. Set before play; the tick thread reads it. */
+        std::vector<uint64> m_StateDumpTicks;
+
+        /** Tick thread to main thread: @see SetStateDumpTicks */
+        ThreadQueue<StateDump> m_StateDumps;
 
         // The main thread's state
 

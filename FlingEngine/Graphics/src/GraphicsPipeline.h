@@ -66,6 +66,14 @@ namespace Fling
 
         VkDescriptorSetLayout m_DescriptorSetLayout;
         VkPipelineVertexInputStateCreateInfo m_VertexInputStateCreateInfo = {};
+
+        /**
+         * True (the default): the pipeline reads mesh vertices (Vertex) from binding 0. False: it
+         * has no vertex input, for a draw that makes its positions from gl_VertexIndex and binds
+         * no vertex buffer (a full screen triangle). A pipeline that declares input it is never
+         * given reads unbound memory: software drivers such as llvmpipe crash on it.
+         */
+        bool m_HasVertexInput = true;
         VkPipelineInputAssemblyStateCreateInfo m_InputAssemblyState = {};
         VkPipelineRasterizationStateCreateInfo m_RasterizationState = {};
         std::vector<VkPipelineColorBlendAttachmentState> m_ColorBlendAttachmentStates;

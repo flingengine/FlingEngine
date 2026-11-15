@@ -23,6 +23,7 @@
 #include "VulkanApp.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -286,10 +287,10 @@ namespace Fling
         ResourceManager::Get().Init();
         Timing::Get().Init();
 
-        // A headless run has no real time: the platform clock is virtual, and the loop
-        // moves it by a fixed step per frame. Install it before input, so every input
-        // message time comes from it.
-        if (m_Options.NullRender)
+        // A headless run (--null-render or --offscreen) has no real time: the platform clock
+        // is virtual, and the loop moves it by a fixed step per frame. Install it before
+        // input, so every input message time comes from it.
+        if (m_Options.IsHeadless())
         {
             m_HeadlessClock = std::make_unique<PlatformTime::VirtualClock>(HeadlessFrameNs(0));
             PlatformTime::UseVirtualClock(m_HeadlessClock.get());
@@ -361,11 +362,27 @@ namespace Fling
         }
         else
         {
+            RenderSurfaceDesc Surface;
+            Surface.Offscreen = m_Options.Offscreen;
+            Surface.Width = m_Options.ResolutionWidth;
+            Surface.Height = m_Options.ResolutionHeight;
+            VulkanApp::Get().SetRenderSurface(Surface);
+
+            uint32 Pipelines = PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP;
+            if (m_Options.Offscreen)
+            {
+                // The developer UI is ImGui, which reads its input from a window: offscreen there
+                // is none, so the frames show the game only
+                F_LOG_TRACE("Fling render: offscreen (--offscreen), no window");
+                m_DebugUI.reset();
+            }
+            else
+            {
+                Pipelines |= PipelineFlags::IMGUI;
+            }
             VulkanApp::Get().SetVSync(m_Settings.VSync);
-            VulkanApp::Get().Init(
-                static_cast<PipelineFlags>(PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP | PipelineFlags::IMGUI),
-                Storage,
-                m_DebugUI);
+            VulkanApp::Get().Init(static_cast<PipelineFlags>(Pipelines), Storage, m_DebugUI);
+            F_LOG_TRACE("Render size: {}x{}", VulkanApp::Get().GetFrameWidth(), VulkanApp::Get().GetFrameHeight());
         }
 
         // The frame cap's default is the refresh rate of the window's monitor
@@ -410,11 +427,12 @@ namespace Fling
         m_World->SetTickClock([]() { return PlatformTime::NowNanoseconds(); });
         // The per-tick state hash costs about 0.7 ms a tick in a Debug Sandbox (754
         // transforms): on for headless runs and --dump-ticks, off for a windowed game.
-        m_World->SetStateHashEnabled(m_Options.NullRender || !m_Options.DumpTicks.empty());
+        m_World->SetStateHashEnabled(m_Options.IsHeadless() || !m_Options.DumpTicks.empty() ||
+                                     !m_Options.DumpState.empty());
         m_World->SetInterpolation(m_Settings.Interpolation);
         m_Controls = std::make_unique<RunControls>(m_Settings, *m_World);
         UpdateFrameLimiter();
-        if (m_Options.NullRender)
+        if (m_Options.IsHeadless())
         {
             m_World->SetTickTimelineStart(HeadlessFrameNs(1) - TickNs());
             m_World->SetTickClockOnlyMovesWithFrames(true);
@@ -430,7 +448,7 @@ namespace Fling
         // every exec mode; World::MakeTickInputConfig says how a game thread waits for it: a
         // headless run or a replay waits for every message of the window (the cuts are the
         // same as in Direct), live windowed play does not wait.
-        const int64 WatermarkWaitNs = (m_Options.NullRender || !m_Options.ReplayInput.empty()) ? -1 : 0;
+        const int64 WatermarkWaitNs = (m_Options.IsHeadless() || !m_Options.ReplayInput.empty()) ? -1 : 0;
         auto TickInputs =
             std::make_shared<TickInputProvider>(Input::Get(), m_World->MakeTickInputConfig(WatermarkWaitNs));
         m_World->SetTickInputSource([TickInputs](TickInput& t_Out, const TickWindow& t_Window)
@@ -448,6 +466,25 @@ namespace Fling
             }
             F_LOG_TRACE("Writing one line per tick to {} (--dump-ticks)", DumpPath);
             m_World->KeepTickRecords();
+        }
+
+        // --dump-state and --screenshot: at the listed ticks, or the last tick of the run
+        if (!m_Options.DumpState.empty())
+        {
+            m_PendingStateDumps =
+                m_Options.DumpStateTicks.empty() ? std::vector<uint64>{LastTickOfRun()} : m_Options.DumpStateTicks;
+            m_World->SetStateDumpTicks(m_PendingStateDumps);
+            F_LOG_TRACE("Writing the state at {} tick(s) to {} (--dump-state)",
+                        m_PendingStateDumps.size(),
+                        FlingPaths::ResolveProjectPath(m_Options.DumpState));
+        }
+        if (!m_Options.Screenshot.empty())
+        {
+            m_PendingScreenshots =
+                m_Options.ScreenshotTicks.empty() ? std::vector<uint64>{LastTickOfRun()} : m_Options.ScreenshotTicks;
+            F_LOG_TRACE("Saving the frames of {} tick(s) to {} (--screenshot)",
+                        m_PendingScreenshots.size(),
+                        FlingPaths::ResolveProjectPath(m_Options.Screenshot));
         }
 
         // The runner fills PendingInput for the frame side with the messages after the cut of the tick
@@ -478,7 +515,7 @@ namespace Fling
             F_LOG_TRACE("Fling debug UI: Disabled");
         }
 
-        if (!m_Options.NullRender)
+        if (!m_Options.IsHeadless())
         {
             // The window exists now. Its events are pumped by the GLFW input interface
             m_InputWindow = GetInputWindowHandle(VulkanApp::Get().GetCurrentWindow());
@@ -551,7 +588,7 @@ namespace Fling
 
             // Under --null-render each frame has the same delta and never waits on real time
             // for its ticks, so a run is as fast as the CPU allows
-            const float DeltaTime = m_Options.NullRender ? NullRenderDeltaTime : Timing.GetDeltaTime();
+            const float DeltaTime = m_Options.IsHeadless() ? NullRenderDeltaTime : Timing.GetDeltaTime();
             Stats::Frames::FrameStats(DeltaTime);
 
             PumpInput(DeltaTime);
@@ -561,6 +598,7 @@ namespace Fling
             // threaded play), the ticks' outbox, then the frame systems on what the world shows
             m_World->Update(DeltaTime);
             DumpNewTicks();
+            WriteStateDumps();
 
             HandleAppRequests();
             if (m_World->ShouldQuit())
@@ -576,7 +614,10 @@ namespace Fling
             }
             else
             {
+                // A window, or offscreen images (--offscreen)
+                RequestScreenshots();
                 Present(DeltaTime);
+                SaveScreenshots();
             }
             Timing.UpdateFps();
         }
@@ -590,6 +631,18 @@ namespace Fling
                     m_World->GetTickCount(),
                     AverageFrameMs,
                     AverageFrameMs > 0.0 ? 1000.0 / AverageFrameMs : 0.0);
+        // A screenshot that was asked for and not taken fails the run, so a script does not read an old file
+        bool bCapturesOk = m_ScreenshotsFailed == 0;
+        for (const uint64 Tick : m_PendingScreenshots)
+        {
+            F_LOG_ERROR(
+                "--screenshot: no frame showed tick {} (the run showed up to tick {})", Tick, m_World->GetShownTick());
+            bCapturesOk = false;
+        }
+        if (!bCapturesOk)
+        {
+            return ExitCode::Failure;
+        }
 #if WITH_INPUT_RECORDING
         if (Input::Get().GetPlayback().HasOverrun())
         {
@@ -623,7 +676,7 @@ namespace Fling
     {
         for (const AppRequest Request : m_World->TakeAppRequests())
         {
-            if (Request == AppRequest::ToggleCursor && !m_Options.NullRender)
+            if (Request == AppRequest::ToggleCursor && !m_Options.IsHeadless())
             {
                 FlingWindow* Window = VulkanApp::Get().GetCurrentWindow();
                 if (Window)
@@ -641,20 +694,24 @@ namespace Fling
         VulkanApp::Get().SetVSync(m_Controls->VSync());
         VulkanApp::Get().Update(t_DeltaTime, m_World->GetPresentedStorage());
 
-        const bool bInBackground = !VulkanApp::Get().GetCurrentWindow()->IsFocused();
-        if (bInBackground != m_Controls->InBackground())
+        // Offscreen there is no window: no focus, no monitor, and no frame cap (headless)
+        if (const FlingWindow* Window = VulkanApp::Get().GetCurrentWindow())
         {
-            m_Controls->SetInBackground(bInBackground);
-            F_LOG_TRACE("Window in the {}", bInBackground ? "background" : "front");
+            const bool bInBackground = !Window->IsFocused();
+            if (bInBackground != m_Controls->InBackground())
+            {
+                m_Controls->SetInBackground(bInBackground);
+                F_LOG_TRACE("Window in the {}", bInBackground ? "background" : "front");
+            }
+            // The window can move to another monitor; a frame cap that came from the monitor follows
+            const int64 NowNs = PlatformTime::NowNanoseconds();
+            if (NowNs >= m_NextMonitorCheckNs)
+            {
+                m_NextMonitorCheckNs = NowNs + MonitorCheckIntervalNs;
+                m_Controls->SetMonitorHz(WindowMonitorHz());
+            }
+            UpdateFrameLimiter();
         }
-        // The window can move to another monitor; a frame cap that came from the monitor follows
-        const int64 NowNs = PlatformTime::NowNanoseconds();
-        if (NowNs >= m_NextMonitorCheckNs)
-        {
-            m_NextMonitorCheckNs = NowNs + MonitorCheckIntervalNs;
-            m_Controls->SetMonitorHz(WindowMonitorHz());
-        }
-        UpdateFrameLimiter();
 
         // The game ticks on its own clock, so it runs at the same speed, only shown less often
         m_FrameLimiter.WaitForNextFrame();
@@ -662,14 +719,15 @@ namespace Fling
 
     std::optional<uint32> Engine::WindowMonitorHz() const
     {
-        const FlingWindow* Window = m_Options.NullRender ? nullptr : VulkanApp::Get().GetCurrentWindow();
+        const FlingWindow* Window = m_Options.IsHeadless() ? nullptr : VulkanApp::Get().GetCurrentWindow();
         return Window != nullptr ? std::optional<uint32>(Window->GetRefreshRate()) : std::nullopt;
     }
 
     void Engine::UpdateFrameLimiter()
     {
         // Headless there is no swap chain and no refresh rate, so the cap applies as it is
-        const bool bDisplayPacesFrames = !m_Options.NullRender && DisplayPacesFrames(VulkanApp::Get().GetPresentMode());
+        const bool bDisplayPacesFrames =
+            !m_Options.IsHeadless() && DisplayPacesFrames(VulkanApp::Get().GetPresentMode());
         const uint32 LimiterFps = m_Controls->LimiterFps(bDisplayPacesFrames);
         if (LimiterFps != m_FrameLimiter.GetMaxFps())
         {
@@ -677,7 +735,7 @@ namespace Fling
             F_LOG_TRACE("Frame limiter: {} (cap {} fps, present mode {})",
                         m_Controls->DescribeLimiter(bDisplayPacesFrames),
                         m_Controls->MaxFps(),
-                        m_Options.NullRender ? "none" : PresentModeName(VulkanApp::Get().GetPresentMode()));
+                        m_Options.IsHeadless() ? "none" : PresentModeName(VulkanApp::Get().GetPresentMode()));
         }
     }
 
@@ -701,7 +759,7 @@ namespace Fling
         // as soon as it is due.
         Input::Get().SetWriterLane(Lane::Frame);
         GameLaneDesc Desc;
-        Desc.Pacing = m_Options.NullRender ? GameLanePacing::AsFastAsPossible : GameLanePacing::RealTime;
+        Desc.Pacing = m_Options.IsHeadless() ? GameLanePacing::AsFastAsPossible : GameLanePacing::RealTime;
         Desc.JitterSeed = m_Options.JitterSeed;
         Desc.JitterMaxMicroseconds = m_Options.JitterMaxMicroseconds;
         m_World->SetGameLaneDesc(Desc);
@@ -748,6 +806,83 @@ namespace Fling
         m_DumpTicksFile->flush();
     }
 
+    void Engine::WriteStateDumps()
+    {
+        if (!m_World || m_Options.DumpState.empty())
+        {
+            return;
+        }
+        const bool bManyTicks = m_Options.DumpStateTicks.size() > 1;
+        for (const World::StateDump& Dump : m_World->TakeStateDumps())
+        {
+            std::erase(m_PendingStateDumps, Dump.Tick);
+            const String Path =
+                FlingPaths::ResolveProjectPath(CaptureFilePath(m_Options.DumpState, Dump.Tick, bManyTicks));
+            std::error_code DirError;
+            const std::filesystem::path FsPath = PathFromUtf8(Path);
+            if (FsPath.has_parent_path())
+            {
+                std::filesystem::create_directories(FsPath.parent_path(), DirError);
+            }
+            std::ofstream File(FsPath, std::ios::binary | std::ios::trunc);
+            File << Dump.Doc.Dump(2) << '\n';
+            if (!File)
+            {
+                F_LOG_ERROR("--dump-state: cannot write {}", Path);
+                ++m_StateDumpsFailed;
+                continue;
+            }
+            F_LOG_TRACE("Wrote the state of tick {} ({} entities, state hash {}) to {}",
+                        Dump.Tick,
+                        Dump.Doc.GetUInt64("entityCount"),
+                        Dump.Doc.GetString("stateHash"),
+                        Path);
+        }
+    }
+
+    void Engine::RequestScreenshots()
+    {
+        // The frame that first shows each tick. With threaded play the frame side can show a
+        // later tick than the one asked for; the log line says which tick the file shows.
+        const uint64 Shown = m_World->GetShownTick();
+        const bool bManyTicks = m_Options.ScreenshotTicks.size() > 1;
+        while (!m_PendingScreenshots.empty() && m_PendingScreenshots.front() <= Shown)
+        {
+            const uint64 Tick = m_PendingScreenshots.front();
+            m_PendingScreenshots.erase(m_PendingScreenshots.begin());
+            const String Path = FlingPaths::ResolveProjectPath(CaptureFilePath(m_Options.Screenshot, Tick, bManyTicks));
+            VulkanApp::Get().RequestCapture(Path);
+            m_ScreenshotShownTicks.push_back({Tick, Shown});
+        }
+    }
+
+    void Engine::SaveScreenshots()
+    {
+        std::vector<CaptureResult> Results = VulkanApp::Get().TakeCaptureResults();
+        for (size_t i = 0; i < Results.size(); ++i)
+        {
+            const CaptureResult& Result = Results[i];
+            const std::pair<uint64, uint64> Ticks =
+                i < m_ScreenshotShownTicks.size() ? m_ScreenshotShownTicks[i] : std::pair<uint64, uint64>{0, 0};
+            if (!Result.Ok)
+            {
+                F_LOG_ERROR("--screenshot: cannot save {}: {}", Result.Path, Result.Error);
+                ++m_ScreenshotsFailed;
+                continue;
+            }
+            F_LOG_TRACE("Saved the frame of tick {} (it shows tick {}, {}x{}) to {}",
+                        Ticks.first,
+                        Ticks.second,
+                        VulkanApp::Get().GetFrameWidth(),
+                        VulkanApp::Get().GetFrameHeight(),
+                        Result.Path);
+        }
+        // A frame that was not drawn (a window resize) keeps its captures for the next frame
+        const size_t Done = std::min(Results.size(), m_ScreenshotShownTicks.size());
+        m_ScreenshotShownTicks.erase(m_ScreenshotShownTicks.begin(),
+                                     m_ScreenshotShownTicks.begin() + static_cast<std::ptrdiff_t>(Done));
+    }
+
     bool Engine::ShouldTick() const
     {
         // --frames: the run ends after N frames, once the frame side shows the last tick (the
@@ -760,7 +895,7 @@ namespace Fling
             return false;
         }
 
-        if (!m_Options.NullRender && VulkanApp::Get().GetCurrentWindow()->ShouldClose())
+        if (!m_Options.IsHeadless() && VulkanApp::Get().GetCurrentWindow()->ShouldClose())
         {
             return false;
         }
@@ -775,6 +910,22 @@ namespace Fling
         {
             m_World->Shutdown();
             m_TicksAtExit = m_World->GetTickCount();
+
+            // The game thread has joined: a dump that it made after the last frame is here now
+            WriteStateDumps();
+            if (!m_Options.DumpState.empty() && t_Code == ExitCode::Success)
+            {
+                bool bDumpsOk = m_StateDumpsFailed == 0;
+                for (const uint64 Tick : m_PendingStateDumps)
+                {
+                    F_LOG_ERROR("--dump-state: tick {} did not run (the run ran {} ticks)", Tick, m_TicksAtExit);
+                    bDumpsOk = false;
+                }
+                if (!bDumpsOk)
+                {
+                    t_Code = ExitCode::Failure;
+                }
+            }
         }
 
         // The world still holds the game until the world is destroyed below
@@ -841,7 +992,7 @@ namespace Fling
     {
         const double WallSeconds =
             std::chrono::duration<double>(std::chrono::steady_clock::now() - m_StartTime).count();
-        const char* Render = m_Options.NullRender ? "null" : "vulkan";
+        const char* Render = m_Options.NullRender ? "null" : (m_Options.Offscreen ? "offscreen" : "vulkan");
 
         if (m_Options.Format == LogFormat::Json)
         {

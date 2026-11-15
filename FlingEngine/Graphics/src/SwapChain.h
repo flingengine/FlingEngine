@@ -29,6 +29,14 @@ namespace Fling
 		/** t_VSync: SetVSync. */
 		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface, bool t_VSync);
 
+		/**
+		 * An offscreen swap chain (--offscreen): t_ImageCount images that it makes and owns, with
+		 * no surface. AquireNextImage takes the next image in turn and QueuePresent shows
+		 * nothing; both still signal and wait on the semaphores, so VulkanApp::Update runs the
+		 * same way with or without a window.
+		 */
+		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, uint32 t_ImageCount);
+
 		~Swapchain();
 
 		VkResult AquireNextImage(const VkSemaphore& t_CompletedSemaphore);
@@ -50,6 +58,21 @@ namespace Fling
 		void SetVSync(bool t_VSync) { m_VSync = t_VSync; }
 
 		const VkSwapchainKHR& GetVkSwapChain() const { return m_SwapChain; }
+
+		/** True for an offscreen swap chain: no surface, no present. */
+		bool IsOffscreen() const { return m_Offscreen; }
+
+		/**
+		 * The layout of an image after the frame's render pass: PRESENT_SRC with a surface,
+		 * TRANSFER_SRC offscreen (nothing presents it; a capture copies from it).
+		 */
+		VkImageLayout GetFinalLayout() const
+		{
+			return m_Offscreen ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		}
+
+		/** True when the images can be copied from (VK_IMAGE_USAGE_TRANSFER_SRC_BIT), for a capture. */
+		bool CanCopyImages() const { return m_CanCopyImages; }
 
 		/** The present mode it was made with. */
 		PresentMode GetPresentMode() const { return m_PresentMode; }
@@ -82,6 +105,21 @@ namespace Fling
 		const LogicalDevice* m_Device;
 		const PhysicalDevice* m_PhysicalDevice;
 		const VkSurfaceKHR m_Surface;
+
+		/** @see IsOffscreen */
+		const bool m_Offscreen = false;
+
+		/** Offscreen: how many images to make. */
+		uint32 m_OffscreenImageCount = 0;
+
+		/** Offscreen: the memory of each image. */
+		std::vector<VkDeviceMemory> m_ImageMemory;
+
+		/** @see CanCopyImages */
+		bool m_CanCopyImages = false;
+
+		/** Offscreen CreateResources: make the images and their memory. */
+		void CreateOffscreenImages();
 
 		/** The images inside of the swap chain */
 		std::vector<VkImage> m_Images;

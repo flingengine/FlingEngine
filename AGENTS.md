@@ -53,6 +53,12 @@ platform setup (Vulkan SDK, GLFW, etc.).
   The editor's GPU Options window (menu Windows; drawn in `--play` too) changes
   the rate, the cap, VSync and interpolation at run time.
   Detail: [`Docs/time-and-ticks.md`](Docs/time-and-ticks.md) section 2.
+- See a run without a window: `--dump-state <file.json>` writes the simulation
+  state as JSON at chosen ticks (works with `--null-render`), and `--offscreen
+  --screenshot <file.png>` renders with Vulkan into offscreen images and saves PNG
+  files (no window, no display; a software driver such as llvmpipe is enough).
+  Prefer the state dump; use screenshots for rendering work. Detail:
+  [`Skills/testing.md`](Skills/testing.md#seeing-the-game-without-a-window).
 - Drive a headless run with `--replay-input <file>`. Agents can write their own
   `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).
 - Load a level other than `[Game] StartLevel` with `--level <file>` (relative

@@ -3,11 +3,19 @@
 #include "Strings/String.h"
 #include "Strings/StringUtils.h"
 
+#include <algorithm>
+
 namespace Fling
 {
     namespace
     {
         constexpr StringView NullRenderFlag = "null-render";
+        constexpr StringView OffscreenFlag = "offscreen";
+        constexpr StringView ResolutionFlag = "resolution";
+        constexpr StringView ScreenshotFlag = "screenshot";
+        constexpr StringView ScreenshotTicksFlag = "screenshot-ticks";
+        constexpr StringView DumpStateFlag = "dump-state";
+        constexpr StringView DumpStateTicksFlag = "dump-state-ticks";
         constexpr StringView UnattendedFlag = "unattended";
         constexpr StringView FramesFlag = "frames";
         constexpr StringView FramesPerTickFlag = "frames-per-tick";
@@ -137,6 +145,48 @@ namespace Fling
             return true;
         }
 
+        /** Read a list of tick numbers, such as 30,60,120 (each 1 or more). The result is sorted, with no repeats. */
+        bool
+        ReadTickList(const CommandLine& t_CmdLine, StringView t_Flag, std::vector<uint64>& t_Out, String& t_OutError)
+        {
+            const std::optional<StringView> Value = t_CmdLine.GetValueAsString(t_Flag);
+            if (!Value)
+            {
+                return true;
+            }
+            StringView Rest = *Value;
+            const auto Fail = [&]()
+            {
+                t_OutError = "--" + String(t_Flag) +
+                             " needs a comma list of ticks (1 or more), for example 30,60,120, not '" + String(*Value) +
+                             "'";
+                return false;
+            };
+            if (Rest.empty() || Rest == "true")
+            {
+                return Fail();
+            }
+            while (true)
+            {
+                const size_t Comma = Rest.find(',');
+                const StringView Item = Rest.substr(0, Comma);
+                uint32 Tick = 0;
+                if (!TryParseUint32(Item, Tick) || Tick == 0)
+                {
+                    return Fail();
+                }
+                t_Out.push_back(Tick);
+                if (Comma == StringView::npos)
+                {
+                    break;
+                }
+                Rest = Rest.substr(Comma + 1);
+            }
+            std::sort(t_Out.begin(), t_Out.end());
+            t_Out.erase(std::unique(t_Out.begin(), t_Out.end()), t_Out.end());
+            return true;
+        }
+
         /** Read a uint32 flag into an optional: empty when the flag is not given. */
         bool ReadOptionalUint32(const CommandLine& t_CmdLine,
                                 StringView t_Flag,
@@ -169,6 +219,59 @@ namespace Fling
 
         if (!ReadBool(t_CmdLine, UnattendedFlag, t_Out.Unattended, t_OutError))
         {
+            return false;
+        }
+
+        if (!ReadBool(t_CmdLine, OffscreenFlag, t_Out.Offscreen, t_OutError))
+        {
+            return false;
+        }
+        if (t_Out.Offscreen && t_Out.NullRender)
+        {
+            t_OutError = "--offscreen and --null-render cannot be used together: --offscreen renders, --null-render "
+                         "does not";
+            return false;
+        }
+
+        if (const std::optional<StringView> Resolution = t_CmdLine.GetValueAsString(ResolutionFlag))
+        {
+            const StringView Str = *Resolution;
+            const size_t X = Str.find('x');
+            uint32 Width = 0;
+            uint32 Height = 0;
+            if (X == StringView::npos || !TryParseUint32(Str.substr(0, X), Width) ||
+                !TryParseUint32(Str.substr(X + 1), Height) || Width == 0 || Height == 0 || Width > 8192 ||
+                Height > 8192)
+            {
+                t_OutError = "--resolution needs <width>x<height> from 1 to 8192, for example 1280x720, not '" +
+                             String(Str) + "'";
+                return false;
+            }
+            t_Out.ResolutionWidth = Width;
+            t_Out.ResolutionHeight = Height;
+        }
+
+        if (!ReadPath(t_CmdLine, ScreenshotFlag, t_Out.Screenshot, t_OutError) ||
+            !ReadTickList(t_CmdLine, ScreenshotTicksFlag, t_Out.ScreenshotTicks, t_OutError) ||
+            !ReadPath(t_CmdLine, DumpStateFlag, t_Out.DumpState, t_OutError) ||
+            !ReadTickList(t_CmdLine, DumpStateTicksFlag, t_Out.DumpStateTicks, t_OutError))
+        {
+            return false;
+        }
+        if (!t_Out.ScreenshotTicks.empty() && t_Out.Screenshot.empty())
+        {
+            t_OutError = "--screenshot-ticks needs --screenshot <file.png>";
+            return false;
+        }
+        if (!t_Out.DumpStateTicks.empty() && t_Out.DumpState.empty())
+        {
+            t_OutError = "--dump-state-ticks needs --dump-state <file.json>";
+            return false;
+        }
+        if (!t_Out.Screenshot.empty() && t_Out.NullRender)
+        {
+            t_OutError = "--screenshot needs a renderer: use --offscreen instead of --null-render (or --dump-state "
+                         "for the state as text)";
             return false;
         }
 
@@ -337,6 +440,44 @@ namespace Fling
         }
 #endif
 
+        // A capture with no tick list is at the last tick of the run, so the run must have one
+        if (t_Out.Frames == 0)
+        {
+            if (!t_Out.Screenshot.empty() && t_Out.ScreenshotTicks.empty())
+            {
+                t_OutError = "--screenshot needs --frames N (a frame at the last tick) or --screenshot-ticks";
+                return false;
+            }
+            if (!t_Out.DumpState.empty() && t_Out.DumpStateTicks.empty())
+            {
+                t_OutError = "--dump-state needs --frames N (the state at the last tick) or --dump-state-ticks";
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    String CaptureFilePath(const StringView t_Path, const uint64 t_Tick, const bool t_ManyTicks)
+    {
+        String Path(t_Path);
+        const String TickText = std::to_string(t_Tick);
+        constexpr StringView Placeholder = "{tick}";
+        if (const size_t At = Path.find(Placeholder); At != String::npos)
+        {
+            Path.replace(At, Placeholder.size(), TickText);
+            return Path;
+        }
+        if (!t_ManyTicks)
+        {
+            return Path;
+        }
+        // Before the extension, if the file name has one
+        const size_t Slash = Path.find_last_of("/\\");
+        const size_t Dot = Path.find_last_of('.');
+        const bool bHasExtension = Dot != String::npos && (Slash == String::npos || Dot > Slash);
+        const size_t InsertAt = bHasExtension ? Dot : Path.size();
+        Path.insert(InsertAt, "_tick" + TickText);
+        return Path;
     }
 } // namespace Fling

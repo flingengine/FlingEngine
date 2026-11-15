@@ -263,3 +263,113 @@ TEST_CASE("Launch Options", "[Launch Options]")
         REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--present-mode is not a flag: --vsync on|off"));
     }
 }
+
+TEST_CASE("Launch Options: offscreen rendering and captures", "[Launch Options]")
+{
+    using namespace Fling;
+
+    LaunchOptions Options;
+    String Error;
+
+    SECTION("Defaults: a window, no captures")
+    {
+        REQUIRE(ParseLaunchArgs({}, Options, Error));
+        REQUIRE_FALSE(Options.Offscreen);
+        REQUIRE_FALSE(Options.IsHeadless());
+        REQUIRE(Options.ResolutionWidth == 0);
+        REQUIRE(Options.Screenshot.empty());
+        REQUIRE(Options.DumpState.empty());
+    }
+
+    SECTION("--offscreen is headless, and renders")
+    {
+        REQUIRE(ParseLaunchArgs({"--offscreen", "--resolution", "1280x720"}, Options, Error));
+        REQUIRE(Options.Offscreen);
+        REQUIRE_FALSE(Options.NullRender);
+        REQUIRE(Options.IsHeadless());
+        REQUIRE(Options.ResolutionWidth == 1280);
+        REQUIRE(Options.ResolutionHeight == 720);
+
+        REQUIRE(ParseLaunchArgs({"--null-render"}, Options, Error));
+        REQUIRE(Options.IsHeadless());
+
+        REQUIRE_FALSE(ParseLaunchArgs({"--offscreen", "--null-render"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("cannot be used together"));
+    }
+
+    SECTION("--resolution must be <width>x<height>")
+    {
+        for (const char* Bad : {"1280", "1280x", "x720", "0x720", "1280x0", "99999x10", "wide"})
+        {
+            REQUIRE_FALSE(ParseLaunchArgs({"--resolution", Bad}, Options, Error));
+            REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--resolution"));
+        }
+    }
+
+    SECTION("Captures at a tick list, sorted, with no repeats")
+    {
+        REQUIRE(ParseLaunchArgs({"--offscreen",
+                                 "--screenshot",
+                                 "shot.png",
+                                 "--screenshot-ticks",
+                                 "60,30,60",
+                                 "--dump-state",
+                                 "state.json",
+                                 "--dump-state-ticks",
+                                 "5"},
+                                Options,
+                                Error));
+        REQUIRE(Options.Screenshot == "shot.png");
+        REQUIRE(Options.ScreenshotTicks == std::vector<uint64>{30, 60});
+        REQUIRE(Options.DumpState == "state.json");
+        REQUIRE(Options.DumpStateTicks == std::vector<uint64>{5});
+
+        for (const char* Bad : {"0", "1,,2", "a", "3,"})
+        {
+            REQUIRE_FALSE(ParseLaunchArgs({"--dump-state", "s.json", "--dump-state-ticks", Bad}, Options, Error));
+            REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--dump-state-ticks"));
+        }
+    }
+
+    SECTION("A capture with no tick list is at the last tick, so it needs --frames")
+    {
+        REQUIRE(ParseLaunchArgs({"--null-render", "--frames", "30", "--dump-state", "s.json"}, Options, Error));
+        REQUIRE(Options.DumpStateTicks.empty());
+
+        REQUIRE_FALSE(ParseLaunchArgs({"--null-render", "--dump-state", "s.json"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--dump-state needs --frames"));
+        REQUIRE_FALSE(ParseLaunchArgs({"--offscreen", "--screenshot", "s.png"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--screenshot needs --frames"));
+    }
+
+    SECTION("Misused capture flags are errors")
+    {
+        REQUIRE_FALSE(ParseLaunchArgs({"--screenshot-ticks", "3"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("needs --screenshot"));
+        REQUIRE_FALSE(ParseLaunchArgs({"--dump-state-ticks", "3"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("needs --dump-state"));
+
+        // There is no frame to save without a renderer; the state dump is the text view
+        REQUIRE_FALSE(ParseLaunchArgs({"--null-render", "--frames", "5", "--screenshot", "s.png"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--offscreen"));
+        REQUIRE_FALSE(ParseLaunchArgs({"--screenshot"}, Options, Error));
+        REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("needs a file path"));
+    }
+}
+
+TEST_CASE("Capture file names", "[Launch Options]")
+{
+    using Fling::CaptureFilePath;
+
+    // One tick: the path as it is
+    REQUIRE(CaptureFilePath("Saved/shot.png", 30, false) == "Saved/shot.png");
+    // More than one: the tick before the extension
+    REQUIRE(CaptureFilePath("Saved/shot.png", 30, true) == "Saved/shot_tick30.png");
+    REQUIRE(CaptureFilePath("state", 7, true) == "state_tick7");
+    // A dot in a folder name is not an extension
+    REQUIRE(CaptureFilePath("out.d/state", 7, true) == "out.d/state_tick7");
+    REQUIRE(CaptureFilePath("out.d\\state", 7, true) == "out.d\\state_tick7");
+    // {tick} puts the tick where the caller wants it, with one tick or many
+    REQUIRE(CaptureFilePath("frames/{tick}.png", 120, false) == "frames/120.png");
+    REQUIRE(CaptureFilePath("frames/f{tick}.png", 5, true) == "frames/f5.png");
+}

@@ -12,8 +12,12 @@
 
 namespace Fling
 {
-    Instance::Instance()
+    Instance::Instance(const bool t_WithSurface) : m_WithSurface(t_WithSurface)
     {
+        if (m_WithSurface)
+        {
+            m_DeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        }
         m_EnableValidationLayers = FlingConfig::GetBool("Vulkan", "EnableValidationLayers", false);
         F_LOG_TRACE("[Renderer] m_EnableValidationLayers is {}", (m_EnableValidationLayers ? "TRUE" : "FALSE"));
 
@@ -121,11 +125,17 @@ namespace Fling
 
     std::vector<const char*> Instance::GetRequiredExtensions()
     {
-        uint32 glfwExtensionCount = 0;
-        const char** glfwExtensions;
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+        std::vector<const char*> extensions;
+        // An offscreen renderer has no window, so it needs no window system extension (and no glfwInit)
+        if (m_WithSurface)
+        {
+            uint32 glfwExtensionCount = 0;
+            const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+            if (glfwExtensions != nullptr)
+            {
+                extensions.assign(glfwExtensions, glfwExtensions + glfwExtensionCount);
+            }
+        }
 
         if (m_EnableValidationLayers)
         {

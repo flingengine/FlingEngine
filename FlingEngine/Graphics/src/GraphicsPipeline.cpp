@@ -118,12 +118,16 @@ namespace Fling {
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
         std::array<VkVertexInputAttributeDescription, 5> AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
+        m_VertexInputStateCreateInfo = {};
         m_VertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
-        m_VertexInputStateCreateInfo.pVertexBindingDescriptions = &BindingDescription;
-        m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount =
-            static_cast<uint32>(AttributeDescriptions.size());
-        m_VertexInputStateCreateInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
+        if (m_HasVertexInput)
+        {
+            m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+            m_VertexInputStateCreateInfo.pVertexBindingDescriptions = &BindingDescription;
+            m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount =
+                static_cast<uint32>(AttributeDescriptions.size());
+            m_VertexInputStateCreateInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
+        }
 
         // Create graphics pipeline ------------------------
         m_PipelineCreateInfo = {};

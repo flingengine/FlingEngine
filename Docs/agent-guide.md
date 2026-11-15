@@ -770,7 +770,11 @@ flag or key. The startup line `Run settings: ...` names each value and its sourc
 | Interpolation | `--interpolation on\|off` | `Interpolation` | on | GPU Options |
 | Thread jitter (tests) | `--thread-jitter S:U` (threaded only; an error otherwise) | none | off | no |
 
-Other flags: `--null-render` (no window or GPU, virtual clock), `--unattended` (no
+Other flags: `--null-render` (no window or GPU, virtual clock), `--offscreen` (render
+with the GPU into images, no window, with the timing of `--null-render`),
+`--resolution WxH`, `--screenshot <file.png>` and `--screenshot-ticks L` (PNG of the
+frame that shows each tick), `--dump-state <file.json>` and `--dump-state-ticks L` (the
+simulation state as JSON after each tick), `--unattended` (no
 dialogs; a crash exits 2 with a stack trace), `--frames N` (see below),
 `--frames-per-tick N` (headless frames between ticks), `--seed S`, `--level <file>` (relative to `Assets/`),
 `--play`, `--dump-schedule`, `--validate-schedule`, `--dump-ticks <file>`,
@@ -829,6 +833,9 @@ the tests from the repository root. clang-cl configure flags are in
 
 Headless run: `Sandbox --null-render --unattended --frames 120 --seed 1` (the last log
 lines print `Sandbox: 754 transforms, checksum ...` and `Fling exit: code=0 ticks=120 ...`).
+To see what a run did without a window, read the state (`--dump-state`), or render
+offscreen and look at a PNG (`--offscreen --screenshot`; a software Vulkan driver such
+as llvmpipe is enough): `Skills/testing.md`, "Seeing the game without a window".
 
 Test layout (Catch2 3; each executable links only its module):
 

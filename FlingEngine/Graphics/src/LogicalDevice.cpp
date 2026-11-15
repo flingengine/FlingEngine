@@ -41,10 +41,18 @@ namespace Fling
                 m_SupportedQueues |= VK_QUEUE_GRAPHICS_BIT;
             }
 
-            // Check for presentation support.
-            VkBool32 presentSupport;
-            vkGetPhysicalDeviceSurfaceSupportKHR(
-                m_PhysicalDevice->GetVkPhysicalDevice(), i, m_Surface, &presentSupport);
+            // Check for presentation support. With no surface (offscreen) nothing is presented,
+            // and the "present" queue is the graphics queue
+            VkBool32 presentSupport = VK_FALSE;
+            if (m_Surface != VK_NULL_HANDLE)
+            {
+                vkGetPhysicalDeviceSurfaceSupportKHR(
+                    m_PhysicalDevice->GetVkPhysicalDevice(), i, m_Surface, &presentSupport);
+            }
+            else
+            {
+                presentSupport = (QueueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) ? VK_TRUE : VK_FALSE;
+            }
 
             if (QueueFamilies[i].queueCount > 0 && presentSupport)
             {

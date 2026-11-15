@@ -25,6 +25,8 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 /**
  * Triggers a breakpoint at the call site, halting execution if a debugger is attached.
@@ -50,8 +52,9 @@ namespace Fling
      * along with all startup/shutdown ordering.
      *
      * The loop does not need a window: with --null-render the engine makes no
-     * window and no GPU device, and ticks with a fixed delta. See LaunchOptions
-     * for the launch flags.
+     * window and no GPU device, and ticks with a fixed delta. With --offscreen it
+     * renders with the GPU into images it owns, still with no window, on the same
+     * fixed delta. See LaunchOptions for the launch flags.
      */
     class Engine
     {
@@ -237,6 +240,30 @@ namespace Fling
 
         /** Writes the ledger rows of the ticks since the last call to the --dump-ticks file (main thread). */
         void DumpNewTicks();
+
+        /** Writes the state dumps that the ticks made since the last call to their --dump-state files (main thread). */
+        void WriteStateDumps();
+
+        /** Before the frame is drawn: ask the renderer to save it for each --screenshot tick that it shows. */
+        void RequestScreenshots();
+
+        /** After the frame is drawn: log the screenshots that it saved, or why not. */
+        void SaveScreenshots();
+
+        /** --dump-state: the ticks whose state has not been written yet. Sorted. */
+        std::vector<uint64> m_PendingStateDumps;
+
+        /** --dump-state: files that could not be written. */
+        uint32 m_StateDumpsFailed = 0;
+
+        /** --screenshot: the ticks whose frame has not been saved yet. Sorted. */
+        std::vector<uint64> m_PendingScreenshots;
+
+        /** --screenshot: for each capture asked for this frame, the tick asked for and the tick the frame shows. */
+        std::vector<std::pair<uint64, uint64>> m_ScreenshotShownTicks;
+
+        /** --screenshot: captures that failed. */
+        uint32 m_ScreenshotsFailed = 0;
 
         /** The exec mode's policies: the world's mode and last tick, and for threaded play the game thread and input.
          */

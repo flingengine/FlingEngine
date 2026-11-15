@@ -34,5 +34,15 @@ namespace Fling
          * Call this after vkDestroyInstance.
          */
         static void UnloadLoader();
+
+        /**
+         * The name of the first surface command (VK_KHR_surface, loaded with the instance) that
+         * did not load, or null when all did. A renderer with a window needs them; an offscreen
+         * one does not.
+         */
+        static const char* MissingSurfaceCommand();
+
+        /** The same for the swap chain commands (VK_KHR_swapchain, loaded with the device). */
+        static const char* MissingSwapchainCommand();
     };
 } // namespace Fling

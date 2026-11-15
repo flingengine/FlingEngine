@@ -6,6 +6,7 @@
 #include "Strings/String.h"
 
 #include <optional>
+#include <vector>
 
 namespace Fling
 {
@@ -27,6 +28,21 @@ namespace Fling
      * LaunchOptions::Parse.
      *
      *   --null-render       No window, no swapchain, no GPU work
+     *   --offscreen         Render with the GPU into images the engine owns: no window and no
+     *                       surface. Timing is the same as --null-render (a virtual clock, no
+     *                       frame cap), so a run gives the same ticks. For --screenshot
+     *   --resolution WxH    The size of the frames (--offscreen) or of the window, for example 1280x720.
+     *                       Overrides [Engine] WindowWidth and WindowHeight
+     *   --screenshot F      Save the rendered frame as a PNG file F (relative to the project).
+     *                       Needs a renderer (--offscreen or a window), not --null-render
+     *   --screenshot-ticks L  The ticks to save a frame at, a comma list such as 30,60,120: the
+     *                       first frame that shows each tick. With more than one tick, or with
+     *                       {tick} in F, each file name gets the tick. Without it: the last tick
+     *                       of the run (needs --frames)
+     *   --dump-state F      Write the simulation state (every saved component and singleton) as
+     *                       JSON to file F, on the game thread right after a tick. Works with
+     *                       --null-render
+     *   --dump-state-ticks L  The ticks to write the state at (the same rules as --screenshot-ticks)
      *   --unattended        No modal dialogs. A crash prints a stack trace and exits with code 2
      *   --frames N          Run N frames, then exit, in every exec mode. No tick runs after
      *                       tick N / frames-per-tick (rounded up), and the run ends once that
@@ -64,6 +80,28 @@ namespace Fling
     struct LaunchOptions
     {
         bool NullRender = false;
+
+        /** Render into offscreen images: no window, no surface (--offscreen). */
+        bool Offscreen = false;
+
+        /** --resolution: the frame or window size. 0 means use the config. */
+        uint32 ResolutionWidth = 0;
+        uint32 ResolutionHeight = 0;
+
+        /** The PNG file to save rendered frames to (--screenshot). Empty means none. */
+        String Screenshot;
+
+        /** The ticks to save a frame at (--screenshot-ticks). Empty: the last tick of the run. Sorted. */
+        std::vector<uint64> ScreenshotTicks;
+
+        /** The JSON file to write the simulation state to (--dump-state). Empty means none. */
+        String DumpState;
+
+        /** The ticks to write the state at (--dump-state-ticks). Empty: the last tick of the run. Sorted. */
+        std::vector<uint64> DumpStateTicks;
+
+        /** True with no window (--null-render, --offscreen): a virtual clock and no frame cap. */
+        bool IsHeadless() const { return NullRender || Offscreen; }
 
         bool Unattended = false;
 
@@ -156,6 +194,13 @@ namespace Fling
          */
         static bool Parse(const CommandLine& t_CmdLine, LaunchOptions& t_Out, String& t_OutError);
     };
+
+    /**
+     * The file name of one capture (--screenshot, --dump-state) at a tick. "{tick}" in the path
+     * is replaced with the tick. Without it, when there is more than one tick, "_tick<N>" goes
+     * before the extension (shot.png: shot_tick30.png). Otherwise the path is used as it is.
+     */
+    String CaptureFilePath(StringView t_Path, uint64 t_Tick, bool t_ManyTicks);
 
     /** Read "on" or "off" (a switch setting such as --vsync or [Engine] VSync). False for any other text. */
     inline bool ParseOnOff(const StringView t_Text, bool& t_Out)

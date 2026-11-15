@@ -83,6 +83,14 @@ TEST_CASE("Run settings: the frame cap is the monitor's refresh rate, else 60", 
         Settings.ResolveFrameCap(std::nullopt);
         REQUIRE(Settings.MaxFps == 30);
         REQUIRE(Settings.MaxFpsSource == SettingSource::CommandLine);
+
+        // --offscreen renders, but it is headless too: no monitor, no cap
+        REQUIRE(Resolve({"--offscreen"}, {}, Settings, Error));
+        REQUIRE(Settings.Headless);
+        Settings.ResolveFrameCap(144u);
+        REQUIRE(Settings.MaxFps == 0);
+        REQUIRE_THAT(Settings.Describe(),
+                     Catch::Matchers::ContainsSubstring("frame cap none (default for --offscreen)"));
     }
     SECTION("A set cap wins over the monitor; 0 is no cap")
     {

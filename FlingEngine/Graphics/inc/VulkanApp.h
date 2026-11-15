@@ -7,6 +7,7 @@
 #include "Strings/String.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace Fling
@@ -21,6 +22,35 @@ namespace Fling
         CUBEMAP = (1u << 3),
         DEBUG = (1u << 4),
         ALL = 0xff
+    };
+
+    /**
+     * What the renderer draws to. Set it with VulkanApp::SetRenderSurface before Init.
+     */
+    struct RenderSurfaceDesc
+    {
+        /**
+         * True: draw into images that the renderer owns (--offscreen). There is no window, no
+         * surface, and no window system: a run works on a machine with no display, and opens
+         * nothing on a machine that has one. Captures (RequestCapture) still work.
+         */
+        bool Offscreen = false;
+
+        /** The size of the frames (offscreen) or the window. 0: [Engine] WindowWidth and WindowHeight. */
+        uint32 Width = 0;
+        uint32 Height = 0;
+    };
+
+    /** The result of one RequestCapture. */
+    struct CaptureResult
+    {
+        /** The file that was asked for. */
+        String Path;
+
+        bool Ok = false;
+
+        /** Why it failed, when Ok is false. */
+        String Error;
     };
 
     class Instance;
@@ -100,6 +130,26 @@ namespace Fling
         /** The present mode of the swap chain. */
         PresentMode GetPresentMode() const;
 
+        /** What to draw to: a window or offscreen images, and the size. Call it before Init. */
+        void SetRenderSurface(const RenderSurfaceDesc& t_Desc) { m_SurfaceDesc = t_Desc; }
+
+        /** True when the renderer draws offscreen (RenderSurfaceDesc::Offscreen): there is no window. */
+        bool IsOffscreen() const { return m_SurfaceDesc.Offscreen; }
+
+        /** The size of the frames the renderer draws, in pixels. 0 x 0 before Init. */
+        uint32 GetFrameWidth() const;
+        uint32 GetFrameHeight() const;
+
+        /**
+         * Save the next frame that Update draws as a PNG file (t_Path, already resolved),
+         * offscreen or with a window. More than one call before that frame saves the same
+         * frame to each path. TakeCaptureResults says how each went.
+         */
+        void RequestCapture(StringView t_Path) { m_PendingCaptures.emplace_back(t_Path); }
+
+        /** The results of the captures since the last call, in request order. */
+        std::vector<CaptureResult> TakeCaptureResults() { return std::exchange(m_CaptureResults, {}); }
+
     protected:
         void Init() override {}
         void Shutdown() override {}
@@ -178,5 +228,17 @@ namespace Fling
         FirstPersonCamera* m_Camera = nullptr;
 
         std::unique_ptr<State> m_State;
+
+        /** @see SetRenderSurface */
+        RenderSurfaceDesc m_SurfaceDesc;
+
+        /** @see RequestCapture */
+        std::vector<String> m_PendingCaptures;
+
+        /** @see TakeCaptureResults */
+        std::vector<CaptureResult> m_CaptureResults;
+
+        /** Save the frame in the active image to the pending captures (Update, after the frame's fence). */
+        void SaveCaptures();
     };
 } // namespace Fling

@@ -17,7 +17,12 @@ namespace Fling
         Instance(const Instance&) = delete;
         Instance& operator=(const Instance&) = delete;
 
-        explicit Instance();
+        /**
+         * t_WithSurface: enable the extensions that a window needs (GLFW's instance extensions
+         * and VK_KHR_swapchain on the device). False for an offscreen renderer, which needs no
+         * window system at all.
+         */
+        explicit Instance(bool t_WithSurface = true);
 
         ~Instance();
 
@@ -46,6 +51,9 @@ namespace Fling
          * Default to false if no config
          */
         uint8 m_EnableValidationLayers : 1;
+
+        /** @see Instance() */
+        bool m_WithSurface = true;
 
         /**
          * Create the VkInstance of this object and application information
@@ -99,7 +107,7 @@ namespace Fling
         /** The validation layers that we want to look for on this instance */
         const std::vector<const char*> m_ValidationLayers = {"VK_LAYER_LUNARG_standard_validation"};
 
-        /** Device extension support for the swap chain */
-        const std::vector<const char*> m_DeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+        /** The device extensions to enable: VK_KHR_swapchain with a surface, none offscreen */
+        std::vector<const char*> m_DeviceExtensions;
     };
 } // namespace Fling
