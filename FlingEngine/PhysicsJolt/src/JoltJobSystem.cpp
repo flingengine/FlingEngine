@@ -96,10 +96,10 @@ namespace Fling
         }
     }
 
-    JPH::JobHandle JoltJobSystem::CreateJob(const char* t_Name,
-                                            JPH::ColorArg t_Color,
-                                            const JobFunction& t_Function,
-                                            JPH::uint32 t_NumDependencies)
+    JoltJobSystem::Job* JoltJobSystem::AllocateJob(const char* t_Name,
+                                                   JPH::ColorArg t_Color,
+                                                   const JobFunction& t_Function,
+                                                   JPH::uint32 t_NumDependencies)
     {
         JPH::uint32 Index = m_JobStorage.ConstructObject(t_Name, t_Color, this, t_Function, t_NumDependencies);
         while (Index == JobList::cInvalidObjectIndex)
@@ -109,14 +109,42 @@ namespace Fling
             std::this_thread::yield();
             Index = m_JobStorage.ConstructObject(t_Name, t_Color, this, t_Function, t_NumDependencies);
         }
+        return &m_JobStorage.Get(Index);
+    }
 
-        Job* NewJob = &m_JobStorage.Get(Index);
+    JPH::JobHandle JoltJobSystem::CreateJob(const char* t_Name,
+                                            JPH::ColorArg t_Color,
+                                            const JobFunction& t_Function,
+                                            JPH::uint32 t_NumDependencies)
+    {
+        Job* NewJob = AllocateJob(t_Name, t_Color, t_Function, t_NumDependencies);
         JobHandle Handle(NewJob);
         if (t_NumDependencies == 0)
         {
             QueueJob(NewJob);
         }
         return Handle;
+    }
+
+    void JoltJobSystem::CreateJobs(const char* t_Name,
+                                   JPH::ColorArg t_Color,
+                                   const JobFunction& t_Function,
+                                   JobHandle* t_OutJobs,
+                                   JPH::uint32 t_NumJobs,
+                                   JPH::uint32 t_NumDependencies)
+    {
+        for (JPH::uint32 i = 0; i < t_NumJobs; ++i)
+        {
+            t_OutJobs[i] = JobHandle(AllocateJob(t_Name, t_Color, t_Function, t_NumDependencies));
+        }
+
+        // Queue them in one push, so the workers are woken one time. A JobHandle
+        // holds only the job pointer, as Jolt's own thread pool also assumes.
+        if (t_NumDependencies == 0)
+        {
+            static_assert(sizeof(JobHandle) == sizeof(Job*));
+            QueueJobs(reinterpret_cast<Job**>(t_OutJobs), t_NumJobs);
+        }
     }
 
     void JoltJobSystem::QueueJob(Job* t_Job)

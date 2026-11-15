@@ -61,7 +61,7 @@ These are git submodules. Each one keeps its own license file, listed here.
 | [GLFW](https://www.glfw.org/) | Windows and input | zlib | `external/glfw/LICENSE.md` |
 | [GLM](https://github.com/g-truc/glm) | Math | MIT (or the Happy Bunny License) | `external/glm/copying.txt` |
 | [Dear ImGui](https://github.com/ocornut/imgui) | Editor and debug UI | MIT | `external/imgui/LICENSE.txt` |
-| [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (our fork: [flingengine/JoltPhysics](https://github.com/flingengine/JoltPhysics), at tag v5.6.0) | Physics provider when `FLING_PHYSICS_PROVIDER=Jolt` (the default) | MIT | `external/JoltPhysics/LICENSE` |
+| [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (our fork: [flingengine/JoltPhysics](https://github.com/flingengine/JoltPhysics), at tag v5.7.0) | Physics provider when `FLING_PHYSICS_PROVIDER=Jolt` (the default) | MIT | `external/JoltPhysics/LICENSE` |
 | [inih](https://github.com/benhoyt/inih) | INI config files | BSD 3-Clause | `external/inih/LICENSE.txt` |
 | [JSON for Modern C++](https://github.com/nlohmann/json) | JSON files, input recordings | MIT | `external/json/LICENSE.MIT` |
 | [spdlog](https://github.com/gabime/spdlog) | Logging | MIT | `external/spdlog/LICENSE` |

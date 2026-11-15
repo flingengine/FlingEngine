@@ -480,7 +480,7 @@ TEST_CASE("Provider: the pyramid scene matches the saved result on every platfor
     // value on every platform in the same change.
     const uint64 Hash = HashBodies(Reg);
     INFO("Provider " << Provider->GetName() << ", " << WorkerCount << " workers, hash 0x" << std::hex << Hash);
-    REQUIRE(Hash == 0x6b3a55f789760cf8ull);
+    REQUIRE(Hash == 0xfc93dbceefb1b6c1ull);
 }
 
 namespace
