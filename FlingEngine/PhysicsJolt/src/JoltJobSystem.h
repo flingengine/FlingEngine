@@ -47,6 +47,13 @@ namespace Fling
                             const JobFunction& t_Function,
                             JPH::uint32 t_NumDependencies = 0) override;
 
+        void CreateJobs(const char* t_Name,
+                        JPH::ColorArg t_Color,
+                        const JobFunction& t_Function,
+                        JobHandle* t_OutJobs,
+                        JPH::uint32 t_NumJobs,
+                        JPH::uint32 t_NumDependencies = 0) override;
+
         uint32 GetWorkerCount() const { return static_cast<uint32>(m_Workers.size()); }
 
     protected:
@@ -100,6 +107,12 @@ namespace Fling
             std::atomic<bool>& m_Quit;
             JPH::uint m_WorkerCount = 0;
         };
+
+        /** Take a free job slot, waiting for one if all are in use. */
+        Job* AllocateJob(const char* t_Name,
+                         JPH::ColorArg t_Color,
+                         const JobFunction& t_Function,
+                         JPH::uint32 t_NumDependencies);
 
         /** Run a queued job and drop the queue's reference to it. */
         static void RunJob(Job* t_Job);
