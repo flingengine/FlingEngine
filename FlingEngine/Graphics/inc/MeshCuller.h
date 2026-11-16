@@ -53,7 +53,7 @@ namespace Fling
          * @param t_Items       The snapshot's meshes
          * @param t_ItemSlots   The slot of each item (MeshProxyTable::SyncResult::ItemSlots)
          * @param t_Frustum     The camera's view volume. Null: no culling, every drawn slot is visible
-         * @return True if a slot became visible or hidden, so a recorded draw list is out of date
+         * @return True if a slot became visible or hidden since the last Cull
          */
         GRAPHICS_API bool
         Cull(std::span<const MeshDrawItem> t_Items, std::span<const uint32> t_ItemSlots, const Frustum* t_Frustum);

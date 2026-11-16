@@ -385,7 +385,6 @@ namespace Fling
                 Pipelines |= PipelineFlags::IMGUI;
             }
             VulkanApp::Get().SetVSync(m_Settings.VSync);
-            VulkanApp::Get().SetFrustumCulling(m_Settings.FrustumCulling);
             VulkanApp::Get().Init(static_cast<PipelineFlags>(Pipelines), Storage, m_DebugUI);
             F_LOG_TRACE("Render size: {}x{}", VulkanApp::Get().GetFrameWidth(), VulkanApp::Get().GetFrameHeight());
         }

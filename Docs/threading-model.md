@@ -215,8 +215,11 @@ snapshot: the packet and the snapshot still hold every mesh. The offscreen
 (G-buffer) pass tests each mesh's world box (the model's local bounds, placed
 by the item's drawn matrix) against the planes of this frame's camera
 (`Frustum`, `MeshCuller` in `FlingEngine/Graphics/inc/`), and skips the draw
-call and the uniform buffer write of a mesh that is outside. A culled mesh
+and the uniform buffer write of a mesh that is outside. A culled mesh
 keeps its proxy slot and GPU resources, so it costs nothing to bring back.
+Each mesh is recorded as an indirect draw; the CPU writes its instance count
+(1 in view, 0 culled) every frame, so a moving camera never makes the command
+buffers record again (they record only when the draw list changes).
 The camera is only final in `VulkanApp::Update`, after the frame systems ran,
 so the snapshot's blend and matrix work is not culled; a test against the last
 frame's camera would not be conservative. Lights are not culled (the deferred

@@ -17,6 +17,9 @@ namespace Fling
         /** False for an empty box: nothing was added, so the bounds are not known. */
         bool IsValid() const { return Min.x <= Max.x && Min.y <= Max.y && Min.z <= Max.z; }
 
+        /** Grow the box to hold t_Point. Adding to an empty box makes the box of that point alone. */
+        GRAPHICS_API void Add(const glm::vec3& t_Point);
+
         /** The box around every point. Empty when there are none. */
         GRAPHICS_API static Aabb Of(std::span<const glm::vec3> t_Points);
     };

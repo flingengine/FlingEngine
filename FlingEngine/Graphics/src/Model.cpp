@@ -156,13 +156,11 @@ namespace Fling
 
     void Model::CalculateLocalBounds()
     {
-        std::vector<glm::vec3> Positions;
-        Positions.reserve(m_Verts.size());
+        m_LocalBounds = Aabb{};
         for (const Vertex& Vert : m_Verts)
         {
-            Positions.push_back(Vert.Pos);
+            m_LocalBounds.Add(Vert.Pos);
         }
-        m_LocalBounds = Aabb::Of(Positions);
     }
 
     void Model::CreateBuffers()

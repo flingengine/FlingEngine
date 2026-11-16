@@ -15,6 +15,8 @@
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 
+#include <algorithm>
+
 namespace Fling
 {
     OffscreenSubpass::OffscreenSubpass(const LogicalDevice* t_Dev,
@@ -83,6 +85,9 @@ namespace Fling
 
         delete m_CameraUboBuffer;
         m_CameraUboBuffer = nullptr;
+
+        delete m_DrawCommands;
+        m_DrawCommands = nullptr;
     }
 
     void OffscreenSubpass::Draw(CommandBuffer& t_CmdBuf,
@@ -114,6 +119,7 @@ namespace Fling
         CullMeshes(t_Snapshot);
 
         UpdateMeshUniformBuffers(t_Snapshot);
+        WriteDrawCommands();
 
         // The command buffer holds only draw calls and descriptor bindings, not
         // UBO data. Keep the last recording if the draw list did not change.
@@ -142,11 +148,11 @@ namespace Fling
             GpuMesh& Mesh = m_GpuMeshes[Slot];
             const bool bHasAssets = ResolveMeshAssets(m_Proxies.At(Slot), Mesh);
             Mesh.Drawn = bHasAssets && Mesh.MeshMaterial->GetType() == Material::Type::Default;
-            m_Culler.SetSlot(Slot, Mesh.Drawn, Mesh.Drawn ? Mesh.MeshModel->GetLocalBounds() : Aabb{});
             if (!Mesh.Drawn)
             {
                 // Another pass draws it (a debug material), or there is no model
                 RetireGpuMesh(Mesh);
+                m_Culler.SetSlot(Slot, false, Aabb{});
                 return;
             }
 
@@ -160,6 +166,8 @@ namespace Fling
             }
             CreateMeshDescriptorSet(Mesh);
             Mesh.UploadedVersion = 0;
+            // The same test the recording uses, so the culler counts only what gets a draw call
+            m_Culler.SetSlot(Slot, IsDrawable(Mesh), Mesh.MeshModel->GetLocalBounds());
         };
 
         for (const uint32 Slot : Result.Added)
@@ -177,6 +185,7 @@ namespace Fling
         {
             InvalidateCommandBuffers();
         }
+        EnsureDrawCommandCapacity();
     }
 
     void OffscreenSubpass::RetireGpuMesh(GpuMesh& t_Mesh)
@@ -194,10 +203,54 @@ namespace Fling
 
     void OffscreenSubpass::CullMeshes(const RenderSnapshot& t_Snapshot)
     {
+        // A change of the visible set needs no new recording: WriteDrawCommands gives each
+        // recorded indirect draw its instance count (0 or 1) for this frame
         const Frustum View = Frustum::FromViewProjection(m_CameraViewProjection);
-        if (m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr))
+        m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr);
+    }
+
+    void OffscreenSubpass::EnsureDrawCommandCapacity()
+    {
+        const size_t Needed = std::max<size_t>(m_GpuMeshes.size(), 1);
+        if (m_DrawCommands != nullptr && m_DrawCommandCapacity >= Needed)
         {
-            InvalidateCommandBuffers();
+            return;
+        }
+        // Grow by doubling. The recordings point at the old buffer, so they record again; it
+        // is deleted with the retired UBOs, once the GPU is done with the frame that used it
+        size_t Capacity = std::max<size_t>(m_DrawCommandCapacity, 64);
+        while (Capacity < Needed)
+        {
+            Capacity *= 2;
+        }
+        if (m_DrawCommands != nullptr)
+        {
+            m_RetiredUniformBuffers.emplace_back(m_DrawCommands);
+        }
+        const VkDeviceSize Size = sizeof(VkDrawIndexedIndirectCommand) * Capacity;
+        m_DrawCommands = new Buffer(Size,
+                                    VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_DrawCommands->MapMemory(Size);
+        m_DrawCommandCapacity = Capacity;
+        InvalidateCommandBuffers();
+    }
+
+    void OffscreenSubpass::WriteDrawCommands()
+    {
+        // One buffer is enough: each frame waits for the GPU to finish before the next frame
+        // writes it (as with the camera UBO)
+        auto* Commands = static_cast<VkDrawIndexedIndirectCommand*>(m_DrawCommands->m_MappedMem);
+        for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
+        {
+            const GpuMesh& Mesh = m_GpuMeshes[Slot];
+            VkDrawIndexedIndirectCommand& Command = Commands[Slot];
+            Command = {};
+            if (IsDrawable(Mesh))
+            {
+                Command.indexCount = Mesh.MeshModel->GetIndexCount();
+                Command.instanceCount = m_Culler.IsVisible(Slot) ? 1 : 0;
+            }
         }
     }
 
@@ -254,7 +307,9 @@ namespace Fling
         for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
         {
             const GpuMesh& Mesh = m_GpuMeshes[Slot];
-            if (!Mesh.Drawn || Mesh.MeshModel == nullptr || Mesh.Set == VK_NULL_HANDLE || !m_Culler.IsVisible(Slot))
+            // Every drawable slot is recorded, in view or not: its indirect command's instance
+            // count, written each frame, decides whether it draws
+            if (!IsDrawable(Mesh))
             {
                 continue;
             }
@@ -274,7 +329,11 @@ namespace Fling
             vkCmdBindVertexBuffers(t_CmdBuf.GetHandle(), 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(
                 t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
-            vkCmdDrawIndexed(t_CmdBuf.GetHandle(), Model->GetIndexCount(), 1, 0, 0, 0);
+            vkCmdDrawIndexedIndirect(t_CmdBuf.GetHandle(),
+                                     m_DrawCommands->GetVkBuffer(),
+                                     sizeof(VkDrawIndexedIndirectCommand) * Slot,
+                                     1,
+                                     sizeof(VkDrawIndexedIndirectCommand));
         }
 
         t_CmdBuf.EndRenderPass();

@@ -74,7 +74,8 @@ namespace Fling
         /**
          * Frustum culling on or off (RunSettings::FrustumCulling). On: a mesh whose bounds are
          * outside the camera's view is not drawn and its uniform buffer is not written. Takes
-         * effect on the next Draw.
+         * effect on the next Draw. The pass holds the renderer's only copy: VulkanApp passes the
+         * value on, and Engine::Present sets it before every frame from RunControls.
          */
         void SetFrustumCulling(const bool t_On) { m_FrustumCulling = t_On; }
 
@@ -101,11 +102,26 @@ namespace Fling
 
         /**
          * Find the meshes in the camera's view (m_Culler), from this frame's camera and the
-         * snapshot's world matrices. The command buffers record again when the set changes.
+         * snapshot's world matrices. A change of the visible set does not record again.
          */
         void CullMeshes(const RenderSnapshot& t_Snapshot);
 
-        /** Record the draw calls for every visible proxy into the given command buffer */
+        /** Make m_DrawCommands hold one command per slot. A new buffer makes the recordings out of date. */
+        void EnsureDrawCommandCapacity();
+
+        /** Write each slot's indirect draw for this frame: its index count, and 1 instance if visible, else 0 */
+        void WriteDrawCommands();
+
+        /** True if the pass records a draw for the mesh: the pass draws it and it has its GPU resources */
+        static bool IsDrawable(const GpuMesh& t_Mesh)
+        {
+            return t_Mesh.Drawn && t_Mesh.MeshModel != nullptr && t_Mesh.Set != VK_NULL_HANDLE;
+        }
+
+        /**
+         * Record an indirect draw for every drawable proxy, visible or not, into the given
+         * command buffer. The recording changes only with the draw list, not with the camera.
+         */
         void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf);
 
         /** Make each offscreen command buffer record again on its next use */
@@ -131,6 +147,16 @@ namespace Fling
 
         /** Projection * view of this frame's camera UBO, for culling */
         glm::mat4 m_CameraViewProjection{1.0f};
+
+        /**
+         * One VkDrawIndexedIndirectCommand per proxy slot, which the recorded draws read. The
+         * CPU writes the instance counts each frame (WriteDrawCommands), so culling a mesh or
+         * bringing it back needs no new recording.
+         */
+        Buffer* m_DrawCommands = nullptr;
+
+        /** The number of commands m_DrawCommands holds */
+        size_t m_DrawCommandCapacity = 0;
 
         /**
          * Goes up by one each time the draw list changes. A command buffer records
@@ -163,7 +189,10 @@ namespace Fling
          */
         std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
 
-        /** UBOs of destroyed meshes. Deleted at the same time as m_RetiredDescriptorSets. */
+        /**
+         * UBOs of destroyed meshes, and draw command buffers that were replaced by a larger one.
+         * Deleted at the same time as m_RetiredDescriptorSets.
+         */
         std::vector<Buffer*> m_RetiredUniformBuffers;
     };
 } // namespace Fling

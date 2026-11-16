@@ -13,6 +13,7 @@
 
 #include <catch2/catch_all.hpp>
 #include <chrono>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -377,4 +378,40 @@ TEST_CASE("Frustum culling: a slot the pass does not draw is neither drawn nor c
     REQUIRE(Culler.Stats().Culled == 0);
     // A slot it never heard of is not visible
     REQUIRE_FALSE(Culler.IsVisible(7));
+}
+
+TEST_CASE("Frustum: a box grows point by point, and a NaN point never makes it cullable", "[graphics][culling]")
+{
+    Aabb Box;
+    REQUIRE_FALSE(Box.IsValid());
+    Box.Add({1.0f, 2.0f, 3.0f});
+    REQUIRE(Box.IsValid());
+    REQUIRE(Box.Min == glm::vec3(1.0f, 2.0f, 3.0f));
+    REQUIRE(Box.Max == glm::vec3(1.0f, 2.0f, 3.0f));
+    Box.Add({-1.0f, 5.0f, 0.0f});
+    REQUIRE(Box.Min == glm::vec3(-1.0f, 2.0f, 0.0f));
+    REQUIRE(Box.Max == glm::vec3(1.0f, 5.0f, 3.0f));
+
+    // Of is the same as adding each point
+    const std::vector<glm::vec3> Points = {{1.0f, 2.0f, 3.0f}, {-1.0f, 5.0f, 0.0f}};
+    const Aabb Made = Aabb::Of(Points);
+    REQUIRE(Made.Min == Box.Min);
+    REQUIRE(Made.Max == Box.Max);
+    REQUIRE_FALSE(Aabb::Of({}).IsValid());
+
+    // A NaN point never lets the box lose a point in view, wherever it comes
+    const float NaN = std::numeric_limits<float>::quiet_NaN();
+    const Frustum View = Frustum::FromViewProjection(ForwardCamera());
+    const glm::vec3 InView{0.0f, 0.0f, -5.0f};
+    const glm::vec3 FarAway{1000.0f, 0.0f, -5.0f};
+    for (const std::vector<glm::vec3>& Order : std::vector<std::vector<glm::vec3>>{
+             {glm::vec3(NaN), InView, FarAway}, {InView, glm::vec3(NaN), FarAway}, {InView, FarAway, glm::vec3(NaN)}})
+    {
+        Aabb Mixed;
+        for (const glm::vec3& Point : Order)
+        {
+            Mixed.Add(Point);
+        }
+        REQUIRE(View.Intersects(Mixed, glm::mat4(1.0f)));
+    }
 }

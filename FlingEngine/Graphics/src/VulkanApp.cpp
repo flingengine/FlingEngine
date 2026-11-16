@@ -419,7 +419,6 @@ namespace Fling
 
     void VulkanApp::SetFrustumCulling(const bool t_On)
     {
-        m_FrustumCulling = t_On;
         if (m_MeshPass != nullptr)
         {
             m_MeshPass->SetFrustumCulling(t_On);
@@ -610,7 +609,6 @@ namespace Fling
             // These shaders do not have any vertex input and do the final processing to the screen
             OffscreenSubpass* Offscreen = static_cast<OffscreenSubpass*>(Subpasses[0].get());
             assert(Offscreen);
-            Offscreen->SetFrustumCulling(m_FrustumCulling);
             m_MeshPass = Offscreen;
             FrameBuffer* OffscreenBuf = Offscreen->GetOffscreenFrameBuffer();
             assert(OffscreenBuf);

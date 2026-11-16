@@ -17,19 +17,25 @@ namespace Fling
         }
     } // namespace
 
+    void Aabb::Add(const glm::vec3& t_Point)
+    {
+        // Only the empty box starts again. A box made invalid by a NaN stays invalid, so it is never culled
+        if (Min.x > Max.x)
+        {
+            Min = t_Point;
+            Max = t_Point;
+            return;
+        }
+        Min = glm::min(Min, t_Point);
+        Max = glm::max(Max, t_Point);
+    }
+
     Aabb Aabb::Of(const std::span<const glm::vec3> t_Points)
     {
         Aabb Box;
-        if (t_Points.empty())
-        {
-            return Box;
-        }
-        Box.Min = t_Points[0];
-        Box.Max = t_Points[0];
         for (const glm::vec3& Point : t_Points)
         {
-            Box.Min = glm::min(Box.Min, Point);
-            Box.Max = glm::max(Box.Max, Point);
+            Box.Add(Point);
         }
         return Box;
     }

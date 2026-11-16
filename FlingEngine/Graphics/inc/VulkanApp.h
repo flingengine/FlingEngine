@@ -128,12 +128,11 @@ namespace Fling
         PresentMode GetPresentMode() const;
 
         /**
-         * Frustum culling on or off (RunSettings::FrustumCulling). On: the meshes outside the
-         * camera's view this frame are not drawn (MeshCuller). Before Init or after, from the
-         * next frame.
+         * Frustum culling on or off (RunSettings::FrustumCulling) for the next frame. On: the
+         * meshes outside the camera's view are not drawn (MeshCuller). The mesh pass holds the
+         * value, so it does nothing before Init; Engine::Present calls it before every frame.
          */
         void SetFrustumCulling(bool t_On);
-        bool GetFrustumCulling() const { return m_FrustumCulling; }
 
         /** The meshes the last frame drew and culled. Zero before the first frame and under --null-render. */
         CullStats GetCullStats() const;
@@ -210,9 +209,6 @@ namespace Fling
 
         /** @see SetVSync */
         bool m_VSync = true;
-
-        /** @see SetFrustumCulling */
-        bool m_FrustumCulling = true;
 
         /** The pass that draws the meshes, which culls them. Owned by m_RenderPipelines. */
         OffscreenSubpass* m_MeshPass = nullptr;
