@@ -32,7 +32,8 @@ namespace Fling
      *                       surface. Timing is the same as --null-render (a virtual clock, no
      *                       frame cap), so a run gives the same ticks. For --screenshot
      *   --resolution WxH    The size of the frames (--offscreen) or of the window, for example 1280x720.
-     *                       Overrides [Engine] WindowWidth and WindowHeight
+     *                       Overrides [Engine] WindowWidth and WindowHeight. A window is still
+     *                       made smaller to fit the screen
      *   --screenshot F      Save the rendered frame as a PNG file F (relative to the project).
      *                       Needs a renderer (--offscreen or a window), not --null-render
      *   --screenshot-ticks L  The ticks to save a frame at, a comma list such as 30,60,120: the

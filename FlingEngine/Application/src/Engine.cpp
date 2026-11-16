@@ -17,6 +17,7 @@
 #include "PresentMode.h"
 #include "Random.h"
 #include "RegisterGraphics.h"
+#include "Screenshot.h"
 #include "Strings/String.h"
 #include "Threading/Lane.h"
 #include "Threading/Thread.h"
@@ -609,15 +610,17 @@ namespace Fling
 
             if (m_Options.NullRender)
             {
+                // No renderer to serve a Screenshot::Request: it fails now, so its caller hears back
+                Screenshot::FailPending("there is no renderer (--null-render); use --offscreen");
                 // No cap unless a setting asks for one (RunSettings::ResolveFrameCap), so tests stay fast
                 m_FrameLimiter.WaitForNextFrame();
             }
             else
             {
-                // A window, or offscreen images (--offscreen)
+                // A window, or offscreen images (--offscreen). The present saves the screenshots
+                // that are waiting (Screenshot::Request), from --screenshot or anywhere else
                 RequestScreenshots();
                 Present(DeltaTime);
-                SaveScreenshots();
             }
             Timing.UpdateFps();
         }
@@ -631,7 +634,10 @@ namespace Fling
                     m_World->GetTickCount(),
                     AverageFrameMs,
                     AverageFrameMs > 0.0 ? 1000.0 / AverageFrameMs : 0.0);
-        // A screenshot that was asked for and not taken fails the run, so a script does not read an old file
+        // A request that no frame served (the loop ended first) fails, so its caller hears back
+        Screenshot::FailPending("the run ended before the next frame was drawn");
+
+        // A screenshot that was asked for and not made fails the run, so a script does not read an old file
         bool bCapturesOk = m_ScreenshotsFailed == 0;
         for (const uint64 Tick : m_PendingScreenshots)
         {
@@ -850,37 +856,23 @@ namespace Fling
         {
             const uint64 Tick = m_PendingScreenshots.front();
             m_PendingScreenshots.erase(m_PendingScreenshots.begin());
-            const String Path = FlingPaths::ResolveProjectPath(CaptureFilePath(m_Options.Screenshot, Tick, bManyTicks));
-            VulkanApp::Get().RequestCapture(Path);
-            m_ScreenshotShownTicks.push_back({Tick, Shown});
+            // The renderer serves it at this frame's present; the callback runs on this thread
+            Screenshot::Request(CaptureFilePath(m_Options.Screenshot, Tick, bManyTicks),
+                                [this, Tick, Shown](const ScreenshotResult& t_Result)
+                                {
+                                    if (!t_Result.Ok)
+                                    {
+                                        ++m_ScreenshotsFailed;
+                                        return;
+                                    }
+                                    F_LOG_TRACE("Saved the frame of tick {} (it shows tick {}, {}x{}) to {}",
+                                                Tick,
+                                                Shown,
+                                                t_Result.Width,
+                                                t_Result.Height,
+                                                t_Result.Path);
+                                });
         }
-    }
-
-    void Engine::SaveScreenshots()
-    {
-        std::vector<CaptureResult> Results = VulkanApp::Get().TakeCaptureResults();
-        for (size_t i = 0; i < Results.size(); ++i)
-        {
-            const CaptureResult& Result = Results[i];
-            const std::pair<uint64, uint64> Ticks =
-                i < m_ScreenshotShownTicks.size() ? m_ScreenshotShownTicks[i] : std::pair<uint64, uint64>{0, 0};
-            if (!Result.Ok)
-            {
-                F_LOG_ERROR("--screenshot: cannot save {}: {}", Result.Path, Result.Error);
-                ++m_ScreenshotsFailed;
-                continue;
-            }
-            F_LOG_TRACE("Saved the frame of tick {} (it shows tick {}, {}x{}) to {}",
-                        Ticks.first,
-                        Ticks.second,
-                        VulkanApp::Get().GetFrameWidth(),
-                        VulkanApp::Get().GetFrameHeight(),
-                        Result.Path);
-        }
-        // A frame that was not drawn (a window resize) keeps its captures for the next frame
-        const size_t Done = std::min(Results.size(), m_ScreenshotShownTicks.size());
-        m_ScreenshotShownTicks.erase(m_ScreenshotShownTicks.begin(),
-                                     m_ScreenshotShownTicks.begin() + static_cast<std::ptrdiff_t>(Done));
     }
 
     bool Engine::ShouldTick() const
@@ -910,6 +902,9 @@ namespace Fling
         {
             m_World->Shutdown();
             m_TicksAtExit = m_World->GetTickCount();
+
+            // No frame is drawn from here on: a screenshot request still waiting fails, so its caller hears back
+            Screenshot::FailPending("the engine shut down before the next frame was drawn");
 
             // The game thread has joined: a dump that it made after the last frame is here now
             WriteStateDumps();

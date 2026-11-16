@@ -32,25 +32,13 @@ namespace Fling
         /**
          * True: draw into images that the renderer owns (--offscreen). There is no window, no
          * surface, and no window system: a run works on a machine with no display, and opens
-         * nothing on a machine that has one. Captures (RequestCapture) still work.
+         * nothing on a machine that has one. Screenshots (Screenshot::Request) still work.
          */
         bool Offscreen = false;
 
         /** The size of the frames (offscreen) or the window. 0: [Engine] WindowWidth and WindowHeight. */
         uint32 Width = 0;
         uint32 Height = 0;
-    };
-
-    /** The result of one RequestCapture. */
-    struct CaptureResult
-    {
-        /** The file that was asked for. */
-        String Path;
-
-        bool Ok = false;
-
-        /** Why it failed, when Ok is false. */
-        String Error;
     };
 
     class Instance;
@@ -140,16 +128,6 @@ namespace Fling
         uint32 GetFrameWidth() const;
         uint32 GetFrameHeight() const;
 
-        /**
-         * Save the next frame that Update draws as a PNG file (t_Path, already resolved),
-         * offscreen or with a window. More than one call before that frame saves the same
-         * frame to each path. TakeCaptureResults says how each went.
-         */
-        void RequestCapture(StringView t_Path) { m_PendingCaptures.emplace_back(t_Path); }
-
-        /** The results of the captures since the last call, in request order. */
-        std::vector<CaptureResult> TakeCaptureResults() { return std::exchange(m_CaptureResults, {}); }
-
     protected:
         void Init() override {}
         void Shutdown() override {}
@@ -232,13 +210,11 @@ namespace Fling
         /** @see SetRenderSurface */
         RenderSurfaceDesc m_SurfaceDesc;
 
-        /** @see RequestCapture */
-        std::vector<String> m_PendingCaptures;
-
-        /** @see TakeCaptureResults */
-        std::vector<CaptureResult> m_CaptureResults;
-
-        /** Save the frame in the active image to the pending captures (Update, after the frame's fence). */
-        void SaveCaptures();
+        /**
+         * Save the frame in the active image for the Screenshot requests that are waiting
+         * (Screenshot::Request, from any module or thread). Update calls it after the frame's
+         * fence, before the present.
+         */
+        void SaveScreenshots();
     };
 } // namespace Fling

@@ -203,7 +203,7 @@ load it.
 | Flag | What it does |
 | --- | --- |
 | `--offscreen` | Render with Vulkan into images that the renderer owns. No window, no surface, no window system extension, and no GLFW: it runs on a machine with no display, and opens nothing on a machine that has one. The timing is the same as `--null-render` (a virtual clock, no frame cap), so the ticks are the same as a `--null-render` run. There is no developer UI (ImGui needs a window). Cannot be used with `--null-render` |
-| `--resolution WxH` | The size of the frames (`--offscreen`) or of the window. Overrides `[Engine] WindowWidth` and `WindowHeight` |
+| `--resolution WxH` | The size of the frames (`--offscreen`) or of the window. Overrides `[Engine] WindowWidth` and `WindowHeight`. A window is still made smaller to fit the screen's work area; offscreen frames are always this size |
 | `--screenshot F` | Save the frame as a PNG file `F`. Works with `--offscreen` and with a window (then the editor UI is in the image too). Not with `--null-render` |
 | `--screenshot-ticks L` | Save the first frame that shows each of these ticks. Without it: the last tick of the run (`--frames` is then required). The log line `Saved the frame of tick N (it shows tick M, WxH) to F` says which tick the frame shows |
 
@@ -224,6 +224,34 @@ always runs.
 
 To view a PNG, an agent reads the file (most agent tools show images). Choose a small
 `--resolution` to keep the image cheap.
+
+### Screenshots from the editor or from C++
+
+The editor's GPU Options window (menu Windows; open in `--play` too) has a **Take
+screenshot** button. It saves the next frame as it is shown, editor UI included, to
+`Saved/Screenshots/Screenshot_<local time>_<n>.png`, and shows the path under the button.
+
+Code anywhere in the engine can do the same with `Fling::Screenshot` (`Screenshot.h`, in
+Core, so a module needs no Graphics header):
+
+```cpp
+#include "Screenshot.h"
+
+// Any thread. Empty path: a new file under Saved/Screenshots
+Fling::Screenshot::Request("Saved/door_open.png",
+    [](const Fling::ScreenshotResult& t_Result)
+    {
+        // On the main thread, after the file is written (or not)
+        F_LOG_TRACE("{}: {}", t_Result.Path, t_Result.Ok ? "saved" : t_Result.Error);
+    });
+```
+
+The renderer saves every waiting request at its next frame, before the present, and logs
+`Screenshot saved (WxH) to <path>` or the error. The callback is optional. Under
+`--null-render` there is no renderer, so a request fails at the next frame with that
+reason; a request still waiting when the run ends fails too. `--screenshot` uses this API.
+Use it for tools, tests and debugging, not to feed results back into the simulation: the
+callback arrives on the main thread, out of step with the ticks.
 
 ## Unattended crash tests
 

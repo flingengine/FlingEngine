@@ -53,6 +53,12 @@ namespace Fling
         float m_FrameTimeMax = 0.0f;
 
         bool m_DisplayGpuOptions = false;
+
+        /**
+         * The last screenshot taken with the GPU Options button: what the window shows under it.
+         * Shared, so a result that arrives after the editor is gone writes nowhere.
+         */
+        std::shared_ptr<String> m_ScreenshotStatus = std::make_shared<String>();
         bool m_DisplayComponentEditor = true;
         bool m_DisplayWorldOutline = true;
         bool m_DisplayWindowOptions = false;
@@ -81,7 +87,8 @@ namespace Fling
         /**
          * The GPU Options window: the device, VSync (with the present mode in use), the frame
          * cap, the simulation rate and render interpolation, with what the frame limiter does
-         * and the measured rates. Each control
+         * and the measured rates, and a button that saves the next frame as a PNG
+         * (Screenshot::Request). Each control
          * calls RunControls, which checks the request; a number box applies when its edit is
          * committed (Enter or focus loss).
          */

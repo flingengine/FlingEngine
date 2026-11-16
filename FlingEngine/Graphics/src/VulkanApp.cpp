@@ -20,6 +20,7 @@
 #include "PhyscialDevice.h"
 #include "RenderPipeline.h"
 #include "RenderSnapshot.h"
+#include "Screenshot.h"
 #include "SkyboxSubpass.h"
 #include "Strings/String.h"
 #include "SwapChain.h"
@@ -440,32 +441,47 @@ namespace Fling
         return m_SwapChain ? m_SwapChain->GetExtents().height : 0;
     }
 
-    void VulkanApp::SaveCaptures()
+    void VulkanApp::SaveScreenshots()
     {
-        if (m_PendingCaptures.empty())
+        std::vector<Screenshot::Pending> Requests = Screenshot::TakePending();
+        if (Requests.empty())
         {
             return;
         }
-        std::vector<String> Paths = std::exchange(m_PendingCaptures, {});
-        String Error;
-        bool bOk = false;
+
+        // One copy of the frame for every request that is waiting
+        std::vector<uint8> Rgba;
+        String ReadError;
+        const VkExtent2D Extent = m_SwapChain->GetExtents();
+        bool bRead = false;
         if (!m_SwapChain->CanCopyImages())
         {
-            Error = "the swap chain images cannot be copied (no VK_IMAGE_USAGE_TRANSFER_SRC_BIT); use --offscreen";
+            ReadError = "the swap chain images cannot be copied (no VK_IMAGE_USAGE_TRANSFER_SRC_BIT); use --offscreen";
         }
         else
         {
-            bOk = FrameCapture::SaveImageAsPng(*m_LogicalDevice,
-                                               m_SwapChain->GetActiveImage(),
-                                               m_SwapChain->GetImageFormat(),
-                                               m_SwapChain->GetExtents(),
-                                               m_SwapChain->GetFinalLayout(),
-                                               Paths,
-                                               Error);
+            bRead = FrameCapture::ReadImageRgba(*m_LogicalDevice,
+                                                m_SwapChain->GetActiveImage(),
+                                                m_SwapChain->GetImageFormat(),
+                                                Extent,
+                                                m_SwapChain->GetFinalLayout(),
+                                                Rgba,
+                                                ReadError);
         }
-        for (String& Path : Paths)
+
+        for (Screenshot::Pending& Request : Requests)
         {
-            m_CaptureResults.push_back(CaptureResult{std::move(Path), bOk, bOk ? String() : Error});
+            ScreenshotResult Result;
+            Result.Path = Request.Path;
+            Result.Error = ReadError;
+            Result.Ok =
+                bRead && FrameCapture::WritePng(Request.Path, Extent.width, Extent.height, Rgba.data(), Result.Error);
+            if (Result.Ok)
+            {
+                Result.Width = Extent.width;
+                Result.Height = Extent.height;
+            }
+            Screenshot::Finish(Request, Result);
         }
     }
 
@@ -807,8 +823,8 @@ namespace Fling
                         VK_TRUE,
                         std::numeric_limits<uint64>::max());
 
-        // The frame is drawn: copy it out before it is presented (--screenshot)
-        SaveCaptures();
+        // The frame is drawn: copy it out before it is presented (Screenshot::Request)
+        SaveScreenshots();
 
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),

@@ -66,13 +66,13 @@ namespace Fling
             return true;
         }
 
-        bool SaveImageAsPng(LogicalDevice& t_Device,
-                            const VkImage t_Image,
-                            const VkFormat t_Format,
-                            const VkExtent2D t_Extent,
-                            const VkImageLayout t_Layout,
-                            const std::vector<String>& t_Paths,
-                            String& t_OutError)
+        bool ReadImageRgba(LogicalDevice& t_Device,
+                           const VkImage t_Image,
+                           const VkFormat t_Format,
+                           const VkExtent2D t_Extent,
+                           const VkImageLayout t_Layout,
+                           std::vector<uint8>& t_OutRgba,
+                           String& t_OutError)
         {
             if (!IsBgra(t_Format) && !IsRgba(t_Format))
             {
@@ -160,28 +160,20 @@ namespace Fling
 
             void* Mapped = nullptr;
             vkMapMemory(Device, StagingMemory, 0, Size, 0, &Mapped);
-            std::vector<uint8> Rgba(static_cast<size_t>(Size));
-            std::memcpy(Rgba.data(), Mapped, static_cast<size_t>(Size));
+            t_OutRgba.resize(static_cast<size_t>(Size));
+            std::memcpy(t_OutRgba.data(), Mapped, static_cast<size_t>(Size));
             vkUnmapMemory(Device, StagingMemory);
             vkDestroyBuffer(Device, Staging, nullptr);
             vkFreeMemory(Device, StagingMemory, nullptr);
 
             const bool bSwap = IsBgra(t_Format);
-            for (size_t i = 0; i < Rgba.size(); i += 4)
+            for (size_t i = 0; i < t_OutRgba.size(); i += 4)
             {
                 if (bSwap)
                 {
-                    std::swap(Rgba[i], Rgba[i + 2]);
+                    std::swap(t_OutRgba[i], t_OutRgba[i + 2]);
                 }
-                Rgba[i + 3] = 255;
-            }
-
-            for (const String& Path : t_Paths)
-            {
-                if (!WritePng(Path, t_Extent.width, t_Extent.height, Rgba.data(), t_OutError))
-                {
-                    return false;
-                }
+                t_OutRgba[i + 3] = 255;
             }
             return true;
         }

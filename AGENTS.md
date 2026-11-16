@@ -57,7 +57,9 @@ platform setup (Vulkan SDK, GLFW, etc.).
   state as JSON at chosen ticks (works with `--null-render`), and `--offscreen
   --screenshot <file.png>` renders with Vulkan into offscreen images and saves PNG
   files (no window, no display; a software driver such as llvmpipe is enough).
-  Prefer the state dump; use screenshots for rendering work. Detail:
+  Prefer the state dump; use screenshots for rendering work. From C++ (any
+  module, any thread): `Fling::Screenshot::Request(path, callback)` in
+  `Screenshot.h`; the editor's GPU Options window has a Take screenshot button. Detail:
   [`Skills/testing.md`](Skills/testing.md#seeing-the-game-without-a-window).
 - Drive a headless run with `--replay-input <file>`. Agents can write their own
   `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).

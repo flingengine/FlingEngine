@@ -244,11 +244,8 @@ namespace Fling
         /** Writes the state dumps that the ticks made since the last call to their --dump-state files (main thread). */
         void WriteStateDumps();
 
-        /** Before the frame is drawn: ask the renderer to save it for each --screenshot tick that it shows. */
+        /** Before the frame is drawn: a Screenshot::Request for each --screenshot tick that it shows. */
         void RequestScreenshots();
-
-        /** After the frame is drawn: log the screenshots that it saved, or why not. */
-        void SaveScreenshots();
 
         /** --dump-state: the ticks whose state has not been written yet. Sorted. */
         std::vector<uint64> m_PendingStateDumps;
@@ -258,9 +255,6 @@ namespace Fling
 
         /** --screenshot: the ticks whose frame has not been saved yet. Sorted. */
         std::vector<uint64> m_PendingScreenshots;
-
-        /** --screenshot: for each capture asked for this frame, the tick asked for and the tick the frame shows. */
-        std::vector<std::pair<uint64, uint64>> m_ScreenshotShownTicks;
 
         /** --screenshot: captures that failed. */
         uint32 m_ScreenshotsFailed = 0;
