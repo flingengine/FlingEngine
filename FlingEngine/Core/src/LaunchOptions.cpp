@@ -37,6 +37,7 @@ namespace Fling
         constexpr StringView MaxFpsFlag = "max-fps";
         constexpr StringView VSyncFlag = "vsync";
         constexpr StringView InterpolationFlag = "interpolation";
+        constexpr StringView FrustumCullingFlag = "frustum-culling";
         constexpr StringView ThreadJitterFlag = "thread-jitter";
         /**
          * Flags that are refused with the name of the flag that does their job, so a script
@@ -392,7 +393,8 @@ namespace Fling
         if (!ReadOptionalUint32(t_CmdLine, SimHzFlag, t_Out.SimHz, t_OutError) ||
             !ReadOptionalUint32(t_CmdLine, MaxFpsFlag, t_Out.MaxFps, t_OutError) ||
             !ReadOptionalOnOff(t_CmdLine, VSyncFlag, t_Out.VSync, t_OutError) ||
-            !ReadOptionalOnOff(t_CmdLine, InterpolationFlag, t_Out.Interpolation, t_OutError))
+            !ReadOptionalOnOff(t_CmdLine, InterpolationFlag, t_Out.Interpolation, t_OutError) ||
+            !ReadOptionalOnOff(t_CmdLine, FrustumCullingFlag, t_Out.FrustumCulling, t_OutError))
         {
             return false;
         }

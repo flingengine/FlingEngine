@@ -74,6 +74,7 @@ outside `--exec threaded` is an error.
 | Frame cap | `--max-fps N` (0: none, up to 1000) | `MaxFps` | the refresh rate of the window's monitor, else 60; none with `--null-render` | GPU Options, from the next frame |
 | VSync | `--vsync on\|off` | `VSync` | on | GPU Options, the swap chain is made again |
 | Interpolation | `--interpolation on\|off` | `Interpolation` | on | GPU Options, from the next frame |
+| Frustum culling | `--frustum-culling on\|off` | `FrustumCulling` | on | GPU Options, from the next frame |
 | Thread jitter (tests) | `--thread-jitter S:U` (`--exec threaded` only) | none | off | no |
 
 `RunSettings` does not change after startup. The live values are in

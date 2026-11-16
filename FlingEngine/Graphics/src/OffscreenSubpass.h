@@ -2,6 +2,7 @@
 
 #include "FlingMath.h"
 #include "GpuMesh.h"
+#include "MeshCuller.h"
 #include "MeshProxyTable.h"
 #include "Subpass.h"
 
@@ -70,6 +71,16 @@ namespace Fling
 
         virtual void OnSwapchainResized() override final;
 
+        /**
+         * Frustum culling on or off (RunSettings::FrustumCulling). On: a mesh whose bounds are
+         * outside the camera's view is not drawn and its uniform buffer is not written. Takes
+         * effect on the next Draw.
+         */
+        void SetFrustumCulling(const bool t_On) { m_FrustumCulling = t_On; }
+
+        /** What the last Draw drew and culled. */
+        const CullStats& GetCullStats() const { return m_Culler.Stats(); }
+
     private:
         /**
          * Match the proxies to the snapshot: release the resources of meshes that are
@@ -88,7 +99,13 @@ namespace Fling
         /** Write the UBO of each mesh whose world matrix changed since its last upload */
         void UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot);
 
-        /** Record the draw calls for every drawn proxy into the given command buffer */
+        /**
+         * Find the meshes in the camera's view (m_Culler), from this frame's camera and the
+         * snapshot's world matrices. The command buffers record again when the set changes.
+         */
+        void CullMeshes(const RenderSnapshot& t_Snapshot);
+
+        /** Record the draw calls for every visible proxy into the given command buffer */
         void BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf);
 
         /** Make each offscreen command buffer record again on its next use */
@@ -112,6 +129,9 @@ namespace Fling
         /** Camera UBO that every mesh descriptor set points to */
         Buffer* m_CameraUboBuffer = nullptr;
 
+        /** Projection * view of this frame's camera UBO, for culling */
+        glm::mat4 m_CameraViewProjection{1.0f};
+
         /**
          * Goes up by one each time the draw list changes. A command buffer records
          * again only when its recorded version is different from this value.
@@ -129,6 +149,12 @@ namespace Fling
 
         /** The proxy slot of each snapshot mesh, from the last SyncProxies */
         std::vector<uint32> m_ItemSlots;
+
+        /** Which slots are in the camera's view, indexed by slot like m_GpuMeshes */
+        MeshCuller m_Culler;
+
+        /** @see SetFrustumCulling */
+        bool m_FrustumCulling = true;
 
         /**
          * Descriptor sets of meshes that are gone. They are freed at the start of the next

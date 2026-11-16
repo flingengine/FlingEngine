@@ -109,6 +109,10 @@ namespace Fling
         CameraUBO.View = m_Camera->GetViewMatrix();
         memcpy(m_CameraUboBuffer->m_MappedMem, &CameraUBO, sizeof(CameraUBO));
 
+        // The view volume of exactly the matrices the shader uses this frame
+        m_CameraViewProjection = CameraUBO.Projection * CameraUBO.View;
+        CullMeshes(t_Snapshot);
+
         UpdateMeshUniformBuffers(t_Snapshot);
 
         // The command buffer holds only draw calls and descriptor bindings, not
@@ -130,6 +134,7 @@ namespace Fling
         for (const uint32 Slot : Result.Removed)
         {
             RetireGpuMesh(m_GpuMeshes[Slot]);
+            m_Culler.ClearSlot(Slot);
         }
 
         auto Prepare = [&](const uint32 Slot)
@@ -137,6 +142,7 @@ namespace Fling
             GpuMesh& Mesh = m_GpuMeshes[Slot];
             const bool bHasAssets = ResolveMeshAssets(m_Proxies.At(Slot), Mesh);
             Mesh.Drawn = bHasAssets && Mesh.MeshMaterial->GetType() == Material::Type::Default;
+            m_Culler.SetSlot(Slot, Mesh.Drawn, Mesh.Drawn ? Mesh.MeshModel->GetLocalBounds() : Aabb{});
             if (!Mesh.Drawn)
             {
                 // Another pass draws it (a debug material), or there is no model
@@ -186,13 +192,24 @@ namespace Fling
         t_Mesh = GpuMesh{};
     }
 
+    void OffscreenSubpass::CullMeshes(const RenderSnapshot& t_Snapshot)
+    {
+        const Frustum View = Frustum::FromViewProjection(m_CameraViewProjection);
+        if (m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr))
+        {
+            InvalidateCommandBuffers();
+        }
+    }
+
     void OffscreenSubpass::UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot)
     {
         for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
         {
             const MeshDrawItem& Item = t_Snapshot.Meshes[i];
-            GpuMesh& Mesh = m_GpuMeshes[m_ItemSlots[i]];
-            if (!Mesh.Drawn || Mesh.Ubo == nullptr)
+            const uint32 Slot = m_ItemSlots[i];
+            GpuMesh& Mesh = m_GpuMeshes[Slot];
+            // A culled mesh keeps its last upload; its version shows that it is old when it is back in view
+            if (!Mesh.Drawn || Mesh.Ubo == nullptr || !m_Culler.IsVisible(Slot))
             {
                 continue;
             }
@@ -234,9 +251,10 @@ namespace Fling
 
         VkDeviceSize offsets[1] = {0};
 
-        for (const GpuMesh& Mesh : m_GpuMeshes)
+        for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
         {
-            if (!Mesh.Drawn || Mesh.MeshModel == nullptr || Mesh.Set == VK_NULL_HANDLE)
+            const GpuMesh& Mesh = m_GpuMeshes[Slot];
+            if (!Mesh.Drawn || Mesh.MeshModel == nullptr || Mesh.Set == VK_NULL_HANDLE || !m_Culler.IsVisible(Slot))
             {
                 continue;
             }
@@ -438,6 +456,7 @@ namespace Fling
             RetireGpuMesh(Mesh);
         }
         m_GpuMeshes.clear();
+        m_Culler.Clear();
         m_Proxies.Clear();
         m_ItemSlots.clear();
         ReleaseRetiredMeshResources();

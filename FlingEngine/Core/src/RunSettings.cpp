@@ -190,6 +190,12 @@ namespace Fling
                        Keys::InterpolationKey,
                        t_Out.Interpolation,
                        t_Out.InterpolationSource,
+                       t_OutError) ||
+            !PickOnOff(t_Options.FrustumCulling,
+                       t_Config.FrustumCulling,
+                       Keys::FrustumCullingKey,
+                       t_Out.FrustumCulling,
+                       t_Out.FrustumCullingSource,
                        t_OutError))
         {
             return false;
@@ -205,6 +211,10 @@ namespace Fling
         {
             t_Out.Ignored.push_back(String("--vsync does nothing with ") + t_Out.HeadlessFlag +
                                     ": there is no swap chain");
+        }
+        if (t_Options.NullRender && t_Options.FrustumCulling)
+        {
+            t_Out.Ignored.push_back("--frustum-culling does nothing with --null-render: nothing is drawn");
         }
         return true;
     }
@@ -253,7 +263,8 @@ namespace Fling
         return "tick rate " + std::to_string(SimHz) + " Hz (" + SettingSourceName(SimHzSource) + "), exec " +
                ExecModeName(Exec) + " (" + SettingSourceName(ExecSource) + "), frame cap " + Cap + " (" + CapSource +
                "), vsync " + OnOffName(VSync) + " (" + SettingSourceName(VSyncSource) + "), interpolation " +
-               OnOffName(Interpolation) + " (" + SettingSourceName(InterpolationSource) + ")";
+               OnOffName(Interpolation) + " (" + SettingSourceName(InterpolationSource) + "), frustum culling " +
+               OnOffName(FrustumCulling) + " (" + SettingSourceName(FrustumCullingSource) + ")";
     }
 
     uint32 LimiterFps(const uint32 t_MaxFps,

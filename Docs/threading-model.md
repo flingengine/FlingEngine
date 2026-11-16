@@ -210,6 +210,21 @@ lighting test: 42 224 bytes). The frame side copies nothing: it indexes the
 new tick of each packet it takes. The render snapshot does a blend and a
 matrix per moving entity, and only a compare per entity that did not move.
 
+**Frustum culling** is on the frame side only, in the renderer, after the
+snapshot: the packet and the snapshot still hold every mesh. The offscreen
+(G-buffer) pass tests each mesh's world box (the model's local bounds, placed
+by the item's drawn matrix) against the planes of this frame's camera
+(`Frustum`, `MeshCuller` in `FlingEngine/Graphics/inc/`), and skips the draw
+call and the uniform buffer write of a mesh that is outside. A culled mesh
+keeps its proxy slot and GPU resources, so it costs nothing to bring back.
+The camera is only final in `VulkanApp::Update`, after the frame systems ran,
+so the snapshot's blend and matrix work is not culled; a test against the last
+frame's camera would not be conservative. Lights are not culled (the deferred
+lighting pass is full screen), and there is no shadow pass. `--frustum-culling
+on|off`, `[Engine] FrustumCulling` and the GPU Options window, which also shows
+the meshes drawn and culled in the last frame. Tests: `GraphicsTests
+"[culling]"` (`FrustumCullingTests.cpp`).
+
 **Tests.** `EngineTests "[interp]"` (`EcsBlendTests.cpp`: each packet
 carries the latest two ticks of the marked types only; new, destroyed, changed
 and reused entities; after skipped packets `BlendFrom` is still the tick before

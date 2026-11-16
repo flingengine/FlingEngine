@@ -45,13 +45,14 @@ platform setup (Vulkan SDK, GLFW, etc.).
 - Play runs threaded (a game thread for the ticks) at a fixed 30 Hz, with the
   main thread's frames capped at the monitor's refresh rate (no cap headless).
   `--exec direct|inline|threaded`, `--sim-hz N`, `--max-fps N` (0: no cap),
-  `--vsync on|off` (on by default) and `--interpolation on|off` (on by
-  default) override, as do `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync` and
-  `Interpolation` in
+  `--vsync on|off` (on by default), `--interpolation on|off` (on by
+  default) and `--frustum-culling on|off` (on by default) override, as do
+  `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync`, `Interpolation` and
+  `FrustumCulling` in
   `Config/EngineConf.ini`. A test that depends on a mode or a rate sets it. The
   startup log line `Run settings: ...` says each value and where it came from.
   The editor's GPU Options window (menu Windows; drawn in `--play` too) changes
-  the rate, the cap, VSync and interpolation at run time.
+  the rate, the cap, VSync, interpolation and frustum culling at run time.
   Detail: [`Docs/time-and-ticks.md`](Docs/time-and-ticks.md) section 2.
 - See a run without a window: `--dump-state <file.json>` writes the simulation
   state as JSON at chosen ticks (works with `--null-render`), and `--offscreen

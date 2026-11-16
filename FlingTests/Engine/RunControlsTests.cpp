@@ -38,9 +38,11 @@ TEST_CASE("Run controls: the live values start from the startup settings, which 
     ThreadedWorldHarness Harness(HarnessOptions{});
     RunSettings Settings = OnMonitor(60);
     Settings.VSync = false;
+    Settings.FrustumCulling = false;
     const RunSettings Startup = Settings;
     RunControls Controls(Settings, Harness.GetWorld());
     REQUIRE_FALSE(Controls.VSync());
+    REQUIRE_FALSE(Controls.FrustumCulling());
     REQUIRE(Controls.MaxFps() == 60);
     REQUIRE(Controls.MonitorHz() == 60u);
 
@@ -48,10 +50,13 @@ TEST_CASE("Run controls: the live values start from the startup settings, which 
     Controls.SetVSync(true);
     REQUIRE(Controls.SetMaxFps(90, Error));
     Controls.SetInterpolation(false);
+    Controls.SetFrustumCulling(true);
     REQUIRE(Controls.VSync());
     REQUIRE(Controls.MaxFps() == 90);
+    REQUIRE(Controls.FrustumCulling());
     REQUIRE(Settings.Describe() == Startup.Describe());
     REQUIRE_FALSE(Settings.VSync);
+    REQUIRE_FALSE(Settings.FrustumCulling);
 }
 
 TEST_CASE("Run controls: the frame cap takes 0 to 1000, and an error is cleared by the next good value",

@@ -37,6 +37,8 @@ TEST_CASE("Run settings: the defaults are threaded play at 30 Hz with VSync and 
     REQUIRE(Settings.VSyncSource == SettingSource::Default);
     REQUIRE(Settings.Interpolation);
     REQUIRE(Settings.InterpolationSource == SettingSource::Default);
+    REQUIRE(Settings.FrustumCulling);
+    REQUIRE(Settings.FrustumCullingSource == SettingSource::Default);
     REQUIRE(Settings.Ignored.empty());
     REQUIRE(SimRate::StepNs(Settings.SimHz) == 33'333'333);
     REQUIRE(SimRate::StepNs(60) == 16'666'667);
@@ -110,8 +112,12 @@ TEST_CASE("Run settings: the command line wins over the config file, which wins 
 {
     RunSettings Settings;
     String Error;
-    const RunSettingsConfig Config{
-        .Exec = "direct", .SimHz = "60", .MaxFps = "120", .VSync = "off", .Interpolation = "off"};
+    const RunSettingsConfig Config{.Exec = "direct",
+                                   .SimHz = "60",
+                                   .MaxFps = "120",
+                                   .VSync = "off",
+                                   .Interpolation = "off",
+                                   .FrustumCulling = "off"};
 
     REQUIRE(Resolve({}, Config, Settings, Error));
     REQUIRE(Settings.Exec == ExecMode::Direct);
@@ -124,20 +130,35 @@ TEST_CASE("Run settings: the command line wins over the config file, which wins 
     REQUIRE(Settings.VSyncSource == SettingSource::Config);
     REQUIRE_FALSE(Settings.Interpolation);
     REQUIRE(Settings.InterpolationSource == SettingSource::Config);
+    REQUIRE_FALSE(Settings.FrustumCulling);
+    REQUIRE(Settings.FrustumCullingSource == SettingSource::Config);
 
-    REQUIRE(Resolve({"--exec", "inline", "--sim-hz", "20", "--max-fps", "75", "--vsync", "on", "--interpolation", "on"},
+    REQUIRE(Resolve({"--exec",
+                     "inline",
+                     "--sim-hz",
+                     "20",
+                     "--max-fps",
+                     "75",
+                     "--vsync",
+                     "on",
+                     "--interpolation",
+                     "on",
+                     "--frustum-culling",
+                     "on"},
                     Config,
                     Settings,
                     Error));
     Settings.ResolveFrameCap(144u);
     REQUIRE(Settings.Describe() == "tick rate 20 Hz (command line), exec inline (command line), frame cap 75 fps "
-                                   "(command line), vsync on (command line), interpolation on (command line)");
+                                   "(command line), vsync on (command line), interpolation on (command line), "
+                                   "frustum culling on (command line)");
 
     // A key with no value is the default
     REQUIRE(Resolve({}, RunSettingsConfig{}, Settings, Error));
     Settings.ResolveFrameCap(144u);
     REQUIRE(Settings.Describe() == "tick rate 30 Hz (default), exec threaded (default), frame cap 144 fps (the "
-                                   "monitor's refresh rate), vsync on (default), interpolation on (default)");
+                                   "monitor's refresh rate), vsync on (default), interpolation on (default), "
+                                   "frustum culling on (default)");
 }
 
 TEST_CASE("Run settings: every config key is read by its name", "[RunSettings]")
@@ -147,6 +168,7 @@ TEST_CASE("Run settings: every config key is read by its name", "[RunSettings]")
                                         {"MaxFps", "90"},
                                         {"VSync", "off"},
                                         {"Interpolation", "off"},
+                                        {"FrustumCulling", "off"},
                                         {"PresentMode", "mailbox"}};
     const RunSettingsConfig Config = RunSettingsConfig::Read(
         [&File](const char* t_Key)
@@ -159,6 +181,7 @@ TEST_CASE("Run settings: every config key is read by its name", "[RunSettings]")
     REQUIRE(Config.MaxFps == "90");
     REQUIRE(Config.VSync == "off");
     REQUIRE(Config.Interpolation == "off");
+    REQUIRE(Config.FrustumCulling == "off");
 }
 
 TEST_CASE("Run settings: a bad value in a config key is an error, also when a flag wins over it", "[RunSettings]")
@@ -193,6 +216,9 @@ TEST_CASE("Run settings: a bad value in a config key is an error, also when a fl
         Fails(Args({"--interpolation", "on"}),
               {.Interpolation = "1"},
               "[Engine] Interpolation in EngineConf.ini must be on or off");
+        Fails(Args({"--frustum-culling", "on"}),
+              {.FrustumCulling = "yes"},
+              "[Engine] FrustumCulling in EngineConf.ini must be on or off");
     }
 }
 
@@ -238,6 +264,22 @@ TEST_CASE("Run settings: --vsync with --null-render does nothing, and says so", 
     REQUIRE(Settings.Ignored.empty());
     REQUIRE(Resolve({"--vsync", "off"}, {}, Settings, Error));
     REQUIRE(Settings.Ignored.empty());
+}
+
+TEST_CASE("Run settings: --frustum-culling with --null-render does nothing, and says so; --offscreen draws",
+          "[RunSettings]")
+{
+    RunSettings Settings;
+    String Error;
+    REQUIRE(Resolve({"--null-render", "--frustum-culling", "off"}, {}, Settings, Error));
+    REQUIRE_FALSE(Settings.FrustumCulling);
+    REQUIRE(Settings.Ignored ==
+            std::vector<String>{"--frustum-culling does nothing with --null-render: nothing is drawn"});
+    REQUIRE(Resolve({"--offscreen", "--frustum-culling", "off"}, {}, Settings, Error));
+    REQUIRE(Settings.Ignored.empty());
+    LaunchOptions Options;
+    REQUIRE_FALSE(TestArgs::ParseLaunchArgs({"--frustum-culling", "maybe"}, Options, Error));
+    REQUIRE_THAT(Error, Catch::Matchers::ContainsSubstring("--frustum-culling"));
 }
 
 TEST_CASE("Run settings: the frame limiter keeps the lower of the cap and the display's refresh rate", "[RunSettings]")

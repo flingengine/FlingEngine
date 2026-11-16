@@ -417,6 +417,20 @@ namespace Fling
         bSwapchainOutOfDate = true;
     }
 
+    void VulkanApp::SetFrustumCulling(const bool t_On)
+    {
+        m_FrustumCulling = t_On;
+        if (m_MeshPass != nullptr)
+        {
+            m_MeshPass->SetFrustumCulling(t_On);
+        }
+    }
+
+    CullStats VulkanApp::GetCullStats() const
+    {
+        return m_MeshPass != nullptr ? m_MeshPass->GetCullStats() : CullStats{};
+    }
+
     void VulkanApp::SetVSync(const bool t_VSync)
     {
         if (t_VSync == m_VSync)
@@ -596,6 +610,8 @@ namespace Fling
             // These shaders do not have any vertex input and do the final processing to the screen
             OffscreenSubpass* Offscreen = static_cast<OffscreenSubpass*>(Subpasses[0].get());
             assert(Offscreen);
+            Offscreen->SetFrustumCulling(m_FrustumCulling);
+            m_MeshPass = Offscreen;
             FrameBuffer* OffscreenBuf = Offscreen->GetOffscreenFrameBuffer();
             assert(OffscreenBuf);
 
@@ -895,6 +911,7 @@ namespace Fling
         m_LogicalDevice->WaitForIdle();
 
         // Cleanup render pipelines (created in BuildRenderPipelines) -----------------
+        m_MeshPass = nullptr;
         for (RenderPipeline* pipeline : m_RenderPipelines)
         {
             if (pipeline)

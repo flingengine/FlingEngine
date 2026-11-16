@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Buffer.h"
+#include "Frustum.h"
 #include "Resource.h"
 #include "Vertex.h"
 
@@ -46,13 +47,22 @@ namespace Fling
 
         constexpr static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
+        /** The box around every vertex, in the model's own space. Empty when the model has no vertices. */
+        FORCEINLINE const Aabb& GetLocalBounds() const { return m_LocalBounds; }
+
     private:
         void CreateBuffers();
+
+        /** Set m_LocalBounds from m_Verts */
+        void CalculateLocalBounds();
 
         static void CalculateVertexTangents(Vertex* verts, uint32 numVerts, uint32* indices, uint32 numIndices);
 
         std::vector<Vertex> m_Verts;
         std::vector<uint32> m_Indices;
+
+        /** @see GetLocalBounds */
+        Aabb m_LocalBounds;
 
         Buffer* m_VertexBuffer = nullptr;
         Buffer* m_IndexBuffer = nullptr;
