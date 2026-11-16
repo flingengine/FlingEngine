@@ -27,6 +27,23 @@ TEST_CASE("Screenshot requests wait for the renderer, in order", "[Screenshot]")
     REQUIRE(Screenshot::TakePending().empty());
 }
 
+TEST_CASE("Screenshot::HasPending is the free check the renderer makes every frame", "[Screenshot]")
+{
+    Screenshot::FailPending("test start");
+    REQUIRE_FALSE(Screenshot::HasPending());
+    // With nothing waiting, TakePending returns at once (no lock, nothing allocated)
+    REQUIRE(Screenshot::TakePending().empty());
+
+    Screenshot::Request("Saved/pending.png");
+    REQUIRE(Screenshot::HasPending());
+    REQUIRE(Screenshot::TakePending().size() == 1);
+    REQUIRE_FALSE(Screenshot::HasPending());
+
+    Screenshot::Request("Saved/failed.png");
+    Screenshot::FailPending("no renderer");
+    REQUIRE_FALSE(Screenshot::HasPending());
+}
+
 TEST_CASE("Screenshot with no path gets a new file under Saved/Screenshots", "[Screenshot]")
 {
     Screenshot::FailPending("test start");
@@ -106,4 +123,5 @@ TEST_CASE("Screenshot requests from many threads all arrive", "[Screenshot]")
         Each.join();
     }
     REQUIRE(Screenshot::TakePending().size() == ThreadCount * PerThread);
+    REQUIRE_FALSE(Screenshot::HasPending());
 }

@@ -20,6 +20,12 @@ namespace Fling
             return s_Queue;
         }
 
+        /**
+         * The requests in the queue: one atomic load answers HasPending, so a frame with no
+         * request takes no lock. Signed: a drain can take an item before its push adds 1.
+         */
+        std::atomic<int64> s_PendingCount{0};
+
         /** Makes DefaultPath names unique within one second. */
         std::atomic<uint32> s_DefaultPathCount{0};
     } // namespace
@@ -44,13 +50,25 @@ namespace Fling
     {
         const String Path = t_Path.empty() ? DefaultPath() : FlingPaths::ResolveProjectPath(t_Path);
         PendingQueue().Push(Pending{Path, std::move(t_OnDone)});
+        s_PendingCount.fetch_add(1, std::memory_order_release);
         return Path;
+    }
+
+    bool Screenshot::HasPending()
+    {
+        return s_PendingCount.load(std::memory_order_acquire) > 0;
     }
 
     std::vector<Screenshot::Pending> Screenshot::TakePending()
     {
         std::vector<Pending> Requests;
+        // The common case, every frame: nothing asked for, so no lock and no allocation
+        if (!HasPending())
+        {
+            return Requests;
+        }
         PendingQueue().Drain([&Requests](Pending& t_Request) { Requests.push_back(std::move(t_Request)); });
+        s_PendingCount.fetch_sub(static_cast<int64>(Requests.size()), std::memory_order_acq_rel);
         return Requests;
     }
 

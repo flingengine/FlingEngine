@@ -34,8 +34,14 @@ namespace Fling
                          LogicalDevice* t_Dev,
                          PhysicalDevice* t_PhysDev,
                          VkSurfaceKHR t_Surface,
-                         const bool t_VSync)
-        : m_VSync(t_VSync), m_Extents{t_Extent}, m_Device(t_Dev), m_PhysicalDevice(t_PhysDev), m_Surface(t_Surface)
+                         const bool t_VSync,
+                         const bool t_Copyable)
+        : m_VSync(t_VSync),
+          m_Extents{t_Extent},
+          m_Device(t_Dev),
+          m_PhysicalDevice(t_PhysDev),
+          m_Surface(t_Surface),
+          m_WantCopy(t_Copyable)
     {
         assert(m_Device && m_PhysicalDevice && m_Surface);
         Recreate(m_Extents);
@@ -44,14 +50,16 @@ namespace Fling
     Swapchain::Swapchain(const VkExtent2D& t_Extent,
                          LogicalDevice* t_Dev,
                          PhysicalDevice* t_PhysDev,
-                         const uint32 t_ImageCount)
+                         const uint32 t_ImageCount,
+                         const bool t_Copyable)
         : m_VSync(false),
           m_Extents{t_Extent},
           m_Device(t_Dev),
           m_PhysicalDevice(t_PhysDev),
           m_Surface(VK_NULL_HANDLE),
           m_Offscreen(true),
-          m_OffscreenImageCount(t_ImageCount)
+          m_OffscreenImageCount(t_ImageCount),
+          m_WantCopy(t_Copyable)
     {
         assert(m_Device && m_PhysicalDevice && m_OffscreenImageCount > 0);
         // Nothing is presented, so nothing waits for a display
@@ -160,7 +168,15 @@ namespace Fling
                     m_Extents.height,
                     static_cast<int>(m_ImageFormat));
 
-        m_CanCopyImages = true;
+        // Copyable only when a capture needs it: the usage can cost on every frame (it can turn
+        // off framebuffer compression on some GPUs)
+        m_CopySupported = true;
+        m_CanCopyImages = m_WantCopy;
+        VkImageUsageFlags Usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        if (m_CanCopyImages)
+        {
+            Usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        }
         m_Images.resize(m_OffscreenImageCount);
         m_ImageMemory.resize(m_OffscreenImageCount);
         for (uint32 i = 0; i < m_OffscreenImageCount; ++i)
@@ -170,7 +186,7 @@ namespace Fling
                                            m_Extents.height,
                                            m_ImageFormat,
                                            VK_IMAGE_TILING_OPTIMAL,
-                                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                           Usage,
                                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                            m_Images[i],
                                            m_ImageMemory[i]);
@@ -213,8 +229,11 @@ namespace Fling
         CreateInfo.imageExtent = m_Extents;
         CreateInfo.imageArrayLayers = 1;
         CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        // A capture (--screenshot) copies from the image before it is presented
-        m_CanCopyImages = (SwapChainSupport.Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0;
+        // A capture (Screenshot::Request) copies from the image before it is presented. Only
+        // while one needs it (SetCopyable): the usage can cost on every frame, for example by
+        // turning off framebuffer compression on some GPUs
+        m_CopySupported = (SwapChainSupport.Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0;
+        m_CanCopyImages = m_WantCopy && m_CopySupported;
         if (m_CanCopyImages)
         {
             CreateInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;

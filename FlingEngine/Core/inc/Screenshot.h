@@ -36,6 +36,10 @@ namespace Fling
      * works with a window (the image then has the editor UI in it) and with --offscreen.
      * Under --null-render there is no renderer, so each request fails at the next frame.
      *
+     * It costs nothing when nobody asks: a frame with no request does one atomic load. The
+     * frames are made copyable only while a capture needs it (--screenshot at launch, or
+     * the one frame a request is for), so normal frames keep every GPU optimization.
+     *
      * A frame shows the simulation state that the frame side has, not a tick on the game
      * thread. To save the frame of a given tick, use --screenshot-ticks, which calls this
      * when the frame side first shows that tick.
@@ -71,7 +75,16 @@ namespace Fling
          * Screenshot_2026-11-16_14-03-22_1.png. */
         static String DefaultPath();
 
-        /** Renderer side (main thread): the requests since the last call, in request order. */
+        /**
+         * True when a request is waiting. One atomic load and no lock, so the renderer can ask
+         * every frame for free. Any thread.
+         */
+        static bool HasPending();
+
+        /**
+         * Renderer side (main thread): the requests since the last call, in request order.
+         * With none waiting it takes no lock and allocates nothing.
+         */
         static std::vector<Pending> TakePending();
 
         /** Renderer side (main thread): log the result and call the request's callback. */

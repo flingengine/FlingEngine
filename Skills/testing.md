@@ -253,6 +253,16 @@ reason; a request still waiting when the run ends fails too. `--screenshot` uses
 Use it for tools, tests and debugging, not to feed results back into the simulation: the
 callback arrives on the main thread, out of step with the ticks.
 
+Cost: nothing when nobody asks. The renderer checks `Screenshot::HasPending()` each frame
+(one atomic load, no lock). The frames are made copyable (`VK_IMAGE_USAGE_TRANSFER_SRC_BIT`,
+which can turn off framebuffer compression on some GPUs) only while a capture needs it:
+
+- a run with `--screenshot`: from the start (`RenderSurfaceDesc::CopyableFrames`), so it
+  never makes the swap chain again;
+- any other run: a request makes the swap chain again with copyable images for its frame,
+  saves it, and makes it again without them after that frame's present. That is a short
+  hitch (the GPU waits to be idle twice) on the frame of the screenshot only.
+
 ## Unattended crash tests
 
 `FlingTests/CMakeLists.txt` adds `Unattended crash: <mode>` tests. Each runs

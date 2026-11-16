@@ -39,6 +39,13 @@ namespace Fling
         /** The size of the frames (offscreen) or the window. 0: [Engine] WindowWidth and WindowHeight. */
         uint32 Width = 0;
         uint32 Height = 0;
+
+        /**
+         * Make the frames copyable (VK_IMAGE_USAGE_TRANSFER_SRC_BIT) for the whole run: a run that
+         * will take screenshots (--screenshot). Off: a Screenshot::Request makes the frames
+         * copyable for the frame it needs only, and the run pays nothing when nobody asks.
+         */
+        bool CopyableFrames = false;
     };
 
     class Instance;
@@ -216,5 +223,16 @@ namespace Fling
          * fence, before the present.
          */
         void SaveScreenshots();
+
+        /**
+         * Before the frame: when a Screenshot::Request waits and the frames are not copyable,
+         * make the swap chain again with copyable images. A frame with no request costs one
+         * atomic load here.
+         */
+        void PrepareScreenshots();
+
+        /** True while the frames are copyable for a request only, not for the run (RenderSurfaceDesc::CopyableFrames).
+         */
+        bool m_CopyableForRequest = false;
     };
 } // namespace Fling

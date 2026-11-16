@@ -367,6 +367,9 @@ namespace Fling
             Surface.Offscreen = m_Options.Offscreen;
             Surface.Width = m_Options.ResolutionWidth;
             Surface.Height = m_Options.ResolutionHeight;
+            // A run that will take screenshots keeps its frames copyable; any other run makes them
+            // copyable only for a frame that a Screenshot::Request needs
+            Surface.CopyableFrames = !m_Options.Screenshot.empty();
             VulkanApp::Get().SetRenderSurface(Surface);
 
             uint32 Pipelines = PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP;
@@ -848,6 +851,10 @@ namespace Fling
 
     void Engine::RequestScreenshots()
     {
+        if (m_PendingScreenshots.empty())
+        {
+            return;
+        }
         // The frame that first shows each tick. With threaded play the frame side can show a
         // later tick than the one asked for; the log line says which tick the file shows.
         const uint64 Shown = m_World->GetShownTick();

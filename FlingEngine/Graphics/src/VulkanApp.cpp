@@ -188,7 +188,11 @@ namespace Fling
         if (bOffscreen)
         {
             const VkExtent2D Extent = {std::max<uint32>(Width, 1), std::max<uint32>(Height, 1)};
-            m_SwapChain = new Swapchain(Extent, m_LogicalDevice, m_PhysicalDevice, VkConfig::MAX_FRAMES_IN_FLIGHT);
+            m_SwapChain = new Swapchain(Extent,
+                                        m_LogicalDevice,
+                                        m_PhysicalDevice,
+                                        VkConfig::MAX_FRAMES_IN_FLIGHT,
+                                        m_SurfaceDesc.CopyableFrames);
         }
         else
         {
@@ -196,7 +200,8 @@ namespace Fling
                                         m_LogicalDevice,
                                         m_PhysicalDevice,
                                         m_State->m_Surface,
-                                        m_VSync);
+                                        m_VSync,
+                                        m_SurfaceDesc.CopyableFrames);
         }
         assert(m_SwapChain);
 
@@ -441,8 +446,34 @@ namespace Fling
         return m_SwapChain ? m_SwapChain->GetExtents().height : 0;
     }
 
+    void VulkanApp::PrepareScreenshots()
+    {
+        // The common case, every frame: nobody asked
+        if (!Screenshot::HasPending() || m_SwapChain->CanCopyImages() || !m_SwapChain->IsCopySupported())
+        {
+            return;
+        }
+        // Copyable images for this frame only; SaveScreenshots turns it off again after it
+        F_LOG_TRACE("Screenshot requested: making the frames copyable");
+        m_CopyableForRequest = true;
+        m_SwapChain->SetCopyable(true);
+        RecreateSwapchain();
+    }
+
     void VulkanApp::SaveScreenshots()
     {
+        // The common case, every frame: nobody asked, so no lock
+        if (!Screenshot::HasPending())
+        {
+            return;
+        }
+        // A request that came in during this frame, from another thread: the next frame makes
+        // the images copyable and serves it
+        if (!m_SwapChain->CanCopyImages() && m_SwapChain->IsCopySupported())
+        {
+            return;
+        }
+
         std::vector<Screenshot::Pending> Requests = Screenshot::TakePending();
         if (Requests.empty())
         {
@@ -483,17 +514,23 @@ namespace Fling
             }
             Screenshot::Finish(Request, Result);
         }
+
+        // Copyable for a request only: back to the cheaper images after this frame's present,
+        // unless another request is waiting
+        if (m_CopyableForRequest && !Screenshot::HasPending())
+        {
+            m_CopyableForRequest = false;
+            m_SwapChain->SetCopyable(false);
+            bSwapchainOutOfDate = true;
+        }
     }
 
     void VulkanApp::RecreateSwapchain()
     {
-        // Offscreen images never go out of date: there is no window to resize
-        if (m_CurrentWindow == nullptr)
-        {
-            return;
-        }
         F_LOG_TRACE("Making the swap chain again");
-        if (!m_CurrentWindow->WaitForNewWindowSize())
+        // Offscreen images keep their size (there is no window); they are made again only to
+        // change whether they can be copied (Screenshot::Request)
+        if (m_CurrentWindow != nullptr && !m_CurrentWindow->WaitForNewWindowSize())
         {
             // The window was closed while minimized. ShouldTick sees the close next.
             return;
@@ -502,7 +539,9 @@ namespace Fling
 
         CleanupSwapChainResources();
 
-        m_SwapChain->Recreate(ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface));
+        m_SwapChain->Recreate(m_CurrentWindow != nullptr
+                                  ? ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface)
+                                  : m_SwapChain->GetExtents());
 
         BuildSwapChainResources();
 
@@ -665,6 +704,9 @@ namespace Fling
         {
             m_Camera->SetLookRotation(View->Yaw, View->Pitch);
         }
+
+        // A screenshot was asked for: copyable images for this frame (nothing when none was)
+        PrepareScreenshots();
 
         // Aquire the active image index
         VkResult iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
