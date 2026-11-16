@@ -246,22 +246,31 @@ Fling::Screenshot::Request("Saved/door_open.png",
     });
 ```
 
-The renderer saves every waiting request at its next frame, before the present, and logs
-`Screenshot saved (WxH) to <path>` or the error. The callback is optional. Under
+The renderer copies its next frame for every waiting request, and a writer thread saves
+the PNG files, then logs `Screenshot saved (WxH) to <path>` or the error. The callback is optional. Under
 `--null-render` there is no renderer, so a request fails at the next frame with that
 reason; a request still waiting when the run ends fails too. `--screenshot` uses this API.
 Use it for tools, tests and debugging, not to feed results back into the simulation: the
 callback arrives on the main thread, out of step with the ticks.
 
-Cost: nothing when nobody asks. The renderer checks `Screenshot::HasPending()` each frame
-(one atomic load, no lock). The frames are made copyable (`VK_IMAGE_USAGE_TRANSFER_SRC_BIT`,
-which can turn off framebuffer compression on some GPUs) only while a capture needs it:
+Cost: nothing when nobody asks, and no stall when somebody does (`FrameCapturer` in
+`Graphics/src/FrameCapture.h`):
 
-- a run with `--screenshot`: from the start (`RenderSurfaceDesc::CopyableFrames`), so it
-  never makes the swap chain again;
-- any other run: a request makes the swap chain again with copyable images for its frame,
-  saves it, and makes it again without them after that frame's present. That is a short
-  hitch (the GPU waits to be idle twice) on the frame of the screenshot only.
+- A frame with no request does two atomic loads (`Screenshot::HasPending()`, and "any
+  results to deliver"). No lock, no allocation. The writer thread and the staging buffers
+  are made on the first capture only.
+- The frame of a capture records one more barrier and a `vkCmdCopyImageToBuffer` into its
+  own command buffer, after the render pass. That is GPU work in the frame's submit; the
+  CPU does not wait for it, and the swap chain is never made again.
+- After the frame's fence, the staging buffer goes to the `Screenshot Writer` thread,
+  which converts the pixels, encodes the PNG once and writes it to each requested path.
+  The main thread copies nothing. At 1920x1080 on llvmpipe the encode takes about a second
+  on the writer while the frames keep their normal time.
+- The callbacks run on the main thread at a later frame. A run's end waits for the writes
+  (`VulkanApp::FinishScreenshots`), so `--screenshot` checks every file before it exits.
+- The swap chain images are made with `VK_IMAGE_USAGE_TRANSFER_SRC_BIT` once, when the
+  surface allows it (always offscreen). It costs no CPU time, and desktop drivers keep
+  their framebuffer compression with it.
 
 ## Unattended crash tests
 

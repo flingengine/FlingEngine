@@ -27,15 +27,15 @@ namespace Fling
     public:
 
 		/** t_VSync: SetVSync. */
-		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface, bool t_VSync, bool t_Copyable = false);
+		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, VkSurfaceKHR t_Surface, bool t_VSync);
 
 		/**
 		 * An offscreen swap chain (--offscreen): t_ImageCount images that it makes and owns, with
 		 * no surface. AquireNextImage takes the next image in turn and QueuePresent shows
-		 * nothing; both still signal and wait on the semaphores, so VulkanApp::Update runs the
-		 * same way with or without a window.
+		 * nothing. Neither does GPU work or touches the semaphores: VulkanApp::Update skips
+		 * the present semaphores offscreen.
 		 */
-		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, uint32 t_ImageCount, bool t_Copyable = false);
+		Swapchain(const VkExtent2D& t_Extent, LogicalDevice* t_Dev, PhysicalDevice* t_PhysDev, uint32 t_ImageCount);
 
 		~Swapchain();
 
@@ -64,30 +64,18 @@ namespace Fling
 
 		/**
 		 * The layout of an image after the frame's render pass: PRESENT_SRC with a surface.
-		 * Offscreen nothing presents it: TRANSFER_SRC when a capture copies from it, else
-		 * COLOR_ATTACHMENT (TRANSFER_SRC needs the copy usage, which costs; see SetCopyable).
+		 * Offscreen nothing presents it, and a capture copies from it: TRANSFER_SRC.
 		 */
 		VkImageLayout GetFinalLayout() const
 		{
-			if (!m_Offscreen)
-			{
-				return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			}
-			return m_CanCopyImages ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			return m_Offscreen ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		}
 
-		/** True when the images can be copied from (VK_IMAGE_USAGE_TRANSFER_SRC_BIT), for a capture. */
-		bool CanCopyImages() const { return m_CanCopyImages; }
-
 		/**
-		 * Whether the next Recreate makes images that can be copied from. Off by default: the
-		 * usage can cost on every frame (some GPUs turn off framebuffer compression for it),
-		 * so it is on only while a capture needs it.
+		 * True when the images can be copied from (VK_IMAGE_USAGE_TRANSFER_SRC_BIT), for a
+		 * capture. Always offscreen; with a surface, when the surface allows the usage.
 		 */
-		void SetCopyable(bool t_Copyable) { m_WantCopy = t_Copyable; }
-
-		/** True when the images could be made copyable (the surface allows it; always offscreen). */
-		bool IsCopySupported() const { return m_CopySupported; }
+		bool CanCopyImages() const { return m_CanCopyImages; }
 
 		/** The present mode it was made with. */
 		PresentMode GetPresentMode() const { return m_PresentMode; }
@@ -132,12 +120,6 @@ namespace Fling
 
 		/** @see CanCopyImages */
 		bool m_CanCopyImages = false;
-
-		/** @see SetCopyable */
-		bool m_WantCopy = false;
-
-		/** @see IsCopySupported */
-		bool m_CopySupported = false;
 
 		/** Offscreen CreateResources: make the images and their memory. */
 		void CreateOffscreenImages();
