@@ -61,20 +61,21 @@ namespace Fling
         }
         m_RecordedDrawListVersions.resize(m_OffscreenCmdBufs.size(), 0);
 
-        // One camera UBO is enough because each frame waits for the GPU to finish
-        // before the next frame writes it again
+        m_Uploader = std::make_unique<FrameUploader>(m_Device);
+
+        // One camera UBO is enough: it is in GPU memory, and each frame's upload writes it after the
+        // frame before has finished on the GPU
         VkDeviceSize CameraBufferSize = sizeof(OffscreenCameraUBO);
         m_CameraUboBuffer = new Buffer(CameraBufferSize,
-                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        m_CameraUboBuffer->MapMemory(CameraBufferSize);
+                                       VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         // Tell the Vulkan app that the draw command buffers need to WAIT on this offscreen semaphore
         PrepareAttachments();
 
         if (t_HizDownsample && t_HizCull)
         {
-            m_Occlusion = std::make_unique<OcclusionCuller>(m_Device, t_HizDownsample, t_HizCull);
+            m_Occlusion = std::make_unique<OcclusionCuller>(m_Device, m_Uploader.get(), t_HizDownsample, t_HizCull);
             SetOcclusionDepth();
         }
     }
@@ -121,8 +122,9 @@ namespace Fling
         CommandBuffer* OffscreenCmdBuf = m_OffscreenCmdBufs[t_ActiveSwapImage];
         assert(OffscreenCmdBuf);
 
-        // The previous frame is done on the GPU, so the resources of destroyed meshes can go
         FLING_PROFILE_SCOPE("Offscreen.Draw");
+        m_Uploader->Begin();
+        // The resources of destroyed meshes go when the frames that used them are done
         ReleaseRetiredMeshResources();
 
         const bool bOcclusion = OcclusionActive();
@@ -130,9 +132,13 @@ namespace Fling
         {
             m_Occlusion->ReleaseRetired();
         }
-        // The GPU counted the hidden meshes of the previous frame
+        // The GPU counted the hidden meshes of a frame that finished (a few frames ago)
         m_OccludedCount = bOcclusion ? m_Occlusion->ReadOccludedCount() : 0;
         m_GpuFrustumCulled = bOcclusion ? m_Occlusion->ReadFrustumCulledCount() : 0;
+        if (m_Occlusion)
+        {
+            m_Occlusion->QueueStatsReadback();
+        }
         const bool bGpuBlend = GpuBlendActive();
         // The culler leaves the meshes that the GPU blends to the GPU (it has no matrix for them)
         m_Culler.SetDeferBlended(bGpuBlend);
@@ -155,7 +161,7 @@ namespace Fling
         CameraUBO.Projection = m_Camera->GetProjectionMatrix();
         CameraUBO.Projection[1][1] *= -1.0f;
         CameraUBO.View = m_Camera->GetViewMatrix();
-        memcpy(m_CameraUboBuffer->m_MappedMem, &CameraUBO, sizeof(CameraUBO));
+        memcpy(m_Uploader->Stage(*m_CameraUboBuffer, 0, sizeof(CameraUBO)), &CameraUBO, sizeof(CameraUBO));
 
         // The view volume of exactly the matrices the shader uses this frame
         m_CameraViewProjection = CameraUBO.Projection * CameraUBO.View;
@@ -199,6 +205,8 @@ namespace Fling
             BuildOffscreenCommandBuffer(*OffscreenCmdBuf);
             m_RecordedDrawListVersions[t_ActiveSwapImage] = m_DrawListVersion;
         }
+
+        m_UploadCmd = m_Uploader->Record();
     }
 
     void OffscreenSubpass::SyncProxies(const RenderSnapshot& t_Snapshot)
@@ -268,11 +276,11 @@ namespace Fling
     {
         if (t_Mesh.Set != VK_NULL_HANDLE)
         {
-            m_RetiredDescriptorSets.emplace_back(t_Mesh.Set);
+            m_RetiredDescriptorSets.Add(t_Mesh.Set);
         }
         if (t_Mesh.Ubo != nullptr)
         {
-            m_RetiredUniformBuffers.emplace_back(t_Mesh.Ubo);
+            m_RetiredUniformBuffers.Add(t_Mesh.Ubo);
         }
         t_Mesh = GpuMesh{};
     }
@@ -306,12 +314,15 @@ namespace Fling
 
     void OffscreenSubpass::WriteOcclusionSlots(const RenderSnapshot& t_Snapshot)
     {
-        OcclusionSlot* Slots = m_Occlusion->MappedSlots();
+        OcclusionSlot* Slots = m_Occlusion->StageSlots(m_GpuMeshes.size());
         const bool bGpuBlend = GpuBlendActive();
         for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
         {
             const GpuMesh& Mesh = m_GpuMeshes[Slot];
-            Slots[Slot].Info = glm::uvec4(IsDrawable(Mesh) ? Mesh.MeshModel->GetIndexCount() : 0u, 0u, 0u, 0u);
+            // The staging memory holds an old frame's data: every field is written
+            OcclusionSlot Empty;
+            Empty.Info = glm::uvec4(IsDrawable(Mesh) ? Mesh.MeshModel->GetIndexCount() : 0u, 0u, 0u, 0u);
+            Slots[Slot] = Empty;
         }
         for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
         {
@@ -376,22 +387,24 @@ namespace Fling
         }
         if (m_DrawCommands != nullptr)
         {
-            m_RetiredUniformBuffers.emplace_back(m_DrawCommands);
+            m_RetiredUniformBuffers.Add(m_DrawCommands);
         }
         const VkDeviceSize Size = sizeof(VkDrawIndexedIndirectCommand) * Capacity;
         m_DrawCommands = new Buffer(Size,
-                                    VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        m_DrawCommands->MapMemory(Size);
+                                    VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_Uploader->Fill(*m_DrawCommands, 0, Size, 0);
         m_DrawCommandCapacity = Capacity;
         InvalidateCommandBuffers();
     }
 
     void OffscreenSubpass::WriteDrawCommands()
     {
-        // One buffer is enough: each frame waits for the GPU to finish before the next frame
-        // writes it (as with the camera UBO)
-        auto* Commands = static_cast<VkDrawIndexedIndirectCommand*>(m_DrawCommands->m_MappedMem);
+        // One buffer is enough: it is in GPU memory, and the frame's upload writes it after the frame
+        // before has finished on the GPU (as with the camera UBO)
+        auto* Commands = static_cast<VkDrawIndexedIndirectCommand*>(
+            m_Uploader->Stage(*m_DrawCommands, 0, sizeof(VkDrawIndexedIndirectCommand) * m_GpuMeshes.size()));
         for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
         {
             const GpuMesh& Mesh = m_GpuMeshes[Slot];
@@ -407,7 +420,6 @@ namespace Fling
 
     void OffscreenSubpass::UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot)
     {
-        glm::mat4* Worlds = static_cast<glm::mat4*>(m_WorldBuffer->m_MappedMem);
         const bool bGpuBlend = GpuBlendActive();
         for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
         {
@@ -431,7 +443,9 @@ namespace Fling
                 continue;
             }
 
-            Worlds[Slot] = m_Worlds[i];
+            std::memcpy(m_Uploader->Stage(*m_WorldBuffer, sizeof(glm::mat4) * Slot, sizeof(glm::mat4)),
+                        &m_Worlds[i],
+                        sizeof(glm::mat4));
             Mesh.UploadedVersion = Item.WorldVersion;
         }
     }
@@ -448,16 +462,21 @@ namespace Fling
             Capacity *= 2;
         }
         const VkDeviceSize Size = sizeof(glm::mat4) * Capacity;
-        Buffer* Bigger = new Buffer(Size,
-                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        Bigger->MapMemory(Size);
-        std::memset(Bigger->m_MappedMem, 0, Size);
+        // The descriptor sets of the meshes are written again below, and the frames in flight use them
         if (m_WorldBuffer != nullptr)
         {
-            std::memcpy(Bigger->m_MappedMem, m_WorldBuffer->m_MappedMem, sizeof(glm::mat4) * m_WorldCapacity);
-            // The GPU is done with the last frame, but it is freed with the other retired buffers
-            m_RetiredUniformBuffers.emplace_back(m_WorldBuffer);
+            m_Device->WaitForIdle();
+        }
+        Buffer* Bigger = new Buffer(Size,
+                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_Uploader->Fill(*Bigger, 0, Size, 0);
+        if (m_WorldBuffer != nullptr)
+        {
+            // The GPU copies the matrices over: it is freed with the other retired buffers
+            m_Uploader->Copy(*m_WorldBuffer, *Bigger, sizeof(glm::mat4) * m_WorldCapacity);
+            m_RetiredUniformBuffers.Add(m_WorldBuffer);
         }
         m_WorldBuffer = Bigger;
         m_WorldCapacity = Capacity;
@@ -745,6 +764,8 @@ namespace Fling
                                                      uint32 t_ActiveFrameIndex,
                                                      uint32 t_CurrentFrameInFlight)
     {
+        // The upload goes first: it copies this frame's data, after the frame before has finished
+        t_CmdBuffs.emplace_back(m_UploadCmd);
         t_CmdBuffs.emplace_back(m_OffscreenCmdBufs[t_ActiveFrameIndex]);
         t_Deps.emplace_back(m_OffscreenSemaphores[t_CurrentFrameInFlight]);
     }
@@ -763,7 +784,7 @@ namespace Fling
         m_Occlusion.reset();
         m_Proxies.Clear();
         m_ItemSlots.clear();
-        ReleaseRetiredMeshResources();
+        ReleaseRetiredMeshResources(true);
 
         if (m_DescriptorPool != VK_NULL_HANDLE)
         {
@@ -791,21 +812,28 @@ namespace Fling
         InvalidateCommandBuffers();
     }
 
-    void OffscreenSubpass::ReleaseRetiredMeshResources()
+    void OffscreenSubpass::ReleaseRetiredMeshResources(const bool t_All)
     {
-        if (!m_RetiredDescriptorSets.empty() && m_DescriptorPool != VK_NULL_HANDLE)
+        auto FreeSet = [this](const VkDescriptorSet t_Set)
         {
-            VK_CHECK_RESULT(vkFreeDescriptorSets(m_Device->GetVkDevice(),
-                                                 m_DescriptorPool,
-                                                 static_cast<uint32>(m_RetiredDescriptorSets.size()),
-                                                 m_RetiredDescriptorSets.data()));
-        }
-        m_RetiredDescriptorSets.clear();
-
-        for (Buffer* Ubo : m_RetiredUniformBuffers)
+            if (m_DescriptorPool != VK_NULL_HANDLE)
+            {
+                VK_CHECK_RESULT(vkFreeDescriptorSets(m_Device->GetVkDevice(), m_DescriptorPool, 1, &t_Set));
+            }
+        };
+        auto FreeBuffer = [](Buffer* t_Buffer)
         {
-            delete Ubo;
+            delete t_Buffer;
+        };
+        if (t_All)
+        {
+            m_RetiredDescriptorSets.ReleaseAll(FreeSet);
+            m_RetiredUniformBuffers.ReleaseAll(FreeBuffer);
         }
-        m_RetiredUniformBuffers.clear();
+        else
+        {
+            m_RetiredDescriptorSets.Release(FreeSet);
+            m_RetiredUniformBuffers.Release(FreeBuffer);
+        }
     }
 } // namespace Fling

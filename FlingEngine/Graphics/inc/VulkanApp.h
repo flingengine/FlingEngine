@@ -78,6 +78,22 @@ namespace Fling
         void ShutdownRenderer();
 
         /**
+         * Wait until the GPU has finished every frame that was recorded. The renderer records the next frame
+         * while the GPU still draws the last one, so call this before freeing a model, texture or other
+         * resource that a frame may have used. Main thread.
+         */
+        void WaitForGpuIdle();
+
+        /**
+         * Show the frame that is held back. Without a present thread ([Graphics] PresentThread=false) Update
+         * presents the frame before the one it just submitted, because the present call can wait for the GPU and
+         * the GPU should have the next frame queued by then. Call this when the thread would wait anyway (the frame
+         * limiter sleeps), so the frame is not shown later than it needs to be. Does nothing when no frame is held
+         * back. Main thread.
+         */
+        void PresentPendingFrame();
+
+        /**
          * Wait for the screenshots that are being written (Screenshot::Request) and call their
          * callbacks. A frame copies a screenshot; a writer thread saves it later, so a run that
          * counts its screenshots calls this before it ends. Main thread.
@@ -186,7 +202,15 @@ namespace Fling
 
         /** Make the swap chain and what depends on it again (a resize, an out-of-date swap chain, a present mode
          * change). */
-        void RecreateSwapchain();
+        /** @return False when the swap chain stays (the window closed while it was minimized) */
+        bool RecreateSwapchain();
+
+        /** Start the thread that presents and acquires, when the device has a queue for it. Not offscreen. */
+        void StartPresentThread();
+
+        /** Make (again) the semaphores that the acquires of the present thread signal */
+        void MakeAcquireSemaphores();
+        void DestroyAcquireSemaphores();
 
         /** Builds any render pipelines with their specific set of sub passes and shaders */
         void BuildRenderPipelines(PipelineFlags t_Conf,

@@ -74,6 +74,12 @@ namespace Fling
          */
         CORE_API void WaitForNextFrame();
 
+        /**
+         * True if WaitForNextFrame would wait now: the frame is faster than the cap. The render thread uses it to
+         * present a frame before it sleeps, instead of after the next frame.
+         */
+        CORE_API bool WillWait() const;
+
         /** The number of times the schedule started again because a frame was too late. */
         uint64 GetRestarts() const { return m_Restarts; }
 

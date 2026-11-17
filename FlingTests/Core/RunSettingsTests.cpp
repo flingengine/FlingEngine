@@ -63,16 +63,23 @@ TEST_CASE("Run settings: the frame cap is the monitor's refresh rate, else 60", 
         Settings.ResolveFrameCap(2000u);
         REQUIRE(Settings.MaxFps == RunSettings::MaxMaxFps);
     }
-    SECTION("A monitor that reports 0")
+    SECTION("A monitor that reports 0, with VSync on: the display paces the frames")
     {
         Settings.ResolveFrameCap(0u);
-        REQUIRE(Settings.MaxFps == 60);
+        REQUIRE(Settings.MaxFps == 0);
         REQUIRE(Settings.MaxFpsSource == SettingSource::Default);
     }
-    SECTION("No monitor")
+    SECTION("No monitor, with VSync on: no cap")
     {
         Settings.ResolveFrameCap(std::nullopt);
-        REQUIRE(Settings.MaxFps == 60);
+        REQUIRE(Settings.MaxFps == 0);
+        REQUIRE(Settings.MaxFpsSource == SettingSource::Default);
+    }
+    SECTION("No monitor, with VSync off: the fallback cap")
+    {
+        REQUIRE(Resolve({"--vsync", "off"}, {}, Settings, Error));
+        Settings.ResolveFrameCap(std::nullopt);
+        REQUIRE(Settings.MaxFps == RunSettings::FallbackMaxFps);
         REQUIRE(Settings.MaxFpsSource == SettingSource::Default);
     }
     SECTION("Headless runs have no cap unless they ask for one, so tests stay fast")

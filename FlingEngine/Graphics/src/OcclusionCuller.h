@@ -3,6 +3,7 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
+#include "FrameSync.h"
 #include "Frustum.h"
 
 #include <memory>
@@ -11,6 +12,7 @@
 namespace Fling
 {
     class Buffer;
+    class FrameUploader;
     class LogicalDevice;
     class Shader;
 
@@ -70,6 +72,7 @@ namespace Fling
     {
     public:
         OcclusionCuller(const LogicalDevice* t_Device,
+                        FrameUploader* t_Uploader,
                         std::shared_ptr<Shader> t_Downsample,
                         std::shared_ptr<Shader> t_Cull);
         ~OcclusionCuller();
@@ -93,16 +96,25 @@ namespace Fling
          */
         bool EnsureCapacity(size_t t_Slots, Buffer* t_Draw1);
 
-        /** Delete the buffers that EnsureCapacity replaced. The GPU is done with the frame that used them. */
+        /** Delete the buffers that EnsureCapacity replaced, when the GPU is done with the frames that used them. */
         void ReleaseRetired();
 
-        /** The slot data, one per slot, for the CPU to fill. Valid after EnsureCapacity. */
-        OcclusionSlot* MappedSlots() const;
+        /**
+         * Memory for the slot data of t_Count slots, for the CPU to fill (every field of every slot): the
+         * frame's upload copies it to the GPU. Valid after EnsureCapacity, until the frame's upload is recorded.
+         */
+        OcclusionSlot* StageSlots(size_t t_Count);
+
+        /**
+         * Queue the copy of the counters that the last frame made to this frame slot's readback buffer. Call it
+         * once a frame, before the frame's other work is recorded.
+         */
+        void QueueStatsReadback();
 
         /** The second draw commands, one per slot: the draws that the second render pass reads */
         const Buffer* Draw2() const { return m_Draw2; }
 
-        /** The meshes the previous frame found hidden, read from the GPU's counter */
+        /** The meshes found hidden by the frame that the readback buffer of this frame slot holds (a few frames old) */
         uint32 ReadOccludedCount() const;
 
         /** The slots with TestFrustum that the previous frame found outside the view */
@@ -168,6 +180,10 @@ namespace Fling
         Buffer* m_Worlds = nullptr;
         size_t m_Capacity = 0;
         uint32 m_SlotCount = 0;
-        std::vector<Buffer*> m_Retired;
+        RetireList<Buffer*> m_Retired;
+        FrameUploader* m_Uploader;
+        /** The counters, copied to the host after each frame: one buffer for each frame slot */
+        Buffer* m_Readback[FrameSync::FramesInFlight] = {};
+        bool m_StatsReady = false;
     };
 } // namespace Fling

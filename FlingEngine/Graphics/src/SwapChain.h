@@ -41,7 +41,19 @@ namespace Fling
 
 		VkResult AquireNextImage(const VkSemaphore& t_CompletedSemaphore);
 
+		/**
+		 * Acquire the next image of a window's swap chain: signals t_Semaphore and gives the image index. Does not
+		 * change the active image, so the present thread can call it (the swap chain is used by one thread at a time).
+		 */
+		VkResult AcquireImage(VkSemaphore t_Semaphore, uint32& t_OutIndex) const;
+
 		VkResult QueuePresent(const VkQueue& t_PresentQueue, const VkSemaphore& t_WaitSemaphore);
+
+		/**
+		 * Present image t_ImageIndex. Reads nothing that a later AquireNextImage changes, so another thread can call
+		 * it while this one records the next frame (the swap chain must not be recreated meanwhile).
+		 */
+		VkResult QueuePresent(const VkQueue& t_PresentQueue, const VkSemaphore& t_WaitSemaphore, uint32 t_ImageIndex) const;
 
 		/**
 		 * Recreate this swap chain including image views, render passes, and command buffers.

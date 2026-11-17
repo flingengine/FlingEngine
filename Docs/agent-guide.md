@@ -765,7 +765,7 @@ flag or key. The startup line `Run settings: ...` names each value and its sourc
 | --- | --- | --- | --- | --- |
 | Exec mode | `--exec direct\|inline\|threaded` | `Exec` | threaded | no |
 | Tick rate | `--sim-hz N` (1 to 1000) | `SimHz` | 30 | GPU Options, at a tick boundary |
-| Frame cap | `--max-fps N` (0: none, max 1000) | `MaxFps` | monitor refresh rate, else 60 (`FallbackMaxFps`); none with `--null-render` | GPU Options |
+| Frame cap | `--max-fps N` (0: none, max 1000) | `MaxFps` | monitor refresh rate, else none with VSync on, else 60 (`FallbackMaxFps`); none with `--null-render` | GPU Options |
 | VSync | `--vsync on\|off` | `VSync` | on | GPU Options (swap chain rebuilt) |
 | Interpolation | `--interpolation on\|off` | `Interpolation` | on | GPU Options |
 | Frustum culling | `--frustum-culling on\|off` | `FrustumCulling` | on | GPU Options |

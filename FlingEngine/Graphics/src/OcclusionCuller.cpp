@@ -1,4 +1,5 @@
 #include "Buffer.h"
+#include "FrameUploader.h"
 #include "GraphicsHelpers.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
@@ -21,6 +22,8 @@ namespace Fling
         constexpr uint32 DownsampleGroupSize = 8;
         constexpr VkMemoryPropertyFlags HostVisible =
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        /** The buffers that the CPU fills each frame are in GPU memory: the frame's upload copies into them */
+        constexpr VkMemoryPropertyFlags DeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
         /** The std140 block Params of cull.comp */
         struct alignas(16) CullParams
@@ -65,9 +68,10 @@ namespace Fling
     } // namespace
 
     OcclusionCuller::OcclusionCuller(const LogicalDevice* t_Device,
+                                     FrameUploader* t_Uploader,
                                      std::shared_ptr<Shader> t_Downsample,
                                      std::shared_ptr<Shader> t_Cull)
-        : m_Device(t_Device)
+        : m_Device(t_Device), m_Uploader(t_Uploader)
     {
         assert(m_Device);
         if (!t_Downsample || !t_Cull || t_Downsample->GetShaderModule() == VK_NULL_HANDLE ||
@@ -110,12 +114,18 @@ namespace Fling
         Alloc.pSetLayouts = &m_CullSetLayout;
         VK_CHECK_RESULT(vkAllocateDescriptorSets(Dev, &Alloc, &m_CullSet));
 
-        m_Params = new Buffer(sizeof(CullParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, HostVisible);
-        m_Params->MapMemory(sizeof(CullParams));
-        m_Stats = new Buffer(
-            sizeof(uint32) * 4, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, HostVisible);
-        m_Stats->MapMemory(sizeof(uint32) * 4);
-        std::memset(m_Stats->m_MappedMem, 0, sizeof(uint32) * 4);
+        m_Params = new Buffer(
+            sizeof(CullParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, DeviceLocal);
+        m_Stats = new Buffer(sizeof(uint32) * 4,
+                             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             DeviceLocal);
+        for (Buffer*& Each : m_Readback)
+        {
+            Each = new Buffer(sizeof(uint32) * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, HostVisible);
+            Each->MapMemory(sizeof(uint32) * 4);
+            std::memset(Each->m_MappedMem, 0, sizeof(uint32) * 4);
+        }
 
         m_Supported = true;
     }
@@ -124,9 +134,10 @@ namespace Fling
     {
         const VkDevice Dev = m_Device->GetVkDevice();
         DestroyPyramid();
-        for (Buffer* B : m_Retired)
+        m_Retired.ReleaseAll([](Buffer* t_Buffer) { delete t_Buffer; });
+        for (Buffer* Each : m_Readback)
         {
-            delete B;
+            delete Each;
         }
         delete m_Params;
         delete m_Slots;
@@ -361,26 +372,37 @@ namespace Fling
         if (m_Capacity < t_Slots || m_Slots == nullptr)
         {
             const size_t Capacity = std::max<size_t>(t_Slots, 64);
+            const bool bReplace = m_Slots != nullptr;
+            if (bReplace)
+            {
+                // The sets of the frames in flight point at the old buffers: let those frames finish first
+                m_Device->WaitForIdle();
+            }
             for (Buffer* Old : {m_Slots, m_Draw2, m_Visible})
             {
                 if (Old != nullptr)
                 {
-                    m_Retired.push_back(Old);
+                    m_Retired.Add(Old);
                 }
             }
-            m_Slots = new Buffer(sizeof(OcclusionSlot) * Capacity, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, HostVisible);
-            m_Slots->MapMemory(sizeof(OcclusionSlot) * Capacity);
-            std::memset(m_Slots->m_MappedMem, 0, sizeof(OcclusionSlot) * Capacity);
+            m_Slots = new Buffer(sizeof(OcclusionSlot) * Capacity,
+                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                 DeviceLocal);
             m_Draw2 = new Buffer(sizeof(VkDrawIndexedIndirectCommand) * Capacity,
-                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
-                                 HostVisible);
-            m_Draw2->MapMemory(sizeof(VkDrawIndexedIndirectCommand) * Capacity);
-            std::memset(m_Draw2->m_MappedMem, 0, sizeof(VkDrawIndexedIndirectCommand) * Capacity);
+                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT |
+                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                 DeviceLocal);
+            m_Uploader->Fill(*m_Draw2, 0, sizeof(VkDrawIndexedIndirectCommand) * Capacity, 0);
             // Nothing was visible yet, so the first frame draws everything in the second pass
-            m_Visible = new Buffer(sizeof(uint32) * Capacity, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, HostVisible);
-            m_Visible->MapMemory(sizeof(uint32) * Capacity);
-            std::memset(m_Visible->m_MappedMem, 0, sizeof(uint32) * Capacity);
+            m_Visible = new Buffer(sizeof(uint32) * Capacity,
+                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                   DeviceLocal);
+            m_Uploader->Fill(*m_Visible, 0, sizeof(uint32) * Capacity, 0);
             m_Capacity = Capacity;
+        }
+        if (m_Draw1 != t_Draw1 && m_Draw1 != nullptr)
+        {
+            m_Device->WaitForIdle();
         }
         m_Draw1 = t_Draw1;
         WriteCullDescriptors();
@@ -389,11 +411,7 @@ namespace Fling
 
     void OcclusionCuller::ReleaseRetired()
     {
-        for (Buffer* B : m_Retired)
-        {
-            delete B;
-        }
-        m_Retired.clear();
+        m_Retired.Release([](Buffer* t_Buffer) { delete t_Buffer; });
     }
 
     void OcclusionCuller::WriteCullDescriptors() const
@@ -436,19 +454,35 @@ namespace Fling
         vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(Writes.size()), Writes.data(), 0, nullptr);
     }
 
-    OcclusionSlot* OcclusionCuller::MappedSlots() const
+    OcclusionSlot* OcclusionCuller::StageSlots(const size_t t_Count)
     {
-        return m_Slots != nullptr ? static_cast<OcclusionSlot*>(m_Slots->m_MappedMem) : nullptr;
+        assert(m_Slots != nullptr && t_Count <= m_Capacity);
+        return static_cast<OcclusionSlot*>(m_Uploader->Stage(*m_Slots, 0, sizeof(OcclusionSlot) * t_Count));
+    }
+
+    void OcclusionCuller::QueueStatsReadback()
+    {
+        if (!m_Supported)
+        {
+            return;
+        }
+        if (!m_StatsReady)
+        {
+            // Device memory starts with whatever was there
+            m_Uploader->Fill(*m_Stats, 0, sizeof(uint32) * 4, 0);
+            m_StatsReady = true;
+        }
+        m_Uploader->Copy(*m_Stats, *m_Readback[FrameSync::Slot()], sizeof(uint32) * 4);
     }
 
     uint32 OcclusionCuller::ReadOccludedCount() const
     {
-        return m_Stats != nullptr ? *static_cast<const uint32*>(m_Stats->m_MappedMem) : 0;
+        return *static_cast<const uint32*>(m_Readback[FrameSync::Slot()]->m_MappedMem);
     }
 
     uint32 OcclusionCuller::ReadFrustumCulledCount() const
     {
-        return m_Stats != nullptr ? static_cast<const uint32*>(m_Stats->m_MappedMem)[1] : 0;
+        return static_cast<const uint32*>(m_Readback[FrameSync::Slot()]->m_MappedMem)[1];
     }
 
     void OcclusionCuller::SetWorlds(Buffer* t_Worlds)
@@ -474,7 +508,7 @@ namespace Fling
         {
             Params.Planes[i] = t_View.Planes[i];
         }
-        std::memcpy(m_Params->m_MappedMem, &Params, sizeof(Params));
+        std::memcpy(m_Uploader->Stage(*m_Params, 0, sizeof(Params)), &Params, sizeof(Params));
     }
 
     void OcclusionCuller::Dispatch(VkCommandBuffer t_Cmd, const uint32 t_Phase) const

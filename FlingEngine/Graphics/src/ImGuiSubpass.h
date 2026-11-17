@@ -2,8 +2,10 @@
 
 #include "Ecs/EntityStorage.h"
 #include "FlingMath.h"
+#include "FrameSync.h"
 #include "Subpass.h"
 
+#include <array>
 #include <memory>
 
 namespace Fling
@@ -65,8 +67,10 @@ namespace Fling
             glm::vec2 translate;
         } pushConstBlock;
 
-        std::unique_ptr<class Buffer> m_vertexBuffer;
-        std::unique_ptr<class Buffer> m_indexBuffer;
+        /** The geometry of the UI: one pair of buffers for each frame slot, because the CPU writes the pair of the
+         * frame it records */
+        std::array<std::unique_ptr<class Buffer>, FrameSync::FramesInFlight> m_vertexBuffer;
+        std::array<std::unique_ptr<class Buffer>, FrameSync::FramesInFlight> m_indexBuffer;
 
         VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
@@ -86,8 +90,8 @@ namespace Fling
         /** Instance of the editor that we will get what commands to build from */
         std::shared_ptr<Fling::IDebugUI> m_DebugUI;
 
-        int32 m_vertexCount = 0;
-        int32 m_indexCount = 0;
+        std::array<int32, FrameSync::FramesInFlight> m_vertexCount{};
+        std::array<int32, FrameSync::FramesInFlight> m_indexCount{};
 
         VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
     };

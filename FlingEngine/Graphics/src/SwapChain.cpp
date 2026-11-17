@@ -35,11 +35,7 @@ namespace Fling
                          PhysicalDevice* t_PhysDev,
                          VkSurfaceKHR t_Surface,
                          const bool t_VSync)
-        : m_VSync(t_VSync),
-          m_Extents{t_Extent},
-          m_Device(t_Dev),
-          m_PhysicalDevice(t_PhysDev),
-          m_Surface(t_Surface)
+        : m_VSync(t_VSync), m_Extents{t_Extent}, m_Device(t_Dev), m_PhysicalDevice(t_PhysDev), m_Surface(t_Surface)
     {
         assert(m_Device && m_PhysicalDevice && m_Surface);
         Recreate(m_Extents);
@@ -313,6 +309,17 @@ namespace Fling
         return t_AvailableFormats[0];
     }
 
+    VkResult Swapchain::AcquireImage(const VkSemaphore t_Semaphore, uint32& t_OutIndex) const
+    {
+        assert(m_Device && !m_Offscreen);
+        return vkAcquireNextImageKHR(m_Device->GetVkDevice(),
+                                     m_SwapChain,
+                                     std::numeric_limits<uint64>::max(),
+                                     t_Semaphore,
+                                     VK_NULL_HANDLE,
+                                     &t_OutIndex);
+    }
+
     VkResult Swapchain::AquireNextImage(const VkSemaphore& t_CompletedSemaphore)
     {
         assert(m_Device);
@@ -333,6 +340,26 @@ namespace Fling
                                               VK_NULL_HANDLE,
                                               &m_ActiveImageIndex);
         return iRes;
+    }
+
+    VkResult Swapchain::QueuePresent(const VkQueue& t_PresentQueue,
+                                     const VkSemaphore& t_WaitSemaphore,
+                                     const uint32 t_ImageIndex) const
+    {
+        if (m_Offscreen)
+        {
+            return VK_SUCCESS;
+        }
+
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &t_WaitSemaphore;
+        VkSwapchainKHR swapChains[] = {m_SwapChain};
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapChains;
+        presentInfo.pImageIndices = &t_ImageIndex;
+        return vkQueuePresentKHR(t_PresentQueue, &presentInfo);
     }
 
     VkResult Swapchain::QueuePresent(const VkQueue& t_PresentQueue, const VkSemaphore& t_WaitSemaphore)

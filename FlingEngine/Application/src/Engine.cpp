@@ -740,6 +740,13 @@ namespace Fling
             UpdateFrameLimiter();
         }
 
+        // Without a present thread the renderer holds the last frame back, to record the next one while the GPU
+        // draws it. When the limiter sleeps anyway, nothing is gained by holding it: show it now
+        if (!m_Options.NullRender && m_FrameLimiter.WillWait())
+        {
+            VulkanApp::Get().PresentPendingFrame();
+        }
+
         // The game ticks on its own clock, so it runs at the same speed, only shown less often
         m_FrameLimiter.WaitForNextFrame();
     }
@@ -949,6 +956,13 @@ namespace Fling
 
         // The world still holds the game until the world is destroyed below
         m_GameImpl.reset();
+
+        // The renderer records a frame while the GPU draws the one before: let the GPU finish before the models
+        // and textures that the frames use are freed
+        if (m_SystemsStarted && !m_Options.NullRender && m_World)
+        {
+            VulkanApp::Get().WaitForGpuIdle();
+        }
 
         // Cleanup any resources
         if (m_SystemsStarted)

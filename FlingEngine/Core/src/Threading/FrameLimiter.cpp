@@ -51,6 +51,11 @@ namespace Fling
         return Math::Min(m_SpinNs, m_PeriodNs / 2);
     }
 
+    bool FrameLimiter::WillWait() const
+    {
+        return m_PeriodNs > 0 && m_Started && m_Now() < m_NextNs;
+    }
+
     void FrameLimiter::WaitForNextFrame()
     {
         if (m_PeriodNs <= 0)

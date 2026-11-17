@@ -1,10 +1,12 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "FrameSync.h"
 #include "GpuMesh.h"
 #include "MeshProxyTable.h"
 #include "Subpass.h"
 
+#include <array>
 #include <cstddef>
 #include <memory>
 
@@ -48,12 +50,12 @@ namespace Fling
         /** Match the proxies to the snapshot, and make resources for meshes with a debug material */
         void SyncProxies(const RenderSnapshot& t_Snapshot);
 
-        void RetireGpuMesh(GpuMesh& t_Mesh);
+        void RetireGpuMesh(uint32 t_Slot);
 
-        /** Free retired sets and UBOs. The previous frame has finished on the GPU when Draw starts. */
-        void ReleaseRetiredMeshResources();
+        /** Free retired sets and UBOs whose frames are finished on the GPU (t_All: all of them, the device is idle) */
+        void ReleaseRetiredMeshResources(bool t_All = false);
 
-        void CreateMeshDescriptorSet(GpuMesh& t_Mesh);
+        void CreateMeshDescriptorSet(VkDescriptorSet& t_Set, Buffer* t_Ubo);
 
         VkRenderPass m_GlobalRenderPass = VK_NULL_HANDLE;
 
@@ -75,8 +77,19 @@ namespace Fling
 
         std::vector<uint32> m_ItemSlots;
 
-        std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
+        /**
+         * The UBO and the descriptor set of a mesh for each frame slot: the CPU writes the UBO of the slot that it
+         * records while the GPU may still read the one of the frame before. Indexed by slot like m_GpuMeshes.
+         */
+        struct FrameResources
+        {
+            std::array<Buffer*, FrameSync::FramesInFlight> Ubos{};
+            std::array<VkDescriptorSet, FrameSync::FramesInFlight> Sets{};
+        };
+        std::vector<FrameResources> m_FrameResources;
 
-        std::vector<Buffer*> m_RetiredUniformBuffers;
+        RetireList<VkDescriptorSet> m_RetiredDescriptorSets;
+
+        RetireList<Buffer*> m_RetiredUniformBuffers;
     };
 } // namespace Fling
