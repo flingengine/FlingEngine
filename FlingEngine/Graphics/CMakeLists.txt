@@ -39,6 +39,8 @@ fling_add_shaders(Graphics
 		"${FLING_ENGINE_SHADER_DIR}/Deferred/deferred.frag"
 		"${FLING_ENGINE_SHADER_DIR}/Deferred/mrt.vert"
 		"${FLING_ENGINE_SHADER_DIR}/Deferred/mrt.frag"
+		"${FLING_ENGINE_SHADER_DIR}/Occlusion/cull.comp"
+		"${FLING_ENGINE_SHADER_DIR}/Occlusion/hiz_downsample.comp"
 		"${FLING_ENGINE_SHADER_DIR}/imgui/ui.vert"
 		"${FLING_ENGINE_SHADER_DIR}/imgui/ui.frag"
 		"${FLING_ENGINE_SHADER_DIR}/skybox/skybox.vert"

@@ -67,6 +67,18 @@ namespace Fling
 		vkCmdBeginRenderPass(GetHandle(), &begin_info, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
+	void CommandBuffer::BeginLoadRenderPass(const FrameBuffer& t_frameBuf)
+	{
+		VkRenderPassBeginInfo begin_info{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+		begin_info.renderPass = t_frameBuf.GetLoadRenderPassHandle();
+		begin_info.framebuffer = t_frameBuf.GetHandle();
+		begin_info.renderArea.offset = { 0, 0 };
+		begin_info.renderArea.extent.width = t_frameBuf.GetWidth();
+		begin_info.renderArea.extent.height = t_frameBuf.GetHeight();
+		// Nothing is cleared, so there are no clear values
+		vkCmdBeginRenderPass(GetHandle(), &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
 	void CommandBuffer::NextSubpass()
 	{
 		// track pipeline state ?

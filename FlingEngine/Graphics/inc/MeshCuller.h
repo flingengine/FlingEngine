@@ -18,6 +18,12 @@ namespace Fling
 
         /** Meshes the pass would draw, but that are outside the camera's view. */
         uint32 Culled = 0;
+
+        /**
+         * Meshes that are in the camera's view but that other meshes hide (occlusion culling).
+         * Counted by the GPU, so it is the value of the previous frame. Not part of Culled.
+         */
+        uint32 Occluded = 0;
     };
 
     /**
