@@ -455,8 +455,17 @@ namespace Fling
             m_ControlsError.clear();
             Controls.SetFrustumCulling(bFrustumCulling);
         }
+        bool bOcclusionCulling = Controls.OcclusionCulling();
+        if (ImGui::Checkbox("Occlusion culling", &bOcclusionCulling))
+        {
+            m_ControlsError.clear();
+            Controls.SetOcclusionCulling(bOcclusionCulling);
+        }
         const CullStats Culled = VulkanApp::Get().GetCullStats();
-        ImGui::TextDisabled("Last frame: %u meshes drawn, %u outside the view", Culled.Drawn, Culled.Culled);
+        ImGui::TextDisabled("Last frame: %u meshes drawn, %u outside the view, %u occluded (hidden by other meshes)",
+                            Culled.Drawn,
+                            Culled.Culled,
+                            Culled.Occluded);
 
         if (!m_ControlsError.empty())
         {

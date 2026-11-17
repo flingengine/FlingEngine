@@ -1,0 +1,47 @@
+#version 450
+
+// One level of the depth pyramid. Level 0 copies the depth image. Each later level holds the
+// farthest depth of the texels below it. Keep in step with DepthPyramid::Build (OcclusionTest.cpp).
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0) uniform sampler2D uSrc;
+layout(set = 0, binding = 1, r32f) uniform writeonly image2D uDst;
+
+layout(push_constant) uniform Params
+{
+    ivec2 SrcSize;
+    ivec2 DstSize;
+    int Copy;
+} pc;
+
+void main()
+{
+    const ivec2 d = ivec2(gl_GlobalInvocationID.xy);
+    if (d.x >= pc.DstSize.x || d.y >= pc.DstSize.y)
+    {
+        return;
+    }
+
+    if (pc.Copy != 0)
+    {
+        imageStore(uDst, d, vec4(texelFetch(uSrc, d, 0).r));
+        return;
+    }
+
+    const ivec2 lo = d * 2;
+    ivec2 hi = lo + 1;
+    // The last row or column also covers the extra source row or column of an odd size
+    if (d.x == pc.DstSize.x - 1) hi.x = pc.SrcSize.x - 1;
+    if (d.y == pc.DstSize.y - 1) hi.y = pc.SrcSize.y - 1;
+
+    float farthest = 0.0;
+    for (int y = lo.y; y <= hi.y; ++y)
+    {
+        for (int x = lo.x; x <= hi.x; ++x)
+        {
+            farthest = max(farthest, texelFetch(uSrc, ivec2(x, y), 0).r);
+        }
+    }
+    imageStore(uDst, d, vec4(farthest));
+}

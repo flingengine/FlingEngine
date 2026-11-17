@@ -23,7 +23,9 @@ namespace Fling
                                        const Swapchain* t_Swap,
                                        FirstPersonCamera* t_Cam,
                                        std::shared_ptr<Fling::Shader> t_Vert,
-                                       std::shared_ptr<Fling::Shader> t_Frag)
+                                       std::shared_ptr<Fling::Shader> t_Frag,
+                                       std::shared_ptr<Fling::Shader> t_HizDownsample,
+                                       std::shared_ptr<Fling::Shader> t_HizCull)
         : Subpass(t_Dev, t_Swap, t_Vert, t_Frag), m_Camera(t_Cam)
     {
         // Set the clear values for the G Buffer
@@ -60,10 +62,17 @@ namespace Fling
 
         // Tell the Vulkan app that the draw command buffers need to WAIT on this offscreen semaphore
         PrepareAttachments();
+
+        if (t_HizDownsample && t_HizCull)
+        {
+            m_Occlusion = std::make_unique<OcclusionCuller>(m_Device, t_HizDownsample, t_HizCull);
+            SetOcclusionDepth();
+        }
     }
 
     OffscreenSubpass::~OffscreenSubpass()
     {
+        m_Occlusion.reset();
         // Destroy any allocated semaphores
         for (size_t i = 0; i < m_OffscreenSemaphores.size(); ++i)
         {
@@ -103,6 +112,20 @@ namespace Fling
         // The previous frame is done on the GPU, so the resources of destroyed meshes can go
         ReleaseRetiredMeshResources();
 
+        const bool bOcclusion = OcclusionActive();
+        if (m_Occlusion)
+        {
+            m_Occlusion->ReleaseRetired();
+        }
+        // The GPU counted the hidden meshes of the previous frame
+        m_OccludedCount = bOcclusion ? m_Occlusion->ReadOccludedCount() : 0;
+        if (bOcclusion != m_RecordedOcclusion)
+        {
+            // The recordings hold either one pass or the two phase passes
+            InvalidateCommandBuffers();
+            m_RecordedOcclusion = bOcclusion;
+        }
+
         // The meshes in this frame's snapshot: new ones get a proxy, gone ones release theirs
         SyncProxies(t_Snapshot);
 
@@ -119,7 +142,20 @@ namespace Fling
         CullMeshes(t_Snapshot);
 
         UpdateMeshUniformBuffers(t_Snapshot);
-        WriteDrawCommands();
+        if (bOcclusion)
+        {
+            // The GPU writes the draw commands, from the slot data and this frame's camera
+            if (m_Occlusion->EnsureCapacity(m_DrawCommandCapacity, m_DrawCommands))
+            {
+                InvalidateCommandBuffers();
+            }
+            WriteOcclusionSlots(t_Snapshot);
+            m_Occlusion->WriteParams(m_CameraViewProjection, static_cast<uint32>(m_GpuMeshes.size()));
+        }
+        else
+        {
+            WriteDrawCommands();
+        }
 
         // The command buffer holds only draw calls and descriptor bindings, not
         // UBO data. Keep the last recording if the draw list did not change.
@@ -209,6 +245,41 @@ namespace Fling
         m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr);
     }
 
+    void OffscreenSubpass::WriteOcclusionSlots(const RenderSnapshot& t_Snapshot)
+    {
+        OcclusionSlot* Slots = m_Occlusion->MappedSlots();
+        for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
+        {
+            const GpuMesh& Mesh = m_GpuMeshes[Slot];
+            Slots[Slot].Info = glm::uvec4(IsDrawable(Mesh) ? Mesh.MeshModel->GetIndexCount() : 0u, 0u, 0u, 0u);
+        }
+        for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
+        {
+            const uint32 Slot = m_ItemSlots[i];
+            const GpuMesh& Mesh = m_GpuMeshes[Slot];
+            if (!IsDrawable(Mesh))
+            {
+                continue;
+            }
+            const Aabb& Bounds = Mesh.MeshModel->GetLocalBounds();
+            OcclusionSlot& Out = Slots[Slot];
+            Out.World = t_Snapshot.Meshes[i].World;
+            Out.BoundsMin = glm::vec4(Bounds.Min, 0.0f);
+            Out.BoundsMax = glm::vec4(Bounds.Max, 0.0f);
+            Out.Info.y = (m_Culler.IsVisible(Slot) ? OcclusionSlot::InView : 0u) |
+                         (Bounds.IsValid() ? OcclusionSlot::HasBounds : 0u);
+        }
+    }
+
+    void OffscreenSubpass::SetOcclusionDepth()
+    {
+        // The depth is the last attachment of the offscreen frame buffer
+        FrameBufferAttachment* Depth = m_OffscreenFrameBuf->GetAttachmentAtIndex(5);
+        assert(Depth);
+        m_Occlusion->SetDepth(
+            Depth->GetViewHandle(), m_OffscreenFrameBuf->GetWidth(), m_OffscreenFrameBuf->GetHeight(), Depth->GetFormat());
+    }
+
     void OffscreenSubpass::EnsureDrawCommandCapacity()
     {
         const size_t Needed = std::max<size_t>(m_GpuMeshes.size(), 1);
@@ -229,7 +300,7 @@ namespace Fling
         }
         const VkDeviceSize Size = sizeof(VkDrawIndexedIndirectCommand) * Capacity;
         m_DrawCommands = new Buffer(Size,
-                                    VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+                                    VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         m_DrawCommands->MapMemory(Size);
         m_DrawCommandCapacity = Capacity;
@@ -281,28 +352,8 @@ namespace Fling
         }
     }
 
-    void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf)
+    void OffscreenSubpass::RecordDraws(CommandBuffer& t_CmdBuf, const Buffer& t_Commands)
     {
-        // Set viewport and scissors to the offscreen frame buffer
-        VkViewport viewport = Initializers::Viewport(static_cast<float>(m_OffscreenFrameBuf->GetWidth()),
-                                                     static_cast<float>(m_OffscreenFrameBuf->GetHeight()),
-                                                     0.0f,
-                                                     1.0f);
-
-        VkRect2D scissor = Initializers::Rect2D(m_OffscreenFrameBuf->GetWidth(),
-                                                m_OffscreenFrameBuf->GetHeight(),
-                                                /** offsetX */ 0,
-                                                /** offsetY */ 0);
-
-        t_CmdBuf.Begin();
-        t_CmdBuf.BeginLabel(DebugName());
-        t_CmdBuf.BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
-
-        t_CmdBuf.SetViewport(0, {viewport});
-        t_CmdBuf.SetScissor(0, {scissor});
-
-        vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
-
         VkDeviceSize offsets[1] = {0};
 
         for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
@@ -331,15 +382,60 @@ namespace Fling
             vkCmdBindIndexBuffer(
                 t_CmdBuf.GetHandle(), Model->GetIndexBuffer()->GetVkBuffer(), 0, Model->GetIndexType());
             vkCmdDrawIndexedIndirect(t_CmdBuf.GetHandle(),
-                                     m_DrawCommands->GetVkBuffer(),
+                                     t_Commands.GetVkBuffer(),
                                      sizeof(VkDrawIndexedIndirectCommand) * Slot,
                                      1,
                                      sizeof(VkDrawIndexedIndirectCommand));
         }
+    }
 
+    void OffscreenSubpass::BuildOffscreenCommandBuffer(CommandBuffer& t_CmdBuf)
+    {
+        // Set viewport and scissors to the offscreen frame buffer
+        VkViewport viewport = Initializers::Viewport(static_cast<float>(m_OffscreenFrameBuf->GetWidth()),
+                                                     static_cast<float>(m_OffscreenFrameBuf->GetHeight()),
+                                                     0.0f,
+                                                     1.0f);
+
+        VkRect2D scissor = Initializers::Rect2D(m_OffscreenFrameBuf->GetWidth(),
+                                                m_OffscreenFrameBuf->GetHeight(),
+                                                /** offsetX */ 0,
+                                                /** offsetY */ 0);
+
+        auto BeginDraws = [&]()
+        {
+            t_CmdBuf.SetViewport(0, {viewport});
+            t_CmdBuf.SetScissor(0, {scissor});
+            vkCmdBindPipeline(
+                t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+        };
+
+        t_CmdBuf.Begin();
+        t_CmdBuf.BeginLabel(DebugName());
+        const bool bOcclusion = m_RecordedOcclusion && OcclusionActive();
+        if (bOcclusion)
+        {
+            // Phase 0: what was visible last frame draws first
+            m_Occlusion->RecordFirstPhase(t_CmdBuf.GetHandle());
+        }
+
+        t_CmdBuf.BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
+        BeginDraws();
+        RecordDraws(t_CmdBuf, *m_DrawCommands);
         t_CmdBuf.EndRenderPass();
-        t_CmdBuf.EndLabel();
 
+        if (bOcclusion)
+        {
+            // Phase 1: test everything in view against the depth of the first draw, then draw
+            // what it did not hide and was not drawn yet, over the same images
+            m_Occlusion->RecordSecondPhase(t_CmdBuf.GetHandle());
+            t_CmdBuf.BeginLoadRenderPass(*m_OffscreenFrameBuf);
+            BeginDraws();
+            RecordDraws(t_CmdBuf, *m_Occlusion->Draw2());
+            t_CmdBuf.EndRenderPass();
+        }
+
+        t_CmdBuf.EndLabel();
         t_CmdBuf.End();
     }
 
@@ -429,13 +525,15 @@ namespace Fling
 
         // Attachment 3: Depth
         attachmentInfo.Format = attDepthFormat;
-        attachmentInfo.Usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        // Sampled, so that the occlusion culling pass can build a depth pyramid from it
+        attachmentInfo.Usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         m_OffscreenFrameBuf->AddAttachment(attachmentInfo);
 
         // Create sampler to sample from the color attachments
         VK_CHECK_RESULT(m_OffscreenFrameBuf->CreateSampler(
             VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE));
         VK_CHECK_RESULT(m_OffscreenFrameBuf->CreateRenderPass());
+        VK_CHECK_RESULT(m_OffscreenFrameBuf->CreateLoadRenderPass());
         F_LOG_TRACE("Offscreen render pass created...");
 
         // Create the descriptor pool for off screen things. Each mesh holds one set, so
@@ -520,6 +618,7 @@ namespace Fling
         }
         m_GpuMeshes.clear();
         m_Culler.Clear();
+        m_Occlusion.reset();
         m_Proxies.Clear();
         m_ItemSlots.clear();
         ReleaseRetiredMeshResources();
@@ -537,6 +636,11 @@ namespace Fling
         if (m_OffscreenFrameBuf)
         {
             m_OffscreenFrameBuf->ResizeAndRecreate(NewSize.width, NewSize.height);
+            if (m_Occlusion)
+            {
+                // The depth image is new, so the pyramid is made again
+                SetOcclusionDepth();
+            }
             // The offscreen render pass is new. Rebuild the pipeline that uses it.
             CreateGraphicsPipeline();
         }

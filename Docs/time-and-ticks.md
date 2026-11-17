@@ -75,6 +75,7 @@ outside `--exec threaded` is an error.
 | VSync | `--vsync on\|off` | `VSync` | on | GPU Options, the swap chain is made again |
 | Interpolation | `--interpolation on\|off` | `Interpolation` | on | GPU Options, from the next frame |
 | Frustum culling | `--frustum-culling on\|off` | `FrustumCulling` | on | GPU Options, from the next frame |
+| Occlusion culling | `--occlusion-culling on\|off` | `OcclusionCulling` | on | GPU Options, from the next frame |
 | Thread jitter (tests) | `--thread-jitter S:U` (`--exec threaded` only) | none | off | no |
 
 `RunSettings` does not change after startup. The live values are in

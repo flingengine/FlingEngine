@@ -46,9 +46,10 @@ platform setup (Vulkan SDK, GLFW, etc.).
   main thread's frames capped at the monitor's refresh rate (no cap headless).
   `--exec direct|inline|threaded`, `--sim-hz N`, `--max-fps N` (0: no cap),
   `--vsync on|off` (on by default), `--interpolation on|off` (on by
-  default) and `--frustum-culling on|off` (on by default) override, as do
-  `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync`, `Interpolation` and
-  `FrustumCulling` in
+  default), `--frustum-culling on|off` (on by default) and
+  `--occlusion-culling on|off` (on by default) override, as do
+  `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync`, `Interpolation`,
+  `FrustumCulling` and `OcclusionCulling` in
   `Config/EngineConf.ini`. A test that depends on a mode or a rate sets it. The
   startup log line `Run settings: ...` says each value and where it came from.
   The editor's GPU Options window (menu Windows; drawn in `--play` too) changes
@@ -112,6 +113,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
   [`Docs/time-and-ticks.md`](Docs/time-and-ticks.md). The game thread, the
   published copy, exec modes and the determinism tests:
   [`Docs/threading-model.md`](Docs/threading-model.md).
+- Occlusion culling in the G-buffer pass (a two phase Hi-Z pass on the GPU, its CPU twin
+  and tests): [`Docs/occlusion-culling.md`](Docs/occlusion-culling.md).
 - One self-contained guide to all of the above, written to be loaded as context
   by an AI coding agent: [`Docs/agent-guide.md`](Docs/agent-guide.md). The
   handoff for the original Fling authors (what changed since the first commit,

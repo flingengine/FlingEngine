@@ -46,6 +46,9 @@ namespace Fling
 
 		void BeginRenderPass(const FrameBuffer& t_frameBuf, const std::vector<VkClearValue>& t_ClearVales);
 
+		/** Begin the frame buffer's load render pass: it keeps the contents the first pass drew */
+		void BeginLoadRenderPass(const FrameBuffer& t_frameBuf);
+
 		void NextSubpass();
 
 		void BindPipeline(VkPipelineBindPoint t_BindPoint, VkPipeline t_Pipeline);
