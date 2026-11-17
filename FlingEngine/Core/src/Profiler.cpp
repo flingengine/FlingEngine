@@ -1,5 +1,7 @@
 #include "Profiler.h"
 
+#if WITH_PROFILER
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -152,3 +154,5 @@ namespace Fling
         return Out;
     }
 } // namespace Fling
+
+#endif // WITH_PROFILER

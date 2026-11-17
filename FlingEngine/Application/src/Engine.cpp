@@ -583,7 +583,9 @@ namespace Fling
         // sends the messages of a tick over its N frames
         const float NullRenderDeltaTime = 1.0f / static_cast<float>(m_Settings.SimHz * m_Options.FramesPerTick);
 
+#if WITH_PROFILER
         Profiler::SetEnabled(m_Options.Profile);
+#endif
         const std::chrono::steady_clock::time_point LoopStart = std::chrono::steady_clock::now();
         while (ShouldTick())
         {
@@ -996,6 +998,7 @@ namespace Fling
         }
 
         PrintExitSummary(t_Code);
+#if WITH_PROFILER
         if (m_Options.Profile)
         {
             const double WallSeconds =
@@ -1003,6 +1006,7 @@ namespace Fling
             std::printf("%s", Profiler::Report(WallSeconds).c_str());
             std::fflush(stdout);
         }
+#endif
 
         // Last, so that every system above can still log while it shuts down
         Logger::Get().Shutdown();

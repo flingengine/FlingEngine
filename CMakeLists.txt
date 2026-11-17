@@ -44,6 +44,22 @@ OPTION( WITH_CRASH_HANDLER_FLAG "Builds CrashHandler: --unattended crash handlin
 set( FLING_PHYSICS_PROVIDER "Jolt" CACHE STRING "Physics provider to build: Jolt, Bullet, None, or a provider of your own" )
 list( APPEND FLING_PHYSICS_PROVIDER_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/FlingEngine" )
 
+# The instrumented profiler (Profiler.h, --profile). AUTO: in every build except shipping. ON or OFF
+# forces it, for example ON to profile a shipping build, or OFF to compile it out of a dev build.
+set( FLING_PROFILER "AUTO" CACHE STRING "Profiler: AUTO (on unless DEFINE_SHIPPING), ON or OFF" )
+set_property( CACHE FLING_PROFILER PROPERTY STRINGS AUTO ON OFF )
+if( FLING_PROFILER STREQUAL "AUTO" )
+    if( DEFINE_SHIPPING )
+        set( FLING_PROFILER_ENABLED OFF )
+    else()
+        set( FLING_PROFILER_ENABLED ON )
+    endif()
+elseif( FLING_PROFILER )
+    set( FLING_PROFILER_ENABLED ON )
+else()
+    set( FLING_PROFILER_ENABLED OFF )
+endif()
+
 OPTION( ENABLE_MULTICORE "ENABLE_MULTICORE will allow MSVC to use all cores by adding the /MP option" ON)
 
 # We can't have the editor without ImGUI!
@@ -69,6 +85,7 @@ message( STATUS "WITH_EDITOR_FLAG=${WITH_EDITOR_FLAG}" )
 message( STATUS "WITH_IMGUI_FLAG=${WITH_IMGUI_FLAG}" )
 message( STATUS "WITH_CRASH_HANDLER_FLAG=${WITH_CRASH_HANDLER_FLAG}" )
 message( STATUS "DEFINE_SHIPPING=${DEFINE_SHIPPING}" )
+message( STATUS "FLING_PROFILER=${FLING_PROFILER} (enabled: ${FLING_PROFILER_ENABLED})" )
 message( STATUS "ENABLE_MULTICORE=${ENABLE_MULTICORE}" )
 message( STATUS "FLING_BUILD_TESTS=${FLING_BUILD_TESTS}" )
 message( STATUS "FLING_PHYSICS_PROVIDER=${FLING_PHYSICS_PROVIDER}" )
