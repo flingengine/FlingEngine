@@ -42,6 +42,8 @@ namespace Fling
 
         void CreateDescriptorSets(VkDescriptorPool t_Pool) override;
 
+        const char* DebugName() const override { return "Sky"; }
+
         void CreateGraphicsPipeline() override;
 
         void OnSwapchainResized() override;

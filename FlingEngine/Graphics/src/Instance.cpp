@@ -126,6 +126,22 @@ namespace Fling
         return true;
     }
 
+    bool Instance::IsInstanceExtensionSupported(const char* t_Name)
+    {
+        uint32 Count = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &Count, nullptr);
+        std::vector<VkExtensionProperties> Properties(Count);
+        vkEnumerateInstanceExtensionProperties(nullptr, &Count, Properties.data());
+        for (const VkExtensionProperties& Property : Properties)
+        {
+            if (strcmp(Property.extensionName, t_Name) == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     std::vector<const char*> Instance::GetRequiredExtensions()
     {
         std::vector<const char*> extensions;
@@ -140,11 +156,18 @@ namespace Fling
             }
         }
 
-        if (m_EnableValidationLayers)
-        {
+        // Pass labels need VK_EXT_debug_utils, and a Release capture needs them most. Turn the
+        // extension on when the driver has it, in every build but Shipping.
+        bool bWantDebugUtils = false;
 #if FLING_DEBUG
-            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        bWantDebugUtils = m_EnableValidationLayers;
 #endif
+#ifndef FLING_SHIPPING
+        bWantDebugUtils = bWantDebugUtils || IsInstanceExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
+        if (bWantDebugUtils)
+        {
+            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
 
         return extensions;

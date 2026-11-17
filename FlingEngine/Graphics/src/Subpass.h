@@ -40,6 +40,9 @@ namespace Fling
 
         virtual void CreateGraphicsPipeline() = 0;
 
+        /** The name a graphics debugger shows for this pass's commands. */
+        virtual const char* DebugName() const { return "Subpass"; }
+
         /**
          * Record this pass for one frame. A pass reads only the snapshot, never the
          * world, so the world can change while the frame is drawn.

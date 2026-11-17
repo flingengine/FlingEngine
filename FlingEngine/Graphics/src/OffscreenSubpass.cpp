@@ -295,6 +295,7 @@ namespace Fling
                                                 /** offsetY */ 0);
 
         t_CmdBuf.Begin();
+        t_CmdBuf.BeginLabel(DebugName());
         t_CmdBuf.BeginRenderPass(*m_OffscreenFrameBuf, m_ClearValues);
 
         t_CmdBuf.SetViewport(0, {viewport});
@@ -337,6 +338,7 @@ namespace Fling
         }
 
         t_CmdBuf.EndRenderPass();
+        t_CmdBuf.EndLabel();
 
         t_CmdBuf.End();
     }
