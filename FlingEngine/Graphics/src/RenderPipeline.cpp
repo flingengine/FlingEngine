@@ -49,7 +49,10 @@ namespace Fling
         for (size_t i = 0; i < m_Subpasses.size(); ++i)
         {
             // Build the subpasses for the active frame in flight
+            // The label groups this pass's commands in a capture
+            t_CmdBuf.BeginLabel(m_Subpasses[i]->DebugName());
             m_Subpasses[i]->Draw(t_CmdBuf, t_ActiveFrameInFlight, t_Snapshot, DeltaTime);
+            t_CmdBuf.EndLabel();
         }
     }
 

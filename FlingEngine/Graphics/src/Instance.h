@@ -60,6 +60,9 @@ namespace Fling
          */
         void CreateInstance();
 
+        /** True if the Vulkan loader lists this instance extension. */
+        static bool IsInstanceExtensionSupported(const char* t_Name);
+
         std::vector<const char*> GetRequiredExtensions();
 
         bool CheckValidationLayerSupport();

@@ -59,6 +59,15 @@ namespace Fling
 		/** Stop recording commands to the command buffer */
 		void End();
 
+		/**
+		 * Open a named group of commands, shown by a graphics debugger (RenderDoc, Nsight).
+		 * Does nothing when VK_EXT_debug_utils is off. Close it with EndLabel.
+		 */
+		void BeginLabel(const char* t_Name);
+
+		/** Close the group opened by the last BeginLabel. */
+		void EndLabel();
+
 		inline bool IsRecording() const { return m_State == State::Recording; }
 
 	private:

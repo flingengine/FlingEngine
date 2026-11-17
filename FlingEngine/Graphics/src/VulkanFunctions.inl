@@ -63,6 +63,10 @@ FLING_VK_INSTANCE(vkGetPhysicalDeviceQueueFamilyProperties)
 FLING_VK_INSTANCE_OPTIONAL(vkCreateDebugUtilsMessengerEXT)
 FLING_VK_INSTANCE_OPTIONAL(vkDestroyDebugUtilsMessengerEXT)
 
+// Pass labels for a graphics debugger (RenderDoc, Nsight). Null when VK_EXT_debug_utils is off.
+FLING_VK_INSTANCE_OPTIONAL(vkCmdBeginDebugUtilsLabelEXT)
+FLING_VK_INSTANCE_OPTIONAL(vkCmdEndDebugUtilsLabelEXT)
+
 // VK_KHR_surface: an offscreen renderer (--offscreen) does not enable it.
 // VulkanLoader::MissingPresentCommand checks them when there is a window.
 FLING_VK_INSTANCE_OPTIONAL(vkDestroySurfaceKHR)
