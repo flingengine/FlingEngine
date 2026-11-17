@@ -111,7 +111,7 @@ namespace Fling
     PresentThread::Acquired PresentThread::TakeAcquired()
     {
         ScopedLock Lock(m_Mutex);
-        m_Ready.Wait(Lock, [this]() { return !m_Acquired.empty(); });
+        m_Ready.Wait(Lock, [this]() FLING_REQUIRES(m_Mutex) { return !m_Acquired.empty(); });
         const Acquired Image = m_Acquired.front();
         m_Acquired.pop_front();
         return Image;
