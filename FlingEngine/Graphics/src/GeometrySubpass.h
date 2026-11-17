@@ -79,6 +79,8 @@ namespace Fling
         /**
          * @param t_FrameBuffer	The swap chain frame buffer
          */
+        const char* DebugName() const override { return "Lighting"; }
+
         void CreateGraphicsPipeline() override;
 
         virtual void OnSwapchainResized() override final;

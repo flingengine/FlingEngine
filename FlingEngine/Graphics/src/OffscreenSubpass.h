@@ -63,6 +63,8 @@ namespace Fling
 
         void PrepareAttachments() override final;
 
+        const char* DebugName() const override { return "G-buffer"; }
+
         void CreateGraphicsPipeline() override final;
 
         void GatherPresentDependencies(std::vector<CommandBuffer*>& t_CmdBuffs,

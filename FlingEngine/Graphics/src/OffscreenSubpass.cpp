@@ -411,6 +411,7 @@ namespace Fling
         };
 
         t_CmdBuf.Begin();
+        t_CmdBuf.BeginLabel(DebugName());
         const bool bOcclusion = m_RecordedOcclusion && OcclusionActive();
         if (bOcclusion)
         {
@@ -434,6 +435,7 @@ namespace Fling
             t_CmdBuf.EndRenderPass();
         }
 
+        t_CmdBuf.EndLabel();
         t_CmdBuf.End();
     }
 

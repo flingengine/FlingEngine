@@ -38,6 +38,8 @@ namespace Fling
 
         void PrepareAttachments() override;
 
+        const char* DebugName() const override { return "Debug draw"; }
+
         void CreateGraphicsPipeline() override;
 
         void CleanUp() override;

@@ -79,6 +79,26 @@ namespace Fling
 		vkCmdBeginRenderPass(GetHandle(), &begin_info, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
+	void CommandBuffer::BeginLabel(const char* t_Name)
+	{
+		if (vkCmdBeginDebugUtilsLabelEXT == nullptr)
+		{
+			return;
+		}
+		VkDebugUtilsLabelEXT Label = {};
+		Label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+		Label.pLabelName = t_Name;
+		vkCmdBeginDebugUtilsLabelEXT(GetHandle(), &Label);
+	}
+
+	void CommandBuffer::EndLabel()
+	{
+		if (vkCmdEndDebugUtilsLabelEXT != nullptr)
+		{
+			vkCmdEndDebugUtilsLabelEXT(GetHandle());
+		}
+	}
+
 	void CommandBuffer::NextSubpass()
 	{
 		// track pipeline state ?
