@@ -1,5 +1,6 @@
 #include "Interpolate.h"
 #include "Platform.h"
+#include "PreCullView.h"
 #include "Profiler.h"
 #include "Systems/PublishSnapshotSystem.h"
 #include "TransformUtil.h"
@@ -42,6 +43,38 @@ namespace Fling
         }
 
         /**
+         * The latest world matrix of an entity that is far outside the last frame's view (see
+         * PreCullView): the blend is left out, and the published LocalToWorld is drawn. The
+         * radius is twice the largest scale of a unit mesh, plus one, so a big mesh whose
+         * centre is off screen is still blended. Returns false when the entity is near the
+         * view, or there is no view or no LocalToWorld yet.
+         */
+        template <typename Ctx>
+        bool
+        LatestIfFarOutside(Ctx& ctx, const Frustum* view, const Entity entity, glm::mat4& outWorld, uint32& outVersion)
+        {
+            if (view == nullptr)
+            {
+                return false;
+            }
+            const LocalToWorld* world = ctx.template TryGet<const LocalToWorld>(entity);
+            if (world == nullptr)
+            {
+                return false;
+            }
+            const glm::mat4& m = world->Value;
+            const float scale = glm::max(glm::length(glm::vec3(m[0])),
+                                         glm::max(glm::length(glm::vec3(m[1])), glm::length(glm::vec3(m[2]))));
+            if (!PreCullView::IsFarOutside(*view, glm::vec3(m[3]), 2.0f * scale + 1.0f))
+            {
+                return false;
+            }
+            outWorld = m;
+            outVersion = world->Version;
+            return true;
+        }
+
+        /**
          * The next item of the frame. Items are reused, not cleared, so their path strings keep
          * their buffers and a steady frame does not allocate. Every field is written.
          */
@@ -64,6 +97,7 @@ namespace Fling
         snapshot.PointLights.clear();
         snapshot.DirectionalLights.clear();
         ++snapshot.Frame;
+        const Frustum* view = PreCullView::Get();
 
         for (auto [entity, transform, mesh] : ctx.Query<const Transform, const MeshRenderer>())
         {
@@ -71,7 +105,10 @@ namespace Fling
             item.Key = entity.ToBits();
             item.Mesh = mesh.Mesh;
             item.Material = mesh.Material;
-            WorldOf(ctx, entity, transform, alpha, item.World, item.WorldVersion);
+            if (!LatestIfFarOutside(ctx, view, entity, item.World, item.WorldVersion))
+            {
+                WorldOf(ctx, entity, transform, alpha, item.World, item.WorldVersion);
+            }
         }
 
         for (auto [entity, transform, light] : ctx.Query<const Transform, const PointLight>())
