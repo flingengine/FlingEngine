@@ -17,6 +17,7 @@ namespace Fling
         constexpr StringView DumpStateFlag = "dump-state";
         constexpr StringView DumpStateTicksFlag = "dump-state-ticks";
         constexpr StringView UnattendedFlag = "unattended";
+        constexpr StringView ProfileFlag = "profile";
         constexpr StringView FramesFlag = "frames";
         constexpr StringView FramesPerTickFlag = "frames-per-tick";
         constexpr StringView SeedFlag = "seed";
@@ -219,10 +220,18 @@ namespace Fling
             return false;
         }
 
-        if (!ReadBool(t_CmdLine, UnattendedFlag, t_Out.Unattended, t_OutError))
+        if (!ReadBool(t_CmdLine, UnattendedFlag, t_Out.Unattended, t_OutError) ||
+            !ReadBool(t_CmdLine, ProfileFlag, t_Out.Profile, t_OutError))
         {
             return false;
         }
+#if !WITH_PROFILER
+        if (t_Out.Profile)
+        {
+            t_OutError = "--profile is not available in this build: configure with -DFLING_PROFILER=ON";
+            return false;
+        }
+#endif
 
         if (!ReadBool(t_CmdLine, OffscreenFlag, t_Out.Offscreen, t_OutError))
         {

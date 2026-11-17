@@ -63,6 +63,13 @@ platform setup (Vulkan SDK, GLFW, etc.).
   module, any thread): `Fling::Screenshot::Request(path, callback)` in
   `Screenshot.h`; the editor's GPU Options window has a Take screenshot button. Detail:
   [`Skills/testing.md`](Skills/testing.md#seeing-the-game-without-a-window).
+- See where the time goes: add `--profile` to any run (it works with `--null-render`,
+  `--offscreen` and a window) and a table of timed scopes prints after the exit line.
+  A scope is `FLING_PROFILE_SCOPE("Name")` from `Profiler.h` (Core): off it costs one
+  atomic load. Shipping builds compile it out; `-DFLING_PROFILER=ON|OFF` overrides
+  that in any build ([`Skills/building.md`](Skills/building.md)). Measure in the build mode you care about:
+  Debug is much slower than RelWithDebInfo for per-entity work. In a window, use `--play`
+  (a window without it starts the editor, which runs no ticks).
 - Drive a headless run with `--replay-input <file>`. Agents can write their own
   `.input.jsonl` files. Format and flags: [`Skills/input-playback.md`](Skills/input-playback.md).
 - Load a level other than `[Game] StartLevel` with `--level <file>` (relative

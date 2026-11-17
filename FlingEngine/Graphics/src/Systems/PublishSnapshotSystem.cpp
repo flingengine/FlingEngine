@@ -1,5 +1,6 @@
 #include "Interpolate.h"
 #include "Platform.h"
+#include "Profiler.h"
 #include "Systems/PublishSnapshotSystem.h"
 #include "TransformUtil.h"
 
@@ -56,6 +57,7 @@ namespace Fling
 
     void PublishSnapshotSystem::Update(Context& ctx) const
     {
+        FLING_PROFILE_SCOPE("Graphics.PublishSnapshot");
         RenderSnapshot& snapshot = ctx.Singleton<RenderSnapshot>();
         const float alpha = ctx.Singleton<const RealFrameTime>().BlendAlpha;
         size_t meshCount = 0;

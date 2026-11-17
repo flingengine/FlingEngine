@@ -28,6 +28,8 @@ target_compile_definitions(Core PUBLIC
 	# Input recording and playback (--record-input, --replay-input, the editor UI).
 	# Shipping builds do not have it, so a shipped game cannot be driven by an input file.
 	WITH_INPUT_RECORDING=$<NOT:$<BOOL:${DEFINE_SHIPPING}>>
+	# The instrumented profiler (FLING_PROFILER in the root CMakeLists.txt): off in shipping builds unless asked for
+	WITH_PROFILER=$<BOOL:${FLING_PROFILER_ENABLED}>
 	$<$<BOOL:${DEFINE_SHIPPING}>:FLING_SHIPPING>
 )
 
