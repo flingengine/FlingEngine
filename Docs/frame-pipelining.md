@@ -22,7 +22,7 @@ The frame is now GPU bound. `Vk.Acquire` (the render thread waits for an image) 
    is done. The frame before it may still run on the GPU. `FrameSync::Begin` then tells the passes which
    frames are finished.
 
-2. **The present thread** (`PresentThread`). On some drivers (NVIDIA on Wayland) `vkQueuePresentKHR`
+2. **The present thread** (`PresentThread`, optional, see below). On some drivers (NVIDIA on Wayland) `vkQueuePresentKHR`
    does not return until the GPU has finished the frame. Called on the render thread, that brings the wait
    back. So a thread of its own makes the present call, on a second queue of the graphics family
    (`LogicalDevice::HasSeparatePresentQueue`). A swap chain must not be used by two threads at once, so the
@@ -41,6 +41,20 @@ The frame is now GPU bound. `Vk.Acquire` (the render thread waits for an image) 
    pyramid and the visibility flags. The first submission of a frame waits for the last one of the frame
    before (`VulkanApp::State::m_FrameChain`), and the upload command buffer starts with a full memory
    barrier. The CPU records ahead; the GPU frames do not overlap each other.
+
+## The present thread is optional
+
+`[Graphics] PresentThread` in `Config/EngineConf.ini` (default `true`) turns the present thread on or off. The
+engine itself has two threads, the game thread and the main thread, and the present thread is an extra one for a
+driver that blocks. Off (or when the device has no second queue), the main thread does the swap chain calls
+itself and gets the same overlap another way: it presents a frame after it has submitted the next one, so the GPU
+has that frame queued while the present call waits. The cost is that a frame is shown one frame later than it could
+be. When the frame limiter is going to sleep anyway (`FrameLimiter::WillWait`), the engine presents the held frame
+first (`VulkanApp::PresentPendingFrame`), so a capped run does not pay it. A driver whose present call does not
+block gains nothing from the thread, and can switch it off.
+
+Same scene (uncapped, VSync off): about 560 fps with the thread, about 460 fps without it, 368 fps before the
+pipelining.
 
 ## Rules for a pass
 

@@ -210,3 +210,24 @@ TEST_CASE("Sleep timer: it never wakes before the deadline", "[FrameLimiter]")
     // A deadline in the past returns at once
     Timer.SleepUntil(Clock::now() - std::chrono::seconds(1));
 }
+
+TEST_CASE("Frame limiter: WillWait says if the next wait would sleep", "[FrameLimiter]")
+{
+    VirtualFrames Clock;
+    FrameLimiter Limiter = Clock.Make(1 * Ms);
+
+    // No cap: never
+    REQUIRE_FALSE(Limiter.WillWait());
+
+    Limiter.SetMaxFps(100);
+    const int64 Period = Limiter.GetPeriodNs();
+    // The schedule has not started: the first wait does not sleep
+    REQUIRE_FALSE(Limiter.WillWait());
+    Clock.Frame(Limiter, 0);
+
+    // A frame that is faster than the period will wait, a slower one will not
+    Clock.Now += Period / 2;
+    REQUIRE(Limiter.WillWait());
+    Clock.Now += Period;
+    REQUIRE_FALSE(Limiter.WillWait());
+}

@@ -228,8 +228,16 @@ namespace Fling
 
     void VulkanApp::StartPresentThread()
     {
-        if (m_SwapChain->IsOffscreen() || !m_LogicalDevice->HasSeparatePresentQueue())
+        if (m_SwapChain->IsOffscreen())
         {
+            return;
+        }
+        // [Graphics] PresentThread: on by default. Off, or without a second queue, the render thread presents
+        const bool bWanted = FlingConfig::GetBool("Graphics", "PresentThread", true);
+        if (!bWanted || !m_LogicalDevice->HasSeparatePresentQueue())
+        {
+            F_LOG_TRACE("Present thread: off ({}); the render thread presents the frame before the one it submits",
+                        bWanted ? "the device has no second queue" : "[Graphics] PresentThread is false");
             return;
         }
         MakeAcquireSemaphores();
@@ -242,6 +250,7 @@ namespace Fling
             return;
         }
         m_State->m_PresentThread = std::move(Thread);
+        F_LOG_TRACE("Present thread: on");
         // WaitForIdle needs the present queue free: let the presents that wait on the GPU return first
         m_LogicalDevice->SetBeforeIdle(
             [this]()
@@ -555,6 +564,8 @@ namespace Fling
             // The window was closed while minimized. ShouldTick sees the close next.
             return false;
         }
+        // The frame that is held back belongs to the old swap chain: show it first
+        PresentPendingFrame();
         m_LogicalDevice->WaitForIdle();
 
         CleanupSwapChainResources();
@@ -1022,25 +1033,44 @@ namespace Fling
         }
         else
         {
-            // On the NVIDIA Wayland driver this call blocks until the GPU has finished the frame
-            FLING_PROFILE_SCOPE("Vk.QueuePresent");
-            iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
-                                                m_State->m_RenderFinishedSemaphores[ImageIndex]);
+            // No present thread. The present call can wait for the GPU (on the NVIDIA Wayland driver it does until the
+            // frame is done), so it is made after the next frame is submitted, not right after this one: the GPU then
+            // has that frame queued while the call waits. This frame is held until then
+            // (PresentPendingFrame also runs when the frame limiter sleeps, so a capped run shows it at once).
+            PresentPendingFrame();
+            m_State->m_HeldFrame.Valid = true;
+            m_State->m_HeldFrame.Finished =
+                bPresentSync ? m_State->m_RenderFinishedSemaphores[ImageIndex] : VK_NULL_HANDLE;
+            m_State->m_HeldFrame.ImageIndex = ImageIndex;
+        }
+    }
 
-            // Check if the swap chain is out of date and needs to be rebuilt
-            if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR)
-            {
-                bSwapchainOutOfDate = true;
-            }
-            else if (iResult != VK_SUCCESS)
-            {
-                F_LOG_FATAL("Failed to present swap chain image!");
-            }
+    void VulkanApp::PresentPendingFrame()
+    {
+        VulkanApp::State::HeldFrame Held = m_State->m_HeldFrame;
+        if (!Held.Valid)
+        {
+            return;
+        }
+        m_State->m_HeldFrame.Valid = false;
+
+        FLING_PROFILE_SCOPE("Vk.QueuePresent");
+        const VkResult Result =
+            m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), Held.Finished, Held.ImageIndex);
+        // Check if the swap chain is out of date and needs to be rebuilt
+        if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
+        {
+            bSwapchainOutOfDate = true;
+        }
+        else if (Result != VK_SUCCESS)
+        {
+            F_LOG_FATAL("Failed to present swap chain image!");
         }
     }
 
     void VulkanApp::WaitForGpuIdle()
     {
+        PresentPendingFrame();
         if (m_LogicalDevice != nullptr)
         {
             m_LogicalDevice->WaitForIdle();
@@ -1050,6 +1080,7 @@ namespace Fling
     void VulkanApp::ShutdownRenderer()
     {
         // The last frames still run, and the present thread uses the swap chain
+        PresentPendingFrame();
         if (m_LogicalDevice != nullptr)
         {
             m_LogicalDevice->WaitForIdle();

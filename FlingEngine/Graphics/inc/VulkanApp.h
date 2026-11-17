@@ -85,6 +85,15 @@ namespace Fling
         void WaitForGpuIdle();
 
         /**
+         * Show the frame that is held back. Without a present thread ([Graphics] PresentThread=false) Update
+         * presents the frame before the one it just submitted, because the present call can wait for the GPU and
+         * the GPU should have the next frame queued by then. Call this when the thread would wait anyway (the frame
+         * limiter sleeps), so the frame is not shown later than it needs to be. Does nothing when no frame is held
+         * back. Main thread.
+         */
+        void PresentPendingFrame();
+
+        /**
          * Wait for the screenshots that are being written (Screenshot::Request) and call their
          * callbacks. A frame copies a screenshot; a writer thread saves it later, so a run that
          * counts its screenshots calls this before it ends. Main thread.

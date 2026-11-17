@@ -33,6 +33,16 @@ namespace Fling
          * does not start. */
         std::unique_ptr<PresentThread> m_PresentThread;
 
+        /** A frame that was submitted and is not presented yet (no present thread). Update presents it after the next
+         * submit. */
+        struct HeldFrame
+        {
+            bool Valid = false;
+            VkSemaphore Finished = VK_NULL_HANDLE;
+            uint32 ImageIndex = 0;
+        };
+        HeldFrame m_HeldFrame;
+
         /** What the acquires of the present thread signal, used in turn (FramesInFlight + 2 of them) */
         std::vector<VkSemaphore> m_AcquireSemaphores;
 
