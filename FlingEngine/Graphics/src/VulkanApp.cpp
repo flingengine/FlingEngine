@@ -431,6 +431,14 @@ namespace Fling
         }
     }
 
+    void VulkanApp::SetGpuBlend(const bool t_On)
+    {
+        if (m_MeshPass != nullptr)
+        {
+            m_MeshPass->SetGpuBlend(t_On);
+        }
+    }
+
     CullStats VulkanApp::GetCullStats() const
     {
         return m_MeshPass != nullptr ? m_MeshPass->GetCullStats() : CullStats{};

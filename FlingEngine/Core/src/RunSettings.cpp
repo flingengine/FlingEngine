@@ -202,6 +202,12 @@ namespace Fling
                        Keys::OcclusionCullingKey,
                        t_Out.OcclusionCulling,
                        t_Out.OcclusionCullingSource,
+                       t_OutError) ||
+            !PickOnOff(t_Options.GpuBlend,
+                       t_Config.GpuBlend,
+                       Keys::GpuBlendKey,
+                       t_Out.GpuBlend,
+                       t_Out.GpuBlendSource,
                        t_OutError))
         {
             return false;
@@ -225,6 +231,10 @@ namespace Fling
         if (t_Options.NullRender && t_Options.OcclusionCulling)
         {
             t_Out.Ignored.push_back("--occlusion-culling does nothing with --null-render: nothing is drawn");
+        }
+        if (t_Options.NullRender && t_Options.GpuBlend)
+        {
+            t_Out.Ignored.push_back("--gpu-blend does nothing with --null-render: nothing is drawn");
         }
         return true;
     }
@@ -275,7 +285,8 @@ namespace Fling
                "), vsync " + OnOffName(VSync) + " (" + SettingSourceName(VSyncSource) + "), interpolation " +
                OnOffName(Interpolation) + " (" + SettingSourceName(InterpolationSource) + "), frustum culling " +
                OnOffName(FrustumCulling) + " (" + SettingSourceName(FrustumCullingSource) + "), occlusion culling " +
-               OnOffName(OcclusionCulling) + " (" + SettingSourceName(OcclusionCullingSource) + ")";
+               OnOffName(OcclusionCulling) + " (" + SettingSourceName(OcclusionCullingSource) + "), gpu blend " +
+               OnOffName(GpuBlend) + " (" + SettingSourceName(GpuBlendSource) + ")";
     }
 
     uint32 LimiterFps(const uint32 t_MaxFps,

@@ -1,6 +1,6 @@
 # Blending meshes on the GPU
 
-Status: in progress, on top of the occlusion culling pass (`Docs/occlusion-culling.md`).
+Status: stages 1 and 2 are built, on top of the occlusion culling pass (`Docs/occlusion-culling.md`). Stage 3 is next.
 
 ## Why
 
@@ -39,8 +39,42 @@ supported. With it off, the renderer resolves the matrices on the CPU (stage 1).
 1. Snapshot carries the pair; the renderer resolves it on the CPU. No picture change.
 2. World matrix buffer, the blend and the frustum test in `cull.comp`, the vertex shader reads
    the buffer. `--gpu-blend on|off`.
-3. Snapshot rebuilt only when a tick arrives (the pairs do not change between ticks), so a frame
+3. (Not built yet.) Snapshot rebuilt only when a tick arrives (the pairs do not change between ticks), so a frame
    with no new tick does no per-mesh work on the CPU.
+
+## What was built (stages 1 and 2)
+
+- `MeshDrawItem::HasBlend`, `From`, `To` and `RenderSnapshot::BlendAlpha`. `PublishSnapshot` gives a
+  mesh the pair when it moved between the two ticks and has no `Parent`; a mesh far outside the
+  last view (`PreCullView`) or a child keeps a matrix.
+- The G-buffer vertex shader (`mrt.vert`) reads its matrix from one storage buffer by slot
+  (`OffscreenSubpass::m_WorldBuffer`, binding 6). The per mesh UBO holds only the slot. The
+  CPU writes the matrix of a still mesh when its `LocalToWorld` version changes; with `--gpu-blend off`
+  (or with occlusion culling off) it also writes the blended matrices.
+- `cull.comp` makes the matrix of each slot with `Blend` in phase 0 (`SlerpQuat`, `LocalMatrix`: the
+  same as `Interpolate::Blend` and `TransformUtil::LocalMatrix`) and decides the frustum test for it
+  (`InFrustum`: the same as `Frustum::Intersects`), because the CPU has no matrix for it. A barrier
+  makes the matrices visible to the vertex shader.
+- Shader reflection (`Shader.cpp`) now tells a storage buffer from a uniform buffer.
+- `--gpu-blend on|off`, `[Engine] GpuBlend`, a checkbox in GPU Options. On by default; it needs
+  occlusion culling to run, otherwise the CPU blends.
+
+## Measured
+
+Debug build, `--offscreen --exec threaded`, 3,136 rotating spheres, CPU ms per frame:
+
+| | CPU blend | GPU blend |
+|---|---|---|
+| everything in view (`--frustum-culling off`): `ResolveWorlds` | 0.43 | 0.01 |
+| default view: `ResolveWorlds` + `Cull` | 0.14 + 2.34 | 0.02 + 1.57 |
+
+`PublishSnapshot` is 1.2 to 1.7 ms in both: that is the per mesh loop (stage 3). Before stage 1 it
+was 6.4 ms with the spheres turning. Most of that was the lookups of the old blend (two walks of
+the parent chain, several component lookups), not the slerp, so stage 1 gave most of the gain.
+
+The picture: GPU and CPU blend at the same tick differ by at most 3 of 255 on 1,697 of 2 million
+pixels (float rounding), and both differ greatly from `--interpolation off`, so the check does
+test the blend. No validation layer messages, with and without occlusion culling.
 
 ## Checking it
 

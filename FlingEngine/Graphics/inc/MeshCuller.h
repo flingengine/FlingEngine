@@ -83,12 +83,20 @@ namespace Fling
             return Cull(t_Items, t_ItemSlots, Worlds, t_Frustum);
         }
 
+        /**
+         * On: an item with HasBlend has no matrix on the CPU (the GPU makes it and tests the view),
+         * so Cull counts its slot as visible and does not count it in the stats.
+         */
+        void SetDeferBlended(const bool t_On) { m_DeferBlended = t_On; }
+
         /** True if the pass draws t_Slot this frame: it is drawn and in view, or culling is off. */
         bool IsVisible(const uint32 t_Slot) const { return t_Slot < m_Slots.size() && m_Slots[t_Slot].Visible; }
 
         const CullStats& Stats() const { return m_Stats; }
 
     private:
+        bool m_DeferBlended = false;
+
         struct SlotState
         {
             Aabb LocalBounds;

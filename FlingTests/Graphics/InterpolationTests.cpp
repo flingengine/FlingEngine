@@ -288,6 +288,9 @@ namespace
 
         World& GetWorld() { return *m_World; }
 
+        /** The entities that the test game made at play start. */
+        const InterpGame& Game() const { return *m_Game; }
+
         /** The time of the frame that started play. */
         int64 StartNs() const { return m_StartNs; }
 
@@ -547,6 +550,56 @@ TEST_CASE("Interpolation: a stalled game thread does not stop the frames, and th
     }
     CHECK(Rig.GetWorld().GetTickCount() > TicksBefore + 3);
     CheckFramesFollowTheRule(Frames, At, Rig.StartNs());
+}
+
+namespace
+{
+    const MeshDrawItem& ItemOf(const RenderSnapshot& t_Snapshot, const Entity t_Entity)
+    {
+        for (const MeshDrawItem& Item : t_Snapshot.Meshes)
+        {
+            if (Item.Key == t_Entity.ToBits())
+            {
+                return Item;
+            }
+        }
+        FAIL("the snapshot has no mesh for the entity");
+        return t_Snapshot.Meshes.front();
+    }
+} // namespace
+
+TEST_CASE("The snapshot gives the two ends of a moving mesh, and a matrix for a child", "[graphics][interp]")
+{
+    const ExecMode Mode = GENERATE(ExecMode::Direct, ExecMode::Inline, ExecMode::Threaded);
+    const Rate At(30u);
+    INFO("exec mode " << ExecModeName(Mode));
+    InterpWorld Rig(Mode, At.Hz);
+    Drawn Out;
+    for (int64 Frame = 0; Frame < 6 * FramesPerTick + 1; ++Frame)
+    {
+        Out = Rig.Frame(At.FrameTime(Frame), At.StepNs);
+    }
+
+    const RenderSnapshot& Snapshot = Rig.GetWorld().GetPresentedStorage().Singleton<RenderSnapshot>();
+    CHECK(Snapshot.BlendAlpha == Out.Alpha);
+
+    // A mesh with no Parent that moved between the two ticks: its two Transform values, and no matrix
+    const MeshDrawItem& Slider = ItemOf(Snapshot, Rig.Game().Slider);
+    REQUIRE(Slider.HasBlend);
+    CHECK(Slider.WorldVersion == 0);
+    CHECK(Slider.To.Position.x - Slider.From.Position.x == Catch::Approx(SlidePerTick.x).margin(1e-5));
+    CHECK(Slider.ResolveWorld(Snapshot.BlendAlpha) == Out.Slider);
+    CHECK(Slider.ResolveWorld(0.0f)[3].x == Catch::Approx(Slider.From.Position.x));
+    CHECK(Slider.ResolveWorld(1.0f)[3].x == Catch::Approx(Slider.To.Position.x));
+
+    // The spinner crosses 0 degrees, so its ends are on opposite sides: it still blends the short way
+    const MeshDrawItem& Spinner = ItemOf(Snapshot, Rig.Game().Spinner);
+    CHECK(Spinner.HasBlend);
+
+    // A child of a turning parent is made on the CPU from the whole chain: it has its matrix
+    const MeshDrawItem& Child = ItemOf(Snapshot, Rig.Game().Child);
+    CHECK_FALSE(Child.HasBlend);
+    CHECK(Child.World == Out.Child);
 }
 
 TEST_CASE("Interpolation: a pause holds the latest state, and the resume does not jump", "[graphics][interp]")

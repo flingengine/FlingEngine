@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "Frustum.h"
 #include "GpuMesh.h"
 #include "MeshCuller.h"
 #include "MeshProxyTable.h"
@@ -21,16 +22,17 @@ namespace Fling
 
     class Buffer;
 
-    /** UBO for mesh data. Written only when the mesh's transform changes. The std140 layout of mrt.vert's UBO. */
+    /**
+     * UBO for mesh data: the slot of the mesh, written once when the mesh is made. The std140 layout of
+     * mrt.vert's UBO. The world matrix is in the world matrix buffer, by slot (m_WorldBuffer).
+     */
     struct alignas(16) OffscreenUBO
     {
-        glm::mat4 Model;
-        glm::vec3 ObjPos;
-        /** std140 rounds the block to 16 bytes; GLM's vec3 is 12 on every platform. */
-        float ObjPosPadding = 0.0f;
+        uint32 Slot = 0;
+        /** std140 rounds the block to 16 bytes */
+        uint32 Padding[3] = {};
     };
-    static_assert(offsetof(OffscreenUBO, Model) == 0 && offsetof(OffscreenUBO, ObjPos) == 64 &&
-                  sizeof(OffscreenUBO) == 80);
+    static_assert(offsetof(OffscreenUBO, Slot) == 0 && sizeof(OffscreenUBO) == 16);
 
     /** UBO for camera data. All meshes share one, written once per frame. */
     struct alignas(16) OffscreenCameraUBO
@@ -90,11 +92,20 @@ namespace Fling
          */
         void SetOcclusionCulling(const bool t_On) { m_OcclusionCulling = t_On; }
 
+        /**
+         * Blend the meshes that move between two ticks on the GPU (on) or on the CPU (off). On needs
+         * the occlusion culling pass to run: with that off, or not supported, the CPU blends. Takes
+         * effect on the next Draw. See Plans/gpu-blend.md.
+         */
+        void SetGpuBlend(const bool t_On) { m_GpuBlend = t_On; }
+
         /** What the last Draw drew and culled. */
         CullStats GetCullStats() const
         {
             CullStats Stats = m_Culler.Stats();
             Stats.Occluded = m_OccludedCount;
+            // The meshes that the GPU tested for the view are counted by it, one frame late
+            Stats.Culled += m_GpuFrustumCulled;
             return Stats;
         }
 
@@ -124,6 +135,13 @@ namespace Fling
          * snapshot's world matrices. A change of the visible set does not record again.
          */
         void CullMeshes(const RenderSnapshot& t_Snapshot);
+
+        /** True if this frame blends the moving meshes on the GPU (the setting is on and the cull pass runs) */
+        bool GpuBlendActive() const { return m_GpuBlend && OcclusionActive(); }
+
+        /** Make m_WorldBuffer hold t_Slots matrices. A new buffer keeps the old contents and is written into every set.
+         */
+        void EnsureWorldCapacity(size_t t_Slots);
 
         /** True if this frame runs the occlusion passes (the setting is on and the device can) */
         bool OcclusionActive() const { return m_OcclusionCulling && m_Occlusion && m_Occlusion->IsSupported(); }
@@ -215,6 +233,14 @@ namespace Fling
 
         /** @see SetFrustumCulling */
         bool m_FrustumCulling = true;
+        bool m_GpuBlend = true;
+
+        /** The view volume of the last CullMeshes */
+        Frustum m_View;
+
+        /** The world matrix of every slot (a mat4 each), read by the vertex shader and the cull shader */
+        Buffer* m_WorldBuffer = nullptr;
+        size_t m_WorldCapacity = 0;
 
         /** @see SetOcclusionCulling */
         bool m_OcclusionCulling = true;
@@ -227,6 +253,9 @@ namespace Fling
 
         /** Meshes the GPU found hidden in the previous frame */
         uint32 m_OccludedCount = 0;
+
+        /** The meshes that the GPU found outside the view in the previous frame (the ones that move between ticks) */
+        uint32 m_GpuFrustumCulled = 0;
 
         /**
          * Descriptor sets of meshes that are gone. They are freed at the start of the next

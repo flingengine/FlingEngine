@@ -156,16 +156,18 @@ TEST_CASE("Run settings: the command line wins over the config file, which wins 
                     Settings,
                     Error));
     Settings.ResolveFrameCap(144u);
-    REQUIRE(Settings.Describe() == "tick rate 20 Hz (command line), exec inline (command line), frame cap 75 fps "
-                                   "(command line), vsync on (command line), interpolation on (command line), "
-                                   "frustum culling on (command line), occlusion culling on (command line)");
+    REQUIRE(Settings.Describe() ==
+            "tick rate 20 Hz (command line), exec inline (command line), frame cap 75 fps "
+            "(command line), vsync on (command line), interpolation on (command line), "
+            "frustum culling on (command line), occlusion culling on (command line), gpu blend on (default)");
 
     // A key with no value is the default
     REQUIRE(Resolve({}, RunSettingsConfig{}, Settings, Error));
     Settings.ResolveFrameCap(144u);
-    REQUIRE(Settings.Describe() == "tick rate 30 Hz (default), exec threaded (default), frame cap 144 fps (the "
-                                   "monitor's refresh rate), vsync on (default), interpolation on (default), "
-                                   "frustum culling on (default), occlusion culling on (default)");
+    REQUIRE(Settings.Describe() ==
+            "tick rate 30 Hz (default), exec threaded (default), frame cap 144 fps (the "
+            "monitor's refresh rate), vsync on (default), interpolation on (default), "
+            "frustum culling on (default), occlusion culling on (default), gpu blend on (default)");
 }
 
 TEST_CASE("Run settings: every config key is read by its name", "[RunSettings]")

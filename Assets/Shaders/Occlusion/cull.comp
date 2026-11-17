@@ -1,6 +1,10 @@
 #version 450
 
 // Occlusion culling of the G-buffer pass, two phases (see OcclusionCuller.h).
+// Before the tests, each slot that moves between two ticks gets its world matrix here, from the
+// two ends of its Transform and the frame's blend factor (the same as Interpolate::Blend and
+// TransformUtil::LocalMatrix), and is tested against the view volume (Frustum::Intersects).
+// The G-buffer vertex shader reads the matrices from the same buffer.
 // Phase 0: the meshes that were visible last frame and are in the view get the first draw.
 // Phase 1: every mesh in the view is tested against the depth pyramid of that first draw. A
 //          mesh that is not hidden and was not drawn yet gets the second draw.
@@ -10,11 +14,19 @@ layout(local_size_x = 64) in;
 
 struct Slot
 {
-    mat4 World;
     vec4 BoundsMin;
     vec4 BoundsMax;
-    // x: index count (0: nothing to draw), y: bit 0 in the view, bit 1 has bounds
+    // x: index count (0: nothing to draw)
+    // y: bit 0 in the view (decided by the CPU), bit 1 has bounds, bit 2 moves between two ticks (this
+    //    shader makes the world matrix), bit 3 this shader decides if it is in the view
     uvec4 Info;
+    // The Transform at the two ticks: xyz position, a quaternion (x, y, z, w), xyz scale
+    vec4 FromPos;
+    vec4 FromRot;
+    vec4 FromScale;
+    vec4 ToPos;
+    vec4 ToRot;
+    vec4 ToScale;
 };
 
 struct DrawCmd
@@ -31,22 +43,118 @@ layout(std140, set = 0, binding = 0) uniform Params
     mat4 ViewProjection;
     // x: slot count
     uvec4 Counts;
+    // x: the blend factor of this frame, from 0 to 1
+    vec4 Blend;
+    // The view volume: n pointing in, a point p is inside when dot(n, p) + d >= 0 (Frustum)
+    vec4 Planes[6];
 } u;
 
 layout(std430, set = 0, binding = 1) readonly buffer Slots { Slot slots[]; };
 layout(std430, set = 0, binding = 2) writeonly buffer Draw1 { DrawCmd draw1[]; };
 layout(std430, set = 0, binding = 3) writeonly buffer Draw2 { DrawCmd draw2[]; };
 layout(std430, set = 0, binding = 4) buffer Visible { uint visible[]; };
-layout(std430, set = 0, binding = 5) buffer Stats { uint occluded; } stats;
+layout(std430, set = 0, binding = 5) buffer Stats { uint occluded; uint frustumCulled; } stats;
 layout(set = 0, binding = 6) uniform sampler2D uPyramid;
+layout(std430, set = 0, binding = 7) buffer Worlds { mat4 worlds[]; };
 
 layout(push_constant) uniform Phase { uint Value; } phase;
 
 const float DepthBias = 1.0e-5;
 
-bool IsOccluded(const Slot slot)
+const uint InViewBit = 1u;
+const uint HasBoundsBit = 2u;
+const uint BlendBit = 4u;
+const uint TestFrustumBit = 8u;
+
+// Interpolate::Slerp: a at t <= 0, b at t >= 1, the shorter way around between them
+vec4 SlerpQuat(vec4 a, vec4 b, float t)
 {
-    const mat4 mvp = u.ViewProjection * slot.World;
+    if (t <= 0.0)
+    {
+        return a;
+    }
+    if (t >= 1.0)
+    {
+        return b;
+    }
+    const vec4 sameSide = dot(a, b) < 0.0 ? -b : b;
+    const float cosTheta = dot(a, sameSide);
+    vec4 q;
+    if (cosTheta > 1.0 - 1.0e-6)
+    {
+        // glm::slerp: nearly the same rotation, a straight line
+        q = mix(a, sameSide, t);
+    }
+    else
+    {
+        const float angle = acos(cosTheta);
+        q = (sin((1.0 - t) * angle) * a + sin(t * angle) * sameSide) / sin(angle);
+    }
+    return normalize(q);
+}
+
+// Interpolate::Lerp
+vec3 LerpVec(vec3 a, vec3 b, float t)
+{
+    if (t <= 0.0)
+    {
+        return a;
+    }
+    if (t >= 1.0)
+    {
+        return b;
+    }
+    return a + (b - a) * t;
+}
+
+// TransformUtil::LocalMatrix: translate * rotate * scale
+mat4 LocalMatrix(vec3 position, vec4 q, vec3 scale)
+{
+    const float xx = q.x * q.x;
+    const float yy = q.y * q.y;
+    const float zz = q.z * q.z;
+    const float xy = q.x * q.y;
+    const float xz = q.x * q.z;
+    const float yz = q.y * q.z;
+    const float wx = q.w * q.x;
+    const float wy = q.w * q.y;
+    const float wz = q.w * q.z;
+    return mat4(vec4(1.0 - 2.0 * (yy + zz), 2.0 * (xy + wz), 2.0 * (xz - wy), 0.0) * scale.x,
+                vec4(2.0 * (xy - wz), 1.0 - 2.0 * (xx + zz), 2.0 * (yz + wx), 0.0) * scale.y,
+                vec4(2.0 * (xz + wy), 2.0 * (yz - wx), 1.0 - 2.0 * (xx + yy), 0.0) * scale.z,
+                vec4(position, 1.0));
+}
+
+mat4 BlendWorld(const Slot slot, float t)
+{
+    return LocalMatrix(LerpVec(slot.FromPos.xyz, slot.ToPos.xyz, t),
+                       SlerpQuat(slot.FromRot, slot.ToRot, t),
+                       LerpVec(slot.FromScale.xyz, slot.ToScale.xyz, t));
+}
+
+// Frustum::Intersects: the world box around the placed local box, against the six planes
+bool InFrustum(const Slot slot, const mat4 world)
+{
+    const vec3 localCentre = (slot.BoundsMin.xyz + slot.BoundsMax.xyz) * 0.5;
+    const vec3 localExtents = (slot.BoundsMax.xyz - slot.BoundsMin.xyz) * 0.5;
+    const vec3 centre = (world * vec4(localCentre, 1.0)).xyz;
+    const vec3 extents = abs(world[0].xyz) * localExtents.x + abs(world[1].xyz) * localExtents.y +
+                         abs(world[2].xyz) * localExtents.z;
+    for (uint i = 0; i < 6; ++i)
+    {
+        const vec3 n = u.Planes[i].xyz;
+        const float reach = dot(abs(n), extents);
+        if (dot(n, centre) + u.Planes[i].w + reach < 0.0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsOccluded(const Slot slot, const mat4 world)
+{
+    const mat4 mvp = u.ViewProjection * world;
     vec2 uvMin = vec2(1.0e30);
     vec2 uvMax = vec2(-1.0e30);
     float nearest = 1.0e30;
@@ -106,7 +214,21 @@ void main()
 
     const Slot slot = slots[s];
     const uint indexCount = slot.Info.x;
-    const bool inView = (slot.Info.y & 1u) != 0u && indexCount != 0u;
+    const uint flags = slot.Info.y;
+
+    // The matrix of a slot that moves is made once, in phase 0, and read in phase 1 and by the vertex shader
+    if (phase.Value == 0u && (flags & BlendBit) != 0u && indexCount != 0u)
+    {
+        worlds[s] = BlendWorld(slot, u.Blend.x);
+    }
+
+    bool inView = (flags & InViewBit) != 0u;
+    if ((flags & TestFrustumBit) != 0u)
+    {
+        // A slot with no bounds is always in view (Frustum::Intersects)
+        inView = ((flags & HasBoundsBit) == 0u) || InFrustum(slot, worlds[s]);
+    }
+    inView = inView && indexCount != 0u;
     const bool drawnFirst = inView && visible[s] != 0u;
 
     if (phase.Value == 0u)
@@ -118,7 +240,7 @@ void main()
     bool hidden = false;
     if (inView && (slot.Info.y & 2u) != 0u)
     {
-        hidden = IsOccluded(slot);
+        hidden = IsOccluded(slot, worlds[s]);
     }
     const bool shown = inView && !hidden;
     draw2[s] = DrawCmd(indexCount, (shown && !drawnFirst) ? 1u : 0u, 0u, 0, 0u);
@@ -126,5 +248,10 @@ void main()
     if (inView && hidden)
     {
         atomicAdd(stats.occluded, 1u);
+    }
+    if (!inView && (flags & TestFrustumBit) != 0u && indexCount != 0u)
+    {
+        // Outside the view: the CPU counts the slots that it tests itself
+        atomicAdd(stats.frustumCulled, 1u);
     }
 }

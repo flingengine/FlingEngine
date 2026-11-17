@@ -52,6 +52,13 @@ namespace Fling
             {
                 continue;
             }
+            if (m_DeferBlended && t_Items[i].HasBlend)
+            {
+                // The GPU decides: the slot stays visible to the CPU (it is not skipped for its matrix)
+                bChanged |= !Slot.Visible;
+                Slot.Visible = true;
+                continue;
+            }
             const bool bVisible = t_Frustum == nullptr || t_Frustum->Intersects(Slot.LocalBounds, t_Worlds[i]);
             bChanged |= bVisible != Slot.Visible;
             Slot.Visible = bVisible;

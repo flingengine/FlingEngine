@@ -81,6 +81,8 @@ namespace Fling
      *   --occlusion-culling on|off
      *                       Skip the meshes that other meshes hide (on) or draw every mesh
      *                       (off). Overrides [Engine] OcclusionCulling
+     *   --gpu-blend on|off  Blend the meshes that move between two ticks on the GPU (on) or on the CPU
+     *                       (off). Needs occlusion culling. Overrides [Engine] GpuBlend
      *   --profile           Time the FLING_PROFILE_SCOPE scopes and print a table of them at exit
      *   --thread-jitter S:U --exec threaded only: sleep a random 0..U microseconds (seed S) before each wake
      *                       and after each publish on the game thread, and before each frame
@@ -169,6 +171,9 @@ namespace Fling
 
         /** --occlusion-culling on or off. Empty: not on the command line. */
         std::optional<bool> OcclusionCulling;
+
+        /** --gpu-blend on or off. Empty: not on the command line. */
+        std::optional<bool> GpuBlend;
 
         /** --thread-jitter: the seed and the longest sleep in microseconds. 0 microseconds means off. */
         uint32 JitterSeed = 0;
