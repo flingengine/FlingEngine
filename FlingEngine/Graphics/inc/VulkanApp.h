@@ -7,6 +7,7 @@
 #include "Strings/String.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace Fling
@@ -23,6 +24,23 @@ namespace Fling
         ALL = 0xff
     };
 
+    /**
+     * What the renderer draws to. Set it with VulkanApp::SetRenderSurface before Init.
+     */
+    struct RenderSurfaceDesc
+    {
+        /**
+         * True: draw into images that the renderer owns (--offscreen). There is no window, no
+         * surface, and no window system: a run works on a machine with no display, and opens
+         * nothing on a machine that has one. Screenshots (Screenshot::Request) still work.
+         */
+        bool Offscreen = false;
+
+        /** The size of the frames (offscreen) or the window. 0: [Engine] WindowWidth and WindowHeight. */
+        uint32 Width = 0;
+        uint32 Height = 0;
+    };
+
     class Instance;
     class LogicalDevice;
     class PhysicalDevice;
@@ -33,6 +51,7 @@ namespace Fling
     class FirstPersonCamera;
     class DepthBuffer;
     class IDebugUI;
+    class FrameCapturer;
 
     /**
      * Core rendering functionality of the Fling Engine. Controls what Render pipelines
@@ -55,6 +74,13 @@ namespace Fling
 
         /** Wait for the GPU, then free the render pipelines, the device, and the window. */
         void ShutdownRenderer();
+
+        /**
+         * Wait for the screenshots that are being written (Screenshot::Request) and call their
+         * callbacks. A frame copies a screenshot; a writer thread saves it later, so a run that
+         * counts its screenshots calls this before it ends. Main thread.
+         */
+        void FinishScreenshots();
 
         /**
          * Specify default constructible so that we have more explicit
@@ -99,6 +125,16 @@ namespace Fling
 
         /** The present mode of the swap chain. */
         PresentMode GetPresentMode() const;
+
+        /** What to draw to: a window or offscreen images, and the size. Call it before Init. */
+        void SetRenderSurface(const RenderSurfaceDesc& t_Desc) { m_SurfaceDesc = t_Desc; }
+
+        /** True when the renderer draws offscreen (RenderSurfaceDesc::Offscreen): there is no window. */
+        bool IsOffscreen() const { return m_SurfaceDesc.Offscreen; }
+
+        /** The size of the frames the renderer draws, in pixels. 0 x 0 before Init. */
+        uint32 GetFrameWidth() const;
+        uint32 GetFrameHeight() const;
 
     protected:
         void Init() override {}
@@ -178,5 +214,11 @@ namespace Fling
         FirstPersonCamera* m_Camera = nullptr;
 
         std::unique_ptr<State> m_State;
+
+        /** @see SetRenderSurface */
+        RenderSurfaceDesc m_SurfaceDesc;
+
+        /** Serves Screenshot::Request: the copy in the frame, and the PNG on a writer thread. */
+        std::unique_ptr<FrameCapturer> m_Capturer;
     };
 } // namespace Fling

@@ -4,7 +4,9 @@
 #include "Strings/String.h"
 #include "VulkanLoader.h"
 
+#include <initializer_list>
 #include <stdexcept>
+#include <utility>
 
 extern "C"
 {
@@ -167,6 +169,48 @@ namespace Fling
 #define FLING_VK_DEVICE(name) RequireProc(#name, name);
 #include "VulkanFunctions.inl"
 #undef FLING_VK_DEVICE
+    }
+
+    namespace
+    {
+        /** The name of the first null command, or null. */
+        const char* FirstMissing(std::initializer_list<std::pair<const char*, const void*>> t_Commands)
+        {
+            for (const auto& [Name, Command] : t_Commands)
+            {
+                if (Command == nullptr)
+                {
+                    return Name;
+                }
+            }
+            return nullptr;
+        }
+    } // namespace
+
+    const char* VulkanLoader::MissingSurfaceCommand()
+    {
+        return FirstMissing({
+            {"vkDestroySurfaceKHR", reinterpret_cast<const void*>(vkDestroySurfaceKHR)},
+            {"vkGetPhysicalDeviceSurfaceCapabilitiesKHR",
+             reinterpret_cast<const void*>(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)},
+            {"vkGetPhysicalDeviceSurfaceFormatsKHR",
+             reinterpret_cast<const void*>(vkGetPhysicalDeviceSurfaceFormatsKHR)},
+            {"vkGetPhysicalDeviceSurfacePresentModesKHR",
+             reinterpret_cast<const void*>(vkGetPhysicalDeviceSurfacePresentModesKHR)},
+            {"vkGetPhysicalDeviceSurfaceSupportKHR",
+             reinterpret_cast<const void*>(vkGetPhysicalDeviceSurfaceSupportKHR)},
+        });
+    }
+
+    const char* VulkanLoader::MissingSwapchainCommand()
+    {
+        return FirstMissing({
+            {"vkAcquireNextImageKHR", reinterpret_cast<const void*>(vkAcquireNextImageKHR)},
+            {"vkCreateSwapchainKHR", reinterpret_cast<const void*>(vkCreateSwapchainKHR)},
+            {"vkDestroySwapchainKHR", reinterpret_cast<const void*>(vkDestroySwapchainKHR)},
+            {"vkGetSwapchainImagesKHR", reinterpret_cast<const void*>(vkGetSwapchainImagesKHR)},
+            {"vkQueuePresentKHR", reinterpret_cast<const void*>(vkQueuePresentKHR)},
+        });
     }
 
     void VulkanLoader::UnloadLoader()

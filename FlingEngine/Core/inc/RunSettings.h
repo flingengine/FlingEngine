@@ -124,6 +124,9 @@ namespace Fling
         /** True for a --null-render run: no monitor, and no frame cap unless a setting asks for one. */
         bool Headless = false;
 
+        /** The flag that made the run headless, for messages: "--null-render" or "--offscreen". */
+        const char* HeadlessFlag = "--null-render";
+
         /** Settings that were given but do nothing in this run, one line each, for the startup log. */
         std::vector<String> Ignored;
 

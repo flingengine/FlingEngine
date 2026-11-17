@@ -8,6 +8,7 @@
 #include "FlingConfig.h"
 #include "FlingIntegers.h"
 #include "FlingWindow.h"
+#include "FrameCapture.h"
 #include "GeometrySubpass.h"
 #include "GitVersion.h"
 #include "GraphicsHelpers.h"
@@ -140,26 +141,65 @@ namespace Fling
 
     void VulkanApp::Prepare()
     {
-        CreateGameWindow(FlingConfig::GetInt("Engine", "WindowWidth", FLING_DEFAULT_WINDOW_WIDTH),
-                         FlingConfig::GetInt("Engine", "WindowHeight", FLING_DEFAULT_WINDOW_WIDTH));
+        // --resolution, else the config
+        const uint32 Width = m_SurfaceDesc.Width > 0
+                                 ? m_SurfaceDesc.Width
+                                 : FlingConfig::GetInt("Engine", "WindowWidth", FLING_DEFAULT_WINDOW_WIDTH);
+        const uint32 Height = m_SurfaceDesc.Height > 0
+                                  ? m_SurfaceDesc.Height
+                                  : FlingConfig::GetInt("Engine", "WindowHeight", FLING_DEFAULT_WINDOW_HEIGHT);
+        const bool bOffscreen = m_SurfaceDesc.Offscreen;
 
-        m_Instance = new Instance();
+        // Offscreen: no window, no glfwInit, and no window system extension
+        if (!bOffscreen)
+        {
+            CreateGameWindow(Width, Height);
+        }
+
+        m_Instance = new Instance(/* t_WithSurface */ !bOffscreen);
         assert(m_Instance);
 
-        m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_State->m_Surface);
+        if (!bOffscreen)
+        {
+            if (const char* Missing = VulkanLoader::MissingSurfaceCommand())
+            {
+                F_LOG_ERROR("The Vulkan driver has no {}: a window cannot be shown", Missing);
+                F_LOG_FATAL("The Vulkan driver cannot show a window (no VK_KHR_surface). Try --offscreen");
+            }
+            m_CurrentWindow->CreateSurface(m_Instance->GetRawVkInstance(), &m_State->m_Surface);
+        }
 
         m_PhysicalDevice = new PhysicalDevice(m_Instance->GetBestPhysicalDevice());
         assert(m_PhysicalDevice);
+        F_LOG_TRACE("Render device: {} ({})", GetPhysicalDeviceName(), bOffscreen ? "offscreen" : "window");
 
         m_LogicalDevice = new LogicalDevice(m_Instance, m_PhysicalDevice, m_State->m_Surface);
         assert(m_LogicalDevice);
+        if (!bOffscreen)
+        {
+            if (const char* Missing = VulkanLoader::MissingSwapchainCommand())
+            {
+                F_LOG_ERROR("The Vulkan driver has no {}: a window cannot be shown", Missing);
+                F_LOG_FATAL("The Vulkan driver cannot show a window (no VK_KHR_swapchain). Try --offscreen");
+            }
+        }
 
-        m_SwapChain = new Swapchain(ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface),
-                                    m_LogicalDevice,
-                                    m_PhysicalDevice,
-                                    m_State->m_Surface,
-                                    m_VSync);
+        if (bOffscreen)
+        {
+            const VkExtent2D Extent = {std::max<uint32>(Width, 1), std::max<uint32>(Height, 1)};
+            m_SwapChain = new Swapchain(Extent, m_LogicalDevice, m_PhysicalDevice, VkConfig::MAX_FRAMES_IN_FLIGHT);
+        }
+        else
+        {
+            m_SwapChain = new Swapchain(ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface),
+                                        m_LogicalDevice,
+                                        m_PhysicalDevice,
+                                        m_State->m_Surface,
+                                        m_VSync);
+        }
         assert(m_SwapChain);
+        // Holds nothing until the first Screenshot::Request: no thread and no buffer
+        m_Capturer = std::make_unique<FrameCapturer>();
 
         GraphicsHelpers::CreateCommandPool(&m_State->m_CommandPool, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
@@ -168,7 +208,10 @@ namespace Fling
         // Create the camera
         float CamMoveSpeed = FlingConfig::GetFloat("Camera", "MoveSpeed", 10.0f);
         float CamRotSpeed = FlingConfig::GetFloat("Camera", "RotationSpeed", 40.0f);
-        m_Camera = new FirstPersonCamera(m_CurrentWindow->GetAspectRatio(), CamMoveSpeed, CamRotSpeed);
+        const float Aspect = m_CurrentWindow ? m_CurrentWindow->GetAspectRatio()
+                                             : static_cast<float>(m_SwapChain->GetExtents().width) /
+                                                   static_cast<float>(m_SwapChain->GetExtents().height);
+        m_Camera = new FirstPersonCamera(Aspect, CamMoveSpeed, CamRotSpeed);
 
         BuildSwapChainResources();
     }
@@ -228,7 +271,8 @@ namespace Fling
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        // PRESENT_SRC for a window; offscreen, TRANSFER_SRC (a capture copies from it)
+        colorAttachment.finalLayout = m_SwapChain->GetFinalLayout();
 
         VkAttachmentDescription depthAttachment = {};
         depthAttachment.format = DepthBuffer::GetDepthBufferFormat();
@@ -388,10 +432,29 @@ namespace Fling
         return m_SwapChain ? m_SwapChain->GetPresentMode() : PresentMode::Fifo;
     }
 
+    uint32 VulkanApp::GetFrameWidth() const
+    {
+        return m_SwapChain ? m_SwapChain->GetExtents().width : 0;
+    }
+
+    uint32 VulkanApp::GetFrameHeight() const
+    {
+        return m_SwapChain ? m_SwapChain->GetExtents().height : 0;
+    }
+
+    void VulkanApp::FinishScreenshots()
+    {
+        if (m_Capturer)
+        {
+            m_Capturer->Flush();
+        }
+    }
+
     void VulkanApp::RecreateSwapchain()
     {
         F_LOG_TRACE("Making the swap chain again");
-        if (!m_CurrentWindow->WaitForNewWindowSize())
+        // Offscreen images keep their size (there is no window)
+        if (m_CurrentWindow != nullptr && !m_CurrentWindow->WaitForNewWindowSize())
         {
             // The window was closed while minimized. ShouldTick sees the close next.
             return;
@@ -400,7 +463,9 @@ namespace Fling
 
         CleanupSwapChainResources();
 
-        m_SwapChain->Recreate(ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface));
+        m_SwapChain->Recreate(m_CurrentWindow != nullptr
+                                  ? ChooseSwapExtent(m_CurrentWindow, m_PhysicalDevice, m_State->m_Surface)
+                                  : m_SwapChain->GetExtents());
 
         BuildSwapChainResources();
 
@@ -509,7 +574,12 @@ namespace Fling
             );
         }*/
 
-        if (t_Conf & PipelineFlags::IMGUI)
+        if ((t_Conf & PipelineFlags::IMGUI) && m_CurrentWindow == nullptr)
+        {
+            // ImGui reads its input from the window
+            F_LOG_WARN("IMGUI render pipeline needs a window: there is none offscreen, so it is left out");
+        }
+        else if (t_Conf & PipelineFlags::IMGUI)
         {
 #if WITH_IMGUI
             F_LOG_TRACE("Bulid IMGUI render pipeline! ");
@@ -540,9 +610,17 @@ namespace Fling
         const RenderSnapshot& Snapshot = SnapshotPtr ? *SnapshotPtr : s_EmptySnapshot;
 
         // Prepare the frame for submission by waiting for the swap chain
-        m_CurrentWindow->Update();
-        m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
-                                  static_cast<float>(m_CurrentWindow->GetFramebufferHeight()));
+        if (m_CurrentWindow)
+        {
+            m_CurrentWindow->Update();
+            m_Camera->SetViewportSize(static_cast<float>(m_CurrentWindow->GetFramebufferWidth()),
+                                      static_cast<float>(m_CurrentWindow->GetFramebufferHeight()));
+        }
+        else
+        {
+            m_Camera->SetViewportSize(static_cast<float>(m_SwapChain->GetExtents().width),
+                                      static_cast<float>(m_SwapChain->GetExtents().height));
+        }
         m_Camera->Update(DeltaTime);
         // A game's view (CameraView, written by its frame system) turns the camera. The debug camera still moves it.
         const CameraView* View = t_Reg.TryGetSingleton<CameraView>();
@@ -550,6 +628,12 @@ namespace Fling
         {
             m_Camera->SetLookRotation(View->Yaw, View->Pitch);
         }
+
+        // The screenshots that the writer thread finished: their callbacks (one atomic load when none)
+        m_Capturer->DeliverResults();
+
+        // Offscreen there is no present engine: no semaphores between the acquire, the frame and the present
+        const bool bPresentSync = !m_SwapChain->IsOffscreen();
 
         // Aquire the active image index
         VkResult iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
@@ -621,6 +705,10 @@ namespace Fling
 
             CmdBuf->EndRenderPass();
 
+            // A screenshot waits: the GPU copies this frame out in the same command buffer
+            // (nothing is recorded when none waits)
+            m_Capturer->RecordCopy(CmdBuf->GetHandle(), *m_SwapChain, ImageIndex);
+
             // End command buffer recording
             CmdBuf->End();
         }
@@ -651,7 +739,7 @@ namespace Fling
             OffscreenSubmission.pWaitDstStageMask = waitStages;
             // Wait on Present complete
             OffscreenSubmission.pWaitSemaphores = &m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
-            OffscreenSubmission.waitSemaphoreCount = 1;
+            OffscreenSubmission.waitSemaphoreCount = bPresentSync ? 1 : 0;
 
             // Signal that the dependent semaphores are done when this is complete
             OffscreenSubmission.pSignalSemaphores = SemaphoresToWaitOn.data();
@@ -678,7 +766,7 @@ namespace Fling
         else
         {
             // Track any semaphores that we may need to wait on for the render pipeline
-            FinalScreenSubmitInfo.waitSemaphoreCount = 1;
+            FinalScreenSubmitInfo.waitSemaphoreCount = bPresentSync ? 1 : 0;
             FinalScreenSubmitInfo.pWaitSemaphores = &m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
         }
 
@@ -693,7 +781,7 @@ namespace Fling
         FinalScreenSubmitInfo.commandBufferCount = (uint32)submitCommandBuffers.size();
 
         // Actually present the swap chain queue. This is always going to be the signal for the final semaphore
-        FinalScreenSubmitInfo.signalSemaphoreCount = 1;
+        FinalScreenSubmitInfo.signalSemaphoreCount = bPresentSync ? 1 : 0;
         FinalScreenSubmitInfo.pSignalSemaphores = &m_State->m_RenderFinishedSemaphores[ImageIndex];
 
         VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(),
@@ -707,6 +795,9 @@ namespace Fling
                         &m_State->m_InFlightFences[CurrentFrameIndex],
                         VK_TRUE,
                         std::numeric_limits<uint64>::max());
+
+        // The frame is drawn, and so is a screenshot's copy: the writer thread takes it from here
+        m_Capturer->OnFrameDone();
 
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
@@ -758,6 +849,13 @@ namespace Fling
         delete m_Camera;
         m_Camera = nullptr;
 
+        // Screenshots: the writes that are queued finish, and the staging buffers go before the device
+        if (m_Capturer)
+        {
+            m_Capturer->Release();
+            m_Capturer.reset();
+        }
+
         // Destroy swap chain (created in Prepare) -----------
         delete m_SwapChain;
         m_SwapChain = nullptr;
@@ -794,7 +892,12 @@ namespace Fling
         delete m_LogicalDevice;
         m_LogicalDevice = nullptr;
 
-        vkDestroySurfaceKHR(m_Instance->GetRawVkInstance(), m_State->m_Surface, nullptr);
+        // Offscreen there is no surface
+        if (m_State->m_Surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_Instance->GetRawVkInstance(), m_State->m_Surface, nullptr);
+            m_State->m_Surface = VK_NULL_HANDLE;
+        }
 
         delete m_PhysicalDevice;
         m_PhysicalDevice = nullptr;

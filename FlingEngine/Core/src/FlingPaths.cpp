@@ -4,6 +4,8 @@
 
 #include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <system_error>
 
 namespace Fling
 {
@@ -100,5 +102,34 @@ namespace Fling
             return String(t_Path);
         }
         return PathToUtf8(PathFromUtf8(Root) / Path);
+    }
+
+    bool FlingPaths::SaveFile(const StringView t_Path, const StringView t_Bytes, String& t_OutError)
+    {
+        const std::filesystem::path Path = PathFromUtf8(t_Path);
+        if (Path.has_parent_path())
+        {
+            std::error_code Error;
+            std::filesystem::create_directories(Path.parent_path(), Error);
+            if (Error)
+            {
+                t_OutError = "cannot make the folder " + PathToUtf8(Path.parent_path()) + ": " + Error.message();
+                return false;
+            }
+        }
+        std::ofstream File(Path, std::ios::binary | std::ios::trunc);
+        if (!File)
+        {
+            t_OutError = "cannot open " + String(t_Path) + " to write";
+            return false;
+        }
+        File.write(t_Bytes.data(), static_cast<std::streamsize>(t_Bytes.size()));
+        File.flush();
+        if (!File)
+        {
+            t_OutError = "cannot write " + String(t_Path);
+            return false;
+        }
+        return true;
     }
 } // namespace Fling

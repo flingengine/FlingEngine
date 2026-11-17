@@ -607,7 +607,7 @@ namespace Fling
 
         for (const FieldDesc& field : type.Fields)
         {
-            if (!field.Transient)
+            if (!field.Transient || context.IncludeTransientFields)
             {
                 SaveField(field, object, out, context);
             }

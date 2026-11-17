@@ -102,6 +102,27 @@ namespace Fling {
         // Shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 
+        // The fragment shader's specialization constants (SetFragmentConstant), 4 bytes each
+        std::vector<VkSpecializationMapEntry> FragmentEntries;
+        for (size_t i = 0; i < m_FragmentConstants.size(); ++i)
+        {
+            VkSpecializationMapEntry Entry = {};
+            Entry.constantID = m_FragmentConstants[i].first;
+            Entry.offset = static_cast<uint32>(i * sizeof(uint32));
+            Entry.size = sizeof(uint32);
+            FragmentEntries.push_back(Entry);
+        }
+        std::vector<uint32> FragmentData;
+        for (const std::pair<uint32, uint32>& Constant : m_FragmentConstants)
+        {
+            FragmentData.push_back(Constant.second);
+        }
+        VkSpecializationInfo FragmentSpecialization = {};
+        FragmentSpecialization.mapEntryCount = static_cast<uint32>(FragmentEntries.size());
+        FragmentSpecialization.pMapEntries = FragmentEntries.data();
+        FragmentSpecialization.dataSize = FragmentData.size() * sizeof(uint32);
+        FragmentSpecialization.pData = FragmentData.data();
+
         for (Shader* shader : m_Shaders) {
             VkPipelineShaderStageCreateInfo createInfo = {};
             createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -110,7 +131,10 @@ namespace Fling {
             createInfo.pName = "main";
             createInfo.flags = 0;
             createInfo.pNext = nullptr;
-            createInfo.pSpecializationInfo = nullptr;
+            createInfo.pSpecializationInfo =
+                (shader->GetStage() == VK_SHADER_STAGE_FRAGMENT_BIT && !FragmentEntries.empty())
+                    ? &FragmentSpecialization
+                    : nullptr;
             shaderStages.push_back(createInfo);
         }
 
@@ -118,12 +142,16 @@ namespace Fling {
         VkVertexInputBindingDescription BindingDescription = Vertex::GetBindingDescription();
         std::array<VkVertexInputAttributeDescription, 5> AttributeDescriptions = Vertex::GetAttributeDescriptions();
 
+        m_VertexInputStateCreateInfo = {};
         m_VertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
-        m_VertexInputStateCreateInfo.pVertexBindingDescriptions = &BindingDescription;
-        m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount =
-            static_cast<uint32>(AttributeDescriptions.size());
-        m_VertexInputStateCreateInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
+        if (m_HasVertexInput)
+        {
+            m_VertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+            m_VertexInputStateCreateInfo.pVertexBindingDescriptions = &BindingDescription;
+            m_VertexInputStateCreateInfo.vertexAttributeDescriptionCount =
+                static_cast<uint32>(AttributeDescriptions.size());
+            m_VertexInputStateCreateInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
+        }
 
         // Create graphics pipeline ------------------------
         m_PipelineCreateInfo = {};

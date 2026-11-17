@@ -76,6 +76,16 @@ namespace Fling
          */
         static void GetCurrentWorkingDir(char* t_OutBuf, size_t t_BufSize);
 
+        /**
+         * Write t_Bytes to a file, replacing it. Missing folders are made. Any thread.
+         *
+         * @param t_Path      The file (UTF-8)
+         * @param t_Bytes     What to write, as is (binary)
+         * @param t_OutError  Receives why it failed
+         * @return True when every byte was written
+         */
+        static bool SaveFile(StringView t_Path, StringView t_Bytes, String& t_OutError);
+
         // TODO: Add options to get the current user's home path
     };
 } // namespace Fling

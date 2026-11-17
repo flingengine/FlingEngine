@@ -16,6 +16,7 @@
 #include "MeshRenderer.h"
 #include "PresentMode.h"
 #include "RunControls.h"
+#include "Screenshot.h"
 #include "SimRate.h"
 #include "Timing.h"
 #include "TransformUtil.h"
@@ -410,7 +411,7 @@ namespace Fling
         // Right of the World Outline and Entity Editor windows, so none covers another on
         // first use, and wide enough for the limiter and measured lines
         ImGui::SetNextWindowPos(ImVec2(520, 30), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(600, 340), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
         ImGui::Begin("GPU Options");
 
         const String DeviceName = VulkanApp::Get().GetPhysicalDeviceName();
@@ -451,6 +452,29 @@ namespace Fling
         if (!m_ControlsError.empty())
         {
             ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", m_ControlsError.c_str());
+        }
+
+        ImGui::Separator();
+        // The next frame as it is shown, this window included, to Saved/Screenshots
+        if (ImGui::Button("Take screenshot"))
+        {
+            const std::weak_ptr<String> Status = m_ScreenshotStatus;
+            const String Path = Screenshot::Request({},
+                                                    [Status](const ScreenshotResult& t_Result)
+                                                    {
+                                                        if (const std::shared_ptr<String> Text = Status.lock())
+                                                        {
+                                                            *Text = t_Result.Ok ? "Saved " + t_Result.Path
+                                                                                : "Not saved: " + t_Result.Error;
+                                                        }
+                                                    });
+            *m_ScreenshotStatus = "Saving " + Path;
+        }
+        ImGui::SameLine();
+        ImGui::TextDisabled("The next frame, with the editor UI, as a PNG");
+        if (!m_ScreenshotStatus->empty())
+        {
+            ImGui::TextWrapped("%s", m_ScreenshotStatus->c_str());
         }
 
         ImGui::Separator();

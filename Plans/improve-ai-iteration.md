@@ -268,9 +268,20 @@ Done. The rules that it establishes are in
   `improve-time.md`. The tick clocks (`FixedTickClock`) come with T1 and T2.
 - JSON logs go to the existing `Logs/` folder (`fling_log.jsonl`), not to
   `Saved/Logs/`. Move them when `project-model.md` adds `Saved/`.
-- `--dump-state` is not done. It needs the state hash from phase C.
+- `--dump-state <file>` (with `--dump-state-ticks`) is done: the state at chosen
+  ticks as JSON, written on the game thread after the tick, with the tick's state
+  hash. See [`Skills/testing.md`](../Skills/testing.md#seeing-the-game-without-a-window).
 - CTest runs the Sandbox headless and runs `CrashProbe` to check that each kind
   of crash exits with code 2, with a stack trace and no dialog.
+
+### Phase F status
+
+Offscreen capture is done, before phases C to E: `--offscreen` renders into images
+that the renderer owns (no window, no surface, no GLFW), with the headless timing of
+`--null-render`, and `--screenshot` saves PNG files at chosen ticks, offscreen or
+windowed. See [`Skills/testing.md`](../Skills/testing.md#seeing-the-game-without-a-window).
+The `screenshot` command of the command layer (section 5) can call the same
+`VulkanApp::RequestCapture`. The MCP wrapper and hot reload are not done.
 
 ## Open questions
 

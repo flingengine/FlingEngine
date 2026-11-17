@@ -96,6 +96,9 @@ namespace Fling
 
         /** Ids that the save gives to entities with none (or a shared one): the document has them, the storage not. */
         const std::unordered_map<Entity, uint64>* NewGuids = nullptr;
+
+        /** Write Transient fields too (World::SaveStateToJson): a state dump shows every field, a level does not. */
+        bool IncludeTransientFields = false;
     };
 
     /** What a load needs beyond the object: how to find an entity from a saved EntityGuid. */

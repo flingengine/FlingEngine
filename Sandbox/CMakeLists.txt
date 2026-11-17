@@ -333,6 +333,50 @@ if( FLING_BUILD_TESTS )
         PASS_REGULAR_EXPRESSION "Run settings: tick rate 30 Hz \\(default\\), exec threaded \\(default\\), frame cap none \\(default for --null-render\\), vsync on \\(default\\), interpolation on \\(default\\).*Fling exit: code=0 ticks=10"
     )
 
+    # --dump-state: the simulation state as JSON at chosen ticks, with no window and no GPU.
+    # The same bytes in --exec direct and threaded (Sandbox/Tests/CheckCaptures.cmake).
+    add_test( NAME "Sandbox: headless state dump"
+        COMMAND ${CMAKE_COMMAND}
+            -DSANDBOX=$<TARGET_FILE:${PROJECT_NAME}>
+            -DROOT=${FLING_ROOT_DIR}
+            -DOUT=${CMAKE_BINARY_DIR}/TestOutput/StateDump
+            -DKIND=state
+            -P "${FLING_ROOT_DIR}/Sandbox/Tests/CheckCaptures.cmake"
+    )
+    set_tests_properties( "Sandbox: headless state dump" PROPERTIES
+        PASS_REGULAR_EXPRESSION "Captures are the same in --exec direct and threaded"
+        TIMEOUT 120
+    )
+
+    # A capture that was asked for and not made fails the run, so a script never reads an old file
+    add_test( NAME "Sandbox: state dump of a tick that does not run"
+        COMMAND ${PROJECT_NAME} --null-render --unattended --frames 10 --seed 1
+                --dump-state ${CMAKE_BINARY_DIR}/TestOutput/NoState.json --dump-state-ticks 99
+        WORKING_DIRECTORY "${FLING_ROOT_DIR}"
+    )
+    set_tests_properties( "Sandbox: state dump of a tick that does not run" PROPERTIES
+        PASS_REGULAR_EXPRESSION "--dump-state: tick 99 did not run.*Fling exit: code=1"
+    )
+
+    # --offscreen --screenshot renders with the GPU into images and saves PNG files, with no
+    # window. It needs a Vulkan driver (llvmpipe is enough, no display), which CI machines may
+    # not have, so it is off unless FLING_TEST_OFFSCREEN is on.
+    option( FLING_TEST_OFFSCREEN "Add the CTest that renders offscreen (needs a Vulkan driver, no display)" OFF )
+    if( FLING_TEST_OFFSCREEN )
+        add_test( NAME "Sandbox: offscreen screenshots"
+            COMMAND ${CMAKE_COMMAND}
+                -DSANDBOX=$<TARGET_FILE:${PROJECT_NAME}>
+                -DROOT=${FLING_ROOT_DIR}
+                -DOUT=${CMAKE_BINARY_DIR}/TestOutput/Screenshots
+                -DKIND=screenshot
+                -P "${FLING_ROOT_DIR}/Sandbox/Tests/CheckCaptures.cmake"
+        )
+        set_tests_properties( "Sandbox: offscreen screenshots" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Captures are the same in --exec direct and threaded"
+            TIMEOUT 300
+        )
+    endif()
+
     # The linked binary must not import libvulkan / vulkan-1.dll. The loader is
     # opened at runtime by Fling::DynamicLibrary.
     add_test(NAME "Sandbox: no Vulkan import"

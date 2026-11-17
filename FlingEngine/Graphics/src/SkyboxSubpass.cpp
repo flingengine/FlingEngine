@@ -118,6 +118,9 @@ namespace Fling
         m_GraphicsPipeline->m_RasterizationState = Initializers::PipelineRasterizationStateCreateInfo(
             VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
+        // The vertex shader makes the triangle from gl_VertexIndex: no vertex buffer is bound
+        m_GraphicsPipeline->m_HasVertexInput = false;
+
         m_GraphicsPipeline->m_DepthStencilState.depthTestEnable = VK_FALSE;
         m_GraphicsPipeline->m_DepthStencilState.depthWriteEnable = VK_FALSE;
 

@@ -162,7 +162,8 @@ namespace Fling
         using Keys = RunSettingsConfig;
         t_Out = RunSettings{};
         t_OutError.clear();
-        t_Out.Headless = t_Options.NullRender;
+        t_Out.Headless = t_Options.IsHeadless();
+        t_Out.HeadlessFlag = t_Options.Offscreen ? "--offscreen" : "--null-render";
 
         const NumberRange SimHzRange{.Min = SimRate::MinHz, .Max = SimRate::MaxHz, .Unit = "ticks a second"};
         const NumberRange MaxFpsRange{.Min = 1, .Max = MaxMaxFps, .AllowZero = true, .Unit = "frames a second"};
@@ -202,7 +203,8 @@ namespace Fling
         }
         if (t_Out.Headless && t_Options.VSync)
         {
-            t_Out.Ignored.push_back("--vsync does nothing with --null-render: there is no swap chain");
+            t_Out.Ignored.push_back(String("--vsync does nothing with ") + t_Out.HeadlessFlag +
+                                    ": there is no swap chain");
         }
         return true;
     }
@@ -241,7 +243,8 @@ namespace Fling
         String CapSource = SettingSourceName(MaxFpsSource);
         if (MaxFpsSource == SettingSource::Default)
         {
-            CapSource = Headless ? "default for --null-render" : "default: the monitor refresh rate is not known";
+            CapSource =
+                Headless ? String("default for ") + HeadlessFlag : "default: the monitor refresh rate is not known";
         }
         else if (MaxFpsSource == SettingSource::Monitor)
         {
