@@ -46,6 +46,10 @@ namespace Fling
         /**
          * Record this pass for one frame. A pass reads only the snapshot, never the
          * world, so the world can change while the frame is drawn.
+         *
+         * The GPU may still draw the frame before this one (Docs/frame-pipelining.md): do not write memory that
+         * a recorded frame reads. Send per frame data through a FrameUploader, or keep a copy for each
+         * FrameSync::Slot(), and free what a frame used with a RetireList.
          */
         virtual void Draw(CommandBuffer& t_CmdBuf,
                           uint32 t_ActiveFrameInFlight,

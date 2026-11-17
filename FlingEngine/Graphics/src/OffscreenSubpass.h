@@ -1,6 +1,8 @@
 #pragma once
 
 #include "FlingMath.h"
+#include "FrameSync.h"
+#include "FrameUploader.h"
 #include "Frustum.h"
 #include "GpuMesh.h"
 #include "MeshCuller.h"
@@ -116,11 +118,15 @@ namespace Fling
          */
         void SyncProxies(const RenderSnapshot& t_Snapshot);
 
-        /** Retire the resources of one proxy. ReleaseRetiredMeshResources frees them on the next Draw. */
+        /** Retire the resources of one proxy. ReleaseRetiredMeshResources frees them when the frames that used them are
+         * done. */
         void RetireGpuMesh(GpuMesh& t_Mesh);
 
-        /** Free the descriptor sets and UBOs of destroyed meshes */
-        void ReleaseRetiredMeshResources();
+        /**
+         * Free the descriptor sets and UBOs of destroyed meshes whose frames are finished on the GPU
+         * (t_All: free all of them, the device is idle)
+         */
+        void ReleaseRetiredMeshResources(bool t_All = false);
 
         void CreateMeshDescriptorSet(GpuMesh& t_Mesh);
 
@@ -176,6 +182,12 @@ namespace Fling
         /** Make each offscreen command buffer record again on its next use */
         inline void InvalidateCommandBuffers() { ++m_DrawListVersion; }
 
+        /** Sends the data that the CPU makes each frame to the GPU buffers of this pass and of the occlusion passes */
+        std::unique_ptr<FrameUploader> m_Uploader;
+
+        /** The upload command buffer of the current frame, which goes first in the submission. Set by Draw. */
+        CommandBuffer* m_UploadCmd = nullptr;
+
         // We need an offscreen semaphore for each possible frame in flight because the swap chain
         // presentation will depend on this command buffer being complete
         std::vector<VkSemaphore> m_OffscreenSemaphores;
@@ -191,7 +203,7 @@ namespace Fling
 
         VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 
-        /** Camera UBO that every mesh descriptor set points to */
+        /** Camera UBO that every mesh descriptor set points to. In GPU memory: m_Uploader writes it each frame. */
         Buffer* m_CameraUboBuffer = nullptr;
 
         /** Projection * view of this frame's camera UBO, for culling */
@@ -238,7 +250,10 @@ namespace Fling
         /** The view volume of the last CullMeshes */
         Frustum m_View;
 
-        /** The world matrix of every slot (a mat4 each), read by the vertex shader and the cull shader */
+        /**
+         * The world matrix of every slot (a mat4 each), read by the vertex shader and the cull shader. In GPU
+         * memory: the cull shader writes the matrices of the meshes that move, and m_Uploader the others.
+         */
         Buffer* m_WorldBuffer = nullptr;
         size_t m_WorldCapacity = 0;
 
@@ -258,16 +273,15 @@ namespace Fling
         uint32 m_GpuFrustumCulled = 0;
 
         /**
-         * Descriptor sets of meshes that are gone. They are freed at the start of the next
-         * Draw. The previous frame has finished on the GPU then, and every command buffer
-         * records again.
+         * Descriptor sets of meshes that are gone. A frame in flight can still use them, so they are
+         * freed when the frames up to the one that retired them are done.
          */
-        std::vector<VkDescriptorSet> m_RetiredDescriptorSets;
+        RetireList<VkDescriptorSet> m_RetiredDescriptorSets;
 
         /**
-         * UBOs of destroyed meshes, and draw command buffers that were replaced by a larger one.
-         * Deleted at the same time as m_RetiredDescriptorSets.
+         * UBOs of destroyed meshes, and buffers that were replaced by a larger one. Freed at the
+         * same time as m_RetiredDescriptorSets.
          */
-        std::vector<Buffer*> m_RetiredUniformBuffers;
+        RetireList<Buffer*> m_RetiredUniformBuffers;
     };
 } // namespace Fling

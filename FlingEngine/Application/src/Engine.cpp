@@ -950,6 +950,13 @@ namespace Fling
         // The world still holds the game until the world is destroyed below
         m_GameImpl.reset();
 
+        // The renderer records a frame while the GPU draws the one before: let the GPU finish before the models
+        // and textures that the frames use are freed
+        if (m_SystemsStarted && !m_Options.NullRender && m_World)
+        {
+            VulkanApp::Get().WaitForGpuIdle();
+        }
+
         // Cleanup any resources
         if (m_SystemsStarted)
         {

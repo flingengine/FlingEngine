@@ -1,4 +1,5 @@
 #include "FlingIntegers.h"
+#include "FrameSync.h"
 #include "Instance.h"
 #include "Logger.h"
 #include "LogicalDevice.h"
@@ -25,6 +26,11 @@ namespace Fling
         vkGetPhysicalDeviceQueueFamilyProperties(PhysDevice, &QueueFamilyCount, nullptr);
         std::vector<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(PhysDevice, &QueueFamilyCount, QueueFamilies.data());
+        m_FamilyQueueCounts.resize(QueueFamilyCount);
+        for (uint32 i = 0; i < QueueFamilyCount; ++i)
+        {
+            m_FamilyQueueCounts[i] = QueueFamilies[i].queueCount;
+        }
 
         std::optional<uint32> graphicsFamily;
         std::optional<uint32> presentFamily;
@@ -95,14 +101,18 @@ namespace Fling
         // Generate the CreatinInfo for each queue family
         std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
 
-        float Priority = 1.0f;
+        float Priority[2] = {1.0f, 1.0f};
+        // A second queue of the graphics family, for presenting from its own thread (a queue is externally
+        // synchronized, and vkQueuePresentKHR can block until the GPU has finished the frame)
+        m_SeparatePresentQueue = m_GraphicsFamily == m_PresentFamily && m_Surface != VK_NULL_HANDLE &&
+                                 m_FamilyQueueCounts[m_GraphicsFamily] >= 2;
         for (const uint32 fam : UniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo QueueCreateInfo = {};
             QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             QueueCreateInfo.queueFamilyIndex = fam;
-            QueueCreateInfo.queueCount = 1;
-            QueueCreateInfo.pQueuePriorities = &Priority;
+            QueueCreateInfo.queueCount = (fam == m_GraphicsFamily && m_SeparatePresentQueue) ? 2 : 1;
+            QueueCreateInfo.pQueuePriorities = Priority;
             QueueCreateInfos.push_back(QueueCreateInfo);
         }
 
@@ -139,12 +149,18 @@ namespace Fling
         VulkanLoader::LoadDevice(m_Device);
 
         vkGetDeviceQueue(m_Device, m_GraphicsFamily, 0, &m_GraphicsQueue);
-        vkGetDeviceQueue(m_Device, m_PresentFamily, 0, &m_PresentQueue);
+        vkGetDeviceQueue(m_Device, m_PresentFamily, m_SeparatePresentQueue ? 1 : 0, &m_PresentQueue);
     }
 
-    void LogicalDevice::WaitForIdle()
+    void LogicalDevice::WaitForIdle() const
     {
+        // A thread that presents holds its queue, which the wait needs to be free
+        if (m_BeforeIdle)
+        {
+            m_BeforeIdle();
+        }
         vkDeviceWaitIdle(m_Device);
+        FrameSync::MarkIdle();
     }
 
     LogicalDevice::~LogicalDevice()

@@ -138,9 +138,10 @@ namespace Fling
         if (imDrawData->CmdListsCount > 0)
         {
             VkDeviceSize offsets[1] = {0};
-            vkCmdBindVertexBuffers(t_commandBuffer, 0, 1, &m_vertexBuffer->GetVkBuffer(), offsets);
+            vkCmdBindVertexBuffers(t_commandBuffer, 0, 1, &m_vertexBuffer[FrameSync::Slot()]->GetVkBuffer(), offsets);
 
-            vkCmdBindIndexBuffer(t_commandBuffer, m_indexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
+            vkCmdBindIndexBuffer(
+                t_commandBuffer, m_indexBuffer[FrameSync::Slot()]->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
             for (int32 i = 0; i < imDrawData->CmdListsCount; ++i)
             {
@@ -462,13 +463,17 @@ namespace Fling
     void ImGuiSubpass::PrepareResources()
     {
         // Create vert and index buffers for use with imgui geometry
-        m_indexBuffer = std::make_unique<Buffer>();
-        m_vertexBuffer = std::make_unique<Buffer>();
+        for (uint32 f = 0; f < FrameSync::FramesInFlight; ++f)
+        {
+            m_indexBuffer[f] = std::make_unique<Buffer>();
+            m_vertexBuffer[f] = std::make_unique<Buffer>();
+        }
     }
 
     void ImGuiSubpass::UpdateUniforms()
     {
         ImDrawData* imDrawData = ImGui::GetDrawData();
+        const uint32 Slot = FrameSync::Slot();
 
         VkDeviceSize vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
         VkDeviceSize indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
@@ -478,30 +483,31 @@ namespace Fling
             return;
         }
 
-        if ((m_vertexBuffer->GetVkBuffer() == VK_NULL_HANDLE) || (m_vertexCount != imDrawData->TotalVtxCount))
+        if ((m_vertexBuffer[Slot]->GetVkBuffer() == VK_NULL_HANDLE) ||
+            (m_vertexCount[Slot] != imDrawData->TotalVtxCount))
         {
-            m_vertexBuffer->UnmapMemory();
-            m_vertexBuffer->Release();
+            m_vertexBuffer[Slot]->UnmapMemory();
+            m_vertexBuffer[Slot]->Release();
 
-            m_vertexBuffer->CreateBuffer(
+            m_vertexBuffer[Slot]->CreateBuffer(
                 vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, true);
-            m_vertexCount = imDrawData->TotalVtxCount;
-            m_vertexBuffer->MapMemory();
+            m_vertexCount[Slot] = imDrawData->TotalVtxCount;
+            m_vertexBuffer[Slot]->MapMemory();
         }
 
-        if ((m_indexBuffer->GetVkBuffer() == VK_NULL_HANDLE) || (m_indexCount < imDrawData->TotalIdxCount))
+        if ((m_indexBuffer[Slot]->GetVkBuffer() == VK_NULL_HANDLE) || (m_indexCount[Slot] < imDrawData->TotalIdxCount))
         {
-            m_indexBuffer->UnmapMemory();
-            m_indexBuffer->Release();
+            m_indexBuffer[Slot]->UnmapMemory();
+            m_indexBuffer[Slot]->Release();
 
-            m_indexBuffer->CreateBuffer(
+            m_indexBuffer[Slot]->CreateBuffer(
                 indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, true);
-            m_indexCount = imDrawData->TotalIdxCount;
-            m_indexBuffer->MapMemory();
+            m_indexCount[Slot] = imDrawData->TotalIdxCount;
+            m_indexBuffer[Slot]->MapMemory();
         }
 
-        ImDrawVert* vtxDst = (ImDrawVert*)m_vertexBuffer->m_MappedMem;
-        ImDrawIdx* idxDst = (ImDrawIdx*)m_indexBuffer->m_MappedMem;
+        ImDrawVert* vtxDst = (ImDrawVert*)m_vertexBuffer[Slot]->m_MappedMem;
+        ImDrawIdx* idxDst = (ImDrawIdx*)m_indexBuffer[Slot]->m_MappedMem;
 
         for (int n = 0; n < imDrawData->CmdListsCount; ++n)
         {
@@ -512,8 +518,8 @@ namespace Fling
             idxDst += cmd_list->IdxBuffer.Size;
         }
 
-        m_vertexBuffer->Flush(VK_WHOLE_SIZE, 0);
-        m_indexBuffer->Flush(VK_WHOLE_SIZE, 0);
+        m_vertexBuffer[Slot]->Flush(VK_WHOLE_SIZE, 0);
+        m_indexBuffer[Slot]->Flush(VK_WHOLE_SIZE, 0);
     }
 } // namespace Fling
 

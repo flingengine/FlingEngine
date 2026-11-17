@@ -82,3 +82,7 @@ test the blend. No validation layer messages, with and without occlusion culling
   0..1. A screenshot with `--gpu-blend on` and `off` at the same tick must match (within
   float rounding).
 - `--profile`: `Graphics.PublishSnapshot` and `Offscreen.*` before and after.
+
+Real window, 1080p, RTX 3090, VSync off, no frame cap, 30 Hz sim (RelWithDebInfo, `Docs/frame-pipelining.md`):
+the frame was 2.7 ms with the CPU and the GPU taking turns. With the frames pipelined it is 1.85 ms (536 to 541 fps
+with the spheres turning, 533 to 549 still), GPU bound. The world matrix buffer is now in GPU memory.

@@ -123,6 +123,9 @@ platform setup (Vulkan SDK, GLFW, etc.).
   [`Docs/threading-model.md`](Docs/threading-model.md).
 - Occlusion culling in the G-buffer pass (a two phase Hi-Z pass on the GPU, its CPU twin
   and tests): [`Docs/occlusion-culling.md`](Docs/occlusion-culling.md).
+- Frame pipelining (the CPU records a frame while the GPU draws the one before: the fence at the start of the
+  frame, the present thread, `FrameUploader`, `FrameSync` and `RetireList`, and the rules for a render pass that
+  writes data each frame): [`Docs/frame-pipelining.md`](Docs/frame-pipelining.md).
 - One self-contained guide to all of the above, written to be loaded as context
   by an AI coding agent: [`Docs/agent-guide.md`](Docs/agent-guide.md). The
   handoff for the original Fling authors (what changed since the first commit,

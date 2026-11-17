@@ -9,6 +9,7 @@
 #include "FlingIntegers.h"
 #include "FlingWindow.h"
 #include "FrameCapture.h"
+#include "FrameSync.h"
 #include "GeometrySubpass.h"
 #include "GitVersion.h"
 #include "GraphicsHelpers.h"
@@ -30,7 +31,9 @@
 #include "VulkanAppState.h"
 #include "VulkanLoader.h"
 
+#include <chrono>
 #include <stdexcept>
+#include <thread>
 
 namespace
 {
@@ -89,6 +92,9 @@ namespace
 
 namespace Fling
 {
+    static_assert(FrameSync::FramesInFlight == VkConfig::MAX_FRAMES_IN_FLIGHT,
+                  "FrameSync and the swap chain resources must agree on the frames in flight");
+
     VulkanApp::VulkanApp() : m_State(std::make_unique<State>())
     {
     }
@@ -216,6 +222,56 @@ namespace Fling
         m_Camera = new FirstPersonCamera(Aspect, CamMoveSpeed, CamRotSpeed);
 
         BuildSwapChainResources();
+
+        StartPresentThread();
+    }
+
+    void VulkanApp::StartPresentThread()
+    {
+        if (m_SwapChain->IsOffscreen() || !m_LogicalDevice->HasSeparatePresentQueue())
+        {
+            return;
+        }
+        MakeAcquireSemaphores();
+        auto Thread = std::make_unique<PresentThread>([this](const VkSemaphore t_Semaphore, uint32& t_OutIndex)
+                                                      { return m_SwapChain->AcquireImage(t_Semaphore, t_OutIndex); },
+                                                      &m_State->m_AcquireSemaphores);
+        if (!Thread->IsRunning())
+        {
+            DestroyAcquireSemaphores();
+            return;
+        }
+        m_State->m_PresentThread = std::move(Thread);
+        // WaitForIdle needs the present queue free: let the presents that wait on the GPU return first
+        m_LogicalDevice->SetBeforeIdle(
+            [this]()
+            {
+                if (m_State->m_PresentThread)
+                {
+                    m_State->m_PresentThread->Drain();
+                }
+            });
+        // The images of the first frames
+        m_State->m_PresentThread->Prime(FrameSync::FramesInFlight);
+    }
+
+    void VulkanApp::MakeAcquireSemaphores()
+    {
+        DestroyAcquireSemaphores();
+        m_State->m_AcquireSemaphores.resize(FrameSync::FramesInFlight + 2);
+        for (VkSemaphore& Each : m_State->m_AcquireSemaphores)
+        {
+            Each = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+        }
+    }
+
+    void VulkanApp::DestroyAcquireSemaphores()
+    {
+        for (const VkSemaphore Each : m_State->m_AcquireSemaphores)
+        {
+            vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), Each, nullptr);
+        }
+        m_State->m_AcquireSemaphores.clear();
     }
 
     void VulkanApp::BuildSwapChainResources()
@@ -360,6 +416,8 @@ namespace Fling
         m_State->m_PresentCompleteSemaphores.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
         m_State->m_InFlightFences.resize(VkConfig::MAX_FRAMES_IN_FLIGHT);
 
+        m_State->m_FrameChain = GraphicsHelpers::CreateSemaphore(m_LogicalDevice->GetVkDevice());
+
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -477,18 +535,25 @@ namespace Fling
     {
         if (m_Capturer)
         {
+            // The last copy may still be on the GPU: wait for it, then the writer takes it
+            if (m_State->m_CaptureFrame >= 0 && m_LogicalDevice != nullptr)
+            {
+                m_LogicalDevice->WaitForIdle();
+                m_Capturer->OnFrameDone();
+                m_State->m_CaptureFrame = -1;
+            }
             m_Capturer->Flush();
         }
     }
 
-    void VulkanApp::RecreateSwapchain()
+    bool VulkanApp::RecreateSwapchain()
     {
         F_LOG_TRACE("Making the swap chain again");
         // Offscreen images keep their size (there is no window)
         if (m_CurrentWindow != nullptr && !m_CurrentWindow->WaitForNewWindowSize())
         {
             // The window was closed while minimized. ShouldTick sees the close next.
-            return;
+            return false;
         }
         m_LogicalDevice->WaitForIdle();
 
@@ -504,6 +569,15 @@ namespace Fling
         {
             Pipeline->OnSwapchainResized();
         }
+
+        if (m_State->m_PresentThread)
+        {
+            // The images that were acquired belong to the old swap chain, and their semaphores may be signaled
+            m_State->m_PresentThread->Reset();
+            MakeAcquireSemaphores();
+            m_State->m_PresentThread->Prime(FrameSync::FramesInFlight);
+        }
+        return true;
     }
 
     void VulkanApp::CleanupSwapChainResources()
@@ -671,26 +745,85 @@ namespace Fling
         // Offscreen there is no present engine: no semaphores between the acquire, the frame and the present
         const bool bPresentSync = !m_SwapChain->IsOffscreen();
 
-        // Aquire the active image index
+        // What the presents on the present thread found out about the swap chain (a resize, a new surface size)
+        if (m_State->m_PresentThread)
+        {
+            const VkResult Presented = m_State->m_PresentThread->TakeResult();
+            if (Presented == VK_ERROR_OUT_OF_DATE_KHR || Presented == VK_SUBOPTIMAL_KHR)
+            {
+                bSwapchainOutOfDate = true;
+            }
+            else if (Presented != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to present swap chain image!");
+            }
+        }
+        if (bSwapchainOutOfDate)
+        {
+            bSwapchainOutOfDate = false;
+            RecreateSwapchain();
+        }
+
+        // The frame slot: the frame that used it last (FramesInFlight frames ago) must be done before this one
+        // writes what that frame read. The frame before it may still be on the GPU: that is the overlap.
+        const uint64 Frame = m_State->m_FrameNumber;
+        CurrentFrameIndex = static_cast<size_t>(Frame % FrameSync::FramesInFlight);
+        {
+            // The CPU waits here for the GPU: a long wait means the frame is GPU bound
+            FLING_PROFILE_SCOPE("Vk.WaitForGpu");
+            vkWaitForFences(m_LogicalDevice->GetVkDevice(),
+                            1,
+                            &m_State->m_InFlightFences[CurrentFrameIndex],
+                            VK_TRUE,
+                            std::numeric_limits<uint64>::max());
+        }
+        FrameSync::Begin(Frame);
+
+        // A screenshot's copy was in the frame of this slot: it is done, so the writer thread takes it
+        if (m_State->m_CaptureFrame >= 0 && FrameSync::IsDone(static_cast<uint64>(m_State->m_CaptureFrame)))
+        {
+            m_Capturer->OnFrameDone();
+            m_State->m_CaptureFrame = -1;
+        }
+
+        // Aquire the active image index. With the present thread the image was acquired ahead of the frame
         VkResult iResult = VK_SUCCESS;
+        uint32 ImageIndex = 0;
+        VkSemaphore AcquireSemaphore = m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
         {
             FLING_PROFILE_SCOPE("Vk.Acquire");
-            iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
+            if (m_State->m_PresentThread)
+            {
+                const PresentThread::Acquired Image = m_State->m_PresentThread->TakeAcquired();
+                iResult = Image.Result;
+                ImageIndex = Image.Index;
+                AcquireSemaphore = Image.Semaphore;
+            }
+            else
+            {
+                iResult = m_SwapChain->AquireNextImage(AcquireSemaphore);
+                ImageIndex = m_SwapChain->GetActiveImageIndex();
+            }
         }
-        uint32 ImageIndex = m_SwapChain->GetActiveImageIndex();
 
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
             F_LOG_WARN("Swap chain out of date! ");
             bSwapchainOutOfDate = false;
-            RecreateSwapchain();
+            if (!RecreateSwapchain() && m_State->m_PresentThread)
+            {
+                // The swap chain stays (the window is closing): the next frame still needs an image
+                m_State->m_PresentThread->Prime(1);
+            }
             return;
         }
 
         vkResetFences(m_LogicalDevice->GetVkDevice(), 1, &m_State->m_InFlightFences[CurrentFrameIndex]);
+        ++m_State->m_FrameNumber;
 
         if (iResult != VK_SUCCESS && iResult != VK_SUBOPTIMAL_KHR)
         {
+            F_LOG_ERROR("Acquire result {}", static_cast<int>(iResult));
             F_LOG_FATAL("Failed to acquire swap chain image!");
         }
 
@@ -747,8 +880,16 @@ namespace Fling
             CmdBuf->EndRenderPass();
 
             // A screenshot waits: the GPU copies this frame out in the same command buffer
-            // (nothing is recorded when none waits)
-            m_Capturer->RecordCopy(CmdBuf->GetHandle(), *m_SwapChain, ImageIndex);
+            // (nothing is recorded when none waits). One copy at a time: the capturer holds one until its frame is
+            // done.
+            if (m_State->m_CaptureFrame < 0)
+            {
+                m_Capturer->RecordCopy(CmdBuf->GetHandle(), *m_SwapChain, ImageIndex);
+                if (m_Capturer->HasRecorded())
+                {
+                    m_State->m_CaptureFrame = static_cast<int64>(Frame);
+                }
+            }
 
             // End command buffer recording
             CmdBuf->End();
@@ -765,6 +906,24 @@ namespace Fling
         // Wait for the color attachment to be done
         VkPipelineStageFlags waitStages[] = {m_State->m_WaitStages};
 
+        // What the first submission of the frame waits for: the swap chain image, and the frame before this one
+        // (it shares the G-buffer images, the depth and the occlusion buffers with this one)
+        std::vector<VkSemaphore> FirstWaits;
+        std::vector<VkPipelineStageFlags> FirstWaitStages;
+        if (bPresentSync)
+        {
+            FirstWaits.push_back(AcquireSemaphore);
+            FirstWaitStages.push_back(m_State->m_WaitStages);
+        }
+        if (m_State->m_FrameChainSignaled)
+        {
+            FirstWaits.push_back(m_State->m_FrameChain);
+            FirstWaitStages.push_back(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            m_State->m_FrameChainSignaled = false;
+        }
+
+        std::vector<VkPipelineStageFlags> FinalWaitStages;
+
         // Submit any PIPELINE command buffers for work
         VkSubmitInfo FinalScreenSubmitInfo = {};
         FinalScreenSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -777,10 +936,10 @@ namespace Fling
             // Submit sub pass command buffers with their waits
             VkSubmitInfo OffscreenSubmission = {};
             OffscreenSubmission.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            OffscreenSubmission.pWaitDstStageMask = waitStages;
-            // Wait on Present complete
-            OffscreenSubmission.pWaitSemaphores = &m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
-            OffscreenSubmission.waitSemaphoreCount = bPresentSync ? 1 : 0;
+            // Wait on Present complete, and on the frame before
+            OffscreenSubmission.pWaitDstStageMask = FirstWaitStages.data();
+            OffscreenSubmission.pWaitSemaphores = FirstWaits.data();
+            OffscreenSubmission.waitSemaphoreCount = static_cast<uint32>(FirstWaits.size());
 
             // Signal that the dependent semaphores are done when this is complete
             OffscreenSubmission.pSignalSemaphores = SemaphoresToWaitOn.data();
@@ -800,15 +959,19 @@ namespace Fling
             VK_CHECK_RESULT(
                 vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(), 1, &OffscreenSubmission, VK_NULL_HANDLE));
 
-            // Wait for dependent semaphores
+            // Wait for dependent semaphores. The pass samples the G-buffer in its fragment shaders, and its depth
+            // tests start before the color output: the wait covers every stage
+            FinalWaitStages.assign(SemaphoresToWaitOn.size(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            FinalScreenSubmitInfo.pWaitDstStageMask = FinalWaitStages.data();
             FinalScreenSubmitInfo.waitSemaphoreCount = (uint32)SemaphoresToWaitOn.size();
             FinalScreenSubmitInfo.pWaitSemaphores = SemaphoresToWaitOn.data();
         }
         else
         {
             // Track any semaphores that we may need to wait on for the render pipeline
-            FinalScreenSubmitInfo.waitSemaphoreCount = bPresentSync ? 1 : 0;
-            FinalScreenSubmitInfo.pWaitSemaphores = &m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
+            FinalScreenSubmitInfo.pWaitDstStageMask = FirstWaitStages.data();
+            FinalScreenSubmitInfo.waitSemaphoreCount = static_cast<uint32>(FirstWaits.size());
+            FinalScreenSubmitInfo.pWaitSemaphores = FirstWaits.data();
         }
 
         // Collect any addition command buffers that we want to submit, but are not dependent on offscreen
@@ -821,9 +984,22 @@ namespace Fling
         FinalScreenSubmitInfo.pCommandBuffers = submitCommandBuffers.data();
         FinalScreenSubmitInfo.commandBufferCount = (uint32)submitCommandBuffers.size();
 
-        // Actually present the swap chain queue. This is always going to be the signal for the final semaphore
-        FinalScreenSubmitInfo.signalSemaphoreCount = bPresentSync ? 1 : 0;
-        FinalScreenSubmitInfo.pSignalSemaphores = &m_State->m_RenderFinishedSemaphores[ImageIndex];
+        // Actually present the swap chain queue. This is always going to be the signal for the final semaphore.
+        // The next frame waits for the other one.
+        VkSemaphore FinalSignals[2] = {VK_NULL_HANDLE, m_State->m_FrameChain};
+        uint32 FinalSignalCount = 1;
+        if (bPresentSync)
+        {
+            FinalSignals[0] = m_State->m_RenderFinishedSemaphores[ImageIndex];
+            FinalSignalCount = 2;
+        }
+        else
+        {
+            FinalSignals[0] = m_State->m_FrameChain;
+        }
+        FinalScreenSubmitInfo.signalSemaphoreCount = FinalSignalCount;
+        FinalScreenSubmitInfo.pSignalSemaphores = FinalSignals;
+        m_State->m_FrameChainSignaled = true;
 
         {
             FLING_PROFILE_SCOPE("Vk.Submit");
@@ -833,45 +1009,60 @@ namespace Fling
                                           m_State->m_InFlightFences[CurrentFrameIndex]));
         }
 
-        // Finish up the frame by setting the in flight fences to wait -----
+        // The frame is on its way. The next Update waits for its fence (the frame slot) before it reuses what it read.
+        // Present: on the present thread when there is one, so that a driver that blocks the call until the GPU has
+        // finished the frame does not make this thread wait
+        if (m_State->m_PresentThread && bPresentSync)
         {
-            // The CPU waits here for the GPU: a long wait means the frame is GPU bound
-            FLING_PROFILE_SCOPE("Vk.WaitForGpu");
-            vkWaitForFences(m_LogicalDevice->GetVkDevice(),
-                            1,
-                            &m_State->m_InFlightFences[CurrentFrameIndex],
-                            VK_TRUE,
-                            std::numeric_limits<uint64>::max());
+            const VkSemaphore Finished = m_State->m_RenderFinishedSemaphores[ImageIndex];
+            FLING_PROFILE_SCOPE("Vk.QueuePresent");
+            m_State->m_PresentThread->SubmitPresent(
+                [this, Finished, ImageIndex]()
+                { return m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(), Finished, ImageIndex); });
         }
-
-        // The frame is drawn, and so is a screenshot's copy: the writer thread takes it from here
-        m_Capturer->OnFrameDone();
-
-        // Present the swap chain with the renderer finished semaphore
+        else
         {
             // On the NVIDIA Wayland driver this call blocks until the GPU has finished the frame
             FLING_PROFILE_SCOPE("Vk.QueuePresent");
             iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
                                                 m_State->m_RenderFinishedSemaphores[ImageIndex]);
-        }
 
-        // Check if the swap chain is out of date and needs to be rebuilt
-        if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || bSwapchainOutOfDate)
-        {
-            bSwapchainOutOfDate = false;
-            RecreateSwapchain();
+            // Check if the swap chain is out of date and needs to be rebuilt
+            if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR)
+            {
+                bSwapchainOutOfDate = true;
+            }
+            else if (iResult != VK_SUCCESS)
+            {
+                F_LOG_FATAL("Failed to present swap chain image!");
+            }
         }
-        else if (iResult != VK_SUCCESS)
-        {
-            F_LOG_FATAL("Failed to present swap chain image!");
-        }
+    }
 
-        // Update the current in flight frame index!
-        CurrentFrameIndex = (CurrentFrameIndex + 1) % VkConfig::MAX_FRAMES_IN_FLIGHT;
+    void VulkanApp::WaitForGpuIdle()
+    {
+        if (m_LogicalDevice != nullptr)
+        {
+            m_LogicalDevice->WaitForIdle();
+        }
     }
 
     void VulkanApp::ShutdownRenderer()
     {
+        // The last frames still run, and the present thread uses the swap chain
+        if (m_LogicalDevice != nullptr)
+        {
+            m_LogicalDevice->WaitForIdle();
+            m_LogicalDevice->SetBeforeIdle(nullptr);
+        }
+        m_State->m_PresentThread.reset();
+        DestroyAcquireSemaphores();
+        if (m_State->m_CaptureFrame >= 0 && m_Capturer)
+        {
+            m_Capturer->OnFrameDone();
+            m_State->m_CaptureFrame = -1;
+        }
+
         Singleton<VulkanApp>::Shutdown();
 
         // Wait for the device to be ready before shutting down
@@ -925,6 +1116,8 @@ namespace Fling
         }
         m_State->m_RenderFinishedSemaphores.clear();
 
+        vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_State->m_FrameChain, nullptr);
+        m_State->m_FrameChain = VK_NULL_HANDLE;
         for (size_t i = 0; i < VkConfig::MAX_FRAMES_IN_FLIGHT; i++)
         {
             vkDestroySemaphore(m_LogicalDevice->GetVkDevice(), m_State->m_PresentCompleteSemaphores[i], nullptr);

@@ -48,22 +48,25 @@ namespace Fling
 
         for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
         {
-            const GpuMesh& Mesh = m_GpuMeshes[m_ItemSlots[i]];
+            const uint32 ItemSlot = m_ItemSlots[i];
+            const GpuMesh& Mesh = m_GpuMeshes[ItemSlot];
             if (!Mesh.Drawn || Mesh.MeshModel == nullptr)
             {
                 continue;
             }
+            const FrameResources& Frame = m_FrameResources[ItemSlot];
+            const uint32 FrameSlot = FrameSync::Slot();
             Fling::Model* Model = Mesh.MeshModel;
 
             m_Ubo.Model = t_Snapshot.Meshes[i].ResolveWorld(t_Snapshot.BlendAlpha);
-            memcpy(Mesh.Ubo->m_MappedMem, &m_Ubo, sizeof(m_Ubo));
+            memcpy(Frame.Ubos[FrameSlot]->m_MappedMem, &m_Ubo, sizeof(m_Ubo));
 
             vkCmdBindDescriptorSets(t_CmdBuf.GetHandle(),
                                     VK_PIPELINE_BIND_POINT_GRAPHICS,
                                     m_GraphicsPipeline->GetPipelineLayout(),
                                     0,
                                     1,
-                                    &Mesh.Set,
+                                    &Frame.Sets[FrameSlot],
                                     0,
                                     nullptr);
 
@@ -83,16 +86,17 @@ namespace Fling
         MeshProxyTable::SyncResult Result = m_Proxies.Sync(t_Snapshot.Meshes);
         m_ItemSlots = std::move(Result.ItemSlots);
         m_GpuMeshes.resize(m_Proxies.Capacity());
+        m_FrameResources.resize(m_Proxies.Capacity());
 
         for (const uint32 Slot : Result.Removed)
         {
-            RetireGpuMesh(m_GpuMeshes[Slot]);
+            RetireGpuMesh(Slot);
         }
 
         auto Prepare = [&](const uint32 Slot)
         {
+            RetireGpuMesh(Slot);
             GpuMesh& Mesh = m_GpuMeshes[Slot];
-            RetireGpuMesh(Mesh);
             const bool bHasAssets = ResolveMeshAssets(m_Proxies.At(Slot), Mesh);
             Mesh.Drawn = bHasAssets && Mesh.MeshMaterial->GetType() == Material::Type::Debug;
             if (!Mesh.Drawn)
@@ -102,11 +106,18 @@ namespace Fling
             }
 
             const VkDeviceSize BufferSize = sizeof(DebugUBO);
-            Mesh.Ubo = new Buffer(BufferSize,
-                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-            Mesh.Ubo->MapMemory(BufferSize);
-            CreateMeshDescriptorSet(Mesh);
+            FrameResources& Frame = m_FrameResources[Slot];
+            for (uint32 f = 0; f < FrameSync::FramesInFlight; ++f)
+            {
+                Frame.Ubos[f] = new Buffer(BufferSize,
+                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                Frame.Ubos[f]->MapMemory(BufferSize);
+                CreateMeshDescriptorSet(Frame.Sets[f], Frame.Ubos[f]);
+            }
+            // The first frame's resources stand for the mesh in the checks of the other code
+            Mesh.Ubo = Frame.Ubos[0];
+            Mesh.Set = Frame.Sets[0];
         };
 
         for (const uint32 Slot : Result.Added)
@@ -119,44 +130,56 @@ namespace Fling
         }
     }
 
-    void DebugSubpass::RetireGpuMesh(GpuMesh& t_Mesh)
+    void DebugSubpass::RetireGpuMesh(const uint32 t_Slot)
     {
-        if (t_Mesh.Set != VK_NULL_HANDLE)
+        FrameResources& Frame = m_FrameResources[t_Slot];
+        for (uint32 f = 0; f < FrameSync::FramesInFlight; ++f)
         {
-            m_RetiredDescriptorSets.emplace_back(t_Mesh.Set);
+            if (Frame.Sets[f] != VK_NULL_HANDLE)
+            {
+                m_RetiredDescriptorSets.Add(Frame.Sets[f]);
+            }
+            if (Frame.Ubos[f] != nullptr)
+            {
+                m_RetiredUniformBuffers.Add(Frame.Ubos[f]);
+            }
         }
-        if (t_Mesh.Ubo != nullptr)
-        {
-            m_RetiredUniformBuffers.emplace_back(t_Mesh.Ubo);
-        }
-        t_Mesh = GpuMesh{};
+        Frame = FrameResources{};
+        m_GpuMeshes[t_Slot] = GpuMesh{};
     }
 
-    void DebugSubpass::ReleaseRetiredMeshResources()
+    void DebugSubpass::ReleaseRetiredMeshResources(const bool t_All)
     {
-        if (!m_RetiredDescriptorSets.empty() && m_DescriptorPool != VK_NULL_HANDLE)
+        auto FreeSet = [this](const VkDescriptorSet t_Set)
         {
-            VK_CHECK_RESULT(vkFreeDescriptorSets(m_Device->GetVkDevice(),
-                                                 m_DescriptorPool,
-                                                 static_cast<uint32>(m_RetiredDescriptorSets.size()),
-                                                 m_RetiredDescriptorSets.data()));
-        }
-        m_RetiredDescriptorSets.clear();
-
-        for (Buffer* Ubo : m_RetiredUniformBuffers)
+            if (m_DescriptorPool != VK_NULL_HANDLE)
+            {
+                VK_CHECK_RESULT(vkFreeDescriptorSets(m_Device->GetVkDevice(), m_DescriptorPool, 1, &t_Set));
+            }
+        };
+        auto FreeBuffer = [](Buffer* t_Buffer)
         {
-            delete Ubo;
+            delete t_Buffer;
+        };
+        if (t_All)
+        {
+            m_RetiredDescriptorSets.ReleaseAll(FreeSet);
+            m_RetiredUniformBuffers.ReleaseAll(FreeBuffer);
         }
-        m_RetiredUniformBuffers.clear();
+        else
+        {
+            m_RetiredDescriptorSets.Release(FreeSet);
+            m_RetiredUniformBuffers.Release(FreeBuffer);
+        }
     }
 
     void DebugSubpass::CreateDescriptorSets(VkDescriptorPool t_Pool)
     {
     }
 
-    void DebugSubpass::CreateMeshDescriptorSet(GpuMesh& t_Mesh)
+    void DebugSubpass::CreateMeshDescriptorSet(VkDescriptorSet& t_Set, Buffer* t_Ubo)
     {
-        if (t_Mesh.Set == VK_NULL_HANDLE)
+        if (t_Set == VK_NULL_HANDLE)
         {
             VkDescriptorSetLayout layout = m_GraphicsPipeline->GetDescriptorSetLayout();
             VkDescriptorSetAllocateInfo allocInfo = {};
@@ -166,12 +189,12 @@ namespace Fling
             allocInfo.descriptorSetCount = 1;
             allocInfo.pSetLayouts = &layout;
 
-            VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_Mesh.Set));
+            VK_CHECK_RESULT(vkAllocateDescriptorSets(m_Device->GetVkDevice(), &allocInfo, &t_Set));
         }
 
         std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
             // 0: UBO
-            Initializers::WriteDescriptorSetUniform(t_Mesh.Ubo, t_Mesh.Set, 0),
+            Initializers::WriteDescriptorSetUniform(t_Ubo, t_Set, 0),
         };
 
         vkUpdateDescriptorSets(m_Device->GetVkDevice(),
@@ -184,7 +207,7 @@ namespace Fling
     void DebugSubpass::PrepareAttachments()
     {
         // Create the descriptor pool for off screen things
-        uint32 DescriptorCount = 100 * m_SwapChain->GetImageViewCount();
+        const uint32 DescriptorCount = 100 * m_SwapChain->GetImageViewCount() * FrameSync::FramesInFlight;
 
         std::vector<VkDescriptorPoolSize> poolSizes = {
             Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
@@ -196,7 +219,7 @@ namespace Fling
         poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
         poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.maxSets = to_u32(100 * m_SwapChain->GetImageViewCount());
+        poolInfo.maxSets = DescriptorCount;
 
         if (vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {
@@ -217,14 +240,15 @@ namespace Fling
     void DebugSubpass::CleanUp()
     {
         // Called after the device is idle
-        for (GpuMesh& Mesh : m_GpuMeshes)
+        for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
         {
-            RetireGpuMesh(Mesh);
+            RetireGpuMesh(Slot);
         }
         m_GpuMeshes.clear();
+        m_FrameResources.clear();
         m_Proxies.Clear();
         m_ItemSlots.clear();
-        ReleaseRetiredMeshResources();
+        ReleaseRetiredMeshResources(true);
 
         if (m_DescriptorPool != VK_NULL_HANDLE)
         {

@@ -69,6 +69,9 @@ namespace Fling
         /** The fence of the frame that RecordCopy recorded into has signaled: start the writes. Main thread. */
         void OnFrameDone();
 
+        /** True if RecordCopy recorded a copy whose frame OnFrameDone has not seen yet */
+        bool HasRecorded() const { return m_Recorded != nullptr; }
+
         /** Call the callbacks of the captures that the writer finished. Main thread. */
         void DeliverResults();
 
