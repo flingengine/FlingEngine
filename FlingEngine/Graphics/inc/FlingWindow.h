@@ -93,7 +93,8 @@ namespace Fling
 
         /**
          * The refresh rate in Hz of the monitor that the window is on (the one that holds the
-         * window's center), from its video mode. 0 when it is not known.
+         * window's center), from its video mode. 0 when it is not known: a windowed window on
+         * Wayland, which has no position.
          */
         virtual uint32 GetRefreshRate() const = 0;
 
