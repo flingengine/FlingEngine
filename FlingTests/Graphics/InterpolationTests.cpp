@@ -301,7 +301,7 @@ namespace
             {
                 if (Item.Key == t_Entity.ToBits())
                 {
-                    return Item.World;
+                    return Item.ResolveWorld(t_Snapshot.BlendAlpha);
                 }
             }
             FAIL("the snapshot has no mesh for the entity");

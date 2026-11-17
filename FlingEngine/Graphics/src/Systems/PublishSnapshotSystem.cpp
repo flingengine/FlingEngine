@@ -75,6 +75,35 @@ namespace Fling
         }
 
         /**
+         * The two ends of an entity that moved between the two ticks of the frame's blend and
+         * has no Parent: the renderer blends them (MeshDrawItem::HasBlend). False for an entity
+         * that did not move (its LocalToWorld is exact), and for a child (its matrix needs the
+         * blended chain: Interpolate::BlendedWorld).
+         */
+        template <typename Ctx>
+        bool BlendPairOf(Ctx& ctx, const Entity entity, Transform& outFrom, Transform& outTo)
+        {
+            if (ctx.template TryGet<const Parent>(entity) != nullptr)
+            {
+                return false;
+            }
+            const Transform* latest = ctx.template TryGet<const Transform>(entity);
+            if (latest == nullptr)
+            {
+                return false;
+            }
+            const Transform& from = ctx.template BlendFrom<Transform>(entity);
+            const Transform& to = ctx.template BlendTo<Transform>(entity);
+            if (Interpolate::Same(from, to) && Interpolate::Same(to, *latest))
+            {
+                return false;
+            }
+            outFrom = from;
+            outTo = to;
+            return true;
+        }
+
+        /**
          * The next item of the frame. Items are reused, not cleared, so their path strings keep
          * their buffers and a steady frame does not allocate. Every field is written.
          */
@@ -97,6 +126,7 @@ namespace Fling
         snapshot.PointLights.clear();
         snapshot.DirectionalLights.clear();
         ++snapshot.Frame;
+        snapshot.BlendAlpha = alpha;
         const Frustum* view = PreCullView::Get();
 
         for (auto [entity, transform, mesh] : ctx.Query<const Transform, const MeshRenderer>())
@@ -105,10 +135,19 @@ namespace Fling
             item.Key = entity.ToBits();
             item.Mesh = mesh.Mesh;
             item.Material = mesh.Material;
-            if (!LatestIfFarOutside(ctx, view, entity, item.World, item.WorldVersion))
+            item.HasBlend = false;
+            if (LatestIfFarOutside(ctx, view, entity, item.World, item.WorldVersion))
             {
-                WorldOf(ctx, entity, transform, alpha, item.World, item.WorldVersion);
+                continue;
             }
+            if (BlendPairOf(ctx, entity, item.From, item.To))
+            {
+                // The renderer makes the matrix: it changes every frame
+                item.HasBlend = true;
+                item.WorldVersion = 0;
+                continue;
+            }
+            WorldOf(ctx, entity, transform, alpha, item.World, item.WorldVersion);
         }
 
         for (auto [entity, transform, light] : ctx.Query<const Transform, const PointLight>())
@@ -128,6 +167,7 @@ namespace Fling
             gizmo.Material = "Materials/White.mat";
             gizmo.World = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(world[3])), glm::vec3(0.1f));
             gizmo.WorldVersion = version;
+            gizmo.HasBlend = false;
 #endif
         }
 

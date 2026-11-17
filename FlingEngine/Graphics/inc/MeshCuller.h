@@ -58,11 +58,30 @@ namespace Fling
          *
          * @param t_Items       The snapshot's meshes
          * @param t_ItemSlots   The slot of each item (MeshProxyTable::SyncResult::ItemSlots)
+         * @param t_Worlds      The world matrix of each item this frame (MeshDrawItem::ResolveWorld)
          * @param t_Frustum     The camera's view volume. Null: no culling, every drawn slot is visible
          * @return True if a slot became visible or hidden since the last Cull
          */
-        GRAPHICS_API bool
-        Cull(std::span<const MeshDrawItem> t_Items, std::span<const uint32> t_ItemSlots, const Frustum* t_Frustum);
+        GRAPHICS_API bool Cull(std::span<const MeshDrawItem> t_Items,
+                               std::span<const uint32> t_ItemSlots,
+                               std::span<const glm::mat4> t_Worlds,
+                               const Frustum* t_Frustum);
+
+        /** Cull with the matrices of the items resolved at blend factor t_Alpha (their World when they do not blend).
+         */
+        bool Cull(std::span<const MeshDrawItem> t_Items,
+                  std::span<const uint32> t_ItemSlots,
+                  const Frustum* t_Frustum,
+                  const float t_Alpha = 1.0f)
+        {
+            std::vector<glm::mat4> Worlds;
+            Worlds.reserve(t_Items.size());
+            for (const MeshDrawItem& Item : t_Items)
+            {
+                Worlds.push_back(Item.ResolveWorld(t_Alpha));
+            }
+            return Cull(t_Items, t_ItemSlots, Worlds, t_Frustum);
+        }
 
         /** True if the pass draws t_Slot this frame: it is drawn and in view, or culling is off. */
         bool IsVisible(const uint32 t_Slot) const { return t_Slot < m_Slots.size() && m_Slots[t_Slot].Visible; }

@@ -146,6 +146,10 @@ namespace Fling
         // The view volume of exactly the matrices the shader uses this frame
         m_CameraViewProjection = CameraUBO.Projection * CameraUBO.View;
         {
+            FLING_PROFILE_SCOPE("Offscreen.ResolveWorlds");
+            ResolveWorlds(t_Snapshot);
+        }
+        {
             FLING_PROFILE_SCOPE("Offscreen.Cull");
             CullMeshes(t_Snapshot);
         }
@@ -252,12 +256,22 @@ namespace Fling
         t_Mesh = GpuMesh{};
     }
 
+    void OffscreenSubpass::ResolveWorlds(const RenderSnapshot& t_Snapshot)
+    {
+        // A mesh between two ticks has no matrix yet: make it from its two ends and this frame's factor
+        m_Worlds.resize(t_Snapshot.Meshes.size());
+        for (size_t i = 0; i < t_Snapshot.Meshes.size(); ++i)
+        {
+            m_Worlds[i] = t_Snapshot.Meshes[i].ResolveWorld(t_Snapshot.BlendAlpha);
+        }
+    }
+
     void OffscreenSubpass::CullMeshes(const RenderSnapshot& t_Snapshot)
     {
         // A change of the visible set needs no new recording: WriteDrawCommands gives each
         // recorded indirect draw its instance count (0 or 1) for this frame
         const Frustum View = Frustum::FromViewProjection(m_CameraViewProjection);
-        m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr);
+        m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_Worlds, m_FrustumCulling ? &View : nullptr);
         // The next frame's Graphics.PublishSnapshot skips the blend of what is far outside this view
         PreCullView::Set(m_FrustumCulling ? &View : nullptr);
     }
@@ -280,7 +294,7 @@ namespace Fling
             }
             const Aabb& Bounds = Mesh.MeshModel->GetLocalBounds();
             OcclusionSlot& Out = Slots[Slot];
-            Out.World = t_Snapshot.Meshes[i].World;
+            Out.World = m_Worlds[i];
             Out.BoundsMin = glm::vec4(Bounds.Min, 0.0f);
             Out.BoundsMax = glm::vec4(Bounds.Max, 0.0f);
             Out.Info.y = (m_Culler.IsVisible(Slot) ? OcclusionSlot::InView : 0u) |
@@ -293,8 +307,10 @@ namespace Fling
         // The depth is the last attachment of the offscreen frame buffer
         FrameBufferAttachment* Depth = m_OffscreenFrameBuf->GetAttachmentAtIndex(5);
         assert(Depth);
-        m_Occlusion->SetDepth(
-            Depth->GetViewHandle(), m_OffscreenFrameBuf->GetWidth(), m_OffscreenFrameBuf->GetHeight(), Depth->GetFormat());
+        m_Occlusion->SetDepth(Depth->GetViewHandle(),
+                              m_OffscreenFrameBuf->GetWidth(),
+                              m_OffscreenFrameBuf->GetHeight(),
+                              Depth->GetFormat());
     }
 
     void OffscreenSubpass::EnsureDrawCommandCapacity()
@@ -362,8 +378,8 @@ namespace Fling
             }
 
             OffscreenUBO MeshUBO = {};
-            MeshUBO.Model = Item.World;
-            MeshUBO.ObjPos = glm::vec3(Item.World[3]);
+            MeshUBO.Model = m_Worlds[i];
+            MeshUBO.ObjPos = glm::vec3(m_Worlds[i][3]);
             memcpy(Mesh.Ubo->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
             Mesh.UploadedVersion = Item.WorldVersion;
         }
@@ -423,8 +439,7 @@ namespace Fling
         {
             t_CmdBuf.SetViewport(0, {viewport});
             t_CmdBuf.SetScissor(0, {scissor});
-            vkCmdBindPipeline(
-                t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+            vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
         };
 
         t_CmdBuf.Begin();

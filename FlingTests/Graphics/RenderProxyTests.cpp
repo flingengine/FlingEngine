@@ -223,7 +223,7 @@ TEST_CASE("Graphics.PublishSnapshot takes no memory from the global heap in a st
         CHECK(snapshot.Meshes[i].Key == before[i].Key);
         CHECK(snapshot.Meshes[i].Mesh == before[i].Mesh);
         CHECK(snapshot.Meshes[i].Material == before[i].Material);
-        CHECK(snapshot.Meshes[i].World == before[i].World);
+        CHECK(snapshot.Meshes[i].ResolveWorld(snapshot.BlendAlpha) == before[i].ResolveWorld(snapshot.BlendAlpha));
     }
     CHECK(snapshot.PointLights.size() == 4);
     CHECK(snapshot.DirectionalLights.size() == 1);

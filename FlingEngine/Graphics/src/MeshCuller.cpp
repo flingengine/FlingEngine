@@ -36,11 +36,12 @@ namespace Fling
 
     bool MeshCuller::Cull(const std::span<const MeshDrawItem> t_Items,
                           const std::span<const uint32> t_ItemSlots,
+                          const std::span<const glm::mat4> t_Worlds,
                           const Frustum* t_Frustum)
     {
         bool bChanged = false;
         m_Stats = {};
-        for (size_t i = 0; i < t_Items.size() && i < t_ItemSlots.size(); ++i)
+        for (size_t i = 0; i < t_Items.size() && i < t_ItemSlots.size() && i < t_Worlds.size(); ++i)
         {
             if (t_ItemSlots[i] >= m_Slots.size())
             {
@@ -51,7 +52,7 @@ namespace Fling
             {
                 continue;
             }
-            const bool bVisible = t_Frustum == nullptr || t_Frustum->Intersects(Slot.LocalBounds, t_Items[i].World);
+            const bool bVisible = t_Frustum == nullptr || t_Frustum->Intersects(Slot.LocalBounds, t_Worlds[i]);
             bChanged |= bVisible != Slot.Visible;
             Slot.Visible = bVisible;
             ++(bVisible ? m_Stats.Drawn : m_Stats.Culled);

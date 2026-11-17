@@ -116,6 +116,9 @@ namespace Fling
         /** Write the UBO of each mesh whose world matrix changed since its last upload */
         void UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot);
 
+        /** Make m_Worlds: the world matrix of each item of the snapshot this frame */
+        void ResolveWorlds(const RenderSnapshot& t_Snapshot);
+
         /**
          * Find the meshes in the camera's view (m_Culler), from this frame's camera and the
          * snapshot's world matrices. A change of the visible set does not record again.
@@ -203,6 +206,9 @@ namespace Fling
 
         /** The proxy slot of each snapshot mesh, from the last SyncProxies */
         std::vector<uint32> m_ItemSlots;
+
+        /** The world matrix of each snapshot item this frame (ResolveWorlds), in the order of the items */
+        std::vector<glm::mat4> m_Worlds;
 
         /** Which slots are in the camera's view, indexed by slot like m_GpuMeshes */
         MeshCuller m_Culler;
