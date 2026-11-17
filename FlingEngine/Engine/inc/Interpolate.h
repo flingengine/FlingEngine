@@ -117,19 +117,9 @@ namespace Fling::Interpolate
         }
     }
 
-    /**
-     * The world matrix of an entity between the two ticks of the frame's blend (ctx.BlendFrom
-     * and ctx.BlendTo): each Transform up its Parent chain is blended at t, then the matrices
-     * are composed. So a child of a rotating parent moves on the arc and stays rigid; a
-     * blend of world matrices or world positions would cut the chord.
-     *
-     * Returns false, and leaves out alone, when no Transform on the chain differs between
-     * the two ticks and the latest one: then the published LocalToWorld is the exact matrix,
-     * and the check is all it costs. t_Ctx is a frame system context with Read<Transform>,
-     * ReadBlend<Transform> and Read<Parent>.
-     */
+    /** BlendedWorld for a chain of any depth: one walk to check, one to blend. */
     template <typename Ctx>
-    bool BlendedWorld(Ctx& t_Ctx, const Entity t_Entity, const float t, glm::mat4& out)
+    bool BlendedWorldDeep(Ctx& t_Ctx, const Entity t_Entity, const float t, glm::mat4& out)
     {
         bool Moved = false;
         ForEachUp(t_Ctx,
@@ -151,6 +141,67 @@ namespace Fling::Interpolate
                       World = TransformUtil::LocalMatrix(Blend(t_From, t_To, t)) * World;
                       return true;
                   });
+        out = World;
+        return true;
+    }
+
+    /**
+     * The world matrix of an entity between the two ticks of the frame's blend (ctx.BlendFrom
+     * and ctx.BlendTo): each Transform up its Parent chain is blended at t, then the matrices
+     * are composed. So a child of a rotating parent moves on the arc and stays rigid; a
+     * blend of world matrices or world positions would cut the chord.
+     *
+     * Returns false, and leaves out alone, when no Transform on the chain differs between
+     * the two ticks and the latest one: then the published LocalToWorld is the exact matrix,
+     * and the check is all it costs. t_Ctx is a frame system context with Read<Transform>,
+     * ReadBlend<Transform> and Read<Parent>.
+     */
+    template <typename Ctx>
+    bool BlendedWorld(Ctx& t_Ctx, const Entity t_Entity, const float t, glm::mat4& out)
+    {
+        // One walk up the chain: look each level up once, note whether anything moved, and keep
+        // the two ends, so a moved entity does not walk the chain again to blend it
+        constexpr uint32 MaxLevels = 8;
+        const Transform* From[MaxLevels];
+        const Transform* To[MaxLevels];
+        uint32 Levels = 0;
+        bool Moved = false;
+        Entity At = t_Entity;
+        // HierarchyUtil refuses loops, and the limit keeps bad data from hanging
+        for (uint32 Depth = 0; Depth < 4096; ++Depth)
+        {
+            const Transform* Latest = t_Ctx.template TryGet<const Transform>(At);
+            if (Latest == nullptr)
+            {
+                break;
+            }
+            const Transform& A = t_Ctx.template BlendFrom<Transform>(At);
+            const Transform& B = t_Ctx.template BlendTo<Transform>(At);
+            Moved = Moved || !Same(A, B) || !Same(B, *Latest);
+            if (Levels == MaxLevels)
+            {
+                // A chain this deep is rare: the plain two walks, with no limit on the depth
+                return BlendedWorldDeep(t_Ctx, t_Entity, t, out);
+            }
+            From[Levels] = &A;
+            To[Levels] = &B;
+            ++Levels;
+            const Parent* Up = t_Ctx.template TryGet<const Parent>(At);
+            if (Up == nullptr)
+            {
+                break;
+            }
+            At = Up->Value;
+        }
+        if (!Moved)
+        {
+            return false;
+        }
+        glm::mat4 World = TransformUtil::LocalMatrix(Blend(*From[0], *To[0], t));
+        for (uint32 i = 1; i < Levels; ++i)
+        {
+            World = TransformUtil::LocalMatrix(Blend(*From[i], *To[i], t)) * World;
+        }
         out = World;
         return true;
     }

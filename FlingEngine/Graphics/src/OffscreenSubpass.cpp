@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
+#include "PreCullView.h"
 #include "Profiler.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
@@ -257,6 +258,8 @@ namespace Fling
         // recorded indirect draw its instance count (0 or 1) for this frame
         const Frustum View = Frustum::FromViewProjection(m_CameraViewProjection);
         m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr);
+        // The next frame's Graphics.PublishSnapshot skips the blend of what is far outside this view
+        PreCullView::Set(m_FrustumCulling ? &View : nullptr);
     }
 
     void OffscreenSubpass::WriteOcclusionSlots(const RenderSnapshot& t_Snapshot)
