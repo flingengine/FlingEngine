@@ -733,7 +733,13 @@ namespace Fling
     std::optional<uint32> Engine::WindowMonitorHz() const
     {
         const FlingWindow* Window = m_Options.IsHeadless() ? nullptr : VulkanApp::Get().GetCurrentWindow();
-        return Window != nullptr ? std::optional<uint32>(Window->GetRefreshRate()) : std::nullopt;
+        if (Window == nullptr)
+        {
+            return std::nullopt;
+        }
+        // 0 is not a refresh rate: unknown, so the frame limiter does not take the display to pace the frames
+        const uint32 Hz = Window->GetRefreshRate();
+        return Hz > 0 ? std::optional<uint32>(Hz) : std::nullopt;
     }
 
     void Engine::UpdateFrameLimiter()

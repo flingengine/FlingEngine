@@ -83,8 +83,8 @@ if( FLING_BUILD_TESTS )
     if( NOT FLING_PHYSICS_PROVIDER STREQUAL "None" )
         list( APPEND _LevelDumpLevels "PhysicsTest|Levels/PhysicsTest.json" )
     endif()
-    set( _LevelDumpSha256_Default "3c8ea95f10bebb9a2572c3a245950a52f90bce9d9fe2ef1f415f70d404de593c" )
-    set( _LevelDumpSha256_Level_1 "4b6842bc226437aa64cff15b4c09b25b406e5c98a1333042acc117eaf56a195f" )
+    set( _LevelDumpSha256_Default "f0ac084fee2b20fec916bd839644407d8116aac0aba69cd44f401021c3d149dd" )
+    set( _LevelDumpSha256_Level_1 "f938f973a3053505f3bced9746eeec216febdbca8d14f8116d457c6c2c765601" )
     set( _LevelDumpSha256_PhysicsTest "1dd37b2c3540524d014af7fcd4e160603c616e1c546c0554491c82d138311291" )
     foreach( _case IN LISTS _LevelDumpLevels )
         string( REPLACE "|" ";" _parts "${_case}" )
@@ -130,7 +130,7 @@ if( FLING_BUILD_TESTS )
                 WORKING_DIRECTORY "${FLING_ROOT_DIR}"
             )
             set_tests_properties( "Sandbox: systems move the lighting test ${_exec}" PROPERTIES
-                PASS_REGULAR_EXPRESSION "Sandbox: 754 transforms, checksum 47091.359022474.*Fling exit: code=0 ticks=120"
+                PASS_REGULAR_EXPRESSION "Sandbox: 3266 transforms, checksum 76083.598973967.*Fling exit: code=0 ticks=120"
                 TIMEOUT 120
             )
 
@@ -141,7 +141,7 @@ if( FLING_BUILD_TESTS )
                 WORKING_DIRECTORY "${FLING_ROOT_DIR}"
             )
             set_tests_properties( "Sandbox: systems move the lighting test ${_exec} interpolation off" PROPERTIES
-                PASS_REGULAR_EXPRESSION "interpolation off \\(command line\\).*Sandbox: 754 transforms, checksum 47091.359022474.*Fling exit: code=0 ticks=120"
+                PASS_REGULAR_EXPRESSION "interpolation off \\(command line\\).*Sandbox: 3266 transforms, checksum 76083.598973967.*Fling exit: code=0 ticks=120"
                 TIMEOUT 120
             )
         endforeach()
@@ -181,7 +181,7 @@ if( FLING_BUILD_TESTS )
             WORKING_DIRECTORY "${FLING_ROOT_DIR}"
         )
         set_tests_properties( "Sandbox: look camera replay" PROPERTIES
-            PASS_REGULAR_EXPRESSION "checksum 44871.195499957.*Fling exit: code=0 ticks=20"
+            PASS_REGULAR_EXPRESSION "checksum 65798.493022203.*Fling exit: code=0 ticks=20"
             TIMEOUT 120
         )
     endif()
@@ -258,7 +258,7 @@ if( FLING_BUILD_TESTS )
             # The look camera replay's 600-tick dump is pinned, as the level dumps above
             set( _pin "" )
             if( _name STREQUAL "time" AND FLING_PHYSICS_PROVIDER STREQUAL "Jolt" )
-                set( _pin -DEXPECT_SHA256=14bce16318b1fdaf22792576cbeca4d8df040b03e9c993a0322db28ae32ea5e8 )
+                set( _pin -DEXPECT_SHA256=126564541f04c075050d1b438d053bee8183ebb1327f42e539793ec8b2d6dab2 )
             endif()
             add_test( NAME "Sandbox: tick dump exec modes ${_name}"
                 COMMAND ${CMAKE_COMMAND}

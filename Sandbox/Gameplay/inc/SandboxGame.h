@@ -26,16 +26,5 @@ namespace Sandbox
         void OnStopGame(Fling::EntityStorage& t_Reg) override final;
 
         void Shutdown(Fling::EntityStorage& t_Reg) override final;
-
-        /* Creates a 3D array of meshes */
-        void GenerateTestMeshes(Fling::EntityStorage& t_Reg);
-
-        void LightingTest(Fling::EntityStorage& t_Reg);
-
-    private:
-        void AddFloor(Fling::EntityStorage& t_Reg,
-                      Fling::StringView t_Model,
-                      Fling::StringView t_Mat,
-                      const glm::vec3 t_Scale = glm::vec3(1.0f));
     };
 } // namespace Sandbox

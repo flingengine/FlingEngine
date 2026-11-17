@@ -833,7 +833,7 @@ the tests from the repository root. clang-cl configure flags are in
 `Skills/building.md`.
 
 Headless run: `Sandbox --null-render --unattended --frames 120 --seed 1` (the last log
-lines print `Sandbox: 754 transforms, checksum ...` and `Fling exit: code=0 ticks=120 ...`).
+lines print `Sandbox: 3266 transforms, checksum ...` and `Fling exit: code=0 ticks=120 ...`).
 To see what a run did without a window, read the state (`--dump-state`), or render
 offscreen and look at a PNG (`--offscreen --screenshot`; a software Vulkan driver such
 as llvmpipe is enough): `Skills/testing.md`, "Seeing the game without a window".
