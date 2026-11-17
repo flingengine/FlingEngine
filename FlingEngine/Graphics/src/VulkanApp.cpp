@@ -672,7 +672,11 @@ namespace Fling
         const bool bPresentSync = !m_SwapChain->IsOffscreen();
 
         // Aquire the active image index
-        VkResult iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
+        VkResult iResult = VK_SUCCESS;
+        {
+            FLING_PROFILE_SCOPE("Vk.Acquire");
+            iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
+        }
         uint32 ImageIndex = m_SwapChain->GetActiveImageIndex();
 
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR)
@@ -821,10 +825,13 @@ namespace Fling
         FinalScreenSubmitInfo.signalSemaphoreCount = bPresentSync ? 1 : 0;
         FinalScreenSubmitInfo.pSignalSemaphores = &m_State->m_RenderFinishedSemaphores[ImageIndex];
 
-        VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(),
-                                      1,
-                                      &FinalScreenSubmitInfo,
-                                      m_State->m_InFlightFences[CurrentFrameIndex]));
+        {
+            FLING_PROFILE_SCOPE("Vk.Submit");
+            VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(),
+                                          1,
+                                          &FinalScreenSubmitInfo,
+                                          m_State->m_InFlightFences[CurrentFrameIndex]));
+        }
 
         // Finish up the frame by setting the in flight fences to wait -----
         {
@@ -841,8 +848,12 @@ namespace Fling
         m_Capturer->OnFrameDone();
 
         // Present the swap chain with the renderer finished semaphore
-        iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
-                                            m_State->m_RenderFinishedSemaphores[ImageIndex]);
+        {
+            // On the NVIDIA Wayland driver this call blocks until the GPU has finished the frame
+            FLING_PROFILE_SCOPE("Vk.QueuePresent");
+            iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
+                                                m_State->m_RenderFinishedSemaphores[ImageIndex]);
+        }
 
         // Check if the swap chain is out of date and needs to be rebuilt
         if (iResult == VK_ERROR_OUT_OF_DATE_KHR || iResult == VK_SUBOPTIMAL_KHR || bSwapchainOutOfDate)
