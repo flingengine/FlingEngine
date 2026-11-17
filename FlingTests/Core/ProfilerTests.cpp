@@ -7,7 +7,7 @@ using namespace Fling;
 
 TEST_CASE("Profiler counts scopes only while it is on", "[Profiler]")
 {
-#ifndef FLING_SHIPPING
+#if WITH_PROFILER
     Profiler::SetEnabled(false);
     Profiler::Reset();
     {

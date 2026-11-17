@@ -6,6 +6,8 @@
 
 #include <chrono>
 
+#if WITH_PROFILER
+
 namespace Fling
 {
     /**
@@ -77,9 +79,6 @@ namespace Fling
     };
 } // namespace Fling
 
-#ifdef FLING_SHIPPING
-#define FLING_PROFILE_SCOPE(Name) ((void)0)
-#else
 #define FLING_PROFILE_CONCAT_INNER(A, B) A##B
 #define FLING_PROFILE_CONCAT(A, B) FLING_PROFILE_CONCAT_INNER(A, B)
 /** Time the rest of the enclosing block. Name is a string literal. */
@@ -87,4 +86,10 @@ namespace Fling
     static const uint32 FLING_PROFILE_CONCAT(FlingProfileId, __LINE__) = ::Fling::Profiler::Register(Name);            \
     ::Fling::ProfileScope FLING_PROFILE_CONCAT(FlingProfileScope,                                                      \
                                                __LINE__)(FLING_PROFILE_CONCAT(FlingProfileId, __LINE__))
+
+#else
+
+// Compiled out (WITH_PROFILER is 0): a scope is nothing, and there is no Profiler class
+#define FLING_PROFILE_SCOPE(Name) ((void)0)
+
 #endif

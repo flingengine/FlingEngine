@@ -157,6 +157,19 @@ and `--record-input` / `--replay-input` exit with code 3. A shipped game cannot 
 driven by an input file. Guard code that uses them with `#if WITH_INPUT_RECORDING`.
 `VirtualInputDeviceInterface` stays, because only code can make one.
 
+## `FLING_PROFILER`
+
+`-DFLING_PROFILER=AUTO|ON|OFF` (default `AUTO`) decides whether the instrumented
+profiler (`Profiler.h`, `--profile`) is built. `AUTO` builds it in every build except
+shipping (`DEFINE_SHIPPING=ON`). `ON` builds it anywhere, for example to profile a
+shipping build locally; `OFF` compiles it out of a dev build.
+
+Code reads it as `WITH_PROFILER` (a PUBLIC definition on Core, 0 or 1). When it is 0
+there is no `Profiler` class, `FLING_PROFILE_SCOPE` is nothing, and `--profile` exits
+with code 3. Guard any code that calls `Profiler` directly with `#if WITH_PROFILER`;
+`FLING_PROFILE_SCOPE` needs no guard. The configure output says what was chosen
+(`FLING_PROFILER=AUTO (enabled: ON)`).
+
 ## `FLING_PHYSICS_PROVIDER`
 
 Picks the physics provider: `Jolt` (the default), `Bullet`, `None`, or a

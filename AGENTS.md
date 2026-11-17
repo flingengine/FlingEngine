@@ -65,7 +65,8 @@ platform setup (Vulkan SDK, GLFW, etc.).
 - See where the time goes: add `--profile` to any run (it works with `--null-render`,
   `--offscreen` and a window) and a table of timed scopes prints after the exit line.
   A scope is `FLING_PROFILE_SCOPE("Name")` from `Profiler.h` (Core): off it costs one
-  atomic load, and shipping builds remove it. Measure in the build mode you care about:
+  atomic load. Shipping builds compile it out; `-DFLING_PROFILER=ON|OFF` overrides
+  that in any build ([`Skills/building.md`](Skills/building.md)). Measure in the build mode you care about:
   Debug is much slower than RelWithDebInfo for per-entity work. In a window, use `--play`
   (a window without it starts the editor, which runs no ticks).
 - Drive a headless run with `--replay-input <file>`. Agents can write their own

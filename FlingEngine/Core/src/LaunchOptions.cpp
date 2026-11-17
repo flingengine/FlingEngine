@@ -224,6 +224,13 @@ namespace Fling
         {
             return false;
         }
+#if !WITH_PROFILER
+        if (t_Out.Profile)
+        {
+            t_OutError = "--profile is not available in this build: configure with -DFLING_PROFILER=ON";
+            return false;
+        }
+#endif
 
         if (!ReadBool(t_CmdLine, OffscreenFlag, t_Out.Offscreen, t_OutError))
         {
