@@ -165,6 +165,13 @@ namespace Fling
         // A full screen window has its monitor. A windowed one has none, so find the monitor
         // whose area holds the window's center; fall back to the primary monitor.
         GLFWmonitor* Monitor = glfwGetWindowMonitor(m_Window);
+        if (Monitor == nullptr && glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+        {
+            // Wayland does not tell a window where it is: glfwGetWindowPos is always (0, 0),
+            // which would pick the monitor at the origin whichever one the window is on, and
+            // the primary monitor is a guess too. Say that it is not known.
+            return 0;
+        }
         if (Monitor == nullptr)
         {
             int X = 0, Y = 0, Width = 0, Height = 0;
