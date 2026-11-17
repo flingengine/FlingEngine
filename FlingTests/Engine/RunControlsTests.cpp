@@ -39,10 +39,12 @@ TEST_CASE("Run controls: the live values start from the startup settings, which 
     RunSettings Settings = OnMonitor(60);
     Settings.VSync = false;
     Settings.FrustumCulling = false;
+    Settings.OcclusionCulling = false;
     const RunSettings Startup = Settings;
     RunControls Controls(Settings, Harness.GetWorld());
     REQUIRE_FALSE(Controls.VSync());
     REQUIRE_FALSE(Controls.FrustumCulling());
+    REQUIRE_FALSE(Controls.OcclusionCulling());
     REQUIRE(Controls.MaxFps() == 60);
     REQUIRE(Controls.MonitorHz() == 60u);
 
@@ -51,12 +53,15 @@ TEST_CASE("Run controls: the live values start from the startup settings, which 
     REQUIRE(Controls.SetMaxFps(90, Error));
     Controls.SetInterpolation(false);
     Controls.SetFrustumCulling(true);
+    Controls.SetOcclusionCulling(true);
     REQUIRE(Controls.VSync());
     REQUIRE(Controls.MaxFps() == 90);
     REQUIRE(Controls.FrustumCulling());
+    REQUIRE(Controls.OcclusionCulling());
     REQUIRE(Settings.Describe() == Startup.Describe());
     REQUIRE_FALSE(Settings.VSync);
     REQUIRE_FALSE(Settings.FrustumCulling);
+    REQUIRE_FALSE(Settings.OcclusionCulling);
 }
 
 TEST_CASE("Run controls: the frame cap takes 0 to 1000, and an error is cleared by the next good value",

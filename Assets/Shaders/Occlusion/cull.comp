@@ -1,0 +1,130 @@
+#version 450
+
+// Occlusion culling of the G-buffer pass, two phases (see OcclusionCuller.h).
+// Phase 0: the meshes that were visible last frame and are in the view get the first draw.
+// Phase 1: every mesh in the view is tested against the depth pyramid of that first draw. A
+//          mesh that is not hidden and was not drawn yet gets the second draw.
+// The test is the same as Occlusion::ProjectBounds and Occlusion::IsOccluded (OcclusionTest.cpp).
+
+layout(local_size_x = 64) in;
+
+struct Slot
+{
+    mat4 World;
+    vec4 BoundsMin;
+    vec4 BoundsMax;
+    // x: index count (0: nothing to draw), y: bit 0 in the view, bit 1 has bounds
+    uvec4 Info;
+};
+
+struct DrawCmd
+{
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int vertexOffset;
+    uint firstInstance;
+};
+
+layout(std140, set = 0, binding = 0) uniform Params
+{
+    mat4 ViewProjection;
+    // x: slot count
+    uvec4 Counts;
+} u;
+
+layout(std430, set = 0, binding = 1) readonly buffer Slots { Slot slots[]; };
+layout(std430, set = 0, binding = 2) writeonly buffer Draw1 { DrawCmd draw1[]; };
+layout(std430, set = 0, binding = 3) writeonly buffer Draw2 { DrawCmd draw2[]; };
+layout(std430, set = 0, binding = 4) buffer Visible { uint visible[]; };
+layout(std430, set = 0, binding = 5) buffer Stats { uint occluded; } stats;
+layout(set = 0, binding = 6) uniform sampler2D uPyramid;
+
+layout(push_constant) uniform Phase { uint Value; } phase;
+
+const float DepthBias = 1.0e-5;
+
+bool IsOccluded(const Slot slot)
+{
+    const mat4 mvp = u.ViewProjection * slot.World;
+    vec2 uvMin = vec2(1.0e30);
+    vec2 uvMax = vec2(-1.0e30);
+    float nearest = 1.0e30;
+    for (uint i = 0; i < 8; ++i)
+    {
+        const vec3 corner = vec3(((i & 1u) != 0u) ? slot.BoundsMax.x : slot.BoundsMin.x,
+                                 ((i & 2u) != 0u) ? slot.BoundsMax.y : slot.BoundsMin.y,
+                                 ((i & 4u) != 0u) ? slot.BoundsMax.z : slot.BoundsMin.z);
+        const vec4 clip = mvp * vec4(corner, 1.0);
+        if (clip.w <= 1.0e-4)
+        {
+            return false;
+        }
+        const vec2 uv = clip.xy / clip.w * 0.5 + 0.5;
+        uvMin = min(uvMin, uv);
+        uvMax = max(uvMax, uv);
+        nearest = min(nearest, clip.z / clip.w);
+    }
+    uvMin = clamp(uvMin, vec2(0.0), vec2(1.0));
+    uvMax = clamp(uvMax, vec2(0.0), vec2(1.0));
+    nearest = max(nearest, 0.0);
+
+    const ivec2 size = textureSize(uPyramid, 0);
+    const ivec2 maxTexel = size - 1;
+    const ivec2 lo = clamp(ivec2(floor(uvMin * vec2(size))), ivec2(0), maxTexel);
+    const ivec2 hi = clamp(ivec2(floor(uvMax * vec2(size))), ivec2(0), maxTexel);
+
+    const int span = max(hi.x - lo.x, hi.y - lo.y) + 1;
+    const int levels = textureQueryLevels(uPyramid);
+    int level = 0;
+    while ((1 << level) < span && level + 1 < levels)
+    {
+        ++level;
+    }
+
+    const ivec2 levelMax = textureSize(uPyramid, level) - 1;
+    const ivec2 a = min(lo >> level, levelMax);
+    const ivec2 b = min(hi >> level, levelMax);
+    float farthest = 0.0;
+    for (int y = a.y; y <= b.y; ++y)
+    {
+        for (int x = a.x; x <= b.x; ++x)
+        {
+            farthest = max(farthest, texelFetch(uPyramid, ivec2(x, y), level).r);
+        }
+    }
+    return nearest > farthest + DepthBias;
+}
+
+void main()
+{
+    const uint s = gl_GlobalInvocationID.x;
+    if (s >= u.Counts.x)
+    {
+        return;
+    }
+
+    const Slot slot = slots[s];
+    const uint indexCount = slot.Info.x;
+    const bool inView = (slot.Info.y & 1u) != 0u && indexCount != 0u;
+    const bool drawnFirst = inView && visible[s] != 0u;
+
+    if (phase.Value == 0u)
+    {
+        draw1[s] = DrawCmd(indexCount, drawnFirst ? 1u : 0u, 0u, 0, 0u);
+        return;
+    }
+
+    bool hidden = false;
+    if (inView && (slot.Info.y & 2u) != 0u)
+    {
+        hidden = IsOccluded(slot);
+    }
+    const bool shown = inView && !hidden;
+    draw2[s] = DrawCmd(indexCount, (shown && !drawnFirst) ? 1u : 0u, 0u, 0, 0u);
+    visible[s] = shown ? 1u : 0u;
+    if (inView && hidden)
+    {
+        atomicAdd(stats.occluded, 1u);
+    }
+}

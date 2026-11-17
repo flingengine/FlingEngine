@@ -45,6 +45,7 @@ namespace Fling
         static constexpr const char* VSyncKey = "VSync";
         static constexpr const char* InterpolationKey = "Interpolation";
         static constexpr const char* FrustumCullingKey = "FrustumCulling";
+        static constexpr const char* OcclusionCullingKey = "OcclusionCulling";
 
         String Exec;
         String SimHz;
@@ -52,6 +53,7 @@ namespace Fling
         String VSync;
         String Interpolation;
         String FrustumCulling;
+        String OcclusionCulling;
 
         /**
          * Each key's text from t_GetKey, which returns the text of one [Engine] key, or empty
@@ -65,7 +67,8 @@ namespace Fling
                                      .MaxFps = t_GetKey(MaxFpsKey),
                                      .VSync = t_GetKey(VSyncKey),
                                      .Interpolation = t_GetKey(InterpolationKey),
-                                     .FrustumCulling = t_GetKey(FrustumCullingKey)};
+                                     .FrustumCulling = t_GetKey(FrustumCullingKey),
+                                     .OcclusionCulling = t_GetKey(OcclusionCullingKey)};
         }
     };
 
@@ -83,11 +86,12 @@ namespace Fling
      * | VSync | [Engine] VSync | --vsync | on |
      * | Interpolation | [Engine] Interpolation | --interpolation | on |
      * | FrustumCulling | [Engine] FrustumCulling | --frustum-culling | on |
+     * | OcclusionCulling | [Engine] OcclusionCulling | --occlusion-culling | on |
      *
      * The values here do not change after startup. The GPU Options window changes VSync, the
-     * frame cap, the simulation rate, interpolation and frustum culling while the game runs; RunControls holds
-     * those live values, starting from these. Edit mode in the editor always runs on one
-     * thread, whatever Exec says.
+     * frame cap, the simulation rate, interpolation, frustum culling and occlusion culling while the game runs;
+     * RunControls holds those live values, starting from these. Edit mode in the editor always runs on one thread,
+     * whatever Exec says.
      */
     struct RunSettings
     {
@@ -127,6 +131,13 @@ namespace Fling
          */
         bool FrustumCulling = true;
         SettingSource FrustumCullingSource = SettingSource::Default;
+
+        /**
+         * The renderer does not draw a mesh that other meshes hide from the camera (the GPU
+         * occlusion test in Graphics). Presentation only: the simulation never reads it.
+         */
+        bool OcclusionCulling = true;
+        SettingSource OcclusionCullingSource = SettingSource::Default;
 
         /** The refresh rate of the window's monitor at startup (ResolveFrameCap). Empty when not known, and headless.
          */

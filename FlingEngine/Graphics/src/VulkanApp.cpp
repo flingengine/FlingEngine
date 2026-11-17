@@ -423,6 +423,14 @@ namespace Fling
         }
     }
 
+    void VulkanApp::SetOcclusionCulling(const bool t_On)
+    {
+        if (m_MeshPass != nullptr)
+        {
+            m_MeshPass->SetOcclusionCulling(t_On);
+        }
+    }
+
     CullStats VulkanApp::GetCullStats() const
     {
         return m_MeshPass != nullptr ? m_MeshPass->GetCullStats() : CullStats{};
@@ -528,8 +536,12 @@ namespace Fling
                 Shader::Create(AssetPath("Deferred/mrt.vert.spv"), m_LogicalDevice);
             std::shared_ptr<Fling::Shader> OffscreenFrag =
                 Shader::Create(AssetPath("Deferred/mrt.frag.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> HizDownsample =
+                Shader::Create(AssetPath("Occlusion/hiz_downsample.comp.spv"), m_LogicalDevice);
+            std::shared_ptr<Fling::Shader> HizCull =
+                Shader::Create(AssetPath("Occlusion/cull.comp.spv"), m_LogicalDevice);
             Subpasses.emplace_back(std::make_unique<OffscreenSubpass>(
-                m_LogicalDevice, m_SwapChain, m_Camera, OffscreenVert, OffscreenFrag));
+                m_LogicalDevice, m_SwapChain, m_Camera, OffscreenVert, OffscreenFrag, HizDownsample, HizCull));
 
             // Create geometry pass ------
             // These shaders do not have any vertex input and do the final processing to the screen

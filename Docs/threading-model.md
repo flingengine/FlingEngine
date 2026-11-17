@@ -224,7 +224,7 @@ The camera is only final in `VulkanApp::Update`, after the frame systems ran,
 so the snapshot's blend and matrix work is not culled; a test against the last
 frame's camera would not be conservative. Lights are not culled (the deferred
 lighting pass is full screen), and there is no shadow pass. `--frustum-culling
-on|off`, `[Engine] FrustumCulling` and the GPU Options window, which also shows
+on|off`, `[Engine] FrustumCulling` (and `--occlusion-culling on|off`, `[Engine] OcclusionCulling`) and the GPU Options window, which also shows
 the meshes drawn and culled in the last frame. Tests: `GraphicsTests
 "[culling]"` (`FrustumCullingTests.cpp`).
 

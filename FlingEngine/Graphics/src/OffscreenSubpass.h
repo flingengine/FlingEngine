@@ -4,6 +4,7 @@
 #include "GpuMesh.h"
 #include "MeshCuller.h"
 #include "MeshProxyTable.h"
+#include "OcclusionCuller.h"
 #include "Subpass.h"
 
 #include <cstddef>
@@ -47,7 +48,9 @@ namespace Fling
                          const Swapchain* t_Swap,
                          FirstPersonCamera* t_Cam,
                          std::shared_ptr<Fling::Shader> t_Vert,
-                         std::shared_ptr<Fling::Shader> t_Frag);
+                         std::shared_ptr<Fling::Shader> t_Frag,
+                         std::shared_ptr<Fling::Shader> t_HizDownsample = nullptr,
+                         std::shared_ptr<Fling::Shader> t_HizCull = nullptr);
 
         virtual ~OffscreenSubpass();
 
@@ -81,8 +84,19 @@ namespace Fling
          */
         void SetFrustumCulling(const bool t_On) { m_FrustumCulling = t_On; }
 
+        /**
+         * Occlusion culling on or off (RunSettings::OcclusionCulling). Takes effect on the next
+         * Draw. The pass turns it off by itself when it cannot run (see OcclusionCuller).
+         */
+        void SetOcclusionCulling(const bool t_On) { m_OcclusionCulling = t_On; }
+
         /** What the last Draw drew and culled. */
-        const CullStats& GetCullStats() const { return m_Culler.Stats(); }
+        CullStats GetCullStats() const
+        {
+            CullStats Stats = m_Culler.Stats();
+            Stats.Occluded = m_OccludedCount;
+            return Stats;
+        }
 
     private:
         /**
@@ -107,6 +121,18 @@ namespace Fling
          * snapshot's world matrices. A change of the visible set does not record again.
          */
         void CullMeshes(const RenderSnapshot& t_Snapshot);
+
+        /** True if this frame runs the occlusion passes (the setting is on and the device can) */
+        bool OcclusionActive() const { return m_OcclusionCulling && m_Occlusion && m_Occlusion->IsSupported(); }
+
+        /** Point the occlusion passes at the depth image of the frame buffer, and make the pyramid for its size */
+        void SetOcclusionDepth();
+
+        /** Write each slot's data for the cull shader (m_Occlusion), from the snapshot and the frustum test */
+        void WriteOcclusionSlots(const RenderSnapshot& t_Snapshot);
+
+        /** Record the indirect draws of every drawable slot, from t_Commands, with the pipeline already bound */
+        void RecordDraws(CommandBuffer& t_CmdBuf, const Buffer& t_Commands);
 
         /** Make m_DrawCommands hold one command per slot. A new buffer makes the recordings out of date. */
         void EnsureDrawCommandCapacity();
@@ -183,6 +209,18 @@ namespace Fling
 
         /** @see SetFrustumCulling */
         bool m_FrustumCulling = true;
+
+        /** @see SetOcclusionCulling */
+        bool m_OcclusionCulling = true;
+
+        /** The GPU occlusion passes. Null when the shaders were not given. */
+        std::unique_ptr<OcclusionCuller> m_Occlusion;
+
+        /** Whether the recordings hold the two phase draw (OcclusionActive when they were made) */
+        bool m_RecordedOcclusion = false;
+
+        /** Meshes the GPU found hidden in the previous frame */
+        uint32 m_OccludedCount = 0;
 
         /**
          * Descriptor sets of meshes that are gone. They are freed at the start of the next

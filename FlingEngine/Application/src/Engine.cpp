@@ -716,6 +716,7 @@ namespace Fling
         // the swap chain again after this frame's present.
         VulkanApp::Get().SetVSync(m_Controls->VSync());
         VulkanApp::Get().SetFrustumCulling(m_Controls->FrustumCulling());
+        VulkanApp::Get().SetOcclusionCulling(m_Controls->OcclusionCulling());
         FLING_PROFILE_SCOPE("Frame.Present");
         VulkanApp::Get().Update(t_DeltaTime, m_World->GetPresentedStorage());
 

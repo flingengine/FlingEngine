@@ -88,6 +88,17 @@ namespace Fling
         VkRenderPass GetRenderPassHandle() const { return m_RenderPass; }
 
         /**
+         * A render pass that is compatible with GetRenderPassHandle but keeps the contents of
+         * every attachment (load op LOAD) instead of clearing them. It starts from the layouts
+         * the default pass ends in. A second pass over the same frame buffer uses it. Made by
+         * CreateLoadRenderPass; null before that.
+         */
+        VkRenderPass GetLoadRenderPassHandle() const { return m_LoadRenderPass; }
+
+        /** Make the load render pass (see GetLoadRenderPassHandle). Call it after CreateRenderPass. */
+        VkResult CreateLoadRenderPass();
+
+        /**
          * Create the default render pass of this frame buffer
          *			based on the given attachments it has. Should be called
          *			AFTER adding attachments for proper uses.
@@ -117,11 +128,15 @@ namespace Fling
         inline int32 GetHeight() const { return m_Height; }
 
     private:
+        /** Build a render pass over the attachments. t_Load: keep the contents, as CreateLoadRenderPass says. */
+        VkResult BuildRenderPass(bool t_Load, VkRenderPass& t_Out);
+
         int32 m_Width = 0;
         int32 m_Height = 0;
 
         VkFramebuffer m_FrameBuffer = VK_NULL_HANDLE;
         VkRenderPass m_RenderPass = VK_NULL_HANDLE;
+        VkRenderPass m_LoadRenderPass = VK_NULL_HANDLE;
         VkSampler m_Sampler = VK_NULL_HANDLE;
         const LogicalDevice* m_Device;
 

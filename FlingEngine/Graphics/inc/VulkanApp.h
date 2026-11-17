@@ -135,6 +135,13 @@ namespace Fling
          */
         void SetFrustumCulling(bool t_On);
 
+        /**
+         * Occlusion culling on or off (RunSettings::OcclusionCulling) for the next frame. On: the
+         * meshes that other meshes hide from the camera are not drawn. The mesh pass holds the
+         * value, so it does nothing before Init; Engine::Present calls it before every frame.
+         */
+        void SetOcclusionCulling(bool t_On);
+
         /** The meshes the last frame drew and culled. Zero before the first frame and under --null-render. */
         CullStats GetCullStats() const;
 

@@ -196,6 +196,12 @@ namespace Fling
                        Keys::FrustumCullingKey,
                        t_Out.FrustumCulling,
                        t_Out.FrustumCullingSource,
+                       t_OutError) ||
+            !PickOnOff(t_Options.OcclusionCulling,
+                       t_Config.OcclusionCulling,
+                       Keys::OcclusionCullingKey,
+                       t_Out.OcclusionCulling,
+                       t_Out.OcclusionCullingSource,
                        t_OutError))
         {
             return false;
@@ -215,6 +221,10 @@ namespace Fling
         if (t_Options.NullRender && t_Options.FrustumCulling)
         {
             t_Out.Ignored.push_back("--frustum-culling does nothing with --null-render: nothing is drawn");
+        }
+        if (t_Options.NullRender && t_Options.OcclusionCulling)
+        {
+            t_Out.Ignored.push_back("--occlusion-culling does nothing with --null-render: nothing is drawn");
         }
         return true;
     }
@@ -264,7 +274,8 @@ namespace Fling
                ExecModeName(Exec) + " (" + SettingSourceName(ExecSource) + "), frame cap " + Cap + " (" + CapSource +
                "), vsync " + OnOffName(VSync) + " (" + SettingSourceName(VSyncSource) + "), interpolation " +
                OnOffName(Interpolation) + " (" + SettingSourceName(InterpolationSource) + "), frustum culling " +
-               OnOffName(FrustumCulling) + " (" + SettingSourceName(FrustumCullingSource) + ")";
+               OnOffName(FrustumCulling) + " (" + SettingSourceName(FrustumCullingSource) + "), occlusion culling " +
+               OnOffName(OcclusionCulling) + " (" + SettingSourceName(OcclusionCullingSource) + ")";
     }
 
     uint32 LimiterFps(const uint32 t_MaxFps,

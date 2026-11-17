@@ -163,6 +163,8 @@ namespace Fling
             AttachmentCreation.push_back(Attachment->GetCreationInfo());
         }
 
+        const bool bHadLoadPass = m_LoadRenderPass != VK_NULL_HANDLE;
+
         // Destroy the old stuff--------------------------------
         for (FrameBufferAttachment* Attachment : m_Attachments)
         {
@@ -174,6 +176,12 @@ namespace Fling
         {
             vkDestroyRenderPass(m_Device->GetVkDevice(), m_RenderPass, nullptr);
             m_RenderPass = VK_NULL_HANDLE;
+        }
+
+        if (m_LoadRenderPass != VK_NULL_HANDLE)
+        {
+            vkDestroyRenderPass(m_Device->GetVkDevice(), m_LoadRenderPass, nullptr);
+            m_LoadRenderPass = VK_NULL_HANDLE;
         }
 
         if (m_FrameBuffer != VK_NULL_HANDLE)
@@ -191,6 +199,10 @@ namespace Fling
         }
 
         VK_CHECK_RESULT(CreateRenderPass());
+        if (bHadLoadPass)
+        {
+            VK_CHECK_RESULT(CreateLoadRenderPass());
+        }
     }
 
     void FrameBuffer::Release()
@@ -214,19 +226,78 @@ namespace Fling
             vkDestroyRenderPass(m_Device->GetVkDevice(), m_RenderPass, nullptr);
         }
 
+        if (m_LoadRenderPass != VK_NULL_HANDLE)
+        {
+            vkDestroyRenderPass(m_Device->GetVkDevice(), m_LoadRenderPass, nullptr);
+        }
+
         if (m_FrameBuffer != VK_NULL_HANDLE)
         {
             vkDestroyFramebuffer(m_Device->GetVkDevice(), m_FrameBuffer, nullptr);
         }
     }
 
+    VkResult FrameBuffer::CreateLoadRenderPass()
+    {
+        assert(m_RenderPass != VK_NULL_HANDLE);
+        return BuildRenderPass(true, m_LoadRenderPass);
+    }
+
     VkResult FrameBuffer::CreateRenderPass()
+    {
+        VK_CHECK_RESULT(BuildRenderPass(false, m_RenderPass));
+
+        std::vector<VkImageView> attachmentViews;
+        for (auto& attachment : m_Attachments)
+        {
+            attachmentViews.push_back(attachment->GetViewHandle());
+        }
+
+        // Find. max number of layers across attachments
+        uint32 maxLayers = 0;
+        for (auto& attachment : m_Attachments)
+        {
+            if (attachment->GetSubresourceRange().layerCount > maxLayers)
+            {
+                maxLayers = attachment->GetSubresourceRange().layerCount;
+            }
+        }
+
+        VkFramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = m_RenderPass;
+        framebufferInfo.pAttachments = attachmentViews.data();
+        framebufferInfo.attachmentCount = static_cast<uint32>(attachmentViews.size());
+        framebufferInfo.width = m_Width;
+        framebufferInfo.height = m_Height;
+        framebufferInfo.layers = maxLayers;
+
+        if (m_FrameBuffer != VK_NULL_HANDLE)
+        {
+            vkDestroyFramebuffer(m_Device->GetVkDevice(), m_FrameBuffer, nullptr);
+            m_FrameBuffer = VK_NULL_HANDLE;
+        }
+
+        VK_CHECK_RESULT(vkCreateFramebuffer(m_Device->GetVkDevice(), &framebufferInfo, nullptr, &m_FrameBuffer));
+
+        return VK_SUCCESS;
+    }
+
+    VkResult FrameBuffer::BuildRenderPass(const bool t_Load, VkRenderPass& t_Out)
     {
         // Gather attachment descriptions
         std::vector<VkAttachmentDescription> attachmentDescriptions;
         for (auto& attachment : m_Attachments)
         {
-            attachmentDescriptions.push_back(attachment->GetDescription());
+            VkAttachmentDescription Description = attachment->GetDescription();
+            if (t_Load)
+            {
+                // Keep what the first pass drew, and start in the layout it ended in
+                Description.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+                Description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                Description.initialLayout = Description.finalLayout;
+            }
+            attachmentDescriptions.push_back(Description);
         }
 
         // Collect attachment references
@@ -268,23 +339,35 @@ namespace Fling
             subpass.pDepthStencilAttachment = &depthReference;
         }
 
-        // Use subpass dependencies for attachment layout transitions
+        // Use subpass dependencies for attachment layout transitions. They cover the depth
+        // stages too, and let a compute shader read the attachments after the pass (the
+        // occlusion culling pass builds a depth pyramid from the depth).
+        constexpr VkPipelineStageFlags AttachmentStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                                          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                                          VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        constexpr VkAccessFlags AttachmentAccess =
+            VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
         std::array<VkSubpassDependency, 2> dependencies;
 
         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
         dependencies[0].dstSubpass = 0;
-        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-        dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        // The same for the load pass and the default pass, as render passes that share a frame
+        // buffer must have the same dependencies. The load pass follows compute work that read the depth.
+        dependencies[0].srcStageMask = AttachmentStages | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        dependencies[0].dstStageMask = AttachmentStages;
+        dependencies[0].srcAccessMask = AttachmentAccess | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+        dependencies[0].dstAccessMask = AttachmentAccess;
         dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
         dependencies[1].srcSubpass = 0;
         dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+        dependencies[1].srcStageMask = AttachmentStages;
+        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+                                       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependencies[1].srcAccessMask = AttachmentAccess;
+        dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_SHADER_READ_BIT;
         dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
         // Create render pass
@@ -296,41 +379,7 @@ namespace Fling
         renderPassInfo.pSubpasses = &subpass;
         renderPassInfo.dependencyCount = static_cast<uint32>(dependencies.size());
         renderPassInfo.pDependencies = dependencies.data();
-        VK_CHECK_RESULT(vkCreateRenderPass(m_Device->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass));
-
-        std::vector<VkImageView> attachmentViews;
-        for (auto& attachment : m_Attachments)
-        {
-            attachmentViews.push_back(attachment->GetViewHandle());
-        }
-
-        // Find. max number of layers across attachments
-        uint32 maxLayers = 0;
-        for (auto& attachment : m_Attachments)
-        {
-            if (attachment->GetSubresourceRange().layerCount > maxLayers)
-            {
-                maxLayers = attachment->GetSubresourceRange().layerCount;
-            }
-        }
-
-        VkFramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = m_RenderPass;
-        framebufferInfo.pAttachments = attachmentViews.data();
-        framebufferInfo.attachmentCount = static_cast<uint32>(attachmentViews.size());
-        framebufferInfo.width = m_Width;
-        framebufferInfo.height = m_Height;
-        framebufferInfo.layers = maxLayers;
-
-        if (m_FrameBuffer != VK_NULL_HANDLE)
-        {
-            vkDestroyFramebuffer(m_Device->GetVkDevice(), m_FrameBuffer, nullptr);
-            m_FrameBuffer = VK_NULL_HANDLE;
-        }
-
-        VK_CHECK_RESULT(vkCreateFramebuffer(m_Device->GetVkDevice(), &framebufferInfo, nullptr, &m_FrameBuffer));
-
+        VK_CHECK_RESULT(vkCreateRenderPass(m_Device->GetVkDevice(), &renderPassInfo, nullptr, &t_Out));
         return VK_SUCCESS;
     }
 

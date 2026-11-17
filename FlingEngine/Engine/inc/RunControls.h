@@ -45,6 +45,7 @@ namespace Fling
      * - MaxFps: Engine::Present puts LimiterFps into the FrameLimiter, on the next frame.
      * - Interpolation: World::SetInterpolation, which holds it, on the next frame.
      * - FrustumCulling: Engine::Present gives it to VulkanApp::SetFrustumCulling, on the next frame.
+     * - OcclusionCulling: Engine::Present gives it to VulkanApp::SetOcclusionCulling, on the next frame.
      * - SimHz: World::RequestSimHz, a SetRate clock command applied between two ticks, at the
      *   next wake. The world holds the rate.
      *
@@ -83,6 +84,10 @@ namespace Fling
         /** Frustum culling in the renderer (RunSettings::FrustumCulling). */
         bool FrustumCulling() const { return m_FrustumCulling; }
         void SetFrustumCulling(bool t_On);
+
+        /** Occlusion culling in the renderer (RunSettings::OcclusionCulling). */
+        bool OcclusionCulling() const { return m_OcclusionCulling; }
+        void SetOcclusionCulling(bool t_On);
 
         /**
          * Ask for a new simulation rate (World::RequestSimHz, applied at the next tick
@@ -140,6 +145,7 @@ namespace Fling
 
         bool m_VSync = true;
         bool m_FrustumCulling = true;
+        bool m_OcclusionCulling = true;
         uint32 m_MaxFps = 0;
 
         /** True while the cap is the monitor's refresh rate and no one has set it. */
