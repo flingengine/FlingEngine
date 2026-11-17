@@ -40,13 +40,6 @@ namespace Fling
         /** The size of the frames (offscreen) or the window. 0: [Engine] WindowWidth and WindowHeight. */
         uint32 Width = 0;
         uint32 Height = 0;
-
-        /**
-         * Make the frames copyable (VK_IMAGE_USAGE_TRANSFER_SRC_BIT) for the whole run: a run that
-         * will take screenshots (--screenshot). Off: a Screenshot::Request makes the frames
-         * copyable for the frame it needs only, and the run pays nothing when nobody asks.
-         */
-        bool CopyableFrames = false;
     };
 
     class Instance;
@@ -60,6 +53,7 @@ namespace Fling
     class DepthBuffer;
     class IDebugUI;
     class OffscreenSubpass;
+    class FrameCapturer;
 
     /**
      * Core rendering functionality of the Fling Engine. Controls what Render pipelines
@@ -82,6 +76,13 @@ namespace Fling
 
         /** Wait for the GPU, then free the render pipelines, the device, and the window. */
         void ShutdownRenderer();
+
+        /**
+         * Wait for the screenshots that are being written (Screenshot::Request) and call their
+         * callbacks. A frame copies a screenshot; a writer thread saves it later, so a run that
+         * counts its screenshots calls this before it ends. Main thread.
+         */
+        void FinishScreenshots();
 
         /**
          * Specify default constructible so that we have more explicit
@@ -232,22 +233,7 @@ namespace Fling
         /** @see SetRenderSurface */
         RenderSurfaceDesc m_SurfaceDesc;
 
-        /**
-         * Save the frame in the active image for the Screenshot requests that are waiting
-         * (Screenshot::Request, from any module or thread). Update calls it after the frame's
-         * fence, before the present.
-         */
-        void SaveScreenshots();
-
-        /**
-         * Before the frame: when a Screenshot::Request waits and the frames are not copyable,
-         * make the swap chain again with copyable images. A frame with no request costs one
-         * atomic load here.
-         */
-        void PrepareScreenshots();
-
-        /** True while the frames are copyable for a request only, not for the run (RenderSurfaceDesc::CopyableFrames).
-         */
-        bool m_CopyableForRequest = false;
+        /** Serves Screenshot::Request: the copy in the frame, and the PNG on a writer thread. */
+        std::unique_ptr<FrameCapturer> m_Capturer;
     };
 } // namespace Fling

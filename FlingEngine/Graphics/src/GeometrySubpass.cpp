@@ -237,6 +237,11 @@ namespace Fling
         m_GraphicsPipeline->m_RasterizationState = Initializers::PipelineRasterizationStateCreateInfo(
             VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
+        // deferred.frag's CPU_DRIVER: its llvmpipe workaround runs on a CPU driver only
+        const bool bCpuDriver =
+            VulkanApp::Get().GetPhysicalDevice()->GetDeviceProps().deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
+        m_GraphicsPipeline->SetFragmentConstant(0, bCpuDriver ? 1u : 0u);
+
         // Create it otherwise with defaults
         m_GraphicsPipeline->CreateGraphicsPipeline(m_GlobalRenderPass, nullptr);
     }

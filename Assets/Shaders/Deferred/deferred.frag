@@ -12,6 +12,9 @@ layout (binding = 4) uniform sampler2D samplerMetal;
 layout (binding = 5) uniform sampler2D samplerRoughness;
 
 // In UV from the vertex shader
+// True on a CPU driver such as llvmpipe (VK_PHYSICAL_DEVICE_TYPE_CPU): see the loop counts in main
+layout (constant_id = 0) const bool CPU_DRIVER = false;
+
 layout (location = 0) in vec2 inUV;
 
 // Final screen color 
@@ -60,13 +63,20 @@ void main()
     // so that calculations only have to be done for visible fragments 
     // independent of no. of lights.
 
-	// The loop counts. The min with a value only the GPU knows (the G-buffer size, never 0)
-	// changes nothing, but keeps a driver from compiling the shader again for each count:
-	// llvmpipe's uniform inlining does that for loop bounds read from a uniform buffer, and
-	// its code for these two loops reads a null pointer (a crash on CPU rendering)
-	const uint NotInlined = uint(textureSize(samplerposition, 0).x) + 128u;
-	const uint DirLightCount = min(lights.DirLightCount, NotInlined);
-	const uint PointLightCount = min(lights.PointLightCount, NotInlined);
+	// The loop counts. On a CPU driver only (CPU_DRIVER, set by GeometrySubpass), the min with
+	// a value only the GPU knows (the G-buffer size, never 0) changes nothing, but keeps the
+	// driver from compiling the shader again for each count: llvmpipe's uniform inlining does
+	// that for loop bounds read from a uniform buffer, and its code for these two loops reads
+	// a null pointer (a crash on CPU rendering). A GPU driver removes the branch when it
+	// specializes the shader, so it pays nothing
+	uint DirLightCount = lights.DirLightCount;
+	uint PointLightCount = lights.PointLightCount;
+	if (CPU_DRIVER)
+	{
+		const uint NotInlined = uint(textureSize(samplerposition, 0).x) + 128u;
+		DirLightCount = min(DirLightCount, NotInlined);
+		PointLightCount = min(PointLightCount, NotInlined);
+	}
 
 	// Ambient part
 	vec3 LightColor  = vec3(0.0, 0.0, 0.0);   

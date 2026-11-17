@@ -188,11 +188,7 @@ namespace Fling
         if (bOffscreen)
         {
             const VkExtent2D Extent = {std::max<uint32>(Width, 1), std::max<uint32>(Height, 1)};
-            m_SwapChain = new Swapchain(Extent,
-                                        m_LogicalDevice,
-                                        m_PhysicalDevice,
-                                        VkConfig::MAX_FRAMES_IN_FLIGHT,
-                                        m_SurfaceDesc.CopyableFrames);
+            m_SwapChain = new Swapchain(Extent, m_LogicalDevice, m_PhysicalDevice, VkConfig::MAX_FRAMES_IN_FLIGHT);
         }
         else
         {
@@ -200,10 +196,11 @@ namespace Fling
                                         m_LogicalDevice,
                                         m_PhysicalDevice,
                                         m_State->m_Surface,
-                                        m_VSync,
-                                        m_SurfaceDesc.CopyableFrames);
+                                        m_VSync);
         }
         assert(m_SwapChain);
+        // Holds nothing until the first Screenshot::Request: no thread and no buffer
+        m_Capturer = std::make_unique<FrameCapturer>();
 
         GraphicsHelpers::CreateCommandPool(&m_State->m_CommandPool, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
@@ -459,90 +456,18 @@ namespace Fling
         return m_SwapChain ? m_SwapChain->GetExtents().height : 0;
     }
 
-    void VulkanApp::PrepareScreenshots()
+    void VulkanApp::FinishScreenshots()
     {
-        // The common case, every frame: nobody asked
-        if (!Screenshot::HasPending() || m_SwapChain->CanCopyImages() || !m_SwapChain->IsCopySupported())
+        if (m_Capturer)
         {
-            return;
-        }
-        // Copyable images for this frame only; SaveScreenshots turns it off again after it
-        F_LOG_TRACE("Screenshot requested: making the frames copyable");
-        m_CopyableForRequest = true;
-        m_SwapChain->SetCopyable(true);
-        RecreateSwapchain();
-    }
-
-    void VulkanApp::SaveScreenshots()
-    {
-        // The common case, every frame: nobody asked, so no lock
-        if (!Screenshot::HasPending())
-        {
-            return;
-        }
-        // A request that came in during this frame, from another thread: the next frame makes
-        // the images copyable and serves it
-        if (!m_SwapChain->CanCopyImages() && m_SwapChain->IsCopySupported())
-        {
-            return;
-        }
-
-        std::vector<Screenshot::Pending> Requests = Screenshot::TakePending();
-        if (Requests.empty())
-        {
-            return;
-        }
-
-        // One copy of the frame for every request that is waiting
-        std::vector<uint8> Rgba;
-        String ReadError;
-        const VkExtent2D Extent = m_SwapChain->GetExtents();
-        bool bRead = false;
-        if (!m_SwapChain->CanCopyImages())
-        {
-            ReadError = "the swap chain images cannot be copied (no VK_IMAGE_USAGE_TRANSFER_SRC_BIT); use --offscreen";
-        }
-        else
-        {
-            bRead = FrameCapture::ReadImageRgba(*m_LogicalDevice,
-                                                m_SwapChain->GetActiveImage(),
-                                                m_SwapChain->GetImageFormat(),
-                                                Extent,
-                                                m_SwapChain->GetFinalLayout(),
-                                                Rgba,
-                                                ReadError);
-        }
-
-        for (Screenshot::Pending& Request : Requests)
-        {
-            ScreenshotResult Result;
-            Result.Path = Request.Path;
-            Result.Error = ReadError;
-            Result.Ok =
-                bRead && FrameCapture::WritePng(Request.Path, Extent.width, Extent.height, Rgba.data(), Result.Error);
-            if (Result.Ok)
-            {
-                Result.Width = Extent.width;
-                Result.Height = Extent.height;
-            }
-            Screenshot::Finish(Request, Result);
-        }
-
-        // Copyable for a request only: back to the cheaper images after this frame's present,
-        // unless another request is waiting
-        if (m_CopyableForRequest && !Screenshot::HasPending())
-        {
-            m_CopyableForRequest = false;
-            m_SwapChain->SetCopyable(false);
-            bSwapchainOutOfDate = true;
+            m_Capturer->Flush();
         }
     }
 
     void VulkanApp::RecreateSwapchain()
     {
         F_LOG_TRACE("Making the swap chain again");
-        // Offscreen images keep their size (there is no window); they are made again only to
-        // change whether they can be copied (Screenshot::Request)
+        // Offscreen images keep their size (there is no window)
         if (m_CurrentWindow != nullptr && !m_CurrentWindow->WaitForNewWindowSize())
         {
             // The window was closed while minimized. ShouldTick sees the close next.
@@ -719,8 +644,11 @@ namespace Fling
             m_Camera->SetLookRotation(View->Yaw, View->Pitch);
         }
 
-        // A screenshot was asked for: copyable images for this frame (nothing when none was)
-        PrepareScreenshots();
+        // The screenshots that the writer thread finished: their callbacks (one atomic load when none)
+        m_Capturer->DeliverResults();
+
+        // Offscreen there is no present engine: no semaphores between the acquire, the frame and the present
+        const bool bPresentSync = !m_SwapChain->IsOffscreen();
 
         // Aquire the active image index
         VkResult iResult = m_SwapChain->AquireNextImage(m_State->m_PresentCompleteSemaphores[CurrentFrameIndex]);
@@ -792,6 +720,10 @@ namespace Fling
 
             CmdBuf->EndRenderPass();
 
+            // A screenshot waits: the GPU copies this frame out in the same command buffer
+            // (nothing is recorded when none waits)
+            m_Capturer->RecordCopy(CmdBuf->GetHandle(), *m_SwapChain, ImageIndex);
+
             // End command buffer recording
             CmdBuf->End();
         }
@@ -822,7 +754,7 @@ namespace Fling
             OffscreenSubmission.pWaitDstStageMask = waitStages;
             // Wait on Present complete
             OffscreenSubmission.pWaitSemaphores = &m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
-            OffscreenSubmission.waitSemaphoreCount = 1;
+            OffscreenSubmission.waitSemaphoreCount = bPresentSync ? 1 : 0;
 
             // Signal that the dependent semaphores are done when this is complete
             OffscreenSubmission.pSignalSemaphores = SemaphoresToWaitOn.data();
@@ -849,7 +781,7 @@ namespace Fling
         else
         {
             // Track any semaphores that we may need to wait on for the render pipeline
-            FinalScreenSubmitInfo.waitSemaphoreCount = 1;
+            FinalScreenSubmitInfo.waitSemaphoreCount = bPresentSync ? 1 : 0;
             FinalScreenSubmitInfo.pWaitSemaphores = &m_State->m_PresentCompleteSemaphores[CurrentFrameIndex];
         }
 
@@ -864,7 +796,7 @@ namespace Fling
         FinalScreenSubmitInfo.commandBufferCount = (uint32)submitCommandBuffers.size();
 
         // Actually present the swap chain queue. This is always going to be the signal for the final semaphore
-        FinalScreenSubmitInfo.signalSemaphoreCount = 1;
+        FinalScreenSubmitInfo.signalSemaphoreCount = bPresentSync ? 1 : 0;
         FinalScreenSubmitInfo.pSignalSemaphores = &m_State->m_RenderFinishedSemaphores[ImageIndex];
 
         VK_CHECK_RESULT(vkQueueSubmit(m_LogicalDevice->GetGraphicsQueue(),
@@ -879,8 +811,8 @@ namespace Fling
                         VK_TRUE,
                         std::numeric_limits<uint64>::max());
 
-        // The frame is drawn: copy it out before it is presented (Screenshot::Request)
-        SaveScreenshots();
+        // The frame is drawn, and so is a screenshot's copy: the writer thread takes it from here
+        m_Capturer->OnFrameDone();
 
         // Present the swap chain with the renderer finished semaphore
         iResult = m_SwapChain->QueuePresent(m_LogicalDevice->GetPresentQueue(),
@@ -932,6 +864,13 @@ namespace Fling
         // Camera cleanup ------------
         delete m_Camera;
         m_Camera = nullptr;
+
+        // Screenshots: the writes that are queued finish, and the staging buffers go before the device
+        if (m_Capturer)
+        {
+            m_Capturer->Release();
+            m_Capturer.reset();
+        }
 
         // Destroy swap chain (created in Prepare) -----------
         delete m_SwapChain;

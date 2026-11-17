@@ -36,9 +36,10 @@ namespace Fling
      * works with a window (the image then has the editor UI in it) and with --offscreen.
      * Under --null-render there is no renderer, so each request fails at the next frame.
      *
-     * It costs nothing when nobody asks: a frame with no request does one atomic load. The
-     * frames are made copyable only while a capture needs it (--screenshot at launch, or
-     * the one frame a request is for), so normal frames keep every GPU optimization.
+     * It costs nothing when nobody asks: a frame with no request does one atomic load. A
+     * request does not stall the frame either: the GPU copies the frame in its own command
+     * buffer, and a writer thread encodes and writes the PNG. The callback arrives a few
+     * frames later.
      *
      * A frame shows the simulation state that the frame side has, not a tick on the game
      * thread. To save the frame of a given tick, use --screenshot-ticks, which calls this

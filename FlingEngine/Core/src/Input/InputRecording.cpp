@@ -1,3 +1,4 @@
+#include "FlingPaths.h"
 #include "Input/InputRecording.h"
 #include "Strings/String.h"
 
@@ -1098,32 +1099,7 @@ namespace Fling
 
     bool SaveInputRecording(const StringView t_Path, const InputRecording& t_Recording, String& t_OutError)
     {
-        namespace fs = std::filesystem;
-        std::error_code Code;
-        const fs::path Path = PathFromUtf8(t_Path);
-        if (Path.has_parent_path())
-        {
-            fs::create_directories(Path.parent_path(), Code);
-            if (Code)
-            {
-                t_OutError = "cannot make folder '" + Path.parent_path().string() + "': " + Code.message();
-                return false;
-            }
-        }
-        std::ofstream File(Path, std::ios::binary | std::ios::trunc);
-        if (!File)
-        {
-            t_OutError = "cannot write '" + String(t_Path) + "'";
-            return false;
-        }
-        File << WriteInputRecording(t_Recording);
-        File.flush();
-        if (!File)
-        {
-            t_OutError = "error while writing '" + String(t_Path) + "'";
-            return false;
-        }
-        return true;
+        return FlingPaths::SaveFile(t_Path, WriteInputRecording(t_Recording), t_OutError);
     }
 
     String DescribeRecordedMessage(double t_TimeSeconds, StringView t_DeviceName, const InputMessage& t_Message)

@@ -367,9 +367,6 @@ namespace Fling
             Surface.Offscreen = m_Options.Offscreen;
             Surface.Width = m_Options.ResolutionWidth;
             Surface.Height = m_Options.ResolutionHeight;
-            // A run that will take screenshots keeps its frames copyable; any other run makes them
-            // copyable only for a frame that a Screenshot::Request needs
-            Surface.CopyableFrames = !m_Options.Screenshot.empty();
             VulkanApp::Get().SetRenderSurface(Surface);
 
             uint32 Pipelines = PipelineFlags::DEFERRED | PipelineFlags::CUBEMAP;
@@ -637,6 +634,12 @@ namespace Fling
                     m_World->GetTickCount(),
                     AverageFrameMs,
                     AverageFrameMs > 0.0 ? 1000.0 / AverageFrameMs : 0.0);
+        // The screenshots that frames copied are written on a thread: wait for them, so the checks
+        // below see every result
+        if (!m_Options.NullRender)
+        {
+            VulkanApp::Get().FinishScreenshots();
+        }
         // A request that no frame served (the loop ended first) fails, so its caller hears back
         Screenshot::FailPending("the run ended before the next frame was drawn");
 
@@ -828,17 +831,10 @@ namespace Fling
             std::erase(m_PendingStateDumps, Dump.Tick);
             const String Path =
                 FlingPaths::ResolveProjectPath(CaptureFilePath(m_Options.DumpState, Dump.Tick, bManyTicks));
-            std::error_code DirError;
-            const std::filesystem::path FsPath = PathFromUtf8(Path);
-            if (FsPath.has_parent_path())
+            String WriteError;
+            if (!FlingPaths::SaveFile(Path, Dump.Doc.Dump(2) + '\n', WriteError))
             {
-                std::filesystem::create_directories(FsPath.parent_path(), DirError);
-            }
-            std::ofstream File(FsPath, std::ios::binary | std::ios::trunc);
-            File << Dump.Doc.Dump(2) << '\n';
-            if (!File)
-            {
-                F_LOG_ERROR("--dump-state: cannot write {}", Path);
+                F_LOG_ERROR("--dump-state: {}", WriteError);
                 ++m_StateDumpsFailed;
                 continue;
             }

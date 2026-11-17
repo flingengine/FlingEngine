@@ -4,6 +4,7 @@
 #include "Shader.h"
 #include "Vertex.h"
 
+#include <utility>
 #include <vector>
 
 namespace Fling
@@ -32,6 +33,23 @@ namespace Fling
         void CreateGraphicsPipeline(VkRenderPass& t_RenderPass, Multisampler* t_Sampler);
 
         const std::vector<Shader*> GetShaders() const { return m_Shaders; }
+
+        /**
+         * Set a 32-bit specialization constant of the fragment shader (layout(constant_id =
+         * t_Id)), for example a bool as 0 or 1. Used by the next CreateGraphicsPipeline.
+         */
+        void SetFragmentConstant(uint32 t_Id, uint32 t_Value)
+        {
+            for (std::pair<uint32, uint32>& Constant : m_FragmentConstants)
+            {
+                if (Constant.first == t_Id)
+                {
+                    Constant.second = t_Value;
+                    return;
+                }
+            }
+            m_FragmentConstants.emplace_back(t_Id, t_Value);
+        }
 
         Depth GetDepth() const { return m_Depth; }
         VkPrimitiveTopology GetTopology() const { return m_Topology; }
@@ -74,6 +92,9 @@ namespace Fling
          * given reads unbound memory: software drivers such as llvmpipe crash on it.
          */
         bool m_HasVertexInput = true;
+
+        /** @see SetFragmentConstant: (constant id, value). */
+        std::vector<std::pair<uint32, uint32>> m_FragmentConstants;
         VkPipelineInputAssemblyStateCreateInfo m_InputAssemblyState = {};
         VkPipelineRasterizationStateCreateInfo m_RasterizationState = {};
         std::vector<VkPipelineColorBlendAttachmentState> m_ColorBlendAttachmentStates;
