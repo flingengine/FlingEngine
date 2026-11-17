@@ -15,6 +15,7 @@
 #include "Misc/CrashHandler.h"
 #include "Physics.h"
 #include "PresentMode.h"
+#include "Profiler.h"
 #include "Random.h"
 #include "RegisterGraphics.h"
 #include "Screenshot.h"
@@ -582,6 +583,7 @@ namespace Fling
         // sends the messages of a tick over its N frames
         const float NullRenderDeltaTime = 1.0f / static_cast<float>(m_Settings.SimHz * m_Options.FramesPerTick);
 
+        Profiler::SetEnabled(m_Options.Profile);
         const std::chrono::steady_clock::time_point LoopStart = std::chrono::steady_clock::now();
         while (ShouldTick())
         {
@@ -591,13 +593,20 @@ namespace Fling
             // for its ticks, so a run is as fast as the CPU allows
             const float DeltaTime = m_Options.IsHeadless() ? NullRenderDeltaTime : Timing.GetDeltaTime();
             Stats::Frames::FrameStats(DeltaTime);
+            FLING_PROFILE_SCOPE("Frame");
 
-            PumpInput(DeltaTime);
-            m_Controls->OnFrame(PlatformTime::NowNanoseconds());
+            {
+                FLING_PROFILE_SCOPE("Frame.Input");
+                PumpInput(DeltaTime);
+                m_Controls->OnFrame(PlatformTime::NowNanoseconds());
+            }
 
             // The play requests, this frame's ticks (the game thread runs them itself in
             // threaded play), the ticks' outbox, then the frame systems on what the world shows
-            m_World->Update(DeltaTime);
+            {
+                FLING_PROFILE_SCOPE("Frame.WorldUpdate");
+                m_World->Update(DeltaTime);
+            }
             DumpNewTicks();
             WriteStateDumps();
 
@@ -705,6 +714,7 @@ namespace Fling
         // the swap chain again after this frame's present.
         VulkanApp::Get().SetVSync(m_Controls->VSync());
         VulkanApp::Get().SetFrustumCulling(m_Controls->FrustumCulling());
+        FLING_PROFILE_SCOPE("Frame.Present");
         VulkanApp::Get().Update(t_DeltaTime, m_World->GetPresentedStorage());
 
         // Offscreen there is no window: no focus, no monitor, and no frame cap (headless)
@@ -986,6 +996,13 @@ namespace Fling
         }
 
         PrintExitSummary(t_Code);
+        if (m_Options.Profile)
+        {
+            const double WallSeconds =
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - m_StartTime).count();
+            std::printf("%s", Profiler::Report(WallSeconds).c_str());
+            std::fflush(stdout);
+        }
 
         // Last, so that every system above can still log while it shuts down
         Logger::Get().Shutdown();

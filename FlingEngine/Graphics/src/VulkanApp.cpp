@@ -18,6 +18,7 @@
 #include "LogicalDevice.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
+#include "Profiler.h"
 #include "RenderPipeline.h"
 #include "RenderSnapshot.h"
 #include "Screenshot.h"
@@ -713,6 +714,7 @@ namespace Fling
             CmdBuf->SetScissor(0, {scissor});
 
             // Build the command buffers of the render pipelines
+            FLING_PROFILE_SCOPE("Vk.RecordPipelines");
             for (RenderPipeline* Pipeline : m_RenderPipelines)
             {
                 Pipeline->Draw(*CmdBuf, FrameBuf, ImageIndex, Snapshot, DeltaTime);
@@ -805,11 +807,15 @@ namespace Fling
                                       m_State->m_InFlightFences[CurrentFrameIndex]));
 
         // Finish up the frame by setting the in flight fences to wait -----
-        vkWaitForFences(m_LogicalDevice->GetVkDevice(),
-                        1,
-                        &m_State->m_InFlightFences[CurrentFrameIndex],
-                        VK_TRUE,
-                        std::numeric_limits<uint64>::max());
+        {
+            // The CPU waits here for the GPU: a long wait means the frame is GPU bound
+            FLING_PROFILE_SCOPE("Vk.WaitForGpu");
+            vkWaitForFences(m_LogicalDevice->GetVkDevice(),
+                            1,
+                            &m_State->m_InFlightFences[CurrentFrameIndex],
+                            VK_TRUE,
+                            std::numeric_limits<uint64>::max());
+        }
 
         // The frame is drawn, and so is a screenshot's copy: the writer thread takes it from here
         m_Capturer->OnFrameDone();
