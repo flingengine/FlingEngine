@@ -260,6 +260,13 @@ namespace Fling
             MaxFps = MonitorMaxFps(*MonitorHz);
             MaxFpsSource = SettingSource::Monitor;
         }
+        else if (VSync)
+        {
+            // The refresh rate is not known (Wayland), but VSync on makes the display pace the
+            // frames. A cap of 60 here would hold a faster monitor at 60.
+            MaxFps = 0;
+            MaxFpsSource = SettingSource::Default;
+        }
         else
         {
             MaxFps = FallbackMaxFps;
@@ -274,7 +281,9 @@ namespace Fling
         if (MaxFpsSource == SettingSource::Default)
         {
             CapSource =
-                Headless ? String("default for ") + HeadlessFlag : "default: the monitor refresh rate is not known";
+                Headless ? String("default for ") + HeadlessFlag :
+                       VSync ? String("default: the monitor refresh rate is not known, so the display paces the frames") :
+                               String("default: the monitor refresh rate is not known");
         }
         else if (MaxFpsSource == SettingSource::Monitor)
         {

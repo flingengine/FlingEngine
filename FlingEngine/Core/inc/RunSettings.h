@@ -189,7 +189,8 @@ namespace Fling
         /**
          * The default frame cap, when neither the command line nor the config file set one:
          * none for a headless run (so headless runs and tests stay as fast as before), else
-         * MonitorMaxFps(t_MonitorHz), else FallbackMaxFps when the refresh rate is missing or 0.
+         * MonitorMaxFps(t_MonitorHz), else none when the refresh rate is missing or 0 and VSync is on (the display
+         * paces the frames), else FallbackMaxFps.
          *
          * @param t_MonitorHz   The refresh rate of the window's monitor. Empty when it is not known
          */

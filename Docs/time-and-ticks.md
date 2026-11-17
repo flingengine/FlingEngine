@@ -155,7 +155,8 @@ refuses it".
 The main thread's frames are variable rate, with a cap (`FrameLimiter`,
 `Core/inc/Threading/FrameLimiter.h`): `--max-fps N`, else `[Engine] MaxFps`,
 else the refresh rate of the monitor the window is on (the GLFW video mode),
-else 60 when that is 0 or not known. 0 means no cap. A cap that came from the
+else, when that is 0 or not known (Wayland), no cap with VSync on (the display paces
+the frames) and 60 with VSync off. 0 means no cap. A cap that came from the
 monitor follows the window to another monitor: the engine reads the refresh
 rate again once a second (`RunControls::SetMonitorHz`). GLFW gives the refresh
 rate as a whole number, so a 59.94 Hz display reports 59. A `--null-render`
