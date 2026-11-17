@@ -81,6 +81,7 @@ namespace Fling
      *   --occlusion-culling on|off
      *                       Skip the meshes that other meshes hide (on) or draw every mesh
      *                       (off). Overrides [Engine] OcclusionCulling
+     *   --profile           Time the FLING_PROFILE_SCOPE scopes and print a table of them at exit
      *   --thread-jitter S:U --exec threaded only: sleep a random 0..U microseconds (seed S) before each wake
      *                       and after each publish on the game thread, and before each frame
      */
@@ -111,6 +112,9 @@ namespace Fling
         bool IsHeadless() const { return NullRender || Offscreen; }
 
         bool Unattended = false;
+
+        /** Time the profiled scopes and print the table at exit (--profile). See Profiler.h. */
+        bool Profile = false;
 
         /** Number of frames to run before the engine exits (--frames). 0 means no limit. */
         uint32 Frames = 0;

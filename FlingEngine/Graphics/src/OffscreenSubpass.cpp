@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
+#include "Profiler.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 
@@ -110,6 +111,7 @@ namespace Fling
         assert(OffscreenCmdBuf);
 
         // The previous frame is done on the GPU, so the resources of destroyed meshes can go
+        FLING_PROFILE_SCOPE("Offscreen.Draw");
         ReleaseRetiredMeshResources();
 
         const bool bOcclusion = OcclusionActive();
@@ -127,7 +129,10 @@ namespace Fling
         }
 
         // The meshes in this frame's snapshot: new ones get a proxy, gone ones release theirs
-        SyncProxies(t_Snapshot);
+        {
+            FLING_PROFILE_SCOPE("Offscreen.SyncProxies");
+            SyncProxies(t_Snapshot);
+        }
 
         // The camera moves on most frames, but it is only one small write
         OffscreenCameraUBO CameraUBO = {};
@@ -139,11 +144,18 @@ namespace Fling
 
         // The view volume of exactly the matrices the shader uses this frame
         m_CameraViewProjection = CameraUBO.Projection * CameraUBO.View;
-        CullMeshes(t_Snapshot);
+        {
+            FLING_PROFILE_SCOPE("Offscreen.Cull");
+            CullMeshes(t_Snapshot);
+        }
 
-        UpdateMeshUniformBuffers(t_Snapshot);
+        {
+            FLING_PROFILE_SCOPE("Offscreen.UpdateUbos");
+            UpdateMeshUniformBuffers(t_Snapshot);
+        }
         if (bOcclusion)
         {
+            FLING_PROFILE_SCOPE("Offscreen.OcclusionSlots");
             // The GPU writes the draw commands, from the slot data and this frame's camera
             if (m_Occlusion->EnsureCapacity(m_DrawCommandCapacity, m_DrawCommands))
             {
@@ -154,6 +166,7 @@ namespace Fling
         }
         else
         {
+            FLING_PROFILE_SCOPE("Offscreen.WriteDrawCommands");
             WriteDrawCommands();
         }
 
@@ -161,6 +174,7 @@ namespace Fling
         // UBO data. Keep the last recording if the draw list did not change.
         if (m_RecordedDrawListVersions[t_ActiveSwapImage] != m_DrawListVersion)
         {
+            FLING_PROFILE_SCOPE("Offscreen.RecordCommands");
             BuildOffscreenCommandBuffer(*OffscreenCmdBuf);
             m_RecordedDrawListVersions[t_ActiveSwapImage] = m_DrawListVersion;
         }
