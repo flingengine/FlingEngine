@@ -34,8 +34,8 @@ namespace Fling
 
     /**
      * The live values of the run settings that change while the game runs: the ones a person
-     * sets in the editor's GPU Options window (VSync, the frame cap, the simulation rate and
-     * render interpolation), and the ones the window system reports (the monitor's refresh
+     * sets in the editor's GPU Options window (VSync, the frame cap, the simulation rate,
+     * render interpolation and frustum culling), and the ones the window system reports (the monitor's refresh
      * rate, and whether the window is in the background). They start from the RunSettings
      * that the engine resolved at startup, which do not change. Each setter checks its
      * request, so the window only draws and calls them.
@@ -44,6 +44,7 @@ namespace Fling
      *   on the resize path, after the next present.
      * - MaxFps: Engine::Present puts LimiterFps into the FrameLimiter, on the next frame.
      * - Interpolation: World::SetInterpolation, which holds it, on the next frame.
+     * - FrustumCulling: Engine::Present gives it to VulkanApp::SetFrustumCulling, on the next frame.
      * - SimHz: World::RequestSimHz, a SetRate clock command applied between two ticks, at the
      *   next wake. The world holds the rate.
      *
@@ -78,6 +79,10 @@ namespace Fling
         /** Render interpolation, as the world has it (World::GetInterpolation). */
         bool Interpolation() const;
         void SetInterpolation(bool t_On);
+
+        /** Frustum culling in the renderer (RunSettings::FrustumCulling). */
+        bool FrustumCulling() const { return m_FrustumCulling; }
+        void SetFrustumCulling(bool t_On);
 
         /**
          * Ask for a new simulation rate (World::RequestSimHz, applied at the next tick
@@ -134,6 +139,7 @@ namespace Fling
         uint32 m_InputTickRate = 0;
 
         bool m_VSync = true;
+        bool m_FrustumCulling = true;
         uint32 m_MaxFps = 0;
 
         /** True while the cap is the monitor's refresh rate and no one has set it. */

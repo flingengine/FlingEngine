@@ -32,7 +32,10 @@ namespace Fling
     {
         if (m_EnableValidationLayers && !CheckValidationLayerSupport())
         {
-            F_LOG_WARN("Validation layers are requested, but not available!");
+            // Asking for a layer that is not installed makes vkCreateInstance fail, so run without it
+            F_LOG_WARN("Validation layers are requested, but not available! Install the Vulkan SDK (or the "
+                       "Khronos validation layer package). Running without validation.");
+            m_EnableValidationLayers = false;
         }
 
         // Basic app data that we can modify

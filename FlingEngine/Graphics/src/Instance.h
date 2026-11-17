@@ -104,8 +104,12 @@ namespace Fling
         void SetupDebugMessages();
 #endif
 
-        /** The validation layers that we want to look for on this instance */
-        const std::vector<const char*> m_ValidationLayers = {"VK_LAYER_LUNARG_standard_validation"};
+        /**
+         * The validation layers that we want to look for on this instance. VK_LAYER_KHRONOS_validation
+         * is the one validation layer of every Vulkan SDK since 1.1.106 (2019); it replaced
+         * VK_LAYER_LUNARG_standard_validation, which current SDKs do not have.
+         */
+        const std::vector<const char*> m_ValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 
         /** The device extensions to enable: VK_KHR_swapchain with a surface, none offscreen */
         std::vector<const char*> m_DeviceExtensions;

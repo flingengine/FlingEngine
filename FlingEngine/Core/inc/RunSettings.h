@@ -44,12 +44,14 @@ namespace Fling
         static constexpr const char* MaxFpsKey = "MaxFps";
         static constexpr const char* VSyncKey = "VSync";
         static constexpr const char* InterpolationKey = "Interpolation";
+        static constexpr const char* FrustumCullingKey = "FrustumCulling";
 
         String Exec;
         String SimHz;
         String MaxFps;
         String VSync;
         String Interpolation;
+        String FrustumCulling;
 
         /**
          * Each key's text from t_GetKey, which returns the text of one [Engine] key, or empty
@@ -62,7 +64,8 @@ namespace Fling
                                      .SimHz = t_GetKey(SimHzKey),
                                      .MaxFps = t_GetKey(MaxFpsKey),
                                      .VSync = t_GetKey(VSyncKey),
-                                     .Interpolation = t_GetKey(InterpolationKey)};
+                                     .Interpolation = t_GetKey(InterpolationKey),
+                                     .FrustumCulling = t_GetKey(FrustumCullingKey)};
         }
     };
 
@@ -79,9 +82,10 @@ namespace Fling
      * | MaxFps | [Engine] MaxFps | --max-fps | monitor refresh, else 60; none headless. 0: no cap |
      * | VSync | [Engine] VSync | --vsync | on |
      * | Interpolation | [Engine] Interpolation | --interpolation | on |
+     * | FrustumCulling | [Engine] FrustumCulling | --frustum-culling | on |
      *
      * The values here do not change after startup. The GPU Options window changes VSync, the
-     * frame cap, the simulation rate and interpolation while the game runs; RunControls holds
+     * frame cap, the simulation rate, interpolation and frustum culling while the game runs; RunControls holds
      * those live values, starting from these. Edit mode in the editor always runs on one
      * thread, whatever Exec says.
      */
@@ -116,6 +120,13 @@ namespace Fling
         /** The renderer draws between the latest two published ticks; off: the latest tick only. */
         bool Interpolation = true;
         SettingSource InterpolationSource = SettingSource::Default;
+
+        /**
+         * The renderer does not draw a mesh whose bounds are outside the camera's view this
+         * frame (MeshCuller in Graphics). Presentation only: the simulation never reads it.
+         */
+        bool FrustumCulling = true;
+        SettingSource FrustumCullingSource = SettingSource::Default;
 
         /** The refresh rate of the window's monitor at startup (ResolveFrameCap). Empty when not known, and headless.
          */
@@ -164,7 +175,7 @@ namespace Fling
         /**
          * One line for the startup log with each value and where it came from, for example
          * "tick rate 30 Hz (default), exec threaded (default), frame cap 144 fps (the monitor's refresh rate),
-         * vsync on (default), interpolation on (default)".
+         * vsync on (default), interpolation on (default), frustum culling on (default)".
          */
         CORE_API String Describe() const;
     };

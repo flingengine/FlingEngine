@@ -704,6 +704,7 @@ namespace Fling
         // During Inline or Threaded play the renderer reads the mirror. A VSync change makes
         // the swap chain again after this frame's present.
         VulkanApp::Get().SetVSync(m_Controls->VSync());
+        VulkanApp::Get().SetFrustumCulling(m_Controls->FrustumCulling());
         VulkanApp::Get().Update(t_DeltaTime, m_World->GetPresentedStorage());
 
         // Offscreen there is no window: no focus, no monitor, and no frame cap (headless)

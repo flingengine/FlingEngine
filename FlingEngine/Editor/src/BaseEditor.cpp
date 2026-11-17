@@ -449,6 +449,15 @@ namespace Fling
             Controls.SetInterpolation(bInterpolation);
         }
 
+        bool bFrustumCulling = Controls.FrustumCulling();
+        if (ImGui::Checkbox("Frustum culling", &bFrustumCulling))
+        {
+            m_ControlsError.clear();
+            Controls.SetFrustumCulling(bFrustumCulling);
+        }
+        const CullStats Culled = VulkanApp::Get().GetCullStats();
+        ImGui::TextDisabled("Last frame: %u meshes drawn, %u outside the view", Culled.Drawn, Culled.Culled);
+
         if (!m_ControlsError.empty())
         {
             ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", m_ControlsError.c_str());

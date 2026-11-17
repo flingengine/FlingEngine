@@ -35,7 +35,11 @@ namespace Fling
                          PhysicalDevice* t_PhysDev,
                          VkSurfaceKHR t_Surface,
                          const bool t_VSync)
-        : m_VSync(t_VSync), m_Extents{t_Extent}, m_Device(t_Dev), m_PhysicalDevice(t_PhysDev), m_Surface(t_Surface)
+        : m_VSync(t_VSync),
+          m_Extents{t_Extent},
+          m_Device(t_Dev),
+          m_PhysicalDevice(t_PhysDev),
+          m_Surface(t_Surface)
     {
         assert(m_Device && m_PhysicalDevice && m_Surface);
         Recreate(m_Extents);

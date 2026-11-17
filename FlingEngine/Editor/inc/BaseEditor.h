@@ -86,7 +86,8 @@ namespace Fling
 
         /**
          * The GPU Options window: the device, VSync (with the present mode in use), the frame
-         * cap, the simulation rate and render interpolation, with what the frame limiter does
+         * cap, the simulation rate, render interpolation and frustum culling (with the meshes
+         * drawn and culled), with what the frame limiter does
          * and the measured rates, and a button that saves the next frame as a PNG
          * (Screenshot::Request). Each control
          * calls RunControls, which checks the request; a number box applies when its edit is

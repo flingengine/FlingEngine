@@ -31,6 +31,7 @@ namespace Fling
         : m_World(t_World),
           m_InputTickRate(t_Startup.SimHz),
           m_VSync(t_Startup.VSync),
+          m_FrustumCulling(t_Startup.FrustumCulling),
           m_MaxFps(t_Startup.MaxFps),
           m_MaxFpsFollowsMonitor(t_Startup.MaxFpsSource == SettingSource::Monitor),
           m_MonitorHz(t_Startup.MonitorHz)
@@ -43,6 +44,15 @@ namespace Fling
         {
             m_VSync = t_On;
             F_LOG_TRACE("VSync {}", t_On ? "on" : "off");
+        }
+    }
+
+    void RunControls::SetFrustumCulling(const bool t_On)
+    {
+        if (t_On != m_FrustumCulling)
+        {
+            m_FrustumCulling = t_On;
+            F_LOG_TRACE("Frustum culling {}", t_On ? "on" : "off");
         }
     }
 

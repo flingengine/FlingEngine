@@ -768,6 +768,7 @@ flag or key. The startup line `Run settings: ...` names each value and its sourc
 | Frame cap | `--max-fps N` (0: none, max 1000) | `MaxFps` | monitor refresh rate, else 60 (`FallbackMaxFps`); none with `--null-render` | GPU Options |
 | VSync | `--vsync on\|off` | `VSync` | on | GPU Options (swap chain rebuilt) |
 | Interpolation | `--interpolation on\|off` | `Interpolation` | on | GPU Options |
+| Frustum culling | `--frustum-culling on\|off` | `FrustumCulling` | on | GPU Options |
 | Thread jitter (tests) | `--thread-jitter S:U` (threaded only; an error otherwise) | none | off | no |
 
 Other flags: `--null-render` (no window or GPU, virtual clock), `--offscreen` (render

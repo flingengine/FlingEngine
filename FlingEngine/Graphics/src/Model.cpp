@@ -92,6 +92,7 @@ namespace Fling
                                 static_cast<uint32>(m_Verts.size()),
                                 m_Indices.data(),
                                 static_cast<uint32>(m_Indices.size()));
+        CalculateLocalBounds();
         CreateBuffers();
     }
 
@@ -149,7 +150,17 @@ namespace Fling
                                 m_Indices.data(),
                                 static_cast<uint32>(m_Indices.size()));
 
+        CalculateLocalBounds();
         CreateBuffers();
+    }
+
+    void Model::CalculateLocalBounds()
+    {
+        m_LocalBounds = Aabb{};
+        for (const Vertex& Vert : m_Verts)
+        {
+            m_LocalBounds.Add(Vert.Pos);
+        }
     }
 
     void Model::CreateBuffers()

@@ -2,6 +2,7 @@
 
 #include "Ecs/EntityStorage.h"
 #include "FlingTypes.h"
+#include "MeshCuller.h"
 #include "PresentMode.h"
 #include "Singleton.hpp"
 #include "Strings/String.h"
@@ -51,6 +52,7 @@ namespace Fling
     class FirstPersonCamera;
     class DepthBuffer;
     class IDebugUI;
+    class OffscreenSubpass;
     class FrameCapturer;
 
     /**
@@ -126,6 +128,16 @@ namespace Fling
         /** The present mode of the swap chain. */
         PresentMode GetPresentMode() const;
 
+        /**
+         * Frustum culling on or off (RunSettings::FrustumCulling) for the next frame. On: the
+         * meshes outside the camera's view are not drawn (MeshCuller). The mesh pass holds the
+         * value, so it does nothing before Init; Engine::Present calls it before every frame.
+         */
+        void SetFrustumCulling(bool t_On);
+
+        /** The meshes the last frame drew and culled. Zero before the first frame and under --null-render. */
+        CullStats GetCullStats() const;
+
         /** What to draw to: a window or offscreen images, and the size. Call it before Init. */
         void SetRenderSurface(const RenderSurfaceDesc& t_Desc) { m_SurfaceDesc = t_Desc; }
 
@@ -198,6 +210,9 @@ namespace Fling
 
         /** @see SetVSync */
         bool m_VSync = true;
+
+        /** The pass that draws the meshes, which culls them. Owned by m_RenderPipelines. */
+        OffscreenSubpass* m_MeshPass = nullptr;
 
         /** Keep a vector of command buffers that we want to use so that we can have one for each active frame */
         std::vector<CommandBuffer*> m_DrawCmdBuffers;
