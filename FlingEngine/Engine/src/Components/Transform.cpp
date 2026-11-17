@@ -5,9 +5,15 @@ namespace Fling::TransformUtil
 {
     glm::mat4 LocalMatrix(const Transform& t_Transform)
     {
-        glm::mat4 Result = glm::translate(glm::mat4(1.0f), t_Transform.Position);
-        Result = Result * glm::mat4_cast(t_Transform.Rotation);
-        return glm::scale(Result, t_Transform.Scale);
+        // Translate * rotate * scale, written out: the same values as the three glm calls
+        // (no matrix products), and the draw loop makes one of these for each moving mesh each frame
+        const glm::mat3 Rotation = glm::mat3_cast(t_Transform.Rotation);
+        glm::mat4 Result;
+        Result[0] = glm::vec4(Rotation[0] * t_Transform.Scale.x, 0.0f);
+        Result[1] = glm::vec4(Rotation[1] * t_Transform.Scale.y, 0.0f);
+        Result[2] = glm::vec4(Rotation[2] * t_Transform.Scale.z, 0.0f);
+        Result[3] = glm::vec4(t_Transform.Position, 1.0f);
+        return Result;
     }
 
     glm::quat FromEulerDegrees(const glm::vec3& t_Degrees)

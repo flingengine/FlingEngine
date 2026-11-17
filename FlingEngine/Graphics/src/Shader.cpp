@@ -16,6 +16,8 @@ namespace Fling
         uint32 storageClass{};
         uint32 binding{};
         uint32 set{};
+        /** A struct that a buffer block (std430 "buffer") is made of: a storage buffer, not a uniform buffer */
+        bool bufferBlock{};
     };
 
     std::shared_ptr<Fling::Shader> Shader::Create(const AssetPath& t_Path, LogicalDevice* t_Dev)
@@ -159,6 +161,9 @@ namespace Fling
                     assert(wordCount == 4);
                     ids[id].binding = insn[3];
                     break;
+                case SpvDecorationBufferBlock:
+                    ids[id].bufferBlock = true;
+                    break;
                 }
             }
             break;
@@ -226,8 +231,12 @@ namespace Fling
                 switch (typeKind)
                 {
                 case SpvOpTypeStruct:
-                    // m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    m_ResourceTypes[id.binding] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    // A "buffer" block is a storage buffer: SPIR-V 1.0 marks the struct BufferBlock, 1.3 and
+                    // later use the StorageBuffer storage class
+                    m_ResourceTypes[id.binding] = (id.storageClass == SpvStorageClassStorageBuffer ||
+                                                   ids[id.typeId].bufferBlock || ids[ids[id.typeId].typeId].bufferBlock)
+                                                      ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+                                                      : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
                     m_ResourceMask |= 1 << id.binding;
                     break;

@@ -23,7 +23,7 @@ namespace Sandbox
         for (size_t i = 0; i < snapshot.Meshes.size(); ++i)
         {
             const Fling::MeshDrawItem& item = snapshot.Meshes[i];
-            const glm::vec3 axis = glm::normalize(glm::vec3(item.World[0]));
+            const glm::vec3 axis = glm::normalize(glm::vec3(item.ResolveWorld(snapshot.BlendAlpha)[0]));
             if (same && probe.Keys[i] == item.Key)
             {
                 // The angle between the two axes, from the chord: precise for small angles

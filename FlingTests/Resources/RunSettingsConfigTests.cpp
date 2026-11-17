@@ -26,8 +26,8 @@ TEST_CASE("Run settings: the [Engine] keys of an ini file reach the run settings
     RunSettings Settings;
     String Error;
     REQUIRE(RunSettings::Resolve(LaunchOptions{}, Config, Settings, Error));
-    REQUIRE(Settings.Describe() ==
-            "tick rate 60 Hz (config), exec inline (config), frame cap 90 fps (config), vsync "
-            "off (config), interpolation off (config), frustum culling off (config), occlusion culling off (config)");
+    REQUIRE(Settings.Describe() == "tick rate 60 Hz (config), exec inline (config), frame cap 90 fps (config), vsync "
+                                   "off (config), interpolation off (config), frustum culling off (config), occlusion "
+                                   "culling off (config), gpu blend on (default)");
     std::filesystem::remove(Path);
 }

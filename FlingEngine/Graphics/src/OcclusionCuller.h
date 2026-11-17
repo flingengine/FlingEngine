@@ -3,6 +3,7 @@
 #include "FlingMath.h"
 #include "FlingTypes.h"
 #include "FlingVulkan.h"
+#include "Frustum.h"
 
 #include <memory>
 #include <vector>
@@ -16,24 +17,38 @@ namespace Fling
     /**
      * What the cull shader reads about one proxy slot, written by the CPU each frame. The std430
      * layout of Slot in Occlusion/cull.comp.
+     *
+     * The world matrix is not here: it is in the world matrix buffer (SetWorlds), which the
+     * G-buffer vertex shader reads too. For a slot with Blend, the shader makes it from From and To.
      */
     struct alignas(16) OcclusionSlot
     {
         enum Flags : uint32
         {
-            /** The slot passed the frustum test this frame */
+            /** The CPU found the slot in the view this frame */
             InView = 1u,
             /** BoundsMin and BoundsMax are known */
             HasBounds = 2u,
+            /** The slot moves between two ticks: the shader makes its world matrix from From, To and the blend factor
+             */
+            Blend = 4u,
+            /** The shader decides if the slot is in the view (the CPU has no matrix for it), and InView is not used */
+            TestFrustum = 8u,
         };
 
-        glm::mat4 World{1.0f};
         glm::vec4 BoundsMin{0.0f};
         glm::vec4 BoundsMax{0.0f};
         /** x: index count (0: nothing to draw), y: Flags */
         glm::uvec4 Info{0u};
+        /** The Transform at the two ticks: xyz position, a quaternion (x, y, z, w), xyz scale */
+        glm::vec4 FromPos{0.0f};
+        glm::vec4 FromRot{0.0f, 0.0f, 0.0f, 1.0f};
+        glm::vec4 FromScale{1.0f};
+        glm::vec4 ToPos{0.0f};
+        glm::vec4 ToRot{0.0f, 0.0f, 0.0f, 1.0f};
+        glm::vec4 ToScale{1.0f};
     };
-    static_assert(sizeof(OcclusionSlot) == 112);
+    static_assert(sizeof(OcclusionSlot) == 144);
 
     /**
      * Occlusion culling of the G-buffer pass on the GPU (a Hi-Z depth pyramid), in two phases.
@@ -90,8 +105,22 @@ namespace Fling
         /** The meshes the previous frame found hidden, read from the GPU's counter */
         uint32 ReadOccludedCount() const;
 
-        /** Write this frame's parameters: the camera matrix and the slot count */
-        void WriteParams(const glm::mat4& t_ViewProjection, uint32 t_SlotCount);
+        /** The slots with TestFrustum that the previous frame found outside the view */
+        uint32 ReadFrustumCulledCount() const;
+
+        /**
+         * Write this frame's parameters: the camera matrix, the view volume that the shader tests
+         * the slots with a TestFrustum flag against, the slot count and the blend factor.
+         */
+        void
+        WriteParams(const glm::mat4& t_ViewProjection, const Frustum& t_View, uint32 t_SlotCount, float t_BlendFactor);
+
+        /**
+         * The buffer of world matrices, one mat4 per slot, that the shader writes for the slots
+         * with Blend and reads for every test. Call it before EnsureCapacity, and again when the
+         * buffer is replaced.
+         */
+        void SetWorlds(Buffer* t_Worlds);
 
         /** Record phase 0 (before the first render pass) */
         void RecordFirstPhase(VkCommandBuffer t_Cmd) const;
@@ -136,6 +165,7 @@ namespace Fling
         Buffer* m_Visible = nullptr;
         Buffer* m_Stats = nullptr;
         Buffer* m_Draw1 = nullptr;
+        Buffer* m_Worlds = nullptr;
         size_t m_Capacity = 0;
         uint32 m_SlotCount = 0;
         std::vector<Buffer*> m_Retired;

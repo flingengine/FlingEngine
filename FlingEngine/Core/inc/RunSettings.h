@@ -46,6 +46,7 @@ namespace Fling
         static constexpr const char* InterpolationKey = "Interpolation";
         static constexpr const char* FrustumCullingKey = "FrustumCulling";
         static constexpr const char* OcclusionCullingKey = "OcclusionCulling";
+        static constexpr const char* GpuBlendKey = "GpuBlend";
 
         String Exec;
         String SimHz;
@@ -54,6 +55,7 @@ namespace Fling
         String Interpolation;
         String FrustumCulling;
         String OcclusionCulling;
+        String GpuBlend;
 
         /**
          * Each key's text from t_GetKey, which returns the text of one [Engine] key, or empty
@@ -68,7 +70,8 @@ namespace Fling
                                      .VSync = t_GetKey(VSyncKey),
                                      .Interpolation = t_GetKey(InterpolationKey),
                                      .FrustumCulling = t_GetKey(FrustumCullingKey),
-                                     .OcclusionCulling = t_GetKey(OcclusionCullingKey)};
+                                     .OcclusionCulling = t_GetKey(OcclusionCullingKey),
+                                     .GpuBlend = t_GetKey(GpuBlendKey)};
         }
     };
 
@@ -87,6 +90,7 @@ namespace Fling
      * | Interpolation | [Engine] Interpolation | --interpolation | on |
      * | FrustumCulling | [Engine] FrustumCulling | --frustum-culling | on |
      * | OcclusionCulling | [Engine] OcclusionCulling | --occlusion-culling | on |
+     * | GpuBlend | [Engine] GpuBlend | --gpu-blend | on |
      *
      * The values here do not change after startup. The GPU Options window changes VSync, the
      * frame cap, the simulation rate, interpolation, frustum culling and occlusion culling while the game runs;
@@ -138,6 +142,14 @@ namespace Fling
          */
         bool OcclusionCulling = true;
         SettingSource OcclusionCullingSource = SettingSource::Default;
+
+        /**
+         * The renderer makes the matrix of a mesh that moves between two ticks on the GPU, in the
+         * occlusion culling pass (Plans/gpu-blend.md). It needs OcclusionCulling: with that off, the CPU blends.
+         * Presentation only: the simulation never reads it.
+         */
+        bool GpuBlend = true;
+        SettingSource GpuBlendSource = SettingSource::Default;
 
         /** The refresh rate of the window's monitor at startup (ResolveFrameCap). Empty when not known, and headless.
          */

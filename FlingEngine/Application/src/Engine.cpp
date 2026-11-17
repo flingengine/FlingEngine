@@ -717,6 +717,7 @@ namespace Fling
         VulkanApp::Get().SetVSync(m_Controls->VSync());
         VulkanApp::Get().SetFrustumCulling(m_Controls->FrustumCulling());
         VulkanApp::Get().SetOcclusionCulling(m_Controls->OcclusionCulling());
+        VulkanApp::Get().SetGpuBlend(m_Controls->GpuBlend());
         FLING_PROFILE_SCOPE("Frame.Present");
         VulkanApp::Get().Update(t_DeltaTime, m_World->GetPresentedStorage());
 

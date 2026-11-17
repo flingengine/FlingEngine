@@ -41,6 +41,14 @@ texels), and a small bias (`Occlusion::DepthBias`). A box that reaches the camer
 hidden. Both phases write every slot's command, so the recorded draw calls do not change from frame
 to frame. A resize makes the pyramid again (`OffscreenSubpass::OnSwapchainResized`).
 
+## Blending on the GPU
+
+The same compute pass makes the world matrix of a mesh that moves between two ticks
+(`Plans/gpu-blend.md`). Its slot holds the two `Transform` values (`OcclusionSlot::From*`, `To*`)
+and the frame's blend factor is in the parameters. Phase 0 writes the matrix into the world matrix
+buffer, which the G-buffer vertex shader reads, and tests the mesh against the frustum, since the
+CPU has no matrix for it. `--gpu-blend off`, or occlusion culling off, makes the CPU do it.
+
 ## The CPU twin
 
 `Occlusion::ProjectBounds`, `Occlusion::IsOccluded` and `DepthPyramid` (`OcclusionTest.h`) do the

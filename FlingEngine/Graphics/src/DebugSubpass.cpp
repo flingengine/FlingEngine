@@ -55,7 +55,7 @@ namespace Fling
             }
             Fling::Model* Model = Mesh.MeshModel;
 
-            m_Ubo.Model = t_Snapshot.Meshes[i].World;
+            m_Ubo.Model = t_Snapshot.Meshes[i].ResolveWorld(t_Snapshot.BlendAlpha);
             memcpy(Mesh.Ubo->m_MappedMem, &m_Ubo, sizeof(m_Ubo));
 
             vkCmdBindDescriptorSets(t_CmdBuf.GetHandle(),

@@ -461,6 +461,12 @@ namespace Fling
             m_ControlsError.clear();
             Controls.SetOcclusionCulling(bOcclusionCulling);
         }
+        bool bGpuBlend = Controls.GpuBlend();
+        if (ImGui::Checkbox("GPU blend (needs occlusion culling)", &bGpuBlend))
+        {
+            m_ControlsError.clear();
+            Controls.SetGpuBlend(bGpuBlend);
+        }
         const CullStats Culled = VulkanApp::Get().GetCullStats();
         ImGui::TextDisabled("Last frame: %u meshes drawn, %u outside the view, %u occluded (hidden by other meshes)",
                             Culled.Drawn,

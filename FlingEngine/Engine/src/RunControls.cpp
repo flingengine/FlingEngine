@@ -33,6 +33,7 @@ namespace Fling
           m_VSync(t_Startup.VSync),
           m_FrustumCulling(t_Startup.FrustumCulling),
           m_OcclusionCulling(t_Startup.OcclusionCulling),
+          m_GpuBlend(t_Startup.GpuBlend),
           m_MaxFps(t_Startup.MaxFps),
           m_MaxFpsFollowsMonitor(t_Startup.MaxFpsSource == SettingSource::Monitor),
           m_MonitorHz(t_Startup.MonitorHz)
@@ -63,6 +64,15 @@ namespace Fling
         {
             m_OcclusionCulling = t_On;
             F_LOG_TRACE("Occlusion culling {}", t_On ? "on" : "off");
+        }
+    }
+
+    void RunControls::SetGpuBlend(const bool t_On)
+    {
+        if (t_On != m_GpuBlend)
+        {
+            m_GpuBlend = t_On;
+            F_LOG_TRACE("GPU blend {}", t_On ? "on" : "off");
         }
     }
 

@@ -27,6 +27,9 @@ namespace Fling
         {
             glm::mat4 ViewProjection{1.0f};
             glm::uvec4 Counts{0u};
+            /** x: the blend factor */
+            glm::vec4 Blend{0.0f};
+            glm::vec4 Planes[Frustum::Count] = {};
         };
 
         /** The push constant block of hiz_downsample.comp */
@@ -91,7 +94,7 @@ namespace Fling
             VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MaxLevels + 2},
             VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, MaxLevels},
             VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5}};
+            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6}};
         VkDescriptorPoolCreateInfo PoolInfo = {};
         PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -196,7 +199,8 @@ namespace Fling
                     Binding(3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER),
                     Binding(4, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER),
                     Binding(5, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER),
-                    Binding(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)},
+                    Binding(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER),
+                    Binding(7, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)},
                    sizeof(uint32),
                    m_CullSetLayout,
                    m_CullPipelineLayout);
@@ -394,19 +398,20 @@ namespace Fling
 
     void OcclusionCuller::WriteCullDescriptors() const
     {
-        if (m_Slots == nullptr || m_Draw1 == nullptr || m_PyramidAllLevels == VK_NULL_HANDLE)
+        if (m_Slots == nullptr || m_Draw1 == nullptr || m_Worlds == nullptr || m_PyramidAllLevels == VK_NULL_HANDLE)
         {
             return;
         }
-        const VkDescriptorBufferInfo Infos[6] = {{m_Params->GetVkBuffer(), 0, sizeof(CullParams)},
+        const VkDescriptorBufferInfo Infos[7] = {{m_Params->GetVkBuffer(), 0, sizeof(CullParams)},
                                                  {m_Slots->GetVkBuffer(), 0, VK_WHOLE_SIZE},
                                                  {m_Draw1->GetVkBuffer(), 0, VK_WHOLE_SIZE},
                                                  {m_Draw2->GetVkBuffer(), 0, VK_WHOLE_SIZE},
                                                  {m_Visible->GetVkBuffer(), 0, VK_WHOLE_SIZE},
-                                                 {m_Stats->GetVkBuffer(), 0, VK_WHOLE_SIZE}};
+                                                 {m_Stats->GetVkBuffer(), 0, VK_WHOLE_SIZE},
+                                                 {m_Worlds->GetVkBuffer(), 0, VK_WHOLE_SIZE}};
         const VkDescriptorImageInfo Pyramid = {m_Sampler, m_PyramidAllLevels, VK_IMAGE_LAYOUT_GENERAL};
 
-        std::array<VkWriteDescriptorSet, 7> Writes = {};
+        std::array<VkWriteDescriptorSet, 8> Writes = {};
         for (uint32 i = 0; i < 6; ++i)
         {
             Writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -422,6 +427,12 @@ namespace Fling
         Writes[6].descriptorCount = 1;
         Writes[6].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         Writes[6].pImageInfo = &Pyramid;
+        Writes[7].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        Writes[7].dstSet = m_CullSet;
+        Writes[7].dstBinding = 7;
+        Writes[7].descriptorCount = 1;
+        Writes[7].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        Writes[7].pBufferInfo = &Infos[6];
         vkUpdateDescriptorSets(m_Device->GetVkDevice(), static_cast<uint32>(Writes.size()), Writes.data(), 0, nullptr);
     }
 
@@ -435,12 +446,34 @@ namespace Fling
         return m_Stats != nullptr ? *static_cast<const uint32*>(m_Stats->m_MappedMem) : 0;
     }
 
-    void OcclusionCuller::WriteParams(const glm::mat4& t_ViewProjection, const uint32 t_SlotCount)
+    uint32 OcclusionCuller::ReadFrustumCulledCount() const
+    {
+        return m_Stats != nullptr ? static_cast<const uint32*>(m_Stats->m_MappedMem)[1] : 0;
+    }
+
+    void OcclusionCuller::SetWorlds(Buffer* t_Worlds)
+    {
+        if (m_Worlds != t_Worlds)
+        {
+            m_Worlds = t_Worlds;
+            WriteCullDescriptors();
+        }
+    }
+
+    void OcclusionCuller::WriteParams(const glm::mat4& t_ViewProjection,
+                                      const Frustum& t_View,
+                                      const uint32 t_SlotCount,
+                                      const float t_BlendFactor)
     {
         m_SlotCount = t_SlotCount;
         CullParams Params;
         Params.ViewProjection = t_ViewProjection;
         Params.Counts = glm::uvec4(t_SlotCount, 0u, 0u, 0u);
+        Params.Blend = glm::vec4(t_BlendFactor, 0.0f, 0.0f, 0.0f);
+        for (uint32 i = 0; i < Frustum::Count; ++i)
+        {
+            Params.Planes[i] = t_View.Planes[i];
+        }
         std::memcpy(m_Params->m_MappedMem, &Params, sizeof(Params));
     }
 
@@ -488,11 +521,13 @@ namespace Fling
 
         Dispatch(t_Cmd, 0);
 
-        // The first render pass reads the commands. Phase 1 reads the visible flags that this phase read.
+        // The first render pass reads the commands, and its vertex shader reads the world matrices that
+        // this phase made. Phase 1 reads the visible flags that this phase read, and the matrices.
         ComputeBarrier(t_Cmd,
                        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                        VK_ACCESS_SHADER_WRITE_BIT,
-                       VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                       VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+                           VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                        VK_ACCESS_INDIRECT_COMMAND_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
     }
 

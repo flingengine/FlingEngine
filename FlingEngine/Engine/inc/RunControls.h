@@ -46,6 +46,7 @@ namespace Fling
      * - Interpolation: World::SetInterpolation, which holds it, on the next frame.
      * - FrustumCulling: Engine::Present gives it to VulkanApp::SetFrustumCulling, on the next frame.
      * - OcclusionCulling: Engine::Present gives it to VulkanApp::SetOcclusionCulling, on the next frame.
+     * - GpuBlend: Engine::Present gives it to VulkanApp::SetGpuBlend, on the next frame.
      * - SimHz: World::RequestSimHz, a SetRate clock command applied between two ticks, at the
      *   next wake. The world holds the rate.
      *
@@ -88,6 +89,10 @@ namespace Fling
         /** Occlusion culling in the renderer (RunSettings::OcclusionCulling). */
         bool OcclusionCulling() const { return m_OcclusionCulling; }
         void SetOcclusionCulling(bool t_On);
+
+        /** Blend the meshes that move between two ticks on the GPU (RunSettings::GpuBlend). */
+        bool GpuBlend() const { return m_GpuBlend; }
+        void SetGpuBlend(bool t_On);
 
         /**
          * Ask for a new simulation rate (World::RequestSimHz, applied at the next tick
@@ -146,6 +151,7 @@ namespace Fling
         bool m_VSync = true;
         bool m_FrustumCulling = true;
         bool m_OcclusionCulling = true;
+        bool m_GpuBlend = true;
         uint32 m_MaxFps = 0;
 
         /** True while the cap is the monitor's refresh rate and no one has set it. */

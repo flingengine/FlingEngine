@@ -12,14 +12,22 @@
 #include "Model.h"
 #include "OffscreenSubpass.h"
 #include "PhyscialDevice.h"
+#include "PreCullView.h"
 #include "Profiler.h"
 #include "SwapChain.h"
 #include "UniformBufferObject.h"
 
 #include <algorithm>
+#include <cstring>
 
 namespace Fling
 {
+    namespace
+    {
+        /** The binding of the world matrix buffer in mrt.vert */
+        constexpr uint32 WorldBufferBinding = 6;
+    } // namespace
+
     OffscreenSubpass::OffscreenSubpass(const LogicalDevice* t_Dev,
                                        const Swapchain* t_Swap,
                                        FirstPersonCamera* t_Cam,
@@ -98,6 +106,9 @@ namespace Fling
 
         delete m_DrawCommands;
         m_DrawCommands = nullptr;
+
+        delete m_WorldBuffer;
+        m_WorldBuffer = nullptr;
     }
 
     void OffscreenSubpass::Draw(CommandBuffer& t_CmdBuf,
@@ -121,6 +132,10 @@ namespace Fling
         }
         // The GPU counted the hidden meshes of the previous frame
         m_OccludedCount = bOcclusion ? m_Occlusion->ReadOccludedCount() : 0;
+        m_GpuFrustumCulled = bOcclusion ? m_Occlusion->ReadFrustumCulledCount() : 0;
+        const bool bGpuBlend = GpuBlendActive();
+        // The culler leaves the meshes that the GPU blends to the GPU (it has no matrix for them)
+        m_Culler.SetDeferBlended(bGpuBlend);
         if (bOcclusion != m_RecordedOcclusion)
         {
             // The recordings hold either one pass or the two phase passes
@@ -145,6 +160,10 @@ namespace Fling
         // The view volume of exactly the matrices the shader uses this frame
         m_CameraViewProjection = CameraUBO.Projection * CameraUBO.View;
         {
+            FLING_PROFILE_SCOPE("Offscreen.ResolveWorlds");
+            ResolveWorlds(t_Snapshot);
+        }
+        {
             FLING_PROFILE_SCOPE("Offscreen.Cull");
             CullMeshes(t_Snapshot);
         }
@@ -155,13 +174,16 @@ namespace Fling
         }
         if (bOcclusion)
         {
+            FLING_PROFILE_SCOPE("Offscreen.OcclusionSlots");
             // The GPU writes the draw commands, from the slot data and this frame's camera
+            m_Occlusion->SetWorlds(m_WorldBuffer);
             if (m_Occlusion->EnsureCapacity(m_DrawCommandCapacity, m_DrawCommands))
             {
                 InvalidateCommandBuffers();
             }
             WriteOcclusionSlots(t_Snapshot);
-            m_Occlusion->WriteParams(m_CameraViewProjection, static_cast<uint32>(m_GpuMeshes.size()));
+            m_Occlusion->WriteParams(
+                m_CameraViewProjection, m_View, static_cast<uint32>(m_GpuMeshes.size()), t_Snapshot.BlendAlpha);
         }
         else
         {
@@ -184,6 +206,7 @@ namespace Fling
         MeshProxyTable::SyncResult Result = m_Proxies.Sync(t_Snapshot.Meshes);
         m_ItemSlots = std::move(Result.ItemSlots);
         m_GpuMeshes.resize(m_Proxies.Capacity());
+        EnsureWorldCapacity(m_Proxies.Capacity());
 
         // Removed first: a removed slot can be used again by an added mesh
         for (const uint32 Slot : Result.Removed)
@@ -213,6 +236,10 @@ namespace Fling
                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
                 Mesh.Ubo->MapMemory(BufferSize);
             }
+            // The slot never changes while the mesh lives: the vertex shader finds its matrix with it
+            OffscreenUBO MeshUBO = {};
+            MeshUBO.Slot = Slot;
+            std::memcpy(Mesh.Ubo->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
             CreateMeshDescriptorSet(Mesh);
             Mesh.UploadedVersion = 0;
             // The same test the recording uses, so the culler counts only what gets a draw call
@@ -250,17 +277,37 @@ namespace Fling
         t_Mesh = GpuMesh{};
     }
 
+    void OffscreenSubpass::ResolveWorlds(const RenderSnapshot& t_Snapshot)
+    {
+        // A mesh between two ticks has no matrix yet: make it from its two ends and this frame's factor
+        // (With the GPU blend, the cull shader makes it: this keeps no matrix for that mesh.)
+        const bool bGpuBlend = GpuBlendActive();
+        m_Worlds.resize(t_Snapshot.Meshes.size());
+        for (size_t i = 0; i < t_Snapshot.Meshes.size(); ++i)
+        {
+            const MeshDrawItem& Item = t_Snapshot.Meshes[i];
+            if (bGpuBlend && Item.HasBlend)
+            {
+                continue;
+            }
+            m_Worlds[i] = Item.ResolveWorld(t_Snapshot.BlendAlpha);
+        }
+    }
+
     void OffscreenSubpass::CullMeshes(const RenderSnapshot& t_Snapshot)
     {
         // A change of the visible set needs no new recording: WriteDrawCommands gives each
         // recorded indirect draw its instance count (0 or 1) for this frame
-        const Frustum View = Frustum::FromViewProjection(m_CameraViewProjection);
-        m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_FrustumCulling ? &View : nullptr);
+        const Frustum& View = m_View = Frustum::FromViewProjection(m_CameraViewProjection);
+        m_Culler.Cull(t_Snapshot.Meshes, m_ItemSlots, m_Worlds, m_FrustumCulling ? &View : nullptr);
+        // The next frame's Graphics.PublishSnapshot skips the blend of what is far outside this view
+        PreCullView::Set(m_FrustumCulling ? &View : nullptr);
     }
 
     void OffscreenSubpass::WriteOcclusionSlots(const RenderSnapshot& t_Snapshot)
     {
         OcclusionSlot* Slots = m_Occlusion->MappedSlots();
+        const bool bGpuBlend = GpuBlendActive();
         for (uint32 Slot = 0; Slot < m_GpuMeshes.size(); ++Slot)
         {
             const GpuMesh& Mesh = m_GpuMeshes[Slot];
@@ -275,12 +322,30 @@ namespace Fling
                 continue;
             }
             const Aabb& Bounds = Mesh.MeshModel->GetLocalBounds();
+            const MeshDrawItem& Item = t_Snapshot.Meshes[i];
             OcclusionSlot& Out = Slots[Slot];
-            Out.World = t_Snapshot.Meshes[i].World;
             Out.BoundsMin = glm::vec4(Bounds.Min, 0.0f);
             Out.BoundsMax = glm::vec4(Bounds.Max, 0.0f);
-            Out.Info.y = (m_Culler.IsVisible(Slot) ? OcclusionSlot::InView : 0u) |
-                         (Bounds.IsValid() ? OcclusionSlot::HasBounds : 0u);
+            uint32 Flags = Bounds.IsValid() ? OcclusionSlot::HasBounds : 0u;
+            if (bGpuBlend && Item.HasBlend)
+            {
+                // The shader makes the matrix from the two ends and the factor, and with frustum culling on it
+                // also finds out if the mesh is in the view (the CPU has no matrix for it)
+                Flags |= OcclusionSlot::Blend;
+                Flags |= m_FrustumCulling ? OcclusionSlot::TestFrustum : OcclusionSlot::InView;
+                Out.FromPos = glm::vec4(Item.From.Position, 0.0f);
+                Out.FromRot =
+                    glm::vec4(Item.From.Rotation.x, Item.From.Rotation.y, Item.From.Rotation.z, Item.From.Rotation.w);
+                Out.FromScale = glm::vec4(Item.From.Scale, 0.0f);
+                Out.ToPos = glm::vec4(Item.To.Position, 0.0f);
+                Out.ToRot = glm::vec4(Item.To.Rotation.x, Item.To.Rotation.y, Item.To.Rotation.z, Item.To.Rotation.w);
+                Out.ToScale = glm::vec4(Item.To.Scale, 0.0f);
+            }
+            else if (m_Culler.IsVisible(Slot))
+            {
+                Flags |= OcclusionSlot::InView;
+            }
+            Out.Info.y = Flags;
         }
     }
 
@@ -289,8 +354,10 @@ namespace Fling
         // The depth is the last attachment of the offscreen frame buffer
         FrameBufferAttachment* Depth = m_OffscreenFrameBuf->GetAttachmentAtIndex(5);
         assert(Depth);
-        m_Occlusion->SetDepth(
-            Depth->GetViewHandle(), m_OffscreenFrameBuf->GetWidth(), m_OffscreenFrameBuf->GetHeight(), Depth->GetFormat());
+        m_Occlusion->SetDepth(Depth->GetViewHandle(),
+                              m_OffscreenFrameBuf->GetWidth(),
+                              m_OffscreenFrameBuf->GetHeight(),
+                              Depth->GetFormat());
     }
 
     void OffscreenSubpass::EnsureDrawCommandCapacity()
@@ -340,6 +407,8 @@ namespace Fling
 
     void OffscreenSubpass::UpdateMeshUniformBuffers(const RenderSnapshot& t_Snapshot)
     {
+        glm::mat4* Worlds = static_cast<glm::mat4*>(m_WorldBuffer->m_MappedMem);
+        const bool bGpuBlend = GpuBlendActive();
         for (size_t i = 0; i < t_Snapshot.Meshes.size() && i < m_ItemSlots.size(); ++i)
         {
             const MeshDrawItem& Item = t_Snapshot.Meshes[i];
@@ -350,6 +419,11 @@ namespace Fling
             {
                 continue;
             }
+            // The cull shader makes the matrix of a mesh that moves between two ticks
+            if (bGpuBlend && Item.HasBlend)
+            {
+                continue;
+            }
 
             // Version 0 has no LocalToWorld yet, so its matrix can change on any frame
             if (Item.WorldVersion != 0 && Item.WorldVersion == Mesh.UploadedVersion)
@@ -357,11 +431,57 @@ namespace Fling
                 continue;
             }
 
-            OffscreenUBO MeshUBO = {};
-            MeshUBO.Model = Item.World;
-            MeshUBO.ObjPos = glm::vec3(Item.World[3]);
-            memcpy(Mesh.Ubo->m_MappedMem, &MeshUBO, sizeof(MeshUBO));
+            Worlds[Slot] = m_Worlds[i];
             Mesh.UploadedVersion = Item.WorldVersion;
+        }
+    }
+
+    void OffscreenSubpass::EnsureWorldCapacity(const size_t t_Slots)
+    {
+        if (m_WorldBuffer != nullptr && m_WorldCapacity >= t_Slots)
+        {
+            return;
+        }
+        size_t Capacity = std::max<size_t>(m_WorldCapacity, 64);
+        while (Capacity < t_Slots)
+        {
+            Capacity *= 2;
+        }
+        const VkDeviceSize Size = sizeof(glm::mat4) * Capacity;
+        Buffer* Bigger = new Buffer(Size,
+                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        Bigger->MapMemory(Size);
+        std::memset(Bigger->m_MappedMem, 0, Size);
+        if (m_WorldBuffer != nullptr)
+        {
+            std::memcpy(Bigger->m_MappedMem, m_WorldBuffer->m_MappedMem, sizeof(glm::mat4) * m_WorldCapacity);
+            // The GPU is done with the last frame, but it is freed with the other retired buffers
+            m_RetiredUniformBuffers.emplace_back(m_WorldBuffer);
+        }
+        m_WorldBuffer = Bigger;
+        m_WorldCapacity = Capacity;
+
+        // Every set that is made points at the buffer, so the ones that exist point at the new one
+        const VkDescriptorBufferInfo Info = {m_WorldBuffer->GetVkBuffer(), 0, VK_WHOLE_SIZE};
+        for (const GpuMesh& Mesh : m_GpuMeshes)
+        {
+            if (Mesh.Set == VK_NULL_HANDLE)
+            {
+                continue;
+            }
+            VkWriteDescriptorSet Write = {};
+            Write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            Write.dstSet = Mesh.Set;
+            Write.dstBinding = WorldBufferBinding;
+            Write.descriptorCount = 1;
+            Write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            Write.pBufferInfo = &Info;
+            vkUpdateDescriptorSets(m_Device->GetVkDevice(), 1, &Write, 0, nullptr);
+        }
+        if (m_Occlusion)
+        {
+            m_Occlusion->SetWorlds(m_WorldBuffer);
         }
     }
 
@@ -419,8 +539,7 @@ namespace Fling
         {
             t_CmdBuf.SetViewport(0, {viewport});
             t_CmdBuf.SetScissor(0, {scissor});
-            vkCmdBindPipeline(
-                t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+            vkCmdBindPipeline(t_CmdBuf.GetHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
         };
 
         t_CmdBuf.Begin();
@@ -467,6 +586,14 @@ namespace Fling
         }
 
         const PBRTextures& Textures = t_Mesh.MeshMaterial->GetPBRTextures();
+        const VkDescriptorBufferInfo WorldInfo = {m_WorldBuffer->GetVkBuffer(), 0, VK_WHOLE_SIZE};
+        VkWriteDescriptorSet WorldWrite = {};
+        WorldWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        WorldWrite.dstSet = t_Mesh.Set;
+        WorldWrite.dstBinding = WorldBufferBinding;
+        WorldWrite.descriptorCount = 1;
+        WorldWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        WorldWrite.pBufferInfo = &WorldInfo;
         std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
             // 0: UBO
             Initializers::WriteDescriptorSetUniform(t_Mesh.Ubo, t_Mesh.Set, 0),
@@ -481,7 +608,9 @@ namespace Fling
             // Any other PBR textures or other samplers go HERE and you add to the MRT shader
 
             // 5: Camera UBO
-            Initializers::WriteDescriptorSetUniform(m_CameraUboBuffer, t_Mesh.Set, 5)};
+            Initializers::WriteDescriptorSetUniform(m_CameraUboBuffer, t_Mesh.Set, 5),
+            // 6: The world matrix of every mesh, by slot
+            WorldWrite};
 
         vkUpdateDescriptorSets(m_Device->GetVkDevice(),
                                static_cast<uint32>(writeDescriptorSets.size()),

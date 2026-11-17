@@ -142,6 +142,13 @@ namespace Fling
          */
         void SetOcclusionCulling(bool t_On);
 
+        /**
+         * GPU blend on or off (RunSettings::GpuBlend) for the next frame. On: the matrix of a mesh that moves
+         * between two ticks is made by the occlusion culling pass (so that needs to be on and supported); off:
+         * the CPU makes it. The mesh pass holds the value; Engine::Present calls it before every frame.
+         */
+        void SetGpuBlend(bool t_On);
+
         /** The meshes the last frame drew and culled. Zero before the first frame and under --null-render. */
         CullStats GetCullStats() const;
 

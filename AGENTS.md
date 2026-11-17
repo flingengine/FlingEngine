@@ -47,9 +47,10 @@ platform setup (Vulkan SDK, GLFW, etc.).
   `--exec direct|inline|threaded`, `--sim-hz N`, `--max-fps N` (0: no cap),
   `--vsync on|off` (on by default), `--interpolation on|off` (on by
   default), `--frustum-culling on|off` (on by default) and
-  `--occlusion-culling on|off` (on by default) override, as do
-  `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync`, `Interpolation`,
-  `FrustumCulling` and `OcclusionCulling` in
+  `--occlusion-culling on|off` (on by default) and `--gpu-blend on|off` (on by default;
+  the GPU makes the matrix of a mesh between two ticks, and needs occlusion culling)
+  override, as do `[Engine] Exec`, `SimHz`, `MaxFps`, `VSync`, `Interpolation`,
+  `FrustumCulling`, `OcclusionCulling` and `GpuBlend` in
   `Config/EngineConf.ini`. A test that depends on a mode or a rate sets it. The
   startup log line `Run settings: ...` says each value and where it came from.
   The editor's GPU Options window (menu Windows; drawn in `--play` too) changes
