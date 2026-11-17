@@ -438,8 +438,10 @@ namespace Fling
         VK_CHECK_RESULT(m_OffscreenFrameBuf->CreateRenderPass());
         F_LOG_TRACE("Offscreen render pass created...");
 
-        // Create the descriptor pool for off screen things
-        uint32 DescriptorCount = 2000 * m_SwapChain->GetImageViewCount();
+        // Create the descriptor pool for off screen things. Each mesh holds one set, so
+        // MaxMeshSetsPerImage is also about how many meshes a scene can have
+        static constexpr uint32 MaxMeshSetsPerImage = 5000;
+        uint32 DescriptorCount = 2 * MaxMeshSetsPerImage * m_SwapChain->GetImageViewCount();
 
         static std::vector<VkDescriptorPoolSize> poolSizes = {
             Initializers::DescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DescriptorCount),
@@ -454,7 +456,7 @@ namespace Fling
         poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         poolInfo.poolSizeCount = static_cast<uint32>(poolSizes.size());
         poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.maxSets = to_u32(1000 * m_SwapChain->GetImageViewCount());
+        poolInfo.maxSets = to_u32(MaxMeshSetsPerImage * m_SwapChain->GetImageViewCount());
 
         if (vkCreateDescriptorPool(m_Device->GetVkDevice(), &poolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
         {

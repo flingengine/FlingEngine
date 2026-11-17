@@ -1,24 +1,12 @@
-#include "BallControl.h"
-#include "Components/Name.hpp"
-#include "Components/Transform.h"
-#include "Lighting/DirectionalLight.hpp"
-#include "Lighting/PointLight.hpp"
+#include "FlingWindow.h"
+#include "Logger.h"
 #include "LookCamera.h"
-#include "MeshRenderer.h"
-#include "PhysicsComponents.h"
-#include "Random.h"
 #include "SandboxGame.h"
-#include "SimRandom.h"
 #include "Stasis.h"
 #include "Stats.h"
 #include "Strings/String.h"
 #include "VulkanApp.h"
 #include "World.h"
-// For getting some lighting info
-#include "FlingWindow.h"
-#include "Lighting/DeferredLightSettings.h"
-#include "Logger.h"
-#include "Mover.h"
 
 namespace Sandbox
 {
@@ -32,13 +20,6 @@ namespace Sandbox
     void Game::OnStartGame(Fling::EntityStorage& t_Reg)
     {
         F_LOG_TRACE("Sandbox OnStartGame!");
-
-        // A level with physics bodies (for example Levels/PhysicsTest.json) is a
-        // scene of its own. Only an empty level gets the lighting test grid.
-        if (t_Reg.View<RigidBody>().Empty())
-        {
-            LightingTest(t_Reg);
-        }
 
         // The mouse look camera, unless the level has one. Sandbox.LookCamera turns it each
         // tick, Sandbox.Stasis can stop it (G), and Sandbox.LookCameraView writes the CameraView
@@ -79,117 +60,5 @@ namespace Sandbox
                 ++Count;
             });
         F_LOG_TRACE("Sandbox: {} transforms, checksum {:.9f}", Count, Checksum);
-    }
-
-    void Game::AddFloor(Fling::EntityStorage& t_Reg,
-                        const Fling::StringView t_Model,
-                        const Fling::StringView t_Mat,
-                        const glm::vec3 t_Scale /* = glm::vec3(1.0f) */)
-    {
-        // One call makes the entity whole: no system sees it with only some of its components
-        Transform t0;
-        t0.Position = glm::vec3(0.0f, -1.0f, 0.0f);
-        t0.Scale = t_Scale;
-        t_Reg.Create(t0, MeshRenderer(Fling::String(t_Model), Fling::String(t_Mat)));
-    }
-
-    void Game::LightingTest(Fling::EntityStorage& t_Reg)
-    {
-        // Simulation setup: its own stream of the run seed, so the editor or cosmetic
-        // code that draws from the global Random cannot change where the lights start
-        SimRandom Rng(Random::GetSeed(), SimRandom::StreamOf("Sandbox.LightingTest"));
-        auto AddRandomPointLight = [&]()
-        {
-            glm::vec3 min = {-15.0f, 0.2f, -15.0f};
-            glm::vec3 max = {15.0f, 1.0f, 15.0f};
-            const glm::vec3 startPos = Rng.Range(min, max);
-
-            Transform t0;
-            t0.Position = startPos;
-
-            Mover m0;
-            m0.TargetPos = Rng.Range(min, max);
-
-            PointLight Light;
-            Light.DiffuseColor = glm::vec4(Rng.Range(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f);
-            Light.Intensity = 5.0f;
-            Light.Range = 3.0f;
-
-            // One call makes the entity whole: no system sees it with only some of its components
-            t_Reg.Create(t0, m0, Light);
-        };
-
-        AddFloor(t_Reg, "Models/cube.obj", "Materials/Cobblestone.mat", glm::vec3(40.0f, 0.1f, 40.0f));
-
-        // Add a bunch of random light bois
-        for (size_t i = 0; i < DeferredLightSettings::MaxPointLights; i++)
-        {
-            AddRandomPointLight();
-        }
-
-        // Spawn a little grid of spheres
-        float Spacing = 1.5f;
-        int32 GridSize = 25;
-
-        for (int32 i = 0; i < GridSize; i++)
-        {
-            Fling::String ModelPath = "Models/sphere.obj";
-            Fling::String MatPath = "Materials/DeferredBronzeMat.mat";
-
-            for (int32 j = 0; j < GridSize; j++)
-            {
-                if (j == 0)
-                {
-                    MatPath = "Materials/Damascus.mat";
-                }
-                else if (j == 1)
-                {
-                    MatPath = "Materials/SheetMetal.mat";
-                }
-                else if (j == 2)
-                {
-                    MatPath = "Materials/Snow.mat";
-                }
-                else if (j == 3)
-                {
-                    MatPath = "Materials/Cobblestone.mat";
-                }
-                else if (j == 4)
-                {
-                    MatPath = "Materials/DotMetal.mat";
-                }
-                else
-                {
-                    MatPath = "Materials/DeferredBronzeMat.mat";
-                }
-
-                if (i == 1)
-                {
-                    ModelPath = "Models/cube.obj";
-                }
-                else if (i == 2)
-                {
-                    ModelPath = "Models/cone.obj";
-                }
-                else if (i == 3)
-                {
-                    ModelPath = "Models/RoundedCube.obj";
-                }
-                else if (i == 4)
-                {
-                    ModelPath = "Models/torus.obj";
-                }
-                else
-                {
-                    ModelPath = "Models/sphere.obj";
-                }
-
-                Transform t0;
-                t0.Position = glm::vec3((-(float)(GridSize / 2) + ((float)i * Spacing)),
-                                        (i > GridSize / 2) ? 1.0f : 0.0f,
-                                        -(float)(GridSize / 2) + float(j) * Spacing);
-                t_Reg.Create(t0, MeshRenderer(ModelPath.c_str(), MatPath.c_str()), Rotator{});
-            }
-        }
     }
 } // namespace Sandbox
